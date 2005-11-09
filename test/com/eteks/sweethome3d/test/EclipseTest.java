@@ -6,6 +6,6 @@ public class EclipseTest {
    * @param args no argument required.
    */
   public static void main(String [] args) {
-    System.out.println("Hello future Sweet Home 3D user");
+    System.out.println("Welcome future Sweet Home 3D user");
   }
 }
