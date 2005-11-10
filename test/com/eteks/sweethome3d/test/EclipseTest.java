@@ -19,9 +19,13 @@
  */
 package com.eteks.sweethome3d.test;
 
+/**
+ * Test for Eclipse IDE.
+ * @author Emmanuel Puybaret
+ */
 public class EclipseTest {
   /**
-   * Test for Eclipse IDE.
+   * Displays a sample text on the console.
    * @param args no argument required.
    */
   public static void main(String [] args) {
