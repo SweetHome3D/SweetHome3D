@@ -490,7 +490,7 @@ public class SweetHome3DSwingDraft extends JFrame {
       furnitureRoot.add(bedroom);
       furnitureRoot.add(livingRoom);
 
-      defaultFurnitureTree = new JTree(furnitureRoot);
+      defaultFurnitureTree = new JTree(furnitureRoot);      
     }
     return defaultFurnitureTree;
   }
@@ -502,7 +502,7 @@ public class SweetHome3DSwingDraft extends JFrame {
    */
   private JTable getFurnitureTable() {
     if (furnitureTable == null) {
-      Object [] columnsTitle = {"Name", "l", "p", "h"};
+      Object [] columnsTitle = {"Name", "W", "P", "H"};
       Object [][] furnitureData = { {"Bed", 140, 190, 50},
           {"Chest", 100, 80, 80}, {"Table", 110, 110, 75},
           {"Chair", 45, 45, 90}, {"Bookcase", 90, 30, 180}};
