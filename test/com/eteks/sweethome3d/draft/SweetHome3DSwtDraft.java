@@ -170,15 +170,15 @@ public class SweetHome3DSwtDraft {
     nameTableColumn.setText("Name");
     TableColumn lTableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
-    lTableColumn.setWidth(30);
+    lTableColumn.setWidth(40);
     lTableColumn.setText("W");
     TableColumn dtableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
-    dtableColumn.setWidth(30);
+    dtableColumn.setWidth(40);
     dtableColumn.setText("D");
     TableColumn hTableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
-    hTableColumn.setWidth(30);
+    hTableColumn.setWidth(40);
     hTableColumn.setText("H");
     TableItem item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Bed", "140", "190", "50"});
