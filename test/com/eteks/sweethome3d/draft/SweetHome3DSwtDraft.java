@@ -27,9 +27,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.CoolBar;
 import org.eclipse.swt.widgets.CoolItem;
 import org.eclipse.swt.widgets.Display;
@@ -41,6 +38,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
@@ -50,16 +49,11 @@ import org.eclipse.swt.widgets.TreeItem;
  */
 public class SweetHome3DSwtDraft {
   private Shell             sShell                  = null;
-  private CoolBar           coolBar                 = null;
   private SashForm          mainSashForm            = null;
   private SashForm          leftSashForm            = null;
   private SashForm          rightSashForm           = null;
   private Tree              defaultFurnitureTree    = null;
   private Table             furnitureTable          = null;
-  private Composite         editionComposite        = null;
-  private Button            cutButton               = null;
-  private Button            copyButton              = null;
-  private Button            pasteButton             = null;
   private ScrolledComposite planScrolledComposite   = null;
   private ScrolledComposite view3DScrolledComposite = null;
   private Label             planLabel               = null;
@@ -70,39 +64,22 @@ public class SweetHome3DSwtDraft {
   private Menu              furnitureMenu           = null;
   private Menu              planMenu                = null;
   private Menu              helpMenu                = null;
-
-  /**
-   * This method initializes coolBar
-   * 
-   */
-  private void createCoolBar() {
-    GridData gridData = new GridData();
-    gridData.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
-    coolBar = new CoolBar(sShell, SWT.NONE);
-    coolBar.setLayout(new RowLayout());
-    createEditionComposite();
-    coolBar.setLayoutData(gridData);
-    CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
-    coolItem.setControl(editionComposite);
-    // Calcul de la taille du CoolItem
-    Point size = coolItem.getControl().computeSize(SWT.DEFAULT,
-        SWT.DEFAULT);
-    coolItem.setSize(coolItem.computeSize(size.x, size.y));
-  }
+  private CoolBar           coolBar                 = null;
+  private ToolBar           editToolBar             = null;
 
   /**
    * This method initializes mainSashForm
    * 
    */
   private void createMainSashForm() {
-    GridData gridData1 = new GridData();
-    gridData1.grabExcessVerticalSpace = true;
-    gridData1.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
-    gridData1.verticalAlignment = org.eclipse.swt.layout.GridData.FILL;
-    gridData1.grabExcessHorizontalSpace = true;
+    GridData mainSashFormGridData = new GridData();
+    mainSashFormGridData.grabExcessVerticalSpace = true;
+    mainSashFormGridData.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
+    mainSashFormGridData.verticalAlignment = org.eclipse.swt.layout.GridData.FILL;
+    mainSashFormGridData.grabExcessHorizontalSpace = true;
     mainSashForm = new SashForm(sShell, SWT.NONE);
     createLeftSashForm();
-    mainSashForm.setLayoutData(gridData1);
+    mainSashForm.setLayoutData(mainSashFormGridData);
     createRightSashForm();
     mainSashForm.setWeights(new int [] {30, 70});
   }
@@ -193,30 +170,6 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes editionComposite
-   * 
-   */
-  private void createEditionComposite() {
-    editionComposite = new Composite(coolBar, SWT.NONE);
-    editionComposite.setLayout(new RowLayout());
-    cutButton = new Button(editionComposite, SWT.NONE);
-    cutButton.setImage(new Image(Display.getCurrent(), getClass()
-        .getResourceAsStream(
-            "/com/eteks/sweethome3d/draft/resources/Cut16.gif")));
-    copyButton = new Button(editionComposite, SWT.NONE);
-    copyButton.setImage(new Image(Display.getCurrent(), getClass()
-        .getResourceAsStream(
-            "/com/eteks/sweethome3d/draft/resources/Copy16.gif")));
-    pasteButton = new Button(editionComposite, SWT.NONE);
-    pasteButton
-        .setImage(new Image(
-            Display.getCurrent(),
-            getClass()
-                .getResourceAsStream(
-                    "/com/eteks/sweethome3d/draft/resources/Paste16.gif")));
-  }
-
-  /**
    * This method initializes planScrolledComposite
    * 
    */
@@ -252,6 +205,46 @@ public class SweetHome3DSwtDraft {
     Point size = view3DLabel.computeSize(SWT.DEFAULT, SWT.DEFAULT);
     view3DScrolledComposite.setMinSize(size.x, size.y);
     view3DScrolledComposite.setContent(view3DLabel);
+  }
+
+  /**
+   * This method initializes coolBar
+   * 
+   */
+  private void createCoolBar() {
+    coolBar = new CoolBar(sShell, SWT.NONE);
+    createEditToolBar();
+    CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
+    coolItem.setControl(editToolBar);
+    // Compute coolItem size
+    Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+    coolItem.setSize(coolItem.computeSize(size.x, size.y));
+  }
+
+  /**
+   * This method initializes editToolBar
+   * 
+   */
+  private void createEditToolBar() {
+    editToolBar = new ToolBar(coolBar, SWT.NONE);
+    ToolItem cutToolItem = new ToolItem(editToolBar, SWT.PUSH);
+    cutToolItem
+        .setImage(new Image(
+            Display.getCurrent(),
+            getClass()
+                .getResourceAsStream(
+                    "/com/eteks/sweethome3d/draft/resources/Paste16.gif")));
+    ToolItem copyToolItem = new ToolItem(editToolBar, SWT.PUSH);
+    copyToolItem.setImage(new Image(Display.getCurrent(),
+        getClass().getResourceAsStream(
+            "/com/eteks/sweethome3d/draft/resources/Copy16.gif")));
+    ToolItem pasteToolItem = new ToolItem(editToolBar, SWT.PUSH);
+    pasteToolItem
+        .setImage(new Image(
+            Display.getCurrent(),
+            getClass()
+                .getResourceAsStream(
+                    "/com/eteks/sweethome3d/draft/resources/Paste16.gif")));
   }
 
   /**
@@ -306,7 +299,8 @@ public class SweetHome3DSwtDraft {
     aboutMenuItem.setText("About");
     aboutMenuItem
         .addSelectionListener(new org.eclipse.swt.events.SelectionListener() {
-          public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetSelected(
+                                     org.eclipse.swt.events.SelectionEvent e) {
             MessageBox aboutMessageBox = new MessageBox(sShell,
                 SWT.OK);
             aboutMessageBox
@@ -315,7 +309,8 @@ public class SweetHome3DSwtDraft {
             aboutMessageBox.open();
           }
 
-          public void widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetDefaultSelected(
+                                            org.eclipse.swt.events.SelectionEvent e) {
           }
         });
     helpMenuItem.setMenu(helpMenu);
@@ -358,11 +353,13 @@ public class SweetHome3DSwtDraft {
     exitMenuItem.setText("Exit");
     exitMenuItem
         .addSelectionListener(new org.eclipse.swt.events.SelectionListener() {
-          public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetSelected(
+                                     org.eclipse.swt.events.SelectionEvent e) {
             System.exit(0);
           }
 
-          public void widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetDefaultSelected(
+                                            org.eclipse.swt.events.SelectionEvent e) {
           }
         });
     fileMenuItem.setMenu(fileMenu);
