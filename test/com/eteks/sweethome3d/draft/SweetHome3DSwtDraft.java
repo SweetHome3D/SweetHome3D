@@ -310,7 +310,7 @@ public class SweetHome3DSwtDraft {
             MessageBox aboutMessageBox = new MessageBox(sShell,
                 SWT.OK);
             aboutMessageBox
-                .setMessage("Sweet Home 3D Draft\n Copyrights 2006 eTeks");
+                .setMessage("Sweet Home 3D Draft\n© Copyrights 2006 eTeks");
             aboutMessageBox.setText("About");
             aboutMessageBox.open();
           }
