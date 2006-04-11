@@ -63,8 +63,9 @@ public class DefaultFurniture {
    * Returns the default furniture instance.
    */
   public static synchronized DefaultFurniture getInstance() {
-    if (instance == null)
-        instance = new DefaultFurniture();
+    if (instance == null) {
+      instance = new DefaultFurniture();
+    }
     return instance;
   }
 
