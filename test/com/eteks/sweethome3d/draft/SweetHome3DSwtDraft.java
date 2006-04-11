@@ -115,8 +115,8 @@ public class SweetHome3DSwtDraft {
 
     TreeItem bedroom = new TreeItem(defaultFurnitureTree, SWT.NONE);
     bedroom.setText("Bedroom");
-    TreeItem bed140x90 = new TreeItem(bedroom, SWT.NONE);
-    bed140x90.setText("Bed 140x90");
+    TreeItem bed140x190 = new TreeItem(bedroom, SWT.NONE);
+    bed140x190.setText("Bed 140x190");
     TreeItem chest = new TreeItem(bedroom, SWT.NONE);
     chest.setText("Chest");
     TreeItem bedsideTable = new TreeItem(bedroom, SWT.NONE);

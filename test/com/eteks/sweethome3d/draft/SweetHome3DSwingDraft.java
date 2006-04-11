@@ -43,7 +43,6 @@ import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeSelectionModel;
 
 /**
  * Draft application for Sweet Home 3D GUI using Swing.
@@ -477,7 +476,7 @@ public class SweetHome3DSwingDraft extends JFrame {
     if (defaultFurnitureTree == null) {
       DefaultMutableTreeNode bedroom = new DefaultMutableTreeNode(
           "Bedroom");
-      bedroom.add(new DefaultMutableTreeNode("Bed 140x90"));
+      bedroom.add(new DefaultMutableTreeNode("Bed 140x190"));
       bedroom.add(new DefaultMutableTreeNode("Chest"));
       bedroom.add(new DefaultMutableTreeNode("Bedside table"));
 
