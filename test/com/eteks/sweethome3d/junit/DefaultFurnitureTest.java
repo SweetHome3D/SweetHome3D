@@ -35,9 +35,9 @@ import junit.framework.TestCase;
  * Tests default furniture tree component.
  * @author Emmanuel Puybaret
  */
-public class TestDefaultFurniture extends TestCase {
+public class DefaultFurnitureTest extends TestCase {
 
-  public TestDefaultFurniture(String name) {
+  public DefaultFurnitureTest(String name) {
     super(name);
   }
 
