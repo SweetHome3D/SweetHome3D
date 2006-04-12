@@ -20,27 +20,12 @@
 package com.eteks.sweethome3d.swing;
 
 import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-
-import com.eteks.sweethome3d.model.DefaultFurniture;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
 
 /**
  * A tree displaying default furniture by category.
  * @author Emmanuel Puybaret
  */
 public class DefaultFurnitureTree extends JTree {
-  public void setFurniture(DefaultFurniture defaultFurniture) {
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    for (int i = 0; i < defaultFurniture.size(); i++) {
-      PieceOfFurniture piece = defaultFurniture.get(i);
-      DefaultMutableTreeNode category = null;
-      for (int j = 0; j < root.getChildCount(); j++) {
-        if (((DefaultMutableTreeNode)root.getChildAt(j)).getUserObject().equals(piece.getCategory())) 
-          break;
-        
-      }
-    }
-    
+  public DefaultFurnitureTree() {
   }
 }
