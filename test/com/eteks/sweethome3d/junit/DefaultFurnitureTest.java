@@ -63,7 +63,6 @@ public class DefaultFurnitureTest extends TestCase {
 
     // Create a tree from default furniture
     DefaultFurnitureTree tree = new DefaultFurnitureTree();
-    tree.setFurniture(defaultFurniture);
 
     // Select first piece in tree
     tree.expandRow(0);
@@ -83,7 +82,6 @@ public class DefaultFurnitureTest extends TestCase {
   
   public static void main(String [] args) {
     DefaultFurnitureTree tree = new DefaultFurnitureTree();
-    tree.setFurniture(DefaultFurniture.getInstance());
     JFrame frame = new JFrame("Default Furniture Test");
     frame.add(new JScrollPane(tree));
     frame.pack();
