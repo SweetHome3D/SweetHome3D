@@ -21,7 +21,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.lang.reflect.Field;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Set;
 
@@ -29,11 +28,11 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 
+import junit.framework.TestCase;
+
 import com.eteks.sweethome3d.model.DefaultFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.swing.DefaultFurnitureTree;
-
-import junit.framework.TestCase;
 
 /**
  * Tests default furniture tree component.

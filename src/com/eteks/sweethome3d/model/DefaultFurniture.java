@@ -24,7 +24,6 @@ import java.net.URL;
 import java.text.Collator;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
