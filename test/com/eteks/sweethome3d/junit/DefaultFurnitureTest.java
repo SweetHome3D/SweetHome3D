@@ -21,10 +21,14 @@
 package com.eteks.sweethome3d.junit;
 
 import java.lang.reflect.Field;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.JTree;
+
 import com.eteks.sweethome3d.model.DefaultFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.swing.DefaultFurnitureTree;
@@ -43,26 +47,39 @@ public class DefaultFurnitureTest extends TestCase {
 
   public void testDefaultFurnitureTreeCreation() throws NoSuchFieldException, IllegalAccessException {
     // Get the default furniture for English locale
-    Locale.setDefault(Locale.ENGLISH);
-    DefaultFurniture defaultFurniture = 
-        DefaultFurniture.getInstance();
-    // Get the name of the first default piece of furniture 
-    PieceOfFurniture firstPiece = defaultFurniture.get(0);
-    String firstPieceName = firstPiece.getName();
+    Locale.setDefault(Locale.ENGLISH); 
+    DefaultFurniture defaultFurniture = DefaultFurniture.getInstance();
 
+    // Get the name of the first category 
+    Set<String> categories = defaultFurniture.getCategories();
+    String firstCategoryEnglishName = categories.iterator().next(); 
+    // Get the name of the first piece of furniture
+    Set<PieceOfFurniture> categoryFurniture = 
+        defaultFurniture.getFurniture(firstCategoryEnglishName);
+    PieceOfFurniture firstPiece = categoryFurniture.iterator().next(); 
+    String firstPieceEnglishName = firstPiece.getName();
+    
+    // Cancel instance singleton with reflexion before changing default locale 
     Field instanceField = DefaultFurniture.class.getDeclaredField("instance");
     instanceField.setAccessible(true);
     instanceField.set(DefaultFurniture.class, null);
-    
-    // Compare firstPieceName to the name of the first default 
-    // piece of furniture in French locale
+
     Locale.setDefault(Locale.FRENCH);
     defaultFurniture = DefaultFurniture.getInstance();
-    assertFalse("Same name for first piece in different locales",
-        firstPieceName.equals(defaultFurniture.get(0).getName()));
+    // Get the french names of the first category and its first piece of furniture
+    String firstCategoryFrenchName = 
+        defaultFurniture.getCategories().iterator().next();
+    firstPiece = defaultFurniture.
+        getFurniture(firstCategoryFrenchName).iterator().next();
+    String firstPieceFrenchName = firstPiece.getName();
+    // Compare categories and furniture names in English and French locale
+    assertFalse("Same name for first category",
+        firstCategoryEnglishName.equals(firstCategoryFrenchName));
+    assertFalse("Same name for first piece",
+        firstPieceEnglishName.equals(firstPieceFrenchName)); 
 
     // Create a tree from default furniture
-    DefaultFurnitureTree tree = new DefaultFurnitureTree();
+    JTree tree = new DefaultFurnitureTree();
 
     // Select first piece in tree
     tree.expandRow(0);

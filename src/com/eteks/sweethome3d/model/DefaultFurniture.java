@@ -21,21 +21,27 @@
 package com.eteks.sweethome3d.model;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.Collator;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Default furniture.
  * @author Emmanuel Puybaret
  */
 public class DefaultFurniture {
-  private static DefaultFurniture instance;
-  private List<PieceOfFurniture>  furniture;
+  private static DefaultFurniture            instance;
+  private Map<String, Set<PieceOfFurniture>> furniture;
 
   private DefaultFurniture() {
-    this.furniture = new ArrayList<PieceOfFurniture>();
+    this.furniture = new TreeMap<String,Set<PieceOfFurniture>> (Collator.getInstance());   
     ResourceBundle resource = ResourceBundle.getBundle(
         "com.eteks.sweethome3d.model.resources.DefaultFurniture");
     for (int i = 1; ; i++) {
@@ -54,9 +60,31 @@ public class DefaultFurniture {
       float height = Float.parseFloat(resource.getString("height#" + i));
       boolean doorOrWindow = Boolean.parseBoolean(resource.getString("doorOrWindow#" + i));
 
-      this.furniture.add(new PieceOfFurniture(name, category, iconURL,
+      addPieceOfFurniture(new PieceOfFurniture(name, category, iconURL,
           modelURL, width, depth, height, doorOrWindow));
+          
+    } 
+  }
+  
+  /**
+   * Adds <code>piece</code> to <code>furniture</code> map.
+   * @param piece  a piece of default furniture.
+   */
+  private void addPieceOfFurniture(PieceOfFurniture piece) {
+    String category = piece.getCategory();
+    Set<PieceOfFurniture> categoryFurniture = furniture.get(category);
+    // If category doesn't exist yet, create a new entry in sortedFurniture
+    if (categoryFurniture == null) {
+      final Collator namesComparator = Collator.getInstance();
+      categoryFurniture = new TreeSet<PieceOfFurniture> (new Comparator<PieceOfFurniture> () {
+        public int compare(PieceOfFurniture piece1, PieceOfFurniture piece2) {
+          return namesComparator.compare (piece1.getName(), piece2.getName());
+        }
+      });
+      furniture.put(category, categoryFurniture);        
     }
+    // Add current piece of furniture to category set
+    categoryFurniture.add(piece);
   }
 
   /**
@@ -70,18 +98,21 @@ public class DefaultFurniture {
   }
 
   /**
-   * Returns the piece of furniture at index <code>i</code>. 
-   * @param i a value between 0 and <code>size() - 1</code>
-   * @return the piece of furniture at index <code>i</code>
+   * Returns an unmodifiable ordered set of default furniture categories.
    */
-  public PieceOfFurniture get(int i) { 
-    return this.furniture.get(i);
+  public Set<String> getCategories() {
+    Set<String> categories = this.furniture.keySet();
+    return Collections.unmodifiableSet(categories);
   }
 
   /**
-   * Returns the count of default furniture.
+   * Returns an unmodifiable ordered set of <code>category</code> funiture. 
    */
-  public int size() {
-    return this.furniture.size();
-  }  
+  public Set<PieceOfFurniture> getFurniture(String category) {
+    Set<PieceOfFurniture> categoryFurniture = this.furniture.get(category);
+    if (categoryFurniture != null)
+      return Collections.unmodifiableSet(categoryFurniture);
+    else
+      throw new IllegalArgumentException("Unknown category " + category);
+  }
 }
