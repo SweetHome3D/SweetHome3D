@@ -52,8 +52,8 @@ public class SweetHome3DSwtDraft {
   private SashForm          mainSashForm            = null;
   private SashForm          leftSashForm            = null;
   private SashForm          rightSashForm           = null;
-  private Tree              furnitureCatalogTree    = null;
-  private Table             homeFurnitureTable      = null;
+  private Tree              catalogTree             = null;
+  private Table             furnitureTable          = null;
   private ScrolledComposite planScrolledComposite   = null;
   private ScrolledComposite view3DScrolledComposite = null;
   private Label             planLabel               = null;
@@ -89,8 +89,8 @@ public class SweetHome3DSwtDraft {
   private void createLeftSashForm() {
     leftSashForm = new SashForm(mainSashForm, SWT.NONE);
     leftSashForm.setOrientation(org.eclipse.swt.SWT.VERTICAL);
-    createFurnitureCatalogTree();
-    createHomeFurnitureTable();
+    createCatalogTree();
+    createFurnitureTable();
   }
 
   /**
@@ -104,12 +104,12 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes furnitureCatalogTree.
+   * This method initializes catalogTree.
    */
-  private void createFurnitureCatalogTree() {
-    furnitureCatalogTree = new Tree(leftSashForm, SWT.NONE);
+  private void createCatalogTree() {
+    catalogTree = new Tree(leftSashForm, SWT.NONE);
 
-    TreeItem bedroom = new TreeItem(furnitureCatalogTree, SWT.NONE);
+    TreeItem bedroom = new TreeItem(catalogTree, SWT.NONE);
     bedroom.setText("Bedroom");
     TreeItem bed140x190 = new TreeItem(bedroom, SWT.NONE);
     bed140x190.setText("Bed 140x190");
@@ -118,7 +118,7 @@ public class SweetHome3DSwtDraft {
     TreeItem bedsideTable = new TreeItem(bedroom, SWT.NONE);
     bedsideTable.setText("Bedside table");
 
-    TreeItem livingRoom = new TreeItem(furnitureCatalogTree,
+    TreeItem livingRoom = new TreeItem(catalogTree,
         SWT.NONE);
     livingRoom.setText("Living Room");
     TreeItem bookcase = new TreeItem(livingRoom, SWT.NONE);
@@ -130,37 +130,37 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes homeFurnitureTable.
+   * This method initializes furnitureTable.
    */
-  private void createHomeFurnitureTable() {
-    homeFurnitureTable = new Table(leftSashForm, SWT.NONE);
-    homeFurnitureTable.setHeaderVisible(true);
-    homeFurnitureTable.setLinesVisible(true);
-    TableColumn nameTableColumn = new TableColumn(homeFurnitureTable,
+  private void createFurnitureTable() {
+    furnitureTable = new Table(leftSashForm, SWT.NONE);
+    furnitureTable.setHeaderVisible(true);
+    furnitureTable.setLinesVisible(true);
+    TableColumn nameTableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
     nameTableColumn.setWidth(60);
     nameTableColumn.setText("Name");
-    TableColumn lTableColumn = new TableColumn(homeFurnitureTable,
+    TableColumn lTableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
     lTableColumn.setWidth(40);
     lTableColumn.setText("W");
-    TableColumn dtableColumn = new TableColumn(homeFurnitureTable,
+    TableColumn dtableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
     dtableColumn.setWidth(40);
     dtableColumn.setText("D");
-    TableColumn hTableColumn = new TableColumn(homeFurnitureTable,
+    TableColumn hTableColumn = new TableColumn(furnitureTable,
         SWT.NONE);
     hTableColumn.setWidth(40);
     hTableColumn.setText("H");
-    TableItem item = new TableItem(homeFurnitureTable, SWT.NONE);
+    TableItem item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Bed", "140", "190", "50"});
-    item = new TableItem(homeFurnitureTable, SWT.NONE);
+    item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Chest", "100", "80", "80"});
-    item = new TableItem(homeFurnitureTable, SWT.NONE);
+    item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Table", "110", "110", "75"});
-    item = new TableItem(homeFurnitureTable, SWT.NONE);
+    item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Chair", "45", "45", "90"});
-    item = new TableItem(homeFurnitureTable, SWT.NONE);
+    item = new TableItem(furnitureTable, SWT.NONE);
     item.setText(new String [] {"Bookcase", "90", "30", "180"});
   }
 
