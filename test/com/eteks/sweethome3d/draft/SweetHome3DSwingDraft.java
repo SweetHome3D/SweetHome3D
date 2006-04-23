@@ -73,7 +73,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   private JButton     cutButton                  = null;
   private JButton     copyButton                 = null;
   private JButton     pasteButton                = null;
-  private JTree       catalogFurnitureTree       = null;
+  private JTree       furnitureCatalogTree       = null;
   private JTable      homeFurnitureTable         = null;
   private JLabel      planLabel                  = null;
   private JLabel      view3DLabel                = null;
@@ -541,7 +541,7 @@ public class SweetHome3DSwingDraft extends JFrame {
     if (catalogFurnitureScrollPane == null) {
       catalogFurnitureScrollPane = new JScrollPane();
       catalogFurnitureScrollPane
-          .setViewportView(getCatalogFurnitureTree());
+          .setViewportView(getFurnitureCatalogTree());
     }
     return catalogFurnitureScrollPane;
   }
@@ -558,10 +558,10 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes catalogFurnitureTree.
+   * This method initializes furnitureCatalogTree.
    */
-  private JTree getCatalogFurnitureTree() {
-    if (catalogFurnitureTree == null) {
+  private JTree getFurnitureCatalogTree() {
+    if (furnitureCatalogTree == null) {
       DefaultMutableTreeNode bedroom = new DefaultMutableTreeNode(
           "Bedroom");
       bedroom.add(new DefaultMutableTreeNode("Bed 140x190"));
@@ -578,11 +578,11 @@ public class SweetHome3DSwingDraft extends JFrame {
       furnitureRoot.add(bedroom);
       furnitureRoot.add(livingRoom);
 
-      catalogFurnitureTree = new JTree(furnitureRoot);
-      catalogFurnitureTree.setRootVisible(false);
-      catalogFurnitureTree.setShowsRootHandles(true);
+      furnitureCatalogTree = new JTree(furnitureRoot);
+      furnitureCatalogTree.setRootVisible(false);
+      furnitureCatalogTree.setShowsRootHandles(true);
     }
-    return catalogFurnitureTree;
+    return furnitureCatalogTree;
   }
 
   /**

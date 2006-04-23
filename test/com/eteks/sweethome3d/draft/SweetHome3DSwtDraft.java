@@ -52,7 +52,7 @@ public class SweetHome3DSwtDraft {
   private SashForm          mainSashForm            = null;
   private SashForm          leftSashForm            = null;
   private SashForm          rightSashForm           = null;
-  private Tree              catalogFurnitureTree    = null;
+  private Tree              furnitureCatalogTree    = null;
   private Table             homeFurnitureTable      = null;
   private ScrolledComposite planScrolledComposite   = null;
   private ScrolledComposite view3DScrolledComposite = null;
@@ -89,7 +89,7 @@ public class SweetHome3DSwtDraft {
   private void createLeftSashForm() {
     leftSashForm = new SashForm(mainSashForm, SWT.NONE);
     leftSashForm.setOrientation(org.eclipse.swt.SWT.VERTICAL);
-    createCatalogFurnitureTree();
+    createFurnitureCatalogTree();
     createHomeFurnitureTable();
   }
 
@@ -104,12 +104,12 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes catalogFurnitureTree.
+   * This method initializes furnitureCatalogTree.
    */
-  private void createCatalogFurnitureTree() {
-    catalogFurnitureTree = new Tree(leftSashForm, SWT.NONE);
+  private void createFurnitureCatalogTree() {
+    furnitureCatalogTree = new Tree(leftSashForm, SWT.NONE);
 
-    TreeItem bedroom = new TreeItem(catalogFurnitureTree, SWT.NONE);
+    TreeItem bedroom = new TreeItem(furnitureCatalogTree, SWT.NONE);
     bedroom.setText("Bedroom");
     TreeItem bed140x190 = new TreeItem(bedroom, SWT.NONE);
     bed140x190.setText("Bed 140x190");
@@ -118,7 +118,7 @@ public class SweetHome3DSwtDraft {
     TreeItem bedsideTable = new TreeItem(bedroom, SWT.NONE);
     bedsideTable.setText("Bedside table");
 
-    TreeItem livingRoom = new TreeItem(catalogFurnitureTree,
+    TreeItem livingRoom = new TreeItem(furnitureCatalogTree,
         SWT.NONE);
     livingRoom.setText("Living Room");
     TreeItem bookcase = new TreeItem(livingRoom, SWT.NONE);
