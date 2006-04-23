@@ -52,8 +52,8 @@ public class SweetHome3DSwtDraft {
   private SashForm          mainSashForm            = null;
   private SashForm          leftSashForm            = null;
   private SashForm          rightSashForm           = null;
-  private Tree              defaultFurnitureTree    = null;
-  private Table             furnitureTable          = null;
+  private Tree              catalogFurnitureTree    = null;
+  private Table             homeFurnitureTable      = null;
   private ScrolledComposite planScrolledComposite   = null;
   private ScrolledComposite view3DScrolledComposite = null;
   private Label             planLabel               = null;
@@ -68,8 +68,7 @@ public class SweetHome3DSwtDraft {
   private ToolBar           editToolBar             = null;
 
   /**
-   * This method initializes mainSashForm
-   * 
+   * This method initializes mainSashForm.
    */
   private void createMainSashForm() {
     GridData mainSashFormGridData = new GridData();
@@ -85,19 +84,17 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes leftSashForm
-   * 
+   * This method initializes leftSashForm.
    */
   private void createLeftSashForm() {
     leftSashForm = new SashForm(mainSashForm, SWT.NONE);
     leftSashForm.setOrientation(org.eclipse.swt.SWT.VERTICAL);
-    createDefaultFurnitureTree();
-    createFurnitureTable();
+    createCatalogFurnitureTree();
+    createHomeFurnitureTable();
   }
 
   /**
-   * This method initializes rightSashForm
-   * 
+   * This method initializes rightSashForm.
    */
   private void createRightSashForm() {
     rightSashForm = new SashForm(mainSashForm, SWT.NONE);
@@ -107,13 +104,12 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes defaultFurnitureTree
-   * 
+   * This method initializes catalogFurnitureTree.
    */
-  private void createDefaultFurnitureTree() {
-    defaultFurnitureTree = new Tree(leftSashForm, SWT.NONE);
+  private void createCatalogFurnitureTree() {
+    catalogFurnitureTree = new Tree(leftSashForm, SWT.NONE);
 
-    TreeItem bedroom = new TreeItem(defaultFurnitureTree, SWT.NONE);
+    TreeItem bedroom = new TreeItem(catalogFurnitureTree, SWT.NONE);
     bedroom.setText("Bedroom");
     TreeItem bed140x190 = new TreeItem(bedroom, SWT.NONE);
     bed140x190.setText("Bed 140x190");
@@ -122,7 +118,7 @@ public class SweetHome3DSwtDraft {
     TreeItem bedsideTable = new TreeItem(bedroom, SWT.NONE);
     bedsideTable.setText("Bedside table");
 
-    TreeItem livingRoom = new TreeItem(defaultFurnitureTree,
+    TreeItem livingRoom = new TreeItem(catalogFurnitureTree,
         SWT.NONE);
     livingRoom.setText("Living Room");
     TreeItem bookcase = new TreeItem(livingRoom, SWT.NONE);
@@ -134,44 +130,42 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes furnitureTable
-   * 
+   * This method initializes homeFurnitureTable.
    */
-  private void createFurnitureTable() {
-    furnitureTable = new Table(leftSashForm, SWT.NONE);
-    furnitureTable.setHeaderVisible(true);
-    furnitureTable.setLinesVisible(true);
-    TableColumn nameTableColumn = new TableColumn(furnitureTable,
+  private void createHomeFurnitureTable() {
+    homeFurnitureTable = new Table(leftSashForm, SWT.NONE);
+    homeFurnitureTable.setHeaderVisible(true);
+    homeFurnitureTable.setLinesVisible(true);
+    TableColumn nameTableColumn = new TableColumn(homeFurnitureTable,
         SWT.NONE);
     nameTableColumn.setWidth(60);
     nameTableColumn.setText("Name");
-    TableColumn lTableColumn = new TableColumn(furnitureTable,
+    TableColumn lTableColumn = new TableColumn(homeFurnitureTable,
         SWT.NONE);
     lTableColumn.setWidth(40);
     lTableColumn.setText("W");
-    TableColumn dtableColumn = new TableColumn(furnitureTable,
+    TableColumn dtableColumn = new TableColumn(homeFurnitureTable,
         SWT.NONE);
     dtableColumn.setWidth(40);
     dtableColumn.setText("D");
-    TableColumn hTableColumn = new TableColumn(furnitureTable,
+    TableColumn hTableColumn = new TableColumn(homeFurnitureTable,
         SWT.NONE);
     hTableColumn.setWidth(40);
     hTableColumn.setText("H");
-    TableItem item = new TableItem(furnitureTable, SWT.NONE);
+    TableItem item = new TableItem(homeFurnitureTable, SWT.NONE);
     item.setText(new String [] {"Bed", "140", "190", "50"});
-    item = new TableItem(furnitureTable, SWT.NONE);
+    item = new TableItem(homeFurnitureTable, SWT.NONE);
     item.setText(new String [] {"Chest", "100", "80", "80"});
-    item = new TableItem(furnitureTable, SWT.NONE);
+    item = new TableItem(homeFurnitureTable, SWT.NONE);
     item.setText(new String [] {"Table", "110", "110", "75"});
-    item = new TableItem(furnitureTable, SWT.NONE);
+    item = new TableItem(homeFurnitureTable, SWT.NONE);
     item.setText(new String [] {"Chair", "45", "45", "90"});
-    item = new TableItem(furnitureTable, SWT.NONE);
+    item = new TableItem(homeFurnitureTable, SWT.NONE);
     item.setText(new String [] {"Bookcase", "90", "30", "180"});
   }
 
   /**
-   * This method initializes planScrolledComposite
-   * 
+   * This method initializes planScrolledComposite.
    */
   private void createPlanScrolledComposite() {
     planScrolledComposite = new ScrolledComposite(rightSashForm,
@@ -189,8 +183,7 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes view3DScrolledComposite
-   * 
+   * This method initializes view3DScrolledComposite.
    */
   private void createView3DScrolledComposite() {
     view3DScrolledComposite = new ScrolledComposite(rightSashForm,
@@ -208,8 +201,7 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes coolBar
-   * 
+   * This method initializes coolBar.
    */
   private void createCoolBar() {
     coolBar = new CoolBar(sShell, SWT.NONE);
@@ -222,8 +214,7 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes editToolBar
-   * 
+   * This method initializes editToolBar.
    */
   private void createEditToolBar() {
     editToolBar = new ToolBar(coolBar, SWT.NONE);
@@ -248,7 +239,7 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * @param args
+   * Launches this application.
    */
   public static void main(String [] args) {
     /*
@@ -270,7 +261,7 @@ public class SweetHome3DSwtDraft {
   }
 
   /**
-   * This method initializes sShell
+   * This method initializes sShell.
    */
   private void createSShell() {
     GridLayout gridLayout = new GridLayout();
@@ -365,5 +356,4 @@ public class SweetHome3DSwtDraft {
     fileMenuItem.setMenu(fileMenu);
     sShell.setMenuBar(shellMenuBar);
   }
-
 }

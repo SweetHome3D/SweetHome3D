@@ -68,13 +68,13 @@ public class SweetHome3DSwingDraft extends JFrame {
   private JToolBar    toolBar                    = null;
   private JScrollPane planScrollPane             = null;
   private JScrollPane view3DScrollPane           = null;
-  private JScrollPane defaultFurnitureScrollPane = null;
-  private JScrollPane furnitureScrollPane        = null;
+  private JScrollPane catalogFurnitureScrollPane = null;
+  private JScrollPane homeFurnitureScrollPane    = null;
   private JButton     cutButton                  = null;
   private JButton     copyButton                 = null;
   private JButton     pasteButton                = null;
-  private JTree       defaultFurnitureTree       = null;
-  private JTable      furnitureTable             = null;
+  private JTree       catalogFurnitureTree       = null;
+  private JTable      homeFurnitureTable         = null;
   private JLabel      planLabel                  = null;
   private JLabel      view3DLabel                = null;
   private JMenu       furnitureMenu              = null;
@@ -91,7 +91,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   private JMenuItem   showRulesMenuItem          = null;
 
   /**
-   * This is the default constructor
+   * This is the default constructor.
    */
   public SweetHome3DSwingDraft() {
     super();
@@ -99,9 +99,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes this
-   * 
-   * @return void
+   * This method initializes this frame.
    */
   private void initialize() {
     this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -113,8 +111,6 @@ public class SweetHome3DSwingDraft extends JFrame {
 
   /**
    * This method initializes frameContentPane
-   * 
-   * @return javax.swing.JPanel
    */
   private JPanel getFrameContentPane() {
     if (frameContentPane == null) {
@@ -129,9 +125,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes frameMenuBar
-   * 
-   * @return javax.swing.JMenuBar
+   * This method initializes frameMenuBar.
    */
   private JMenuBar getFrameMenuBar() {
     if (frameMenuBar == null) {
@@ -146,9 +140,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenu
-   * 
-   * @return javax.swing.JMenu
+   * This method initializes fileMenu.
    */
   private JMenu getFileMenu() {
     if (fileMenu == null) {
@@ -165,9 +157,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenu
-   * 
-   * @return javax.swing.JMenu
+   * This method initializes editMenu.
    */
   private JMenu getEditMenu() {
     if (editMenu == null) {
@@ -183,9 +173,33 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenu
-   * 
-   * @return javax.swing.JMenu
+   * This method initializes furnitureMenu.
+   */
+  private JMenu getFurnitureMenu() {
+    if (furnitureMenu == null) {
+      furnitureMenu = new JMenu();
+      furnitureMenu.setText("Furniture");
+      furnitureMenu.add(getAddMenuItem());
+      furnitureMenu.add(getDeleteMenuItem());
+    }
+    return furnitureMenu;
+  }
+
+  /**
+   * This method initializes planMenu.
+   */
+  private JMenu getPlanMenu() {
+    if (planMenu == null) {
+      planMenu = new JMenu();
+      planMenu.setText("Plan");
+      planMenu.add(getImportImageMenuItem());
+      planMenu.add(getShowRulesMenuItem());
+    }
+    return planMenu;
+  }
+
+  /**
+   * This method initializes helpMenu.
    */
   private JMenu getHelpMenu() {
     if (helpMenu == null) {
@@ -197,9 +211,64 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes newMenuItem.
+   */
+  private JMenuItem getNewMenuItem() {
+    if (newMenuItem == null) {
+      newMenuItem = new JMenuItem();
+      newMenuItem.setText("New");
+    }
+    return newMenuItem;
+  }
+
+  /**
+   * This method initializes openMenuItem.
+   */
+  private JMenuItem getOpenMenuItem() {
+    if (openMenuItem == null) {
+      openMenuItem = new JMenuItem();
+      openMenuItem.setText("Open...");
+    }
+    return openMenuItem;
+  }
+
+  /**
+   * This method initializes saveMenuItem.
+   */
+  private JMenuItem getSaveMenuItem() {
+    if (saveMenuItem == null) {
+      saveMenuItem = new JMenuItem();
+      saveMenuItem.setText("Save");
+      saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+          KeyEvent.VK_S, Event.CTRL_MASK, true));
+    }
+    return saveMenuItem;
+  }
+
+  /**
+   * This method initializes saveAsMenuItem.
+   */
+  private JMenuItem getSaveAsMenuItem() {
+    if (saveAsMenuItem == null) {
+      saveAsMenuItem = new JMenuItem();
+      saveAsMenuItem.setText("Save as...");
+    }
+    return saveAsMenuItem;
+  }
+
+  /**
+   * This method initializes preferencesMenuItem.
+   */
+  private JMenuItem getPreferencesMenuItem() {
+    if (preferencesMenuItem == null) {
+      preferencesMenuItem = new JMenuItem();
+      preferencesMenuItem.setText("Preferences...");
+    }
+    return preferencesMenuItem;
+  }
+
+  /**
+   * This method initializes exitMenuItem.
    */
   private JMenuItem getExitMenuItem() {
     if (exitMenuItem == null) {
@@ -215,9 +284,112 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes undoMenuItem.
+   */
+  private JMenuItem getUndoMenuItem() {
+    if (undoMenuItem == null) {
+      undoMenuItem = new JMenuItem();
+      undoMenuItem.setText("Undo");
+    }
+    return undoMenuItem;
+  }
+
+  /**
+   * This method initializes redoMenuItem.
+   */
+  private JMenuItem getRedoMenuItem() {
+    if (redoMenuItem == null) {
+      redoMenuItem = new JMenuItem();
+      redoMenuItem.setText("Redo");
+    }
+    return redoMenuItem;
+  }
+
+  /**
+   * This method initializes cutMenuItem.
+   */
+  private JMenuItem getCutMenuItem() {
+    if (cutMenuItem == null) {
+      cutMenuItem = new JMenuItem();
+      cutMenuItem.setText("Cut");
+      cutMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+          KeyEvent.VK_X, Event.CTRL_MASK, true));
+    }
+    return cutMenuItem;
+  }
+
+  /**
+   * This method initializes copyMenuItem.
+   */
+  private JMenuItem getCopyMenuItem() {
+    if (copyMenuItem == null) {
+      copyMenuItem = new JMenuItem();
+      copyMenuItem.setText("Copy");
+      copyMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+          KeyEvent.VK_C, Event.CTRL_MASK, true));
+    }
+    return copyMenuItem;
+  }
+
+  /**
+   * This method initializes pasteMenuItem.
+   */
+  private JMenuItem getPasteMenuItem() {
+    if (pasteMenuItem == null) {
+      pasteMenuItem = new JMenuItem();
+      pasteMenuItem.setText("Paste");
+      pasteMenuItem.setAccelerator(KeyStroke.getKeyStroke(
+          KeyEvent.VK_V, Event.CTRL_MASK, true));
+    }
+    return pasteMenuItem;
+  }
+
+  /**
+   * This method initializes addMenuItem.
+   */
+  private JMenuItem getAddMenuItem() {
+    if (addMenuItem == null) {
+      addMenuItem = new JMenuItem();
+      addMenuItem.setText("Add");
+    }
+    return addMenuItem;
+  }
+
+  /**
+   * This method initializes deleteMenuItem.
+   */
+  private JMenuItem getDeleteMenuItem() {
+    if (deleteMenuItem == null) {
+      deleteMenuItem = new JMenuItem();
+      deleteMenuItem.setText("Delete");
+    }
+    return deleteMenuItem;
+  }
+
+  /**
+   * This method initializes importImageMenuItem.
+   */
+  private JMenuItem getImportImageMenuItem() {
+    if (importImageMenuItem == null) {
+      importImageMenuItem = new JMenuItem();
+      importImageMenuItem.setText("Import image...");
+    }
+    return importImageMenuItem;
+  }
+
+  /**
+   * This method initializes showRulesMenuItem.
+   */
+  private JMenuItem getShowRulesMenuItem() {
+    if (showRulesMenuItem == null) {
+      showRulesMenuItem = new JMenuItem();
+      showRulesMenuItem.setText("Show rules");
+    }
+    return showRulesMenuItem;
+  }
+
+  /**
+   * This method initializes aboutMenuItem.
    */
   private JMenuItem getAboutMenuItem() {
     if (aboutMenuItem == null) {
@@ -236,69 +408,56 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes toolBar.
    */
-  private JMenuItem getCutMenuItem() {
-    if (cutMenuItem == null) {
-      cutMenuItem = new JMenuItem();
-      cutMenuItem.setText("Cut");
-      cutMenuItem.setAccelerator(KeyStroke.getKeyStroke(
-          KeyEvent.VK_X, Event.CTRL_MASK, true));
+  private JToolBar getToolBar() {
+    if (toolBar == null) {
+      toolBar = new JToolBar();
+      toolBar.add(getCutButton());
+      toolBar.add(getCopyButton());
+      toolBar.add(getPasteButton());
     }
-    return cutMenuItem;
+    return toolBar;
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes cutButton.
    */
-  private JMenuItem getCopyMenuItem() {
-    if (copyMenuItem == null) {
-      copyMenuItem = new JMenuItem();
-      copyMenuItem.setText("Copy");
-      copyMenuItem.setAccelerator(KeyStroke.getKeyStroke(
-          KeyEvent.VK_C, Event.CTRL_MASK, true));
+  private JButton getCutButton() {
+    if (cutButton == null) {
+      cutButton = new JButton();
+      cutButton.setIcon(new ImageIcon(getClass().getResource(
+          "/com/eteks/sweethome3d/draft/resources/Cut16.gif")));
     }
-    return copyMenuItem;
+    return cutButton;
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes copyButton.
    */
-  private JMenuItem getPasteMenuItem() {
-    if (pasteMenuItem == null) {
-      pasteMenuItem = new JMenuItem();
-      pasteMenuItem.setText("Paste");
-      pasteMenuItem.setAccelerator(KeyStroke.getKeyStroke(
-          KeyEvent.VK_V, Event.CTRL_MASK, true));
+  private JButton getCopyButton() {
+    if (copyButton == null) {
+      copyButton = new JButton();
+      copyButton.setIcon(new ImageIcon(getClass().getResource(
+          "/com/eteks/sweethome3d/draft/resources/Copy16.gif")));
     }
-    return pasteMenuItem;
+    return copyButton;
   }
 
   /**
-   * This method initializes jMenuItem
-   * 
-   * @return javax.swing.JMenuItem
+   * This method initializes pasteButton.
    */
-  private JMenuItem getSaveMenuItem() {
-    if (saveMenuItem == null) {
-      saveMenuItem = new JMenuItem();
-      saveMenuItem.setText("Save");
-      saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(
-          KeyEvent.VK_S, Event.CTRL_MASK, true));
+  private JButton getPasteButton() {
+    if (pasteButton == null) {
+      pasteButton = new JButton();
+      pasteButton.setIcon(new ImageIcon(getClass().getResource(
+          "/com/eteks/sweethome3d/draft/resources/Paste16.gif")));
     }
-    return saveMenuItem;
+    return pasteButton;
   }
 
   /**
-   * This method initializes mainSplitPane
-   * 
-   * @return javax.swing.JSplitPane
+   * This method initializes mainSplitPane.
    */
   private JSplitPane getMainSplitPane() {
     if (mainSplitPane == null) {
@@ -311,9 +470,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes leftSplitPane
-   * 
-   * @return javax.swing.JSplitPane
+   * This method initializes leftSplitPane.
    */
   private JSplitPane getLeftSplitPane() {
     if (leftSplitPane == null) {
@@ -321,17 +478,15 @@ public class SweetHome3DSwingDraft extends JFrame {
       leftSplitPane
           .setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
       leftSplitPane.setResizeWeight(0.5D);
-      leftSplitPane.setBottomComponent(getFurnitureScrollPane());
+      leftSplitPane.setBottomComponent(getHomeFurnitureScrollPane());
       leftSplitPane
-          .setTopComponent(getDefaultFurnitureScrollPane());
+          .setTopComponent(getCatalogFurnitureScrollPane());
     }
     return leftSplitPane;
   }
 
   /**
-   * This method initializes rightSplitPane
-   * 
-   * @return javax.swing.JSplitPane
+   * This method initializes rightSplitPane.
    */
   private JSplitPane getRightSplitPane() {
     if (rightSplitPane == null) {
@@ -346,24 +501,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes toolBar
-   * 
-   * @return javax.swing.JToolBar
-   */
-  private JToolBar getToolBar() {
-    if (toolBar == null) {
-      toolBar = new JToolBar();
-      toolBar.add(getCutButton());
-      toolBar.add(getCopyButton());
-      toolBar.add(getPasteButton());
-    }
-    return toolBar;
-  }
-
-  /**
-   * This method initializes planScrollPane
-   * 
-   * @return javax.swing.JScrollPane
+   * This method initializes planScrollPane.
    */
   private JScrollPane getPlanScrollPane() {
     if (planScrollPane == null) {
@@ -380,9 +518,7 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes view3DScrollPane
-   * 
-   * @return javax.swing.JScrollPane
+   * This method initializes view3DScrollPane.
    */
   private JScrollPane getView3DScrollPane() {
     if (view3DScrollPane == null) {
@@ -399,81 +535,33 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
-   * This method initializes defaultFurnitureScrollPane
-   * 
-   * @return javax.swing.JScrollPane
+   * This method initializes catalogFurnitureScrollPane.
    */
-  private JScrollPane getDefaultFurnitureScrollPane() {
-    if (defaultFurnitureScrollPane == null) {
-      defaultFurnitureScrollPane = new JScrollPane();
-      defaultFurnitureScrollPane
-          .setViewportView(getDefaultFurnitureTree());
+  private JScrollPane getCatalogFurnitureScrollPane() {
+    if (catalogFurnitureScrollPane == null) {
+      catalogFurnitureScrollPane = new JScrollPane();
+      catalogFurnitureScrollPane
+          .setViewportView(getCatalogFurnitureTree());
     }
-    return defaultFurnitureScrollPane;
+    return catalogFurnitureScrollPane;
   }
 
   /**
-   * This method initializes furnitureScrollPane
-   * 
-   * @return javax.swing.JScrollPane
+   * This method initializes homeFurnitureScrollPane.
    */
-  private JScrollPane getFurnitureScrollPane() {
-    if (furnitureScrollPane == null) {
-      furnitureScrollPane = new JScrollPane();
-      furnitureScrollPane.setViewportView(getFurnitureTable());
+  private JScrollPane getHomeFurnitureScrollPane() {
+    if (homeFurnitureScrollPane == null) {
+      homeFurnitureScrollPane = new JScrollPane();
+      homeFurnitureScrollPane.setViewportView(getHomeFurnitureTable());
     }
-    return furnitureScrollPane;
+    return homeFurnitureScrollPane;
   }
 
   /**
-   * This method initializes cutButton
-   * 
-   * @return javax.swing.JButton
+   * This method initializes catalogFurnitureTree.
    */
-  private JButton getCutButton() {
-    if (cutButton == null) {
-      cutButton = new JButton();
-      cutButton.setIcon(new ImageIcon(getClass().getResource(
-          "/com/eteks/sweethome3d/draft/resources/Cut16.gif")));
-    }
-    return cutButton;
-  }
-
-  /**
-   * This method initializes copyButton
-   * 
-   * @return javax.swing.JButton
-   */
-  private JButton getCopyButton() {
-    if (copyButton == null) {
-      copyButton = new JButton();
-      copyButton.setIcon(new ImageIcon(getClass().getResource(
-          "/com/eteks/sweethome3d/draft/resources/Copy16.gif")));
-    }
-    return copyButton;
-  }
-
-  /**
-   * This method initializes pasteButton
-   * 
-   * @return javax.swing.JButton
-   */
-  private JButton getPasteButton() {
-    if (pasteButton == null) {
-      pasteButton = new JButton();
-      pasteButton.setIcon(new ImageIcon(getClass().getResource(
-          "/com/eteks/sweethome3d/draft/resources/Paste16.gif")));
-    }
-    return pasteButton;
-  }
-
-  /**
-   * This method initializes defaultFurnitureTree
-   * 
-   * @return javax.swing.JTree
-   */
-  private JTree getDefaultFurnitureTree() {
-    if (defaultFurnitureTree == null) {
+  private JTree getCatalogFurnitureTree() {
+    if (catalogFurnitureTree == null) {
       DefaultMutableTreeNode bedroom = new DefaultMutableTreeNode(
           "Bedroom");
       bedroom.add(new DefaultMutableTreeNode("Bed 140x190"));
@@ -490,191 +578,29 @@ public class SweetHome3DSwingDraft extends JFrame {
       furnitureRoot.add(bedroom);
       furnitureRoot.add(livingRoom);
 
-      defaultFurnitureTree = new JTree(furnitureRoot);
-      defaultFurnitureTree.setRootVisible(false);
-      defaultFurnitureTree.setShowsRootHandles(true);
+      catalogFurnitureTree = new JTree(furnitureRoot);
+      catalogFurnitureTree.setRootVisible(false);
+      catalogFurnitureTree.setShowsRootHandles(true);
     }
-    return defaultFurnitureTree;
+    return catalogFurnitureTree;
   }
 
   /**
-   * This method initializes furnitureTable
-   * 
-   * @return javax.swing.JTable
+   * This method initializes homeFurnitureTable.
    */
-  private JTable getFurnitureTable() {
-    if (furnitureTable == null) {
+  private JTable getHomeFurnitureTable() {
+    if (homeFurnitureTable == null) {
       Object [] columnsTitle = {"Name", "W", "P", "H"};
       Object [][] furnitureData = { {"Bed", 140, 190, 50},
           {"Chest", 100, 80, 80}, {"Table", 110, 110, 75},
           {"Chair", 45, 45, 90}, {"Bookcase", 90, 30, 180}};
-      furnitureTable = new JTable(furnitureData, columnsTitle);
+      homeFurnitureTable = new JTable(furnitureData, columnsTitle);
     }
-    return furnitureTable;
+    return homeFurnitureTable;
   }
 
   /**
-   * This method initializes furnitureMenu
-   * 
-   * @return javax.swing.JMenu
-   */
-  private JMenu getFurnitureMenu() {
-    if (furnitureMenu == null) {
-      furnitureMenu = new JMenu();
-      furnitureMenu.setText("Furniture");
-      furnitureMenu.add(getAddMenuItem());
-      furnitureMenu.add(getDeleteMenuItem());
-    }
-    return furnitureMenu;
-  }
-
-  /**
-   * This method initializes planMenu
-   * 
-   * @return javax.swing.JMenu
-   */
-  private JMenu getPlanMenu() {
-    if (planMenu == null) {
-      planMenu = new JMenu();
-      planMenu.setText("Plan");
-      planMenu.add(getImportImageMenuItem());
-      planMenu.add(getShowRulesMenuItem());
-    }
-    return planMenu;
-  }
-
-  /**
-   * This method initializes newMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getNewMenuItem() {
-    if (newMenuItem == null) {
-      newMenuItem = new JMenuItem();
-      newMenuItem.setText("New");
-    }
-    return newMenuItem;
-  }
-
-  /**
-   * This method initializes openMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getOpenMenuItem() {
-    if (openMenuItem == null) {
-      openMenuItem = new JMenuItem();
-      openMenuItem.setText("Open...");
-    }
-    return openMenuItem;
-  }
-
-  /**
-   * This method initializes saveAsMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getSaveAsMenuItem() {
-    if (saveAsMenuItem == null) {
-      saveAsMenuItem = new JMenuItem();
-      saveAsMenuItem.setText("Save as...");
-    }
-    return saveAsMenuItem;
-  }
-
-  /**
-   * This method initializes preferencesMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getPreferencesMenuItem() {
-    if (preferencesMenuItem == null) {
-      preferencesMenuItem = new JMenuItem();
-      preferencesMenuItem.setText("Preferences...");
-    }
-    return preferencesMenuItem;
-  }
-
-  /**
-   * This method initializes undoMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getUndoMenuItem() {
-    if (undoMenuItem == null) {
-      undoMenuItem = new JMenuItem();
-      undoMenuItem.setText("Undo");
-    }
-    return undoMenuItem;
-  }
-
-  /**
-   * This method initializes redoMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getRedoMenuItem() {
-    if (redoMenuItem == null) {
-      redoMenuItem = new JMenuItem();
-      redoMenuItem.setText("Redo");
-    }
-    return redoMenuItem;
-  }
-
-  /**
-   * This method initializes addMenuItem
-   * 
-   * @return javax.swing.JMenuItem
-   */
-  private JMenuItem getAddMenuItem() {
-    if (addMenuItem == null) {
-      addMenuItem = new JMenuItem();
-      addMenuItem.setText("Add");
-    }
-    return addMenuItem;
-  }
-
-  /**
-   * This method initializes deleteMenuItem	
-   * 	
-   * @return javax.swing.JMenuItem	
-   */
-  private JMenuItem getDeleteMenuItem() {
-    if (deleteMenuItem == null) {
-      deleteMenuItem = new JMenuItem();
-      deleteMenuItem.setText("Delete");
-    }
-    return deleteMenuItem;
-  }
-
-  /**
-   * This method initializes importImageMenuItem	
-   * 	
-   * @return javax.swing.JMenuItem	
-   */
-  private JMenuItem getImportImageMenuItem() {
-    if (importImageMenuItem == null) {
-      importImageMenuItem = new JMenuItem();
-      importImageMenuItem.setText("Import image...");
-    }
-    return importImageMenuItem;
-  }
-
-  /**
-   * This method initializes showRulesMenuItem	
-   * 	
-   * @return javax.swing.JMenuItem	
-   */
-  private JMenuItem getShowRulesMenuItem() {
-    if (showRulesMenuItem == null) {
-      showRulesMenuItem = new JMenuItem();
-      showRulesMenuItem.setText("Show rules");
-    }
-    return showRulesMenuItem;
-  }
-
-  /**
-   * Launches this application
+   * Launches this application.
    */
   public static void main(String [] args) {
     try {
