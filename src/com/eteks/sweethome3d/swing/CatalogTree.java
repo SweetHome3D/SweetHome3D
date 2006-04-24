@@ -1,5 +1,5 @@
 /*
- * DefaultFurnitureTree.java 7 avr. 2006
+ * CatalogTree.java 7 avr. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,13 +19,26 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
+import java.awt.Image;
+
+import javax.swing.ImageIcon;
 import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
+
+import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 
 /**
- * A tree displaying default furniture by category.
+ * A tree displaying furniture catalog by category.
  * @author Emmanuel Puybaret
  */
-public class DefaultFurnitureTree extends JTree {
-  public DefaultFurnitureTree() {
+public class CatalogTree extends JTree {
+  public CatalogTree(Catalog catalog) {
+    // TODO Auto-generated constructor stub
   }
 }

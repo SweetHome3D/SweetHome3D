@@ -1,5 +1,5 @@
 /*
- * TestDefaultFurniture.java 6 avr. 2006
+ * CatalogTest.java 6 avr. 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
@@ -20,9 +20,8 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -30,55 +29,56 @@ import javax.swing.JTree;
 
 import junit.framework.TestCase;
 
-import com.eteks.sweethome3d.model.DefaultFurniture;
+import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
-import com.eteks.sweethome3d.swing.DefaultFurnitureTree;
+import com.eteks.sweethome3d.swing.CatalogTree;
+import com.eteks.sweethome3d.io.DefaultCatalog;
 
 /**
- * Tests default furniture tree component.
+ * Tests furniture catalog tree component.
  * @author Emmanuel Puybaret
  */
-public class DefaultFurnitureTest extends TestCase {
+public class CatalogTest extends TestCase {
 
-  public DefaultFurnitureTest(String name) {
+  public CatalogTest(String name) {
     super(name);
   }
 
-  public void testDefaultFurnitureTreeCreation() throws NoSuchFieldException, IllegalAccessException {
-    // Get the default furniture for English locale
-    Locale.setDefault(Locale.ENGLISH); 
-    DefaultFurniture defaultFurniture = DefaultFurniture.getInstance();
+  public void testCatalogTreeCreation() {
+    // Read the furniture catalog from English locale resources
+    Locale.setDefault(Locale.US);
+    Catalog catalog = new DefaultCatalog();
+    catalog.readFurniture();
 
     // Get the name of the first category 
-    Set<String> categories = defaultFurniture.getCategories();
-    String firstCategoryEnglishName = categories.iterator().next(); 
+    List<Category> categories = catalog.getCategories();
+    Category firstCategory = categories.get(0);
+    String firstCategoryEnglishName = firstCategory.getName(); 
     // Get the name of the first piece of furniture
-    Set<PieceOfFurniture> categoryFurniture = 
-        defaultFurniture.getFurniture(firstCategoryEnglishName);
-    PieceOfFurniture firstPiece = categoryFurniture.iterator().next(); 
+    List<PieceOfFurniture> categoryFurniture = firstCategory.getFurniture();
+    PieceOfFurniture firstPiece = categoryFurniture.get(0); 
     String firstPieceEnglishName = firstPiece.getName();
     
-    // Cancel instance singleton with reflexion before changing default locale 
-    Field instanceField = DefaultFurniture.class.getDeclaredField("instance");
-    instanceField.setAccessible(true);
-    instanceField.set(DefaultFurniture.class, null);
-
+    // Read the furniture catalog from French locale resources
     Locale.setDefault(Locale.FRENCH);
-    defaultFurniture = DefaultFurniture.getInstance();
+    catalog = new DefaultCatalog();
+    catalog.readFurniture();
     // Get the french names of the first category and its first piece of furniture
-    String firstCategoryFrenchName = 
-        defaultFurniture.getCategories().iterator().next();
-    firstPiece = defaultFurniture.
-        getFurniture(firstCategoryFrenchName).iterator().next();
-    String firstPieceFrenchName = firstPiece.getName();
+    firstCategory = catalog.getCategories().get(0);
+    String firstCategoryFrenchName = firstCategory.getName();
+    String firstPieceFrenchName = firstCategory.getFurniture().get(0).getName();
     // Compare categories and furniture names in English and French locale
+    
+    System.out.println(firstCategoryEnglishName + " " + firstCategoryFrenchName);
+    
     assertFalse("Same name for first category",
         firstCategoryEnglishName.equals(firstCategoryFrenchName));
     assertFalse("Same name for first piece",
         firstPieceEnglishName.equals(firstPieceFrenchName)); 
 
     // Create a tree from default furniture
-    JTree tree = new DefaultFurnitureTree();
+    JTree tree = new CatalogTree(catalog);
 
     // Select first piece in tree
     tree.expandRow(0);
@@ -97,8 +97,11 @@ public class DefaultFurnitureTest extends TestCase {
   }
   
   public static void main(String [] args) {
-    DefaultFurnitureTree tree = new DefaultFurnitureTree();
-    JFrame frame = new JFrame("Default Furniture Test");
+    // Read the furniture catalog from default locale resources
+    Catalog catalog = new DefaultCatalog();
+    catalog.readFurniture();
+    CatalogTree tree = new CatalogTree(catalog);
+    JFrame frame = new JFrame("Catalog Test");
     frame.add(new JScrollPane(tree));
     frame.pack();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
