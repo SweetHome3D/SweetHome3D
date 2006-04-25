@@ -69,9 +69,6 @@ public class CatalogTest extends TestCase {
     String firstCategoryFrenchName = firstCategory.getName();
     String firstPieceFrenchName = firstCategory.getFurniture().get(0).getName();
     // Compare categories and furniture names in English and French locale
-    
-    System.out.println(firstCategoryEnglishName + " " + firstCategoryFrenchName);
-    
     assertFalse("Same name for first category",
         firstCategoryEnglishName.equals(firstCategoryFrenchName));
     assertFalse("Same name for first piece",
