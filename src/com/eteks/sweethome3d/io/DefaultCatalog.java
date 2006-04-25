@@ -21,8 +21,11 @@
 package com.eteks.sweethome3d.io;
 
 import java.net.URL;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
@@ -46,10 +49,10 @@ public class DefaultCatalog extends Catalog {
         break;
       }
       String category = resource.getString("category#" + i);
-      URL iconURL = getClass().getResource(
-          resource.getString("iconURL#" + i));
-      URL modelURL = getClass().getResource(
-          resource.getString("modelURL#" + i));
+      URL icon = getClass().getResource(
+          resource.getString("icon#" + i));
+      URL model = getClass().getResource(
+          resource.getString("model#" + i));
       float width = Float.parseFloat(
           resource.getString("width#" + i));
       float depth = Float.parseFloat(
@@ -60,8 +63,10 @@ public class DefaultCatalog extends Catalog {
           resource.getString("doorOrWindow#" + i));
 
       add(new Category(category),
-          new PieceOfFurniture(name, iconURL,
-          modelURL, width, depth, height, doorOrWindow));
+          new PieceOfFurniture(name, 
+              new URLContent (icon), 
+              new URLContent (model),
+              width, depth, height, doorOrWindow));
     }
   }
 }

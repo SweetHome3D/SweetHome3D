@@ -20,7 +20,6 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.net.URL;
 import java.text.Collator;
 
 /**
@@ -29,8 +28,8 @@ import java.text.Collator;
  */
 public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
   private String  name;
-  private URL     iconURL;
-  private URL     modelURL;
+  private Content icon;
+  private Content model;
   private float   width;
   private float   depth;
   private float   height;
@@ -40,18 +39,18 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
   /**
    * Creates a piece of furniture with all its values.
    * @param name  the name of the new piece
-   * @param iconURL an URL to the icon file of the new piece
-   * @param modelURL an URL to the 3D model file of the new piece
+   * @param icon an URL to the icon file of the new piece
+   * @param model an URL to the 3D model file of the new piece
    * @param width  the width in meters of the new piece
    * @param depth  the depth in meters of the new piece
    * @param height  the height in meters of the new piece
    * @param doorOrWindow if true, the new piece is a door or a window
    */
-  public PieceOfFurniture(String name, URL iconURL, URL modelURL, 
+  public PieceOfFurniture(String name, Content icon, Content model, 
                           float width, float depth, float height, boolean doorOrWindow) {
     this.name = name;
-    this.iconURL = iconURL;
-    this.modelURL = modelURL;
+    this.icon = icon;
+    this.model = model;
     this.width = width;
     this.depth = depth;
     this.height = height;
@@ -87,17 +86,17 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
   }
 
   /**
-   * @return Returns the iconURL.
+   * @return Returns the icon.
    */
-  public URL getIconURL() {
-    return this.iconURL;
+  public Content getIcon() {
+    return this.icon;
   }
 
   /**
-   * @return Returns the modelURL.
+   * @return Returns the model.
    */
-  public URL getModelURL() {
-    return this.modelURL;
+  public Content getModel() {
+    return this.model;
   }
 
   /**
