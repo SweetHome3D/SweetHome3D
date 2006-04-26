@@ -78,20 +78,16 @@ public class CatalogTest extends TestCase {
     JTree tree = new CatalogTree(catalog);
 
     // Select first piece in tree
-    tree.expandRow(0);
-    tree.setSelectionRow(1);
+    tree.expandRow(0); 
+    tree.setSelectionRow(1); 
+    PieceOfFurniture [] selectedFurniture = 
+        ((CatalogTree)tree).getSelectedFurniture();
     assertEquals("No piece of furniture selected", 
-        1, tree.getSelectionRows().length);
+        1, selectedFurniture.length);
     assertEquals("First piece not selected", 
-        1, tree.getSelectionRows() [0]);
-
-    // Select second piece in tree 
-    tree.addSelectionRow(2);
-    assertFalse("More than one selected piece", 
-        tree.getSelectionRows().length > 1);
-    assertEquals("Second piece not selected",
-        2, tree.getSelectionRows() [0]);
+        firstPieceFrenchName, selectedFurniture [0].getName()); 
   }
+
   
   public static void main(String [] args) {
     // Read the furniture catalog from default locale resources
