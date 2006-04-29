@@ -21,11 +21,8 @@
 package com.eteks.sweethome3d.io;
 
 import java.net.URL;
-import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
