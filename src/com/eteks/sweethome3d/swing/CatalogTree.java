@@ -25,15 +25,16 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import com.eteks.sweethome3d.model.Catalog;
@@ -46,17 +47,7 @@ import com.eteks.sweethome3d.model.PieceOfFurniture;
  */
 public class CatalogTree extends JTree {
   public CatalogTree(Catalog catalog) {
-    // Create Nodes hierarchy from DefaultFurniture 
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    for(Category category : catalog.getCategories()) {
-      DefaultMutableTreeNode categoryNode = new DefaultMutableTreeNode (category);
-      root.add(categoryNode);
-      for (PieceOfFurniture piece : category.getFurniture()) {
-        categoryNode.add(new DefaultMutableTreeNode (piece, false));
-      }      
-    }
-      
-    setModel(new DefaultTreeModel (root));
+    setModel(new CatalogTreeModel (catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
@@ -72,13 +63,15 @@ public class CatalogTree extends JTree {
     for (TreePath path : selectionPaths) {
       // Add to selectedFurniture all the nodes that matches a piece of furniture
       if (path.getPathCount() == 3) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-        selectedFurniture.add((PieceOfFurniture)node.getUserObject());
+        selectedFurniture.add((PieceOfFurniture)path.getLastPathComponent());
       }        
     }
     return selectedFurniture.toArray(new PieceOfFurniture [selectedFurniture.size()]);
   }  
   
+  /**
+   * Cell renderer for this catalog tree.
+   */
   private class CatalogCellRenderer extends DefaultTreeCellRenderer {
     private static final int DEFAULT_ICON_HEIGHT = 32;
     @Override
@@ -88,17 +81,13 @@ public class CatalogTree extends JTree {
       // Get default label with its icon, background and focus colors 
       JLabel label = (JLabel)super.getTreeCellRendererComponent( 
           tree, value, selected, expanded, leaf, row, hasFocus);
-      // Get the rendered node
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-      // If user's objet node is a category, change label text
-      if (node.getUserObject() instanceof Category) {
-        Category category = (Category)node.getUserObject();
-        label.setText(category.getName());
+      // If node is a category, change label text
+      if (value instanceof Category) {
+        label.setText(((Category)value).getName());
       } 
-      // Else if user's objet node is a piece of furntiure, change label text and icon
-      else if (node.getUserObject() instanceof PieceOfFurniture) {
-        PieceOfFurniture piece = 
-            (PieceOfFurniture)node.getUserObject();
+      // Else if node is a piece of furntiure, change label text and icon
+      else if (value instanceof PieceOfFurniture) {
+        PieceOfFurniture piece = (PieceOfFurniture)value;
         label.setText(piece.getName());
         try {
           // Read the icon of the piece 
@@ -120,6 +109,55 @@ public class CatalogTree extends JTree {
         }
       }
       return label;
+    }
+  }
+  
+  /**
+   * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.  
+   */
+  private static class CatalogTreeModel implements TreeModel {
+    Catalog catalog;
+    
+    public CatalogTreeModel(Catalog catalog) {
+      this.catalog = catalog;
+    }
+
+    public Object getRoot() {
+      return catalog;
+    }
+
+    public Object getChild(Object parent, int index) {
+      if (parent instanceof Catalog)
+        return ((Catalog)parent).getCategories().get(index);
+      else
+        return ((Category)parent).getFurniture().get(index);
+    }
+
+    public int getChildCount(Object parent) {
+      if (parent instanceof Catalog)
+        return ((Catalog)parent).getCategories().size();
+      else
+        return ((Category)parent).getFurniture().size();
+    }
+
+    public int getIndexOfChild(Object parent, Object child) {
+      if (parent instanceof Catalog)
+        return Collections.binarySearch(((Catalog)parent).getCategories(), (Category)child);
+      else
+        return Collections.binarySearch(((Category)parent).getFurniture(), (PieceOfFurniture)child);
+    }
+
+    public boolean isLeaf(Object node) {
+      return node instanceof PieceOfFurniture;
+    }
+
+    public void valueForPathChanged(TreePath path, Object newValue) {
+    }
+
+    public void addTreeModelListener(TreeModelListener l) {
+    }
+
+    public void removeTreeModelListener(TreeModelListener l) {
     }
   }
 }
