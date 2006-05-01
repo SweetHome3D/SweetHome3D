@@ -20,12 +20,14 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.text.Collator;
 import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.tree.TreeModel;
 
 import junit.framework.TestCase;
 
@@ -69,7 +71,7 @@ public class CatalogTreeTest extends TestCase {
     String firstCategoryFrenchName = firstCategory.getName();
     String firstPieceFrenchName = firstCategory.getFurniture().get(0).getName();
     // Compare categories and furniture names in English and French locale
-    assertTrue("Same name for first category",
+    assertFalse("Same name for first category",
         firstCategoryEnglishName.equals(firstCategoryFrenchName));
     assertFalse("Same name for first piece",
         firstPieceEnglishName.equals(firstPieceFrenchName)); 
@@ -85,7 +87,32 @@ public class CatalogTreeTest extends TestCase {
     assertEquals("No piece of furniture selected", 
         1, selectedFurniture.length);
     assertEquals("First piece not selected", 
-        firstPieceFrenchName, selectedFurniture [0].getName()); 
+        firstPieceFrenchName, selectedFurniture [0].getName());
+    
+    // Check alphatical order in tree
+    Collator comparator = Collator.getInstance();
+    TreeModel model = tree.getModel();
+    Object    root  = model.getRoot();
+    for (int i = 0, n = model.getChildCount(root); i < n; i++) {
+      Object rootChild = model.getChild(root, i);
+      if (i < n - 1) {
+        Object nextChild = model.getChild(root, i + 1);
+        assertTrue ("Categories not sorted", comparator.compare(
+            ((Category)rootChild).getName(), 
+            ((Category)nextChild).getName()) <= 0);
+      }
+      for (int j = 0, m = model.getChildCount(rootChild) - 1; 
+           j < m; j++) {
+        Object child = model.getChild(rootChild, i);
+        if (j < m - 1) {
+            Object nextChild = model.getChild(rootChild, i + 1);
+            assertTrue ("Furniture not sorted", comparator.compare(
+                ((PieceOfFurniture)child).getName(),
+                ((PieceOfFurniture)nextChild).getName()) <= 0);
+          }
+          assertTrue ("Piece not a leaf", model.isLeaf(child));
+      }
+    }
   }
 
   
