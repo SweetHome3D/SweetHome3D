@@ -116,7 +116,7 @@ public class CatalogTree extends JTree {
    * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.  
    */
   private static class CatalogTreeModel implements TreeModel {
-    Catalog catalog;
+    private Catalog catalog;
     
     public CatalogTreeModel(Catalog catalog) {
       this.catalog = catalog;
@@ -127,24 +127,27 @@ public class CatalogTree extends JTree {
     }
 
     public Object getChild(Object parent, int index) {
-      if (parent instanceof Catalog)
+      if (parent instanceof Catalog) {
         return ((Catalog)parent).getCategories().get(index);
-      else
+      } else {
         return ((Category)parent).getFurniture().get(index);
+      }
     }
 
     public int getChildCount(Object parent) {
-      if (parent instanceof Catalog)
+      if (parent instanceof Catalog) {
         return ((Catalog)parent).getCategories().size();
-      else
+      } else {
         return ((Category)parent).getFurniture().size();
+      }
     }
 
     public int getIndexOfChild(Object parent, Object child) {
-      if (parent instanceof Catalog)
+      if (parent instanceof Catalog) {
         return Collections.binarySearch(((Catalog)parent).getCategories(), (Category)child);
-      else
+      } else {
         return Collections.binarySearch(((Category)parent).getFurniture(), (PieceOfFurniture)child);
+      }
     }
 
     public boolean isLeaf(Object node) {
