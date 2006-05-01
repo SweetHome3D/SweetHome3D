@@ -123,7 +123,7 @@ public class CatalogTree extends JTree {
     }
 
     public Object getRoot() {
-      return catalog;
+      return this.catalog;
     }
 
     public Object getChild(Object parent, int index) {
