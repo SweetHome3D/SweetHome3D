@@ -35,7 +35,7 @@ import com.eteks.sweethome3d.model.Catalog;
  * Tests furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class JFaceTreeCatalogTest {
+public class JFaceCatalogTreeTest {
   public static void main(String [] args) {
     // Read the furniture catalog from default locale resources
     final Catalog catalog = new DefaultCatalog();
@@ -44,7 +44,7 @@ public class JFaceTreeCatalogTest {
     // Create an application window that displays an instance of CatalogTree
     ApplicationWindow window = new ApplicationWindow(null) {
        protected void configureShell(Shell shell) {
-        shell.setText("Category Test");
+        shell.setText("Category Tree Test");
         shell.setLayout(new FillLayout(SWT.VERTICAL));
       }
 
