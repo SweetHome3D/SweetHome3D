@@ -39,6 +39,7 @@ import javax.swing.tree.TreePath;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 
 /**
@@ -89,26 +90,35 @@ public class CatalogTree extends JTree {
       else if (value instanceof PieceOfFurniture) {
         PieceOfFurniture piece = (PieceOfFurniture)value;
         label.setText(piece.getName());
-        try {
-          // Read the icon of the piece 
-          InputStream iconStream = piece.getIcon().openStream();
-          BufferedImage image = ImageIO.read(iconStream);
-          iconStream.close();
-          // Scale the read icon  
-          int rowHeight = isFixedRowHeight() 
-                              ? getRowHeight() 
-                              : DEFAULT_ICON_HEIGHT;
-          int imageWidth = image.getWidth() * rowHeight 
-                                            / image.getHeight();
-          Image scaledImage = image.getScaledInstance(
-              imageWidth, rowHeight, Image.SCALE_SMOOTH);
-          label.setIcon(new ImageIcon (scaledImage));
-        } catch (IOException ex) {
-          // Too bad the icon can't be read
-          ex.printStackTrace();
-        }
+        label.setIcon(getImageIcon(piece.getIcon()));
       }
       return label;
+    }
+
+    /**
+     * Returns an ImageIcon instance with the read image scaled at the tree row height or
+     * an empty image if the image couldn't be read.
+     * @param content the content of an image.
+     */
+    private ImageIcon getImageIcon(Content content) {
+      try {
+        // Read the icon of the piece 
+        InputStream iconStream = content.openStream();
+        BufferedImage image = ImageIO.read(iconStream);
+        iconStream.close();
+        // Scale the read icon  
+        int rowHeight = isFixedRowHeight() 
+                            ? getRowHeight() 
+                            : DEFAULT_ICON_HEIGHT;
+        int imageWidth = image.getWidth() * rowHeight 
+                                          / image.getHeight();
+        Image scaledImage = image.getScaledInstance(
+            imageWidth, rowHeight, Image.SCALE_SMOOTH);
+        return new ImageIcon (scaledImage);
+      } catch (IOException ex) {
+        // Too bad the icon can't be read
+        return new ImageIcon();
+      }
     }
   }
   
