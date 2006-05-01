@@ -26,6 +26,7 @@ import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 
 /**
@@ -46,10 +47,8 @@ public class DefaultCatalog extends Catalog {
         break;
       }
       String category = resource.getString("category#" + i);
-      URL icon = getClass().getResource(
-          resource.getString("icon#" + i));
-      URL model = getClass().getResource(
-          resource.getString("model#" + i));
+      Content icon  = getContent(resource, "icon#" + i);
+      Content model = getContent(resource, "model#" + i);
       float width = Float.parseFloat(
           resource.getString("width#" + i));
       float depth = Float.parseFloat(
@@ -60,10 +59,24 @@ public class DefaultCatalog extends Catalog {
           resource.getString("doorOrWindow#" + i));
 
       add(new Category(category),
-          new PieceOfFurniture(name, 
-              new URLContent (icon), 
-              new URLContent (model),
+          new PieceOfFurniture(name, icon, model,
               width, depth, height, doorOrWindow));
+    }
+  }
+  
+  /**
+   * Returns a valid URLContent instance from the resource file value of key.
+   * @param resource a resource bundle
+   * @param key      the key of a resource file
+   * @throws IllegalArgumentException if the file value doesn't match a valid resource.
+   */
+  private Content getContent(ResourceBundle resource, String key) {
+    String file = resource.getString(key);
+    URL url = getClass().getResource(file);
+    if (url == null) {
+      throw new IllegalArgumentException("Unknown resource " + file);
+    } else {
+      return new URLContent(url); 
     }
   }
 }
