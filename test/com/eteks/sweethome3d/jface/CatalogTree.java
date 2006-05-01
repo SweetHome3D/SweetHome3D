@@ -1,5 +1,5 @@
 /*
- * CatalogTree.java 30 avr. 2006
+ * CatalogTree.java 1 mai 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  * 
@@ -54,7 +54,8 @@ public class CatalogTree extends TreeViewer {
   private class CatalogLabelProvider extends LabelProvider {
     // Label images cache (we're obliged to keep track of all the images
     // to dispose them when tree will be disposed)
-    Map<PieceOfFurniture, Image> imagesCache = new HashMap<PieceOfFurniture, Image>();
+    Map<PieceOfFurniture, Image> imagesCache = 
+      new HashMap<PieceOfFurniture, Image>();
     
     @Override
     public Image getImage(Object element) {
@@ -70,7 +71,7 @@ public class CatalogTree extends TreeViewer {
             // Scale the read icon  
             int rowHeight = getTree().getItemHeight();
             int imageWidth = image.getBounds().width * rowHeight 
-                                              / image.getBounds().height;
+                             / image.getBounds().height;
             scaledImage = new Image (Display.getCurrent(), 
                 image.getImageData().scaledTo(imageWidth, rowHeight));
             image.dispose();
@@ -104,7 +105,6 @@ public class CatalogTree extends TreeViewer {
       }
       super.dispose();
     }
-
   }
 
   /**
