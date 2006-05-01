@@ -106,19 +106,21 @@ public class CatalogTree extends JTree {
         InputStream iconStream = content.openStream();
         BufferedImage image = ImageIO.read(iconStream);
         iconStream.close();
-        // Scale the read icon  
-        int rowHeight = isFixedRowHeight() 
-                            ? getRowHeight() 
-                            : DEFAULT_ICON_HEIGHT;
-        int imageWidth = image.getWidth() * rowHeight 
-                                          / image.getHeight();
-        Image scaledImage = image.getScaledInstance(
-            imageWidth, rowHeight, Image.SCALE_SMOOTH);
-        return new ImageIcon (scaledImage);
+        if (image != null) {
+          // Scale the read icon  
+          int rowHeight = isFixedRowHeight() 
+                              ? getRowHeight() 
+                              : DEFAULT_ICON_HEIGHT;
+          int imageWidth = image.getWidth() * rowHeight 
+                                            / image.getHeight();
+          Image scaledImage = image.getScaledInstance(
+              imageWidth, rowHeight, Image.SCALE_SMOOTH);
+          return new ImageIcon (scaledImage);
+        }
       } catch (IOException ex) {
         // Too bad the icon can't be read
-        return new ImageIcon();
       }
+      return new ImageIcon();
     }
   }
   
