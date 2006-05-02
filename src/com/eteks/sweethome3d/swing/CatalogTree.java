@@ -91,7 +91,7 @@ public class CatalogTree extends JTree {
       else if (value instanceof PieceOfFurniture) {
         PieceOfFurniture piece = (PieceOfFurniture)value;
         label.setText(piece.getName());
-        label.setIcon(createIcon(piece.getIcon()));
+        label.setIcon(getLabelIcon(piece.getIcon()));
       }
       return label;
     }
@@ -101,7 +101,7 @@ public class CatalogTree extends JTree {
      * an empty image if the image couldn't be read.
      * @param content the content of an image.
      */
-    private Icon createIcon(Content content) {
+    private Icon getLabelIcon(Content content) {
       try {
         // Read the icon of the piece 
         InputStream contentStream = content.openStream();
