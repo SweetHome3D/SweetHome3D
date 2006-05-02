@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
@@ -90,17 +91,17 @@ public class CatalogTree extends JTree {
       else if (value instanceof PieceOfFurniture) {
         PieceOfFurniture piece = (PieceOfFurniture)value;
         label.setText(piece.getName());
-        label.setIcon(getImageIcon(piece.getIcon()));
+        label.setIcon(createIcon(piece.getIcon()));
       }
       return label;
     }
 
     /**
-     * Returns an ImageIcon instance with the read image scaled at the tree row height or
+     * Returns an Icon instance with the read image scaled at the tree row height or
      * an empty image if the image couldn't be read.
      * @param content the content of an image.
      */
-    private ImageIcon getImageIcon(Content content) {
+    private Icon createIcon(Content content) {
       try {
         // Read the icon of the piece 
         InputStream iconStream = content.openStream();
