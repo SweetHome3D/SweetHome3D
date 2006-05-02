@@ -104,9 +104,9 @@ public class CatalogTree extends JTree {
     private Icon createIcon(Content content) {
       try {
         // Read the icon of the piece 
-        InputStream iconStream = content.openStream();
-        BufferedImage image = ImageIO.read(iconStream);
-        iconStream.close();
+        InputStream contentStream = content.openStream();
+        BufferedImage image = ImageIO.read(contentStream);
+        contentStream.close();
         if (image != null) {
           // Scale the read icon  
           int rowHeight = isFixedRowHeight() 
