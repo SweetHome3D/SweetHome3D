@@ -1,5 +1,5 @@
 /*
- * ResourcesCatalog.java 7 avr. 2006
+ * DefaultCatalog.java 7 avr. 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.

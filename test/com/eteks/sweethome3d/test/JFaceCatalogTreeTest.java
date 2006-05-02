@@ -1,5 +1,5 @@
 /*
- * SwtTreeCatalogTest.java 1 mai 2006
+ * JFaceTreeCatalogTest.java 1 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *

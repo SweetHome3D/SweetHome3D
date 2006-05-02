@@ -1,5 +1,5 @@
 /*
- * ContentProvider.java 25 avr. 2006
+ * Content.java 25 avr. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *

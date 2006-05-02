@@ -1,5 +1,5 @@
 /*
- * SweetHome3DDraft.java 5 déc. 2005
+ * SweetHome3DSwingDraft.java 5 déc. 2005
  * 
  * Copyright (c) 2005 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
