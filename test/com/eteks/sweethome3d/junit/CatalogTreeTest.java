@@ -1,5 +1,5 @@
 /*
- * CatalogTest.java 6 avr. 2006
+ * CatalogTreeTest.java 6 avr. 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
