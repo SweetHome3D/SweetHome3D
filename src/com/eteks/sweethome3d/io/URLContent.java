@@ -37,6 +37,13 @@ public class URLContent implements Content {
   }
 
   /**
+   * Returns the URL of this content.
+   */
+  public URL getURL() {
+    return this.url;
+  }
+
+  /**
    * Returns an InputStream on the URL content. 
    * @throws IOException if URL stream can't be opened. 
    */
