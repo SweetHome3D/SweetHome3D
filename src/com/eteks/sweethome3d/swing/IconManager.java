@@ -43,10 +43,10 @@ public class IconManager {
   private static Icon errorIcon = new ImageIcon (
       IconManager.class.getResource("resources/error.png"));
   
-  private Map<ContentHeightKey,Icon> icons =
-    new HashMap<ContentHeightKey,Icon>();
+  private Map<ContentHeightKey,Icon> icons;
   
   private IconManager() {  
+    icons = new HashMap<ContentHeightKey,Icon>();
   }
   
   /**
@@ -70,37 +70,38 @@ public class IconManager {
    * @param waitingComponent a waiting component
    */
   public Icon getIcon (Content content, int height, Component waitingComponent) {
-    ContentHeightKey key = new ContentHeightKey(content, height);
-    Icon icon = this.icons.get(key);
+    ContentHeightKey contentKey = new ContentHeightKey(content, height);
+    Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      icon = createIcon(content, height, waitingComponent);
-      this.icons.put(key, icon);
+      icon = createIcon(contentKey, waitingComponent);
     }
     return icon;    
   }
   
-  private Icon createIcon(Content content, int height, Component waitingComponent) {
+  private Icon createIcon(ContentHeightKey contentKey, Component waitingComponent) {
     Cursor currentCursor = waitingComponent.getCursor();
     waitingComponent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    Icon icon = errorIcon;
     try {
       // Read the icon of the piece 
-      InputStream contentStream = content.openStream();
+      InputStream contentStream = contentKey.getContent().openStream();
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
         // Scale the read icon  
-        int width = image.getWidth() * height / image.getHeight();
+        int width = image.getWidth() * contentKey.getHeight() / image.getHeight();
         Image scaledImage = image.getScaledInstance(
-            width, height, Image.SCALE_SMOOTH);
-        return new ImageIcon (scaledImage);
-      } else {
-        return errorIcon;
+            width, contentKey.getHeight(), Image.SCALE_SMOOTH);
+        icon = new ImageIcon (scaledImage);
       }
     } catch (IOException ex) {
-      return errorIcon;
+      // Too bad, we'll use errorIcon
     } finally {
+      // Store the icon in icons map
+      this.icons.put(contentKey, icon); 
       waitingComponent.setCursor(currentCursor);
     }
+    return icon;
   }
 
   /** 
@@ -113,6 +114,14 @@ public class IconManager {
     public ContentHeightKey(Content content, int height) {
       this.content = content;
       this.height = height;
+    }
+
+    public Content getContent() {
+      return this.content;
+    }
+
+    public int getHeight() {
+      return this.height;
     }
 
     @Override
