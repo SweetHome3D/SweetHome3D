@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -36,6 +35,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import com.eteks.sweethome3d.io.URLContent;
 import com.eteks.sweethome3d.model.Content;
 
 /**
@@ -45,18 +45,18 @@ import com.eteks.sweethome3d.model.Content;
 public class IconManager {
   private volatile static IconManager instance;
   // Icon used if an image content couldn't be loaded
-  private ImageIcon errorIcon;
+  private Content                     errorIcon;
   // Icon used while an image content is loaded
-  private ImageIcon waitIcon;
+  private Content                     waitIcon;
   // Executor used by IconProxy to load images
-  private Executor iconsLoader;
+  private Executor                    iconsLoader;
   // Map storing loaded icons
-  private Map<ContentHeightKey,Icon> icons;
+  private Map<ContentHeightKey, Icon> icons;
 
   private IconManager() {
-    this.errorIcon = new ImageIcon (
+    this.errorIcon = new URLContent (
         getClass().getResource("resources/error.png"));
-    this.waitIcon = new ImageIcon (
+    this.waitIcon = new URLContent (
         getClass().getResource("resources/wait.png"));
     this.iconsLoader = Executors.newCachedThreadPool();
     this.icons = Collections.synchronizedMap(new HashMap<ContentHeightKey,Icon>());
@@ -86,7 +86,13 @@ public class IconManager {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      icon = new IconProxy(content, height, waitingComponent);
+      if (content == waitIcon) {
+        // Load waitIcon immediately 
+        icon = createIcon(content, height, waitingComponent);
+      } else {
+        // For other content, use a virtual proxy
+        icon = new IconProxy(content, height, waitingComponent);
+      }
       // Store the icon in icons map
       this.icons.put(contentKey, icon);
     }
@@ -97,28 +103,23 @@ public class IconManager {
    * Returns an icon created and scaled from the content of contentKey.
    * @param contentKey the content from which the icon image is read
    */
-  private Icon createIcon(Content content, int height) {
+  private Icon createIcon(Content content, int height, Component waitingComponent) {
     try {
       // Read the icon of the piece 
       InputStream contentStream = content.openStream();
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
-        return getScaledIcon (image, height);
+        int width = image.getWidth() * height / image.getHeight();
+        Image scaledImage = image.getScaledInstance(
+            width, height, Image.SCALE_SMOOTH);
+        return new ImageIcon (scaledImage);
       }
     } catch (IOException ex) {
       // Too bad, we'll use errorIcon
     }
-    return getScaledIcon (errorIcon.getImage(), height);
-  }
-
-  /**
-   * Returns an icon scaled to newHeight.
-   */
-  private Icon getScaledIcon(Image image, int height) {
-    int width = image.getWidth(null) * height / image.getHeight(null);
-    Image scaledImage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-    return new ImageIcon(scaledImage);
+    //  Get errorIcon stored in cache
+    return getIcon (errorIcon, height, waitingComponent);
   }
 
   /**
@@ -130,11 +131,12 @@ public class IconManager {
     
     public IconProxy(final Content content, final int height,
                      final Component waitingComponent) {
-      icon = getScaledIcon(waitIcon.getImage(), height);
+      // Get waitIcon stored in cache
+      icon = getIcon(waitIcon, height, waitingComponent); 
       // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {
-            icon = createIcon(content, height);
+            icon = createIcon(content, height, waitingComponent);
             waitingComponent.repaint();
           }
         });
