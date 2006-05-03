@@ -106,9 +106,9 @@ public class IconManager {
   /** 
    * Key used to access to icons.
    */
-  private static class ContentHeightKey {
-    private Content content;
-    private int     height;
+  private static final class ContentHeightKey {
+    private final Content content;
+    private final int     height;
  
     public ContentHeightKey(Content content, int height) {
       this.content = content;
