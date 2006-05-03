@@ -20,13 +20,16 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
-import java.awt.Cursor;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
@@ -40,13 +43,19 @@ import com.eteks.sweethome3d.model.Content;
  */
 public class IconManager {
   private volatile static IconManager instance;
+  // Icon used if an image content couldn't be loaded
   private static Icon errorIcon = new ImageIcon (
       IconManager.class.getResource("resources/error.png"));
+  // Icon used while if an image content is loaded
+  private static Icon waitIcon = new ImageIcon (
+      IconManager.class.getResource("resources/wait.png"));
+  // Executor used by IconProxy to load images
+  private static Executor iconsLoader = Executors.newCachedThreadPool();
   
   private Map<ContentHeightKey,Icon> icons;
   
   private IconManager() {  
-    icons = new HashMap<ContentHeightKey,Icon>();
+    icons = Collections.synchronizedMap(new HashMap<ContentHeightKey,Icon>());
   }
   
   /**
@@ -73,14 +82,12 @@ public class IconManager {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      icon = createIcon(contentKey, waitingComponent);
+      icon = new IconProxy(contentKey, waitingComponent);
     }
     return icon;    
   }
   
-  private Icon createIcon(ContentHeightKey contentKey, Component waitingComponent) {
-    Cursor currentCursor = waitingComponent.getCursor();
-    waitingComponent.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+  private Icon createIcon(ContentHeightKey contentKey) {
     Icon icon = errorIcon;
     try {
       // Read the icon of the piece 
@@ -96,12 +103,36 @@ public class IconManager {
       }
     } catch (IOException ex) {
       // Too bad, we'll use errorIcon
-    } finally {
-      // Store the icon in icons map
-      this.icons.put(contentKey, icon); 
-      waitingComponent.setCursor(currentCursor);
     }
+    // Store the icon in icons map
+    this.icons.put(contentKey, icon); 
     return icon;
+  }
+
+  private class IconProxy implements Icon {
+    private Icon icon = waitIcon;
+    
+    public IconProxy(final ContentHeightKey contentKey, 
+                     final Component waitingComponent) {
+      iconsLoader.execute(new Runnable () {
+          public void run() {
+            icon = createIcon(contentKey);
+            waitingComponent.repaint();
+          }
+        });
+    }
+
+    public int getIconWidth() {
+      return icon.getIconWidth();
+    }
+
+    public int getIconHeight() {
+      return icon.getIconHeight();
+    }
+    
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      icon.paintIcon(c, g, x, y);
+    }
   }
 
   /** 
