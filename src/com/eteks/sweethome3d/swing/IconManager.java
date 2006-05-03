@@ -25,7 +25,6 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -43,7 +42,7 @@ import com.eteks.sweethome3d.model.Content;
  * @author Emmanuel Puybaret
  */
 public class IconManager {
-  private volatile static IconManager instance;
+  private static IconManager          instance;
   // Icon used if an image content couldn't be loaded
   private Content                     errorIcon;
   // Icon used while an image content is loaded
@@ -59,7 +58,7 @@ public class IconManager {
     this.waitIcon = new URLContent (
         getClass().getResource("resources/wait.png"));
     this.iconsLoader = Executors.newCachedThreadPool();
-    this.icons = Collections.synchronizedMap(new HashMap<ContentHeightKey,Icon>());
+    this.icons = new HashMap<ContentHeightKey,Icon>();
   }
   
   /**
@@ -67,11 +66,7 @@ public class IconManager {
    */
   public static IconManager getInstance() {
     if (instance == null) {
-      synchronized (IconManager.class) {
-        if (instance == null) {
-          instance = new IconManager();
-        }
-      }
+      instance = new IconManager();
     }
     return instance;
   }
