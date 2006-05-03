@@ -44,18 +44,21 @@ import com.eteks.sweethome3d.model.Content;
 public class IconManager {
   private volatile static IconManager instance;
   // Icon used if an image content couldn't be loaded
-  private static ImageIcon errorIcon = new ImageIcon (
-      IconManager.class.getResource("resources/error.png"));
-  // Icon used while if an image content is loaded
-  private static ImageIcon waitIcon = new ImageIcon (
-      IconManager.class.getResource("resources/wait.png"));
+  private ImageIcon errorIcon;
+  // Icon used while an image content is loaded
+  private ImageIcon waitIcon;
   // Executor used by IconProxy to load images
-  private static Executor iconsLoader = Executors.newCachedThreadPool();
-  
+  private Executor iconsLoader;
+  // Map storing loaded icons
   private Map<ContentHeightKey,Icon> icons;
-  
-  private IconManager() {  
-    icons = Collections.synchronizedMap(new HashMap<ContentHeightKey,Icon>());
+
+  private IconManager() {
+    this.errorIcon = new ImageIcon (
+        getClass().getResource("resources/error.png"));
+    this.waitIcon = new ImageIcon (
+        getClass().getResource("resources/wait.png"));
+    this.iconsLoader = Executors.newCachedThreadPool();
+    this.icons = Collections.synchronizedMap(new HashMap<ContentHeightKey,Icon>());
   }
   
   /**
