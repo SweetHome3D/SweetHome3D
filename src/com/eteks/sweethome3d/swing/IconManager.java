@@ -123,12 +123,17 @@ public class IconManager {
     return new ImageIcon(scaledImage);
   }
 
+  /**
+   * Proxy icon that displays a temporary icon while waiting 
+   * image loading completion. 
+   */
   private class IconProxy implements Icon {
-    private Icon icon = waitIcon;
+    private Icon icon;
     
     public IconProxy(final ContentHeightKey contentKey, 
                      final Component waitingComponent) {
       icon = getScaledIcon(waitIcon.getImage(), contentKey.getHeight());
+      // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {
             icon = createIcon(contentKey);
