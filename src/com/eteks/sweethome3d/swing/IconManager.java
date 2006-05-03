@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -85,7 +86,9 @@ public class IconManager {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      icon = new IconProxy(contentKey, waitingComponent);
+      icon = new IconProxy(content, height, waitingComponent);
+      // Store the icon in icons map
+      this.icons.put(contentKey, icon);
     }
     return icon;    
   }
@@ -94,35 +97,27 @@ public class IconManager {
    * Returns an icon created and scaled from the content of contentKey.
    * @param contentKey the content from which the icon image is read
    */
-  private Icon createIcon(ContentHeightKey contentKey) {
-    Icon icon;
+  private Icon createIcon(Content content, int height) {
     try {
       // Read the icon of the piece 
-      InputStream contentStream = contentKey.getContent().openStream();
+      InputStream contentStream = content.openStream();
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
-        // Scale the read icon  
-        icon = getScaledIcon (image, contentKey.getHeight());
-      } else {
-        icon = getScaledIcon (errorIcon.getImage(), contentKey.getHeight()); 
+        return getScaledIcon (image, height);
       }
     } catch (IOException ex) {
       // Too bad, we'll use errorIcon
-      icon = getScaledIcon (errorIcon.getImage(), contentKey.getHeight()); 
     }
-    // Store the icon in icons map
-    this.icons.put(contentKey, icon); 
-    return icon;
+    return getScaledIcon (errorIcon.getImage(), height);
   }
 
   /**
    * Returns an icon scaled to newHeight.
    */
-  private Icon getScaledIcon(Image image, int newHeight) {
-    int newWidth = image.getWidth(null) * newHeight / image.getHeight(null);
-    Image scaledImage = image.getScaledInstance(newWidth,
-        newHeight, Image.SCALE_SMOOTH);
+  private Icon getScaledIcon(Image image, int height) {
+    int width = image.getWidth(null) * height / image.getHeight(null);
+    Image scaledImage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
     return new ImageIcon(scaledImage);
   }
 
@@ -133,13 +128,13 @@ public class IconManager {
   private class IconProxy implements Icon {
     private Icon icon;
     
-    public IconProxy(final ContentHeightKey contentKey, 
+    public IconProxy(final Content content, final int height,
                      final Component waitingComponent) {
-      icon = getScaledIcon(waitIcon.getImage(), contentKey.getHeight());
+      icon = getScaledIcon(waitIcon.getImage(), height);
       // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {
-            icon = createIcon(contentKey);
+            icon = createIcon(content, height);
             waitingComponent.repaint();
           }
         });
@@ -168,14 +163,6 @@ public class IconManager {
     public ContentHeightKey(Content content, int height) {
       this.content = content;
       this.height = height;
-    }
-
-    public Content getContent() {
-      return this.content;
-    }
-
-    public int getHeight() {
-      return this.height;
     }
 
     @Override
