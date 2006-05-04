@@ -72,7 +72,8 @@ public class CatalogTreeTest extends TestCase {
     // Get the french names of the first category and its first piece of furniture
     firstCategory = catalog.getCategories().get(0);
     String firstCategoryFrenchName = firstCategory.getName();
-    String firstPieceFrenchName = firstCategory.getFurniture().get(0).getName();
+    firstPiece = firstCategory.getFurniture().get(0); 
+    String firstPieceFrenchName = firstPiece.getName();
     // Compare categories and furniture names in English and French locale
     assertFalse("Same name for first category",
         firstCategoryEnglishName.equals(firstCategoryFrenchName));
@@ -94,7 +95,7 @@ public class CatalogTreeTest extends TestCase {
     assertEquals("No piece of furniture selected", 
         1, selectedFurniture.length);
     assertEquals("First piece not selected", 
-        firstPieceFrenchName, selectedFurniture [0].getName());
+        firstPiece, selectedFurniture [0]);
   }
   
   public void testCatalogTreeNodesOrder() {
