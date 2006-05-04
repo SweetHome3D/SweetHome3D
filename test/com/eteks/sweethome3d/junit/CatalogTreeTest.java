@@ -20,13 +20,16 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.Component;
 import java.text.Collator;
 import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreeModel;
 
 import junit.framework.TestCase;
@@ -76,9 +79,13 @@ public class CatalogTreeTest extends TestCase {
     assertFalse("Same name for first piece",
         firstPieceEnglishName.equals(firstPieceFrenchName)); 
 
-    // Create a tree from default furniture
+    // Create a tree from default catalog
     JTree tree = new CatalogTree(catalog);
 
+    // Check root isn't visible and root handles are showed
+    assertFalse("Root is visible", tree.isRootVisible());
+    assertTrue("Handles not showed", tree.getShowsRootHandles());
+    
     // Select first piece in tree
     tree.expandRow(0); 
     tree.setSelectionRow(1); 
@@ -88,33 +95,49 @@ public class CatalogTreeTest extends TestCase {
         1, selectedFurniture.length);
     assertEquals("First piece not selected", 
         firstPieceFrenchName, selectedFurniture [0].getName());
-    
-    // Check alphatical order in tree
-    Collator comparator = Collator.getInstance();
+  }
+  
+  public void testCatalogTreeNodesOrder() {
+    // Create a tree from default catalog
+    Catalog catalog = new DefaultCatalog();
+    catalog.readFurniture();
+    JTree tree = new CatalogTree(catalog);   
     TreeModel model = tree.getModel();
     Object    root  = model.getRoot();
+    Collator  comparator = Collator.getInstance();
+    // For each category 
     for (int i = 0, n = model.getChildCount(root); i < n; i++) {
       Object rootChild = model.getChild(root, i);
       if (i < n - 1) {
         Object nextChild = model.getChild(root, i + 1);
-        assertTrue ("Categories not sorted", comparator.compare(
-            ((Category)rootChild).getName(), 
-            ((Category)nextChild).getName()) <= 0);
+        // Check alphatical order of categories nodes in tree 
+        assertTrue("Categories not sorted", comparator.compare(
+            getNodeText(tree, rootChild), 
+            getNodeText(tree, nextChild)) <= 0);
       }
+      // For each piece of furniture of a category
       for (int j = 0, m = model.getChildCount(rootChild) - 1; 
            j < m; j++) {
         Object child = model.getChild(rootChild, i);
         if (j < m - 1) {
-            Object nextChild = model.getChild(rootChild, i + 1);
-            assertTrue ("Furniture not sorted", comparator.compare(
-                ((PieceOfFurniture)child).getName(),
-                ((PieceOfFurniture)nextChild).getName()) <= 0);
-          }
-          assertTrue ("Piece not a leaf", model.isLeaf(child));
+          Object nextChild = model.getChild(rootChild, i + 1);
+          // Check alphatical order of furniture nodes in tree 
+          assertTrue("Furniture not sorted", comparator.compare(
+              getNodeText(tree, child), 
+              getNodeText(tree, nextChild)) <= 0);
+        }
+        assertTrue("Piece not a leaf", model.isLeaf(child));
       }
     }
   }
 
+  private String getNodeText(JTree tree, Object node) {
+    TreeCellRenderer renderer = tree.getCellRenderer();
+    Component childLabel = renderer.
+        getTreeCellRendererComponent(tree, node, 
+           false, true, false, 0, false);
+    return ((JLabel)childLabel).getText();
+  }
   
   public static void main(String [] args) {
     // Read the furniture catalog from default locale resources
