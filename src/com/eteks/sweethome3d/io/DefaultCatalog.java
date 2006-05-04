@@ -28,6 +28,7 @@ import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * Furniture default catalog read from localized resources.
