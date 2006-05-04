@@ -96,7 +96,9 @@ public class IconManager {
   
   /**
    * Returns an icon created and scaled from the content of contentKey.
-   * @param contentKey the content from which the icon image is read
+   * @param content the content from which the icon image is read
+   * @param height  the desired height of the returned icon
+   * @param waitingComponent a waiting component
    */
   private Icon createIcon(Content content, int height, Component waitingComponent) {
     try {
