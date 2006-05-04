@@ -46,7 +46,7 @@ public class Category implements Comparable<Category> {
   }
 
   /**
-   * @return Returns the name.
+   * Returns the name of this category.
    */
   public String getName() {
     return this.name;

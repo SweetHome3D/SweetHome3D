@@ -58,52 +58,52 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
   }
 
   /**
-   * @return Returns the name.
+   * Returns the name of this piece of furniture.
    */
-  public String getName() {
+   public String getName() {
     return this.name;
   }
 
   /**
-   * @return Returns the depth.
+   * Returns the depth of this piece of furniture.
    */
   public float getDepth() {
     return this.depth;
   }
 
   /**
-   * @return Returns the doorOrWindow.
-   */
-  public boolean isDoorOrWindow() {
-    return this.doorOrWindow;
-  }
-
-  /**
-   * @return Returns the height.
+   * Returns the height of this piece of furniture.
    */
   public float getHeight() {
     return this.height;
   }
 
   /**
-   * @return Returns the icon.
+   * Returns the width of this piece of furniture.
+   */
+  public float getWidth() {
+    return this.width;
+  }
+
+  /**
+   * Returns <code>true</code> if this piece of furniture is a door or a window.
+   */
+  public boolean isDoorOrWindow() {
+    return this.doorOrWindow;
+  }
+
+  /**
+   * Returns the icon of this piece of furniture.
    */
   public Content getIcon() {
     return this.icon;
   }
 
   /**
-   * @return Returns the model.
+   * Returns the 3D model of this piece of furniture.
    */
   public Content getModel() {
     return this.model;
-  }
-
-  /**
-   * @return Returns the width.
-   */
-  public float getWidth() {
-    return this.width;
   }
 
   /** 
@@ -115,7 +115,10 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
            && COMPARATOR.equals(this.name, ((PieceOfFurniture)obj).name);
   }
 
-  @Override
+  /** 
+   * Returns a hash code computed from the name of this piece.
+   */
+   @Override
   public int hashCode() {
     return this.name.hashCode();
   }

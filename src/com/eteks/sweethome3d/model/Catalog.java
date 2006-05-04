@@ -32,6 +32,9 @@ public abstract class Catalog {
   private List<Category> categories = new ArrayList<Category>();
   private boolean        sorted;
 
+  /**
+   * Reads the furniture catalog.
+   */
   public abstract void readFurniture();
 
   /**
