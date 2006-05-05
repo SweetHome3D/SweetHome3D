@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
 import java.text.Collator;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 

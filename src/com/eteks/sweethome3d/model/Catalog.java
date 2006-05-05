@@ -52,8 +52,14 @@ public abstract class Catalog {
   /**
    * Adds a catagory.
    * @param category the category to add.
+   * @throws IllegalArgumentException if a category with same name as the one in
+   *           parameter already exists in this catalog.
    */
   public void add(Category category) {
+    if (this.categories.contains(category)) {
+      throw new IllegalArgumentException(
+          category.getName() + " already exists in catalog");
+    }
     this.categories.add(category);
     this.sorted = false;
   }
