@@ -44,18 +44,18 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class IconManager {
   private static IconManager          instance;
   // Icon used if an image content couldn't be loaded
-  private Content                     errorIcon;
+  private Content                     errorIconContent;
   // Icon used while an image content is loaded
-  private Content                     waitIcon;
+  private Content                     waitIconContent;
   // Executor used by IconProxy to load images
   private Executor                    iconsLoader;
   // Map storing loaded icons
   private Map<ContentHeightKey, Icon> icons;
 
   private IconManager() {
-    this.errorIcon = new URLContent (
+    this.errorIconContent = new URLContent (
         getClass().getResource("resources/error.png"));
-    this.waitIcon = new URLContent (
+    this.waitIconContent = new URLContent (
         getClass().getResource("resources/wait.png"));
     this.iconsLoader = Executors.newCachedThreadPool();
     this.icons = new HashMap<ContentHeightKey,Icon>();
@@ -81,12 +81,15 @@ public class IconManager {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      if (content == waitIcon) {
-        // Load waitIcon immediately 
-        icon = createIcon(content, height, waitingComponent);
+      if (content != this.errorIconContent &&
+          content != this.waitIconContent) {
+        // For content different from error icon and wait icon, use a virtual proxy
+        icon = new IconProxy(content, height, waitingComponent,
+                 getIcon(this.errorIconContent, height, null),
+                 getIcon(this.waitIconContent, height, null));
       } else {
-        // For other content, use a virtual proxy
-        icon = new IconProxy(content, height, waitingComponent);
+        // Load icon immediately in this thread 
+        icon = createIcon(content, height, waitingComponent, null); 
       }
       // Store the icon in icons map
       this.icons.put(contentKey, icon);
@@ -99,8 +102,11 @@ public class IconManager {
    * @param content the content from which the icon image is read
    * @param height  the desired height of the returned icon
    * @param waitingComponent a waiting component
+   * @param errorIcon the returned icon in cas of error
    */
-  private Icon createIcon(Content content, int height, Component waitingComponent) {
+  private Icon createIcon(Content content, int height, 
+                          Component waitingComponent,
+                          Icon      errorIcon) {
     try {
       // Read the icon of the piece 
       InputStream contentStream = content.openStream();
@@ -115,8 +121,7 @@ public class IconManager {
     } catch (IOException ex) {
       // Too bad, we'll use errorIcon
     }
-    //  Get errorIcon stored in cache
-    return getIcon (errorIcon, height, waitingComponent);
+    return errorIcon;
   }
 
   /**
@@ -127,28 +132,28 @@ public class IconManager {
     private Icon icon;
     
     public IconProxy(final Content content, final int height,
-                     final Component waitingComponent) {
-      // Get waitIcon stored in cache
-      icon = getIcon(waitIcon, height, waitingComponent); 
+                     final Component waitingComponent,
+                     final Icon errorIcon, Icon waitIcon) {
+      this.icon = waitIcon; 
       // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {
-            icon = createIcon(content, height, waitingComponent);
+            icon = createIcon(content, height, waitingComponent, errorIcon);
             waitingComponent.repaint();
           }
         });
     }
 
     public int getIconWidth() {
-      return icon.getIconWidth();
+      return this.icon.getIconWidth();
     }
 
     public int getIconHeight() {
-      return icon.getIconHeight();
+      return this.icon.getIconHeight();
     }
     
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      icon.paintIcon(c, g, x, y);
+      this.icon.paintIcon(c, g, x, y);
     }
   }
 
