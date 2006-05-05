@@ -81,15 +81,16 @@ public class IconManager {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {
-      if (content != this.errorIconContent &&
-          content != this.waitIconContent) {
-        // For content different from error icon and wait icon, use a virtual proxy
+      if (content == this.errorIconContent ||
+          content == this.waitIconContent) {
+        // Load icon immediately in this thread 
+        icon = createIcon(content, height, waitingComponent, null); 
+      } else {
+        // For content different from error icon and wait icon, 
+        // laod it in a different thread with a virtual proxy 
         icon = new IconProxy(content, height, waitingComponent,
                  getIcon(this.errorIconContent, height, null),
                  getIcon(this.waitIconContent, height, null));
-      } else {
-        // Load icon immediately in this thread 
-        icon = createIcon(content, height, waitingComponent, null); 
       }
       // Store the icon in icons map
       this.icons.put(contentKey, icon);
