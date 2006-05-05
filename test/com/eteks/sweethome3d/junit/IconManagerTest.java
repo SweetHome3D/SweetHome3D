@@ -50,7 +50,7 @@ public class IconManagerTest extends TestCase {
   public void testIconManager() 
       throws NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException, ClassNotFoundException {
     // Test icon loading on a good image
-    testIconLoading(getClass().getResource("resources/test.png"), false);
+    testIconLoading(getClass().getResource("resources/test.png"), true);
     // Test icon loading on a content that doesn't an image
     testIconLoading(getClass().getResource("IconManagerTest.class"), false);
 
