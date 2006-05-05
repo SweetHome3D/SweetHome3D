@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
 import java.text.Collator;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -35,11 +34,11 @@ import javax.swing.tree.TreeModel;
 
 import junit.framework.TestCase;
 
+import com.eteks.sweethome3d.io.DefaultCatalog;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.swing.CatalogTree;
-import com.eteks.sweethome3d.io.DefaultCatalog;
 
 /**
  * Tests furniture catalog tree component.
