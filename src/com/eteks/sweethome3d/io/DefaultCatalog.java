@@ -35,8 +35,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultCatalog extends Catalog {
-  @Override
-  public void readFurniture() {
+  public DefaultCatalog() {
     ResourceBundle resource = ResourceBundle.getBundle(
         "com.eteks.sweethome3d.io.resources.DefaultCatalog");
     for (int i = 1;; i++) {

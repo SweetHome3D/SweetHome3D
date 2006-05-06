@@ -33,11 +33,6 @@ public abstract class Catalog {
   private boolean        sorted;
 
   /**
-   * Reads the furniture catalog.
-   */
-  public abstract void readFurniture();
-
-  /**
    * Returns the catagories list sorted by name.
    * @return an unmodifiable list of catagories.
    */

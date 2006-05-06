@@ -51,10 +51,9 @@ public class CatalogTreeTest extends TestCase {
   }
 
   public void testCatalogTreeCreation() {
-    // Read the furniture catalog from English locale resources
+    // Create a furniture catalog read from English locale resources
     Locale.setDefault(Locale.US);
     Catalog catalog = new DefaultCatalog();
-    catalog.readFurniture();
 
     // Get the name of the first category 
     List<Category> categories = catalog.getCategories();
@@ -68,7 +67,6 @@ public class CatalogTreeTest extends TestCase {
     // Read the furniture catalog from French locale resources
     Locale.setDefault(Locale.FRENCH);
     catalog = new DefaultCatalog();
-    catalog.readFurniture();
     // Get the french names of the first category and its first piece of furniture
     firstCategory = catalog.getCategories().get(0);
     String firstCategoryFrenchName = firstCategory.getName();
@@ -100,9 +98,7 @@ public class CatalogTreeTest extends TestCase {
   
   public void testCatalogTreeNodesOrder() {
     // Create a tree from default catalog
-    Catalog catalog = new DefaultCatalog();
-    catalog.readFurniture();
-    JTree tree = new CatalogTree(catalog);   
+    JTree tree = new CatalogTree(new DefaultCatalog());   
     TreeModel model = tree.getModel();
     Object    root  = model.getRoot();
     Collator  comparator = Collator.getInstance();
@@ -141,10 +137,8 @@ public class CatalogTreeTest extends TestCase {
   }
   
   public static void main(String [] args) {
-    // Read the furniture catalog from default locale resources
-    Catalog catalog = new DefaultCatalog();
-    catalog.readFurniture();
-    CatalogTree tree = new CatalogTree(catalog);
+    // Create a furniture tree from the default locale catalog
+    CatalogTree tree = new CatalogTree(new DefaultCatalog());
     JFrame frame = new JFrame("Catalog Tree Test");
     frame.add(new JScrollPane(tree));
     frame.pack();
