@@ -35,6 +35,9 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultCatalog extends Catalog {
+  /**
+   * Creates a default catalog read from resources.
+   */
   public DefaultCatalog() {
     ResourceBundle resource = ResourceBundle.getBundle(
         "com.eteks.sweethome3d.io.resources.DefaultCatalog");
