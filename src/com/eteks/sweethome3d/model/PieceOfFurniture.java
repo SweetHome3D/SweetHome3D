@@ -33,6 +33,7 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
   private float   width;
   private float   depth;
   private float   height;
+  private boolean movable;
   private boolean doorOrWindow;
   private static final Collator COMPARATOR = Collator.getInstance();
 
@@ -44,16 +45,18 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
    * @param width  the width in meters of the new piece
    * @param depth  the depth in meters of the new piece
    * @param height  the height in meters of the new piece
+   * @param movable if true, the new piece is movable
    * @param doorOrWindow if true, the new piece is a door or a window
    */
   public PieceOfFurniture(String name, Content icon, Content model, 
-                          float width, float depth, float height, boolean doorOrWindow) {
+                          float width, float depth, float height, boolean movable, boolean doorOrWindow) {
     this.name = name;
     this.icon = icon;
     this.model = model;
     this.width = width;
     this.depth = depth;
     this.height = height;
+    this.movable = movable;
     this.doorOrWindow = doorOrWindow;
   }
 
@@ -83,6 +86,13 @@ public class PieceOfFurniture implements Comparable<PieceOfFurniture> {
    */
   public float getWidth() {
     return this.width;
+  }
+
+  /**
+   * Returns <code>true</code> if this piece of furniture is movable.
+   */
+  public boolean isMovable() {
+    return this.movable;
   }
 
   /**

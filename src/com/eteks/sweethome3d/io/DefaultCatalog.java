@@ -56,12 +56,14 @@ public class DefaultCatalog extends Catalog {
           resource.getString("depth#" + i));
       float height = Float.parseFloat(
           resource.getString("height#" + i));
+      boolean movable = Boolean.parseBoolean(
+          resource.getString("movable#" + i));
       boolean doorOrWindow = Boolean.parseBoolean(
           resource.getString("doorOrWindow#" + i));
 
       add(new Category(category),
           new PieceOfFurniture(name, icon, model,
-              width, depth, height, doorOrWindow));
+              width, depth, height, movable, doorOrWindow));
     }
   }
   
