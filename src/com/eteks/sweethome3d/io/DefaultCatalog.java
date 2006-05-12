@@ -40,7 +40,7 @@ public class DefaultCatalog extends Catalog {
    */
   public DefaultCatalog() {
     ResourceBundle resource = ResourceBundle.getBundle(
-        "com.eteks.sweethome3d.io.resources.DefaultCatalog");
+        getClass().getName());
     for (int i = 1;; i++) {
       String name = null;
       try {
