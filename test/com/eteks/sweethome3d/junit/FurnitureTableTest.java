@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.text.Collator;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -50,7 +51,6 @@ import com.eteks.sweethome3d.swing.CatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
-import com.sun.tools.javac.util.List;
 
 public class FurnitureTableTest extends TestCase {
   public FurnitureTableTest(String name) {

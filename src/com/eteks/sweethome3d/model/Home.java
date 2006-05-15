@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.model;
 
-import com.sun.tools.javac.util.List;
+import java.util.List;
 
 /**
  * @author Emmanuel Puybaret
