@@ -128,6 +128,9 @@ public class CatalogTreeTest extends TestCase {
     }
   }
 
+  /**
+   * Returns the label text of <code>node</code> in <code>tree</code>.
+   */
   private String getNodeText(JTree tree, Object node) {
     TreeCellRenderer renderer = tree.getCellRenderer();
     Component childLabel = renderer.
