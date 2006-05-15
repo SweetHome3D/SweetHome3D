@@ -88,12 +88,12 @@ public class CatalogTreeTest extends TestCase {
     // Select first piece in tree
     tree.expandRow(0); 
     tree.setSelectionRow(1); 
-    PieceOfFurniture [] selectedFurniture = 
-        ((CatalogTree)tree).getSelectedFurniture();
+    List<PieceOfFurniture> selectedFurniture = 
+      ((CatalogTree)tree).getSelectedFurniture();
     assertEquals("No piece of furniture selected", 
-        1, selectedFurniture.length);
+      1, selectedFurniture.size());
     assertEquals("First piece not selected", 
-        firstPiece, selectedFurniture [0]);
+      firstPiece, selectedFurniture.get(0)); 
   }
   
   public void testCatalogTreeNodesOrder() {

@@ -51,9 +51,9 @@ public class CatalogTree extends JTree {
 
   /**
    * Returns the furniture currently selected in the tree.
-   * @return an array of furniture. If no furniture is selected, the array length is 0.
+   * @return a list of furniture. If no furniture is selected, the list is empty.
    */
-  public PieceOfFurniture [] getSelectedFurniture() {
+  public List<PieceOfFurniture> getSelectedFurniture() {
     TreePath [] selectionPaths  = getSelectionPaths();
     List<PieceOfFurniture> selectedFurniture = new ArrayList<PieceOfFurniture>();
     for (TreePath path : selectionPaths) {
@@ -62,7 +62,7 @@ public class CatalogTree extends JTree {
         selectedFurniture.add((PieceOfFurniture)path.getLastPathComponent());
       }        
     }
-    return selectedFurniture.toArray(new PieceOfFurniture [selectedFurniture.size()]);
+    return selectedFurniture;
   }  
   
   /**
