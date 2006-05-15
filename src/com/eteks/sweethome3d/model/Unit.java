@@ -24,5 +24,5 @@ package com.eteks.sweethome3d.model;
  * @author Emmanuel Puybaret
  */
 public enum Unit {
-  METER, INCH
+  CENTIMETER, INCH
 }

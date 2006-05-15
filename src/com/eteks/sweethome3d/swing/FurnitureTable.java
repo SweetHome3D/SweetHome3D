@@ -19,11 +19,9 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.Component;
 import java.util.List;
 
 import javax.swing.JTable;
-import javax.swing.table.TableColumn;
 
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 
@@ -45,7 +43,7 @@ public class FurnitureTable extends JTable {
    * @param nameColumn <code>null</code> if insert order or the column order. 
    */
   public void setSortedColumn(String column) {
-    // TODO Store the column value
+    // TODO Store the column parameter in a field
   }
 
   /**
@@ -53,7 +51,6 @@ public class FurnitureTable extends JTable {
    * @param ascending ascending order if <code>true</code>.
    */
   public void setAscendingSort(boolean ascending) {
-    // TODO Store the ascending value
-    
+    // TODO Store the ascending parameter in a field
   }
 }

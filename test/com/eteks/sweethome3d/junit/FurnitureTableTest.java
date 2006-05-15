@@ -63,7 +63,7 @@ public class FurnitureTableTest extends TestCase {
     // Create model objects
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    // Create home controller and its view
+    // Create home controller
     HomeController homeController = 
         new HomeController(home, preferences);
     // Retrieve tree and table objects created by home controller
@@ -76,11 +76,12 @@ public class FurnitureTableTest extends TestCase {
         (FurnitureTable)tableController.getView();
 
     // Select two pieces of furniture in tree and add them to the table
+    tree.expandRow(0); 
     tree.addSelectionInterval(1, 2);
     homeController.addHomeFurniture();
 
     // Check the model and the table contains two pieces
-    List<HomePieceOfFurniture> homeFurniture = home.getFurniture();
+    List<HomePieceOfFurniture> homeFurniture = home.getFurniture(); 
     assertEquals("Home doesn't contain 2 pieces", 
         homeFurniture.size(), 2);
     assertEquals("Table doesn't contain 2 pieces", 
@@ -130,24 +131,24 @@ public class FurnitureTableTest extends TestCase {
     tableController.sortHomeFurniture();
 
     // Check the alphabetical order of table data
-    assertTableIsSorted(table, nameColumn, false);
+    assertTableIsSorted(table, nameColumn, true);
     // Sort in descending order and check order
     table.setAscendingSort(false);
     tableController.sortHomeFurniture();
-    assertTableIsSorted(table, nameColumn, true);
+    assertTableIsSorted(table, nameColumn, false);
 
     // Check the displayed widths in table are different in French and US
     // version
     String widthColumn = resource.getString("widthColumn");
     String widthInInch = getRenderedValue(table, widthColumn, 0);
-    preferences.setUnit(Unit.METER);
+    preferences.setUnit(Unit.CENTIMETER);
     String widthInMeter = getRenderedValue(table, widthColumn, 0);
     assertFalse("Same width in different units", 
         widthInInch.equals(widthInMeter));
   }
   
   private void assertTableIsSorted(JTable table, String column, boolean ascendingOrder) {
-    // TODO Check if column name column is sorted
+    // TODO Check if column in table is sorted
     TableModel model = table.getModel();
     TableColumnModel columnModel = table.getColumnModel(); 
     int columnIndex = columnModel.getColumnIndex(column);
@@ -164,7 +165,7 @@ public class FurnitureTableTest extends TestCase {
     }
   }
   
-  private String getRenderedValue(FurnitureTable table, String column, int row) {
+  private String getRenderedValue(JTable table, String column, int row) {
     // TODO Get the value displayed in table cell at column, row 
     return null;
   }
