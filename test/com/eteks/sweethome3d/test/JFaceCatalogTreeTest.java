@@ -39,7 +39,6 @@ public class JFaceCatalogTreeTest {
   public static void main(String [] args) {
     // Read the furniture catalog from default locale resources
     final Catalog catalog = new DefaultCatalog();
-    catalog.readFurniture();
     
     // Create an application window that displays an instance of CatalogTree
     ApplicationWindow window = new ApplicationWindow(null) {
@@ -55,6 +54,6 @@ public class JFaceCatalogTreeTest {
     };
     window.setBlockOnOpen(true);
     window.open();
-    Display.getCurrent().dispose();
+    Display.getCurrent().dispose(); 
   } 
 }
