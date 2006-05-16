@@ -51,7 +51,7 @@ public class CatalogTreeTest extends TestCase {
   }
 
   public void testCatalogTreeCreation() {
-    // Create a furniture catalog read from English locale resources
+    // 1. Create a furniture catalog read from English locale resources
     Locale.setDefault(Locale.US);
     Catalog catalog = new DefaultCatalog();
 
@@ -64,7 +64,7 @@ public class CatalogTreeTest extends TestCase {
     PieceOfFurniture firstPiece = categoryFurniture.get(0); 
     String firstPieceEnglishName = firstPiece.getName();
     
-    // Read the furniture catalog from French locale resources
+    // 2. Read the furniture catalog from French locale resources
     Locale.setDefault(Locale.FRENCH);
     catalog = new DefaultCatalog();
     // Get the french names of the first category and its first piece of furniture
@@ -72,26 +72,28 @@ public class CatalogTreeTest extends TestCase {
     String firstCategoryFrenchName = firstCategory.getName();
     firstPiece = firstCategory.getFurniture().get(0); 
     String firstPieceFrenchName = firstPiece.getName();
-    // Compare categories and furniture names in English and French locale
+    // Check categories and furniture names in English and French locale are different
     assertFalse("Same name for first category",
         firstCategoryEnglishName.equals(firstCategoryFrenchName));
     assertFalse("Same name for first piece",
         firstPieceEnglishName.equals(firstPieceFrenchName)); 
 
-    // Create a tree from default catalog
+    // 3. Create a tree from default catalog
     JTree tree = new CatalogTree(catalog);
 
     // Check root isn't visible and root handles are showed
     assertFalse("Root is visible", tree.isRootVisible());
     assertTrue("Handles not showed", tree.getShowsRootHandles());
     
-    // Select first piece in tree
+    // 4. Select first piece in tree
     tree.expandRow(0); 
     tree.setSelectionRow(1); 
     List<PieceOfFurniture> selectedFurniture = 
       ((CatalogTree)tree).getSelectedFurniture();
+    
+    // Check the selected piece in catalog is the selected piece in tree 
     assertEquals("No piece of furniture selected", 
-      1, selectedFurniture.size());
+        1, selectedFurniture.size());
     assertEquals("First piece not selected", 
       firstPiece, selectedFurniture.get(0)); 
   }
