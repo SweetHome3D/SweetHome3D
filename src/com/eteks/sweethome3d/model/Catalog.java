@@ -50,7 +50,7 @@ public abstract class Catalog {
    * @throws IllegalArgumentException if a category with same name as the one in
    *           parameter already exists in this catalog.
    */
-  public void add(Category category) {
+  private void add(Category category) {
     if (this.categories.contains(category)) {
       throw new IllegalArgumentException(
           category.getName() + " already exists in catalog");

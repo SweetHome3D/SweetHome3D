@@ -70,7 +70,7 @@ public class Category implements Comparable<Category> {
    * @throws IllegalArgumentException if a piece with same name as the one in
    *           parameter already exists in this category.
    */
-  public void add(PieceOfFurniture piece) {
+  void add(PieceOfFurniture piece) {
     if (this.furniture.contains(piece)) {
       throw new IllegalArgumentException(
          piece.getName() + " already in category " + this.name);
