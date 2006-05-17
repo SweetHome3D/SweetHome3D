@@ -45,11 +45,6 @@ import com.eteks.sweethome3d.swing.CatalogTree;
  * @author Emmanuel Puybaret
  */
 public class CatalogTreeTest extends TestCase {
-
-  public CatalogTreeTest(String name) {
-    super(name);
-  }
-
   public void testCatalogTreeCreation() {
     // 1. Create a furniture catalog read from English locale resources
     Locale.setDefault(Locale.US);
