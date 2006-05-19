@@ -24,11 +24,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.UndoableEditSupport;
 
 import junit.framework.TestCase;
 
@@ -39,8 +43,8 @@ import junit.framework.TestCase;
 public class UndoManagerTest extends TestCase {
   public void testUndoManager() {
     UndoManager manager = new UndoManager(); 
-    // Add some undoable edits
     List<String> list = new ArrayList<String>();
+    // Add some undoable edits
     manager.addEdit(new AddWordToListEdit(list, "a"));
     manager.addEdit(new AddWordToListEdit(list, "b"));
     assertEquals(Arrays.asList(new String [] {"a", "b"}), list);
@@ -61,8 +65,8 @@ public class UndoManagerTest extends TestCase {
   
   public void testInsignificantUndoableEdits() {
     UndoManager manager = new UndoManager(); 
-    // Add some significant undoable edits and an insignificant undoable edit
     List<String> list = new ArrayList<String>();
+       // Add some significant undoable edits and an insignificant undoable edit
     manager.addEdit(new AddWordToListEdit(list, "a"));
     manager.addEdit(new InsignificantEdit(list, " "));
     manager.addEdit(new AddWordToListEdit(list, "b"));
@@ -73,11 +77,31 @@ public class UndoManagerTest extends TestCase {
     manager.undo();
     assertEquals(Collections.EMPTY_LIST, list);
   }
+  
+  public void testUndoableEditSupport() {
+    UndoableEditSupport editSupport = new UndoableEditSupport();
+    UndoManager manager = new UndoManager(); 
+    // Add manager as a listener of editSupport
+    editSupport.addUndoableEditListener(manager);
+
+    List<String> list = new ArrayList<String>();
+    final UndoableEdit edit = new AddWordToListEdit(list, "a");    
+    // Add an other listener to editSupport
+    editSupport.addUndoableEditListener(new UndoableEditListener () {
+      public void undoableEditHappened(UndoableEditEvent ev) {
+        assertEquals(edit, ev.getEdit());
+      }
+    });
+    // Add a significant undoable edit
+    assertFalse(manager.canUndo());
+    editSupport.postEdit(edit);    
+    assertTrue(manager.canUndo());
+  }
 
   public void testCompoundUndoableEdits() {
     UndoManager manager = new UndoManager(); 
-    // Add some coumpound undoable edits
     List<String> list = new ArrayList<String>();
+    // Add some coumpound undoable edits
     CompoundEdit compoundEdit = new CompoundEdit();
     compoundEdit.addEdit(new AddWordToListEdit(list, "a"));
     compoundEdit.addEdit(new InsignificantEdit(list, " "));
