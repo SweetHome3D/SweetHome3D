@@ -1,4 +1,4 @@
-#Mon Apr 10 09:42:14 CEST 2006
+#Mon May 15 15:33:54 CEST 2006
 eclipse.preferences.version=1
 org.eclipse.jdt.core.codeComplete.argumentPrefixes=
 org.eclipse.jdt.core.codeComplete.argumentSuffixes=
@@ -31,7 +31,7 @@ org.eclipse.jdt.core.formatter.alignment_for_parameters_in_method_declaration=18
 org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation=16
 org.eclipse.jdt.core.formatter.alignment_for_superclass_in_type_declaration=16
 org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_enum_declaration=16
-org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_type_declaration=16
+org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_type_declaration=2
 org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_constructor_declaration=16
 org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_method_declaration=16
 org.eclipse.jdt.core.formatter.blank_lines_after_imports=1
