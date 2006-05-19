@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Display;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 
 /**
  * Furniture catalog tree JFace implementation.
@@ -54,14 +54,14 @@ public class CatalogTree extends TreeViewer {
   private class CatalogLabelProvider extends LabelProvider {
     // Label images cache (we're obliged to keep track of all the images
     // to dispose them when tree will be disposed)
-    Map<PieceOfFurniture, Image> imagesCache = 
-      new HashMap<PieceOfFurniture, Image>();
+    Map<CatalogPieceOfFurniture, Image> imagesCache = 
+      new HashMap<CatalogPieceOfFurniture, Image>();
     
     @Override
     public Image getImage(Object element) {
-      if (element instanceof PieceOfFurniture) {
+      if (element instanceof CatalogPieceOfFurniture) {
         try {
-          PieceOfFurniture piece = (PieceOfFurniture)element;
+          CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)element;
           Image scaledImage = imagesCache.get(piece);
           if (scaledImage == null) {
             // Read the icon of the piece 
@@ -90,8 +90,8 @@ public class CatalogTree extends TreeViewer {
     public String getText(Object element) {
       if (element instanceof Category) {
         return ((Category)element).getName();
-      } else if (element instanceof PieceOfFurniture) {
-        return ((PieceOfFurniture)element).getName();
+      } else if (element instanceof CatalogPieceOfFurniture) {
+        return ((CatalogPieceOfFurniture)element).getName();
       } else {
         return super.getText(element);
       }
@@ -133,7 +133,7 @@ public class CatalogTree extends TreeViewer {
         // If Sweet Home 3D UI changes to SWT, there should be a getCategory()
         // method in PieceOfFurniture class to simplify this search
         for (Category category : catalog.getCategories())
-          for (PieceOfFurniture piece : category.getFurniture())
+          for (CatalogPieceOfFurniture piece : category.getFurniture())
             if (element == piece)
               return category;
         return null;
@@ -141,7 +141,7 @@ public class CatalogTree extends TreeViewer {
     }
 
     public boolean hasChildren(Object element) {
-      return !(element instanceof PieceOfFurniture);
+      return !(element instanceof CatalogPieceOfFurniture);
     }
 
     public Object [] getElements(Object inputElement) {

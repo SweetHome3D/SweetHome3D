@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class Category implements Comparable<Category> {
   private String                 name;
-  private List<PieceOfFurniture> furniture;
+  private List<CatalogPieceOfFurniture> furniture;
   private boolean                sorted;
   private static final Collator  COMPARATOR = Collator
                                                 .getInstance();
@@ -42,7 +42,7 @@ public class Category implements Comparable<Category> {
    */
   public Category(String name) {
     this.name = name;
-    this.furniture = new ArrayList<PieceOfFurniture>();
+    this.furniture = new ArrayList<CatalogPieceOfFurniture>();
   }
 
   /**
@@ -56,7 +56,7 @@ public class Category implements Comparable<Category> {
    * Returns the furniture list of this category sorted by name.
    * @return an unmodifiable list of furniture.
    */
-  public List<PieceOfFurniture> getFurniture() {
+  public List<CatalogPieceOfFurniture> getFurniture() {
     if (!this.sorted) {
       Collections.sort(this.furniture);
       this.sorted = true;
@@ -70,7 +70,7 @@ public class Category implements Comparable<Category> {
    * @throws IllegalArgumentException if a piece with same name as the one in
    *           parameter already exists in this category.
    */
-  void add(PieceOfFurniture piece) {
+  void add(CatalogPieceOfFurniture piece) {
     if (this.furniture.contains(piece)) {
       throw new IllegalArgumentException(
          piece.getName() + " already in category " + this.name);

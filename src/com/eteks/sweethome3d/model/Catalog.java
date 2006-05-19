@@ -64,7 +64,7 @@ public abstract class Catalog {
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
    */
-  protected void add(Category category, PieceOfFurniture piece) {
+  protected void add(Category category, CatalogPieceOfFurniture piece) {
     int index = this.categories.indexOf(category);
     // If category doesn't exist yet, add it to catagories
     if (index == -1) {

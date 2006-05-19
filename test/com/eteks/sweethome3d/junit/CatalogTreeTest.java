@@ -37,7 +37,7 @@ import junit.framework.TestCase;
 import com.eteks.sweethome3d.io.DefaultCatalog;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.swing.CatalogTree;
 
 /**
@@ -55,8 +55,8 @@ public class CatalogTreeTest extends TestCase {
     Category firstCategory = categories.get(0);
     String firstCategoryEnglishName = firstCategory.getName(); 
     // Get the name of the first piece of furniture
-    List<PieceOfFurniture> categoryFurniture = firstCategory.getFurniture();
-    PieceOfFurniture firstPiece = categoryFurniture.get(0); 
+    List<CatalogPieceOfFurniture> categoryFurniture = firstCategory.getFurniture();
+    CatalogPieceOfFurniture firstPiece = categoryFurniture.get(0); 
     String firstPieceEnglishName = firstPiece.getName();
     
     // 2. Read the furniture catalog from French locale resources
@@ -83,7 +83,7 @@ public class CatalogTreeTest extends TestCase {
     // 4. Select first piece in tree
     tree.expandRow(0); 
     tree.setSelectionRow(1); 
-    List<PieceOfFurniture> selectedFurniture = 
+    List<CatalogPieceOfFurniture> selectedFurniture = 
       ((CatalogTree)tree).getSelectedFurniture();
     
     // Check the selected piece in catalog is the selected piece in tree 

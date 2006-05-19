@@ -35,7 +35,7 @@ import javax.swing.tree.TreePath;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 
 /**
  * A tree displaying furniture catalog by category.
@@ -53,13 +53,13 @@ public class CatalogTree extends JTree {
    * Returns the furniture currently selected in the tree.
    * @return a list of furniture. If no furniture is selected, the list is empty.
    */
-  public List<PieceOfFurniture> getSelectedFurniture() {
+  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
     TreePath [] selectionPaths  = getSelectionPaths();
-    List<PieceOfFurniture> selectedFurniture = new ArrayList<PieceOfFurniture>();
+    List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
     for (TreePath path : selectionPaths) {
       // Add to selectedFurniture all the nodes that matches a piece of furniture
       if (path.getPathCount() == 3) {
-        selectedFurniture.add((PieceOfFurniture)path.getLastPathComponent());
+        selectedFurniture.add((CatalogPieceOfFurniture)path.getLastPathComponent());
       }        
     }
     return selectedFurniture;
@@ -82,8 +82,8 @@ public class CatalogTree extends JTree {
         label.setText(((Category)value).getName());
       } 
       // Else if node is a piece of furntiure, change label text and icon
-      else if (value instanceof PieceOfFurniture) {
-        PieceOfFurniture piece = (PieceOfFurniture)value;
+      else if (value instanceof CatalogPieceOfFurniture) {
+        CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)value;
         label.setText(piece.getName());
         label.setIcon(getLabelIcon(piece.getIcon()));
       }
@@ -138,12 +138,12 @@ public class CatalogTree extends JTree {
       if (parent instanceof Catalog) {
         return Collections.binarySearch(((Catalog)parent).getCategories(), (Category)child);
       } else {
-        return Collections.binarySearch(((Category)parent).getFurniture(), (PieceOfFurniture)child);
+        return Collections.binarySearch(((Category)parent).getFurniture(), (CatalogPieceOfFurniture)child);
       }
     }
 
     public boolean isLeaf(Object node) {
-      return node instanceof PieceOfFurniture;
+      return node instanceof CatalogPieceOfFurniture;
     }
 
     public void valueForPathChanged(TreePath path, Object newValue) {
