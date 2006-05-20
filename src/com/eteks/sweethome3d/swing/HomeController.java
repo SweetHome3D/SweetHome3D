@@ -19,8 +19,13 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import javax.swing.JComponent;
+import java.util.List;
 
+import javax.swing.JComponent;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEditSupport;
+
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -28,45 +33,70 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
-public class HomeController extends UndoController {
+public class HomeController  {
+  private HomePane            homeView;
+  private UndoableEditSupport undoSupport;
+  private UndoManager         undoManager;
+  private CatalogController   catalogController;
+  private FurnitureController furnitureController;
 
   /**
    * Creates the controller of home view. 
-   * @param home        the home edited vy this controller and its view.
+   * @param home        the home edited by this controller and its view.
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
-    // TODO Create FurnitureController and HomePane instances 
+    this.homeView = new HomePane(this);
+    // Create undo support objects
+    this.undoSupport = new UndoableEditSupport();
+    this.undoManager = new UndoManager();
+    this.undoSupport.addUndoableEditListener(this.undoManager);
+    // Create controllers composed by this controller
+    this.catalogController   = new CatalogController(preferences);
+    this.furnitureController = new FurnitureController(home, preferences, this.undoSupport);
   }
 
   /**
    * Returns the view associated with this controller.
    */
-  public JComponent getView() {
-    // TODO Return HomePane view associated with this controller
-    return null;
+  public JComponent getHomeView() {
+    return this.homeView;
   }
 
   /**
    * Returns the furniture controller managed by this controller.
    */
   public FurnitureController getFurnitureController() {
-    // TODO Return furniture controller instance
-    return null;
+    return this.furnitureController;
   }
 
   /**
    * Returns the catalog controller managed by this controller.
    */
   public CatalogController getCatalogController() {
-    // TODO Return catalog controller instance
-    return null;
+    return this.catalogController;
   }
 
   /**
    * Adds the selected furniture in the catalog view to home.  
    */
   public void addHomeFurniture() {
-    // TODO Add the selected furniture in the catalog view to home 
+    List<CatalogPieceOfFurniture> selectedFurniture = 
+         this.catalogController.getSelectedFurniture();
+    this.furnitureController.addFurniture(selectedFurniture);    
+  }
+
+  /**
+   * Undo last undoable edit.
+   */
+  public void undo() {
+     undoManager.undo();
+  }
+
+  /**
+   * Redo last undone edit.
+   */
+  public void redo() {
+    undoManager.redo();
   }
 }

@@ -19,20 +19,38 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.util.List;
+
 import javax.swing.JComponent;
+
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for the furniture catalog.
  * @author Emmanuel Puybaret
  */
 public class CatalogController {
+  private CatalogTree catalogView;
+  /**
+   * Creates a controller of the furniture catalog view.
+   * @param preferences the preferences of the application
+   */
+  public CatalogController(UserPreferences preferences) {
+    this.catalogView = new CatalogTree(preferences.getCatalog());
+  }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
-    // TODO Return CatalogTree view associated with this controller
-    return null;
+    return this.catalogView;
   }
 
+  /**
+   * Returns the selected furniture un catalog view.
+   */
+  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
+    return this.catalogView.getSelectedFurniture();
+  }
 }

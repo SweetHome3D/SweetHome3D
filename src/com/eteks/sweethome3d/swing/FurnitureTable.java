@@ -22,8 +22,13 @@ package com.eteks.sweethome3d.swing;
 import java.util.List;
 
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A table displaying furniture.
@@ -31,26 +36,41 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
  */
 public class FurnitureTable extends JTable {
   /**
+   * Create this view associated with its controller.
+   * @param controller  the controller of this view
+   * @param home        the home displayed by this view
+   * @param preferences the preferences of the application
+   */
+  public FurnitureTable(FurnitureController controller, Home home, UserPreferences preferences) {
+    // TODO Auto-generated constructor stub
+
+    ListSelectionListener selectionListener = new ListSelectionListener () {
+      public void valueChanged(ListSelectionEvent ev) {
+        if (ev.getValueIsAdjusting()) {
+          int firstIndex = ev.getFirstIndex();
+          int lastIndex = ev.getLastIndex();
+        }
+      } 
+    };
+    getSelectionModel().addListSelectionListener(selectionListener);
+  }
+
+  /**
    * Returns the list of selected furniture in table.
    */
   public List<HomePieceOfFurniture> getSelectedFurniture() {
     // TODO Return the list of selected furniture in table
+    // Reduce returned list to its minimum size
     return null;
   }
 
   /**
-   * Sets the column used for sort.
-   * @param nameColumn <code>null</code> if insert order or the column order. 
+   * Sets the list of selected furniture in table and ensures the first and the
+   * last one is visible.
+   * @param furniture the furniture to select
    */
-  public void setSortedColumn(String column) {
-    // TODO Store the column parameter in a field
-  }
-
-  /**
-   * Sets the sort order.
-   * @param ascending ascending order if <code>true</code>.
-   */
-  public void setAscendingSort(boolean ascending) {
-    // TODO Store the ascending parameter in a field
+  public void setSelectedFurniture(List<HomePieceOfFurniture> furniture) {
+    // TODO Auto-generated method stub
+    // Remove selectionListener before changing selection
   }
 }

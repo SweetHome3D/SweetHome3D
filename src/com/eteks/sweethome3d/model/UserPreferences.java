@@ -28,9 +28,18 @@ public abstract class UserPreferences {
    * Returns the catalog.
    */
   public Catalog getCatalog() {
-    // TODO Return the catalog
+    // Return the catalog
     return null;
   }
+
+  /**
+   * Returns the unit currently in use.
+   */
+  public Unit getUnit() {
+    // TODO Return the unit in use
+    return null;
+  }
+  
   /**
    * Changes the unit currently in use.
    * @param unit one of the values of Unit.

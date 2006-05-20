@@ -26,5 +26,10 @@ import javax.swing.JRootPane;
  * @author Emmanuel Puybaret
  */
 public class HomePane extends JRootPane {
-
+  /**
+   * Create this view associated with its controller.
+   */
+  public HomePane(HomeController controller) {
+    // TODO Auto-generated constructor stub
+  }
 }
