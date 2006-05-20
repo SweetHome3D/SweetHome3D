@@ -89,7 +89,7 @@ public class FurnitureController {
 
       @Override
       public String getPresentationName() {
-        return viewResource.getString("undoRedoDeleteFurniture");
+        return viewResource.getString("undoDeleteFurnitureName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -128,7 +128,7 @@ public class FurnitureController {
 
       @Override
       public String getPresentationName() {
-        return viewResource.getString("undoRedoAddFurniture");
+        return viewResource.getString("undoAddFurnitureName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
