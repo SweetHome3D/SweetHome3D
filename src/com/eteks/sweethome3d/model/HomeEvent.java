@@ -28,6 +28,9 @@ import java.util.EventObject;
 public class HomeEvent extends EventObject {
   private HomePieceOfFurniture piece;
 
+  /**
+   * Creates an event with <code>home</code> as source, and an associated <code>piece</code>.
+   */
   public HomeEvent(Home home, HomePieceOfFurniture piece) {
     super(home);
     this.piece = piece;

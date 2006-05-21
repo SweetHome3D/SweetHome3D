@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.model;
 
+import com.eteks.sweethome3d.io.DefaultCatalog;
+
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -28,24 +30,27 @@ public abstract class UserPreferences {
    * Unit used for dimensions.
    * @author Emmanuel Puybaret
    */
-  public enum Unit {
-    CENTIMETER, INCH
-  }
+  public enum Unit {CENTIMETER, INCH}
+
+  private Catalog catalog;
+  private Unit unit;
   
   /**
    * Returns the catalog.
    */
   public Catalog getCatalog() {
-    // Return the catalog
-    return null;
+    return this.catalog;
+  }
+
+  protected void setCatalog(DefaultCatalog catalog) {
+    this.catalog = catalog;
   }
 
   /**
    * Returns the unit currently in use.
    */
   public Unit getUnit() {
-    // TODO Return the unit in use
-    return null;
+    return this.unit;
   }
   
   /**
@@ -53,6 +58,6 @@ public abstract class UserPreferences {
    * @param unit one of the values of Unit.
    */
   public void setUnit(Unit unit) {
-    // TODO Store the unit in use
+    this.unit = unit;
   }
 }

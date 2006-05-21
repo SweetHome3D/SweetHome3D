@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.util.ResourceBundle;
+
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -26,5 +28,15 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class DefaultUserPreferences extends UserPreferences {
-
+  /**
+   * Creates default user preferences read from resource files.
+   */
+  public DefaultUserPreferences() {
+    // Read default catalog
+    setCatalog(new DefaultCatalog());
+    // Read other preferences from resource bundle
+    ResourceBundle resource = ResourceBundle.getBundle(getClass().getName());
+    Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
+    setUnit(defaultUnit);
+  }
 }

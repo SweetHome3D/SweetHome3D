@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,6 +30,30 @@ import java.util.List;
 public class Home {
   private List<HomePieceOfFurniture> furniture;
   private List<HomeListener> furnitureListeners;
+
+  /**
+   * Creates a home with no furniture.
+   */
+  public Home() {
+    this.furniture = new ArrayList<HomePieceOfFurniture>();
+    this.furnitureListeners = new ArrayList<HomeListener>();
+  }
+
+  /**
+   * Adds the <code>listener</code> in paramter to this home.
+   * Caution : This method isn't thread safe.
+   */
+  public void addHomeListener(HomeListener listener) {
+    furnitureListeners.add(listener);
+  }
+
+  /**
+   * Removes the <code>listener</code> in paramter from this home.
+   * Caution : This method isn't thread safe.
+   */
+  public void removeHomeListener(HomeListener listener) {
+    furnitureListeners.remove(listener);
+  }
 
   /**
    * Returns an unmodifiable list of the furniture managed by this home.
@@ -69,21 +94,5 @@ public class Home {
         listener.pieceOfFurnitureDeleted(homeEvent);
       }
     }
-  }
-  
-  /**
-   * Adds the <code>listener</code> in paramter to this home.
-   * Caution : This method isn't thread safe.
-   */
-  public void addHomeListener(HomeListener listener) {
-    furnitureListeners.add(listener);
-  }
-
-  /**
-   * Removes the <code>listener</code> in paramter from this home.
-   * Caution : This method isn't thread safe.
-   */
-  public void removeHomeListener(HomeListener listener) {
-    furnitureListeners.remove(listener);
-  }
+  } 
 }

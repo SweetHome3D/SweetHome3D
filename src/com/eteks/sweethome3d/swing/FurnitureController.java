@@ -113,6 +113,7 @@ public class FurnitureController {
       this.home.add(furnitureIndex [i], furniture.get(i));
     }
     this.furnitureView.setSelectedFurniture(furniture);
+    this.furnitureView.ensureFurnitureIsVisible(furniture);
   }
     
   /**
@@ -170,8 +171,7 @@ public class FurnitureController {
    * sorted on the given <code>property<code>, it will be sorted in descending 
    * order, if the sort is in ascending order, otherwise it won't be sorted at all 
    * and home furniture will be listed in insertion order. 
-   * Once sorted undo support will receive a new undoable insignificant edit.
-   * @param property the property of <code>Home</code> on which the view wants
+    * @param property the property of <code>Home</code> on which the view wants
    *          to sort the furniture it displays.
    */
   public void sortFurniture(String property) {
@@ -189,32 +189,6 @@ public class FurnitureController {
         property = null;
       }
     }
-    final String newProperty = property;
-    final boolean newAscending = ascending;
-    doSortFurniture(property, ascending);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doSortFurniture(oldProperty, oldAscending);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doSortFurniture(newProperty, newAscending);
-      }
-
-      // Let's tag sort as insignificant edit
-      @Override
-      public boolean isSignificant() {
-        return false;
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
-  }
-
-  private void doSortFurniture(String property, boolean ascending) {
     this.furnitureView.setSortedProperty(property);
     this.furnitureView.setAscendingSort(ascending);
   }

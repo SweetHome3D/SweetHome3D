@@ -123,4 +123,12 @@ public class FurnitureTable extends JTable {
     this.ascendingSort = ascendingSort;
     // TODO Auto-generated method stub
   }
+
+  /**
+   * Ensures the rectangle which displays <code>furniture</code> is visible.
+   */
+  public void ensureFurnitureIsVisible(List<HomePieceOfFurniture> furniture) {
+    // TODO Auto-generated method stub
+    
+  }
 }
