@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A piece of furniture in {@link Home home}.
@@ -33,6 +35,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private float   height;
   private boolean movable;
   private boolean doorOrWindow;
+  private Integer color;
+  private boolean visible;
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -47,6 +51,11 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.height = piece.getHeight();
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
+    if (piece instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture homePiece = (HomePieceOfFurniture)piece;
+      this.color = homePiece.getColor();
+      this.visible = homePiece.isVisible();
+    }
   }
 
   /**
@@ -103,5 +112,20 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   public Content getModel() {
     return this.model;
+  }
+  
+  /**
+   * Returns the color of this piece of furniture.
+   * @return the color of the piece as RGB code or <code>null</code> if piece color is unchanged.
+   */
+  public Integer getColor() {
+    return this.color;
+  }
+  
+  /**
+   * Returns <code>true</code> if this piece of furniture is visible.
+   */
+  public boolean isVisible() {
+    return this.visible;
   }
 }

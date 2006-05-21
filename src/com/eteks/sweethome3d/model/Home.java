@@ -19,75 +19,71 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
+ * The home managed by the application with its furniture.
  * @author Emmanuel Puybaret
  */
 public class Home {
+  private List<HomePieceOfFurniture> furniture;
+  private List<HomeListener> furnitureListeners;
 
   /**
    * Returns an unmodifiable list of the furniture managed by this home.
+   * @return the furniture in the order they were
+   *         {@link #add(HomePieceOfFurniture) added}.
    */
   public List<HomePieceOfFurniture> getFurniture() {
-    // TODO Return an unmodifiable list of the furniture managed by this home
-    // Sort here or in view ? if true, change "should be" in "is"
-    return null;
+    return Collections.unmodifiableList(this.furniture);
   }
 
   /**
    * Adds the <code>piece</code> in parameter at a given <code>index</code>.
+   * Once added, all listeners added to this home will receive a
+   * {@link HomeListener#pieceOfFurnitureAdded(HomeEvent) pieceOfFurnitureAdded}
+   * notification.
    */
-  public void add(HomePieceOfFurniture piece, int index) {
-    // Add piece in furniture list 
+  public void add(int index, HomePieceOfFurniture piece) {
+    this.furniture.add(index, piece);
+    if (furnitureListeners.size() > 0) {
+      HomeEvent homeEvent = null;
+      for (HomeListener listener : furnitureListeners) {
+        listener.pieceOfFurnitureAdded(homeEvent);
+      }
+    }
   }
 
   /**
    * Removes a given <code>piece</code> of furniture from this home.
+   * Once removed, all listeners added to this home will receive a
+   * {@link HomeListener#pieceOfFurnitureDeleted(HomeEvent) pieceOfFurnitureDeleted}
+   * notification.
    */
   public void delete(HomePieceOfFurniture piece) {
-    // TODO Auto-generated method stub
-    
+    this.furniture.remove(piece);
+    if (furnitureListeners.size() > 0) {
+      HomeEvent homeEvent = new HomeEvent(this, piece);
+      for (HomeListener listener : furnitureListeners) {
+        listener.pieceOfFurnitureDeleted(homeEvent);
+      }
+    }
+  }
+  
+  /**
+   * Adds the <code>listener</code> in paramter to this home.
+   * Caution : This method isn't thread safe.
+   */
+  public void addHomeListener(HomeListener listener) {
+    furnitureListeners.add(listener);
   }
 
   /**
-   * Returns the property on which the furniture of this home should be sorted.
-   * @return the name of a property or <code>null</code> if the furniture isn't sorted.
+   * Removes the <code>listener</code> in paramter from this home.
+   * Caution : This method isn't thread safe.
    */
-  public String getSortedProperty() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  /**
-   * Sets the property on which the furniture of this home should be sorted.
-   */
-  public void setSortedProperty(String property) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  /**
-   * Sets whether the furniture of this home should be sorted in ascending or
-   * descending order.
-   * @param ascending if <code>true</code> the furniture should be sorted in
-   *          ascending order on the
-   *          {@link #getSortedProperty() sorted property}.
-   */
-  public void setAscendingSort(boolean ascending) {
-    // TODO Auto-generated method stub
-    
-  }
-
-  /**
-   * Returns whether the furniture of this home should be sorted in ascending or
-   * descending order.
-   * @return  <code>true</code> the furniture should be sorted in
-   *          ascending order on the
-   *          {@link #getSortedProperty() sorted property}.
-   */
-  public boolean isAscendingSort() {
-    // TODO Auto-generated method stub
-    return false;
+  public void removeHomeListener(HomeListener listener) {
+    furnitureListeners.remove(listener);
   }
 }

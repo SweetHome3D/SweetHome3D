@@ -35,6 +35,9 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable {
+  private String sortedProperty;
+  private boolean ascendingSort;
+
   /**
    * Create this view associated with its controller.
    * @param controller  the controller of this view
@@ -72,5 +75,52 @@ public class FurnitureTable extends JTable {
   public void setSelectedFurniture(List<HomePieceOfFurniture> furniture) {
     // TODO Auto-generated method stub
     // Remove selectionListener before changing selection
+  }
+
+  /**
+   * Returns the property on which the furniture of this home is sorted.
+   * @return the name of a property or <code>null</code> if the furniture isn't sorted.
+   */
+  public String getSortedProperty() {
+    return this.sortedProperty;
+  }
+
+  /**
+   * Sets the property on which the furniture of this home should be sorted.
+   */
+  public void setSortedProperty(String sortedProperty) {
+    if (sortedProperty == null && this.sortedProperty != null
+        || !sortedProperty.equals(this.sortedProperty)) {
+//      this.sortedFurniture = null;
+    }
+    this.sortedProperty = sortedProperty;
+    // TODO Auto-generated method stub
+  }
+
+  /**
+   * Returns whether the furniture of this home is sorted in ascending or
+   * descending order.
+   * @return  <code>true</code> if the furniture is sorted in
+   *          ascending order on the
+   *          {@link #getSortedProperty() sorted property}.
+   */
+  public boolean isAscendingSort() {
+    return this.ascendingSort;
+  }
+
+  /**
+   * Sets whether the furniture of this home should be sorted in ascending or
+   * descending order.
+   * @param ascendingSort if <code>true</code> the furniture should be sorted in
+   *          ascending order on the
+   *          {@link #getSortedProperty() sorted property}.
+   */
+  public void setAscendingSort(boolean ascendingSort) {
+    if (this.sortedProperty != null
+        && ascendingSort != this.ascendingSort) {
+//      this.sortedFurniture = null;
+    }
+    this.ascendingSort = ascendingSort;
+    // TODO Auto-generated method stub
   }
 }

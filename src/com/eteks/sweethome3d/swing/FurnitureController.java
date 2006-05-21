@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
 
@@ -77,11 +78,14 @@ public class FurnitureController {
   public void addFurniture(List<? extends PieceOfFurniture> furniture) {
     // Create the list of HomePieceOfFurniture instances that will be added to home
     final List<HomePieceOfFurniture> newFurniture = new ArrayList<HomePieceOfFurniture> (furniture.size());
-    for (HomePieceOfFurniture piece : newFurniture) {
-      newFurniture.add(new HomePieceOfFurniture(piece));
+    final int [] furnitureIndex = new int [furniture.size()];
+    int endIndex = home.getFurniture().size();
+    for (int i = 0; i < furnitureIndex.length; i++) {
+      newFurniture.add(new HomePieceOfFurniture(furniture.get(i)));
+      furnitureIndex [i] = endIndex++;
     }
     
-    doAddFurniture(newFurniture);
+    doAddFurniture(furnitureIndex, newFurniture);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -92,7 +96,7 @@ public class FurnitureController {
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        doAddFurniture(newFurniture);
+        doAddFurniture(furnitureIndex, newFurniture);
       }      
 
       @Override
@@ -103,26 +107,40 @@ public class FurnitureController {
     this.undoSupport.postEdit(undoableEdit);
   }
   
-  private void doAddFurniture(List<HomePieceOfFurniture> furniture) {
-    for (HomePieceOfFurniture piece : furniture) {
-      this.home.add(piece);
+  private void doAddFurniture(int [] furnitureIndex,
+                              List<HomePieceOfFurniture> furniture) {
+    for (int i = 0; i < furnitureIndex.length; i++) {
+      this.home.add(furnitureIndex [i], furniture.get(i));
     }
     this.furnitureView.setSelectedFurniture(furniture);
   }
-  
+    
   /**
    * Controls the deletion of the current selected furniture in home.
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteFurniture() {
-    final List<HomePieceOfFurniture> furniture = this.furnitureView.getSelectedFurniture();
-    final int [] furnitureIndex = this.furnitureView.getSelectedRows();
+    List<HomePieceOfFurniture> selectedFurniture = this.furnitureView.getSelectedFurniture();
+    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+    // Sort the selected furniture in the ascending order of their index in home
+    Map<Integer, HomePieceOfFurniture> sortedMap = new TreeMap<Integer, HomePieceOfFurniture>();
+    for (HomePieceOfFurniture piece : selectedFurniture) {
+      sortedMap.put(homeFurniture.indexOf(piece), piece);
+    }
+    final List<HomePieceOfFurniture> furniture = 
+      new ArrayList<HomePieceOfFurniture>(sortedMap.values());
+    final int [] furnitureIndex = new int [furniture.size()];
+    int i = 0;
+    for (int index : sortedMap.keySet()) {
+      furnitureIndex [i++] = index;
+    }
+
     doDeleteFurniture(furniture);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doAddFurniture(furniture, furnitureIndex);
+        doAddFurniture(furnitureIndex, furniture);
       }
       
       @Override
@@ -145,14 +163,6 @@ public class FurnitureController {
     }
   }
 
-  private void doAddFurniture(List<HomePieceOfFurniture> furniture,
-                              int [] furnitureIndex) {
-    for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.add(furniture.get(i), furnitureIndex [i]);
-    }
-    this.furnitureView.setSelectedFurniture(furniture);
-  }
-    
   /**
    * Controls the sort of the furniture in home. If home furniture isn't sorted
    * or is sorted on an other property, it will be sorted on the given
@@ -169,8 +179,8 @@ public class FurnitureController {
     if (property.equals("icon"))
       return;
     // Compute sort algorithm described in javadoc
-    final String  oldProperty   = this.home.getSortedProperty();
-    final boolean oldAscending  = this.home.isAscendingSort(); 
+    final String  oldProperty   = this.furnitureView.getSortedProperty();
+    final boolean oldAscending  = this.furnitureView.isAscendingSort(); 
     boolean ascending = true;
     if (property.equals(oldProperty)) {
       if (oldAscending) {
@@ -205,8 +215,8 @@ public class FurnitureController {
   }
 
   private void doSortFurniture(String property, boolean ascending) {
-    this.home.setSortedProperty(property);
-    this.home.setAscendingSort(ascending);
+    this.furnitureView.setSortedProperty(property);
+    this.furnitureView.setAscendingSort(ascending);
   }
 
   /**
