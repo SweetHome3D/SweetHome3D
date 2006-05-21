@@ -45,7 +45,6 @@ import junit.framework.TestCase;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.Unit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.CatalogController;
 import com.eteks.sweethome3d.swing.CatalogTree;
@@ -62,8 +61,8 @@ public class FurnitureTableTest extends TestCase {
     Home home = new Home();
 
     // Check the current unit isn't centimeter
-    Unit currentUnit = preferences.getUnit();
-    assertFalse("Unit is in centimeter", currentUnit == Unit.CENTIMETER);
+    UserPreferences.Unit currentUnit = preferences.getUnit();
+    assertFalse("Unit is in centimeter", currentUnit == UserPreferences.Unit.CENTIMETER);
    
     // Create home controller
     HomeController homeController = 
@@ -140,7 +139,7 @@ public class FurnitureTableTest extends TestCase {
 
     // 8. Check the displayed widths in table are different in French and US version
     String widthInInch = getRenderedValue(table, "widthColumn", 0);
-    preferences.setUnit(Unit.CENTIMETER);
+    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     String widthInMeter = getRenderedValue(table, "widthColumn", 0);
     assertFalse("Same width in different units", 
         widthInInch.equals(widthInMeter));

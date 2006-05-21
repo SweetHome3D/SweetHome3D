@@ -25,6 +25,14 @@ package com.eteks.sweethome3d.model;
  */
 public abstract class UserPreferences {
   /**
+   * Unit used for dimensions.
+   * @author Emmanuel Puybaret
+   */
+  public enum Unit {
+    CENTIMETER, INCH
+  }
+  
+  /**
    * Returns the catalog.
    */
   public Catalog getCatalog() {
