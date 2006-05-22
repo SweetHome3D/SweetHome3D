@@ -85,7 +85,7 @@ public class FurnitureController {
       furnitureIndex [i] = endIndex++;
     }
     
-    doAddFurniture(furnitureIndex, newFurniture);
+    doAddFurniture(newFurniture, furnitureIndex);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -96,7 +96,7 @@ public class FurnitureController {
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        doAddFurniture(furnitureIndex, newFurniture);
+        doAddFurniture(newFurniture, furnitureIndex);
       }      
 
       @Override
@@ -107,10 +107,10 @@ public class FurnitureController {
     this.undoSupport.postEdit(undoableEdit);
   }
   
-  private void doAddFurniture(int [] furnitureIndex,
-                              List<HomePieceOfFurniture> furniture) {
+  private void doAddFurniture(List<HomePieceOfFurniture> furniture,
+                              int [] furnitureIndex) {
     for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.add(furnitureIndex [i], furniture.get(i));
+      this.home.add(furniture.get(i), furnitureIndex [i]);
     }
     this.furnitureView.setSelectedFurniture(furniture);
     this.furnitureView.ensureFurnitureIsVisible(furniture);
@@ -141,7 +141,7 @@ public class FurnitureController {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doAddFurniture(furnitureIndex, furniture);
+        doAddFurniture(furniture, furnitureIndex);
       }
       
       @Override
@@ -225,8 +225,6 @@ public class FurnitureController {
 
   private void doSelectFurniture(List<HomePieceOfFurniture> furniture) {
     this.furnitureView.setSelectedFurniture(furniture);
+    this.furnitureView.ensureFurnitureIsVisible(furniture);
   }
-  
-  // TODO Call scrollRectToVisible once furniture is added in addFurniture 
-  // and add a recordScrollChange() method that records in undo support the last changes in ViewPort scroll
 }

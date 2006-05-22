@@ -1,5 +1,5 @@
 /*
- * HomeEvent.java 21 mai 2006
+ * FurnitureEvent.java 21 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -22,24 +22,24 @@ package com.eteks.sweethome3d.model;
 import java.util.EventObject;
 
 /**
- * Type of event notified by {@link Home} when its furniture is added or deleted.
+ * Type of event notified when its furniture is added or deleted.
  * @author Emmanuel Puybaret
  */
-public class HomeEvent extends EventObject {
-  private HomePieceOfFurniture piece;
+public class FurnitureEvent extends EventObject {
+  private PieceOfFurniture piece;
 
   /**
    * Creates an event with <code>home</code> as source, and an associated <code>piece</code>.
    */
-  public HomeEvent(Home home, HomePieceOfFurniture piece) {
-    super(home);
+  public FurnitureEvent(Object source, PieceOfFurniture piece) {
+    super(source);
     this.piece = piece;
   }
 
   /**
    * Returns the piece of furniture added or deleted.
    */
-  public HomePieceOfFurniture getPiece() {
+  public PieceOfFurniture getPieceOfFurniture() {
     return this.piece;
   }
 }

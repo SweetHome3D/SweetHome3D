@@ -1,5 +1,5 @@
 /*
- * HomeListener.java 21 mai 2006
+ * FurnitureListener.java 21 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -25,14 +25,14 @@ import java.util.EventListener;
  * Listener implemented to follow notifications from furniture changes in {@link Home}.
  * @author Emmanuel Puybaret
  */
-public interface HomeListener extends EventListener {
+public interface FurnitureListener extends EventListener {
   /**
    * Invoked when furniture is added to home.
    */
-  void pieceOfFurnitureAdded(HomeEvent ev);
+  void pieceOfFurnitureAdded(FurnitureEvent ev);
 
   /**
    * Invoked when furniture is deleted from home.
    */
-  void pieceOfFurnitureDeleted(HomeEvent homeEvent);
+  void pieceOfFurnitureDeleted(FurnitureEvent ev);
 }

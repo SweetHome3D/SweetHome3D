@@ -29,21 +29,21 @@ import java.util.List;
  */
 public class Home {
   private List<HomePieceOfFurniture> furniture;
-  private List<HomeListener> furnitureListeners;
+  private List<FurnitureListener> furnitureListeners;
 
   /**
    * Creates a home with no furniture.
    */
   public Home() {
     this.furniture = new ArrayList<HomePieceOfFurniture>();
-    this.furnitureListeners = new ArrayList<HomeListener>();
+    this.furnitureListeners = new ArrayList<FurnitureListener>();
   }
 
   /**
    * Adds the <code>listener</code> in paramter to this home.
    * Caution : This method isn't thread safe.
    */
-  public void addHomeListener(HomeListener listener) {
+  public void addHomeListener(FurnitureListener listener) {
     furnitureListeners.add(listener);
   }
 
@@ -51,7 +51,7 @@ public class Home {
    * Removes the <code>listener</code> in paramter from this home.
    * Caution : This method isn't thread safe.
    */
-  public void removeHomeListener(HomeListener listener) {
+  public void removeHomeListener(FurnitureListener listener) {
     furnitureListeners.remove(listener);
   }
 
@@ -67,15 +67,15 @@ public class Home {
   /**
    * Adds the <code>piece</code> in parameter at a given <code>index</code>.
    * Once added, all listeners added to this home will receive a
-   * {@link HomeListener#pieceOfFurnitureAdded(HomeEvent) pieceOfFurnitureAdded}
+   * {@link FurnitureListener#pieceOfFurnitureAdded(FurnitureEvent) pieceOfFurnitureAdded}
    * notification.
    */
-  public void add(int index, HomePieceOfFurniture piece) {
+  public void add(HomePieceOfFurniture piece, int index) {
     this.furniture.add(index, piece);
-    if (furnitureListeners.size() > 0) {
-      HomeEvent homeEvent = null;
-      for (HomeListener listener : furnitureListeners) {
-        listener.pieceOfFurnitureAdded(homeEvent);
+    if (!furnitureListeners.isEmpty()) {
+      FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
+      for (FurnitureListener listener : furnitureListeners) {
+        listener.pieceOfFurnitureAdded(furnitureEvent);
       }
     }
   }
@@ -83,15 +83,15 @@ public class Home {
   /**
    * Removes a given <code>piece</code> of furniture from this home.
    * Once removed, all listeners added to this home will receive a
-   * {@link HomeListener#pieceOfFurnitureDeleted(HomeEvent) pieceOfFurnitureDeleted}
+   * {@link FurnitureListener#pieceOfFurnitureDeleted(FurnitureEvent) pieceOfFurnitureDeleted}
    * notification.
    */
   public void delete(HomePieceOfFurniture piece) {
     this.furniture.remove(piece);
-    if (furnitureListeners.size() > 0) {
-      HomeEvent homeEvent = new HomeEvent(this, piece);
-      for (HomeListener listener : furnitureListeners) {
-        listener.pieceOfFurnitureDeleted(homeEvent);
+    if (!furnitureListeners.isEmpty()) {
+      FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
+      for (FurnitureListener listener : furnitureListeners) {
+        listener.pieceOfFurnitureDeleted(furnitureEvent);
       }
     }
   } 
