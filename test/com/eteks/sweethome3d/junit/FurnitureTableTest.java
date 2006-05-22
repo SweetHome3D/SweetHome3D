@@ -71,10 +71,10 @@ public class FurnitureTableTest extends TestCase {
     CatalogController catalogController = 
         homeController.getCatalogController();
     CatalogTree tree = (CatalogTree)catalogController.getView();
-    FurnitureController tableController = 
+    FurnitureController furnitureController = 
         homeController.getFurnitureController();
     FurnitureTable table = 
-        (FurnitureTable)tableController.getView();
+        (FurnitureTable)furnitureController.getView();
 
     // 2. Select two pieces of furniture in tree and add them to the table
     tree.expandRow(0); 
@@ -94,7 +94,7 @@ public class FurnitureTableTest extends TestCase {
     // 3. Select the first piece in table, delete it
     table.setSelectedFurniture(Arrays.asList(
         new HomePieceOfFurniture [] {home.getFurniture().get(0)}));
-    tableController.deleteFurniture();
+    furnitureController.deleteFurniture();
     // Check the model and the table contains only one piece
     assertEquals("Home doesn't contain 1 piece", 
         home.getFurniture().size(), 1);
@@ -129,12 +129,12 @@ public class FurnitureTableTest extends TestCase {
         homeFurniture, home.getFurniture());
 
     // 7. Sort furniture table in alphabetical order of furniture name
-    tableController.sortFurniture("name");
+    furnitureController.sortFurniture("name");
 
     // Check the alphabetical order of table data
     assertTableIsSorted(table, "nameColumn", true);
     // Sort in descending order and check order
-    tableController.sortFurniture("name");
+    furnitureController.sortFurniture("name");
     assertTableIsSorted(table, "nameColumn", false);
 
     // 8. Check the displayed widths in table are different in French and US version
