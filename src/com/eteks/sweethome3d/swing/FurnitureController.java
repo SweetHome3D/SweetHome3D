@@ -20,8 +20,6 @@
 package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -44,11 +42,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureController {
+  private FurnitureTable             furnitureView;
   private Home                       home;
   private UndoableEditSupport        undoSupport;
-  private FurnitureTable             furnitureView;
   private ResourceBundle             viewResource;
-  private List<HomePieceOfFurniture> selectedFurniture = Collections.emptyList();
 
   /**
    * Creates the controller of home furniture view. 
@@ -59,8 +56,8 @@ public class FurnitureController {
   public FurnitureController(Home home, UserPreferences preferences, UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
+    this.viewResource  = ResourceBundle.getBundle(FurnitureTable.class.getName()); 
     this.furnitureView = new FurnitureTable(this, home, preferences);
-    this.viewResource  = ResourceBundle.getBundle(this.furnitureView.getClass().getName()); 
   }
 
   /**
@@ -76,6 +73,7 @@ public class FurnitureController {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<? extends PieceOfFurniture> furniture) {
+    final List<HomePieceOfFurniture> oldSelection = this.furnitureView.getSelectedFurniture();
     // Create the list of HomePieceOfFurniture instances that will be added to home
     final List<HomePieceOfFurniture> newFurniture = new ArrayList<HomePieceOfFurniture> (furniture.size());
     final int [] furnitureIndex = new int [furniture.size()];
@@ -84,13 +82,14 @@ public class FurnitureController {
       newFurniture.add(new HomePieceOfFurniture(furniture.get(i)));
       furnitureIndex [i] = endIndex++;
     }
-    
+
     doAddFurniture(newFurniture, furnitureIndex);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
         doDeleteFurniture(newFurniture);
+        selectAndShowFurniture(oldSelection);        
       }
       
       @Override
@@ -112,16 +111,20 @@ public class FurnitureController {
     for (int i = 0; i < furnitureIndex.length; i++) {
       this.home.add(furniture.get(i), furnitureIndex [i]);
     }
+    selectAndShowFurniture(furniture);
+  }
+ 
+  private void selectAndShowFurniture(List<HomePieceOfFurniture> furniture) {
     this.furnitureView.setSelectedFurniture(furniture);
     this.furnitureView.ensureFurnitureIsVisible(furniture);
   }
-    
+
   /**
    * Controls the deletion of the current selected furniture in home.
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteFurniture() {
-    List<HomePieceOfFurniture> selectedFurniture = this.furnitureView.getSelectedFurniture();
+    final List<HomePieceOfFurniture> selectedFurniture = this.furnitureView.getSelectedFurniture();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     // Sort the selected furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = new TreeMap<Integer, HomePieceOfFurniture>();
@@ -166,65 +169,30 @@ public class FurnitureController {
 
   /**
    * Controls the sort of the furniture in home. If home furniture isn't sorted
-   * or is sorted on an other property, it will be sorted on the given
+   * or is sorted on an other column, it will be sorted on the given
    * <code>property</code> in ascending order. If home furniture is already
    * sorted on the given <code>property<code>, it will be sorted in descending 
    * order, if the sort is in ascending order, otherwise it won't be sorted at all 
    * and home furniture will be listed in insertion order. 
-    * @param property the property of <code>Home</code> on which the view wants
+    * @param property  the furniture property on which the view wants
    *          to sort the furniture it displays.
    */
   public void sortFurniture(String property) {
-    // Refuse sort on icon property
-    if (property.equals("icon"))
-      return;
-    // Compute sort algorithm described in javadoc
-    final String  oldProperty   = this.furnitureView.getSortedProperty();
-    final boolean oldAscending  = this.furnitureView.isAscendingSort(); 
-    boolean ascending = true;
-    if (property.equals(oldProperty)) {
-      if (oldAscending) {
-        ascending = false;
-      } else {
-        property = null;
+    // Refuse sort on icon column
+    if (!property.equals("icon")) {
+      // Compute sort algorithm described in javadoc
+      final String  oldProperty    = this.furnitureView.getSortedProperty();
+      final boolean oldAscending = this.furnitureView.isAscendingSort(); 
+      boolean ascending = true;
+      if (property.equals(oldProperty)) {
+        if (oldAscending) {
+          ascending = false;
+        } else {
+          property = null;
+        }
       }
+      this.furnitureView.setSortedProperty(property);
+      this.furnitureView.setAscendingSort(ascending);
     }
-    this.furnitureView.setSortedProperty(property);
-    this.furnitureView.setAscendingSort(ascending);
-  }
-
-  /**
-   * Records in undo support the current selected furniture in view.
-   */
-  public void recordSelectedFurniture() {
-    // Record new and old selection
-    final List<HomePieceOfFurniture> newSelectedFurniture = this.furnitureView.getSelectedFurniture();
-    final List<HomePieceOfFurniture> oldSelectedFurniture = this.selectedFurniture;
-    this.selectedFurniture = newSelectedFurniture;
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doSelectFurniture(oldSelectedFurniture);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doSelectFurniture(newSelectedFurniture);
-      }
-
-      // Let's tag selection as insignificant edit
-      @Override
-      public boolean isSignificant() {
-        return false;
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
-  }
-
-  private void doSelectFurniture(List<HomePieceOfFurniture> furniture) {
-    this.furnitureView.setSelectedFurniture(furniture);
-    this.furnitureView.ensureFurnitureIsVisible(furniture);
   }
 }

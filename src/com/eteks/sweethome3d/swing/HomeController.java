@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -46,7 +47,6 @@ public class HomeController  {
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
-    this.homeView = new HomePane(this);
     // Create undo support objects
     this.undoSupport = new UndoableEditSupport();
     this.undoManager = new UndoManager();
@@ -54,6 +54,7 @@ public class HomeController  {
     // Create controllers composed by this controller
     this.catalogController   = new CatalogController(preferences);
     this.furnitureController = new FurnitureController(home, preferences, this.undoSupport);
+    this.homeView = new HomePane(this);
   }
 
   /**

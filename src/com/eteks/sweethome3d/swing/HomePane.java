@@ -19,7 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import javax.swing.JComponent;
 import javax.swing.JRootPane;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 
 /**
  * The MVC view that edits home furniture. 
@@ -30,6 +33,17 @@ public class HomePane extends JRootPane {
    * Create this view associated with its controller.
    */
   public HomePane(HomeController controller) {
-    // TODO Auto-generated constructor stub
+    // Set the catalogFurniture as the contentPane
+    this.setContentPane(getCatalogFurniturePane(controller));
+  }
+
+  private JComponent getCatalogFurniturePane(HomeController controller) {
+    JComponent catalogView = controller.getCatalogController().getView();
+    JComponent furnitureView = controller.getFurnitureController().getView();
+    // Create a split pane that displays both components
+    JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
+        new JScrollPane(catalogView), new JScrollPane(furnitureView));
+    catalogFurniturePane.setResizeWeight(0.5);
+    return catalogFurniturePane;
   }
 }

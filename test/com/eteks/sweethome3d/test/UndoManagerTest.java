@@ -63,21 +63,6 @@ public class UndoManagerTest extends TestCase {
     assertFalse(manager.canRedo());
   }
   
-  public void testInsignificantUndoableEdits() {
-    UndoManager manager = new UndoManager(); 
-    List<String> list = new ArrayList<String>();
-       // Add some significant undoable edits and an insignificant undoable edit
-    manager.addEdit(new AddWordToListEdit(list, "a"));
-    manager.addEdit(new InsignificantEdit(list, " "));
-    manager.addEdit(new AddWordToListEdit(list, "b"));
-    assertEquals(Arrays.asList(new String [] {"a", " ", "b"}), list);
-    // Test undo / redo
-    manager.undo();
-    assertEquals(Arrays.asList(new String [] {"a", " "}), list);
-    manager.undo();
-    assertEquals(Collections.EMPTY_LIST, list);
-  }
-  
   public void testUndoableEditSupport() {
     UndoableEditSupport editSupport = new UndoableEditSupport();
     UndoManager manager = new UndoManager(); 
@@ -92,12 +77,27 @@ public class UndoManagerTest extends TestCase {
         assertEquals(edit, ev.getEdit());
       }
     });
-    // Add a significant undoable edit
+    // Add an undoable edit
     assertFalse(manager.canUndo());
     editSupport.postEdit(edit);    
     assertTrue(manager.canUndo());
   }
 
+  public void testInsignificantUndoableEdits() {
+    UndoManager manager = new UndoManager(); 
+    List<String> list = new ArrayList<String>();
+    // Add some significant undoable edits and an insignificant undoable edit
+    manager.addEdit(new AddWordToListEdit(list, "a"));
+    manager.addEdit(new InsignificantEdit(list, " "));
+    manager.addEdit(new AddWordToListEdit(list, "b"));
+    assertEquals(Arrays.asList(new String [] {"a", " ", "b"}), list);
+    // Test undo / redo
+    manager.undo();
+    assertEquals(Arrays.asList(new String [] {"a", " "}), list);
+    manager.undo();
+    assertEquals(Collections.EMPTY_LIST, list);
+  }
+  
   public void testCompoundUndoableEdits() {
     UndoManager manager = new UndoManager(); 
     List<String> list = new ArrayList<String>();

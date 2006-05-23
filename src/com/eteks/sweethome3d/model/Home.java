@@ -40,18 +40,18 @@ public class Home {
   }
 
   /**
-   * Adds the <code>listener</code> in paramter to this home.
+   * Adds the <code>listener</code> in parameter to this home.
    * Caution : This method isn't thread safe.
    */
-  public void addHomeListener(FurnitureListener listener) {
+  public void addFurnitureListener(FurnitureListener listener) {
     furnitureListeners.add(listener);
   }
 
   /**
-   * Removes the <code>listener</code> in paramter from this home.
+   * Removes the <code>listener</code> in parameter from this home.
    * Caution : This method isn't thread safe.
    */
-  public void removeHomeListener(FurnitureListener listener) {
+  public void removeFurnitureListener(FurnitureListener listener) {
     furnitureListeners.remove(listener);
   }
 
@@ -69,6 +69,7 @@ public class Home {
    * Once added, all listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureAdded(FurnitureEvent) pieceOfFurnitureAdded}
    * notification.
+   * Caution : This method isn't thread safe.
    */
   public void add(HomePieceOfFurniture piece, int index) {
     this.furniture.add(index, piece);
@@ -85,6 +86,7 @@ public class Home {
    * Once removed, all listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureDeleted(FurnitureEvent) pieceOfFurnitureDeleted}
    * notification.
+   * Caution : This method isn't thread safe.
    */
   public void delete(HomePieceOfFurniture piece) {
     this.furniture.remove(piece);

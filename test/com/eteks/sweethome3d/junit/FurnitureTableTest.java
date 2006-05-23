@@ -21,6 +21,7 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.Collator;
@@ -34,9 +35,12 @@ import java.util.ResourceBundle;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JRootPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
@@ -54,7 +58,7 @@ import com.eteks.sweethome3d.swing.HomeController;
 
 public class FurnitureTableTest extends TestCase {
   public void testFurnitureTable()  {
-    // 1. Choose a language that displays furniture dimensions in inches
+    // 1. Choose a locale that displays furniture dimensions in inches
     Locale.setDefault(Locale.US);
     // Create model objects
     UserPreferences preferences = new DefaultUserPreferences();
@@ -81,54 +85,59 @@ public class FurnitureTableTest extends TestCase {
     tree.addSelectionInterval(1, 2);
     homeController.addHomeFurniture();
 
-    // Check the model and the table contains two pieces
+    // Check the model contains two pieces
     List<HomePieceOfFurniture> homeFurniture = home.getFurniture(); 
     assertEquals("Home doesn't contain 2 pieces", 
-        homeFurniture.size(), 2);
-    assertEquals("Table doesn't contain 2 pieces", 
-        table.getSelectedFurniture().size(), 2);
-    // Check the two pieces in table are selected
-    assertEquals("Added pieces aren't selected", 
-        table.getSelectedRowCount(), 2);
+        2, homeFurniture.size());
+    //  Check the two pieces in table are selected
+    assertEquals("Table doesn't display 2 selected pieces", 
+        2, table.getSelectedFurniture().size());
 
     // 3. Select the first piece in table, delete it
     table.setSelectedFurniture(Arrays.asList(
-        new HomePieceOfFurniture [] {home.getFurniture().get(0)}));
+        new HomePieceOfFurniture [] {homeFurniture.get(0)}));
     furnitureController.deleteFurniture();
-    // Check the model and the table contains only one piece
+    // Check the model contains only one piece
     assertEquals("Home doesn't contain 1 piece", 
-        home.getFurniture().size(), 1);
-    assertEquals("Table doesn't contain 1 piece", 
-        table.getSelectedFurniture().size(), 1);
+        1, home.getFurniture().size());
+    // Check the table doesn't display any selection
+    assertEquals("Table selection isn't empty", 
+        0, table.getSelectedFurniture().size());
 
     // 4. Undo previous operation
     homeController.undo();
-    // Check the model and the table contains two pieces
+    // Check the model contains two pieces
     assertEquals("Home doesn't contain 2 pieces after undo", 
-        home.getFurniture().size(), 2);
-    assertEquals("Table doesn't contain 2 pieces after undo",
-        table.getSelectedFurniture().size(), 2);
+        2, home.getFurniture().size());
+    //  Check the deleted piece in table is selected
+    assertEquals("Table selection doesn't contain the previously deleted piece",
+        homeFurniture.get(0), table.getSelectedFurniture().get(0));
 
-    // Check the previously deleted piece is selected
-    assertEquals("Deleted piece isn't selected", 
-        table.getSelectedRow(), 0);
 
     // 5. Undo first operation on table
     homeController.undo();
     // Check the model and the table doesn't contain any piece
     assertEquals("Home isn't empty after 2 undo operations", 
-        home.getFurniture().size(), 0);
-    assertEquals("Table isn't empty after 2 undo operations",
-        table.getSelectedFurniture().size(), 0);
+        0, home.getFurniture().size());
 
-    // 6. Redo the 2 operations on table
-    homeController.redo();
+    // 6. Redo the last undone operation on table
     homeController.redo();
     // Check the model contains the two pieces that where added at beginning
     assertEquals("Home doesn't contain the same furniture",
         homeFurniture, home.getFurniture());
+    assertEquals("Table doesn't display 2 selected pieces",
+        2, table.getSelectedFurniture().size());
 
-    // 7. Sort furniture table in alphabetical order of furniture name
+    // 7. Redo the delete operation
+    homeController.redo();
+    // Check the model contains only one piece
+    assertEquals("Home doesn't contain 1 piece", 
+        1, home.getFurniture().size());
+    // Check the table doesn't display any selection
+    assertEquals("Table selection isn't empty", 
+        0, table.getSelectedFurniture().size());
+
+    // 8. Sort furniture table in alphabetical order of furniture name
     furnitureController.sortFurniture("name");
 
     // Check the alphabetical order of table data
@@ -137,7 +146,7 @@ public class FurnitureTableTest extends TestCase {
     furnitureController.sortFurniture("name");
     assertTableIsSorted(table, "nameColumn", false);
 
-    // 8. Check the displayed widths in table are different in French and US version
+    // 9. Check the displayed widths in table are different in French and US version
     String widthInInch = getRenderedValue(table, "widthColumn", 0);
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     String widthInMeter = getRenderedValue(table, "widthColumn", 0);
@@ -147,14 +156,9 @@ public class FurnitureTableTest extends TestCase {
   
   private void assertTableIsSorted(JTable table, String columnNameKey, boolean ascendingOrder) {
     // TODO Check if column in table is sorted
-    ResourceBundle resource = 
-      ResourceBundle.getBundle(table.getClass().getName());
-    String column = resource.getString(columnNameKey);
-
-    TableModel model = table.getModel();
-    TableColumnModel columnModel = table.getColumnModel(); 
-    int columnIndex = columnModel.getColumnIndex(column);
+    int columnIndex = getColumnIndex(table, columnNameKey);
     int modelColumnIndex = table.convertColumnIndexToModel(columnIndex);
+    TableModel model = table.getModel();
     Comparator<Object> comparator = Collator.getInstance();
     if (!ascendingOrder)
       comparator = Collections.reverseOrder(comparator);
@@ -166,13 +170,34 @@ public class FurnitureTableTest extends TestCase {
       assertTrue("Column not sorted", comparator.compare(value, nextValue) <= 0);
     }
   }
-  
+
   private String getRenderedValue(JTable table, String columnNameKey, int row) {
     //  TODO Return the value displayed in a cell of table
+    int columnIndex = getColumnIndex(table, columnNameKey);
+    int modelColumnIndex = table.convertColumnIndexToModel(columnIndex);
+    TableModel model = table.getModel();
+    Object cellValue = model.getValueAt(row, modelColumnIndex);
+    TableCellRenderer renderer = table.getCellRenderer(row, modelColumnIndex);
+    Component cellLabel = renderer.getTableCellRendererComponent(table, cellValue, false, false, row, columnIndex);
+    return ((JLabel)cellLabel).getText();
+  }
+
+  private int getColumnIndex(JTable table, String columnNameKey) {
     ResourceBundle resource = 
       ResourceBundle.getBundle(table.getClass().getName());
-    String column = resource.getString(columnNameKey);
-    return null;
+    String columnHeader = resource.getString(columnNameKey);
+
+    TableColumnModel columnModel = table.getColumnModel();
+    TableColumn column = null;
+    for (int i = 0, n = columnModel.getColumnCount(); i < n; i++) {
+      if (columnModel.getColumn(i).getHeaderValue().equals(columnHeader)) {
+        column = columnModel.getColumn(i);
+        break;
+      }
+    }
+    if (column == null)
+      fail("Unkonwn column " + columnHeader);
+    return columnModel.getColumnIndex(column.getIdentifier());
   }
 
   public static void main(String [] args) {
@@ -184,48 +209,50 @@ public class FurnitureTableTest extends TestCase {
   private static class HomeControllerTest extends HomeController {
     public HomeControllerTest(Home home, UserPreferences preferences) {
       super(home, preferences);
-      // TODO Display home controller view in a frame with buttons
-      new HomeCatalogViewTest(this, home, preferences).displayView();
+      new HomeCatalogViewTest(this).displayView();
     }
   }
 
   private static class HomeCatalogViewTest extends JRootPane {
-    public HomeCatalogViewTest(final HomeController controler, Home home, UserPreferences preferences) {
-      JToolBar toolBar = new JToolBar();
+    public HomeCatalogViewTest(final HomeController controller) {
+      // Create buttons that will launch controler methods
       JButton addButton = new JButton(new ImageIcon(
-          FurnitureTableTest.class.getResource("resources/Add16.gif")));
+          getClass().getResource("resources/Add16.gif")));
       addButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controler.addHomeFurniture();
+          controller.addHomeFurniture();
         }
       });
       JButton deleteButton = new JButton(new ImageIcon(
-          FurnitureTableTest.class.getResource("resources/Delete16.gif")));
-      addButton.addActionListener(new ActionListener() {
+          getClass().getResource("resources/Delete16.gif")));
+      deleteButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controler.getFurnitureController().deleteFurniture();
+          controller.getFurnitureController().deleteFurniture();
         }
       });
       JButton undoButton = new JButton(new ImageIcon(
-          FurnitureTableTest.class.getResource("resources/Undo16.gif")));
-      addButton.addActionListener(new ActionListener() {
+          getClass().getResource("resources/Undo16.gif")));
+      undoButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controler.undo();
+          controller.undo();
         }
       });
       JButton redoButton = new JButton(new ImageIcon(
-          FurnitureTableTest.class.getResource("resources/Redo16.gif")));
-      addButton.addActionListener(new ActionListener() {
+          getClass().getResource("resources/Redo16.gif")));
+      redoButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controler.redo();
+          controller.redo();
         }
       });
+      // Put them it a tool bar
+      JToolBar toolBar = new JToolBar();
       toolBar.add(addButton);
       toolBar.add(deleteButton);
       toolBar.add(undoButton);
       toolBar.add(redoButton);
+      // Display the tool bar and main view in this pane
       getContentPane().add(toolBar, BorderLayout.NORTH);
-      getContentPane().add(controler.getHomeView(), BorderLayout.CENTER);    
+      getContentPane().add(controller.getHomeView(), BorderLayout.CENTER);    
     }
 
     public void displayView() {

@@ -19,7 +19,10 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,6 +59,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       this.color = homePiece.getColor();
       this.visible = homePiece.isVisible();
     }
+    // TODO suppress
+    List<Color> l = Arrays.asList(new Color [] {null, Color.BLACK, Color.WHITE, Color.GRAY, Color.YELLOW, Color.BLUE.darker()});
+    Collections.shuffle(l);
+    color = l.get(0) == null ? null : l.get(0).getRGB();
   }
 
   /**

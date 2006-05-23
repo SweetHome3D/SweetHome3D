@@ -22,9 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.util.List;
 
 import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -46,16 +43,6 @@ public class FurnitureTable extends JTable {
    */
   public FurnitureTable(FurnitureController controller, Home home, UserPreferences preferences) {
     // TODO Auto-generated constructor stub
-
-    ListSelectionListener selectionListener = new ListSelectionListener () {
-      public void valueChanged(ListSelectionEvent ev) {
-        if (ev.getValueIsAdjusting()) {
-          int firstIndex = ev.getFirstIndex();
-          int lastIndex = ev.getLastIndex();
-        }
-      } 
-    };
-    getSelectionModel().addListSelectionListener(selectionListener);
   }
 
   /**
@@ -91,10 +78,9 @@ public class FurnitureTable extends JTable {
   public void setSortedProperty(String sortedProperty) {
     if (sortedProperty == null && this.sortedProperty != null
         || !sortedProperty.equals(this.sortedProperty)) {
-//      this.sortedFurniture = null;
+      this.sortedProperty = sortedProperty;
+      // TODO Auto-generated method stub
     }
-    this.sortedProperty = sortedProperty;
-    // TODO Auto-generated method stub
   }
 
   /**
@@ -118,10 +104,9 @@ public class FurnitureTable extends JTable {
   public void setAscendingSort(boolean ascendingSort) {
     if (this.sortedProperty != null
         && ascendingSort != this.ascendingSort) {
-//      this.sortedFurniture = null;
+      this.ascendingSort = ascendingSort;
+      // TODO Auto-generated method stub
     }
-    this.ascendingSort = ascendingSort;
-    // TODO Auto-generated method stub
   }
 
   /**
@@ -129,6 +114,5 @@ public class FurnitureTable extends JTable {
    */
   public void ensureFurnitureIsVisible(List<HomePieceOfFurniture> furniture) {
     // TODO Auto-generated method stub
-    
   }
 }
