@@ -225,7 +225,7 @@ public class FurnitureTable extends JTable {
       super(columnNames, 0);
       // Fill table with existing furniture
       this.displayedFurniture = 
-        new ArrayList<HomePieceOfFurniture> (home.getFurniture());
+        new ArrayList<HomePieceOfFurniture> ();
       for (HomePieceOfFurniture piece : displayedFurniture)
         addPieceOfFurniture(home, piece);
       // Add a listener on home to receive furniture notifications
@@ -241,12 +241,12 @@ public class FurnitureTable extends JTable {
     }
     
     private void addPieceOfFurniture(Home home, HomePieceOfFurniture piece) {
+      this.displayedFurniture.add(home.getFurniture().indexOf(piece), piece);
       Object [] rowValues = {piece.getName(), piece.getWidth(),
                              piece.getHeight(), piece.getHeight(),
                              piece.getColor(), piece.isMovable(),
                              piece.isDoorOrWindow(), piece.isVisible()};
       addRow(rowValues);
-      this.displayedFurniture.add(home.getFurniture().indexOf(piece), piece);
     }
 
     private void removePieceOfFurniture(HomePieceOfFurniture piece) {
