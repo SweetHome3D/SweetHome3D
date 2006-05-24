@@ -29,14 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureEvent;
@@ -96,9 +93,8 @@ public class FurnitureTable extends JTable {
       checkBoxRenderer, checkBoxRenderer, checkBoxRenderer};
     
     // Set renderers of each column
-    TableColumnModel columnModel = getColumnModel();
     for (int i = 0, n = getColumnCount(); i < n; i++) {
-      columnModel.getColumn(i).setCellRenderer(columnRenderers [i]);
+      getColumn(getColumnName(i)).setCellRenderer(columnRenderers [i]);
     }
   }
 
@@ -106,12 +102,11 @@ public class FurnitureTable extends JTable {
    * Returns a renderer that displays its value with row piece of furniture icon ahead. 
    */
   private TableCellRenderer getNameWithIconRenderer() {
-    final TableCellRenderer stringRenderer = getDefaultRenderer(String.class); 
-    return new TableCellRenderer() {
+    return new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-        JLabel label = (JLabel)stringRenderer.
-           getTableCellRendererComponent(table, value, 
-               isSelected, hasFocus, row, column);
+        JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
+            row, column);
         FurnitureTableModel model = (FurnitureTableModel)getModel();
         Content iconContent = model.getPieceOfFurnitureAtRow(row).getIcon();
         label.setIcon(IconManager.getInstance().getIcon(iconContent,
@@ -129,7 +124,7 @@ public class FurnitureTable extends JTable {
     return new TableCellRenderer () {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (preferences.getUnit() == INCH) {
-          value = centimerToInch(((Number)value).floatValue());
+          value = centimerToInch((Float)value);
         }        
         return floatRenderer.getTableCellRendererComponent(
             table, value, isSelected, hasFocus, row, column);
@@ -147,14 +142,13 @@ public class FurnitureTable extends JTable {
         JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
             row, column);
         if (value != null) {
-          int color = (Integer)value;
-          label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2),
-              BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(color ^ 0xFFFFFF), 1),
-                                                 BorderFactory.createLineBorder(new Color(color), getRowHeight() / 2 - 2))));
-          label.setText(null);
+          label.setText("\u25fc");
+          label.setForeground(new Color((Integer)value));
         } else {
-          label.setBorder(null);
+          label.setText("-");
+          label.setForeground(table.getForeground());
         }
+        label.setHorizontalAlignment(JLabel.CENTER);
         return label;
       } 
     };
@@ -164,8 +158,8 @@ public class FurnitureTable extends JTable {
    * Returns the list of selected furniture in table.
    */
   public List<HomePieceOfFurniture> getSelectedFurniture() {
-    FurnitureTableModel model = (FurnitureTableModel)getModel();
     int [] selectedRows = getSelectedRows();
+    FurnitureTableModel model = (FurnitureTableModel)getModel();
     List<HomePieceOfFurniture> selectedFurniture = 
         new ArrayList<HomePieceOfFurniture>(selectedRows.length);
     for (int row : selectedRows) {
@@ -196,6 +190,7 @@ public class FurnitureTable extends JTable {
       FurnitureTableModel model = (FurnitureTableModel)getModel();
       Rectangle includingRectangle = null;
       int lastColumn = getColumnCount() - 1;
+      int autoResizeMode = getAutoResizeMode();
       // Compute the rectangle that includes all the furniture 
       for (HomePieceOfFurniture piece : furniture) {
         int row = model.getPieceOfFurnitureRow(piece);
@@ -205,8 +200,10 @@ public class FurnitureTable extends JTable {
           includingRectangle = includingRectangle.
               union(getCellRect(row, 0, true));
         }
-        includingRectangle = includingRectangle.
-            union(getCellRect(row, lastColumn, true));
+        if (autoResizeMode == AUTO_RESIZE_OFF) {
+          includingRectangle = includingRectangle.
+              union(getCellRect(row, lastColumn, true));
+        }
       }
       // Scroll to make including rectangle visible
       scrollRectToVisible(includingRectangle);

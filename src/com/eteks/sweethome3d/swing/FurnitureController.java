@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -165,31 +166,7 @@ public class FurnitureController {
     for (HomePieceOfFurniture piece : furniture) {
       home.delete(piece);
     }
+    List<HomePieceOfFurniture> emptyList = Collections.emptyList();
+    this.furnitureView.setSelectedFurniture(emptyList);
   }
-
-  /**
-   * Controls the sort of the furniture in home. If home furniture isn't sorted
-   * or is sorted on an other column, it will be sorted on the given
-   * <code>property</code> in ascending order. If home furniture is already
-   * sorted on the given <code>property<code>, it will be sorted in descending 
-   * order, if the sort is in ascending order, otherwise it won't be sorted at all 
-   * and home furniture will be listed in insertion order. 
-    * @param property  the furniture property on which the view wants
-   *          to sort the furniture it displays.
-   */
-//  public void sortFurniture(String property) {
-//    // Compute sort algorithm described in javadoc
-//    final String  oldProperty    = this.furnitureView.getSortedProperty();
-//    final boolean oldAscending = this.furnitureView.isAscendingSort(); 
-//    boolean ascending = true;
-//    if (property.equals(oldProperty)) {
-//      if (oldAscending) {
-//        ascending = false;
-//      } else {
-//        property = null;
-//      }
-//    }
-//    this.furnitureView.setSortedProperty(property);
-//    this.furnitureView.setAscendingSort(ascending);
-//  }
 }
