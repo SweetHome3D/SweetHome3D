@@ -28,9 +28,14 @@ import com.eteks.sweethome3d.io.DefaultCatalog;
 public abstract class UserPreferences {
   /**
    * Unit used for dimensions.
-   * @author Emmanuel Puybaret
    */
-  public enum Unit {CENTIMETER, INCH}
+  public enum Unit {
+    CENTIMETER, INCH;
+
+    public static Object centimerToInch(float length) {
+      return length / 2.54f;
+    }
+  }
 
   private Catalog catalog;
   private Unit unit;

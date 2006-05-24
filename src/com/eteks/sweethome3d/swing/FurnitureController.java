@@ -177,22 +177,19 @@ public class FurnitureController {
     * @param property  the furniture property on which the view wants
    *          to sort the furniture it displays.
    */
-  public void sortFurniture(String property) {
-    // Refuse sort on icon column
-    if (!property.equals("icon")) {
-      // Compute sort algorithm described in javadoc
-      final String  oldProperty    = this.furnitureView.getSortedProperty();
-      final boolean oldAscending = this.furnitureView.isAscendingSort(); 
-      boolean ascending = true;
-      if (property.equals(oldProperty)) {
-        if (oldAscending) {
-          ascending = false;
-        } else {
-          property = null;
-        }
-      }
-      this.furnitureView.setSortedProperty(property);
-      this.furnitureView.setAscendingSort(ascending);
-    }
-  }
+//  public void sortFurniture(String property) {
+//    // Compute sort algorithm described in javadoc
+//    final String  oldProperty    = this.furnitureView.getSortedProperty();
+//    final boolean oldAscending = this.furnitureView.isAscendingSort(); 
+//    boolean ascending = true;
+//    if (property.equals(oldProperty)) {
+//      if (oldAscending) {
+//        ascending = false;
+//      } else {
+//        property = null;
+//      }
+//    }
+//    this.furnitureView.setSortedProperty(property);
+//    this.furnitureView.setAscendingSort(ascending);
+//  }
 }

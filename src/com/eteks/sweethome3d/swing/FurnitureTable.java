@@ -19,10 +19,28 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import static com.eteks.sweethome3d.model.UserPreferences.Unit.INCH;
+import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
+import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -32,9 +50,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable {
-  private String sortedProperty;
-  private boolean ascendingSort;
-
   /**
    * Create this view associated with its controller.
    * @param controller  the controller of this view
@@ -42,16 +57,121 @@ public class FurnitureTable extends JTable {
    * @param preferences the preferences of the application
    */
   public FurnitureTable(FurnitureController controller, Home home, UserPreferences preferences) {
-    // TODO Auto-generated constructor stub
+    ResourceBundle resource = 
+      ResourceBundle.getBundle(getClass().getName());
+    String [] columnNames = getColumnNames(resource);
+    setModel(new FurnitureTableModel(home, columnNames));
+    setColumnRenderers(preferences);
+  }
+
+  /**
+   * Returns localized column names.
+   */
+  private String [] getColumnNames(ResourceBundle resource) {
+    String [] columnNames = {
+       resource.getString("nameColumn"),
+       resource.getString("widthColumn"),
+       resource.getString("heightColumn"),
+       resource.getString("depthColumn"),
+       resource.getString("colorColumn"),
+       resource.getString("movableColumn"),
+       resource.getString("doorOrWindowColumn"),
+       resource.getString("visibleColumn")};
+    return columnNames;
+  }
+
+  /**
+   * Sets column renderers.
+   */
+  private void setColumnRenderers(UserPreferences preferences) {
+    // Renderer for width, height and depth columns
+    TableCellRenderer sizeRenderer = getSizeRenderer(preferences);
+    // Renderer for movable, doorOrWindow and visible columns
+    TableCellRenderer checkBoxRenderer = getDefaultRenderer(Boolean.class);
+    // Create an array for the renderers of each column
+    TableCellRenderer [] columnRenderers = { 
+      getNameWithIconRenderer(), // Renderer for name column
+      sizeRenderer, sizeRenderer, sizeRenderer,
+      getColorRenderer(),        // Renderer for color column
+      checkBoxRenderer, checkBoxRenderer, checkBoxRenderer};
+    
+    // Set renderers of each column
+    TableColumnModel columnModel = getColumnModel();
+    for (int i = 0, n = getColumnCount(); i < n; i++) {
+      columnModel.getColumn(i).setCellRenderer(columnRenderers [i]);
+    }
+  }
+
+  /**
+   * Returns a renderer that displays its value with row piece of furniture icon ahead. 
+   */
+  private TableCellRenderer getNameWithIconRenderer() {
+    final TableCellRenderer stringRenderer = getDefaultRenderer(String.class); 
+    return new TableCellRenderer() {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        JLabel label = (JLabel)stringRenderer.
+           getTableCellRendererComponent(table, value, 
+               isSelected, hasFocus, row, column);
+        FurnitureTableModel model = (FurnitureTableModel)getModel();
+        Content iconContent = model.getPieceOfFurnitureAtRow(row).getIcon();
+        label.setIcon(IconManager.getInstance().getIcon(iconContent,
+            getRowHeight(), FurnitureTable.this));
+        return label;
+      }
+    };
+  }
+
+  /**
+   * Returns a renderer that converts the displayed value to inch in case preferences unit us equal to INCH. 
+   */
+  private TableCellRenderer getSizeRenderer(final UserPreferences preferences) {
+    final TableCellRenderer floatRenderer = getDefaultRenderer(Float.class); 
+    return new TableCellRenderer () {
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        if (preferences.getUnit() == INCH) {
+          value = centimerToInch(((Number)value).floatValue());
+        }        
+        return floatRenderer.getTableCellRendererComponent(
+            table, value, isSelected, hasFocus, row, column);
+      }      
+    };
+  }
+
+  /**
+   * Returns a renderer that displays the RGB value of an int in a bordered label.
+   */
+  private TableCellRenderer getColorRenderer() {
+    return new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus,
+            row, column);
+        if (value != null) {
+          int color = (Integer)value;
+          label.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2),
+              BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(color ^ 0xFFFFFF), 1),
+                                                 BorderFactory.createLineBorder(new Color(color), getRowHeight() / 2 - 2))));
+          label.setText(null);
+        } else {
+          label.setBorder(null);
+        }
+        return label;
+      } 
+    };
   }
 
   /**
    * Returns the list of selected furniture in table.
    */
   public List<HomePieceOfFurniture> getSelectedFurniture() {
-    // TODO Return the list of selected furniture in table
-    // Reduce returned list to its minimum size
-    return null;
+    FurnitureTableModel model = (FurnitureTableModel)getModel();
+    int [] selectedRows = getSelectedRows();
+    List<HomePieceOfFurniture> selectedFurniture = 
+        new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+    for (int row : selectedRows) {
+      selectedFurniture.add(model.getPieceOfFurnitureAtRow(row));
+    }
+    return selectedFurniture;
   }
 
   /**
@@ -60,52 +180,11 @@ public class FurnitureTable extends JTable {
    * @param furniture the furniture to select
    */
   public void setSelectedFurniture(List<HomePieceOfFurniture> furniture) {
-    // TODO Auto-generated method stub
-    // Remove selectionListener before changing selection
-  }
-
-  /**
-   * Returns the property on which the furniture of this home is sorted.
-   * @return the name of a property or <code>null</code> if the furniture isn't sorted.
-   */
-  public String getSortedProperty() {
-    return this.sortedProperty;
-  }
-
-  /**
-   * Sets the property on which the furniture of this home should be sorted.
-   */
-  public void setSortedProperty(String sortedProperty) {
-    if (sortedProperty == null && this.sortedProperty != null
-        || !sortedProperty.equals(this.sortedProperty)) {
-      this.sortedProperty = sortedProperty;
-      // TODO Auto-generated method stub
-    }
-  }
-
-  /**
-   * Returns whether the furniture of this home is sorted in ascending or
-   * descending order.
-   * @return  <code>true</code> if the furniture is sorted in
-   *          ascending order on the
-   *          {@link #getSortedProperty() sorted property}.
-   */
-  public boolean isAscendingSort() {
-    return this.ascendingSort;
-  }
-
-  /**
-   * Sets whether the furniture of this home should be sorted in ascending or
-   * descending order.
-   * @param ascendingSort if <code>true</code> the furniture should be sorted in
-   *          ascending order on the
-   *          {@link #getSortedProperty() sorted property}.
-   */
-  public void setAscendingSort(boolean ascendingSort) {
-    if (this.sortedProperty != null
-        && ascendingSort != this.ascendingSort) {
-      this.ascendingSort = ascendingSort;
-      // TODO Auto-generated method stub
+    clearSelection();
+    FurnitureTableModel model = (FurnitureTableModel)getModel();
+    for (HomePieceOfFurniture piece : furniture) {
+      int row = model.getPieceOfFurnitureRow(piece);
+      addRowSelectionInterval(row, row);
     }
   }
 
@@ -113,6 +192,74 @@ public class FurnitureTable extends JTable {
    * Ensures the rectangle which displays <code>furniture</code> is visible.
    */
   public void ensureFurnitureIsVisible(List<HomePieceOfFurniture> furniture) {
-    // TODO Auto-generated method stub
+    if (!furniture.isEmpty()) {
+      FurnitureTableModel model = (FurnitureTableModel)getModel();
+      Rectangle includingRectangle = null;
+      int lastColumn = getColumnCount() - 1;
+      // Compute the rectangle that includes all the furniture 
+      for (HomePieceOfFurniture piece : furniture) {
+        int row = model.getPieceOfFurnitureRow(piece);
+        if (includingRectangle == null) {
+          includingRectangle = getCellRect(row, 0, true);
+        } else {
+          includingRectangle = includingRectangle.
+              union(getCellRect(row, 0, true));
+        }
+        includingRectangle = includingRectangle.
+            union(getCellRect(row, lastColumn, true));
+      }
+      // Scroll to make including rectangle visible
+      scrollRectToVisible(includingRectangle);
+    }
+  }
+
+  /**
+   * Model used by this table
+   */
+  private static class FurnitureTableModel extends DefaultTableModel {
+    // Copy of home furniture that contains the same furniture and 
+    // the deleted ones before they are deleted
+    private List<HomePieceOfFurniture> displayedFurniture;
+    
+    public FurnitureTableModel(Home home, String [] columnNames) {
+      super(columnNames, 0);
+      // Fill table with existing furniture
+      this.displayedFurniture = 
+        new ArrayList<HomePieceOfFurniture> (home.getFurniture());
+      for (HomePieceOfFurniture piece : displayedFurniture)
+        addPieceOfFurniture(home, piece);
+      // Add a listener on home to receive furniture notifications
+      home.addFurnitureListener(new FurnitureListener () {
+        public void pieceOfFurnitureAdded(FurnitureEvent ev) {
+          addPieceOfFurniture((Home)ev.getSource(), 
+              (HomePieceOfFurniture)ev.getPieceOfFurniture());
+        }
+        public void pieceOfFurnitureDeleted(FurnitureEvent ev) {
+          removePieceOfFurniture((HomePieceOfFurniture)ev.getPieceOfFurniture());
+        }
+      });
+    }
+    
+    private void addPieceOfFurniture(Home home, HomePieceOfFurniture piece) {
+      Object [] rowValues = {piece.getName(), piece.getWidth(),
+                             piece.getHeight(), piece.getHeight(),
+                             piece.getColor(), piece.isMovable(),
+                             piece.isDoorOrWindow(), piece.isVisible()};
+      addRow(rowValues);
+      this.displayedFurniture.add(home.getFurniture().indexOf(piece), piece);
+    }
+
+    private void removePieceOfFurniture(HomePieceOfFurniture piece) {
+      removeRow(getPieceOfFurnitureRow(piece));
+      this.displayedFurniture.remove(piece);
+    }
+    
+    private int getPieceOfFurnitureRow(HomePieceOfFurniture piece) {
+      return this.displayedFurniture.indexOf(piece);
+    }
+
+    private HomePieceOfFurniture getPieceOfFurnitureAtRow(int row) {
+      return this.displayedFurniture.get(row);
+    }
   }
 }
