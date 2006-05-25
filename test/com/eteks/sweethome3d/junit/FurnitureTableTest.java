@@ -24,10 +24,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.Collator;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -40,8 +37,6 @@ import javax.swing.JRootPane;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 import junit.framework.TestCase;
@@ -137,25 +132,32 @@ public class FurnitureTableTest extends TestCase {
     assertEquals("Table selection isn't empty", 
         0, table.getSelectedFurniture().size());
 
-    // 8. Check the displayed widths in table are different in French and US version
-    String widthInInch = getRenderedWidth(table, 0);
+    // 8. Check the displayed depth in table are different in French and US version
+    String widthInInch = getRenderedDepth(table, 0);
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
-    String widthInMeter = getRenderedWidth(table, 0);
-    assertFalse("Same width in different units", 
+    String widthInMeter = getRenderedDepth(table, 0);
+    assertFalse("Same depth in different units", 
         widthInInch.equals(widthInMeter));
   }
 
-  private String getRenderedWidth(JTable table, int row) {
+  private String getRenderedDepth(JTable table, int row) {
+    // Get index of detph column in model
     ResourceBundle resource = 
       ResourceBundle.getBundle(table.getClass().getName());
-    String columnName = resource.getString("widthColumn");
+    String columnName = resource.getString("depthColumn");
     int modelColumnIndex = table.getColumn(columnName).getModelIndex();
-    int tableColumnIndex = table.convertColumnIndexToView(modelColumnIndex);
+
+    // Get depth value at row
     TableModel model = table.getModel();
     Object cellValue = model.getValueAt(row, modelColumnIndex);
+    
+    // Get component used to render the depth cell at row
     TableCellRenderer renderer = table.getCellRenderer(row, modelColumnIndex);
+    int tableColumnIndex = table.convertColumnIndexToView(modelColumnIndex);
     Component cellLabel = renderer.getTableCellRendererComponent(
         table, cellValue, false, false, row, tableColumnIndex);
+    
+    // Return rendered depth
     return ((JLabel)cellLabel).getText();
   }
 
