@@ -597,13 +597,6 @@ public class SweetHome3DSwingDraft extends JFrame {
           {"Chest", 100, 80, 80}, {"Table", 110, 110, 75},
           {"Chair", 45, 45, 90}, {"Bookcase", 90, 30, 180}};
       furnitureTable = new JTable(furnitureData, columnsTitle);
-      furnitureTable.getSelectionModel().addListSelectionListener(new ListSelectionListener () {
-        public void valueChanged(ListSelectionEvent ev) {
-          System.out.println(ev.getValueIsAdjusting());
-          System.out.println("first " + ev.getFirstIndex());
-          System.out.println("last  " + ev.getLastIndex());
-        } 
-      });
     }
     return furnitureTable;
   }
