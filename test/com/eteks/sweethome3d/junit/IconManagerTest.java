@@ -55,6 +55,9 @@ public class IconManagerTest extends TestCase {
     testIconLoading(getClass().getResource("IconManagerTest.class"), false);
 
     IconManager iconManager = IconManager.getInstance();
+    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
+    int currentMaximumPoolSize = iconsLoader.getMaximumPoolSize();
+    
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
     URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
     URLContent errorIconContent = (URLContent)getFieldValue(iconManager, "errorIconContent");
@@ -66,6 +69,9 @@ public class IconManagerTest extends TestCase {
     // Check errorIcon is loaded directly without proxy
     Icon errorIcon = iconManager.getIcon(errorIconContent, HEIGHT, null);
     assertNotSame("Error icon loaded with IconProxy", errorIcon.getClass(), iconProxyClass);
+
+    // Restore previous maximum pool size to let other tests run normally
+    iconsLoader.setMaximumPoolSize(currentMaximumPoolSize);
   }
 
   /**
