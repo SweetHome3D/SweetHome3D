@@ -1,5 +1,5 @@
 /*
- * CatalogController.java 15 mai 2006
+ * Controller.java 26 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,38 +19,16 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.util.List;
-
 import javax.swing.JComponent;
 
-import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.UserPreferences;
-
 /**
- * A MVC controller for the furniture catalog.
+ * A controller associated with a view.
  * @author Emmanuel Puybaret
  */
-public class CatalogController implements Controller {
-  private CatalogTree catalogView;
-  /**
-   * Creates a controller of the furniture catalog view.
-   * @param preferences the preferences of the application
-   */
-  public CatalogController(UserPreferences preferences) {
-    this.catalogView = new CatalogTree(preferences.getCatalog());
-  }
-
+public interface Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public JComponent getView() {
-    return this.catalogView;
-  }
+  public abstract JComponent getView();
 
-  /**
-   * Returns the selected furniture un catalog view.
-   */
-  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    return this.catalogView.getSelectedFurniture();
-  }
 }

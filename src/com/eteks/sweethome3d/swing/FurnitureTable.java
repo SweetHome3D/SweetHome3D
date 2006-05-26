@@ -31,6 +31,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -213,42 +214,72 @@ public class FurnitureTable extends JTable {
   /**
    * Model used by this table
    */
-  private static class FurnitureTableModel extends DefaultTableModel {
+  private static class FurnitureTableModel extends AbstractTableModel {
     // Copy of home furniture that contains the same furniture and 
     // the deleted ones before they are deleted
     private List<HomePieceOfFurniture> displayedFurniture;
+    private String [] columnNames;
     
     public FurnitureTableModel(Home home, String [] columnNames) {
-      super(columnNames, 0);
-      // Fill table with existing furniture
+      this.columnNames = columnNames;
       this.displayedFurniture = 
-        new ArrayList<HomePieceOfFurniture> ();
-      for (HomePieceOfFurniture piece : displayedFurniture)
-        addPieceOfFurniture(home, piece);
+        new ArrayList<HomePieceOfFurniture>(home.getFurniture()); 
       // Add a listener on home to receive furniture notifications
-      home.addFurnitureListener(new FurnitureListener () {
+      addHomeListener(home);
+    }
+
+    private void addHomeListener(Home home) {
+      home.addFurnitureListener(new FurnitureListener() {
         public void pieceOfFurnitureAdded(FurnitureEvent ev) {
-          addPieceOfFurniture((Home)ev.getSource(), 
+          addPieceOfFurniture((Home)ev.getSource(),
               (HomePieceOfFurniture)ev.getPieceOfFurniture());
         }
+
         public void pieceOfFurnitureDeleted(FurnitureEvent ev) {
-          removePieceOfFurniture((HomePieceOfFurniture)ev.getPieceOfFurniture());
+          removePieceOfFurniture((HomePieceOfFurniture)ev
+              .getPieceOfFurniture());
         }
       });
     }
     
+    @Override
+    public String getColumnName(int columnIndex) {
+      return this.columnNames [columnIndex];
+    }
+
+    public int getColumnCount() {
+      return this.columnNames.length;
+    }
+
+    public int getRowCount() {
+      return this.displayedFurniture.size();
+    }
+
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      HomePieceOfFurniture piece = this.displayedFurniture.get(rowIndex);
+      switch (columnIndex) {
+        case 0 : return piece.getName();
+        case 1 : return piece.getWidth();
+        case 2 : return piece.getHeight();
+        case 3 : return piece.getDepth();
+        case 4 : return piece.getColor();
+        case 5 : return piece.isDoorOrWindow();
+        case 6 : return piece.isMovable();
+        case 7 : return piece.isVisible();
+        default : throw new IllegalArgumentException("Unknown column " + columnIndex);
+      }
+    }
+
     private void addPieceOfFurniture(Home home, HomePieceOfFurniture piece) {
-      this.displayedFurniture.add(home.getFurniture().indexOf(piece), piece);
-      Object [] rowValues = {piece.getName(), piece.getWidth(),
-                             piece.getHeight(), piece.getHeight(),
-                             piece.getColor(), piece.isMovable(),
-                             piece.isDoorOrWindow(), piece.isVisible()};
-      addRow(rowValues);
+      int rowIndex = home.getFurniture().indexOf(piece);
+      this.displayedFurniture.add(rowIndex, piece);
+      fireTableRowsInserted(rowIndex, rowIndex);
     }
 
     private void removePieceOfFurniture(HomePieceOfFurniture piece) {
-      removeRow(getPieceOfFurnitureRow(piece));
-      this.displayedFurniture.remove(piece);
+      int rowIndex = getPieceOfFurnitureRow(piece);
+      this.displayedFurniture.remove(rowIndex);
+      fireTableRowsDeleted(rowIndex, rowIndex);
     }
     
     private int getPieceOfFurnitureRow(HomePieceOfFurniture piece) {

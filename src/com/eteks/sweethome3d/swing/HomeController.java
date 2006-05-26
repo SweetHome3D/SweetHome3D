@@ -34,7 +34,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
-public class HomeController  {
+public class HomeController implements Controller  {
   private HomePane            homeView;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
@@ -60,7 +60,7 @@ public class HomeController  {
   /**
    * Returns the view associated with this controller.
    */
-  public JComponent getHomeView() {
+  public JComponent getView() {
     return this.homeView;
   }
 

@@ -213,7 +213,7 @@ public class FurnitureTableTest extends TestCase {
       toolBar.add(redoButton);
       // Display the tool bar and main view in this pane
       getContentPane().add(toolBar, BorderLayout.NORTH);
-      getContentPane().add(controller.getHomeView(), BorderLayout.CENTER);    
+      getContentPane().add(controller.getView(), BorderLayout.CENTER);    
     }
 
     public void displayView() {

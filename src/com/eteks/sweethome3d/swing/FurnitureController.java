@@ -42,7 +42,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A MVC controller for the furniture table.
  * @author Emmanuel Puybaret
  */
-public class FurnitureController {
+public class FurnitureController implements Controller {
   private FurnitureTable             furnitureView;
   private Home                       home;
   private UndoableEditSupport        undoSupport;
