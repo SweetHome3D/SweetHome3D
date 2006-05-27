@@ -58,6 +58,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       HomePieceOfFurniture homePiece = (HomePieceOfFurniture)piece;
       this.color = homePiece.getColor();
       this.visible = homePiece.isVisible();
+    } else {
+      this.visible = true;
     }
   }
 
