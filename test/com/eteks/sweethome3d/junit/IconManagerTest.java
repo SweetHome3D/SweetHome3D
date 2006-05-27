@@ -26,10 +26,12 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -49,15 +51,26 @@ public class IconManagerTest extends TestCase {
   
   public void testIconManager() 
       throws NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException, ClassNotFoundException {
+    IconManager iconManager = IconManager.getInstance();
+    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
+    // Store previous maximum pool size to restore it after the end of the test
+    int currentMaximumPoolSize = iconsLoader.getMaximumPoolSize();
+
+    try {
+      // Wait for iconsLoader to stop the threads that could have been launched by other tests
+      while (iconsLoader.getTaskCount() > 0)
+        Thread.sleep(100);
+    } catch (InterruptedException ex) {
+      fail();
+    }
+    // Empty existing icons to prove IconManager work
+    ((Map)getFieldValue(iconManager, "icons")).clear();
+    
     // Test icon loading on a good image
     testIconLoading(getClass().getResource("resources/test.png"), true);
     // Test icon loading on a content that doesn't an image
     testIconLoading(getClass().getResource("IconManagerTest.class"), false);
 
-    IconManager iconManager = IconManager.getInstance();
-    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
-    int currentMaximumPoolSize = iconsLoader.getMaximumPoolSize();
-    
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
     URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
     URLContent errorIconContent = (URLContent)getFieldValue(iconManager, "errorIconContent");
@@ -85,11 +98,11 @@ public class IconManagerTest extends TestCase {
     URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
     URLContent errorIconContent = (URLContent)getFieldValue(iconManager, "errorIconContent");
     
-    final CyclicBarrier waintingComponentBarrier = new CyclicBarrier(2);
+    final CyclicBarrier waitingComponentBarrier = new CyclicBarrier(2);
     // A dummy waiting component that waits on a barrier in its repaint method 
     Component waitingComponent = new Component() { 
       public void repaint() {
-        awaitBarrier(waintingComponentBarrier); 
+        awaitBarrier(waitingComponentBarrier); 
       }
     };
     
@@ -102,7 +115,7 @@ public class IconManagerTest extends TestCase {
     // Let iconsLoader of iconManager load the iconContent
     iconsLoaderBarrier.await();
     // Wait iconContent loading completion
-    waintingComponentBarrier.await();
+    waitingComponentBarrier.await();
     if (goodIcon) {
       assertEquals("Icon not equal to icon read from resource", iconURL, icon);
     } else {
@@ -122,10 +135,10 @@ public class IconManagerTest extends TestCase {
    */
   private CyclicBarrier createBarrierInIconManager(IconManager iconManager) 
         throws NoSuchFieldException, IllegalAccessException {
-    final CyclicBarrier barrier = new CyclicBarrier(2);
+    final CyclicBarrier barrier = new CyclicBarrier(2);    
+    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
     // Set maximum pool size of iconsLoader in iconManager to 1
     // so we can control the task it will run with a barrier in a RejectedExecutionHandler instance
-    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
     iconsLoader.setMaximumPoolSize(1);
     // Execute a dummy task that will reject the task executed by iconsLoader
     iconsLoader.execute(new Runnable() {
