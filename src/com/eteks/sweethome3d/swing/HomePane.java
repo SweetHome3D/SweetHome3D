@@ -20,20 +20,10 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.BoxLayout;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -41,68 +31,22 @@ import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 
 /**
  * The MVC view that edits home furniture. 
  * @author Emmanuel Puybaret
  */
 public class HomePane extends JRootPane {
-  public enum ActionType {undo, redo, addHomeFurniture, deleteFurniture}
-  
-  private Map<ActionType, Action> actions;
-
   /**
    * Create this view associated with its controller.
    */
   public HomePane(HomeController controller) {
-    createActions(controller);
-    setJMenuBar(getHomeMenuBar());
-    getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getCatalogFurniturePane(controller));
-  }
-
-  private void createActions(HomeController controller) {
-    try {
-      this.actions = new HashMap<ActionType, Action>();
-      actions.put(ActionType.undo,
-          new ViewControllerAction(ActionType.undo + "Action", this,
-              controller, "undo"));
-      actions.put(ActionType.redo,
-          new ViewControllerAction(ActionType.redo + "Action", this,
-              controller, "redo"));
-      actions.put(ActionType.addHomeFurniture,
-          new ViewControllerAction(ActionType.addHomeFurniture + "Action", this,
-              controller, "addHomeFurniture"));
-      actions.put(ActionType.deleteFurniture,
-          new ViewControllerAction(ActionType.deleteFurniture + "Action", this,
-              controller.getFurnitureController(), "deleteFurniture"));
-    } catch (NoSuchMethodException ex) {
-      throw new RuntimeException(ex);
-    }
+    setContentPane(getCatalogFurniturePane(controller));
   }
   
-  private JMenuBar getHomeMenuBar() {
-    JMenu editMenu = new JMenu(new ResourceAction("editMenu", this));
-    editMenu.add(actions.get(ActionType.undo));
-    editMenu.add(actions.get(ActionType.redo));
-    JMenu furnitureMenu = new JMenu(new ResourceAction("furnitureMenu", this));
-    editMenu.add(actions.get(ActionType.addHomeFurniture));
-    editMenu.add(actions.get(ActionType.deleteFurniture));
-    JMenuBar menuBar = new JMenuBar();
-    menuBar.add(editMenu);
-    return menuBar;
-  }
-  
-  private JToolBar getToolBar() {
-    JToolBar toolBar = new JToolBar();
-    toolBar.add(actions.get(ActionType.undo));
-    toolBar.add(actions.get(ActionType.redo));
-    toolBar.add(actions.get(ActionType.addHomeFurniture));
-    toolBar.add(actions.get(ActionType.deleteFurniture));
-    return toolBar;
-  }
-
+  /**
+   * Returns the catalog tree and furniture table pane. 
+   */
   private JComponent getCatalogFurniturePane(HomeController controller) {
     JComponent catalogView = controller.getCatalogController().getView();
     JComponent furnitureView = controller.getFurnitureController().getView();
