@@ -54,13 +54,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.height = piece.getHeight();
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
-    if (piece instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture homePiece = (HomePieceOfFurniture)piece;
-      this.color = homePiece.getColor();
-      this.visible = homePiece.isVisible();
-    } else {
-      this.visible = true;
-    }
+    this.visible = true;
   }
 
   /**
