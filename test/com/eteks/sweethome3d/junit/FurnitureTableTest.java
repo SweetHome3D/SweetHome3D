@@ -170,12 +170,12 @@ public class FurnitureTableTest extends TestCase {
   private static class HomeControllerTest extends HomeController {
     public HomeControllerTest(Home home, UserPreferences preferences) {
       super(home, preferences);
-      new HomeCatalogViewTest(this).displayView();
+      new HomeViewTest(this).displayView();
     }
   }
 
-  private static class HomeCatalogViewTest extends JRootPane {
-    public HomeCatalogViewTest(final HomeController controller) {
+  private static class HomeViewTest extends JRootPane {
+    public HomeViewTest(final HomeController controller) {
       // Create buttons that will launch controler methods
       JButton addButton = new JButton(new ImageIcon(
           getClass().getResource("resources/Add16.gif")));
@@ -213,13 +213,13 @@ public class FurnitureTableTest extends TestCase {
       toolBar.add(redoButton);
       // Display the tool bar and main view in this pane
       getContentPane().add(toolBar, BorderLayout.NORTH);
-      getContentPane().add(controller.getView(), BorderLayout.CENTER);    
+      getContentPane().add(controller.getView(), BorderLayout.CENTER);
     }
 
     public void displayView() {
       JFrame frame = new JFrame("Furniture Table Test") {
         {
-          setRootPane(HomeCatalogViewTest.this);
+          setRootPane(HomeViewTest.this);
         }
       };
       frame.pack();
