@@ -22,36 +22,40 @@ package com.eteks.sweethome3d.swing;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ResourceBundle;
 
-import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 
 /**
- * An action configured to call a controller method.
+ * A view action configured to call a controller method.
  * @author Emmanuel Puybaret
  */
-public class ViewControllerAction extends AbstractAction {
-  private Object     controller;  //  TODOO change controller type to Controller
+public class ViewControllerAction extends ResourceAction {
+  private Controller controller; 
   private Object []  parameters;
   private Method     controllerMethod;
 
   /**
-   * Creates an action whose {@link #actionPerfomed} will call <code>controllerMethod</code> on <code>controller</code> 
-   * with the given list of <code>parameters</code>. The action is configured with values starting with 
-   * <code>actionPrefix</code> retrieved from properties bundle of prefix <code>view.getClass().getName()</code>.
-   * @param actionPrefix
-   * @param view
-   * @param controller
-   * @param controllerMethod
-   * @param parameters
-   * @throws NoSuchMethodException
+   * Creates a {@link ResourceAction} whose {@link #actionPerfomed} will call
+   * <code>controllerMethod</code> on <code>controller</code> with the given
+   * list of <code>parameters</code>.
+   * @param action prefix used in resource bundle to search action properties
+   * @param view view used as file base for resource bundle
+   * @param controller the controller object on which will be invoked
+   *          controllerMethod
+   * @param controllerMethod name of the controller method that will be invoked
+   *          in {@link #actionPerformed(ActionEvent) actionPerfomed}
+   * @param parameters list of parameters to be used with
+   *          <code>controllerMethod</code>
+   * @throws NoSuchMethodException if <code>controllerMethod</code> with a
+   *           matching <code>parameters</code> list doesn't exist
    */
-  public ViewControllerAction(String actionPrefix, JComponent view, Object controller, String controllerMethod, Object ... parameters) throws NoSuchMethodException {
-    //  TODOO change controller parameter type to Controller
+  public ViewControllerAction(String action, JComponent view, 
+                              Controller controller, 
+                              String controllerMethod, Object ... parameters) throws NoSuchMethodException {
+    super(action, view);
+    putValue(ACTION_COMMAND_KEY, action);
     this.controller = controller;
     this.parameters = parameters;
-    configureAction (view, actionPrefix);
     // Get parameters class
     Class [] parametersClass = new Class [parameters.length];
     for(int i = 0; i < parameters.length; i++)
@@ -59,22 +63,11 @@ public class ViewControllerAction extends AbstractAction {
     this.controllerMethod = controller.getClass().getMethod(controllerMethod, parametersClass);
   }
 
-  private void configureAction(JComponent view, String actionPrefix) {
-    // ResourceBundle resource = ResourceBundle.getBundle(view.getClass().getName());
-    // TODOO Read localized values in bundle using actionPrefix
-    // Find a way to represent a KeyStroke or a KeyEvent as a string (toString() ?) 
-    // Find a way to use different KeyStroke on Mac OS and Windows (for example Command + Q or Alt + F4 to quit)
-    // Take care of Command/Ctrl key on various systems with Toolkit#getMenuShortcutKeyMask
-    // No mnemonic under Mac OS X : is there a system property that disables them ?
-    // Read icon as a resource URL (do not use IconManager)
-    // Use actionPrefix as ACTION-COMMAND_KEY ?
-    
-  }
-
   /**
    * Calls the registered controller method of this action. 
    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
    */
+  @Override
   public void actionPerformed(ActionEvent ev) {
     try {
       this.controllerMethod.invoke(controller, parameters);
@@ -84,34 +77,5 @@ public class ViewControllerAction extends AbstractAction {
       throw new RuntimeException (ex);
     }
   }
-  
-  // TODOO Move to a JUnit class
-  public static void main(String [] args) throws NoSuchMethodException {
-    class Test {
-      // Test with no parameter
-      public void test1() { 
-        System.out.println("It works !");
-      }
-      
-      // Test with an object parameter
-      public void test2(String s) {
-        System.out.println("It works with " + s);
-      }
-
-      // Test with a wrapping class object parameter
-      public void test3(Boolean b) {
-        System.out.println("It works with "+ b);
-      }
-
-      // Test with an primary type parameter
-      public void test4(boolean b) {
-        System.out.println("It doesn't work with "+ b);
-      }
-    }
-    
-    new ViewControllerAction ("test", new JComponent() {}, new Test(), "test1").actionPerformed(null);
-    new ViewControllerAction ("test", new JComponent() {}, new Test(), "test2", "value").actionPerformed(null);
-    new ViewControllerAction ("test", new JComponent() {}, new Test(), "test3", true).actionPerformed(null);
-    new ViewControllerAction ("test", new JComponent() {}, new Test(), "test4", true).actionPerformed(null);
-  }
 }
+
