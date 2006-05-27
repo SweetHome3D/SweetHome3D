@@ -26,12 +26,11 @@ import java.lang.reflect.Method;
 import javax.swing.JComponent;
 
 /**
- * A view action configured to call a controller method.
+ * A resource action configured to call a controller method.
  * @author Emmanuel Puybaret
  */
 public class ViewControllerAction extends ResourceAction {
   private Controller controller; 
-  private Object []  parameters;
   private Method     controllerMethod;
 
   /**
@@ -44,23 +43,15 @@ public class ViewControllerAction extends ResourceAction {
    *          controllerMethod
    * @param controllerMethod name of the controller method that will be invoked
    *          in {@link #actionPerformed(ActionEvent) actionPerfomed}
-   * @param parameters list of parameters to be used with
-   *          <code>controllerMethod</code>
    * @throws NoSuchMethodException if <code>controllerMethod</code> with a
    *           matching <code>parameters</code> list doesn't exist
    */
   public ViewControllerAction(String action, JComponent view, 
-                              Controller controller, 
-                              String controllerMethod, Object ... parameters) throws NoSuchMethodException {
+                              Controller controller, String method) throws NoSuchMethodException {
     super(action, view);
     putValue(ACTION_COMMAND_KEY, action);
     this.controller = controller;
-    this.parameters = parameters;
-    // Get parameters class
-    Class [] parametersClass = new Class [parameters.length];
-    for(int i = 0; i < parameters.length; i++)
-      parametersClass [i] = parameters [i].getClass();
-    this.controllerMethod = controller.getClass().getMethod(controllerMethod, parametersClass);
+    this.controllerMethod = controller.getClass().getMethod(method);
   }
 
   /**
@@ -70,7 +61,7 @@ public class ViewControllerAction extends ResourceAction {
   @Override
   public void actionPerformed(ActionEvent ev) {
     try {
-      this.controllerMethod.invoke(controller, parameters);
+      this.controllerMethod.invoke(controller);
     } catch (IllegalAccessException ex) {
       throw new RuntimeException (ex);
     } catch (InvocationTargetException ex) {

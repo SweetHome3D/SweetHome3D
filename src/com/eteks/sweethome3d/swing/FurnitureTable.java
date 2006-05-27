@@ -263,8 +263,8 @@ public class FurnitureTable extends JTable {
         case 2 : return piece.getHeight();
         case 3 : return piece.getDepth();
         case 4 : return piece.getColor();
-        case 5 : return piece.isDoorOrWindow();
-        case 6 : return piece.isMovable();
+        case 5 : return piece.isMovable();
+        case 6 : return piece.isDoorOrWindow();
         case 7 : return piece.isVisible();
         default : throw new IllegalArgumentException("Unknown column " + columnIndex);
       }
