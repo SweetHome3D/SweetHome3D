@@ -91,13 +91,17 @@ public class HomeController implements Controller  {
    * Undo last undoable edit.
    */
   public void undo() {
-     undoManager.undo();
+    if (this.undoManager.canUndo()) {
+      this.undoManager.undo();
+    }
   }
 
   /**
    * Redo last undone edit.
    */
   public void redo() {
-    undoManager.redo();
+    if (this.undoManager.canRedo()) {
+      this.undoManager.redo();
+    }
   }
 }
