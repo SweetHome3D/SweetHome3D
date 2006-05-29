@@ -1,5 +1,5 @@
 /*
- * JFaceTreeCatalogTest.java 1 mai 2006
+ * JFaceFurnitureTableTest.java 1 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *

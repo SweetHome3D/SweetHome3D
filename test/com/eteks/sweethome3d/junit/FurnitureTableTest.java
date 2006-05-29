@@ -1,5 +1,5 @@
 /*
- * CatalogTreeTest.java 11 mai 2006
+ * FurnitureTableTest.java 11 mai 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
