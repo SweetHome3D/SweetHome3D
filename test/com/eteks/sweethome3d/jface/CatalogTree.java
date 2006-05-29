@@ -23,9 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -37,24 +39,26 @@ import org.eclipse.swt.widgets.Display;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
-import com.eteks.sweethome3d.viewcontroller.CatalogView;
 
 /**
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree extends TreeViewer implements CatalogView {
+public class CatalogTree  {
+  private TreeViewer treeViewer; 
+  
   public CatalogTree(Composite parent, Catalog catalog) {
-    super(parent);
-    setContentProvider(new CatalogTreeContentProvider(catalog));
-    setLabelProvider(new CatalogLabelProvider());
-    setInput(catalog);
+    this.treeViewer = new TreeViewer(parent);
+    this.treeViewer.setContentProvider(new CatalogTreeContentProvider(catalog));
+    this.treeViewer.setLabelProvider(new CatalogLabelProvider());
+    this.treeViewer.setInput(catalog);
   }
 
   public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    List selection  = getSelectionFromWidget();
     List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
-    for (Object item : selection) {
+    IStructuredSelection selection = (IStructuredSelection)this.treeViewer.getSelection();
+    for (Iterator it = selection.iterator(); it.hasNext(); ) {
+      Object item = it.next();
       // Add to selectedFurniture all the nodes that matches a piece of furniture
       if (item instanceof CatalogPieceOfFurniture) {
         selectedFurniture.add((CatalogPieceOfFurniture)item);
@@ -84,7 +88,7 @@ public class CatalogTree extends TreeViewer implements CatalogView {
             Image image = new Image(Display.getCurrent(), iconStream);
             iconStream.close();
             // Scale the read icon  
-            int rowHeight = getTree().getItemHeight();
+            int rowHeight = treeViewer.getTree().getItemHeight();
             int imageWidth = image.getBounds().width * rowHeight 
                              / image.getBounds().height;
             scaledImage = new Image (Display.getCurrent(), 
