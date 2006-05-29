@@ -37,12 +37,13 @@ import org.eclipse.swt.widgets.Display;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.viewcontroller.CatalogView;
 
 /**
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree extends TreeViewer  { 
+public class CatalogTree extends TreeViewer implements CatalogView {
   public CatalogTree(Composite parent, Catalog catalog) {
     super(parent);
     setContentProvider(new CatalogTreeContentProvider(catalog));
