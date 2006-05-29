@@ -24,43 +24,27 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 
-import com.eteks.sweethome3d.model.Catalog;
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.CatalogView;
-import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
-import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
- * The MVC view that edits home furniture. This class implements
- * {@link com.eteks.sweethome3d.viewcontroller.ViewFactory ViewFacory} because
- * child components need their parent at their instantiation. 
- * An instance of this class must be created before 
- * {@link com.eteks.sweethome3d.viewcontroller.HomeController HomeController}
- * to let this component assign the parent component to its children. 
+ * The MVC view that edits home furniture. 
  * @author Emmanuel Puybaret
  */
-public class HomeComposite extends Composite implements HomeView, ViewFactory {
+public class HomeComposite implements HomeView {
+  private Composite composite;
   private SashForm  catalogFurnitureSashForm;
 
   public HomeComposite(Composite parent) {
-    super(parent, SWT.NONE);
-    this.catalogFurnitureSashForm = new SashForm(this, SWT.VERTICAL);
-    setLayout(new FillLayout());
+    this.composite = new Composite(parent, SWT.NONE);
+    this.catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
+    this.composite.setLayout(new FillLayout());
+  }
+  
+  public Composite getHomeComposite() {
+    return this.composite;
   }
 
-  public HomeView createHomeView(HomeController controller) {
-    return this;
-  }
-
-  public CatalogView createCatalogView(Catalog catalog) {
-    return new CatalogTree(this.catalogFurnitureSashForm, catalog);
-  }
-
-  public FurnitureView createFurnitureView(FurnitureController controller, Home home, UserPreferences preferences) {
-    return new FurnitureTable(this.catalogFurnitureSashForm, controller, home, preferences);
+  public Composite getCatalogFurnitureComposite() {
+    return this.catalogFurnitureSashForm;
   }
 }

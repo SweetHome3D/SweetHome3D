@@ -22,16 +22,16 @@ package com.eteks.sweethome3d.jface;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -52,22 +52,26 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureView;
  * A table displaying furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends TableViewer implements FurnitureView {
+public class FurnitureTable implements FurnitureView {
+  private TableViewer tableViewer;
+  
   public FurnitureTable(Composite parent, FurnitureController controller, Home home, UserPreferences preferences) {
-    super(parent); 
+    this.tableViewer = new TableViewer(parent); 
     String [] columnNames = getColumnNames();
+    // Create SWT table columns
     int    [] columnAlignment = {SWT.LEFT, SWT.RIGHT, SWT.RIGHT, SWT.RIGHT, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
-    int    [] columnWidth     = {100, 50, 50, 50, 50, 50, 60, 50};
+    int    [] columnWidth     = {100, 50, 50, 50, 50, 60, 70, 50};
     for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-      TableColumn column = new TableColumn(getTable(), columnAlignment [columnIndex]);
-      column.setText(columnNames [columnIndex]);
-      column.setWidth(columnWidth [columnIndex]);
+      TableColumn column = new TableColumn(this.tableViewer.getTable(), columnAlignment [columnIndex]);
+      column.setText(columnNames [columnIndex]);  // Set column title
+      column.setWidth(columnWidth [columnIndex]); // Need a minimum width or columns are invisible
     }
-    getTable().setHeaderVisible(true);
-    setColumnProperties(columnNames);
-    setContentProvider(new FurnitureTableContentProvider(home));
-    setLabelProvider(new FurnitureLabelProvider(preferences));
-    setInput(home);
+    this.tableViewer.getTable().setHeaderVisible(true);
+    
+    this.tableViewer.setColumnProperties(columnNames);
+    this.tableViewer.setContentProvider(new FurnitureTableContentProvider(home));
+    this.tableViewer.setLabelProvider(new FurnitureLabelProvider(preferences));
+    this.tableViewer.setInput(home);
   }
 
   /**
@@ -93,7 +97,7 @@ public class FurnitureTable extends TableViewer implements FurnitureView {
    * @return a list of furniture. If no furniture is selected, the list is empty.
    */
   public List<HomePieceOfFurniture> getSelectedFurniture() {
-    return (List<HomePieceOfFurniture>)getSelectionFromWidget();
+    return ((IStructuredSelection)this.tableViewer.getSelection()).toList();
   }
 
   /**
@@ -102,8 +106,7 @@ public class FurnitureTable extends TableViewer implements FurnitureView {
    * @param furniture the furniture to select
    */
   public void setSelectedFurniture(List<HomePieceOfFurniture> furniture) {
-    getTable().deselectAll();
-    setSelectionToWidget(furniture, true);
+    this.tableViewer.setSelection(new StructuredSelection(furniture), true);
   }
 
   /**
@@ -131,7 +134,7 @@ public class FurnitureTable extends TableViewer implements FurnitureView {
             Image image = new Image(Display.getCurrent(), iconStream);
             iconStream.close();
             // Scale the read icon  
-            int rowHeight = getTable().getItemHeight();
+            int rowHeight = tableViewer.getTable().getItemHeight();
             int imageWidth = image.getBounds().width * rowHeight 
                              / image.getBounds().height;
             scaledImage = new Image (Display.getCurrent(), 
@@ -204,11 +207,11 @@ public class FurnitureTable extends TableViewer implements FurnitureView {
     private void addPieceOfFurniture(Home home, 
                      HomePieceOfFurniture piece) {
       int row = home.getFurniture().indexOf(piece);
-      insert(piece, row);
+      tableViewer.insert(piece, row);
     }
 
     private void removePieceOfFurniture(HomePieceOfFurniture piece) {
-      remove(piece);
+      tableViewer.remove(piece);
     }
 
     public Object [] getElements(Object inputElement) {

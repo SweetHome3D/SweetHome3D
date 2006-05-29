@@ -38,6 +38,7 @@ import org.eclipse.swt.widgets.ToolItem;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.jface.HomeComposite;
+import com.eteks.sweethome3d.jface.JFaceViewFactory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -56,18 +57,16 @@ public class JFaceFurnitureTableTest {
       private HomeController controller;
       
       protected void configureShell(Shell shell) {
-        shell.setText("Category Tree Test");
+        shell.setText("Furniture Table Test");
         shell.setLayout(new GridLayout());
       }
 
       protected Control createContents(Composite parent) {
         CoolBar coolBar = createCoolBar(parent);
-        // As SWT requires a parent for each component, we're obliged to create 
-        // first HomeComposite which implements also ViewFactory
-        HomeComposite homeComposite = new HomeComposite(parent);
-        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         // Create controller and the other view components
-        this.controller = new HomeController(homeComposite, home, preferences);
+        this.controller = new HomeController(new JFaceViewFactory(parent), home, preferences);
+        Composite homeComposite = ((HomeComposite)controller.getView()).getHomeComposite();
+        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
         return parent;
       }
 
