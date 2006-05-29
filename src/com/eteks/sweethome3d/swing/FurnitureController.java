@@ -90,7 +90,7 @@ public class FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doDeleteFurniture(newFurniture);
-        selectAndShowFurniture(oldSelection);        
+        selectFurniture(oldSelection);        
       }
       
       @Override
@@ -112,12 +112,11 @@ public class FurnitureController implements Controller {
     for (int i = 0; i < furnitureIndex.length; i++) {
       this.home.add(furniture.get(i), furnitureIndex [i]);
     }
-    selectAndShowFurniture(furniture);
+    selectFurniture(furniture);
   }
  
-  private void selectAndShowFurniture(List<HomePieceOfFurniture> furniture) {
+  private void selectFurniture(List<HomePieceOfFurniture> furniture) {
     this.furnitureView.setSelectedFurniture(furniture);
-    this.furnitureView.ensureFurnitureIsVisible(furniture);
   }
 
   /**
@@ -167,6 +166,6 @@ public class FurnitureController implements Controller {
       home.delete(piece);
     }
     List<HomePieceOfFurniture> emptyList = Collections.emptyList();
-    this.furnitureView.setSelectedFurniture(emptyList);
+    selectFurniture(emptyList);
   }
 }

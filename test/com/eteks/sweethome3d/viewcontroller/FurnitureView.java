@@ -40,9 +40,4 @@ public interface FurnitureView extends View {
    * @param furniture the furniture to select
    */
   public void setSelectedFurniture(List<HomePieceOfFurniture> furniture);
-
-  /**
-   * Ensures the rectangle which displays <code>furniture</code> is visible.
-   */
-  void ensureFurnitureIsVisible(List<HomePieceOfFurniture> furniture);
 }
