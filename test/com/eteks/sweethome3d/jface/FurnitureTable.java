@@ -57,7 +57,7 @@ public class FurnitureTable extends TableViewer implements FurnitureView {
     super(parent); 
     String [] columnNames = getColumnNames();
     int    [] columnAlignment = {SWT.LEFT, SWT.RIGHT, SWT.RIGHT, SWT.RIGHT, SWT.CENTER, SWT.CENTER, SWT.CENTER, SWT.CENTER};
-    int    [] columnWidth     = {120, 60, 60, 60, 60, 60, 80, 60};
+    int    [] columnWidth     = {100, 50, 50, 50, 50, 50, 60, 50};
     for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
       TableColumn column = new TableColumn(getTable(), columnAlignment [columnIndex]);
       column.setText(columnNames [columnIndex]);

@@ -65,7 +65,7 @@ public class JFaceFurnitureTableTest {
         // As SWT requires a parent for each component, we're obliged to create 
         // first HomeComposite which implements also ViewFactory
         HomeComposite homeComposite = new HomeComposite(parent);
-        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH | GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
         // Create controller and the other view components
         this.controller = new HomeController(homeComposite, home, preferences);
         return parent;
