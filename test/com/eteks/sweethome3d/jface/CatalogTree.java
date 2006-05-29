@@ -21,7 +21,9 @@ package com.eteks.sweethome3d.jface;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -33,19 +35,31 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 
 import com.eteks.sweethome3d.model.Catalog;
-import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.Category;
 
 /**
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree extends TreeViewer { 
+public class CatalogTree extends TreeViewer  { 
   public CatalogTree(Composite parent, Catalog catalog) {
     super(parent);
     setContentProvider(new CatalogTreeContentProvider(catalog));
     setLabelProvider(new CatalogLabelProvider());
     setInput(catalog);
+  }
+
+  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
+    List selection  = getSelectionFromWidget();
+    List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
+    for (Object item : selection) {
+      // Add to selectedFurniture all the nodes that matches a piece of furniture
+      if (item instanceof CatalogPieceOfFurniture) {
+        selectedFurniture.add((CatalogPieceOfFurniture)item);
+      }        
+    }
+    return selectedFurniture;
   }
 
   /**
@@ -54,7 +68,7 @@ public class CatalogTree extends TreeViewer {
   private class CatalogLabelProvider extends LabelProvider {
     // Label images cache (we're obliged to keep track of all the images
     // to dispose them when tree will be disposed)
-    Map<CatalogPieceOfFurniture, Image> imagesCache = 
+    private Map<CatalogPieceOfFurniture, Image> imagesCache = 
       new HashMap<CatalogPieceOfFurniture, Image>();
     
     @Override
