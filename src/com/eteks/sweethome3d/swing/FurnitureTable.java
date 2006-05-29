@@ -55,9 +55,7 @@ public class FurnitureTable extends JTable {
    * @param preferences the preferences of the application
    */
   public FurnitureTable(FurnitureController controller, Home home, UserPreferences preferences) {
-    ResourceBundle resource = 
-      ResourceBundle.getBundle(getClass().getName());
-    String [] columnNames = getColumnNames(resource);
+    String [] columnNames = getColumnNames();
     setModel(new FurnitureTableModel(home, columnNames));
     setColumnRenderers(preferences);
   }
@@ -65,7 +63,9 @@ public class FurnitureTable extends JTable {
   /**
    * Returns localized column names.
    */
-  private String [] getColumnNames(ResourceBundle resource) {
+  private String [] getColumnNames() {
+    ResourceBundle resource = 
+      ResourceBundle.getBundle(getClass().getName());
     String [] columnNames = {
        resource.getString("nameColumn"),
        resource.getString("widthColumn"),
