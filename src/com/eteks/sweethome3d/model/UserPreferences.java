@@ -32,7 +32,7 @@ public abstract class UserPreferences {
   public enum Unit {
     CENTIMETER, INCH;
 
-    public static Object centimerToInch(float length) {
+    public static float centimerToInch(float length) {
       return length / 2.54f;
     }
   }
