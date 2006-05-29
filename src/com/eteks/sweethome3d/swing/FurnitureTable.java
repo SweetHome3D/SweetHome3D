@@ -157,6 +157,7 @@ public class FurnitureTable extends JTable {
 
   /**
    * Returns the list of selected furniture in table.
+   * @return a list of furniture. If no furniture is selected, the list is empty.
    */
   public List<HomePieceOfFurniture> getSelectedFurniture() {
     int [] selectedRows = getSelectedRows();
