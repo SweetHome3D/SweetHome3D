@@ -19,18 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BorderLayout;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.Action;
 import javax.swing.JComponent;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JToolBar;
 
 /**
  * The MVC view that edits home furniture. 
