@@ -19,12 +19,6 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * A piece of furniture in {@link Home home}.
  * @author Emmanuel Puybaret
