@@ -112,9 +112,9 @@ public class CatalogTreeTest extends TestCase {
       // For each piece of furniture of a category
       for (int j = 0, m = model.getChildCount(rootChild) - 1; 
            j < m; j++) {
-        Object child = model.getChild(rootChild, i);
+        Object child = model.getChild(rootChild, j);
         if (j < m - 1) {
-          Object nextChild = model.getChild(rootChild, i + 1);
+          Object nextChild = model.getChild(rootChild, j + 1);
           // Check alphatical order of furniture nodes in tree 
           assertTrue("Furniture not sorted", comparator.compare(
               getNodeText(tree, child), 
