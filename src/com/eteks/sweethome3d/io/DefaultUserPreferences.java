@@ -1,5 +1,5 @@
 /*
- * UserDefaultPreferences.java 15 mai 2006
+ * DefaultUserPreferences.java 15 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
