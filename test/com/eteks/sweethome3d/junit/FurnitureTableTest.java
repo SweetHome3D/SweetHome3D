@@ -51,6 +51,10 @@ import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
 
+/**
+ * Tests furniture table component.
+ * @author Emmanuel Puybaret
+ */
 public class FurnitureTableTest extends TestCase {
   public void testFurnitureTable()  {
     // 1. Choose a locale that displays furniture dimensions in inches
