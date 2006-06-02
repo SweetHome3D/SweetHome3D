@@ -91,7 +91,7 @@ public class FurnitureTableTest extends TestCase {
     // 3. Select the first piece in table, delete it
     table.setSelectedFurniture(Arrays.asList(
         new HomePieceOfFurniture [] {homeFurniture.get(0)}));
-    furnitureController.deleteFurniture();
+    furnitureController.deleteSelectedFurniture();
     // Check the model contains only one piece
     assertEquals("Home doesn't contain 1 piece", 
         1, home.getFurniture().size());
@@ -188,7 +188,7 @@ public class FurnitureTableTest extends TestCase {
           getClass().getResource("resources/Delete16.gif")));
       deleteButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controller.getFurnitureController().deleteFurniture();
+          controller.getFurnitureController().deleteSelectedFurniture();
         }
       });
       JButton undoButton = new JButton(new ImageIcon(

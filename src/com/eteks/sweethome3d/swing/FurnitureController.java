@@ -123,7 +123,7 @@ public class FurnitureController implements Controller {
    * Controls the deletion of the current selected furniture in home.
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
-  public void deleteFurniture() {
+  public void deleteSelectedFurniture() {
     final List<HomePieceOfFurniture> selectedFurniture = this.furnitureView.getSelectedFurniture();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     // Sort the selected furniture in the ascending order of their index in home
