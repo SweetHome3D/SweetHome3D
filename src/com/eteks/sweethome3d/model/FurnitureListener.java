@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.util.EventListener;
 
 /**
- * Listener implemented to follow notifications from furniture changes in {@link Home}.
+ * Listener implemented to receive notifications of furniture changes in {@link Home}.
  * @author Emmanuel Puybaret
  */
 public interface FurnitureListener extends EventListener {

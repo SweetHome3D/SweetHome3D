@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.util.EventObject;
 
 /**
- * Type of event notified when its furniture is added or deleted.
+ * Type of event notified when {@link Home home} furniture is added or deleted.
  * @author Emmanuel Puybaret
  */
 public class FurnitureEvent extends EventObject {
