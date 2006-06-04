@@ -90,7 +90,7 @@ public class JFaceFurnitureTableTest {
         deleteToolItem.addSelectionListener(new SelectionAdapter () {
           @Override
           public void widgetSelected(SelectionEvent e) {
-            controller.getFurnitureController().deleteFurniture();
+            controller.getFurnitureController().deleteSelectedFurniture();
           } 
         });
         // Undo button
