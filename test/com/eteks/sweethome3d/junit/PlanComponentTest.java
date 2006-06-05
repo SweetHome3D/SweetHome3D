@@ -28,8 +28,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -66,7 +66,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Show home plan frame
     showWindow(frame);
     
-    // Build an ordered list of added walls to home
+    // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
     frame.home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
@@ -213,7 +213,7 @@ public class PlanComponentTest extends ComponentTestFixture {
    * Asserts <code>home</code> contains <code>walls</code>.
    */
   private void assertHomeContains(Home home, Wall ... walls) {
-    Set<Wall> homeWalls = home.getWalls();
+    Collection<Wall> homeWalls = home.getWalls();
     assertEquals("Home walls incorrect count", 
         walls.length, homeWalls.size());
     for (Wall wall : walls)

@@ -20,10 +20,9 @@
 package com.eteks.sweethome3d.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * The home managed by the application with its furniture.
@@ -32,7 +31,7 @@ import java.util.Set;
 public class Home {
   private List<HomePieceOfFurniture> furniture;
   private List<FurnitureListener>    furnitureListeners;
-  private Set<Wall>                  walls;
+  private Collection<Wall>           walls;
   private List<WallListener>         wallListeners;
 
   /**
@@ -41,7 +40,7 @@ public class Home {
   public Home() {
     this.furniture = new ArrayList<HomePieceOfFurniture>();
     this.furnitureListeners = new ArrayList<FurnitureListener>();
-    this.walls = new HashSet<Wall>();
+    this.walls = new ArrayList<Wall>();
     this.wallListeners = new ArrayList<WallListener>();
   }
 
@@ -121,10 +120,10 @@ public class Home {
   } 
 
   /**
-   * Returns an unmodifiable set of the walls of this home.
+   * Returns an unmodifiable collection of the walls of this home.
    */
-  public Set<Wall> getWalls() {
-    return Collections.unmodifiableSet(this.walls);
+  public Collection<Wall> getWalls() {
+    return Collections.unmodifiableCollection(this.walls);
   }
 
   /**
