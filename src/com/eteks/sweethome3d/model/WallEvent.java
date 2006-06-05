@@ -1,5 +1,5 @@
 /*
- * DefaultUserPreferences.java 15 mai 2006
+ * WallEvent.java 3 juin 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -17,27 +17,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package com.eteks.sweethome3d.io;
+package com.eteks.sweethome3d.model;
 
-import java.util.ResourceBundle;
-
-import com.eteks.sweethome3d.model.UserPreferences;
+import java.util.EventObject;
 
 /**
- * Default user preferences.
+ * Type of event notified when {@link Home home} walls are modified.
  * @author Emmanuel Puybaret
  */
-public class DefaultUserPreferences extends UserPreferences {
+public class WallEvent extends EventObject {
+  public enum Type {ADD, DELETE, UPDATE}
+
+  private Wall wall;
+  private Type type;
+  
   /**
-   * Creates default user preferences read from resource files.
+   * Creates an event emitted by <code>source</code> for a notification
+   * of a given <code>{@link Type type}</code> about a <code>wall</code>. 
    */
-  public DefaultUserPreferences() {
-    // Read default catalog
-    setCatalog(new DefaultCatalog());
-    // Read other preferences from resource bundle
-    ResourceBundle resource = ResourceBundle.getBundle(getClass().getName());
-    Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
-    setUnit(defaultUnit);
-    setDefaultThickness(Float.parseFloat(resource.getString("defaultThickness")));
+  public WallEvent(Object source, Wall wall, Type type) {
+    super(source);
+    this.wall = wall;
+    this.type = type;
+  }
+
+  /**
+   * Returns the wall associated to this event.
+   */
+  public Wall getWall() {
+    return this.wall;
+  }
+  
+  /**
+   * Returns the {@link Type type} of notification this event represents.
+   */
+  public Type getType() {
+    return this.type;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * DefaultUserPreferences.java 15 mai 2006
+ * WallListener.java 3 juin 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -17,27 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package com.eteks.sweethome3d.io;
+package com.eteks.sweethome3d.model;
 
-import java.util.ResourceBundle;
-
-import com.eteks.sweethome3d.model.UserPreferences;
+import java.util.EventListener;
 
 /**
- * Default user preferences.
+ * Listener implemented to receive notifications of walls changes in {@link Home}.
  * @author Emmanuel Puybaret
  */
-public class DefaultUserPreferences extends UserPreferences {
-  /**
-   * Creates default user preferences read from resource files.
-   */
-  public DefaultUserPreferences() {
-    // Read default catalog
-    setCatalog(new DefaultCatalog());
-    // Read other preferences from resource bundle
-    ResourceBundle resource = ResourceBundle.getBundle(getClass().getName());
-    Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
-    setUnit(defaultUnit);
-    setDefaultThickness(Float.parseFloat(resource.getString("defaultThickness")));
-  }
+public interface WallListener extends EventListener {
+  void wallChanged(WallEvent ev);
 }
