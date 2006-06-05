@@ -29,7 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 import junit.extensions.abbot.ComponentTestFixture;
-import abbot.tester.AbstractButtonTester;
+import abbot.tester.JButtonTester;
 
 /**
  * Simple test on Abbot framework.
@@ -57,7 +57,7 @@ public class AbbotTimeTest extends ComponentTestFixture {
     showWindow(frame, null, true);
     assertTrue(timeLabel.getText().equals(""));
     // Click on button
-    new AbstractButtonTester().actionClick(timeButton);
+    new JButtonTester().actionClick(timeButton);
     // Check label changed
     assertFalse(timeLabel.getText().equals(""));
   }
