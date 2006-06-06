@@ -63,7 +63,7 @@ public class Home {
   /**
    * Returns an unmodifiable list of the furniture managed by this home.
    * @return the furniture in the order they were
-   *         {@link #add(HomePieceOfFurniture) added}.
+   *         {@link #add(HomePieceOfFurniture, int) added}.
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
