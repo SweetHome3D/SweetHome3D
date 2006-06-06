@@ -88,51 +88,39 @@ public class PlanController implements Controller {
    }
 
   /**
-   * Processes a mouse click event. 
-   */
-  public void processMouseClicked(int x, int y, int clickCount) {
-    // TODO Auto-generated method stub
-  }
-
-  /**
    * Processes a mouse button pressed event.
    */
-  public void processMousePressed(int x, int y, boolean shiftDown) {
+  public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
     // TODO Auto-generated method stub
   }
 
   /**
    * Processes a mouse button released event.
    */
-  public void processMouseReleased(int x, int y) {
+  public void releaseMouse(int x, int y) {
     // TODO Auto-generated method stub
   }
 
   /**
    * Processes a mouse button moved event.
    */
-  public void processMouseMoved(int x, int y) {
-    // TODO Auto-generated method stub
-  }
-
-  /**
-   * Processes a mouse button dragged event.
-   */
-  public void processMouseDragged(int x, int y) {
+  public void moveMouse(int x, int y) {
     // TODO Auto-generated method stub
   }
 
   /**
    * Processes a focus lost event.
    */
-  public void processFocusLost() {
+  public void loseFocus() {
     // TODO Auto-generated method stub
   }
 
   /**
    * Processes a component resized event.
+   * @param width the new width of the component 
+   * @param height the new height of the component
    */
-  public void processComponentResized() {
+  public void resizeComponent(int width, int height) {
     // TODO Auto-generated method stub
   }
 }
