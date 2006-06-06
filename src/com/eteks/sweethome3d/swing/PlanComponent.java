@@ -47,9 +47,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanComponent extends JComponent {
   public PlanComponent(PlanController controller, Home home,
                        UserPreferences preferences) {
-    // TODO
   }
-
 
   /**
    * Returns the scale used to display the plan in component width.
@@ -67,19 +65,49 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns the selected items in plan.
+   * Returns the selected walls in plan.
    */
-  public List<Object> getSelectedItems() {
+  public List<Wall> getSelectedWalls() {
     // TODO Auto-generated method stub
     return null;
   }
 
   /**
-   * Sets the selected items in plan.
-   * @param selectedItems a list of walls and/or points.
+   * Sets the selected walls in plan.
+   * @param selectedWalls the list of walls to selected.
    */
-  public void setSelectedItems(List<Object> selectedItems) {
+  public void setSelectedWalls(List<Wall> selectedWalls) {
     // TODO
+  }
+
+  /**
+   * Returns the wall which start point is selected.
+   */
+  public Wall getSelectedWallStartPoint() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
+  /**
+   * Sets the wall which start point is selected.
+   */
+  public void setSelectedWallStartPoint(Wall wall) {
+    // TODO Auto-generated method stub
+  }
+  
+  /**
+   * Returns the wall which end point is selected.
+   */
+  public Wall getSelectedWallEndPoint() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
+  /**
+   * Sets the wall which end point is selected.
+   */
+  public void setSelectedWallEndPoint(Wall wall) {
+    // TODO Auto-generated method stub
   }
   
   /**

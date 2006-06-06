@@ -117,9 +117,10 @@ public class PlanComponentTest extends ComponentTestFixture {
     // 4. Check current mode is SELECTION
     assertEquals("Current mode isn't " + PlanController.Mode.SELECTION, 
         frame.planController.getMode(), PlanController.Mode.SELECTION);
-    // Click at (29, 32), and check the end point of the forth wall is selected
+    // Click at (29, 32), and check the end point of the forth wall is selected 
     tester.actionClick(plan, 29, 32);
-    assertSelectionContains(plan, wall4.getEndPoint());
+    assertSame("End point of 4th wall not selected", 
+        wall4, plan.getSelectedWallEndPoint());
 
     // 5. Drag and drop cursor to (19, 19)
     tester.actionMousePress(plan, 
@@ -195,10 +196,10 @@ public class PlanComponentTest extends ComponentTestFixture {
    * <code>wall</code> are at (startX, startY), (endX, endY). 
    */
   private void assertCoordinatesEqualWallPoints(int startX, int startY, int endX, int endY, Wall wall) {
-    assertEquals("Incorrect start X", startX, wall.getStartPoint().getX());
-    assertEquals("Incorrect start Y", startY, wall.getStartPoint().getY());
-    assertEquals("Incorrect end X", endY, wall.getEndPoint().getX());
-    assertEquals("Incorrect end Y", endY, wall.getEndPoint().getY());
+    assertEquals("Incorrect start X", startX, wall.getStartX());
+    assertEquals("Incorrect start Y", startY, wall.getStartY());
+    assertEquals("Incorrect end X", endY, wall.getEndX());
+    assertEquals("Incorrect end Y", endY, wall.getEndY());
   }
 
   /**
@@ -217,20 +218,21 @@ public class PlanComponentTest extends ComponentTestFixture {
     Collection<Wall> homeWalls = home.getWalls();
     assertEquals("Home walls incorrect count", 
         walls.length, homeWalls.size());
-    for (Wall wall : walls)
+    for (Wall wall : walls) {
       assertTrue("Wall doesn't belong to home", homeWalls.contains(wall));
+    }
   }
 
   /**
-   * Asserts <code>items</code> are the current selected ones in <code>home</code>.
-   * @param plan TODO
+   * Asserts <code>walls</code> are the current selected ones in <code>home</code>.
    */
   private void assertSelectionContains(PlanComponent plan, 
-                                       Object ... items) {
-    List<Object> selectedItems = plan.getSelectedItems();
-    assertEquals(items.length, selectedItems.size());
-    for (Object item : items)
-      assertTrue("Item not selected", selectedItems.contains(item));
+                                       Wall ... walls) {
+    List<Wall> selectedWalls = plan.getSelectedWalls();
+    assertEquals(walls.length, selectedWalls.size());
+    for (Wall wall : walls) {
+      assertTrue("Wall not selected", selectedWalls.contains(wall));
+    }
   }
   
   public static void main(String [] args) {

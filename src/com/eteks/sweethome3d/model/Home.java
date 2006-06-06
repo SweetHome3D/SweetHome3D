@@ -71,7 +71,7 @@ public class Home {
 
   /**
    * Adds a <code>piece</code> in parameter at a given <code>index</code>.
-   * Once the <code>piece</code> is added, all furniture listeners added to this home will receive a
+   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureAdded(FurnitureEvent) pieceOfFurnitureAdded}
    * notification.
    * <br>Caution : This method isn't thread safe.
@@ -88,7 +88,7 @@ public class Home {
 
   /**
    * Removes a given <code>piece</code> of furniture from this home.
-   * Once the <code>piece</code> is removed, all furniture listeners added to this home will receive a
+   * Once the <code>piece</code> is removed, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureDeleted(FurnitureEvent) pieceOfFurnitureDeleted}
    * notification.
    * <br>Caution : This method isn't thread safe.
@@ -128,7 +128,7 @@ public class Home {
 
   /**
    * Adds a given <code>wall</code> to the set of walls of this home.
-   * Once the <code>wall</code> is added, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is added, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#ADD ADD}. 
@@ -141,7 +141,7 @@ public class Home {
 
   /**
    * Removes a given <code>wall</code> from the set of walls of this home.
-   * Once the <code>wall</code> is removed, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#DELETE DELETE}.
@@ -157,8 +157,7 @@ public class Home {
     for (Wall otherWall : getWalls()) {
       if (wall.equals(otherWall.getWallAtStart())) {
         setWallAtStart(otherWall, null);
-      }
-      if (wall.equals(otherWall.getWallAtEnd())) {
+      } else if (wall.equals(otherWall.getWallAtEnd())) {
         setWallAtEnd(otherWall, null);
       }
     }
@@ -168,61 +167,41 @@ public class Home {
 
   /**
    * Moves <code>wall</code> start point of (<code>dx</code>, <code>dy</code>) pixels.
-   * Once the <code>wall</code> is updated, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> start point is attached itself
-   * to <code>wall</code>, wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   * No change is made on walls attached to <code>wall</code>.
    * <br>Caution : This method isn't thread safe.
    */
   public void moveWallStartPoint(Wall wall, float dx, float dy) {
-    moveWallPoint(wall, dx, dy, wall.getStartPoint());
-    notifyJoinedWallChanged(wall, wall.getWallAtStart());
+    if (dx != 0 || dy != 0) {
+      wall.setStartX(wall.getStartX() + dx);
+      wall.setStartY(wall.getStartY() + dy);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
   }
 
   /**
    * Moves <code>wall</code> end point of (<code>dx</code>, <code>dy</code>) pixels.
-   * Once the <code>wall</code> is updated, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> end point is attached itself
-   * to <code>wall</code>, wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   * No change is made on walls attached to <code>wall</code>.
    * <br>Caution : This method isn't thread safe.
    */
   public void moveWallEndPoint(Wall wall, float dx, float dy) {
-    moveWallPoint(wall, dx, dy, wall.getStartPoint());
-    notifyJoinedWallChanged(wall, wall.getWallAtEnd());
-  }
-
-  private void moveWallPoint(Wall wall, float dx, float dy, Point point) {
-    point.setX(point.getX() + dx);
-    point.setY(point.getY() + dy);
-    fireWallEvent(wall, WallEvent.Type.UPDATE);
-  }
-
-  /**
-   * Notifies <code>joinedWall</code> changed to wall listeners 
-   * if <code>joinedWall</code> is joined to <code>wall</code>. 
-   */
-  private void notifyJoinedWallChanged(Wall wall, Wall joinedWall) {
-    if (joinedWall != null
-        && (wall.equals(joinedWall.getWallAtStart())
-            || wall.equals(joinedWall.getWallAtEnd()))) {
-      fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
+    if (dx != 0 || dy != 0) {
+      wall.setEndX(wall.getEndX() + dx);
+      wall.setEndY(wall.getEndY() + dy);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }
 
   /**
    * Sets the wall at start of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
    * an {@link WallEvent#getType() event type} equal to
    * {@link WallEvent.Type#UPDATE UPDATE}. 
@@ -244,7 +223,7 @@ public class Home {
 
   /**
    * Sets the wall at end of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, all wall listeners added to this home will receive a
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
    * an {@link WallEvent#getType() event type} equal to
    * {@link WallEvent.Type#UPDATE UPDATE}. 

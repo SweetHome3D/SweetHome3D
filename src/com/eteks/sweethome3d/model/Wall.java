@@ -24,38 +24,85 @@ package com.eteks.sweethome3d.model;
  * @author Emmanuel Puybaret
  */
 public class Wall {
-  private Point startPoint;
-  private Point endPoint;
+  private float startX;
+  private float startY;
+  private float endX;
+  private float endY; 
   private Wall  wallAtStart;
   private Wall  wallAtEnd;
   private int   innerColor;
   private int   outerColor;
-  private float thickness; 
+  private float thickness;
 
   /**
-   * Creates a wall from <code>startPoint</code> to <code>endPoint</code>, 
+   * Creates a wall from (<code>startX</code>,<code>startY</code>)
+   * to (<code>endX</code>, <code>endY</code>), 
    * with given inner color, outer color and thickness.
    */
-  public Wall(Point startPoint, Point endPoint, int innerColor, int outerColor, float thickness) {
-    this.startPoint = startPoint;
-    this.endPoint = endPoint;
+  public Wall(float startX, float startY, float endX, float endY, int innerColor, int outerColor, float thickness) {
+    this.startX = startX;
+    this.startY = startY;
+    this.endX = endX;
+    this.endY = endY;
     this.innerColor = innerColor;
     this.outerColor = outerColor;
     this.thickness = thickness;
   }
 
   /**
-   * Returns the start point of this wall.
+   * Returns the start point abscissa of this wall.
    */
-  public Point getStartPoint() {
-    return this.startPoint;
+  public float getStartX() {
+    return this.startX;
   }
 
   /**
-   * Returns the end point of this wall.
+   * Sets the start point abscissa of this wall.
    */
-  public Point getEndPoint() {
-    return this.endPoint;
+  void setStartX(float startX) {
+    this.startX = startX;
+  }
+
+  /**
+   * Returns the start point ordinate of this wall.
+   */
+  public float getStartY() {
+    return this.startY;
+  }
+
+  /**
+   * Sets the start point ordinate of this wall.
+   */
+  void setStartY(float startY) {
+    this.startY = startY;
+  }
+
+  /**
+   * Returns the end point abscissa of this wall.
+   */
+  public float getEndX() {
+    return this.endX;
+  }
+
+  /**
+   * Sets the end point abscissa of this wall.
+   */
+  void setEndX(float endX) {
+    this.endX = endX;
+  }
+
+  /**
+   * Returns the end point ordinate of this wall.
+   */
+  public float getEndY() {
+    return this.endY;
+  }
+
+  /**
+   * Sets the end point ordinate of this wall.
+   */
+  void setEndY(float endY) {
+    this.endY = endY;
   }
 
   /**
