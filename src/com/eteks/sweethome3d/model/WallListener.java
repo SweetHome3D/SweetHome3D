@@ -26,5 +26,8 @@ import java.util.EventListener;
  * @author Emmanuel Puybaret
  */
 public interface WallListener extends EventListener {
+  /**
+   * Invoked when a wall is added, deleted or updated in home.
+   */
   void wallChanged(WallEvent ev);
 }
