@@ -54,7 +54,8 @@ import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.PlanController;
 
 /**
- * Tests plan component.
+ * Tests {@link com.eteks.sweethome3d.swing.PlanComponent plan} component and 
+ * its {@link com.eteks.sweethome3d.swing.PlanController controller}.
  * @author Emmanuel Puybaret
  */
 public class PlanComponentTest extends ComponentTestFixture {
