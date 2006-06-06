@@ -153,8 +153,6 @@ public class Home {
    * <br>Caution : This method isn't thread safe.
    */
   public void deleteWall(Wall wall) {
-    this.walls.remove(wall);
-    fireWallEvent(wall, WallEvent.Type.DELETE);
     // Detach any other wall attached to wall
     for (Wall otherWall : getWalls()) {
       if (wall.equals(otherWall.getWallAtStart())) {
@@ -164,6 +162,8 @@ public class Home {
         setWallAtEnd(otherWall, null);
       }
     }
+    this.walls.remove(wall);
+    fireWallEvent(wall, WallEvent.Type.DELETE);
   }
 
   /**
@@ -181,12 +181,7 @@ public class Home {
    */
   public void moveWallStartPoint(Wall wall, float dx, float dy) {
     moveWallPoint(wall, dx, dy, wall.getStartPoint());
-    Wall wallAtStart = wall.getWallAtStart();
-    if (wallAtStart != null
-        && (wall.equals(wallAtStart.getWallAtStart())
-            || wall.equals(wallAtStart.getWallAtEnd()))) {
-      fireWallEvent(wallAtStart, WallEvent.Type.UPDATE);
-    }
+    notifyJoinedWallChanged(wall, wall.getWallAtStart());
   }
 
   /**
@@ -204,18 +199,25 @@ public class Home {
    */
   public void moveWallEndPoint(Wall wall, float dx, float dy) {
     moveWallPoint(wall, dx, dy, wall.getStartPoint());
-    Wall wallAtEnd = wall.getWallAtEnd();
-    if (wallAtEnd != null
-        && (wall.equals(wallAtEnd.getWallAtStart())
-            || wall.equals(wallAtEnd.getWallAtEnd()))) {
-      fireWallEvent(wallAtEnd, WallEvent.Type.UPDATE);
-    }
+    notifyJoinedWallChanged(wall, wall.getWallAtEnd());
   }
 
   private void moveWallPoint(Wall wall, float dx, float dy, Point point) {
     point.setX(point.getX() + dx);
     point.setY(point.getY() + dy);
     fireWallEvent(wall, WallEvent.Type.UPDATE);
+  }
+
+  /**
+   * Notifies <code>joinedWall</code> changed to wall listeners 
+   * if <code>joinedWall</code> is joined to <code>wall</code>. 
+   */
+  private void notifyJoinedWallChanged(Wall wall, Wall joinedWall) {
+    if (joinedWall != null
+        && (wall.equals(joinedWall.getWallAtStart())
+            || wall.equals(joinedWall.getWallAtEnd()))) {
+      fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
+    }
   }
 
   /**
@@ -235,17 +237,9 @@ public class Home {
    *          from any wall it was attached to before.
    */
   public void setWallAtStart(Wall wall, Wall wallAtStart) {
-    Wall oldWallAtStart = wall.getWallAtStart();
+    detachJoinedWall(wall, wall.getWallAtStart());    
     wall.setWallAtStart(wallAtStart);
     fireWallEvent(wall, WallEvent.Type.UPDATE);
-    // Detach the previously attached wall to wall in parameter
-    if (oldWallAtStart != null) {
-      if (wall.equals(oldWallAtStart.getWallAtStart())) {
-        setWallAtStart(oldWallAtStart, null);
-      } else if (wall.equals(oldWallAtStart.getWallAtEnd())) {
-        setWallAtEnd(oldWallAtStart, null);
-      } 
-    }    
   }
 
   /**
@@ -265,17 +259,25 @@ public class Home {
    *          from any wall it was attached to before.
    */
   public void setWallAtEnd(Wall wall, Wall wallAtEnd) {
-    Wall oldWallAtEnd = wall.getWallAtEnd();
+    detachJoinedWall(wall, wall.getWallAtEnd());    
     wall.setWallAtEnd(wallAtEnd);
     fireWallEvent(wall, WallEvent.Type.UPDATE);
+  }
+
+  /**
+   * Detaches <code>joinedWall</code> from <code>wall</code>.
+   */
+  private void detachJoinedWall(Wall wall, Wall joinedWall) {
     // Detach the previously attached wall to wall in parameter
-    if (oldWallAtEnd != null) {
-      if (wall.equals(oldWallAtEnd.getWallAtStart())) {
-        setWallAtStart(oldWallAtEnd, null);
-      } else if (wall.equals(oldWallAtEnd.getWallAtEnd())) {
-        setWallAtEnd(oldWallAtEnd, null);
+    if (joinedWall != null) {
+      if (wall.equals(joinedWall.getWallAtStart())) {
+        joinedWall.setWallAtStart(null);
+        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
+      } else if (wall.equals(joinedWall.getWallAtEnd())) {
+        joinedWall.setWallAtEnd(null);
+        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
       } 
-    }    
+    }
   }
 
   /**
