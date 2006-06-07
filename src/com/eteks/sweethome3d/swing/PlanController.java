@@ -32,14 +32,17 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class PlanController implements Controller {
   public enum Mode {WALL_CREATION, SELECTION }
   
-  private PlanComponent planComponent;
-  private Home home;
-  private UserPreferences preferences;
+  private PlanComponent       planComponent;
+  private Home                home;
+  private UserPreferences     userPreferences;
+  private UndoableEditSupport undoSupport;
 
-  public PlanController(Home home, UserPreferences preferences, UndoableEditSupport support) {
+  public PlanController(Home home, UserPreferences userPreferences, 
+                        UndoableEditSupport undoSupport) {
     this.home = home;
-    this.preferences = preferences;
-    this.planComponent = new PlanComponent(this, home, preferences);
+    this.userPreferences = userPreferences;
+    this.undoSupport = undoSupport;
+    this.planComponent = new PlanComponent(this, home, userPreferences);
   }
 
   /**

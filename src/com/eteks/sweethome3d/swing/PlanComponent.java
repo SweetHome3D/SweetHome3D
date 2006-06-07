@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanComponent extends JComponent {
   public PlanComponent(PlanController controller, Home home,
                        UserPreferences preferences) {
+    // TODO
   }
 
   /**
@@ -81,46 +82,9 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns the wall which start point is selected.
+   * Sets rectangle selection feedback coordinates. 
    */
-  public Wall getSelectedWallStartPoint() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-  
-  /**
-   * Sets the wall which start point is selected.
-   */
-  public void setSelectedWallStartPoint(Wall wall) {
-    // TODO Auto-generated method stub
-  }
-  
-  /**
-   * Returns the wall which end point is selected.
-   */
-  public Wall getSelectedWallEndPoint() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-  
-  /**
-   * Sets the wall which end point is selected.
-   */
-  public void setSelectedWallEndPoint(Wall wall) {
-    // TODO Auto-generated method stub
-  }
-  
-  /**
-   * Updates the feedback of the current created wall.
-   */
-  public void updateNewWallFeedback(Wall newWall) {
-    // TODO
-  }
-  
-  /**
-   * Moves selected items feedback of (<code>dx</code>, <code>dy</code>) pixels. 
-   */
-  public void moveSelectionFeedback(float dx, float dy) {
+  public void setRectangleFeedback(int x, int y, int width, int height) {
     // TODO
   }
   

@@ -112,17 +112,29 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check a forth wall was created at (0, 300), (20, 20) coordinates
     Wall wall4 = orderedWalls.get(3);
     assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);
+    assertSelectionContains(plan, wall4);
     assertWallsAreJoined(wall3, wall4, null);
 
     // 4. Check current mode is SELECTION
     assertEquals("Current mode isn't " + PlanController.Mode.SELECTION, 
         frame.planController.getMode(), PlanController.Mode.SELECTION);
-    // Click at (29, 32), and check the end point of the forth wall is selected 
-    tester.actionClick(plan, 29, 32);
-    assertSame("End point of 4th wall not selected", 
-        wall4, plan.getSelectedWallEndPoint());
-
-    // 5. Drag and drop cursor to (19, 19)
+    // Press the delete key 
+    tester.actionKeyStroke(KeyEvent.VK_DELETE);
+    // Check plan contains only the first three walls
+    assertHomeContains(frame.home, wall1, wall2, wall3);
+    
+    // 5. Use WALL_CREATION mode
+    tester.actionClick(frame.modeButton);   
+    //  Click at (19, 19), then double click at (20, 170)
+    tester.actionClick(plan, 19, 19); 
+    tester.actionClick(plan, 20, 170, InputEvent.BUTTON1_MASK, 2);
+    // Check a new forth wall was created at (0, 0), (0, 300) coordinates
+    wall4 = orderedWalls.get(4);
+    assertCoordinatesEqualWallPoints(0, 0, 0, 300, wall4);
+    // Check its end points are joined to the first and third wall
+    assertWallsAreJoined(wall1, wall4, wall3);
+    
+    // 6. Drag and drop cursor to (19, 19)
     tester.actionMousePress(plan, 
         new ComponentLocation(new Point(29, 32)));
     tester.actionMouseMove(plan, 
@@ -133,37 +145,32 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check its end point is joined to the third wall
     assertWallsAreJoined(wall3, wall4, wall1);
 
-    // 6. drag and drop cursor from (10, 100) to (20, 180)
+    // 6. drag and drop cursor from (200, 100) to (300, 180)
     tester.actionMousePress(plan, 
-        new ComponentLocation(new Point(10, 100)));
+        new ComponentLocation(new Point(200, 100))); 
     tester.actionMouseMove(plan, 
-        new ComponentLocation(new Point(20, 180)));
-    tester.actionMouseRelease();
-    // Check the selected walls are the third and the forth one
-    assertSelectionContains(plan, wall3, wall4);
+        new ComponentLocation(new Point(300, 180))); 
+    tester.actionMouseRelease(); 
+    // Check the selected walls are the second and third ones
+    assertSelectionContains(plan, wall2, wall3);
 
     // 7. Press twice right arrow key     
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
-    // Check the 4 walls coordinates are (4, 0), (500, 0), (500, 300), (4, 300) 
-    assertCoordinatesEqualWallPoints(4, 0, 500, 0, wall1);
-    assertCoordinatesEqualWallPoints(500, 0, 500, 300, wall2);
-    assertCoordinatesEqualWallPoints(500, 300, 4, 300, wall3);
-    assertCoordinatesEqualWallPoints(4, 300, 4, 0, wall4);
+    // Check the 4 walls coordinates are (0, 0), (504, 0), (504, 300), (4, 300) 
+    assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
+    assertCoordinatesEqualWallPoints(504, 0, 504, 300, wall2);
+    assertCoordinatesEqualWallPoints(504, 300, 0, 300, wall3);
+    assertCoordinatesEqualWallPoints(4, 300, 0, 0, wall4);
 
-    // 8. Click at (269, 40) with Shift key depressed
+    // 8. Click at (272, 40) with Shift key depressed
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
-    tester.actionClick(plan, 269, 40);
+    tester.actionClick(plan, 272, 40);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
-    // Check the second wall was added to selection
-    assertSelectionContains(plan, wall2, wall3, wall4);
+    // Check the second wall was removed from selection
+    assertSelectionContains(plan, wall3);
 
-    // 9. Press the delete key 
-    tester.actionKeyStroke(KeyEvent.VK_DELETE);
-    // Check plan contains only the first wall
-    assertHomeContains(frame.home, wall1);
-
-    // 10. Drag cursor from (50, 20) to (50, 40) 
+     // 9. Drag cursor from (50, 20) to (50, 40) 
     tester.actionMousePress(plan, 
         new ComponentLocation(new Point(50, 20)));
     tester.actionMouseMove(plan, 
@@ -172,23 +179,23 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Transfer focus to undo button
     tester.actionFocus(frame.undoButton);
     // Check the wall didn't move
-    assertCoordinatesEqualWallPoints(4, 0, 500, 0, wall1);
+    assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
 
-    // 11. Click 6 times on undo button
+    // 10. Click 6 times on undo button
     for (int i = 0; i < 6; i++) {
       tester.actionClick(frame.undoButton);
     }
     // Check home doesn't contain any wall
     assertHomeContains(frame.home);
     
-    // 12. Click 6 times on redo button
+    // 11. Click 6 times on redo button
     for (int i = 0; i < 6; i++) {
       tester.actionClick(frame.redoButton);
     }
-    // Check plan contains only the first wall
-    assertHomeContains(frame.home, wall1);
-    // Check the first wall is selected
-    assertSelectionContains(plan, wall1);
+    // Check plan contains the four wall
+    assertHomeContains(frame.home, wall1, wall2, wall3, wall4);
+    // Check the second and the third wall are selected
+    assertSelectionContains(plan, wall2, wall3);
   }
 
   /**
