@@ -46,7 +46,7 @@ public class FurnitureController implements Controller {
   private FurnitureTable             furnitureView;
   private Home                       home;
   private UndoableEditSupport        undoSupport;
-  private ResourceBundle             viewResource;
+  private ResourceBundle             resource;
 
   /**
    * Creates the controller of home furniture view. 
@@ -57,7 +57,7 @@ public class FurnitureController implements Controller {
   public FurnitureController(Home home, UserPreferences preferences, UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.viewResource  = ResourceBundle.getBundle(getClass().getName()); 
+    this.resource  = ResourceBundle.getBundle(getClass().getName()); 
     this.furnitureView = new FurnitureTable(this, home, preferences);
   }
 
@@ -101,7 +101,7 @@ public class FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return viewResource.getString("undoAddFurnitureName");
+        return resource.getString("undoAddFurnitureName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -155,7 +155,7 @@ public class FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return viewResource.getString("undoDeleteFurnitureName");
+        return resource.getString("undoDeleteFurnitureName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
