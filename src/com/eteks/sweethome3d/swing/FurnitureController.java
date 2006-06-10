@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -74,13 +75,15 @@ public class FurnitureController implements Controller {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<? extends PieceOfFurniture> furniture) {
-    final List<HomePieceOfFurniture> oldSelection = this.furnitureView.getSelectedFurniture();
-    // Create the list of HomePieceOfFurniture instances that will be added to home
-    final List<HomePieceOfFurniture> newFurniture = new ArrayList<HomePieceOfFurniture> (furniture.size());
+    List<HomePieceOfFurniture> selection = this.furnitureView.getSelectedFurniture();
+    final HomePieceOfFurniture [] oldSelection = 
+      selection.toArray(new HomePieceOfFurniture [selection.size()]);
+    // Create HomePieceOfFurniture instances that will be added to home
+    final HomePieceOfFurniture [] newFurniture = new HomePieceOfFurniture [furniture.size()];
     final int [] furnitureIndex = new int [furniture.size()];
     int endIndex = home.getFurniture().size();
     for (int i = 0; i < furnitureIndex.length; i++) {
-      newFurniture.add(new HomePieceOfFurniture(furniture.get(i)));
+      newFurniture [i] = new HomePieceOfFurniture(furniture.get(i));
       furnitureIndex [i] = endIndex++;
     }
 
@@ -107,16 +110,16 @@ public class FurnitureController implements Controller {
     this.undoSupport.postEdit(undoableEdit);
   }
   
-  private void doAddFurniture(List<HomePieceOfFurniture> furniture,
+  private void doAddFurniture(HomePieceOfFurniture [] furniture,
                               int [] furnitureIndex) {
     for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.add(furniture.get(i), furnitureIndex [i]);
+      this.home.add(furniture [i], furnitureIndex [i]);
     }
     selectFurniture(furniture);
   }
  
-  private void selectFurniture(List<HomePieceOfFurniture> furniture) {
-    this.furnitureView.setSelectedFurniture(furniture);
+  private void selectFurniture(HomePieceOfFurniture [] furniture) {
+    this.furnitureView.setSelectedFurniture(Arrays.asList(furniture));
   }
 
   /**
@@ -131,9 +134,9 @@ public class FurnitureController implements Controller {
     for (HomePieceOfFurniture piece : selectedFurniture) {
       sortedMap.put(homeFurniture.indexOf(piece), piece);
     }
-    final List<HomePieceOfFurniture> furniture = 
-      new ArrayList<HomePieceOfFurniture>(sortedMap.values());
-    final int [] furnitureIndex = new int [furniture.size()];
+    final HomePieceOfFurniture [] furniture = 
+      sortedMap.values().toArray(new HomePieceOfFurniture [sortedMap.size()]);
+    final int [] furnitureIndex = new int [furniture.length];
     int i = 0;
     for (int index : sortedMap.keySet()) {
       furnitureIndex [i++] = index;
@@ -161,11 +164,10 @@ public class FurnitureController implements Controller {
     this.undoSupport.postEdit(undoableEdit);
   }
   
-  private void doDeleteFurniture(List<HomePieceOfFurniture> furniture) {
+  private void doDeleteFurniture(HomePieceOfFurniture [] furniture) {
     for (HomePieceOfFurniture piece : furniture) {
       home.delete(piece);
     }
-    List<HomePieceOfFurniture> emptyList = Collections.emptyList();
-    selectFurniture(emptyList);
+    selectFurniture(new HomePieceOfFurniture [0]);
   }
 }
