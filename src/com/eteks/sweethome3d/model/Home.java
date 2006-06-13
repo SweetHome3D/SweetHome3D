@@ -176,8 +176,8 @@ public class Home {
    */
   public void moveWallStartPoint(Wall wall, float dx, float dy) {
     if (dx != 0 || dy != 0) {
-      wall.setStartX(wall.getStartX() + dx);
-      wall.setStartY(wall.getStartY() + dy);
+      wall.setXStart(wall.getXStart() + dx);
+      wall.setYStart(wall.getYStart() + dy);
       fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }
@@ -193,8 +193,8 @@ public class Home {
    */
   public void moveWallEndPoint(Wall wall, float dx, float dy) {
     if (dx != 0 || dy != 0) {
-      wall.setEndX(wall.getEndX() + dx);
-      wall.setEndY(wall.getEndY() + dy);
+      wall.setXEnd(wall.getXEnd() + dx);
+      wall.setYEnd(wall.getYEnd() + dy);
       fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }
