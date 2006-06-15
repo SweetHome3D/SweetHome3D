@@ -21,7 +21,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +32,6 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -66,6 +64,8 @@ public class PlanComponentTest extends ComponentTestFixture {
     PlanTestFrame frame = new PlanTestFrame();    
     // Show home plan frame
     showWindow(frame);
+    PlanComponent plan = (PlanComponent)frame.planController.getView();
+    assertEquals("Wrong preferred width", 540, plan.getWidth());
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
@@ -83,7 +83,6 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertEquals("Current mode isn't " + PlanController.Mode.WALL_CREATION, 
         PlanController.Mode.WALL_CREATION, frame.planController.getMode());
     // Click at (20, 20), (270, 21), (269, 170), then double click at (20, 171)
-    PlanComponent plan = (PlanComponent)frame.planController.getView();
     tester.actionClick(plan, 20, 20);
     tester.actionClick(plan, 270, 21);
     tester.actionClick(plan, 269, 170);
@@ -259,10 +258,8 @@ public class PlanComponentTest extends ComponentTestFixture {
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);
       this.planController = new PlanController(this.home, preferences, undoSupport);
-      // Add plan component to frame with its preferred size set to 540 pixels by 400
-      JComponent plan = this.planController.getView();
-      plan.setPreferredSize(new Dimension(540, 400));
-      add(plan);
+      // Add plan component to frame at its preferred size 
+      add(this.planController.getView());
       // Create a toggle button for plan component mode 
       this.modeButton = new JToggleButton(new ImageIcon(
           getClass().getResource("resources/Add16.gif")));

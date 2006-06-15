@@ -23,24 +23,18 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.Point;
+import java.awt.Paint;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.TexturePaint;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -49,23 +43,18 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
-
-import quicktime.app.spaces.Collection;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -78,55 +67,37 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class PlanComponent extends JComponent {
-  // Useles after second step
-  private Home            home;
+  private static final float MARGIN = 40;  
   
-  private UserPreferences preferences;
-  private List<Wall>      selectedWalls;
-  private Rectangle2D     rectangleFeedback;
-  private HashMap<Wall,Shape> shapes;
+  private Home               home;
+  private UserPreferences    preferences;
+  private float              scale = 0.5f;
 
-  private Area wallsArea;
+  private List<Wall>         selectedWalls;
+  private Rectangle2D        rectangleFeedback;
 
   public PlanComponent(PlanController controller, Home home,
                        UserPreferences preferences) {
     this.home = home;
     this.preferences = preferences;
+    this.selectedWalls = new ArrayList<Wall>();
+
     // TODO
+    home.addWallListener(new WallListener () {
+      public void wallChanged(WallEvent ev) {
+        repaint();
+      }
+    });
     if (controller != null) {
       addAWTListeners(controller);
       configureKeyMap(controller);
     }
-    this.selectedWalls = new ArrayList<Wall>();
-    this.shapes = new HashMap<Wall,Shape>();
-    
-    for (Wall wall : home.getWalls()) {
-      updateWallShape(wall);
-    }
-    home.addWallListener(new WallListener () {
-      public void wallChanged(WallEvent ev) {
-        Wall wall = ev.getWall();
-        // Fifth, update joined walls to an updated wall
-        switch (ev.getType()) {
-          case ADD :
-          case UPDATE :
-            updateWallShape(wall);
-            break;
-          case DELETE :
-            shapes.remove(wall);
-            break;
-        }
-        
-        wallsArea = null;        
-        // First to third step, generate a simple repaint
-        repaint();
-      }
-    });
 
     setFocusable(true);
     setOpaque(true);
   }
 
+  // TODO
   /**
    * Adds AWT listeners to this component that calls back <code>controller</code> methods.  
    */
@@ -166,14 +137,9 @@ public class PlanComponent extends JComponent {
         controller.escape();
       }
     });
-    addComponentListener(new ComponentAdapter () {
-      @Override
-      public void componentResized(ComponentEvent ev) {
-        controller.resizeComponent(getWidth(), getHeight());
-      }
-    });
   }
 
+  // TODO
   private void configureKeyMap(final PlanController controller) {
     // Delete selection action mapped to back space and delete keys
     Action deleteSelectionAction = new AbstractAction() {
@@ -235,36 +201,281 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns the scale used to display the plan in component width.
+   * Returns the preferred size of this component.
    */
-  public float getScale() {
-    // TODO
-    return 0.5f;
+  @Override
+  public Dimension getPreferredSize() {
+    float xMax = Float.NEGATIVE_INFINITY;
+    float yMax = Float.NEGATIVE_INFINITY;
+    Collection<Wall> walls = home.getWalls(); 
+    if (walls.isEmpty()) {
+      xMax = yMax = 1000;
+    } else {
+      for (Wall wall : walls) {
+        xMax = Math.max(xMax, wall.getXStart());
+        xMax = Math.max(xMax, wall.getXEnd());
+        yMax = Math.max(yMax, wall.getYStart());
+        yMax = Math.max(yMax, wall.getYEnd());
+      }
+    }
+    Insets insets = getInsets();
+    return new Dimension(
+        Math.round((xMax + MARGIN * 2) * this.scale) + insets.left + insets.right, 
+        Math.round((yMax + MARGIN * 2) * this.scale) + insets.top  + insets.bottom);
   }
 
   /**
-   * Sets the scale used to display the plan in component width.
+   * Paints this component.
    */
-  public void setScale(float scale) {
-    // TODO Auto-generated method stub
+  @Override
+  protected void paintComponent(Graphics g) {
+    Graphics2D g2D = (Graphics2D)g.create();
+    paintBackground(g2D);
+    // Change coordinates system to home
+    Insets insets = getInsets();
+    g2D.translate(insets.left + MARGIN * this.scale, insets.top + MARGIN * this.scale);
+    g2D.scale(scale, scale);
+    g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    paintGrid(g2D);
+    paintWalls(g2D);   
+    paintRectangleFeedback(g2D);
+    g2D.dispose();
   }
 
-  public void setCursor(PlanController.Mode mode) {
-    if (mode == PlanController.Mode.WALL_CREATION) {
-      setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+  /**
+   * Fills the background with UI window background color. 
+   */
+  private void paintBackground(Graphics2D g2D) {
+    if (isOpaque()) {
+      Color backgroundColor = UIManager.getColor("window");
+      g2D.setColor(backgroundColor);
+      g2D.fillRect(0, 0, getWidth(), getHeight());
+    }
+  }
+
+  private void paintGrid(Graphics2D g2D) {
+    float mainGridSize;
+    float [] gridSizes;
+    if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
+      // Use a grid in inch and foot with a minimun grid increment of 1 inch
+      mainGridSize = 2.54f * 12; // 1 foot
+      gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
     } else {
-      setCursor(Cursor.getDefaultCursor());
+      // Use a grid in cm and meters with a minimun grid increment of 1 cm
+      mainGridSize = 100;
+      gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100};
+    }
+    // Compute grid size to get a grid where the space between each line is around 10 pixels
+    float gridSize = gridSizes [0];
+    for (int i = 1; i < gridSizes.length && gridSize * this.scale < 10; i++) {
+      gridSize = gridSizes [i];
+    }
+    
+    Insets insets = getInsets();
+    float xMin = convertXPixelToModel(insets.left);
+    float xMax = convertXPixelToModel(getWidth() - insets.right);
+    float yMin = convertYPixelToModel(insets.top);
+    float yMax = convertYPixelToModel(getHeight() - insets.bottom);
+    g2D.setColor(Color.LIGHT_GRAY);
+    g2D.setStroke(new BasicStroke(1 / this.scale));
+    // Draw vertical lines
+    for (float x = (int)(xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+      g2D.draw(new Line2D.Float(x, yMin, x, yMax)); 
+    }
+    // Draw horizontal lines
+    for (float y = (int)(yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+      g2D.draw(new Line2D.Float(xMin, y, xMax, y)); 
+    }
+    if (mainGridSize != gridSize) {
+      g2D.setStroke(new BasicStroke(2 / this.scale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+      // Draw main vertical lines
+      for (float x = (int)(xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+        g2D.draw(new Line2D.Float(x, yMin, x, yMax));
+      }
+      // Draw positive main horizontal lines
+      for (float y = (int)(xMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+        g2D.draw(new Line2D.Float(xMin, y, xMax, y)); 
+      }
+    }
+  }
+
+  /**
+   * Paints rectangle feedback.
+   */
+  private void paintRectangleFeedback(Graphics2D g2D) {
+    if (this.rectangleFeedback != null) {
+      Color selectionColor = UIManager.getColor("textHighlight");
+      g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 32));
+      g2D.fill(this.rectangleFeedback);
+      g2D.setPaint(selectionColor);
+      g2D.setStroke(new BasicStroke(1 / this.scale));
+      g2D.draw(this.rectangleFeedback);
+    }
+  }
+
+  /**
+   * Paints home walls.
+   */
+  private void paintWalls(Graphics2D g2D) {
+    Shape wallsArea = getWallsArea();
+    // Fill walls area
+    g2D.setPaint(getWallPaint());
+    g2D.fill(wallsArea);
+    // Draw selected walls with a surrounding shape
+    Color selectionColor = UIManager.getColor("textHighlight");
+    g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 128));
+    g2D.setStroke(new BasicStroke(6 / this.scale, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    for (Wall wall : this.selectedWalls) {
+      g2D.draw(getWallShape(wall));
+    }
+    // Draw walls area
+    g2D.setPaint(getForeground());
+    g2D.setStroke(new BasicStroke(2 / this.scale));
+    g2D.draw(wallsArea);
+  }
+
+  /**
+   * Returns the <code>Paint</code> object used to fill walls.
+   */
+  private Paint getWallPaint() {
+    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+    Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+    // Create an image displaying a line in its diagonal
+    imageGraphics.setColor(UIManager.getColor("window"));
+    imageGraphics.fillRect(0, 0, 10, 10);
+    imageGraphics.setColor(getForeground());
+    imageGraphics.drawLine(0, 9, 9, 0);
+    imageGraphics.dispose();
+    return new TexturePaint(image, 
+        new Rectangle2D.Float(0, 0, 10 / this.scale, 10 / this.scale));
+  }
+
+  /**
+   * Returns an area matching the union of all wall shapes. 
+   */
+  private Shape getWallsArea() {
+    Area area = new Area();
+    for (Wall wall : this.home.getWalls()) {
+      area.add(new Area(getWallShape(wall)));
+    }    
+    return area;
+  }
+  
+  /**
+   * Returns the shape of a <code>wall</code>.
+   */
+  private Shape getWallShape(Wall wall) {
+    float [][] wallPoints = getWallRectangle(wall);
+    float limit = 2 * wall.getThickness();
+    Wall wallAtStart = wall.getWallAtStart();
+    // If wall is joined to a wall at its start, 
+    // compute the intersection between their outlines 
+    if (wallAtStart != null) {
+      float [][] wallAtStartPoints = getWallRectangle(wallAtStart);
+      if (wallAtStart.getWallAtEnd() == wall) {
+        computeIntersection(wallPoints [0], wallPoints [1], 
+            wallAtStartPoints [1], wallAtStartPoints [0], limit);
+        computeIntersection(wallPoints [3], wallPoints [2],  
+            wallAtStartPoints [2], wallAtStartPoints [3], limit);
+      } else if (wallAtStart.getWallAtStart() == wall) {
+        computeIntersection(wallPoints [0], wallPoints [1], 
+            wallAtStartPoints [2], wallAtStartPoints [3], limit);
+        computeIntersection(wallPoints [3], wallPoints [2],  
+            wallAtStartPoints [0], wallAtStartPoints [1], limit);
+      }
+    }
+  
+    Wall wallAtEnd = wall.getWallAtEnd();
+    // If wall is joined to a wall at its end, 
+    // compute the intersection between their outlines 
+    if (wallAtEnd != null) {
+      float [][] wallAtEndPoints = getWallRectangle(wallAtEnd);
+      if (wallAtEnd.getWallAtStart() == wall) {
+        computeIntersection(wallPoints [1], wallPoints [0], 
+            wallAtEndPoints [0], wallAtEndPoints [1], limit);
+        computeIntersection(wallPoints [2], wallPoints [3], 
+            wallAtEndPoints [3], wallAtEndPoints [2], limit);
+      
+      } else if (wallAtEnd.getWallAtEnd() == wall) {
+        computeIntersection(wallPoints [1], wallPoints [0],  
+            wallAtEndPoints [3], wallAtEndPoints [2], limit);
+        computeIntersection(wallPoints [2], wallPoints [3], 
+            wallAtEndPoints [0], wallAtEndPoints [1], limit);
+      }
+    }
+
+    return getShape(wallPoints);
+  }
+
+  /**
+   * Compute the rectangle of a wall with its thickness.
+   */  
+  private float [][] getWallRectangle(Wall wall) {
+    double angle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+                              wall.getXEnd() - wall.getXStart());
+    float dx = (float)Math.sin(angle) * wall.getThickness() / 2;
+    float dy = (float)Math.cos(angle) * wall.getThickness() / 2;
+    return new float [][] {
+       {wall.getXStart() + dx, wall.getYStart() - dy},
+       {wall.getXEnd()   + dx, wall.getYEnd()   - dy},
+       {wall.getXEnd()   - dx, wall.getYEnd()   + dy},
+       {wall.getXStart() - dx, wall.getYStart() + dy}};
+  }
+  
+  /**
+   * Compute the intersection between the line that joins <code>point1</code> to <code>point2</code>
+   * and the line that joins <code>point3</code> and <code>point4</code>, and stores the result 
+   * in <code>point1</code>.
+   */
+  private void computeIntersection(float [] point1, float [] point2, 
+                                   float [] point3, float [] point4, float limit) {
+    float x = point1 [0];
+    float y = point1 [1];
+    float alpha1 = (point2 [1] - point1 [1]) / (point2 [0] - point1 [0]);
+    float beta1  = point2 [1] - alpha1 * point2 [0];
+    float alpha2 = (point4 [1] - point3 [1]) / (point4 [0] - point3 [0]);
+    float beta2  = point4 [1] - alpha2 * point4 [0];
+    // If the two lines are not parallel
+    if (alpha1 != alpha2) {
+      // If first line is vertical
+      if (point1 [0] == point2 [0]) {
+        x = point1 [0];
+        y = alpha2 * x + beta2;
+      // If second line is vertical
+      } else if (point3 [0] == point4 [0]) {
+        x = point3 [0];
+        y = alpha1 * x + beta1;
+      } else  {
+        x = (beta2 - beta1) / (alpha1 - alpha2);
+        y = alpha1 * x + beta1;
+      } 
+    }
+    if (Point2D.distanceSq(x, y, point1 [0], point1 [1]) < limit * limit) {
+      point1 [0] = x;
+      point1 [1] = y;
     }
   }
   
   /**
-   * Returns the selected walls in plan.
+   * Returns the shape matching the coordinates in <code>points</code> array.
    */
-  public List<Wall> getSelectedWalls() {
-    // TODO Auto-generated method stub
-    return Collections.unmodifiableList(this.selectedWalls);
+  private Shape getShape(float [][] points) {
+    GeneralPath wallPath = new GeneralPath();
+    wallPath.moveTo(points [0][0], points [0][1]);
+    for (int i = 1; i < points.length; i++) {
+      wallPath.lineTo(points [i][0], points [i][1]);
+    }
+    wallPath.closePath();
+    return wallPath;
   }
 
+  /**
+   * Returns an unmodifiable list of the selected walls in plan.
+   */
+  public List<Wall> getSelectedWalls() {
+    return Collections.unmodifiableList(this.selectedWalls);
+  }
+  
   /**
    * Sets the selected walls in plan.
    * @param selectedWalls the list of walls to selected.
@@ -278,96 +489,34 @@ public class PlanComponent extends JComponent {
   /**
    * Sets rectangle selection feedback coordinates. 
    */
-  public void setRectangleFeedback(int x, int y, int width, int height) {
-    // Caution : Rectangle2D doesn't support negative width and height
-    this.rectangleFeedback = new Rectangle2D.Float(convertPixelXToModel(x), convertPixelYToModel(y), 0, 0);
-    this.rectangleFeedback.add(convertPixelXToModel(x) + width / getScale(), convertPixelYToModel(y) + height / getScale());
+  public void setRectangleFeedback(float x0, float y0, float x1, float y1) {
+    this.rectangleFeedback = new Rectangle2D.Float(x0, y0, 0, 0);
+    this.rectangleFeedback.add(x1, y1);
     repaint();
   }
   
   /**
-   * Deletes feed back.
+   * Deletes rectangle feed back.
    */
-  public void deleteFeedback() {
+  public void deleteRectangleFeedback() {
     this.rectangleFeedback = null;
     repaint();
   }
 
-  // TODO make them private ?
-  public float convertPixelDistanceToModel(int pixelDelta) {
-    return pixelDelta / getScale();
-  }
-  
-  public float convertPixelXToModel(int pixelX) {
-    return (pixelX - 20) / getScale();
-  }
-
-  public float convertPixelYToModel(int pixelY) {
-    return (pixelY - 20) / getScale();
-  }
-
-  public int convertModelXToPixel(float x) {
-    return Math.round(x * getScale()) + 20;
-  }
-
-  public int convertModelYToPixel(float y) {
-    return Math.round(y * getScale()) + 20;
-  }
-  
   /**
-   * Returns <code>true</code> if <code>wall</code> contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>x</code> converted in model coordinates sytem.
    */
-  public boolean containsWallAt(Wall wall, int x, int y, float margin) {
-    // First and second, ignore intersection
-//    return false;
-
-    float modelX = convertPixelXToModel(x);
-    float modelY = convertPixelYToModel(y);
-    float modelMargin = margin / getScale();
-    return shapes.get(wall).intersects(
-        new Rectangle2D.Float(modelX - modelMargin, modelY - modelMargin, 2 * modelMargin, 2 * modelMargin));
+  public float convertXPixelToModel(int x) {
+    Insets insets = getInsets();
+    return (x - insets.left) / this.scale - MARGIN;
   }
-  
-  /**
-   * Returns <code>true</code> if <code>wall</code> end line contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
-   */
-  public boolean wallEndLineContains(Wall wall, int x, int y, float margin) {
-    // First and second, ignore intersection
-//    return false;
 
-    float modelX = convertPixelXToModel(x);
-    float modelY = convertPixelYToModel(y);
-    float modelMargin = margin / getScale();
-    // Compute a line with end points of wall shape 
-    float [][] wallPoints = getWallPoints(wall);
-    Line2D endLine = new Line2D.Float(wallPoints [1][0], wallPoints [1][1], 
-        wallPoints [2][0], wallPoints [2][1]);
-    return endLine.intersects(
-       new Rectangle2D.Float(modelX - modelMargin, modelY - modelMargin, 2 * modelMargin, 2 * modelMargin));
-  }
-  
   /**
-   * Returns <code>true</code> if <code>wall</code> start line contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>y</code> converted in model coordinates sytem.
    */
-  public boolean wallStartLineContains(Wall wall, int x, int y, float margin) {
-    // First and second, ignore intersection
-//    return false;
-
-    float modelX = convertPixelXToModel(x);
-    float modelY = convertPixelYToModel(y);
-    float modelMargin = margin / getScale();
-    // Compute a line with end points of wall shape 
-    float [][] wallPoints = getWallPoints(wall);
-    Line2D endLine = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], 
-        wallPoints [3][0], wallPoints [3][1]);
-    return endLine.intersects(
-       new Rectangle2D.Float(modelX - modelMargin, modelY - modelMargin, 2 * modelMargin, 2 * modelMargin));
+  public float convertYPixelToModel(int y) {
+    Insets insets = getInsets();
+    return (y - insets.top) / this.scale - MARGIN;
   }
   
   /**
@@ -375,312 +524,49 @@ public class PlanComponent extends JComponent {
    * with the horizontal rectangle which opposite corners are at points
    * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
    */
-  public boolean wallIntersects(Wall wall, int x0, int y0, int x1, int y1) {
-    // First and second, ignore intersection
-//    return false;
-    
-    Rectangle2D rectangle = new Rectangle2D.Float(convertPixelXToModel(x0), convertPixelYToModel(y0), 0, 0);
-    rectangle.add(convertPixelXToModel(x1), convertPixelYToModel(y1));
-    return shapes.get(wall).intersects(rectangle);
+  public boolean doesWallIntersectRectangle(Wall wall, float x0, float y0, float x1, float y1) {
+    Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
+    rectangle.add(x1, y1);
+    return getWallShape(wall).intersects(rectangle);
   }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    Color backgroundColor = UIManager.getDefaults().getColor("window");
-    if (isOpaque()) {
-      g.setColor(backgroundColor);
-      g.fillRect(0, 0, getWidth(), getHeight());
-      g.setColor(getForeground());
-    }
-    // TODO remove
-    {
-    Graphics2D g2D = (Graphics2D)g.create();
-    g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.setPaint(new GradientPaint(0, 0, Color.WHITE, 100, 100, Color.RED));
-    g2D.draw(new Line2D.Float(0, 0, 100, 100));
-    }
-    
-    Graphics2D g2D = (Graphics2D)g.create();
-    g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.translate(20, 20);
-    g2D.scale(getScale(), getScale());
-    
-    // First, try with line thickness
-//    for (Wall wall : this.home.getWalls()) {
-//      Line2D line = new Line2D.Float(wall.getStartX(), wall.getStartY(), wall.getEndX(), wall.getEndY());
-//      g2D.setStroke(new BasicStroke(wall.getThickness()));
-//      g2D.draw(line);
-//    }
-
-      // Second, try with a rectangular shape built on the fly 
-//    for (Wall wall : this.home.getWalls()) {
-//      g2D.draw(getShape(wall));
-//    }
-    
-    // Third, try with a collection of shapes
-//    for (Shape path : this.shapes.values()) {
-//      g2D.draw(path);
-//    }
-        
-    // Forth, manage selected shapes and rectangle feedback
-    Stroke surroundingSelectionStroke = new BasicStroke(6 / getScale(), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-    Stroke onePixelThickStroke = new BasicStroke(1 / getScale());
-    Stroke threePixelThickStroke = new BasicStroke(2 / getScale());
-    Color selectionColor = UIManager.getDefaults().getColor("textHighlight");
-    
-    float gridIncrement = 10;
-    float mainGridIncrement = 100;
-    if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-      gridIncrement = 2.54f;
-      mainGridIncrement = gridIncrement * 12;
-    }
-    Insets insets = getInsets();
-    float xMin = convertPixelXToModel(insets.left);
-    float xMax = convertPixelXToModel(getWidth() - insets.left - insets.right);
-    float yMin = convertPixelYToModel(insets.top);
-    float yMax = convertPixelYToModel(getHeight() - insets.bottom - insets.top);
-    g2D.setColor(Color.LIGHT_GRAY);
-    for (float x = 0; x < xMax; x += gridIncrement) {
-      if (x % mainGridIncrement == 0f) {
-        g2D.setStroke(threePixelThickStroke);
-      } else {
-        g2D.setStroke(onePixelThickStroke);        
-      }
-      g2D.draw(new Line2D.Float(x, yMin, x, yMax)); 
-    }
-    for (float y = 0; y < yMax; y += gridIncrement) {
-      if (y % mainGridIncrement == 0f) {
-        g2D.setStroke(threePixelThickStroke);
-      } else {
-        g2D.setStroke(onePixelThickStroke);        
-      }
-      g2D.draw(new Line2D.Float(xMin, y, xMax, y)); 
-    }
-
-//    for (Wall wall : this.shapes.keySet()) {
-//      Shape shape = this.shapes.get(wall);
-//      if (selectedWalls.contains(wall)) {
-//        g2D.setColor(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 64));
-//        // Always use a 6 pixel wide border for selection
-//        g2D.setStroke(surroundingSelectionStroke);
-//        g2D.draw(shape);
-//      } 
-//      g2D.setColor(getForeground());
-//      // Always draw shape with a 1 pixel wide border
-//      g2D.setStroke(onePixelThickStroke);
-//      g2D.draw(shape);
-//    }
-
-    if (this.wallsArea == null) {
-      this.wallsArea = new Area();
-      for (Wall wall : this.shapes.keySet()) {
-        this.wallsArea.add(new Area (this.shapes.get(wall)));
-      }
-    }
-    BufferedImage textureImage = new BufferedImage(10, 10, BufferedImage.OPAQUE);
-    Graphics2D textureGraphics = (Graphics2D)textureImage.getGraphics();
-    textureGraphics.setColor(backgroundColor);
-    textureGraphics.fillRect(0, 0, textureImage.getWidth(), textureImage.getHeight());
-    textureGraphics.setColor(getForeground());
-    textureGraphics.drawLine(0, 0, textureImage.getWidth(), textureImage.getHeight());
-    g2D.setPaint(new TexturePaint(textureImage, new Rectangle2D.Float(0, 0, textureImage.getWidth(), textureImage.getHeight())));
-    g2D.fill(this.wallsArea);
-    // Draw selection
-    for (Wall wall : this.shapes.keySet()) {
-      Shape shape = this.shapes.get(wall);
-      if (selectedWalls.contains(wall)) {
-        g2D.setColor(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 64));
-        // Always use a 6 pixel wide border for selection
-        g2D.setStroke(surroundingSelectionStroke);
-        g2D.draw(shape);
-      } 
-    }
-    // Draw wallsArea surround line
-    g2D.setColor(getForeground());
-    // Always draw shape with a 1 pixel wide border
-    g2D.setStroke(onePixelThickStroke);
-    g2D.draw(wallsArea);
-    
-    // Paint rectangle feeback if any
-    if (this.rectangleFeedback != null) {
-      g2D.setColor(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 16));
-      g2D.fill(this.rectangleFeedback);
-      g2D.setColor(selectionColor);
-      g2D.setStroke(onePixelThickStroke);
-      g2D.draw(this.rectangleFeedback);
-    }
-    
-    g2D.dispose();
-  }
-
+  
   /**
-   * Updates the shape of a <code>wall</code> as it's drawn at screen and used to compute intersections. 
+   * Returns <code>true</code> if <code>wall</code> contains 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
    */
-  private void updateWallShape(Wall wall) {
-    // Second to forth, generate a rectangular shape for a wall from lines at +- half thickness
-//    double angle = Math.atan2(wall.getEndY() - wall.getStartY(), wall.getEndX() - wall.getStartX());
-//    float delta = wall.getThickness() / 2;
-//    float sin = (float)Math.sin(angle) * delta;
-//    float cos = (float)Math.cos(angle) * delta;
-//    GeneralPath wallPath = new GeneralPath();
-//    wallPath.moveTo(wall.getStartX() + sin, wall.getStartY() - cos);
-//    wallPath.lineTo(wall.getEndX() + sin, wall.getEndY() - cos);
-//    wallPath.lineTo(wall.getEndX() - sin, wall.getEndY() + cos);
-//    wallPath.lineTo(wall.getStartX() - sin, wall.getStartY() + cos);
-//    wallPath.closePath();
-//    return wallPath;
-
-    // Fifth, compute the exact shape of a wall if it's joined to another one at its end point or at its start point
-//    double angle = Math.atan2(wall.getEndY() - wall.getStartY(), wall.getEndX() - wall.getStartX());
-//    float delta = wall.getThickness() / 2;
-//    float sin = (float)Math.sin(angle) * delta;
-//    float cos = (float)Math.cos(angle) * delta;
-//    float upperLineX1 = wall.getStartX() + sin;
-//    float upperLineY1 = wall.getStartY() - cos;
-//    float upperLineX2 = wall.getEndX() + sin;
-//    float upperLineY2 = wall.getEndY() - cos;
-//    float lowerLineX1 = wall.getStartX() - sin;
-//    float lowerLineY1 = wall.getStartY() + cos;
-//    float lowerLineX2 = wall.getEndX() - sin;
-//    float lowerLineY2 = wall.getEndY() + cos;
-//    Wall wallAtEnd = wall.getWallAtEnd();
-//    if (wallAtEnd != null) {
-//      Shape wallShape = shapes.get(wallAtEnd);
-//      PathIterator it = wallShape.getPathIterator(null);
-//      float [][] wallAtEndPoints = new float[4][2];
-//      for (int i = 0; i < wallAtEndPoints.length; i++) {
-//        it.currentSegment(wallAtEndPoints [i]);
-//        it.next();
-//      }
-//      if (wallAtEnd.getWallAtStart() == wall) {
-//        Point2D intersectionPoint = getIntersection(upperLineX1, upperLineY1, upperLineX2, upperLineY2,
-//            wallAtEndPoints [0][0], wallAtEndPoints [0][1], wallAtEndPoints [1][0], wallAtEndPoints [1][1]);
-//        upperLineX2 = (float)intersectionPoint.getX();
-//        upperLineY2 = (float)intersectionPoint.getY();
-//        intersectionPoint = getIntersection(lowerLineX1, lowerLineY1, lowerLineX2, lowerLineY2,
-//            wallAtEndPoints [2][0], wallAtEndPoints [2][1], wallAtEndPoints [3][0], wallAtEndPoints [3][1]);
-//        lowerLineX2 = (float)intersectionPoint.getX();
-//        lowerLineY2 = (float)intersectionPoint.getY();
-//      } else if (wallAtEnd.getWallAtEnd() == wall) {
-//        Point2D intersectionPoint = getIntersection(upperLineX1, upperLineY1, upperLineX2, upperLineY2,
-//            wallAtEndPoints [2][0], wallAtEndPoints [2][1], wallAtEndPoints [3][0], wallAtEndPoints [3][1]);
-//        upperLineX2 = (float)intersectionPoint.getX();
-//        upperLineY2 = (float)intersectionPoint.getY();
-//        intersectionPoint = getIntersection(lowerLineX1, lowerLineY1, lowerLineX2, lowerLineY2,
-//            wallAtEndPoints [0][0], wallAtEndPoints [0][1], wallAtEndPoints [1][0], wallAtEndPoints [1][1]);
-//        lowerLineX2 = (float)intersectionPoint.getX();
-//        lowerLineY2 = (float)intersectionPoint.getY();
-//      }
-//    }
-//
-//    Wall wallAtStart = wall.getWallAtStart();
-//    if (wallAtStart != null) {
-//      Shape wallShape = shapes.get(wallAtStart);
-//      PathIterator it = wallShape.getPathIterator(null);
-//      float [][] wallAtStartPoints = new float[4][2];
-//      for (int i = 0; i < wallAtStartPoints.length; i++) {
-//        it.currentSegment(wallAtStartPoints [i]);
-//        it.next();
-//      }
-//      if (wallAtStart.getWallAtEnd() == wall) {
-//        Point2D intersectionPoint = getIntersection(upperLineX1, upperLineY1, upperLineX2, upperLineY2,
-//            wallAtStartPoints [0][0], wallAtStartPoints [0][1], wallAtStartPoints [1][0], wallAtStartPoints [1][1]);
-//        upperLineX1 = (float)intersectionPoint.getX();
-//        upperLineY1 = (float)intersectionPoint.getY();
-//        intersectionPoint = getIntersection(lowerLineX1, lowerLineY1, lowerLineX2, lowerLineY2,
-//            wallAtStartPoints [2][0], wallAtStartPoints [2][1], wallAtStartPoints [3][0], wallAtStartPoints [3][1]);
-//        lowerLineX1 = (float)intersectionPoint.getX();
-//        lowerLineY1 = (float)intersectionPoint.getY();
-//      } else if (wallAtStart.getWallAtStart() == wall) {
-//        Point2D intersectionPoint = getIntersection(upperLineX1, upperLineY1, upperLineX2, upperLineY2,
-//            wallAtStartPoints [2][0], wallAtStartPoints [2][1], wallAtStartPoints [3][0], wallAtStartPoints [3][1]);
-//        upperLineX1 = (float)intersectionPoint.getX();
-//        upperLineY1 = (float)intersectionPoint.getY();
-//        intersectionPoint = getIntersection(lowerLineX1, lowerLineY1, lowerLineX2, lowerLineY2,
-//            wallAtStartPoints [0][0], wallAtStartPoints [0][1], wallAtStartPoints [1][0], wallAtStartPoints [1][1]);
-//        lowerLineX1 = (float)intersectionPoint.getX();
-//        lowerLineY1 = (float)intersectionPoint.getY();
-//      }
-//    }
-
-    // Sixth, optimize
-    double angle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart());
-    float delta = wall.getThickness() / 2;
-    float sin = (float)Math.sin(angle) * delta;
-    float cos = (float)Math.cos(angle) * delta;
-    float [][] wallPoints = {{wall.getXStart() + sin, wall.getYStart() - cos},
-                             {wall.getXEnd() + sin,   wall.getYEnd() - cos},
-                             {wall.getXEnd() - sin,   wall.getYEnd() + cos},
-                             {wall.getXStart() - sin, wall.getYStart() + cos}};
-    Wall wallAtEnd = wall.getWallAtEnd();
-    if (wallAtEnd != null) {
-      float [][] wallAtEndPoints = getWallPoints(wallAtEnd);
-      if (wallAtEnd.getWallAtStart() == wall) {
-        computeIntersection(wallPoints [1], wallAtEndPoints [0],
-            wallPoints [0], wallPoints [1],
-            wallAtEndPoints [0], wallAtEndPoints [1]);
-        computeIntersection(wallPoints [2], wallAtEndPoints [3], 
-            wallPoints [2], wallPoints [3],
-            wallAtEndPoints [2], wallAtEndPoints [3]);
-        
-      } else if (wallAtEnd.getWallAtEnd() == wall) {
-        computeIntersection(wallPoints [1], wallAtEndPoints [2],
-            wallPoints [0], wallPoints [1],
-            wallAtEndPoints [2], wallAtEndPoints [3]);
-        computeIntersection(wallPoints [2], wallAtEndPoints [1], 
-            wallPoints [2], wallPoints [3],
-            wallAtEndPoints [0], wallAtEndPoints [1]);
-      }
-
-      this.shapes.put(wallAtEnd, getRectangleShape(wallAtEndPoints));
-    }
-
-    Wall wallAtStart = wall.getWallAtStart();
-    if (wallAtStart != null) {
-      float [][] wallAtStartPoints = getWallPoints(wallAtStart);
-      if (wallAtStart.getWallAtEnd() == wall) {
-        computeIntersection(wallPoints [0], wallAtStartPoints [1],
-            wallPoints [0], wallPoints [1],
-            wallAtStartPoints [0], wallAtStartPoints [1]);
-        computeIntersection(wallPoints [3], wallAtStartPoints [2],
-            wallPoints [2], wallPoints [3],
-            wallAtStartPoints [2], wallAtStartPoints [3]);
-      } else if (wallAtStart.getWallAtStart() == wall) {
-        computeIntersection(wallPoints [0], wallAtStartPoints [3], 
-            wallPoints [0], wallPoints [1],
-            wallAtStartPoints [2], wallAtStartPoints [3]);
-        computeIntersection(wallPoints [3], wallAtStartPoints [0],
-            wallPoints [2], wallPoints [3],
-            wallAtStartPoints [0], wallAtStartPoints [1]);
-      }
-
-      this.shapes.put(wallAtStart, getRectangleShape(wallAtStartPoints));
-    }
-
-    this.shapes.put(wall, getRectangleShape(wallPoints));
+  public boolean containsWallAt(Wall wall, float x, float y, float margin) {
+    return getWallShape(wall).intersects(x - margin, y - margin, 2 * margin, 2 * margin);
   }
-
-
+  
   /**
-   * Returns the shape matching the 4 points in <code>wallPoints</code>.
+   * Returns <code>true</code> if <code>wall</code> start line contains 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
    */
-  private GeneralPath getRectangleShape(float [][] wallPoints) {
-    GeneralPath wallPath = new GeneralPath();
-    wallPath.moveTo(wallPoints [0][0], wallPoints [0][1]);
-    wallPath.lineTo(wallPoints [1][0], wallPoints [1][1]);
-    wallPath.lineTo(wallPoints [2][0], wallPoints [2][1]);
-    wallPath.lineTo(wallPoints [3][0], wallPoints [3][1]);
-    wallPath.closePath();
-    return wallPath;
+  public boolean containsWallStartLineAt(Wall wall, float x, float y, float margin) {
+    float [][] wallPoints = getWallPoints(wall);
+    return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
+      intersectsLine(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
   }
-
+  
+  /**
+   * Returns <code>true</code> if <code>wall</code> end line contains 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean containsWallEndLineAt(Wall wall, float x, float y, float margin) {
+    float [][] wallPoints = getWallPoints(wall);
+    return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
+      intersectsLine(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]);
+  }
+  
   /**
    * Returns the points of a wall shape.
    */
   private float [][] getWallPoints(Wall wall) {
-    Shape wallShape = this.shapes.get(wall);
     float [][] wallPoints = new float[4][2];
-    PathIterator it = wallShape.getPathIterator(null);
+    PathIterator it = getWallShape(wall).getPathIterator(null);
     for (int i = 0; i < wallPoints.length; i++) {
       it.currentSegment(wallPoints [i]);
       it.next();
@@ -688,36 +574,31 @@ public class PlanComponent extends JComponent {
     return wallPoints;
   }
   
+  // TODO
+  
   /**
-   * Compute the intersection between the line that joins <code>point1</code> to <code>point2</code>
-   * and the line that joins <code>point3</code> and <code>point4</code>, and stores the result 
-   * <code>pointLine1</code> and <code>pointLine2</code>.
+   * Returns the scale used to display the plan.
    */
-  private void computeIntersection(float [] pointLine1, float [] pointLine2,
-                                   float [] point1, float [] point2, 
-                                   float [] point3, float [] point4) {
-    float x = pointLine1 [0];
-    float y = pointLine1 [1];
-    float alpha1 = (point2 [1] - point1 [1]) / (point2 [0] - point1 [0]);
-    float beta1  = point2 [1] - alpha1 * point2 [0];
-    float alpha2 = (point4 [1] - point3 [1]) / (point4 [0] - point3 [0]);
-    float beta2  = point4 [1] - alpha2 * point4 [0];
-    if (alpha1 != alpha2) {
-      if (point1 [0] != point2 [0] 
-          && point3 [0] != point4 [0]) {
-        x = (beta2 - beta1) / (alpha1 - alpha2);
-        y = alpha1 * x + beta1;
-      } else if (point1 [0] == point2 [0]) {
-        x = point1 [0];
-        y = alpha2 * x + beta2;
-      } else if (point3 [0] == point4 [0]) {
-        x = point3 [0];
-        y = alpha1 * x + beta1;
-      }
+  public float getScale() {
+    return this.scale;
+  }
+
+  /**
+   * Sets the scale used to display the plan.
+   */
+  public void setScale(float scale) {
+    this.scale = scale;
+  }
+
+  /**
+   * Sets mouse cursor, depending on mode.
+   */
+  public void setCursor(PlanController.Mode mode) {
+    if (mode == PlanController.Mode.WALL_CREATION) {
+      setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+    } else {
+      setCursor(Cursor.getDefaultCursor());
     }
-    pointLine1 [0] = x;
-    pointLine1 [1] = y;
-    pointLine2 [0] = x;
-    pointLine2 [1] = y;
   }
 }
+
