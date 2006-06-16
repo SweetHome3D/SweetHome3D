@@ -48,11 +48,12 @@ public class HomePlanTest {
     // Join the two first walls
     home.setWallAtEnd(wall1, wall2);
     home.setWallAtStart(wall2, wall1);
-    // Create a frame that displays this home in a plan component 
+    // Create a component that displays this home  
     PlanComponent planComponent = new PlanComponent(null, home, new DefaultUserPreferences());
     planComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     planComponent.setSelectedWalls(Arrays.asList(new Wall [] {wall2, wall3}));
     planComponent.setRectangleFeedback(-25, 100, 700, 225);
+    // Show the component in a frame
     JFrame frame = new JFrame("Home Plan Test");
     frame.add(planComponent);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
