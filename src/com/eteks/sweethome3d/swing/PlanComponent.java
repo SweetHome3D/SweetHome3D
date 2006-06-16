@@ -50,6 +50,7 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -231,11 +232,16 @@ public class PlanComponent extends JComponent {
   protected void paintComponent(Graphics g) {
     Graphics2D g2D = (Graphics2D)g.create();
     paintBackground(g2D);
-    // Change coordinates system to home
     Insets insets = getInsets();
+    // Clip componant to avoid drawing in empty borders
+    g2D.clipRect(insets.left, insets.top, 
+        getWidth() - insets.left - insets.right, 
+        getHeight() - insets.top - insets.bottom);
+    // Change coordinates system to home
     g2D.translate(insets.left + MARGIN * this.scale, insets.top + MARGIN * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    // Paint component contents
     paintGrid(g2D);
     paintWalls(g2D);   
     paintRectangleFeedback(g2D);
@@ -330,7 +336,7 @@ public class PlanComponent extends JComponent {
     }
     // Draw walls area
     g2D.setPaint(getForeground());
-    g2D.setStroke(new BasicStroke(2 / this.scale));
+    g2D.setStroke(new BasicStroke(2f / this.scale));
     g2D.draw(wallsArea);
   }
 

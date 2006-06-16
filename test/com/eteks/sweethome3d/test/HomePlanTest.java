@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.test;
 
 import java.util.Arrays;
 
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -49,8 +50,9 @@ public class HomePlanTest {
     home.setWallAtStart(wall2, wall1);
     // Create a frame that displays this home in a plan component 
     PlanComponent planComponent = new PlanComponent(null, home, new DefaultUserPreferences());
+    planComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     planComponent.setSelectedWalls(Arrays.asList(new Wall [] {wall2, wall3}));
-    planComponent.setRectangleFeedback(-25, 100, 500, 225);
+    planComponent.setRectangleFeedback(-25, 100, 700, 225);
     JFrame frame = new JFrame("Home Plan Test");
     frame.add(planComponent);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
