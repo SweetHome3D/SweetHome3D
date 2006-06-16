@@ -469,7 +469,7 @@ public class PlanController implements Controller {
     // and if (x,y) is close to wallUnderCursor start line 
     if (wallUnderCursor != null
         && wallUnderCursor.getWallAtStart() == null
-        && planComponent.containsWallStartLineAt(wallUnderCursor, 
+        && planComponent.containsWallStartAt(wallUnderCursor, 
               x, y, 5 / planComponent.getScale())) {
       return wallUnderCursor;
     }
@@ -486,7 +486,7 @@ public class PlanController implements Controller {
     // and if (x,y) is close to wallUnderCursor end line 
     if (wallUnderCursor != null
         && wallUnderCursor.getWallAtEnd() == null
-        && planComponent.containsWallEndLineAt(wallUnderCursor, 
+        && planComponent.containsWallEndAt(wallUnderCursor, 
               x, y, 5 / planComponent.getScale())) {
       return wallUnderCursor;
     }
@@ -757,6 +757,7 @@ public class PlanController implements Controller {
       doMoveWalls(planComponent.getSelectedWalls(), 
           (x - this.xLastMouseMove) / planComponent.getScale(), 
           (y - this.yLastMouseMove) / planComponent.getScale());
+      planComponent.ensurePointIsVisible(x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;
       this.mouseMoved = true;
@@ -825,6 +826,7 @@ public class PlanController implements Controller {
                                          planComponent.convertXPixelToModel(getYLastMousePress()), 
                                          planComponent.convertYPixelToModel(x), 
                                          planComponent.convertYPixelToModel(y));
+      planComponent.ensurePointIsVisible(x, y);
     }
 
     @Override
@@ -1012,7 +1014,9 @@ public class PlanController implements Controller {
           doDeselectAll();
         }
       }
-      
+
+      // Ensure point at (x,y) is visible
+      planComponent.ensurePointIsVisible(x, y);
       // Update move coordinates
       this.xLastEnd = xEnd;
       this.yLastEnd = yEnd;

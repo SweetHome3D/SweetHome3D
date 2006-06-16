@@ -27,6 +27,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Paint;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.TexturePaint;
@@ -50,7 +51,6 @@ import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
@@ -93,7 +93,6 @@ public class PlanComponent extends JComponent {
       addAWTListeners(controller);
       configureKeyMap(controller);
     }
-
     setFocusable(true);
     setOpaque(true);
   }
@@ -206,23 +205,37 @@ public class PlanComponent extends JComponent {
    */
   @Override
   public Dimension getPreferredSize() {
-    float xMax = Float.NEGATIVE_INFINITY;
-    float yMax = Float.NEGATIVE_INFINITY;
-    Collection<Wall> walls = home.getWalls(); 
-    if (walls.isEmpty()) {
-      xMax = yMax = 1000;
+    if (isPreferredSizeSet()) {
+      return super.getPreferredSize();
     } else {
-      for (Wall wall : walls) {
-        xMax = Math.max(xMax, wall.getXStart());
-        xMax = Math.max(xMax, wall.getXEnd());
-        yMax = Math.max(yMax, wall.getYStart());
-        yMax = Math.max(yMax, wall.getYEnd());
+      Collection<Wall> walls = home.getWalls(); 
+      Rectangle2D wallsBounds;
+      if (walls.isEmpty()) {
+        wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
+      } else {
+        wallsBounds = getWallsBounds(walls);
       }
+      Insets insets = getInsets();
+      return new Dimension(
+          Math.round(((float)wallsBounds.getMaxX() + MARGIN * 2) * this.scale) + insets.left + insets.right, 
+          Math.round(((float)wallsBounds.getMaxY() + MARGIN * 2) * this.scale) + insets.top  + insets.bottom);
     }
-    Insets insets = getInsets();
-    return new Dimension(
-        Math.round((xMax + MARGIN * 2) * this.scale) + insets.left + insets.right, 
-        Math.round((yMax + MARGIN * 2) * this.scale) + insets.top  + insets.bottom);
+  }
+  
+  /**
+   * Returns the bounds of <code>walls</code>.
+   */
+  private Rectangle2D getWallsBounds(Collection<Wall> walls) {
+    Rectangle2D wallBounds = null;
+    for (Wall wall : walls) {
+      if (wallBounds == null) {
+        wallBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
+      } else {
+        wallBounds.add(wall.getXStart(), wall.getYStart());
+      }
+      wallBounds.add(wall.getXEnd(), wall.getYEnd());
+    }
+    return wallBounds;
   }
 
   /**
@@ -488,10 +501,26 @@ public class PlanComponent extends JComponent {
    */
   public void setSelectedWalls(List<Wall> selectedWalls) {
     this.selectedWalls.clear();
-    this.selectedWalls.addAll(selectedWalls);
+    if (!selectedWalls.isEmpty()) {
+      this.selectedWalls.addAll(selectedWalls);
+      ensureRectangleIsVisible(getWallsBounds(selectedWalls));
+    }
     repaint();
   }
-
+  
+  /**
+   * Ensures <code>rectangle</code> is visible at screen and moves
+   * scroll bars if needed.
+   */
+  private void ensureRectangleIsVisible(Rectangle2D rectangle) {
+    Insets insets = getInsets();
+    scrollRectToVisible(new Rectangle(
+        Math.round((float)rectangle.getX() * this.scale + MARGIN) + insets.left, 
+        Math.round((float)rectangle.getY() * this.scale + MARGIN) + insets.top, 
+        Math.round((float)rectangle.getWidth() * this.scale), 
+        Math.round((float)rectangle.getHeight() * this.scale)));
+  }
+ 
   /**
    * Sets rectangle selection feedback coordinates. 
    */
@@ -550,7 +579,7 @@ public class PlanComponent extends JComponent {
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
-  public boolean containsWallStartLineAt(Wall wall, float x, float y, float margin) {
+  public boolean containsWallStartAt(Wall wall, float x, float y, float margin) {
     float [][] wallPoints = getWallPoints(wall);
     return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
       intersectsLine(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
@@ -561,7 +590,7 @@ public class PlanComponent extends JComponent {
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
-  public boolean containsWallEndLineAt(Wall wall, float x, float y, float margin) {
+  public boolean containsWallEndAt(Wall wall, float x, float y, float margin) {
     float [][] wallPoints = getWallPoints(wall);
     return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
       intersectsLine(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]);
@@ -582,6 +611,14 @@ public class PlanComponent extends JComponent {
   
   // TODO
   
+  /**
+   * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
+   * moving scroll bars if needed.
+   */
+  public void ensurePointIsVisible(int xPixel, int yPixel) {
+    scrollRectToVisible(new Rectangle(xPixel, yPixel, 1, 1));
+  }
+
   /**
    * Returns the scale used to display the plan.
    */
