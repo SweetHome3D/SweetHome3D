@@ -82,25 +82,25 @@ public class HomeTest extends TestCase {
     
     // Move end point of second wall
     updatedWalls.clear();
-    home.moveWallEndPoint(wall2, -50, 0);
+    home.moveWallEndPointTo(wall2, 60, 100);
     // Check wall2 end position and that wall listener received 1 notifications
-    assertEquals("Incorrect abscissa", 50f, wall2.getXEnd());
+    assertEquals("Incorrect abscissa", 60f, wall2.getXEnd());
     assertEquals("Incorrect ordinate", 100f, wall2.getYEnd());
     assertWallCollectionContains(updatedWalls, wall2);
 
     // Move point shared by the two walls
     updatedWalls.clear();
-    home.moveWallStartPoint(wall2, -50, 0);
+    home.moveWallStartPointTo(wall2, 60, 0);
     // Check wall2 start point position
-    assertEquals("Incorrect abscissa", 50f, wall2.getXStart());
+    assertEquals("Incorrect abscissa", 60f, wall2.getXStart());
     assertEquals("Incorrect ordinate", 0f, wall2.getYStart());
     // Check that wall listener received 2 notifications
     assertWallCollectionContains(updatedWalls, wall2);
 
     updatedWalls.clear();
-    home.moveWallEndPoint(wall1, -50, 0);
+    home.moveWallEndPointTo(wall1, 60, 0);
     // Check wall1 end point position
-    assertEquals("Incorrect abscissa", 50f, wall1.getXEnd());
+    assertEquals("Incorrect abscissa", 60f, wall1.getXEnd());
     assertEquals("Incorrect ordinate", 0f, wall1.getYEnd());
     // Check that wall listener received 2 notifications
     assertWallCollectionContains(updatedWalls, wall1);
