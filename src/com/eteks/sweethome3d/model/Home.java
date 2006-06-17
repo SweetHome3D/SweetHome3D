@@ -166,7 +166,7 @@ public class Home {
   }
 
   /**
-   * Moves <code>wall</code> start point of (<code>dx</code>, <code>dy</code>) pixels.
+   * Moves <code>wall</code> start point to (<code>x</code>, <code>y</code>).
    * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
@@ -174,16 +174,16 @@ public class Home {
    * No change is made on walls attached to <code>wall</code>.
    * <br>Caution : This method isn't thread safe.
    */
-  public void moveWallStartPoint(Wall wall, float dx, float dy) {
-    if (dx != 0 || dy != 0) {
-      wall.setXStart(wall.getXStart() + dx);
-      wall.setYStart(wall.getYStart() + dy);
+  public void moveWallStartPointTo(Wall wall, float x, float y) {
+    if (x != wall.getXStart() || y != wall.getYStart()) {
+      wall.setXStart(x);
+      wall.setYStart(y);
       fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }
 
   /**
-   * Moves <code>wall</code> end point of (<code>dx</code>, <code>dy</code>) pixels.
+   * Moves <code>wall</code> end point to (<code>x</code>, <code>y</code>) pixels.
    * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
@@ -191,10 +191,10 @@ public class Home {
    * No change is made on walls attached to <code>wall</code>.
    * <br>Caution : This method isn't thread safe.
    */
-  public void moveWallEndPoint(Wall wall, float dx, float dy) {
-    if (dx != 0 || dy != 0) {
-      wall.setXEnd(wall.getXEnd() + dx);
-      wall.setYEnd(wall.getYEnd() + dy);
+  public void moveWallEndPointTo(Wall wall, float x, float y) {
+    if (x != wall.getXEnd() || y != wall.getYEnd()) {
+      wall.setXEnd(x);
+      wall.setYEnd(y);
       fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }
