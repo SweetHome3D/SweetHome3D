@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.test;
 
+import java.awt.Dimension;
 import java.util.Arrays;
 
 import javax.swing.BorderFactory;
@@ -37,9 +38,9 @@ public class HomePlanTest {
   public static void main(String [] args) {
     final int white = 0xFFFFFF;
     // Create 3 walls
-    Wall wall1 = new Wall(0, 0, 300, 0, white, white, 25);
-    Wall wall2 = new Wall(300, 0, 600, 300, white, white, 25);
-    Wall wall3 = new Wall(0, 0, 0, 300, white, white, 10);
+    Wall wall1 = new Wall(-100, 0, 200, 0, white, white, 25);
+    Wall wall2 = new Wall(200, 0, 500, 300, white, white, 25);
+    Wall wall3 = new Wall(-100, 0, -100, 300, white, white, 10);
     // Add them to a Home instance
     Home home = new Home();
     home.addWall(wall1);
@@ -52,7 +53,7 @@ public class HomePlanTest {
     PlanComponent planComponent = new PlanComponent(null, home, new DefaultUserPreferences());
     planComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     planComponent.setSelectedWalls(Arrays.asList(new Wall [] {wall2, wall3}));
-    planComponent.setRectangleFeedback(-25, 100, 700, 225);
+    planComponent.setRectangleFeedback(-125, 100, 700, 225);
     // Show the component in a frame
     JFrame frame = new JFrame("Home Plan Test");
     frame.add(planComponent);

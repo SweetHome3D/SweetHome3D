@@ -57,8 +57,8 @@ public class PlanController implements Controller {
   private final ControllerState wallCreationState;
   private final ControllerState newWallState;
   // Mouse cursor position at last mouse press  
-  private int xLastMousePress;
-  private int yLastMousePress;
+  private float xLastMousePress;
+  private float yLastMousePress;
   private boolean shiftDownLastMousePress;
 
   public PlanController(Home home, UserPreferences userPreferences, 
@@ -124,9 +124,9 @@ public class PlanController implements Controller {
   }
 
   /**
-   * Moves the selection of (<code>dx</code>,<code>dy</code>) pixels in home.
+   * Moves the selection of (<code>dx</code>,<code>dy</code>) in home.
    */
-  public void moveSelection(int dx, int dy) {
+  public void moveSelection(float dx, float dy) {
     this.state.moveSelection(dx, dy);
   }
   
@@ -141,7 +141,7 @@ public class PlanController implements Controller {
   /**
    * Processes a mouse button pressed event.
    */
-  public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
+  public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
     // Store the last coodinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
@@ -152,28 +152,28 @@ public class PlanController implements Controller {
   /**
    * Processes a mouse button released event.
    */
-  public void releaseMouse(int x, int y) {
+  public void releaseMouse(float x, float y) {
     this.state.releaseMouse(x, y);
   }
 
   /**
    * Processes a mouse button moved event.
    */
-  public void moveMouse(int x, int y) {
+  public void moveMouse(float x, float y) {
     this.state.moveMouse(x, y);
   }
 
   /**
    * Returns the abscissa of mouse position at last mouse press.
    */
-  private int getXLastMousePress() {
+  private float getXLastMousePress() {
     return this.xLastMousePress;
   }
 
   /**
    * Returns the ordinate of mouse position at last mouse press.
    */
-  private int getYLastMousePress() {
+  private float getYLastMousePress() {
     return this.yLastMousePress;
   }
   
@@ -215,14 +215,14 @@ public class PlanController implements Controller {
       home.setWallAtEnd(wall, wallStartAtEnd);
       home.setWallAtStart(wallStartAtEnd, wall);
       // Make wall end at the exact same position as wallAtEnd start point
-      home.moveWallEndPoint(wall, wallStartAtEnd.getXStart() - wall.getXEnd(), 
-                                  wallStartAtEnd.getYStart() - wall.getYEnd());
+      home.moveWallEndPointTo(wall, wallStartAtEnd.getXStart(), 
+                                  wallStartAtEnd.getYStart());
     } else if (wallEndAtEnd != null) {
       home.setWallAtEnd(wall, wallEndAtEnd);
       home.setWallAtEnd(wallEndAtEnd, wall);
-      // Make wall end at the exact same position as wallAtEnd start point
-      home.moveWallEndPoint(wall, wallEndAtEnd.getXEnd() - wall.getXEnd(), 
-                                  wallEndAtEnd.getYEnd() - wall.getYEnd());
+      // Make wall end at the exact same position as wallAtEnd end point
+      home.moveWallEndPointTo(wall, wallEndAtEnd.getXEnd(), 
+                                  wallEndAtEnd.getYEnd());
     }
   }
   
@@ -288,7 +288,7 @@ public class PlanController implements Controller {
       }
     }      
     // Select added walls
-    doSelectWalls(Arrays.asList(newWalls));
+    doSelectAndShowWalls(Arrays.asList(newWalls));
   }
 
   /**
@@ -347,16 +347,16 @@ public class PlanController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           List<Wall> wallList = Arrays.asList(walls);
-          doSelectWalls(wallList);
           doMoveWalls(wallList, -dx, -dy);       
+          doSelectAndShowWalls(wallList);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           List<Wall> wallList = Arrays.asList(walls);
-          doSelectWalls(wallList);
           doMoveWalls(wallList, dx, dy);      
+          doSelectAndShowWalls(wallList);
         }      
   
         @Override
@@ -367,7 +367,43 @@ public class PlanController implements Controller {
       undoSupport.postEdit(undoableEdit);
     }
   }
-  
+
+  /**
+   * Moves <code>walls</code> in plan component of (<code>dx</code>, <code>dy</code>) units.
+   */
+  private void doMoveWalls(List<Wall> walls, float dx, float dy) {
+    for (Wall wall : walls) {        
+      home.moveWallStartPointTo(wall, wall.getXStart() + dx, wall.getYStart() + dy);
+      home.moveWallEndPointTo(wall, wall.getXEnd() + dx, wall.getYEnd() + dy);
+      Wall wallAtStart = wall.getWallAtStart();
+      // If wall is joined to a wall at its start 
+      // and that this wall doesn't belong to the list of moved walls
+      if (wallAtStart != null && !walls.contains(wallAtStart)) {
+        // Move the wall start point or end point
+        if (wallAtStart.getWallAtStart() == wall) {
+          home.moveWallStartPointTo(wallAtStart, 
+              wallAtStart.getXStart() + dx, wallAtStart.getYStart() + dy);
+        } else if (wallAtStart.getWallAtEnd() == wall) {
+          home.moveWallEndPointTo(wallAtStart, 
+              wallAtStart.getXEnd() + dx, wallAtStart.getYEnd() + dy);
+        }
+      }
+      Wall wallAtEnd = wall.getWallAtEnd();
+      // If wall is joined to a wall at its  
+      // and that this wall doesn't belong to the list of moved walls
+      if (wallAtEnd != null && !walls.contains(wallAtEnd)) {
+        // Move the wall start point or end point
+        if (wallAtEnd.getWallAtStart() == wall) {
+          home.moveWallStartPointTo(wallAtEnd, 
+              wallAtEnd.getXStart() + dx, wallAtEnd.getYStart() + dy);
+        } else if (wallAtEnd.getWallAtEnd() == wall) {
+          home.moveWallEndPointTo(wallAtEnd, 
+              wallAtEnd.getXEnd() + dx, wallAtEnd.getYEnd() + dy);
+        }
+      }
+    }
+  }
+
   /**
    * Moves selected walls in plan component of (<code>dx</code>, <code>dy</code>) units
    * and record it as undoable operation.
@@ -381,39 +417,15 @@ public class PlanController implements Controller {
   }
   
   /**
-   * Moves <code>walls</code> in plan component of (<code>dx</code>, <code>dy</code>) units.
+   * Selects <code>selection</code> walls and make them visible at screen.
    */
-  private void doMoveWalls(List<Wall> walls, float dx, float dy) {
-    for (Wall wall : walls) {        
-      home.moveWallStartPoint(wall, dx, dy);
-      home.moveWallEndPoint(wall, dx, dy);
-      Wall wallAtStart = wall.getWallAtStart();
-      // If wall is joined to a wall at its start 
-      // and that this wall doesn't belong to the list of moved walls
-      if (wallAtStart != null && !walls.contains(wallAtStart)) {
-        // Move the wall start point or end point
-        if (wallAtStart.getWallAtStart() == wall) {
-          home.moveWallStartPoint(wallAtStart, dx, dy);
-        } else if (wallAtStart.getWallAtEnd() == wall) {
-          home.moveWallEndPoint(wallAtStart, dx, dy);
-        }
-      }
-      Wall wallAtEnd = wall.getWallAtEnd();
-      // If wall is joined to a wall at its  
-      // and that this wall doesn't belong to the list of moved walls
-      if (wallAtEnd != null && !walls.contains(wallAtEnd)) {
-        // Move the wall start point or end point
-        if (wallAtEnd.getWallAtStart() == wall) {
-          home.moveWallStartPoint(wallAtEnd, dx, dy);
-        } else if (wallAtEnd.getWallAtEnd() == wall) {
-          home.moveWallEndPoint(wallAtEnd, dx, dy);
-        }
-      }
-    }
+  private void doSelectAndShowWalls(List<Wall> selection) {
+    doSelectWalls(selection);
+    planComponent.ensureWallsAreVisible(selection);
   }
-
+  
   /**
-   * Selects <code>selection</code> objects.
+   * Selects <code>selection</code> walls and make them visible at screen.
    */
   private void doSelectWalls(List<Wall> selection) {
     planComponent.setSelectedWalls(selection);
@@ -432,17 +444,6 @@ public class PlanController implements Controller {
   private void doDeselectAll() {
     List<Wall> emptyList = Collections.emptyList();
     doSelectWalls(emptyList);
-  }
-
-  /**
-   * Returns the wall at (<code>xPixel</code>, <code>yPixel</code>) 
-   * point, with a given <code>margin</code> in pixel, different from 
-   * <code>ignoredWall</code>.
-   */
-  private Wall getWallAt(int xPixel, int yPixel, int marginPixel, Wall ignoredWall) {
-    return getWallAt(planComponent.convertXPixelToModel(xPixel),
-                     planComponent.convertYPixelToModel(yPixel),
-                     marginPixel / planComponent.getScale(), ignoredWall);
   }
 
   /**
@@ -602,24 +603,24 @@ public class PlanController implements Controller {
         double firstQuarterTanAngle2 = Math.abs(tanAngle2);   
         float x1 = Math.abs(xCenter - x);
         float y2 = Math.abs(yCenter - y);
-        int x2 = 0;
+        float x2 = 0;
         // If angle 2 is greater than 0 rad
         if (firstQuarterTanAngle2 > 1E-10) { 
           // Compute the abscissa of point 2 that belongs to angle 1 radius at y2 ordinate 
-          x2 = (int)(y2 / firstQuarterTanAngle2);
+          x2 = (float)(y2 / firstQuarterTanAngle2);
         }
-        int y1 = 0;
+        float y1 = 0;
         // If angle 1 is smaller than PI / 2 rad
         if (firstQuarterTanAngle1 < 1E10) {
           // Compute the ordinate of point 1 that belongs to angle 1 radius at x1 abscissa 
-          y1 = (int)(x1 * firstQuarterTanAngle1);
+          y1 = (float)(x1 * firstQuarterTanAngle1);
         }
         
         // Apply magnetism to the smallest distance
         if (Math.abs(x2 - x1) < Math.abs(y1 - y2)) {
-          this.x = xCenter + (int)((yCenter - y) / tanAngle2);            
+          this.x = xCenter + (float)((yCenter - y) / tanAngle2);            
         } else {
-          this.y = yCenter - (int)((x - xCenter) * tanAngle1);
+          this.y = yCenter - (float)((x - xCenter) * tanAngle1);
         }
       }
     }
@@ -661,19 +662,19 @@ public class PlanController implements Controller {
     public void escape() {
     }
 
-    public void moveSelection(int dx, int dy) {
+    public void moveSelection(float dx, float dy) {
     }
 
     public void setMagnetismDisabled(boolean magnetismDisabled) {
     }
 
-    public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
+    public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
     }
 
-    public void releaseMouse(int x, int y) {
+    public void releaseMouse(float x, float y) {
     }
 
-    public void moveMouse(int x, int y) {
+    public void moveMouse(float x, float y) {
     }
   }
 
@@ -707,14 +708,14 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void moveSelection(int dx, int dy) {
-      moveSelectedWalls(dx / planComponent.getScale(), dy / planComponent.getScale());
+    public void moveSelection(float dx, float dy) {
+      moveSelectedWalls(dx, dy);
     }
 
     @Override
-    public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
+    public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
       // If shift isn't pressed, and a wall is under cursor position
-      if (!shiftDown && getWallAt(x, y, 2, null) != null) {
+      if (!shiftDown && getWallAt(x, y, 2 / planComponent.getScale(), null) != null) {
         // Change state to SelectionMoveState
         setState(selectionMoveState);
       } else {
@@ -729,8 +730,8 @@ public class PlanController implements Controller {
    * and the selection of one wall, if mouse isn't moved while button is depressed. 
    */
   private class SelectionMoveState extends ControllerState {
-    private int     xLastMouseMove;
-    private int     yLastMouseMove;
+    private float     xLastMouseMove;
+    private float     yLastMouseMove;
     private boolean mouseMoved;
 
     @Override
@@ -743,7 +744,7 @@ public class PlanController implements Controller {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
-      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), 2, null);
+      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), 2 / planComponent.getScale(), null);
       List<Wall> selection = planComponent.getSelectedWalls();
       // If the wall under the cursor doesn't belong to selection
       if (!selection.contains(wallUnderCursor)) {
@@ -753,10 +754,9 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void moveMouse(int x, int y) {      
+    public void moveMouse(float x, float y) {      
       doMoveWalls(planComponent.getSelectedWalls(), 
-          (x - this.xLastMouseMove) / planComponent.getScale(), 
-          (y - this.yLastMouseMove) / planComponent.getScale());
+          x - this.xLastMouseMove, y - this.yLastMouseMove);
       planComponent.ensurePointIsVisible(x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;
@@ -764,14 +764,14 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void releaseMouse(int x, int y) {
+    public void releaseMouse(float x, float y) {
       if (this.mouseMoved) {
         // Post in undo support a move operation
-        postWallsMove((this.xLastMouseMove - getXLastMousePress()) / planComponent.getScale(), 
-                      (this.yLastMouseMove - getYLastMousePress()) / planComponent.getScale());
+        postWallsMove(this.xLastMouseMove - getXLastMousePress(), 
+            this.yLastMouseMove - getYLastMousePress());
       } else {
         // If mouse didn't move, select only the wall at (x,y)
-        Wall wallUnderCursor = getWallAt(x, y, 2, null);
+        Wall wallUnderCursor = getWallAt(x, y, 2 / planComponent.getScale(), null);
         // Select only the wall under cursor position
         doSelectWall(wallUnderCursor);
       }
@@ -784,8 +784,8 @@ public class PlanController implements Controller {
       if (this.mouseMoved) {
         // Put walls back to their initial position
         doMoveWalls(planComponent.getSelectedWalls(), 
-            (getXLastMousePress() - this.xLastMouseMove) / planComponent.getScale(), 
-            (getYLastMousePress() - this.yLastMouseMove) / planComponent.getScale());
+            getXLastMousePress() - this.xLastMouseMove, 
+            getYLastMousePress() - this.yLastMouseMove);
       }
       // Change the state to SelectionState
       setState(selectionState);
@@ -818,22 +818,20 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void moveMouse(int x, int y) {
+    public void moveMouse(float x, float y) {
       this.mouseMoved = true;
       updateSelectedWalls(getXLastMousePress(), getYLastMousePress(), x, y);
       // Update rectangle feedback
-      planComponent.setRectangleFeedback(planComponent.convertXPixelToModel(getXLastMousePress()), 
-                                         planComponent.convertXPixelToModel(getYLastMousePress()), 
-                                         planComponent.convertYPixelToModel(x), 
-                                         planComponent.convertYPixelToModel(y));
+      planComponent.setRectangleFeedback(getXLastMousePress(), getYLastMousePress(), 
+                                         x, y);
       planComponent.ensurePointIsVisible(x, y);
     }
 
     @Override
-    public void releaseMouse(int x, int y) {
+    public void releaseMouse(float x, float y) {
       // If cursor didn't move
       if (!this.mouseMoved) {
-        Wall wallUnderCursor = getWallAt(x, y, 2, null);
+        Wall wallUnderCursor = getWallAt(x, y, 2 / planComponent.getScale(), null);
         // Toggle selection of the wall under cursor 
         if (wallUnderCursor != null) {
           if (this.mousePressSelection.contains(wallUnderCursor)) {
@@ -864,7 +862,7 @@ public class PlanController implements Controller {
      * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>)
      * coordinates.
      */
-    private void updateSelectedWalls(int x0, int y0, int x1, int y1) {
+    private void updateSelectedWalls(float x0, float y0, float x1, float y1) {
       List<Wall> selectedWalls;
       boolean shiftDown = isShiftDownLastMousePress();
       if (shiftDown) {
@@ -873,13 +871,9 @@ public class PlanController implements Controller {
         selectedWalls = new ArrayList<Wall>();
       }
       
-      float x0Model = planComponent.convertXPixelToModel(x0);
-      float y0Model = planComponent.convertYPixelToModel(y0);
-      float x1Model = planComponent.convertXPixelToModel(x1);
-      float y1Model = planComponent.convertYPixelToModel(y1);
       // For all the walls that intersects with surrounding rectangle
       for (Wall wall : home.getWalls()) {
-        if (planComponent.doesWallIntersectRectangle(wall, x0Model, y0Model, x1Model, y1Model)) {
+        if (planComponent.doesWallCutRectangle(wall, x0, y0, x1, y1)) {
           // If shift was down at mouse press
           if (shiftDown) {
             // Toogle selection of the wall
@@ -923,7 +917,7 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
+    public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
       doDeselectAll();
       // Change state to NewWallState
       setState(newWallState);
@@ -938,8 +932,8 @@ public class PlanController implements Controller {
     private float   yStart;
     private float   xLastEnd;
     private float   yLastEnd;
-    private int     xLastMouseMove;
-    private int     yLastMouseMove;
+    private float   xLastMouseMove;
+    private float   yLastMouseMove;
     private Wall    wallStartAtStart;
     private Wall    wallEndAtStart;
     private Wall    currentWall;
@@ -955,8 +949,8 @@ public class PlanController implements Controller {
     
     @Override
     public void enter() {
-      this.xStart = planComponent.convertXPixelToModel(getXLastMousePress());
-      this.yStart = planComponent.convertYPixelToModel(getYLastMousePress());
+      this.xStart = getXLastMousePress();
+      this.yStart = getYLastMousePress();
       // If a wall close to (xStart, y LastMousePress) is free,
       // it will the wall at start of the future created wall
       this.wallEndAtStart = getWallEndAt(this.xStart, this.yStart, null);
@@ -978,10 +972,10 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void moveMouse(int x, int y) {
-      // Compute the coordinates where wall end point should be move
-      float xEnd = planComponent.convertXPixelToModel(x);
-      float yEnd = planComponent.convertYPixelToModel(y);
+    public void moveMouse(float x, float y) {
+      // Compute the coordinates where wall end point should be moved
+      float xEnd = x;
+      float yEnd = y;
       if (this.magnetismEnabled) {
         PointWithMagnetism point = new PointWithMagnetism(
             this.xStart, this.yStart, xEnd, yEnd);
@@ -996,8 +990,7 @@ public class PlanController implements Controller {
             xEnd, yEnd, this.wallStartAtStart, this.wallEndAtStart);
       } else {
         // Otherwise update its end point
-        home.moveWallEndPoint(this.currentWall, 
-            xEnd - this.xLastEnd, yEnd - this.yLastEnd);
+        home.moveWallEndPointTo(this.currentWall, xEnd, yEnd); 
       }         
       
       // Select any wall close to (xMove, yMove) to display a feedback 
@@ -1025,7 +1018,7 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void pressMouse(int x, int y, int clickCount, boolean shiftDown) {
+    public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
       if (clickCount == 2) {
         if (this.lastWall != null) {
           // Join last wall to the selected wall at its end

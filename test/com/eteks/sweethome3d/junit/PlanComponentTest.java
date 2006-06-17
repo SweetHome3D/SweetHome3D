@@ -30,9 +30,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.undo.UndoManager;
@@ -197,10 +199,10 @@ public class PlanComponentTest extends ComponentTestFixture {
    * <code>wall</code> are at (<code>xStart</code>, <code>yStart</code>), (<code>xEnd</code>, <code>yEnd</code>). 
    */
   private void assertCoordinatesEqualWallPoints(float xStart, float yStart, float xEnd, float yEnd, Wall wall) {
-    assertEquals("Incorrect X start", xStart, wall.getXStart());
-    assertEquals("Incorrect Y start", yStart, wall.getYStart());
-    assertEquals("Incorrect X end", xEnd, wall.getXEnd());
-    assertEquals("Incorrect Y end", yEnd, wall.getYEnd());
+    assertTrue("Incorrect X start", Math.abs(xStart - wall.getXStart()) < 1E-10);
+    assertTrue("Incorrect Y start", Math.abs(yStart - wall.getYStart()) < 1E-10);
+    assertTrue("Incorrect X end", Math.abs(xEnd - wall.getXEnd()) < 1E-10);
+    assertTrue("Incorrect Y end", Math.abs(yEnd - wall.getYEnd()) < 1E-10);
   }
 
   /**
@@ -259,7 +261,7 @@ public class PlanComponentTest extends ComponentTestFixture {
       undoSupport.addUndoableEditListener(undoManager);
       this.planController = new PlanController(this.home, preferences, undoSupport);
       // Add plan component to frame at its preferred size 
-      add(this.planController.getView());
+      add(new JScrollPane(this.planController.getView()));
       // Create a toggle button for plan component mode 
       this.modeButton = new JToggleButton(new ImageIcon(
           getClass().getResource("resources/Add16.gif")));

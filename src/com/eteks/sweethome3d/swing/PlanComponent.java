@@ -53,6 +53,7 @@ import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
@@ -68,8 +69,7 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class PlanComponent extends JComponent {
-  private static final float MARGIN = 40;  
-  
+  private static final float MARGIN = 40;
   private Home               home;
   private UserPreferences    preferences;
   private float              scale = 0.5f;
@@ -87,12 +87,14 @@ public class PlanComponent extends JComponent {
     home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         repaint();
+        updateViewSize();
       }
     });
     if (controller != null) {
       addAWTListeners(controller);
       configureKeyMap(controller);
     }
+    setAutoscrolls(true);
     setFocusable(true);
     setOpaque(true);
   }
@@ -107,7 +109,8 @@ public class PlanComponent extends JComponent {
       public void mousePressed(MouseEvent ev) {
         if (!ev.isPopupTrigger()) {
           requestFocusInWindow();
-          controller.pressMouse(ev.getX(), ev.getY(), ev.getClickCount(), ev.isShiftDown());
+          controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
+              ev.getClickCount(), ev.isShiftDown());
           controller.setMagnetismDisabled(ev.isAltDown());
         }
       }
@@ -115,18 +118,18 @@ public class PlanComponent extends JComponent {
       @Override
       public void mouseReleased(MouseEvent ev) {
         if (!ev.isPopupTrigger()) {
-          controller.releaseMouse(ev.getX(), ev.getY());
+          controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
         }
       }
 
       @Override
       public void mouseMoved(MouseEvent ev) {
-        controller.moveMouse(ev.getX(), ev.getY());
+        controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
       }
 
       @Override
       public void mouseDragged(MouseEvent ev) {
-        controller.moveMouse(ev.getX(), ev.getY());
+        controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
       }
     };
     addMouseListener(mouseListener);
@@ -164,7 +167,7 @@ public class PlanComponent extends JComponent {
       }
 
       public void actionPerformed(ActionEvent e) {
-        controller.moveSelection(this.dx, this.dy);
+        controller.moveSelection(this.dx / scale, this.dy / scale);
       }
     }
     // Temporary magnestism mapped to alt key
@@ -208,34 +211,26 @@ public class PlanComponent extends JComponent {
     if (isPreferredSizeSet()) {
       return super.getPreferredSize();
     } else {
-      Collection<Wall> walls = home.getWalls(); 
-      Rectangle2D wallsBounds;
-      if (walls.isEmpty()) {
-        wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
-      } else {
-        wallsBounds = getWallsBounds(walls);
-      }
       Insets insets = getInsets();
+      Rectangle2D wallsBounds = getWallsBounds();
       return new Dimension(
-          Math.round(((float)wallsBounds.getMaxX() + MARGIN * 2) * this.scale) + insets.left + insets.right, 
-          Math.round(((float)wallsBounds.getMaxY() + MARGIN * 2) * this.scale) + insets.top  + insets.bottom);
+          Math.round(((float) wallsBounds.getWidth() + MARGIN * 2)
+                     * this.scale) + insets.left + insets.right,
+          Math.round(((float) wallsBounds.getHeight() + MARGIN * 2)
+                     * this.scale) + insets.top + insets.bottom);
     }
   }
   
   /**
-   * Returns the bounds of <code>walls</code>.
+   * Returns the bounds of <code>walls</code> end points.
    */
-  private Rectangle2D getWallsBounds(Collection<Wall> walls) {
-    Rectangle2D wallBounds = null;
-    for (Wall wall : walls) {
-      if (wallBounds == null) {
-        wallBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
-      } else {
-        wallBounds.add(wall.getXStart(), wall.getYStart());
-      }
-      wallBounds.add(wall.getXEnd(), wall.getYEnd());
+  private Rectangle2D getWallsBounds() {
+    Rectangle2D wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
+    for (Wall wall : home.getWalls()) {
+      wallsBounds.add(wall.getXStart(), wall.getYStart());
+      wallsBounds.add(wall.getXEnd(), wall.getYEnd());
     }
-    return wallBounds;
+    return wallsBounds;
   }
 
   /**
@@ -251,7 +246,9 @@ public class PlanComponent extends JComponent {
         getWidth() - insets.left - insets.right, 
         getHeight() - insets.top - insets.bottom);
     // Change coordinates system to home
-    g2D.translate(insets.left + MARGIN * this.scale, insets.top + MARGIN * this.scale);
+    Rectangle2D wallsBounds = getWallsBounds();    
+    g2D.translate(insets.left + (MARGIN - wallsBounds.getMinX()) * this.scale,
+        insets.top + (MARGIN - wallsBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     // Paint component contents
@@ -290,30 +287,33 @@ public class PlanComponent extends JComponent {
       gridSize = gridSizes [i];
     }
     
-    Insets insets = getInsets();
-    float xMin = convertXPixelToModel(insets.left);
-    float xMax = convertXPixelToModel(getWidth() - insets.right);
-    float yMin = convertYPixelToModel(insets.top);
-    float yMax = convertYPixelToModel(getHeight() - insets.bottom);
+    Rectangle2D wallsBounds = getWallsBounds();    
+    float xMin = (float)wallsBounds.getMinX() - MARGIN;
+    float yMin = (float)wallsBounds.getMinY() - MARGIN;
+    float xMax = convertXPixelToModel(getWidth());
+    float yMax = convertYPixelToModel(getHeight());
+
     g2D.setColor(Color.LIGHT_GRAY);
     g2D.setStroke(new BasicStroke(1 / this.scale));
     // Draw vertical lines
-    for (float x = (int)(xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
-      g2D.draw(new Line2D.Float(x, yMin, x, yMax)); 
+    for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+      g2D.draw(new Line2D.Float(x, yMin, x, yMax));
     }
     // Draw horizontal lines
-    for (float y = (int)(yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
-      g2D.draw(new Line2D.Float(xMin, y, xMax, y)); 
+    for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+      g2D.draw(new Line2D.Float(xMin, y, xMax, y));
     }
+
     if (mainGridSize != gridSize) {
-      g2D.setStroke(new BasicStroke(2 / this.scale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+      g2D.setStroke(new BasicStroke(2 / this.scale,
+          BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
       // Draw main vertical lines
-      for (float x = (int)(xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+      for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
         g2D.draw(new Line2D.Float(x, yMin, x, yMax));
       }
       // Draw positive main horizontal lines
-      for (float y = (int)(xMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
-        g2D.draw(new Line2D.Float(xMin, y, xMax, y)); 
+      for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+        g2D.draw(new Line2D.Float(xMin, y, xMax, y));
       }
     }
   }
@@ -336,7 +336,7 @@ public class PlanComponent extends JComponent {
    * Paints home walls.
    */
   private void paintWalls(Graphics2D g2D) {
-    Shape wallsArea = getWallsArea();
+    Shape wallsArea = getWallsArea(this.home.getWalls());
     // Fill walls area
     g2D.setPaint(getWallPaint());
     g2D.fill(wallsArea);
@@ -372,9 +372,9 @@ public class PlanComponent extends JComponent {
   /**
    * Returns an area matching the union of all wall shapes. 
    */
-  private Shape getWallsArea() {
+  private Shape getWallsArea(Collection<Wall> walls) {
     Area area = new Area();
-    for (Wall wall : this.home.getWalls()) {
+    for (Wall wall : walls) {
       area.add(new Area(getWallShape(wall)));
     }    
     return area;
@@ -503,24 +503,10 @@ public class PlanComponent extends JComponent {
     this.selectedWalls.clear();
     if (!selectedWalls.isEmpty()) {
       this.selectedWalls.addAll(selectedWalls);
-      ensureRectangleIsVisible(getWallsBounds(selectedWalls));
     }
     repaint();
   }
   
-  /**
-   * Ensures <code>rectangle</code> is visible at screen and moves
-   * scroll bars if needed.
-   */
-  private void ensureRectangleIsVisible(Rectangle2D rectangle) {
-    Insets insets = getInsets();
-    scrollRectToVisible(new Rectangle(
-        Math.round((float)rectangle.getX() * this.scale + MARGIN) + insets.left, 
-        Math.round((float)rectangle.getY() * this.scale + MARGIN) + insets.top, 
-        Math.round((float)rectangle.getWidth() * this.scale), 
-        Math.round((float)rectangle.getHeight() * this.scale)));
-  }
- 
   /**
    * Sets rectangle selection feedback coordinates. 
    */
@@ -539,27 +525,11 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns <code>x</code> converted in model coordinates sytem.
-   */
-  public float convertXPixelToModel(int x) {
-    Insets insets = getInsets();
-    return (x - insets.left) / this.scale - MARGIN;
-  }
-
-  /**
-   * Returns <code>y</code> converted in model coordinates sytem.
-   */
-  public float convertYPixelToModel(int y) {
-    Insets insets = getInsets();
-    return (y - insets.top) / this.scale - MARGIN;
-  }
-  
-  /**
    * Returns <code>true</code> if <code>wall</code> intersects
    * with the horizontal rectangle which opposite corners are at points
    * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
    */
-  public boolean doesWallIntersectRectangle(Wall wall, float x0, float y0, float x1, float y1) {
+  public boolean doesWallCutRectangle(Wall wall, float x0, float y0, float x1, float y1) {
     Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
     rectangle.add(x1, y1);
     return getWallShape(wall).intersects(rectangle);
@@ -612,11 +582,26 @@ public class PlanComponent extends JComponent {
   // TODO
   
   /**
+   * Ensures <code>walls</code> are visible at screen and moves
+   * scroll bars if needed.
+   */
+  public void ensureWallsAreVisible(List<Wall> walls) {
+    Insets insets = getInsets();
+    Rectangle2D areaBounds = getWallsArea(walls).getBounds2D();
+    Rectangle2D wallsBounds = getWallsBounds();    
+    scrollRectToVisible(new Rectangle(
+        convertXModelToPixel((float)areaBounds.getMinX()), 
+        convertYModelToPixel((float)areaBounds.getMinY()), 
+        Math.round((float)areaBounds.getWidth() * this.scale), 
+        Math.round((float)areaBounds.getHeight() * this.scale)));
+  }
+ 
+  /**
    * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
    * moving scroll bars if needed.
    */
-  public void ensurePointIsVisible(int xPixel, int yPixel) {
-    scrollRectToVisible(new Rectangle(xPixel, yPixel, 1, 1));
+  public void ensurePointIsVisible(float x, float y) {
+    scrollRectToVisible(new Rectangle(convertXModelToPixel(x), convertYModelToPixel(y), 1, 1));
   }
 
   /**
@@ -631,6 +616,8 @@ public class PlanComponent extends JComponent {
    */
   public void setScale(float scale) {
     this.scale = scale;
+    repaint();
+    updateViewSize();
   }
 
   /**
@@ -642,6 +629,52 @@ public class PlanComponent extends JComponent {
     } else {
       setCursor(Cursor.getDefaultCursor());
     }
+  }
+
+  /**
+   * Updates viewport size with preferred size, if this component is displayed in a scroll pane.
+   */
+  private void updateViewSize() {
+    if (!isPreferredSizeSet()
+        && getParent() instanceof JViewport) {
+      ((JViewport)getParent()).setViewSize(getPreferredSize());
+    }
+  }
+
+  /**
+   * Returns <code>x</code> converted in model coordinates sytem.
+   */
+  private float convertXPixelToModel(int x) {
+    Insets insets = getInsets();
+    Rectangle2D wallsBounds = getWallsBounds();    
+    return (x - insets.left) / this.scale - MARGIN + (float)wallsBounds.getMinX();
+  }
+
+  /**
+   * Returns <code>y</code> converted in model coordinates sytem.
+   */
+  private float convertYPixelToModel(int y) {
+    Insets insets = getInsets();
+    Rectangle2D wallsBounds = getWallsBounds();    
+    return (y - insets.top) / this.scale - MARGIN + (float)wallsBounds.getMinY();
+  }
+
+  /**
+   * Returns <code>x</code> converted in model coordinates sytem.
+   */
+  private int convertXModelToPixel(float x) {
+    Insets insets = getInsets();
+    Rectangle2D wallsBounds = getWallsBounds();    
+    return (int)Math.round((x - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left;
+  }
+
+  /**
+   * Returns <code>y</code> converted in model coordinates sytem.
+   */
+  private int convertYModelToPixel(float y) {
+    Insets insets = getInsets();
+    Rectangle2D wallsBounds = getWallsBounds();    
+    return (int)Math.round((y - wallsBounds.getMinY() + MARGIN) * this.scale) + insets.top;
   }
 }
 
