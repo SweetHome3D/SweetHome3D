@@ -49,11 +49,11 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class FurnitureTable extends JTable {
   /**
    * Create this view associated with its controller.
-   * @param controller  the controller of this view
    * @param home        the home displayed by this view
    * @param preferences the preferences of the application
+   * @param controller  the controller of this view
    */
-  public FurnitureTable(FurnitureController controller, Home home, UserPreferences preferences) {
+  public FurnitureTable(Home home, UserPreferences preferences, FurnitureController controller) {
     String [] columnNames = getColumnNames();
     setModel(new FurnitureTableModel(home, columnNames));
     setColumnRenderers(preferences);

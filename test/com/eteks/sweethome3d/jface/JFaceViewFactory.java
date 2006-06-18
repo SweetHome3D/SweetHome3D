@@ -53,7 +53,7 @@ public class JFaceViewFactory implements ViewFactory {
     return new CatalogTree(this.homeView.getCatalogFurnitureComposite(), catalog);
   }
 
-  public FurnitureView createFurnitureView(FurnitureController controller, Home home, UserPreferences preferences) {
-    return new FurnitureTable(this.homeView.getCatalogFurnitureComposite(), controller, home, preferences);
+  public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
+    return new FurnitureTable(this.homeView.getCatalogFurnitureComposite(), home, preferences, controller);
   }
 }

@@ -55,7 +55,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 public class FurnitureTable implements FurnitureView {
   private TableViewer tableViewer;
   
-  public FurnitureTable(Composite parent, FurnitureController controller, Home home, UserPreferences preferences) {
+  public FurnitureTable(Composite parent, Home home, UserPreferences preferences, FurnitureController controller) {
     this.tableViewer = new TableViewer(parent); 
     String [] columnNames = getColumnNames();
     // Create SWT table columns

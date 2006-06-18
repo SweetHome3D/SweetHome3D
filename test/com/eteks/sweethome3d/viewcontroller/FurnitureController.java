@@ -58,7 +58,7 @@ public class FurnitureController implements Controller {
     this.home = home;
     this.undoSupport = undoSupport;
     this.viewResource  = ResourceBundle.getBundle(getClass().getName()); 
-    this.furnitureView = viewFactory.createFurnitureView(this, home, preferences);
+    this.furnitureView = viewFactory.createFurnitureView(home, preferences, this);
   }
 
   /**
