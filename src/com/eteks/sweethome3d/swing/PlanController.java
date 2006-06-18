@@ -448,13 +448,12 @@ public class PlanController implements Controller {
 
   /**
    * Returns the wall at (<code>x</code>, <code>y</code>) 
-   * point, with a given <code>margin</code>, different from 
-   * <code>ignoredWall</code>.
+   * point different from <code>ignoredWall</code>.
    */
-  private Wall getWallAt(float x, float y, float margin, Wall ignoredWall) {
+  private Wall getWallAt(float x, float y, Wall ignoredWall) {
     for (Wall wall : home.getWalls()) {
-      if (planComponent.containsWallAt(wall, x, y, margin)
-          && wall != ignoredWall) 
+      if (wall != ignoredWall
+          && planComponent.containsWallAt(wall, x, y)) 
         return wall;
     }
     return null;
@@ -465,14 +464,11 @@ public class PlanController implements Controller {
    * which has a start point not joined to any wall. 
    */
   private Wall getWallStartAt(float x, float y, Wall ignoredWall) {
-    Wall wallUnderCursor = getWallAt(x, y, 1 / planComponent.getScale(), ignoredWall);
-    // Check if wallUnderCursor is already joined to an other wall
-    // and if (x,y) is close to wallUnderCursor start line 
-    if (wallUnderCursor != null
-        && wallUnderCursor.getWallAtStart() == null
-        && planComponent.containsWallStartAt(wallUnderCursor, 
-              x, y, 5 / planComponent.getScale())) {
-      return wallUnderCursor;
+    for (Wall wall : home.getWalls()) {
+      if (wall != ignoredWall
+          && wall.getWallAtStart() == null
+          && planComponent.containsWallStartAt(wall, x, y)) 
+        return wall;
     }
     return null;
   }
@@ -482,14 +478,11 @@ public class PlanController implements Controller {
    * which has a end point not joined to any wall. 
    */
   private Wall getWallEndAt(float x, float y, Wall ignoredWall) {
-    Wall wallUnderCursor = getWallAt(x, y, 1 / planComponent.getScale(), ignoredWall);
-    // Check if wallUnderCursor is already joined to an other wall
-    // and if (x,y) is close to wallUnderCursor end line 
-    if (wallUnderCursor != null
-        && wallUnderCursor.getWallAtEnd() == null
-        && planComponent.containsWallEndAt(wallUnderCursor, 
-              x, y, 5 / planComponent.getScale())) {
-      return wallUnderCursor;
+    for (Wall wall : home.getWalls()) {
+      if (wall != ignoredWall
+          && wall.getWallAtEnd() == null
+          && planComponent.containsWallEndAt(wall, x, y)) 
+        return wall;
     }
     return null;
   }
@@ -715,7 +708,7 @@ public class PlanController implements Controller {
     @Override
     public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
       // If shift isn't pressed, and a wall is under cursor position
-      if (!shiftDown && getWallAt(x, y, 2 / planComponent.getScale(), null) != null) {
+      if (!shiftDown && getWallAt(x, y, null) != null) {
         // Change state to SelectionMoveState
         setState(selectionMoveState);
       } else {
@@ -744,7 +737,7 @@ public class PlanController implements Controller {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
-      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), 2 / planComponent.getScale(), null);
+      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), null);
       List<Wall> selection = planComponent.getSelectedWalls();
       // If the wall under the cursor doesn't belong to selection
       if (!selection.contains(wallUnderCursor)) {
@@ -771,7 +764,7 @@ public class PlanController implements Controller {
             this.yLastMouseMove - getYLastMousePress());
       } else {
         // If mouse didn't move, select only the wall at (x,y)
-        Wall wallUnderCursor = getWallAt(x, y, 2 / planComponent.getScale(), null);
+        Wall wallUnderCursor = getWallAt(x, y, null);
         // Select only the wall under cursor position
         doSelectWall(wallUnderCursor);
       }
@@ -807,7 +800,7 @@ public class PlanController implements Controller {
 
     @Override
     public void enter() {
-      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), 2, null);
+      Wall wallUnderCursor = getWallAt(getXLastMousePress(), getYLastMousePress(), null);
       // If no wall under cursor and shift wasn't down, deselect all
       if (wallUnderCursor == null && !isShiftDownLastMousePress()) {
         doDeselectAll();
@@ -831,7 +824,7 @@ public class PlanController implements Controller {
     public void releaseMouse(float x, float y) {
       // If cursor didn't move
       if (!this.mouseMoved) {
-        Wall wallUnderCursor = getWallAt(x, y, 2 / planComponent.getScale(), null);
+        Wall wallUnderCursor = getWallAt(x, y, null);
         // Toggle selection of the wall under cursor 
         if (wallUnderCursor != null) {
           if (this.mousePressSelection.contains(wallUnderCursor)) {

@@ -212,7 +212,7 @@ public class PlanComponent extends JComponent {
       return super.getPreferredSize();
     } else {
       Insets insets = getInsets();
-      Rectangle2D wallsBounds = getWallsBounds();
+      Rectangle2D wallsBounds = getHomeBounds();
       return new Dimension(
           Math.round(((float) wallsBounds.getWidth() + MARGIN * 2)
                      * this.scale) + insets.left + insets.right,
@@ -222,9 +222,9 @@ public class PlanComponent extends JComponent {
   }
   
   /**
-   * Returns the bounds of <code>walls</code> end points.
+   * Returns the bounds of the home displayed by this component.
    */
-  private Rectangle2D getWallsBounds() {
+  private Rectangle2D getHomeBounds() {
     Rectangle2D wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
     for (Wall wall : home.getWalls()) {
       wallsBounds.add(wall.getXStart(), wall.getYStart());
@@ -246,7 +246,7 @@ public class PlanComponent extends JComponent {
         getWidth() - insets.left - insets.right, 
         getHeight() - insets.top - insets.bottom);
     // Change coordinates system to home
-    Rectangle2D wallsBounds = getWallsBounds();    
+    Rectangle2D wallsBounds = getHomeBounds();    
     g2D.translate(insets.left + (MARGIN - wallsBounds.getMinX()) * this.scale,
         insets.top + (MARGIN - wallsBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
@@ -287,7 +287,7 @@ public class PlanComponent extends JComponent {
       gridSize = gridSizes [i];
     }
     
-    Rectangle2D wallsBounds = getWallsBounds();    
+    Rectangle2D wallsBounds = getHomeBounds();    
     float xMin = (float)wallsBounds.getMinX() - MARGIN;
     float yMin = (float)wallsBounds.getMinY() - MARGIN;
     float xMax = convertXPixelToModel(getWidth());
@@ -538,32 +538,35 @@ public class PlanComponent extends JComponent {
   /**
    * Returns <code>true</code> if <code>wall</code> contains 
    * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * with a margin of 2 pixels.
    */
-  public boolean containsWallAt(Wall wall, float x, float y, float margin) {
+  public boolean containsWallAt(Wall wall, float x, float y) {
+    float margin = 2 / getScale();
     return getWallShape(wall).intersects(x - margin, y - margin, 2 * margin, 2 * margin);
   }
   
   /**
    * Returns <code>true</code> if <code>wall</code> start line contains 
    * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * with a margin of 2 pixels around the wall start line.
    */
-  public boolean containsWallStartAt(Wall wall, float x, float y, float margin) {
+  public boolean containsWallStartAt(Wall wall, float x, float y) {
     float [][] wallPoints = getWallPoints(wall);
-    return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
-      intersectsLine(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
+    float margin = 2 / getScale();
+    return new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]).
+      intersects(x - margin, y - margin, 2 * margin, 2 * margin);
   }
   
   /**
    * Returns <code>true</code> if <code>wall</code> end line contains 
    * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * with a margin of 2 pixels around the wall end line.
    */
-  public boolean containsWallEndAt(Wall wall, float x, float y, float margin) {
+  public boolean containsWallEndAt(Wall wall, float x, float y) {
     float [][] wallPoints = getWallPoints(wall);
-    return new Rectangle2D.Float(x - margin, y - margin, 2 * margin, 2 * margin).
-      intersectsLine(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]);
+    float margin = 2 / getScale();
+    return new Line2D.Float(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]).
+        intersects(x - margin, y - margin, 2 * margin, 2 * margin);
   }
   
   /**
@@ -586,14 +589,8 @@ public class PlanComponent extends JComponent {
    * scroll bars if needed.
    */
   public void ensureWallsAreVisible(List<Wall> walls) {
-    Insets insets = getInsets();
     Rectangle2D areaBounds = getWallsArea(walls).getBounds2D();
-    Rectangle2D wallsBounds = getWallsBounds();    
-    scrollRectToVisible(new Rectangle(
-        convertXModelToPixel((float)areaBounds.getMinX()), 
-        convertYModelToPixel((float)areaBounds.getMinY()), 
-        Math.round((float)areaBounds.getWidth() * this.scale), 
-        Math.round((float)areaBounds.getHeight() * this.scale)));
+    scrollRectToVisible(getShapePixelBounds(areaBounds));
   }
  
   /**
@@ -601,7 +598,7 @@ public class PlanComponent extends JComponent {
    * moving scroll bars if needed.
    */
   public void ensurePointIsVisible(float x, float y) {
-    scrollRectToVisible(new Rectangle(convertXModelToPixel(x), convertYModelToPixel(y), 1, 1));
+    scrollRectToVisible(getShapePixelBounds(new Rectangle2D.Float(x, y, 1 / this.scale, 1 / this.scale)));
   }
 
   /**
@@ -642,39 +639,35 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns <code>x</code> converted in model coordinates sytem.
+   * Returns <code>x</code> converted in model coordinates space.
    */
   private float convertXPixelToModel(int x) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getWallsBounds();    
+    Rectangle2D wallsBounds = getHomeBounds();    
     return (x - insets.left) / this.scale - MARGIN + (float)wallsBounds.getMinX();
   }
 
   /**
-   * Returns <code>y</code> converted in model coordinates sytem.
+   * Returns <code>y</code> converted in model coordinates space.
    */
   private float convertYPixelToModel(int y) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getWallsBounds();    
+    Rectangle2D wallsBounds = getHomeBounds();    
     return (y - insets.top) / this.scale - MARGIN + (float)wallsBounds.getMinY();
   }
 
   /**
-   * Returns <code>x</code> converted in model coordinates sytem.
+   * Returns the bounds of <code>shape</code> in pixels coordinates space.
    */
-  private int convertXModelToPixel(float x) {
+  private Rectangle getShapePixelBounds(Shape shape) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getWallsBounds();    
-    return (int)Math.round((x - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left;
-  }
-
-  /**
-   * Returns <code>y</code> converted in model coordinates sytem.
-   */
-  private int convertYModelToPixel(float y) {
-    Insets insets = getInsets();
-    Rectangle2D wallsBounds = getWallsBounds();    
-    return (int)Math.round((y - wallsBounds.getMinY() + MARGIN) * this.scale) + insets.top;
+    Rectangle2D wallsBounds = getHomeBounds();
+    Rectangle2D shapeBounds = shape.getBounds();
+    return new Rectangle(
+        (int)Math.round((shapeBounds.getMinX() - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left,
+        (int)Math.round((shapeBounds.getMinY() - wallsBounds.getMinY() + MARGIN) * this.scale) + insets.top,
+        (int)Math.round(shapeBounds.getWidth() * this.scale),
+        (int)Math.round(shapeBounds.getWidth() * this.scale));
   }
 }
 
