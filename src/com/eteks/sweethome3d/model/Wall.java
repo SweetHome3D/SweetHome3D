@@ -20,7 +20,7 @@
 package com.eteks.sweethome3d.model;
 
 /**
- * A wall of a home.
+ * A wall of a plan.
  * @author Emmanuel Puybaret
  */
 public class Wall {

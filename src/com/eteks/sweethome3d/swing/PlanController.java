@@ -33,6 +33,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -44,7 +45,7 @@ public class PlanController implements Controller {
   public enum Mode {WALL_CREATION, SELECTION }
   
   private PlanComponent         planComponent;
-  private Home                  home;
+  private Plan                  home;
   private UserPreferences       userPreferences;
   private UndoableEditSupport   undoSupport;
   private ResourceBundle        resource;
@@ -61,9 +62,9 @@ public class PlanController implements Controller {
   private float yLastMousePress;
   private boolean shiftDownLastMousePress;
 
-  public PlanController(Home home, UserPreferences userPreferences, 
+  public PlanController(Plan plan, UserPreferences userPreferences, 
                         UndoableEditSupport undoSupport) {
-    this.home = home;
+    this.home = plan;
     this.userPreferences = userPreferences;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(getClass().getName());

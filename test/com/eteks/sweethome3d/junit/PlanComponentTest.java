@@ -46,6 +46,7 @@ import abbot.tester.JButtonTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -66,12 +67,12 @@ public class PlanComponentTest extends ComponentTestFixture {
     PlanTestFrame frame = new PlanTestFrame();    
     // Show home plan frame
     showWindow(frame);
-    PlanComponent plan = (PlanComponent)frame.planController.getView();
-    assertEquals("Wrong preferred width", 540, plan.getWidth());
+    PlanComponent planComponent = (PlanComponent)frame.planController.getView();
+    assertEquals("Wrong preferred width", 540, planComponent.getWidth());
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
-    frame.home.addWallListener(new WallListener () {
+    frame.plan.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         if (ev.getType() == WallEvent.Type.ADD) {
           orderedWalls.add(ev.getWall());
@@ -85,10 +86,10 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertEquals("Current mode isn't " + PlanController.Mode.WALL_CREATION, 
         PlanController.Mode.WALL_CREATION, frame.planController.getMode());
     // Click at (20, 20), (270, 21), (269, 170), then double click at (20, 171)
-    tester.actionClick(plan, 20, 20);
-    tester.actionClick(plan, 270, 21);
-    tester.actionClick(plan, 269, 170);
-    tester.actionClick(plan, 20, 171, InputEvent.BUTTON1_MASK, 2);
+    tester.actionClick(planComponent, 20, 20);
+    tester.actionClick(planComponent, 270, 21);
+    tester.actionClick(planComponent, 269, 170);
+    tester.actionClick(planComponent, 20, 171, InputEvent.BUTTON1_MASK, 2);
     // Check 3 walls were created at (0, 0), (500, 0), (500, 300) and (0, 300) coordinates
     Wall wall1 = orderedWalls.get(0);
     assertCoordinatesEqualWallPoints(0, 0, 500, 0, wall1);
@@ -101,17 +102,17 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall1, wall2, wall3); 
     assertWallsAreJoined(wall2, wall3, null); 
     // Check they are selected
-    assertSelectionContains(plan, wall3);
+    assertSelectionContains(planComponent, wall3);
 
     // 3. Click at (20, 170), then double click at (30, 30) with Alt key depressed
-    tester.actionClick(plan, 20, 170);
+    tester.actionClick(planComponent, 20, 170);
     tester.actionKeyPress(KeyEvent.VK_ALT);
-    tester.actionClick(plan, 30, 30, InputEvent.BUTTON1_MASK, 2);
+    tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
     tester.actionKeyRelease(KeyEvent.VK_ALT);
     // Check a forth wall was created at (0, 300), (20, 20) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);
-    assertSelectionContains(plan, wall4);
+    assertSelectionContains(planComponent, wall4);
     assertWallsAreJoined(wall3, wall4, null);
 
     // 4. Use SELECTION mode
@@ -120,17 +121,17 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertEquals("Current mode isn't " + PlanController.Mode.SELECTION, 
         PlanController.Mode.SELECTION, frame.planController.getMode());
     // Give focus to plan component
-    tester.actionFocus(plan);
+    tester.actionFocus(planComponent);
     // Press the delete key 
     tester.actionKeyStroke(KeyEvent.VK_DELETE);
     // Check plan contains only the first three walls
-    assertHomeContains(frame.home, wall1, wall2, wall3);
+    assertPlanContains(frame.plan, wall1, wall2, wall3);
     
     // 5. Use WALL_CREATION mode
     tester.actionClick(frame.modeButton);   
     //  Click at (21, 19), then double click at (20, 170)
-    tester.actionClick(plan, 21, 19); 
-    tester.actionClick(plan, 20, 170, InputEvent.BUTTON1_MASK, 2);
+    tester.actionClick(planComponent, 21, 19); 
+    tester.actionClick(planComponent, 20, 170, InputEvent.BUTTON1_MASK, 2);
     // Check a new forth wall was created at (0, 0), (0, 300) coordinates
     wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(0, 0, 0, 300, wall4);
@@ -140,13 +141,13 @@ public class PlanComponentTest extends ComponentTestFixture {
     // 6. Use SELECTION mode
     tester.actionClick(frame.modeButton); 
     // Drag and drop cursor from (200, 100) to (300, 180)
-    tester.actionMousePress(plan, 
+    tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(200, 100))); 
-    tester.actionMouseMove(plan, 
+    tester.actionMouseMove(planComponent, 
         new ComponentLocation(new Point(300, 180))); 
     tester.actionMouseRelease(); 
     // Check the selected walls are the second and third ones
-    assertSelectionContains(plan, wall2, wall3);
+    assertSelectionContains(planComponent, wall2, wall3);
 
     // 7. Press twice right arrow key     
     tester.actionKeyStroke(KeyEvent.VK_RIGHT);
@@ -159,18 +160,18 @@ public class PlanComponentTest extends ComponentTestFixture {
 
     // 8. Click at (272, 40) with Shift key depressed
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
-    tester.actionClick(plan, 272, 40);
+    tester.actionClick(planComponent, 272, 40);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check the second wall was removed from selection
-    assertSelectionContains(plan, wall3);
+    assertSelectionContains(planComponent, wall3);
 
      // 9. Drag cursor from (50, 20) to (50, 40) 
-    tester.actionMousePress(plan, 
+    tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(50, 20)));
-    tester.actionMouseMove(plan, 
+    tester.actionMouseMove(planComponent, 
         new ComponentLocation(new Point(50, 40)));
     // Check first wall is selected and that it moved
-    assertSelectionContains(plan, wall1);
+    assertSelectionContains(planComponent, wall1);
     assertCoordinatesEqualWallPoints(0, 40, 504, 40, wall1);
     // Transfer focus to undo button
     tester.actionFocus(frame.undoButton);
@@ -182,16 +183,16 @@ public class PlanComponentTest extends ComponentTestFixture {
       tester.actionClick(frame.undoButton);
     }
     // Check home doesn't contain any wall
-    assertHomeContains(frame.home);
+    assertPlanContains(frame.plan);
     
     // 11. Click 8 times on redo button
     for (int i = 0; i < 8; i++) {
       tester.actionClick(frame.redoButton);
     }
     // Check plan contains the four wall
-    assertHomeContains(frame.home, wall1, wall2, wall3, wall4);
+    assertPlanContains(frame.plan, wall1, wall2, wall3, wall4);
     // Check the second and the third wall are selected
-    assertSelectionContains(plan, wall2, wall3);
+    assertSelectionContains(planComponent, wall2, wall3);
   }
 
   /**
@@ -217,21 +218,21 @@ public class PlanComponentTest extends ComponentTestFixture {
   /**
    * Asserts <code>home</code> contains <code>walls</code>.
    */
-  private void assertHomeContains(Home home, Wall ... walls) {
-    Collection<Wall> homeWalls = home.getWalls();
-    assertEquals("Home walls incorrect count", 
-        walls.length, homeWalls.size());
+  private void assertPlanContains(Plan plan, Wall ... walls) {
+    Collection<Wall> planWalls = plan.getWalls();
+    assertEquals("Plan walls incorrect count", 
+        walls.length, planWalls.size());
     for (Wall wall : walls) {
-      assertTrue("Wall doesn't belong to home", homeWalls.contains(wall));
+      assertTrue("Wall doesn't belong to plan", planWalls.contains(wall));
     }
   }
 
   /**
-   * Asserts <code>walls</code> are the current selected ones in <code>home</code>.
+   * Asserts <code>walls</code> are the current selected ones in <code>planComponent</code>.
    */
-  private void assertSelectionContains(PlanComponent plan, 
+  private void assertSelectionContains(PlanComponent planComponent, 
                                        Wall ... walls) {
-    List<Wall> selectedWalls = plan.getSelectedWalls();
+    List<Wall> selectedWalls = planComponent.getSelectedWalls();
     assertEquals(walls.length, selectedWalls.size());
     for (Wall wall : walls) {
       assertTrue("Wall not selected", selectedWalls.contains(wall));
@@ -245,7 +246,7 @@ public class PlanComponentTest extends ComponentTestFixture {
   }
   
   private static class PlanTestFrame extends JFrame {
-    private final Home           home;
+    private final Plan           plan;
     private final PlanController planController;
     private final JToggleButton  modeButton;
     private final JButton        undoButton;
@@ -254,12 +255,12 @@ public class PlanComponentTest extends ComponentTestFixture {
     public PlanTestFrame() {
       super("Plan Component Test");
       // Create model objects
-      this.home = new Home();
+      this.plan = new Plan();
       UserPreferences preferences = new DefaultUserPreferences();
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);
-      this.planController = new PlanController(this.home, preferences, undoSupport);
+      this.planController = new PlanController(this.plan, preferences, undoSupport);
       // Add plan component to frame at its preferred size 
       add(new JScrollPane(this.planController.getView()));
       // Create a toggle button for plan component mode 

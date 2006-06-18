@@ -58,7 +58,7 @@ import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
-import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -70,21 +70,21 @@ import com.eteks.sweethome3d.model.WallListener;
  */
 public class PlanComponent extends JComponent {
   private static final float MARGIN = 40;
-  private Home               home;
+  private Plan               plan;
   private UserPreferences    preferences;
   private float              scale = 0.5f;
 
   private List<Wall>         selectedWalls;
   private Rectangle2D        rectangleFeedback;
 
-  public PlanComponent(Home home, UserPreferences preferences,
+  public PlanComponent(Plan plan, UserPreferences preferences,
                        PlanController controller) {
-    this.home = home;
+    this.plan = plan;
     this.preferences = preferences;
     this.selectedWalls = new ArrayList<Wall>();
 
     // TODO
-    home.addWallListener(new WallListener () {
+    plan.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         repaint();
         updateViewSize();
@@ -212,7 +212,7 @@ public class PlanComponent extends JComponent {
       return super.getPreferredSize();
     } else {
       Insets insets = getInsets();
-      Rectangle2D wallsBounds = getHomeBounds();
+      Rectangle2D wallsBounds = getPlanBounds();
       return new Dimension(
           Math.round(((float) wallsBounds.getWidth() + MARGIN * 2)
                      * this.scale) + insets.left + insets.right,
@@ -222,11 +222,11 @@ public class PlanComponent extends JComponent {
   }
   
   /**
-   * Returns the bounds of the home displayed by this component.
+   * Returns the bounds of the plan displayed by this component.
    */
-  private Rectangle2D getHomeBounds() {
+  private Rectangle2D getPlanBounds() {
     Rectangle2D wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
-    for (Wall wall : home.getWalls()) {
+    for (Wall wall : plan.getWalls()) {
       wallsBounds.add(wall.getXStart(), wall.getYStart());
       wallsBounds.add(wall.getXEnd(), wall.getYEnd());
     }
@@ -245,8 +245,8 @@ public class PlanComponent extends JComponent {
     g2D.clipRect(insets.left, insets.top, 
         getWidth() - insets.left - insets.right, 
         getHeight() - insets.top - insets.bottom);
-    // Change coordinates system to home
-    Rectangle2D wallsBounds = getHomeBounds();    
+    // Change component coordinates system to plan system
+    Rectangle2D wallsBounds = getPlanBounds();    
     g2D.translate(insets.left + (MARGIN - wallsBounds.getMinX()) * this.scale,
         insets.top + (MARGIN - wallsBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
@@ -287,7 +287,7 @@ public class PlanComponent extends JComponent {
       gridSize = gridSizes [i];
     }
     
-    Rectangle2D wallsBounds = getHomeBounds();    
+    Rectangle2D wallsBounds = getPlanBounds();    
     float xMin = (float)wallsBounds.getMinX() - MARGIN;
     float yMin = (float)wallsBounds.getMinY() - MARGIN;
     float xMax = convertXPixelToModel(getWidth());
@@ -333,10 +333,10 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Paints home walls.
+   * Paints plan walls.
    */
   private void paintWalls(Graphics2D g2D) {
-    Shape wallsArea = getWallsArea(this.home.getWalls());
+    Shape wallsArea = getWallsArea(this.plan.getWalls());
     // Fill walls area
     g2D.setPaint(getWallPaint());
     g2D.fill(wallsArea);
@@ -643,7 +643,7 @@ public class PlanComponent extends JComponent {
    */
   private float convertXPixelToModel(int x) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getHomeBounds();    
+    Rectangle2D wallsBounds = getPlanBounds();    
     return (x - insets.left) / this.scale - MARGIN + (float)wallsBounds.getMinX();
   }
 
@@ -652,7 +652,7 @@ public class PlanComponent extends JComponent {
    */
   private float convertYPixelToModel(int y) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getHomeBounds();    
+    Rectangle2D wallsBounds = getPlanBounds();    
     return (y - insets.top) / this.scale - MARGIN + (float)wallsBounds.getMinY();
   }
 
@@ -661,7 +661,7 @@ public class PlanComponent extends JComponent {
    */
   private Rectangle getShapePixelBounds(Shape shape) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getHomeBounds();
+    Rectangle2D wallsBounds = getPlanBounds();
     Rectangle2D shapeBounds = shape.getBounds();
     return new Rectangle(
         (int)Math.round((shapeBounds.getMinX() - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left,
