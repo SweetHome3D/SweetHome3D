@@ -76,7 +76,7 @@ public class PlanController implements Controller {
     // Set defaut state to selectionState
     this.state = this.selectionState;
     // Create view
-    this.planComponent = new PlanComponent(this, home, userPreferences);
+    this.planComponent = new PlanComponent(home, userPreferences, this);
   }
 
   /**

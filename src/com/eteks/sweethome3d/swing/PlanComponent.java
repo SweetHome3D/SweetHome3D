@@ -77,8 +77,8 @@ public class PlanComponent extends JComponent {
   private List<Wall>         selectedWalls;
   private Rectangle2D        rectangleFeedback;
 
-  public PlanComponent(PlanController controller, Home home,
-                       UserPreferences preferences) {
+  public PlanComponent(Home home, UserPreferences preferences,
+                       PlanController controller) {
     this.home = home;
     this.preferences = preferences;
     this.selectedWalls = new ArrayList<Wall>();
