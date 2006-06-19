@@ -31,9 +31,9 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.TexturePaint;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
@@ -48,13 +48,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
 import javax.swing.JComponent;
-import javax.swing.JViewport;
-import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
@@ -82,28 +76,35 @@ public class PlanComponent extends JComponent {
     this.plan = plan;
     this.preferences = preferences;
     this.selectedWalls = new ArrayList<Wall>();
-
-    // TODO
-    plan.addWallListener(new WallListener () {
-      public void wallChanged(WallEvent ev) {
-        repaint();
-        updateViewSize();
-      }
-    });
-    if (controller != null) {
-      addAWTListeners(controller);
-      configureKeyMap(controller);
-    }
-    setAutoscrolls(true);
-    setFocusable(true);
+    // Set JComponent default properties
     setOpaque(true);
+    // Add listeners
+    addModelListener(plan);
+    if (controller != null) {
+      addMouseListeners(controller);
+      addKeyListener(controller);
+      addFocusListener(controller);
+      setFocusable(true);
+      setAutoscrolls(true);
+    }
   }
 
-  // TODO
   /**
-   * Adds AWT listeners to this component that calls back <code>controller</code> methods.  
+   * Adds wall listener on this component to receive wall changes notifications from plan. 
    */
-  private void addAWTListeners(final PlanController controller) {
+  private void addModelListener(Plan plan) {
+    plan.addWallListener(new WallListener () {
+      public void wallChanged(WallEvent ev) {
+        revalidate();
+        repaint();
+      }
+    });
+  }
+
+  /**
+   * Adds AWT mouse listeners to this component that calls back <code>controller</code> methods.  
+   */
+  private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
       @Override
       public void mousePressed(MouseEvent ev) {
@@ -134,73 +135,61 @@ public class PlanComponent extends JComponent {
     };
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
+  }
+
+  /**
+   * Adds AWT key listener to this component that calls back <code>controller</code> methods.  
+   */
+  private void addKeyListener(final PlanController controller) {
+    addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent ev) {
+        switch (ev.getKeyCode()) {
+          case KeyEvent.VK_BACK_SPACE :
+          case KeyEvent.VK_DELETE :
+            controller.deleteSelection();
+            break;
+          case KeyEvent.VK_ESCAPE :
+            controller.escape();
+            break;
+          case KeyEvent.VK_ALT :
+            controller.setMagnetismDisabled(true);
+            break;
+          case KeyEvent.VK_LEFT :
+            controller.moveSelection(-1 / scale, 0);
+            break;
+          case KeyEvent.VK_UP :
+            controller.moveSelection(0, -1 / scale);
+            break;
+          case KeyEvent.VK_DOWN :
+            controller.moveSelection(0, 1 / scale);
+            break;
+          case KeyEvent.VK_RIGHT :
+            controller.moveSelection(1 / scale, 0);
+            break;
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent ev) {
+        if (ev.getKeyCode() == KeyEvent.VK_ALT) {
+          controller.setMagnetismDisabled(false);
+        }
+      }
+    });
+  }
+  
+  /**
+   * Adds AWT focus listener to this component that calls back <code>controller</code> 
+   * escape method on focus lost event.  
+   */
+  private void addFocusListener(final PlanController controller) {
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent ev) {
         controller.escape();
       }
     });
-  }
-
-  // TODO
-  private void configureKeyMap(final PlanController controller) {
-    // Delete selection action mapped to back space and delete keys
-    Action deleteSelectionAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        controller.deleteSelection();
-      }
-    };
-    // Escape action mapped to Esc key
-    Action escapeAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
-        controller.escape();
-      }
-    };
-    // Move selection action mapped to arrow keys 
-    class MoveSelectionAction extends AbstractAction {
-      private final int dx;
-      private final int dy;
-      
-      public MoveSelectionAction(int dx, int dy) {
-        this.dx = dx;
-        this.dy = dy;
-      }
-
-      public void actionPerformed(ActionEvent e) {
-        controller.moveSelection(this.dx / scale, this.dy / scale);
-      }
-    }
-    // Temporary magnestism mapped to alt key
-    class DisalbleMagnetismAction extends AbstractAction {
-      private final boolean enabled;
-      
-      public DisalbleMagnetismAction(boolean enabled) {
-        this.enabled = enabled;
-      }
-
-      public void actionPerformed(ActionEvent e) {
-        controller.setMagnetismDisabled(this.enabled);
-      }
-    }
-    ActionMap actionMap = getActionMap();
-    actionMap.put("deleteSelectionAction", deleteSelectionAction);
-    actionMap.put("escapeAction", escapeAction);
-    actionMap.put("moveSelectionLeftAction", new MoveSelectionAction(-1, 0));
-    actionMap.put("moveSelectionUpAction", new MoveSelectionAction(0, -1));
-    actionMap.put("moveSelectionDownAction", new MoveSelectionAction(0, 1));
-    actionMap.put("moveSelectionRightAction", new MoveSelectionAction(1, 0));
-    actionMap.put("disableMagnetismAction", new DisalbleMagnetismAction(true));
-    actionMap.put("enableMagnetismAction", new DisalbleMagnetismAction(false));
-    InputMap inputMap = getInputMap(WHEN_FOCUSED);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "deleteSelectionAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "deleteSelectionAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escapeAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "moveSelectionLeftAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "moveSelectionUpAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "moveSelectionDownAction");
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "moveSelectionRightAction");
-    inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), "disableMagnetismAction");
-    inputMap.put(KeyStroke.getKeyStroke("released ALT"), "enableMagnetismAction");
   }
 
   /**
@@ -541,8 +530,7 @@ public class PlanComponent extends JComponent {
    * with a margin of 2 pixels.
    */
   public boolean containsWallAt(Wall wall, float x, float y) {
-    float margin = 2 / getScale();
-    return getWallShape(wall).intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    return containsShapeAtWithMargin(getWallShape(wall), x, y);
   }
   
   /**
@@ -552,9 +540,8 @@ public class PlanComponent extends JComponent {
    */
   public boolean containsWallStartAt(Wall wall, float x, float y) {
     float [][] wallPoints = getWallPoints(wall);
-    float margin = 2 / getScale();
-    return new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]).
-      intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    Line2D startLine = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
+    return containsShapeAtWithMargin(startLine, x, y);
   }
   
   /**
@@ -564,9 +551,18 @@ public class PlanComponent extends JComponent {
    */
   public boolean containsWallEndAt(Wall wall, float x, float y) {
     float [][] wallPoints = getWallPoints(wall);
+    Line2D endLine = new Line2D.Float(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]); 
+    return containsShapeAtWithMargin(endLine, x, y);
+  }
+  
+  /**
+   * Returns <code>true</code> if <code>shape</code> contains 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a margin of 2 pixels around the wall end line.
+   */
+  private boolean containsShapeAtWithMargin(Shape shape, float x, float y) {
     float margin = 2 / getScale();
-    return new Line2D.Float(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]).
-        intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    return shape.intersects(x - margin, y - margin, 2 * margin, 2 * margin);
   }
   
   /**
@@ -582,15 +578,13 @@ public class PlanComponent extends JComponent {
     return wallPoints;
   }
   
-  // TODO
-  
   /**
    * Ensures <code>walls</code> are visible at screen and moves
    * scroll bars if needed.
    */
-  public void ensureWallsAreVisible(List<Wall> walls) {
-    Rectangle2D areaBounds = getWallsArea(walls).getBounds2D();
-    scrollRectToVisible(getShapePixelBounds(areaBounds));
+  public void ensureWallsAreVisible(Collection<Wall> walls) {
+    Shape wallsArea = getWallsArea(walls);
+    scrollRectToVisible(getShapePixelBounds(wallsArea));
   }
  
   /**
@@ -612,9 +606,11 @@ public class PlanComponent extends JComponent {
    * Sets the scale used to display the plan.
    */
   public void setScale(float scale) {
-    this.scale = scale;
-    repaint();
-    updateViewSize();
+    if (this.scale != scale) {
+      this.scale = scale;
+      revalidate();
+      repaint();
+    }
   }
 
   /**
@@ -625,16 +621,6 @@ public class PlanComponent extends JComponent {
       setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     } else {
       setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
-  /**
-   * Updates viewport size with preferred size, if this component is displayed in a scroll pane.
-   */
-  private void updateViewSize() {
-    if (!isPreferredSizeSet()
-        && getParent() instanceof JViewport) {
-      ((JViewport)getParent()).setViewSize(getPreferredSize());
     }
   }
 
@@ -662,12 +648,11 @@ public class PlanComponent extends JComponent {
   private Rectangle getShapePixelBounds(Shape shape) {
     Insets insets = getInsets();
     Rectangle2D wallsBounds = getPlanBounds();
-    Rectangle2D shapeBounds = shape.getBounds();
+    Rectangle2D shapeBounds = shape.getBounds2D();
     return new Rectangle(
         (int)Math.round((shapeBounds.getMinX() - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left,
         (int)Math.round((shapeBounds.getMinY() - wallsBounds.getMinY() + MARGIN) * this.scale) + insets.top,
         (int)Math.round(shapeBounds.getWidth() * this.scale),
-        (int)Math.round(shapeBounds.getWidth() * this.scale));
+        (int)Math.round(shapeBounds.getHeight() * this.scale));
   }
 }
-

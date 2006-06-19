@@ -32,7 +32,6 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
-import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -42,32 +41,34 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class PlanController implements Controller {
-  public enum Mode {WALL_CREATION, SELECTION }
+  public enum Mode {WALL_CREATION, SELECTION}
   
-  private PlanComponent         planComponent;
-  private Plan                  home;
-  private UserPreferences       userPreferences;
-  private UndoableEditSupport   undoSupport;
-  private ResourceBundle        resource;
+  private PlanComponent       planComponent;
+  private Plan                plan;
+  private UserPreferences     userPreferences;
+  private UndoableEditSupport undoSupport;
+  private ResourceBundle      resource;
   // Current state
-  private ControllerState       state;
+  private ControllerState     state;
   // Possibles states
-  private final ControllerState selectionState;
-  private final ControllerState rectangleSelectionState;
-  private final ControllerState selectionMoveState;
-  private final ControllerState wallCreationState;
-  private final ControllerState newWallState;
-  // Mouse cursor position at last mouse press  
-  private float xLastMousePress;
-  private float yLastMousePress;
-  private boolean shiftDownLastMousePress;
+  private ControllerState     selectionState;
+  private ControllerState     rectangleSelectionState;
+  private ControllerState     selectionMoveState;
+  private ControllerState     wallCreationState;
+  private ControllerState     newWallState;
+  // Mouse cursor position at last mouse press
+  private float               xLastMousePress;
+  private float               yLastMousePress;
+  private boolean             shiftDownLastMousePress;
 
   public PlanController(Plan plan, UserPreferences userPreferences, 
                         UndoableEditSupport undoSupport) {
-    this.home = plan;
+    this.plan = plan;
     this.userPreferences = userPreferences;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(getClass().getName());
+    // Create view
+    this.planComponent = new PlanComponent(plan, userPreferences, this);
     // Initialize states
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
@@ -75,9 +76,7 @@ public class PlanController implements Controller {
     this.wallCreationState = new WallCreationState();
     this.newWallState = new NewWallState();
     // Set defaut state to selectionState
-    this.state = this.selectionState;
-    // Create view
-    this.planComponent = new PlanComponent(home, userPreferences, this);
+    setState(this.selectionState);
   }
 
   /**
@@ -87,15 +86,6 @@ public class PlanController implements Controller {
     return this.planComponent;
   }
 
-  /**
-   * Changes current state of controller.
-   */
-  private void setState(ControllerState state) {
-    this.state.exit();
-    this.state = state;
-    this.state.enter();
-  }
-  
   /**
    * Returns the active mode of this controller.
    */
@@ -165,26 +155,72 @@ public class PlanController implements Controller {
   }
 
   /**
+   * Returns the selection state.
+   */
+  protected ControllerState getSelectionState() {
+    return this.selectionState;
+  }
+
+  /**
+   * Returns the selection move state.
+   */
+  protected ControllerState getSelectionMoveState() {
+    return this.selectionMoveState;
+  }
+
+  /**
+   * Returns the rectangle selection state.
+   */
+  protected ControllerState getRectangleSelectionState() {
+    return this.rectangleSelectionState;
+  }
+
+  /**
+   * Returns the wall creation state.
+   */
+  protected ControllerState getWallCreationState() {
+    return this.wallCreationState;
+  }
+
+  /**
+   * Returns the new wall state.
+   */
+  protected ControllerState getNewWallState() {
+    return this.newWallState;
+  }
+
+  /**
    * Returns the abscissa of mouse position at last mouse press.
    */
-  private float getXLastMousePress() {
+  protected float getXLastMousePress() {
     return this.xLastMousePress;
   }
 
   /**
    * Returns the ordinate of mouse position at last mouse press.
    */
-  private float getYLastMousePress() {
+  protected float getYLastMousePress() {
     return this.yLastMousePress;
   }
   
   /**
    * Returns <code>true</code> if shift key was down at last mouse press.
    */
-  private boolean isShiftDownLastMousePress() {
+  protected boolean isShiftDownLastMousePress() {
     return this.shiftDownLastMousePress;
   }
 
+  /**
+   * Changes current state of controller.
+   */
+  protected void setState(ControllerState state) {
+    if (this.state != null) {
+      this.state.exit();
+    }
+    this.state = state;
+    this.state.enter();
+  }
+  
   /**
    * Returns a wall instance with end points matching (<code>x0</code>, <code>y0</code>)
    * and (<code>x1</code>, <code>y1</code>). The new wall start point is joined to the 
@@ -196,13 +232,13 @@ public class PlanController implements Controller {
     // Create a new wall
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, defaultColor, defaultColor, 
         userPreferences.getDefaultThickness());
-    home.addWall(newWall);
+    plan.addWall(newWall);
     if (wallStartAtStart != null) {
-      home.setWallAtStart(newWall, wallStartAtStart);
-      home.setWallAtStart(wallStartAtStart, newWall);
+      plan.setWallAtStart(newWall, wallStartAtStart);
+      plan.setWallAtStart(wallStartAtStart, newWall);
     } else if (wallEndAtStart != null) {
-      home.setWallAtStart(newWall, wallEndAtStart);
-      home.setWallAtEnd(wallEndAtStart, newWall);
+      plan.setWallAtStart(newWall, wallEndAtStart);
+      plan.setWallAtEnd(wallEndAtStart, newWall);
     }        
     return newWall;
   }
@@ -213,16 +249,16 @@ public class PlanController implements Controller {
    */
   private void joinWallEndToWall(Wall wall, Wall wallStartAtEnd, Wall wallEndAtEnd) {
     if (wallStartAtEnd != null) {
-      home.setWallAtEnd(wall, wallStartAtEnd);
-      home.setWallAtStart(wallStartAtEnd, wall);
+      plan.setWallAtEnd(wall, wallStartAtEnd);
+      plan.setWallAtStart(wallStartAtEnd, wall);
       // Make wall end at the exact same position as wallAtEnd start point
-      home.moveWallEndPointTo(wall, wallStartAtEnd.getXStart(), 
+      plan.moveWallEndPointTo(wall, wallStartAtEnd.getXStart(), 
                                   wallStartAtEnd.getYStart());
     } else if (wallEndAtEnd != null) {
-      home.setWallAtEnd(wall, wallEndAtEnd);
-      home.setWallAtEnd(wallEndAtEnd, wall);
+      plan.setWallAtEnd(wall, wallEndAtEnd);
+      plan.setWallAtEnd(wallEndAtEnd, wall);
       // Make wall end at the exact same position as wallAtEnd end point
-      home.moveWallEndPointTo(wall, wallEndAtEnd.getXEnd(), 
+      plan.moveWallEndPointTo(wall, wallEndAtEnd.getXEnd(), 
                                   wallEndAtEnd.getYEnd());
     }
   }
@@ -264,27 +300,27 @@ public class PlanController implements Controller {
   private void doAddWalls(Wall [] newWalls, JoinedWall [] joinedWalls) {
     // First add all walls to home
     for (JoinedWall joinedWall : joinedWalls) {
-      home.addWall(joinedWall.getWall());
+      plan.addWall(joinedWall.getWall());
     }
     // Then join them to each other if necessary
     for (JoinedWall joinedWall : joinedWalls) {
       Wall wall = joinedWall.getWall();
       Wall wallAtStart = joinedWall.getWallAtStart();
       if (wallAtStart != null) {
-        home.setWallAtStart(wall, wallAtStart);
+        plan.setWallAtStart(wall, wallAtStart);
         if (joinedWall.isJoinedAtEndOfWallAtStart()) {
-          home.setWallAtEnd(wallAtStart, wall);
+          plan.setWallAtEnd(wallAtStart, wall);
         } else if (joinedWall.isJoinedAtStartOfWallAtStart()) {
-          home.setWallAtStart(wallAtStart, wall);
+          plan.setWallAtStart(wallAtStart, wall);
         }
       }
       Wall wallAtEnd = joinedWall.getWallAtEnd();
       if (wallAtEnd != null) {
-        home.setWallAtEnd(wall, wallAtEnd);
+        plan.setWallAtEnd(wall, wallAtEnd);
         if (joinedWall.isJoinedAtStartOfWallAtEnd()) {
-          home.setWallAtStart(wallAtEnd, wall);
+          plan.setWallAtStart(wallAtEnd, wall);
         } else if (joinedWall.isJoinedAtEndOfWallAtEnd()) {
-          home.setWallAtEnd(wallAtEnd, wall);
+          plan.setWallAtEnd(wallAtEnd, wall);
         }
       }
     }      
@@ -330,7 +366,7 @@ public class PlanController implements Controller {
    */
   private void doDeleteWalls(Wall [] walls) {
     for (Wall wall : walls) {
-      home.deleteWall(wall);
+      plan.deleteWall(wall);
     }
     doDeselectAll();
   }
@@ -374,18 +410,18 @@ public class PlanController implements Controller {
    */
   private void doMoveWalls(List<Wall> walls, float dx, float dy) {
     for (Wall wall : walls) {        
-      home.moveWallStartPointTo(wall, wall.getXStart() + dx, wall.getYStart() + dy);
-      home.moveWallEndPointTo(wall, wall.getXEnd() + dx, wall.getYEnd() + dy);
+      plan.moveWallStartPointTo(wall, wall.getXStart() + dx, wall.getYStart() + dy);
+      plan.moveWallEndPointTo(wall, wall.getXEnd() + dx, wall.getYEnd() + dy);
       Wall wallAtStart = wall.getWallAtStart();
       // If wall is joined to a wall at its start 
       // and that this wall doesn't belong to the list of moved walls
       if (wallAtStart != null && !walls.contains(wallAtStart)) {
         // Move the wall start point or end point
         if (wallAtStart.getWallAtStart() == wall) {
-          home.moveWallStartPointTo(wallAtStart, 
+          plan.moveWallStartPointTo(wallAtStart, 
               wallAtStart.getXStart() + dx, wallAtStart.getYStart() + dy);
         } else if (wallAtStart.getWallAtEnd() == wall) {
-          home.moveWallEndPointTo(wallAtStart, 
+          plan.moveWallEndPointTo(wallAtStart, 
               wallAtStart.getXEnd() + dx, wallAtStart.getYEnd() + dy);
         }
       }
@@ -395,10 +431,10 @@ public class PlanController implements Controller {
       if (wallAtEnd != null && !walls.contains(wallAtEnd)) {
         // Move the wall start point or end point
         if (wallAtEnd.getWallAtStart() == wall) {
-          home.moveWallStartPointTo(wallAtEnd, 
+          plan.moveWallStartPointTo(wallAtEnd, 
               wallAtEnd.getXStart() + dx, wallAtEnd.getYStart() + dy);
         } else if (wallAtEnd.getWallAtEnd() == wall) {
-          home.moveWallEndPointTo(wallAtEnd, 
+          plan.moveWallEndPointTo(wallAtEnd, 
               wallAtEnd.getXEnd() + dx, wallAtEnd.getYEnd() + dy);
         }
       }
@@ -406,13 +442,14 @@ public class PlanController implements Controller {
   }
 
   /**
-   * Moves selected walls in plan component of (<code>dx</code>, <code>dy</code>) units
+   * Moves and shows selected walls in plan component of (<code>dx</code>, <code>dy</code>) units
    * and record it as undoable operation.
    */
-  private void moveSelectedWalls(float dx, float dy) {
+  private void moveAndShowSelectedWalls(float dx, float dy) {
     List<Wall> selection = planComponent.getSelectedWalls();
     if (!selection.isEmpty()) {
       doMoveWalls(selection, dx, dy);
+      planComponent.ensureWallsAreVisible(planComponent.getSelectedWalls());
       postWallsMove(dx, dy);
     }
   }
@@ -452,7 +489,7 @@ public class PlanController implements Controller {
    * point different from <code>ignoredWall</code>.
    */
   private Wall getWallAt(float x, float y, Wall ignoredWall) {
-    for (Wall wall : home.getWalls()) {
+    for (Wall wall : plan.getWalls()) {
       if (wall != ignoredWall
           && planComponent.containsWallAt(wall, x, y)) 
         return wall;
@@ -465,7 +502,7 @@ public class PlanController implements Controller {
    * which has a start point not joined to any wall. 
    */
   private Wall getWallStartAt(float x, float y, Wall ignoredWall) {
-    for (Wall wall : home.getWalls()) {
+    for (Wall wall : plan.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtStart() == null
           && planComponent.containsWallStartAt(wall, x, y)) 
@@ -479,7 +516,7 @@ public class PlanController implements Controller {
    * which has a end point not joined to any wall. 
    */
   private Wall getWallEndAt(float x, float y, Wall ignoredWall) {
-    for (Wall wall : home.getWalls()) {
+    for (Wall wall : plan.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtEnd() == null
           && planComponent.containsWallEndAt(wall, x, y)) 
@@ -638,7 +675,7 @@ public class PlanController implements Controller {
   /**
    * Controller state classes super class.
    */
-  private abstract class ControllerState {
+  protected static abstract class ControllerState {
     public void enter() {
     }
 
@@ -692,7 +729,7 @@ public class PlanController implements Controller {
     @Override
     public void setMode(Mode mode) {
       if (mode == Mode.WALL_CREATION) {
-        setState(wallCreationState);
+        setState(getWallCreationState());
       }
     }
 
@@ -703,7 +740,7 @@ public class PlanController implements Controller {
 
     @Override
     public void moveSelection(float dx, float dy) {
-      moveSelectedWalls(dx, dy);
+      moveAndShowSelectedWalls(dx, dy);
     }
 
     @Override
@@ -711,10 +748,10 @@ public class PlanController implements Controller {
       // If shift isn't pressed, and a wall is under cursor position
       if (!shiftDown && getWallAt(x, y, null) != null) {
         // Change state to SelectionMoveState
-        setState(selectionMoveState);
+        setState(getSelectionMoveState());
       } else {
         // Otherwise change state to RectangleSelectionState
-        setState(rectangleSelectionState);
+        setState(getRectangleSelectionState());
       }
     }
   }
@@ -770,7 +807,7 @@ public class PlanController implements Controller {
         doSelectWall(wallUnderCursor);
       }
       // Change the state to SelectionState
-      setState(selectionState);
+      setState(getSelectionState());
     }
 
     @Override
@@ -782,7 +819,7 @@ public class PlanController implements Controller {
             getYLastMousePress() - this.yLastMouseMove);
       }
       // Change the state to SelectionState
-      setState(selectionState);
+      setState(getSelectionState());
     }
   }
 
@@ -837,12 +874,12 @@ public class PlanController implements Controller {
         }
       }      
       // Change state to SelectionState
-      setState(selectionState);
+      setState(getSelectionState());
     }
     
     @Override
     public void escape() {
-      setState(selectionState);
+      setState(getSelectionState());
     }
 
     @Override
@@ -866,7 +903,7 @@ public class PlanController implements Controller {
       }
       
       // For all the walls that intersects with surrounding rectangle
-      for (Wall wall : home.getWalls()) {
+      for (Wall wall : plan.getWalls()) {
         if (planComponent.doesWallCutRectangle(wall, x0, y0, x1, y1)) {
           // If shift was down at mouse press
           if (shiftDown) {
@@ -901,7 +938,7 @@ public class PlanController implements Controller {
     public void setMode(Mode mode) {
       if (mode == Mode.SELECTION) {
         // Change state to SelectionState
-        setState(selectionState);
+        setState(getSelectionState());
       } 
     }
 
@@ -914,7 +951,7 @@ public class PlanController implements Controller {
     public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
       doDeselectAll();
       // Change state to NewWallState
-      setState(newWallState);
+      setState(getNewWallState());
     }
   }
 
@@ -984,7 +1021,7 @@ public class PlanController implements Controller {
             xEnd, yEnd, this.wallStartAtStart, this.wallEndAtStart);
       } else {
         // Otherwise update its end point
-        home.moveWallEndPointTo(this.currentWall, xEnd, yEnd); 
+        plan.moveWallEndPointTo(this.currentWall, xEnd, yEnd); 
       }         
       
       // Select any wall close to (xMove, yMove) to display a feedback 
@@ -1019,7 +1056,7 @@ public class PlanController implements Controller {
           joinWallEndToWall(this.lastWall, this.wallStartAtEnd, this.wallEndAtEnd);
         }
         // Change state to WallCreationState 
-        setState(wallCreationState);
+        setState(getWallCreationState());
       } else {
         // Create a new wall only when it may have a length > 0
         // meaning after the first mouse move
@@ -1050,7 +1087,8 @@ public class PlanController implements Controller {
       if (this.currentWall != null) {
         doDeleteWalls(new Wall [] {this.currentWall});
       }
-      setState(wallCreationState);
+      // Change state to WallCreationState 
+      setState(getWallCreationState());
     }
   }
 }
