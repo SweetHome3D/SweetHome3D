@@ -1,5 +1,5 @@
 /*
- * PlanTest.java 13 juin 2006
+ * SimplePlanTest.java 13 juin 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -33,7 +33,7 @@ import com.eteks.sweethome3d.swing.PlanComponent;
  * Displays in a frame a plan with a few walls. 
  * @author Emmanuel Puybaret
  */
-public class HomePlanTest {
+public class SimplePlanTest {
   public static void main(String [] args) {
     final int white = 0xFFFFFF;
     // Create 3 walls
@@ -54,7 +54,7 @@ public class HomePlanTest {
     planComponent.setSelectedWalls(Arrays.asList(new Wall [] {wall2, wall3}));
     planComponent.setRectangleFeedback(-125, 100, 700, 225);
     // Show the component in a frame
-    JFrame frame = new JFrame("Home Plan Test");
+    JFrame frame = new JFrame("Plan Test");
     frame.add(planComponent);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     frame.pack();
