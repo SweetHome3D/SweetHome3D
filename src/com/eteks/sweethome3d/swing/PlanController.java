@@ -313,18 +313,20 @@ public class PlanController implements Controller {
    * Deletes selected walls in plan and record it as an undoable operation.
    */
   private void deleteSelectedWalls() {
-    List<Wall> selectedWalls = this.planComponent.getSelectedWalls();
+    List<Wall> selectedWalls = 
+      new ArrayList<Wall>(this.planComponent.getSelectedWalls());
     if (!selectedWalls.isEmpty()) {
       for (Wall wall : selectedWalls) {
         this.plan.deleteWall(wall);
       }
+      deselectAll();
       postDeleteWalls(selectedWalls);
     }      
   }
 
   /**
-   * Moves and shows selected walls in plan component of (<code>dx</code>, <code>dy</code>) units
-   * and record it as undoable operation.
+   * Moves and shows selected walls in plan component of (<code>dx</code>,
+   * <code>dy</code>) units and record it as undoable operation.
    */
   private void moveAndShowSelectedWalls(float dx, float dy) {
     List<Wall> selectedWalls = planComponent.getSelectedWalls();
