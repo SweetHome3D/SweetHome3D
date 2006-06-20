@@ -72,7 +72,7 @@ public class PlanControllerTest extends TestCase {
     // Click at (0, 0), (500, 2), (498, 300), then double click at (0, 302) in home coordinates space 
     planController.moveMouse(0, 0);
     planController.pressMouse(0, 0, 1, false);
-    planController.setMagnetismDisabled(false);
+    planController.toggleMagnetism(false);
     planController.releaseMouse(0, 0);
     planController.moveMouse(500, 2);
     planController.pressMouse(500, 2, 1, false);
@@ -103,13 +103,13 @@ public class PlanControllerTest extends TestCase {
     planController.moveMouse(0, 300);
     planController.pressMouse(0, 300, 1, false);
     planController.releaseMouse(0, 300);
-    planController.setMagnetismDisabled(true);
+    planController.toggleMagnetism(true);
     planController.moveMouse(20, 20);
     planController.pressMouse(20, 20, 1, false);
     planController.releaseMouse(20, 20);
     planController.pressMouse(20, 20, 2, false);
     planController.releaseMouse(20, 20);
-    planController.setMagnetismDisabled(false);
+    planController.toggleMagnetism(false);
     // Check a forth wall was created at (0, 300), (20, 20) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);

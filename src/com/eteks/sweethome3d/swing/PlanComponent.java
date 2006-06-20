@@ -112,7 +112,6 @@ public class PlanComponent extends JComponent {
           requestFocusInWindow();
           controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
               ev.getClickCount(), ev.isShiftDown());
-          controller.setMagnetismDisabled(ev.isAltDown());
         }
       }
 
@@ -152,8 +151,8 @@ public class PlanComponent extends JComponent {
           case KeyEvent.VK_ESCAPE :
             controller.escape();
             break;
-          case KeyEvent.VK_ALT :
-            controller.setMagnetismDisabled(true);
+          case KeyEvent.VK_SHIFT :
+            controller.toggleMagnetism(true);
             break;
           case KeyEvent.VK_LEFT :
             controller.moveSelection(-1 / scale, 0);
@@ -172,8 +171,8 @@ public class PlanComponent extends JComponent {
 
       @Override
       public void keyReleased(KeyEvent ev) {
-        if (ev.getKeyCode() == KeyEvent.VK_ALT) {
-          controller.setMagnetismDisabled(false);
+        if (ev.getKeyCode() == KeyEvent.VK_SHIFT) {
+          controller.toggleMagnetism(false);
         }
       }
     });
@@ -518,7 +517,7 @@ public class PlanComponent extends JComponent {
    * with the horizontal rectangle which opposite corners are at points
    * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
    */
-  public boolean doesWallCutRectangle(Wall wall, float x0, float y0, float x1, float y1) {
+  public boolean doesWallIntersectRectangle(Wall wall, float x0, float y0, float x1, float y1) {
     Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
     rectangle.add(x1, y1);
     return getWallShape(wall).intersects(rectangle);

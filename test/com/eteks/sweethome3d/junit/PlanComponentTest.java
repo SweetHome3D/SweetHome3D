@@ -106,9 +106,9 @@ public class PlanComponentTest extends ComponentTestFixture {
 
     // 3. Click at (20, 170), then double click at (30, 30) with Alt key depressed
     tester.actionClick(planComponent, 20, 170);
-    tester.actionKeyPress(KeyEvent.VK_ALT);
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
-    tester.actionKeyRelease(KeyEvent.VK_ALT);
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check a forth wall was created at (0, 300), (20, 20) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);

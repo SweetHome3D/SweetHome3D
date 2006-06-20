@@ -133,11 +133,11 @@ public class PlanController implements Controller {
   }
   
   /**
-   * Disables temporary magnetism feature of user preferences. 
-   * @param magnetismDisabled if <code>true</code> then magnetism feature isn't active.
+   * Toggles temporary magnetism feature of user preferences. 
+   * @param magnetismToggled if <code>true</code> then magnetism feature isn't active.
    */
-  public void setMagnetismDisabled(boolean magnetismDisabled) {
-    this.state.setMagnetismDisabled(magnetismDisabled);
+  public void toggleMagnetism(boolean magnetismToggled) {
+    this.state.toggleMagnetism(magnetismToggled);
   }
 
   /**
@@ -217,7 +217,7 @@ public class PlanController implements Controller {
   /**
    * Returns <code>true</code> if shift key was down at last mouse press.
    */
-  protected boolean isShiftDownLastMousePress() {
+  protected boolean wasShiftDownLastMousePress() {
     return this.shiftDownLastMousePress;
   }
 
@@ -737,7 +737,7 @@ public class PlanController implements Controller {
     public void moveSelection(float dx, float dy) {
     }
 
-    public void setMagnetismDisabled(boolean magnetismDisabled) {
+    public void toggleMagnetism(boolean magnetismToggled) {
     }
 
     public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
@@ -888,7 +888,7 @@ public class PlanController implements Controller {
       Wall wallUnderCursor = 
         getWallAt(getXLastMousePress(), getYLastMousePress(), null);
       // If no wall under cursor and shift wasn't down, deselect all
-      if (wallUnderCursor == null && !isShiftDownLastMousePress()) {
+      if (wallUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
       } 
       // 
@@ -946,7 +946,7 @@ public class PlanController implements Controller {
     private void updateSelectedWalls(float x0, float y0, 
                                      float x1, float y1) {
       List<Wall> selectedWalls;
-      boolean shiftDown = isShiftDownLastMousePress();
+      boolean shiftDown = wasShiftDownLastMousePress();
       if (shiftDown) {
         selectedWalls = new ArrayList<Wall>(this.mousePressSelection);
       } else {
@@ -955,7 +955,7 @@ public class PlanController implements Controller {
       
       // For all the walls that intersects with surrounding rectangle
       for (Wall wall : plan.getWalls()) {
-        if (planComponent.doesWallCutRectangle(wall, x0, y0, x1, y1)) {
+        if (planComponent.doesWallIntersectRectangle(wall, x0, y0, x1, y1)) {
           // If shift was down at mouse press
           if (shiftDown) {
             // Toogle selection of the wall
@@ -1032,6 +1032,7 @@ public class PlanController implements Controller {
     @Override
     public void enter() {
       deselectAll();
+      toggleMagnetism(wasShiftDownLastMousePress());
       this.xStart = getXLastMousePress();
       this.yStart = getYLastMousePress();
       // If the start or end line of a wall close to (xStart, yStart) is
@@ -1134,10 +1135,10 @@ public class PlanController implements Controller {
     }
 
     @Override
-    public void setMagnetismDisabled(boolean magnetismDisabled) {
+    public void toggleMagnetism(boolean magnetismToggled) {
       // Compute active magnetism
       this.magnetismEnabled = userPreferences.isMagnetismEnabled()
-                              && !magnetismDisabled;
+                              ^ magnetismToggled;
       // If the new wall already exists, 
       // compute again its end as if mouse moved
       if (this.newWall != null) {
