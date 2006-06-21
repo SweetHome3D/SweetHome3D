@@ -191,6 +191,11 @@ public class PlanComponentTest extends ComponentTestFixture {
     }
     // Check plan contains the four wall
     assertPlanContains(frame.plan, wall1, wall2, wall3, wall4);
+    //  Check they are joined to each other end point
+    assertWallsAreJoined(wall4, wall1, wall2); 
+    assertWallsAreJoined(wall1, wall2, wall3); 
+    assertWallsAreJoined(wall2, wall3, wall4); 
+    assertWallsAreJoined(wall1, wall4, wall3); 
     // Check the second and the third wall are selected
     assertSelectionContains(planComponent, wall2, wall3);
   }
