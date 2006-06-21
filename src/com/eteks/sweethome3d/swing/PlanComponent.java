@@ -46,7 +46,9 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.UIManager;
@@ -70,6 +72,7 @@ public class PlanComponent extends JComponent {
 
   private List<Wall>         selectedWalls;
   private Rectangle2D        rectangleFeedback;
+  private Rectangle2D        planBoundsCache;
 
   public PlanComponent(Plan plan, UserPreferences preferences,
                        PlanController controller) {
@@ -95,6 +98,8 @@ public class PlanComponent extends JComponent {
   private void addModelListener(Plan plan) {
     plan.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
+        planBoundsCache = null;
+        // Revalidate and repaint
         revalidate();
         repaint();
       }
@@ -200,11 +205,11 @@ public class PlanComponent extends JComponent {
       return super.getPreferredSize();
     } else {
       Insets insets = getInsets();
-      Rectangle2D wallsBounds = getPlanBounds();
+      Rectangle2D planBounds = getPlanBounds();
       return new Dimension(
-          Math.round(((float) wallsBounds.getWidth() + MARGIN * 2)
+          Math.round(((float)planBounds.getWidth() + MARGIN * 2)
                      * this.scale) + insets.left + insets.right,
-          Math.round(((float) wallsBounds.getHeight() + MARGIN * 2)
+          Math.round(((float)planBounds.getHeight() + MARGIN * 2)
                      * this.scale) + insets.top + insets.bottom);
     }
   }
@@ -213,12 +218,14 @@ public class PlanComponent extends JComponent {
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
-    Rectangle2D wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
-    for (Wall wall : plan.getWalls()) {
-      wallsBounds.add(wall.getXStart(), wall.getYStart());
-      wallsBounds.add(wall.getXEnd(), wall.getYEnd());
+    if (this.planBoundsCache == null) {
+      this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
+      for (Wall wall : plan.getWalls()) {
+        this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
+        this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
+      }
     }
-    return wallsBounds;
+    return this.planBoundsCache;
   }
 
   /**
@@ -234,9 +241,9 @@ public class PlanComponent extends JComponent {
         getWidth() - insets.left - insets.right, 
         getHeight() - insets.top - insets.bottom);
     // Change component coordinates system to plan system
-    Rectangle2D wallsBounds = getPlanBounds();    
-    g2D.translate(insets.left + (MARGIN - wallsBounds.getMinX()) * this.scale,
-        insets.top + (MARGIN - wallsBounds.getMinY()) * this.scale);
+    Rectangle2D planBounds = getPlanBounds();    
+    g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * this.scale,
+        insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     // Paint component contents
@@ -275,9 +282,9 @@ public class PlanComponent extends JComponent {
       gridSize = gridSizes [i];
     }
     
-    Rectangle2D wallsBounds = getPlanBounds();    
-    float xMin = (float)wallsBounds.getMinX() - MARGIN;
-    float yMin = (float)wallsBounds.getMinY() - MARGIN;
+    Rectangle2D planBounds = getPlanBounds();    
+    float xMin = (float)planBounds.getMinX() - MARGIN;
+    float yMin = (float)planBounds.getMinY() - MARGIN;
     float xMax = convertXPixelToModel(getWidth());
     float yMax = convertYPixelToModel(getHeight());
 
@@ -410,7 +417,7 @@ public class PlanComponent extends JComponent {
             wallAtEndPoints [0], wallAtEndPoints [1], limit);
       }
     }
-
+    
     return getShape(wallPoints);
   }
 
@@ -628,8 +635,8 @@ public class PlanComponent extends JComponent {
    */
   private float convertXPixelToModel(int x) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getPlanBounds();    
-    return (x - insets.left) / this.scale - MARGIN + (float)wallsBounds.getMinX();
+    Rectangle2D planBounds = getPlanBounds();    
+    return (x - insets.left) / this.scale - MARGIN + (float)planBounds.getMinX();
   }
 
   /**
@@ -637,8 +644,8 @@ public class PlanComponent extends JComponent {
    */
   private float convertYPixelToModel(int y) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getPlanBounds();    
-    return (y - insets.top) / this.scale - MARGIN + (float)wallsBounds.getMinY();
+    Rectangle2D planBounds = getPlanBounds();    
+    return (y - insets.top) / this.scale - MARGIN + (float)planBounds.getMinY();
   }
 
   /**
@@ -646,11 +653,11 @@ public class PlanComponent extends JComponent {
    */
   private Rectangle getShapePixelBounds(Shape shape) {
     Insets insets = getInsets();
-    Rectangle2D wallsBounds = getPlanBounds();
+    Rectangle2D planBounds = getPlanBounds();
     Rectangle2D shapeBounds = shape.getBounds2D();
     return new Rectangle(
-        (int)Math.round((shapeBounds.getMinX() - wallsBounds.getMinX() + MARGIN) * this.scale) + insets.left,
-        (int)Math.round((shapeBounds.getMinY() - wallsBounds.getMinY() + MARGIN) * this.scale) + insets.top,
+        (int)Math.round((shapeBounds.getMinX() - planBounds.getMinX() + MARGIN) * this.scale) + insets.left,
+        (int)Math.round((shapeBounds.getMinY() - planBounds.getMinY() + MARGIN) * this.scale) + insets.top,
         (int)Math.round(shapeBounds.getWidth() * this.scale),
         (int)Math.round(shapeBounds.getHeight() * this.scale));
   }
