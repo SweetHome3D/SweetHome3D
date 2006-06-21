@@ -173,8 +173,8 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check first wall is selected and that it moved
     assertSelectionContains(planComponent, wall1);
     assertCoordinatesEqualWallPoints(0, 40, 504, 40, wall1);
-    // Transfer focus to undo button
-    tester.actionFocus(frame.undoButton);
+    // Lose focus 
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
     // Check the wall didn't move at end
     assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
 
