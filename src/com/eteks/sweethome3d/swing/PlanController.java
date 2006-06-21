@@ -251,17 +251,23 @@ public class PlanController implements Controller {
    * Joins the end point of <code>wall</code> to the start of
    * <code>wallStartAtEnd</code> or the end of <code>wallEndAtEnd</code>.
    */
-  private void joinWallEndToWall(Wall wall, 
+  private void joinNewWallEndToWall(Wall wall, JoinedWall joinedWall, 
                                  Wall wallStartAtEnd, Wall wallEndAtEnd) {
     if (wallStartAtEnd != null) {
       this.plan.setWallAtEnd(wall, wallStartAtEnd);
       this.plan.setWallAtStart(wallStartAtEnd, wall);
+      // Update joinedWall data created by postAddWall
+      joinedWall.setWallAtEnd(wallStartAtEnd);
+      joinedWall.setJoinedAtStartOfWallAtEnd(true);
       // Make wall end at the exact same position as wallAtEnd start point
       this.plan.moveWallEndPointTo(wall, wallStartAtEnd.getXStart(),
           wallStartAtEnd.getYStart());
     } else if (wallEndAtEnd != null) {
       this.plan.setWallAtEnd(wall, wallEndAtEnd);
       this.plan.setWallAtEnd(wallEndAtEnd, wall);
+      // Update joinedWall data created by postAddWall
+      joinedWall.setWallAtEnd(wallEndAtEnd);
+      joinedWall.setJoinedAtEndOfWallAtEnd(true);
       // Make wall end at the exact same position as wallAtEnd end point
       this.plan.moveWallEndPointTo(wall, wallEndAtEnd.getXEnd(),
           wallEndAtEnd.getYEnd());
@@ -415,7 +421,7 @@ public class PlanController implements Controller {
   /**
    * Posts an undoable new wall operation, about <code>newWall</code>.
    */
-  private void postAddWall(Wall newWall) {
+  private JoinedWall postAddWall(Wall newWall) {
     // Retrieve data about joined walls to wall
     final JoinedWall [] joinedNewWall = {new JoinedWall(newWall)};
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
@@ -437,6 +443,7 @@ public class PlanController implements Controller {
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
+    return joinedNewWall [0];
   }
 
   /**
@@ -559,7 +566,7 @@ public class PlanController implements Controller {
    * Stores the walls at start and at end of a given wall. This data are usefull
    * to add a collection of walls after an undo/redo delete operation.
    */
-  private final static class JoinedWall {
+  private static class JoinedWall {
     private Wall wall;
     private Wall wallAtStart;
     private Wall wallAtEnd;
@@ -572,13 +579,17 @@ public class PlanController implements Controller {
       this.wall = wall;
       this.wallAtStart = wall.getWallAtStart();
       if (this.wallAtStart != null) {
-        this.joinedAtEndOfWallAtStart = this.wallAtStart.getWallAtEnd() == wall;
-        this.joinedAtStartOfWallAtStart = this.wallAtStart.getWallAtStart() == wall;
+        this.joinedAtEndOfWallAtStart = 
+          this.wallAtStart.getWallAtEnd() == wall;
+        this.joinedAtStartOfWallAtStart = 
+          this.wallAtStart.getWallAtStart() == wall;
       }
       this.wallAtEnd = wall.getWallAtEnd();
       if (this.wallAtEnd != null) {
-        this.joinedAtEndOfWallAtEnd = wallAtEnd.getWallAtEnd() == wall;
-        this.joinedAtStartOfWallAtEnd = wallAtEnd.getWallAtStart() == wall;
+        this.joinedAtEndOfWallAtEnd = 
+          wallAtEnd.getWallAtEnd() == wall;
+        this.joinedAtStartOfWallAtEnd = 
+          wallAtEnd.getWallAtStart() == wall;
       }
     }
 
@@ -586,30 +597,44 @@ public class PlanController implements Controller {
       return this.wall;
     }
 
-    public boolean isJoinedAtEndOfWallAtEnd() {
-      return this.joinedAtEndOfWallAtEnd;
+    public Wall getWallAtEnd() {
+      return this.wallAtEnd;
+    }
+
+    public void setWallAtEnd(Wall wallAtEnd) {
+      this.wallAtEnd = wallAtEnd;
+    }
+
+    public Wall getWallAtStart() {
+      return this.wallAtStart;
     }
 
     public boolean isJoinedAtEndOfWallAtStart() {
       return this.joinedAtEndOfWallAtStart;
     }
 
-    public boolean isJoinedAtStartOfWallAtEnd() {
-      return this.joinedAtStartOfWallAtEnd;
-    }
-
     public boolean isJoinedAtStartOfWallAtStart() {
       return this.joinedAtStartOfWallAtStart;
     }
 
-    public Wall getWallAtEnd() {
-      return this.wallAtEnd;
+    public void setJoinedAtEndOfWallAtEnd(
+                     boolean joinedAtEndOfWallAtEnd) {
+      this.joinedAtEndOfWallAtEnd = joinedAtEndOfWallAtEnd;
     }
 
-    public Wall getWallAtStart() {
-      return this.wallAtStart;
+    public boolean isJoinedAtEndOfWallAtEnd() {
+      return this.joinedAtEndOfWallAtEnd;
     }
-    
+
+    public boolean isJoinedAtStartOfWallAtEnd() {
+      return this.joinedAtStartOfWallAtEnd;
+    }
+
+    public void setJoinedAtStartOfWallAtEnd(
+                     boolean joinedAtStartOfWallAtEnd) {
+      this.joinedAtStartOfWallAtEnd = joinedAtStartOfWallAtEnd;
+    }
+
     /**
      * A helper method that builds an array of <code>JoinedWall</code> objects 
      * for a given list of walls.
@@ -879,7 +904,7 @@ public class PlanController implements Controller {
    * down.
    */
   private class RectangleSelectionState extends ControllerState {
-    private List<Wall> mousePressSelection;  
+    private List<Wall> selectedWallsMousePressed;  
     private boolean    mouseMoved;
   
     @Override
@@ -896,7 +921,7 @@ public class PlanController implements Controller {
         deselectAll();
       } 
       // 
-      this.mousePressSelection = 
+      this.selectedWallsMousePressed = 
         new ArrayList<Wall>(planComponent.getSelectedWalls());
       this.mouseMoved = false;
     }
@@ -904,8 +929,8 @@ public class PlanController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       this.mouseMoved = true;
-      updateSelectedWalls(getXLastMousePress(),
-          getYLastMousePress(), x, y);
+      updateSelectedWalls(getXLastMousePress(), getYLastMousePress(), 
+          x, y, this.selectedWallsMousePressed);
       // Update rectangle feedback
       planComponent.setRectangleFeedback(
           getXLastMousePress(), getYLastMousePress(), x, y);
@@ -919,12 +944,12 @@ public class PlanController implements Controller {
         Wall wallUnderCursor = getWallAt(x, y, null);
         // Toggle selection of the wall under cursor 
         if (wallUnderCursor != null) {
-          if (this.mousePressSelection.contains(wallUnderCursor)) {
-            this.mousePressSelection.remove(wallUnderCursor);
+          if (this.selectedWallsMousePressed.contains(wallUnderCursor)) {
+            this.selectedWallsMousePressed.remove(wallUnderCursor);
           } else {
-            this.mousePressSelection.add(wallUnderCursor);
+            this.selectedWallsMousePressed.add(wallUnderCursor);
           }
-          selectWalls(this.mousePressSelection);
+          selectWalls(this.selectedWallsMousePressed);
         }
       }      
       // Change state to SelectionState
@@ -938,21 +963,22 @@ public class PlanController implements Controller {
 
     @Override
     public void exit() {
-      this.mousePressSelection = null;
+      this.selectedWallsMousePressed = null;
       planComponent.deleteRectangleFeedback();
     }
 
     /**
-     * Updates the selection in rectangle which opposite corners are at 
-     * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>)
-     * coordinates.
+     * Updates selection from <code>selectedWallsMousePressed</code> and the
+     * walls that intersects the rectangle at coordinates (<code>x0</code>,
+     * <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
      */
     private void updateSelectedWalls(float x0, float y0, 
-                                     float x1, float y1) {
+                                     float x1, float y1,
+                                     List<Wall> selectedWallsMousePressed) {
       List<Wall> selectedWalls;
       boolean shiftDown = wasShiftDownLastMousePress();
       if (shiftDown) {
-        selectedWalls = new ArrayList<Wall>(this.mousePressSelection);
+        selectedWalls = new ArrayList<Wall>(selectedWallsMousePressed);
       } else {
         selectedWalls = new ArrayList<Wall>();
       }
@@ -963,12 +989,12 @@ public class PlanController implements Controller {
           // If shift was down at mouse press
           if (shiftDown) {
             // Toogle selection of the wall
-            if (this.mousePressSelection.contains(wall)) {
+            if (selectedWallsMousePressed.contains(wall)) {
               selectedWalls.remove(wall);
             } else {
               selectedWalls.add(wall);
             }
-          } else if (!this.mousePressSelection.contains(wall)) {
+          } else if (!selectedWallsMousePressed.contains(wall)) {
             // Else select the wall
             selectedWalls.add(wall);
           }
@@ -1014,19 +1040,20 @@ public class PlanController implements Controller {
    * New wall state. This state manages wall creation at each mouse press. 
    */
   private class NewWallState extends ControllerState {
-    private float   xStart;
-    private float   yStart;
-    private float   xLastEnd;
-    private float   yLastEnd;
-    private float   xLastMouseMove;
-    private float   yLastMouseMove;
-    private Wall    wallStartAtStart;
-    private Wall    wallEndAtStart;
-    private Wall    newWall;
-    private Wall    wallStartAtEnd;
-    private Wall    wallEndAtEnd;
-    private Wall    lastWall;
-    private boolean magnetismEnabled;
+    private float      xStart;
+    private float      yStart;
+    private float      xLastEnd;
+    private float      yLastEnd;
+    private float      xLastMouseMove;
+    private float      yLastMouseMove;
+    private Wall       wallStartAtStart;
+    private Wall       wallEndAtStart;
+    private Wall       newWall;
+    private Wall       wallStartAtEnd;
+    private Wall       wallEndAtEnd;
+    private Wall       lastWall;
+    private JoinedWall joinedLastWall;
+    private boolean    magnetismEnabled;
     
     @Override
     public Mode getMode() {
@@ -1117,7 +1144,7 @@ public class PlanController implements Controller {
       if (clickCount == 2) {
         if (this.lastWall != null) {
           // Join last wall to the selected wall at its end
-          joinWallEndToWall(this.lastWall, 
+          joinNewWallEndToWall(this.lastWall, this.joinedLastWall,
               this.wallStartAtEnd, this.wallEndAtEnd);
         }
         // Change state to WallCreationState 
@@ -1128,7 +1155,7 @@ public class PlanController implements Controller {
         if (this.newWall != null) {
           selectWall(this.newWall);
           // Post wall creation to undo support
-          postAddWall(this.newWall);
+          this.joinedLastWall = postAddWall(this.newWall);
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
           this.newWall = null;
