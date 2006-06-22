@@ -1158,6 +1158,7 @@ public class PlanController implements Controller {
           this.joinedLastWall = postAddWall(this.newWall);
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
+          this.wallStartAtStart = null;
           this.newWall = null;
           this.xStart = this.xLastEnd; 
           this.yStart = this.yLastEnd;
