@@ -262,6 +262,9 @@ public class PlanComponent extends JComponent {
     }
   }
 
+  /**
+   * Paints background grid lines.
+   */
   private void paintGrid(Graphics2D g2D) {
     float mainGridSize;
     float [] gridSizes;
