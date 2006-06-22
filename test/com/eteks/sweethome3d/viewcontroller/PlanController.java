@@ -44,7 +44,7 @@ public class PlanController implements Controller {
   
   private PlanView            planView;
   private Plan                plan;
-  private UserPreferences     userPreferences;
+  private UserPreferences     preferences;
   private UndoableEditSupport undoSupport;
   private ResourceBundle      resource;
   // Current state
@@ -61,14 +61,14 @@ public class PlanController implements Controller {
   private boolean             shiftDownLastMousePress;
 
   public PlanController(ViewFactory viewFactory,
-                        Plan plan, UserPreferences userPreferences, 
+                        Plan plan, UserPreferences preferences, 
                         UndoableEditSupport undoSupport) {
     this.plan = plan;
-    this.userPreferences = userPreferences;
+    this.preferences = preferences;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(getClass().getName());
     // Create view
-    this.planView = viewFactory.createPlanView(plan, userPreferences, this);
+    this.planView = viewFactory.createPlanView(plan, preferences, this);
     // Initialize states
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
@@ -236,7 +236,7 @@ public class PlanController implements Controller {
     // Create a new wall
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, 
         defaultColor, defaultColor, 
-        this.userPreferences.getDefaultThickness());
+        this.preferences.getDefaultThickness());
     this.plan.addWall(newWall);
     if (wallStartAtStart != null) {
       this.plan.setWallAtStart(newWall, wallStartAtStart);
@@ -1169,7 +1169,7 @@ public class PlanController implements Controller {
     @Override
     public void toggleMagnetism(boolean magnetismToggled) {
       // Compute active magnetism
-      this.magnetismEnabled = userPreferences.isMagnetismEnabled()
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
       // If the new wall already exists, 
       // compute again its end as if mouse moved
