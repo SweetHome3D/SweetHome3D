@@ -1,5 +1,5 @@
 /*
- * JFaceViewFactory.java 29 mai 2006
+ * AbstractViewFactory.java 20 juin 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,40 +19,41 @@
  */
 package com.eteks.sweethome3d.jface;
 
-import org.eclipse.swt.widgets.Composite;
-
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.CatalogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
- * A factory for SWT / JFace widgets.
+ * An abstract view factory that returns <code>null</code> for each method.
  * @author Emmanuel Puybaret
  */
-public class JFaceViewFactory extends AbstractViewFactory {
-  private HomeComposite homeView;
-
-  public JFaceViewFactory(Composite root) {
-    // SWT/JFace doesn't support composite design pattern. We're obliged
-    // to create right now HomeComposite to make its composite component available
-    // to catalogTree and furnitureTable as a parent
-    this.homeView = new HomeComposite(root);
-  }
-
+public class AbstractViewFactory implements ViewFactory {
   public HomeView createHomeView(HomeController controller) {
-    return this.homeView;
+    return null;
   }
 
   public CatalogView createCatalogView(Catalog catalog) {
-    return new CatalogTree(this.homeView.getCatalogFurnitureComposite(), catalog);
+    return null;
   }
 
-  public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
-    return new FurnitureTable(this.homeView.getCatalogFurnitureComposite(), home, preferences, controller);
+  public FurnitureView createFurnitureView(Home home,
+             UserPreferences preferences,
+             FurnitureController controller) {
+    return null;
+  }
+
+  public PlanView createPlanView(Plan plan,
+             UserPreferences userPreferences,
+             PlanController controller) {
+    return null;
   }
 }

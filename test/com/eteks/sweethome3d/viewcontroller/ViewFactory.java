@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -42,4 +43,9 @@ public interface ViewFactory {
    * Creates a furniture view. 
    */
   FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller);
+
+  /**
+   * Creates a plan view.
+   */
+  PlanView createPlanView(Plan plan, UserPreferences userPreferences, PlanController controller);
 }
