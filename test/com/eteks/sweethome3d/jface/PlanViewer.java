@@ -302,35 +302,41 @@ public class PlanViewer extends Viewer implements PlanView {
     gc.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_GRAY));
     // No line thickness in float with SWT !
     gc.setLineWidth((int)Math.round(1 / this.scale));
-    Path linesPath = new Path(this.control.getDisplay());
     // Draw vertical lines
     for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+      Path linesPath = new Path(this.control.getDisplay());
       linesPath.moveTo(x, yMin);
       linesPath.lineTo(x, yMax);
+      gc.drawPath(linesPath);
+      linesPath.dispose();
     }
     // Draw horizontal lines
     for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+      Path linesPath = new Path(this.control.getDisplay());
       linesPath.moveTo(xMin, y);
       linesPath.lineTo(xMax, y);
+      gc.drawPath(linesPath);
+      linesPath.dispose();
     }
-    gc.drawPath(linesPath);
-    linesPath.dispose();
     
     if (mainGridSize != gridSize) {
       gc.setLineWidth((int)Math.round(2 / this.scale));
-      linesPath = new Path(this.control.getDisplay());
       // Draw main vertical lines
       for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+        Path linesPath = new Path(this.control.getDisplay());
         linesPath.moveTo(x, yMin);
         linesPath.lineTo(x, yMax);
+        gc.drawPath(linesPath);
+        linesPath.dispose();
       }
       // Draw positive main horizontal lines
       for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+        Path linesPath = new Path(this.control.getDisplay());
         linesPath.moveTo(xMin, y);
         linesPath.lineTo(xMax, y);
+        gc.drawPath(linesPath);
+        linesPath.dispose();
       }
-      gc.drawPath(linesPath);
-      linesPath.dispose();
     }
   }
 
