@@ -81,6 +81,7 @@ public class PlanViewer extends Viewer implements PlanView {
   private float              scale = 0.5f;
 
   private List<Wall>         selectedWalls;
+  private Rectangle2D        planBoundsCache;
   
   // SWT resources used by this viewer
   private Canvas             control;
@@ -95,7 +96,7 @@ public class PlanViewer extends Viewer implements PlanView {
     this.preferences = preferences;
     this.selectedWalls = new ArrayList<Wall>();
     // Create control associated with this viewer
-    this.control = new Canvas(parent, SWT.NONE) {
+    this.control = new Canvas(parent, SWT.DOUBLE_BUFFERED) {
       // Returns the preferred size of control
       @Override
       public Point computeSize(int wHint, int hHint, boolean changed) {
@@ -146,6 +147,7 @@ public class PlanViewer extends Viewer implements PlanView {
   private void addModelListener(Plan plan) {
     plan.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
+        planBoundsCache = null;
         // No direct SWT equivalent to Swing revalidate
         if (control.getParent() instanceof ScrolledComposite) {
           ((ScrolledComposite)control.getParent()).setMinSize(
@@ -239,12 +241,14 @@ public class PlanViewer extends Viewer implements PlanView {
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
-    Rectangle2D wallsBounds = new Rectangle2D.Float(0, 0, 1000, 1000);
-    for (Wall wall : plan.getWalls()) {
-      wallsBounds.add(wall.getXStart(), wall.getYStart());
-      wallsBounds.add(wall.getXEnd(), wall.getYEnd());
+    if (this.planBoundsCache == null) {
+      this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
+      for (Wall wall : plan.getWalls()) {
+        this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
+        this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
+      }
     }
-    return wallsBounds;
+    return this.planBoundsCache;
   }
 
   /**
@@ -275,6 +279,9 @@ public class PlanViewer extends Viewer implements PlanView {
     gc.fillRectangle(0, 0, this.control.getSize().x, this.control.getSize().y);
   }
 
+  /**
+   * Paints background grid lines.
+   */
   private void paintGrid(GC gc) {
     float mainGridSize;
     float [] gridSizes;
@@ -733,7 +740,7 @@ public class PlanViewer extends Viewer implements PlanView {
         (int)Math.round(shapeBounds.getHeight() * this.scale));
   }
 
-  // Viewer methods
+  // Viewer super class methods implementation
   @Override
   public Control getControl() {
     return this.control;
