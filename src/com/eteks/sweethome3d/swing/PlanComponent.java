@@ -586,11 +586,11 @@ public class PlanComponent extends JComponent {
   }
   
   /**
-   * Ensures <code>walls</code> are visible at screen and moves
+   * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
-  public void ensureWallsAreVisible(Collection<Wall> walls) {
-    Shape wallsArea = getWallsArea(walls);
+  public void ensureSelectionIsVisible() {
+    Shape wallsArea = getWallsArea(this.selectedWalls);
     scrollRectToVisible(getShapePixelBounds(wallsArea));
   }
  

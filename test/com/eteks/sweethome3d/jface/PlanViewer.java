@@ -656,11 +656,11 @@ public class PlanViewer extends Viewer implements PlanView {
   }
   
   /**
-   * Ensures <code>walls</code> are visible at screen and moves
+   * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
-  public void ensureWallsAreVisible(Collection<Wall> walls) {
-    Shape wallsArea = getWallsArea(walls);
+  public void ensureSelectionIsVisible() {
+    Shape wallsArea = getWallsArea(this.selectedWalls);
     Rectangle2D wallsBounds = wallsArea.getBounds2D();
     ensurePointIsVisible((float)wallsBounds.getMinX(), (float)wallsBounds.getMinY());
   }
@@ -781,7 +781,7 @@ public class PlanViewer extends Viewer implements PlanView {
     
     setSelectedWalls(selectedWalls);
     if (reveal) {
-      ensureWallsAreVisible(selectedWalls);
+      ensureSelectionIsVisible();
     }
   }
 }

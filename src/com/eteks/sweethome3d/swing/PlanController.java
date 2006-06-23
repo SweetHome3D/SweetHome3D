@@ -340,7 +340,7 @@ public class PlanController implements Controller {
     List<Wall> selectedWalls = planComponent.getSelectedWalls();
     if (!selectedWalls.isEmpty()) {
       moveWalls(selectedWalls, dx, dy);
-      this.planComponent.ensureWallsAreVisible(selectedWalls);
+      this.planComponent.ensureSelectionIsVisible();
       postWallsMove(selectedWalls, dx, dy);
     }
   }
@@ -393,7 +393,7 @@ public class PlanController implements Controller {
    */
   private void selectAndShowWalls(List<Wall> walls) {
     selectWalls(walls);
-    this.planComponent.ensureWallsAreVisible(walls);
+    this.planComponent.ensureSelectionIsVisible();
   }
   
   /**

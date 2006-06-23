@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Wall;
@@ -79,10 +78,10 @@ public interface PlanView extends View {
   public boolean containsWallEndAt(Wall wall, float x, float y);
 
   /**
-   * Ensures <code>walls</code> are visible at screen and moves
+   * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
-  public void ensureWallsAreVisible(Collection<Wall> walls);
+  public void ensureSelectionIsVisible();
 
   /**
    * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
