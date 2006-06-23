@@ -86,7 +86,6 @@ public class PlanController implements Controller {
     return this.planView;
   }
 
-
   /**
    * Changes current state of controller.
    */
@@ -190,14 +189,14 @@ public class PlanController implements Controller {
   /**
    * Returns the wall creation state.
    */
-  private ControllerState getWallCreationState() {
+  protected ControllerState getWallCreationState() {
     return this.wallCreationState;
   }
 
   /**
    * Returns the new wall state.
    */
-  private ControllerState getNewWallState() {
+  protected ControllerState getNewWallState() {
     return this.newWallState;
   }
 
@@ -422,14 +421,17 @@ public class PlanController implements Controller {
   /**
    * Posts an undoable new wall operation, about <code>newWall</code>.
    */
-  private JoinedWall postAddWall(Wall newWall) {
-    // Retrieve data about joined walls to wall
+  private JoinedWall postAddWall(Wall newWall, List<Wall> oldSelection) {
+    // Retrieve data about joined walls to newWall
     final JoinedWall [] joinedNewWall = {new JoinedWall(newWall)};
+    final Wall [] oldSelectedWalls = 
+      oldSelection.toArray(new Wall [oldSelection.size()]);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doDeleteWalls(joinedNewWall);       
+        doDeleteWalls(joinedNewWall);
+        selectAndShowWalls(Arrays.asList(oldSelectedWalls));
       }
       
       @Override
@@ -1054,6 +1056,7 @@ public class PlanController implements Controller {
     private Wall       wallEndAtEnd;
     private Wall       lastWall;
     private JoinedWall joinedLastWall;
+    private List<Wall> oldSelection;
     private boolean    magnetismEnabled;
     
     @Override
@@ -1063,6 +1066,7 @@ public class PlanController implements Controller {
     
     @Override
     public void enter() {
+      this.oldSelection = new ArrayList<Wall>(planView.getSelectedWalls());
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       this.xStart = getXLastMousePress();
@@ -1156,7 +1160,8 @@ public class PlanController implements Controller {
         if (this.newWall != null) {
           selectWall(this.newWall);
           // Post wall creation to undo support
-          this.joinedLastWall = postAddWall(this.newWall);
+          this.joinedLastWall = postAddWall(this.newWall, oldSelection);
+          this.oldSelection = Arrays.asList(new Wall [] {this.newWall});
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
           this.wallStartAtStart = null;
