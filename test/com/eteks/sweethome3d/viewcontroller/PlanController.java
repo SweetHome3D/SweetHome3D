@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javax.swing.JComponent;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -321,14 +322,12 @@ public class PlanController implements Controller {
   private void deleteSelectedWalls() {
     List<Wall> selectedWalls = this.planView.getSelectedWalls();
     if (!selectedWalls.isEmpty()) {
-      // First post to undo support that walls are deleted, 
-      // otherwise data about joined walls can't be stored 
-      postDeleteWalls(selectedWalls);
-      // Then delete walls from plan
+      // Delete walls from plan
       for (Wall wall : selectedWalls) {
         this.plan.deleteWall(wall);
       }
       deselectAll();
+      postDeleteWalls(selectedWalls);
     }      
   }
 
@@ -1066,7 +1065,7 @@ public class PlanController implements Controller {
     
     @Override
     public void enter() {
-      this.oldSelection = new ArrayList<Wall>(planView.getSelectedWalls());
+      this.oldSelection = planView.getSelectedWalls();
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       this.xStart = getXLastMousePress();
