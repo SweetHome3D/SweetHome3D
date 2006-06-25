@@ -182,13 +182,14 @@ public class FurnitureTable extends JTable {
       addRowSelectionInterval(row, row);
     }
     
-    ensureFurnitureIsVisible(furniture);
+    ensureSelectionIsVisible();
   }
 
   /**
-   * Ensures the rectangle which displays <code>furniture</code> is visible.
+   * Ensures the rectangle which displays selected furniture is visible.
    */
-  private void ensureFurnitureIsVisible(List<HomePieceOfFurniture> furniture) {
+  private void ensureSelectionIsVisible() {
+    List<HomePieceOfFurniture> furniture = getSelectedFurniture();
     if (!furniture.isEmpty()) {
       FurnitureTableModel model = (FurnitureTableModel)getModel();
       Rectangle includingRectangle = null;
