@@ -102,7 +102,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check they are selected
     assertSelectionContains(planComponent, wall3);
 
-    // 3. Click at (20, 170), then double click at (30, 30) with Alt key depressed
+    // 3. Click at (20, 170), then double click at (30, 30) with Shift key depressed
     tester.actionClick(planComponent, 20, 170);
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
