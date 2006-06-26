@@ -71,7 +71,7 @@ import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 
 /**
- * A component displaying the plan of a home.
+ * A component displaying a plan.
  * @author Emmanuel Puybaret
  */
 public class PlanViewer extends Viewer implements PlanView {

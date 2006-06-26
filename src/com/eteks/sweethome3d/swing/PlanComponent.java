@@ -59,7 +59,7 @@ import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
 
 /**
- * A component displaying the plan of a home.
+ * A component displaying a plan.
  * @author Emmanuel Puybaret
  */
 public class PlanComponent extends JComponent {
