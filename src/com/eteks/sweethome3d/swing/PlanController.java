@@ -61,6 +61,12 @@ public class PlanController implements Controller {
   private float               yLastMousePress;
   private boolean             shiftDownLastMousePress;
 
+  /**
+   * Creates the controller of plan view. 
+   * @param plan        the plan edited by this controller and its view
+   * @param preferences the preferences of the application
+   * @param undoSupport undo support to post changes on plan by this controller
+   */
   public PlanController(Plan plan, UserPreferences preferences, 
                         UndoableEditSupport undoSupport) {
     this.plan = plan;
