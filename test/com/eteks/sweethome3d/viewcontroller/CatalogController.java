@@ -29,7 +29,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class CatalogController implements Controller {
-  private CatalogView catalogView;
+  private View catalogView;
   /**
    * Creates a controller of the furniture catalog view.
    * @param viewFactory factory able to create views
