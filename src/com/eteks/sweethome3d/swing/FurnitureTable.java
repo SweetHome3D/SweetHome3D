@@ -64,7 +64,7 @@ public class FurnitureTable extends JTable {
    */
   private String [] getColumnNames() {
     ResourceBundle resource = 
-      ResourceBundle.getBundle(getClass().getName());
+      ResourceBundle.getBundle(FurnitureTable.class.getName());
     String [] columnNames = {
        resource.getString("nameColumn"),
        resource.getString("widthColumn"),

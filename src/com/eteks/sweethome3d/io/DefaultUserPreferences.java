@@ -35,9 +35,9 @@ public class DefaultUserPreferences extends UserPreferences {
     // Read default catalog
     setCatalog(new DefaultCatalog());
     // Read other preferences from resource bundle
-    ResourceBundle resource = ResourceBundle.getBundle(getClass().getName());
+    ResourceBundle resource = 
+      ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
-    setDefaultThickness(Float.parseFloat(resource.getString("defaultThickness")));
   }
 }

@@ -56,7 +56,7 @@ public class FurnitureController implements Controller {
   public FurnitureController(Home home, UserPreferences preferences, UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource  = ResourceBundle.getBundle(getClass().getName()); 
+    this.resource  = ResourceBundle.getBundle(FurnitureController.class.getName()); 
     this.furnitureView = new FurnitureTable(home, preferences, this);
   }
 
