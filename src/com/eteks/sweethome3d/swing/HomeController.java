@@ -35,7 +35,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomeController implements Controller  {
-  private HomePane            homeView;
+  private JComponent          homeView;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
   private CatalogController   catalogController;
