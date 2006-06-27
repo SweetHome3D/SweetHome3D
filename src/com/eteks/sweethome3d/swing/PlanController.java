@@ -43,7 +43,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController implements Controller {
   public enum Mode {WALL_CREATION, SELECTION}
   
-  private PlanComponent       planView;
+  private JComponent          planView;
   private Plan                plan;
   private UserPreferences     preferences;
   private UndoableEditSupport undoSupport;
@@ -287,7 +287,7 @@ public class PlanController implements Controller {
   private Wall getWallAt(float x, float y, Wall ignoredWall) {
     for (Wall wall : this.plan.getWalls()) {
       if (wall != ignoredWall
-          && this.planView.containsWallAt(wall, x, y)) 
+          && ((PlanComponent)getView()).containsWallAt(wall, x, y)) 
         return wall;
     }
     return null;
@@ -301,7 +301,7 @@ public class PlanController implements Controller {
     for (Wall wall : this.plan.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtStart() == null
-          && this.planView.containsWallStartAt(wall, x, y)) 
+          && ((PlanComponent)getView()).containsWallStartAt(wall, x, y)) 
         return wall;
     }
     return null;
@@ -315,7 +315,7 @@ public class PlanController implements Controller {
     for (Wall wall : this.plan.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtEnd() == null
-          && this.planView.containsWallEndAt(wall, x, y)) 
+          && ((PlanComponent)getView()).containsWallEndAt(wall, x, y)) 
         return wall;
     }
     return null;
@@ -325,7 +325,7 @@ public class PlanController implements Controller {
    * Deletes selected walls in plan and record it as an undoable operation.
    */
   private void deleteSelectedWalls() {
-    List<Wall> selectedWalls = this.planView.getSelectedWalls();
+    List<Wall> selectedWalls = ((PlanComponent)getView()).getSelectedWalls();
     if (!selectedWalls.isEmpty()) {
       // Delete walls from plan
       for (Wall wall : selectedWalls) {
@@ -341,10 +341,10 @@ public class PlanController implements Controller {
    * <code>dy</code>) units and record it as undoable operation.
    */
   private void moveAndShowSelectedWalls(float dx, float dy) {
-    List<Wall> selectedWalls = planView.getSelectedWalls();
+    List<Wall> selectedWalls = ((PlanComponent)getView()).getSelectedWalls();
     if (!selectedWalls.isEmpty()) {
       moveWalls(selectedWalls, dx, dy);
-      this.planView.ensureSelectionIsVisible();
+      ((PlanComponent)getView()).ensureSelectionIsVisible();
       postWallsMove(selectedWalls, dx, dy);
     }
   }
@@ -397,14 +397,14 @@ public class PlanController implements Controller {
    */
   private void selectAndShowWalls(List<Wall> walls) {
     selectWalls(walls);
-    this.planView.ensureSelectionIsVisible();
+    ((PlanComponent)getView()).ensureSelectionIsVisible();
   }
   
   /**
    * Selects <code>walls</code> walls.
    */
   private void selectWalls(List<Wall> walls) {
-    this.planView.setSelectedWalls(walls);
+    ((PlanComponent)getView()).setSelectedWalls(walls);
   }
   
   /**
@@ -801,7 +801,7 @@ public class PlanController implements Controller {
 
     @Override
     public void enter() {
-      planView.setCursor(getMode());
+      ((PlanComponent)getView()).setCursor(getMode());
     }
 
     @Override
@@ -857,7 +857,7 @@ public class PlanController implements Controller {
       this.mouseMoved = false;
       Wall wallUnderCursor = getWallAt(getXLastMousePress(),
           getYLastMousePress(), null);
-      List<Wall> selection = planView.getSelectedWalls();
+      List<Wall> selection = ((PlanComponent)getView()).getSelectedWalls();
       // If the wall under the cursor doesn't belong to selection
       if (!selection.contains(wallUnderCursor)) {
         // Select only the wall under cursor position
@@ -867,9 +867,9 @@ public class PlanController implements Controller {
 
     @Override
     public void moveMouse(float x, float y) {      
-      moveWalls(planView.getSelectedWalls(), 
+      moveWalls(((PlanComponent)getView()).getSelectedWalls(), 
           x - this.xLastMouseMove, y - this.yLastMouseMove);
-      planView.ensurePointIsVisible(x, y);
+      ((PlanComponent)getView()).ensurePointIsVisible(x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;
       this.mouseMoved = true;
@@ -879,7 +879,7 @@ public class PlanController implements Controller {
     public void releaseMouse(float x, float y) {
       if (this.mouseMoved) {
         // Post in undo support a move operation
-        postWallsMove(planView.getSelectedWalls(),
+        postWallsMove(((PlanComponent)getView()).getSelectedWalls(),
             this.xLastMouseMove - getXLastMousePress(), 
             this.yLastMouseMove - getYLastMousePress());
       } else {
@@ -896,7 +896,7 @@ public class PlanController implements Controller {
     public void escape() {
       if (this.mouseMoved) {
         // Put walls back to their initial position
-        moveWalls(planView.getSelectedWalls(), 
+        moveWalls(((PlanComponent)getView()).getSelectedWalls(), 
             getXLastMousePress() - this.xLastMouseMove, 
             getYLastMousePress() - this.yLastMouseMove);
       }
@@ -929,7 +929,7 @@ public class PlanController implements Controller {
       } 
       // 
       this.selectedWallsMousePressed = 
-        new ArrayList<Wall>(planView.getSelectedWalls());
+        new ArrayList<Wall>(((PlanComponent)getView()).getSelectedWalls());
       this.mouseMoved = false;
     }
 
@@ -939,9 +939,9 @@ public class PlanController implements Controller {
       updateSelectedWalls(getXLastMousePress(), getYLastMousePress(), 
           x, y, this.selectedWallsMousePressed);
       // Update rectangle feedback
-      planView.setRectangleFeedback(
+      ((PlanComponent)getView()).setRectangleFeedback(
           getXLastMousePress(), getYLastMousePress(), x, y);
-      planView.ensurePointIsVisible(x, y);
+      ((PlanComponent)getView()).ensurePointIsVisible(x, y);
     }
 
     @Override
@@ -971,7 +971,7 @@ public class PlanController implements Controller {
     @Override
     public void exit() {
       this.selectedWallsMousePressed = null;
-      planView.deleteRectangleFeedback();
+      ((PlanComponent)getView()).deleteRectangleFeedback();
     }
 
     /**
@@ -992,7 +992,7 @@ public class PlanController implements Controller {
       
       // For all the walls that intersects with surrounding rectangle
       for (Wall wall : plan.getWalls()) {
-        if (planView.doesWallIntersectRectangle(wall, x0, y0, x1, y1)) {
+        if (((PlanComponent)getView()).doesWallIntersectRectangle(wall, x0, y0, x1, y1)) {
           // If shift was down at mouse press
           if (shiftDown) {
             // Toogle selection of the wall
@@ -1024,7 +1024,7 @@ public class PlanController implements Controller {
 
     @Override
     public void enter() {
-      planView.setCursor(getMode());
+      ((PlanComponent)getView()).setCursor(getMode());
     }
 
     @Override
@@ -1070,7 +1070,7 @@ public class PlanController implements Controller {
     
     @Override
     public void enter() {
-      this.oldSelection = planView.getSelectedWalls();
+      this.oldSelection = ((PlanComponent)getView()).getSelectedWalls();
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       this.xStart = getXLastMousePress();
@@ -1139,7 +1139,7 @@ public class PlanController implements Controller {
       }
 
       // Ensure point at (x,y) is visible
-      planView.ensurePointIsVisible(x, y);
+      ((PlanComponent)getView()).ensurePointIsVisible(x, y);
       // Update move coordinates
       this.xLastEnd = xEnd;
       this.yLastEnd = yEnd;
