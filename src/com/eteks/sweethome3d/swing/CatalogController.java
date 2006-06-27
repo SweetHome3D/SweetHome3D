@@ -31,7 +31,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class CatalogController implements Controller {
-  private CatalogTree catalogView;
+  private JComponent catalogView;
   /**
    * Creates a controller of the furniture catalog view.
    * @param preferences the preferences of the application
@@ -51,6 +51,6 @@ public class CatalogController implements Controller {
    * Returns the selected furniture un catalog view.
    */
   public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    return this.catalogView.getSelectedFurniture();
+    return ((CatalogTree)getView()).getSelectedFurniture();
   }
 }

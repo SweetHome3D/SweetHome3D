@@ -42,18 +42,20 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureController implements Controller {
-  private FurnitureTable             furnitureView;
-  private Home                       home;
-  private UndoableEditSupport        undoSupport;
-  private ResourceBundle             resource;
+  private JComponent          furnitureView;
+  private Home                home;
+  private UndoableEditSupport undoSupport;
+  private ResourceBundle      resource;
 
   /**
-   * Creates the controller of home furniture view. 
-   * @param home        the home edited by this controller and its view
+   * Creates the controller of home furniture view.
+   * @param home the home edited by this controller and its view
    * @param preferences the preferences of the application
    * @param undoSupport undo support to post changes on home by this controller
    */
-  public FurnitureController(Home home, UserPreferences preferences, UndoableEditSupport undoSupport) {
+  public FurnitureController(Home home,
+                             UserPreferences preferences,
+                             UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(FurnitureController.class.getName()); 
@@ -73,11 +75,13 @@ public class FurnitureController implements Controller {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<? extends PieceOfFurniture> furniture) {
-    List<HomePieceOfFurniture> selection = this.furnitureView.getSelectedFurniture();
+    List<HomePieceOfFurniture> selection = 
+      ((FurnitureTable)getView()).getSelectedFurniture();
     final HomePieceOfFurniture [] oldSelection = 
       selection.toArray(new HomePieceOfFurniture [selection.size()]);
     // Create HomePieceOfFurniture instances that will be added to home
-    final HomePieceOfFurniture [] newFurniture = new HomePieceOfFurniture [furniture.size()];
+    final HomePieceOfFurniture [] newFurniture = 
+      new HomePieceOfFurniture [furniture.size()];
     final int [] furnitureIndex = new int [furniture.size()];
     int endIndex = home.getFurniture().size();
     for (int i = 0; i < furnitureIndex.length; i++) {
@@ -117,7 +121,7 @@ public class FurnitureController implements Controller {
   }
  
   private void selectFurniture(HomePieceOfFurniture [] furniture) {
-    this.furnitureView.setSelectedFurniture(Arrays.asList(furniture));
+    ((FurnitureTable)getView()).setSelectedFurniture(Arrays.asList(furniture));
   }
 
   /**
@@ -125,10 +129,12 @@ public class FurnitureController implements Controller {
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteSelectedFurniture() {
-    final List<HomePieceOfFurniture> selectedFurniture = this.furnitureView.getSelectedFurniture();
+    final List<HomePieceOfFurniture> selectedFurniture = 
+      ((FurnitureTable)getView()).getSelectedFurniture();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
     // Sort the selected furniture in the ascending order of their index in home
-    Map<Integer, HomePieceOfFurniture> sortedMap = new TreeMap<Integer, HomePieceOfFurniture>();
+    Map<Integer, HomePieceOfFurniture> sortedMap = 
+      new TreeMap<Integer, HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : selectedFurniture) {
       sortedMap.put(homeFurniture.indexOf(piece), piece);
     }

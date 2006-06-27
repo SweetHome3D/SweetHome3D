@@ -50,6 +50,6 @@ public class CatalogController implements Controller {
    * Returns the selected furniture un catalog view.
    */
   public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    return this.catalogView.getSelectedFurniture();
+    return ((CatalogView)getView()).getSelectedFurniture();
   }
 }
