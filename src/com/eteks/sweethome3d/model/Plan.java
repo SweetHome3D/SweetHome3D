@@ -42,7 +42,6 @@ public class Plan {
 
   /**
    * Adds the wall <code>listener</code> in parameter to this plan.
-   * <br>Caution : This method isn't thread safe.
    */
   public void addWallListener(WallListener listener) {
     this.wallListeners.add(listener);
@@ -50,7 +49,6 @@ public class Plan {
   
   /**
    * Removes the wall <code>listener</code> in parameter from this plan.
-   * <br>Caution : This method isn't thread safe.
    */
   public void removeWallListener(WallListener listener) {
     this.wallListeners.remove(listener); 
@@ -69,7 +67,6 @@ public class Plan {
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#ADD ADD}. 
-   * <br>Caution : This method isn't thread safe.
    */
   public void addWall(Wall wall) {
     this.walls.add(wall);
@@ -87,7 +84,6 @@ public class Plan {
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * <br>Caution : This method isn't thread safe.
    */
   public void deleteWall(Wall wall) {
     // Detach any other wall attached to wall
@@ -109,7 +105,6 @@ public class Plan {
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
    * No change is made on walls attached to <code>wall</code>.
-   * <br>Caution : This method isn't thread safe.
    */
   public void moveWallStartPointTo(Wall wall, float x, float y) {
     if (x != wall.getXStart() || y != wall.getYStart()) {
@@ -126,7 +121,6 @@ public class Plan {
    * notification, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
    * No change is made on walls attached to <code>wall</code>.
-   * <br>Caution : This method isn't thread safe.
    */
   public void moveWallEndPointTo(Wall wall, float x, float y) {
     if (x != wall.getXEnd() || y != wall.getYEnd()) {
@@ -148,7 +142,6 @@ public class Plan {
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification about this wall, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * <br>Caution : This method isn't thread safe.
    * @param wallAtStart a wall or <code>null</code> to detach <code>wall</code>
    *          from any wall it was attached to before.
    */
@@ -170,7 +163,6 @@ public class Plan {
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
    * notification about this wall, with an {@link WallEvent#getType() event type} 
    * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * <br>Caution : This method isn't thread safe.
    * @param wallAtEnd a wall or <code>null</code> to detach <code>wall</code>
    *          from any wall it was attached to before.
    */
@@ -203,7 +195,11 @@ public class Plan {
   private void fireWallEvent(Wall wall, WallEvent.Type eventType) {
     if (!this.wallListeners.isEmpty()) {
       WallEvent wallEvent = new WallEvent(this, wall, eventType);
-      for (WallListener listener : this.wallListeners) {
+      // Work on a copy of wallListeners to ensure a listener 
+      // can modify safely listeners list
+      WallListener [] listeners = this.wallListeners.
+        toArray(new WallListener [this.wallListeners.size()]);
+      for (WallListener listener : listeners) {
         listener.wallChanged(wallEvent);
       }
     }

@@ -41,7 +41,6 @@ public class Home {
 
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
-   * <br>Caution : This method isn't thread safe.
    */
   public void addFurnitureListener(FurnitureListener listener) {
     this.furnitureListeners.add(listener);
@@ -49,7 +48,6 @@ public class Home {
 
   /**
    * Removes the furniture <code>listener</code> in parameter from this home.
-   * <br>Caution : This method isn't thread safe.
    */
   public void removeFurnitureListener(FurnitureListener listener) {
     this.furnitureListeners.remove(listener);
@@ -69,13 +67,16 @@ public class Home {
    * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureAdded(FurnitureEvent) pieceOfFurnitureAdded}
    * notification.
-   * <br>Caution : This method isn't thread safe.
    */
   public void add(HomePieceOfFurniture piece, int index) {
     this.furniture.add(index, piece);
     if (!this.furnitureListeners.isEmpty()) {
       FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
-      for (FurnitureListener listener : this.furnitureListeners) {
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      FurnitureListener [] listeners = this.furnitureListeners.
+        toArray(new FurnitureListener [this.furnitureListeners.size()]);
+      for (FurnitureListener listener : listeners) {
         listener.pieceOfFurnitureAdded(furnitureEvent);
       }
     }
@@ -86,13 +87,16 @@ public class Home {
    * Once the <code>piece</code> is removed, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureDeleted(FurnitureEvent) pieceOfFurnitureDeleted}
    * notification.
-   * <br>Caution : This method isn't thread safe.
    */
   public void delete(HomePieceOfFurniture piece) {
     this.furniture.remove(piece);
     if (!this.furnitureListeners.isEmpty()) {
       FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
-      for (FurnitureListener listener : this.furnitureListeners) {
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      FurnitureListener [] listeners = this.furnitureListeners.
+        toArray(new FurnitureListener [this.furnitureListeners.size()]);
+      for (FurnitureListener listener : listeners) {
         listener.pieceOfFurnitureDeleted(furnitureEvent);
       }
     }
