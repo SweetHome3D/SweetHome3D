@@ -39,5 +39,6 @@ public class DefaultUserPreferences extends UserPreferences {
       ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
+    setDefaultThickness(Float.parseFloat(resource.getString("defaultThickness")));
   }
 }
