@@ -23,7 +23,6 @@ import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
