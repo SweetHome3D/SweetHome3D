@@ -435,7 +435,7 @@ public class PlanViewer extends Viewer implements PlanView {
   /**
    * Returns an area matching the union of all wall shapes. 
    */
-  private Shape getWallsArea(Collection<Wall> walls) {
+  private Area getWallsArea(Collection<Wall> walls) {
     Area area = new Area();
     for (Wall wall : walls) {
       area.add(new Area(getWallShape(wall)));
