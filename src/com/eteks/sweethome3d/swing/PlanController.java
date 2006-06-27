@@ -72,7 +72,7 @@ public class PlanController implements Controller {
     this.plan = plan;
     this.preferences = preferences;
     this.undoSupport = undoSupport;
-    this.resource  = ResourceBundle.getBundle(getClass().getName());
+    this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
     // Create view
     this.planView = new PlanComponent(plan, preferences, this);
     // Initialize states
