@@ -560,7 +560,7 @@ public class PlanViewer extends Viewer implements PlanView {
   
   /**
    * Sets the selected walls in plan.
-   * @param selectedWalls the list of walls to selected.
+   * @param selectedWalls the list of walls to select.
    */
   public void setSelectedWalls(List<Wall> selectedWalls) {
     this.selectedWalls = new ArrayList<Wall>(selectedWalls);
