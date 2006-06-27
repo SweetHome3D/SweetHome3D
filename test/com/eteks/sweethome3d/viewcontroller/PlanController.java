@@ -1165,7 +1165,7 @@ public class PlanController implements Controller {
         if (this.newWall != null) {
           selectWall(this.newWall);
           // Post wall creation to undo support
-          this.joinedLastWall = postAddWall(this.newWall, oldSelection);
+          this.joinedLastWall = postAddWall(this.newWall, this.oldSelection);
           this.oldSelection = Arrays.asList(new Wall [] {this.newWall});
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
