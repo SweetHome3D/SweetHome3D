@@ -328,12 +328,14 @@ public class PlanController implements Controller {
   private void deleteSelectedWalls() {
     List<Wall> selectedWalls = ((PlanView)getView()).getSelectedWalls();
     if (!selectedWalls.isEmpty()) {
-      // Delete walls from plan
+      // First post to undo support that walls are deleted, 
+      // otherwise data about joined walls can't be stored 
+      postDeleteWalls(selectedWalls);
+      // Then delete walls from plan
       for (Wall wall : selectedWalls) {
         this.plan.deleteWall(wall);
       }
       deselectAll();
-      postDeleteWalls(selectedWalls);
     }      
   }
 
