@@ -40,7 +40,7 @@ public class DefaultCatalog extends Catalog {
    */
   public DefaultCatalog() {
     ResourceBundle resource = ResourceBundle.getBundle(
-        getClass().getName());
+        DefaultCatalog.class.getName());
     for (int i = 1;; i++) {
       String name = null;
       try {
