@@ -928,7 +928,7 @@ public class PlanController implements Controller {
       if (wallUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
       } 
-      // 
+      // Store current selection
       this.selectedWallsMousePressed = 
         new ArrayList<Wall>(((PlanComponent)getView()).getSelectedWalls());
       this.mouseMoved = false;
