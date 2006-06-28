@@ -692,8 +692,7 @@ public class PlanController implements Controller {
         // Caution : pixel coordinate space is indirect !
         double angle = Math.atan2(yStart - y, x - xStart);
         // Compute previous angle closest to a step angle (multiple of angleStep) 
-        double previousStepAngle = 
-          Math.floor((angle + Math.PI) / angleStep) * angleStep;
+        double previousStepAngle = Math.floor(angle / angleStep) * angleStep;
         double tanAngle1;
         double tanAngle2;
         // Compute the tan of previousStepAngle and the next step angle
