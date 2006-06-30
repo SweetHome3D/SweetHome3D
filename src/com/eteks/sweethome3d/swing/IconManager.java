@@ -29,6 +29,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
@@ -57,7 +60,7 @@ public class IconManager {
         getClass().getResource("resources/error.png"));
     this.waitIconContent = new URLContent (
         getClass().getResource("resources/wait.png"));
-    this.iconsLoader = Executors.newCachedThreadPool();
+    this.iconsLoader = Executors.newFixedThreadPool(5);
     this.icons = new HashMap<ContentHeightKey,Icon>();
   }
   

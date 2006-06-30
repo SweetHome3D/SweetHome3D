@@ -29,7 +29,12 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -51,25 +56,34 @@ public class IconManagerTest extends TestCase {
   
   public void testIconManager() 
       throws NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException, ClassNotFoundException {
+    // Stop iconsLoader of iconManager 
     IconManager iconManager = IconManager.getInstance();
     ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
-    // Store previous maximum pool size to restore it after the end of the test
-    int currentMaximumPoolSize = iconsLoader.getMaximumPoolSize();
-
-    try {
-      // Wait for iconsLoader to stop the threads that could have been launched by other tests
-      while (iconsLoader.getTaskCount() > 0)
-        Thread.sleep(100);
-    } catch (InterruptedException ex) {
-      fail();
-    }
+    iconsLoader.shutdownNow();
+    // Replace it by an excecutor that controls the start of a task with a barrier
+    final CyclicBarrier iconLoadingStartBarrier = new CyclicBarrier(2);
+    final ThreadPoolExecutor replacingIconsLoader = 
+      new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
+        @Override
+        protected void beforeExecute(Thread t, Runnable r) {
+          super.beforeExecute(t, r);
+          awaitBarrier(iconLoadingStartBarrier);
+        }
+    };
+    // Redirect rejected tasks on iconsLoader to the replacing executor
+    iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
+      public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
+        replacingIconsLoader.execute(r);
+      }
+    });
+    
     // Empty existing icons to prove IconManager work
     ((Map)getFieldValue(iconManager, "icons")).clear();
     
     // Test icon loading on a good image
-    testIconLoading(getClass().getResource("resources/test.png"), true);
+    testIconLoading(getClass().getResource("resources/test.png"), true, iconLoadingStartBarrier);
     // Test icon loading on a content that doesn't an image
-    testIconLoading(getClass().getResource("IconManagerTest.class"), false);
+    testIconLoading(getClass().getResource("IconManagerTest.class"), false, iconLoadingStartBarrier);
 
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
     URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
@@ -83,14 +97,19 @@ public class IconManagerTest extends TestCase {
     Icon errorIcon = iconManager.getIcon(errorIconContent, HEIGHT, null);
     assertNotSame("Error icon loaded with IconProxy", errorIcon.getClass(), iconProxyClass);
 
-    // Restore previous maximum pool size to let other tests run normally
-    iconsLoader.setMaximumPoolSize(currentMaximumPoolSize);
+    // For other tests, replace again iconLoader by an excecutor that let icon loading complete normaly
+    final Executor nextTestsIconsLoader = Executors.newFixedThreadPool(5); 
+    iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
+      public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
+        nextTestsIconsLoader.execute(r);
+      }
+    });
   }
 
   /**
    * Test how an icon is loaded by IconManager. 
    */
-  private void testIconLoading(URL iconURL, boolean goodIcon) 
+  private void testIconLoading(URL iconURL, boolean goodIcon, CyclicBarrier iconLoadingStartBarrier) 
       throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException {
     IconManager iconManager = IconManager.getInstance();
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
@@ -105,15 +124,13 @@ public class IconManagerTest extends TestCase {
         awaitBarrier(waitingComponentBarrier); 
       }
     };
-    
+
     Content iconContent = new URLContent(iconURL);
-    // Add a barrier in iconsLoader of iconManager to avoid immediat loading of iconContent
-    CyclicBarrier iconsLoaderBarrier = createBarrierInIconManager(iconManager);
     Icon icon = iconManager.getIcon(iconContent, HEIGHT, waitingComponent);
     assertEquals("Icon not equal to wait icon while loading", waitIconContent.getURL(), icon);
 
-    // Let iconsLoader of iconManager load the iconContent
-    iconsLoaderBarrier.await();
+    // Let iconManager load the iconContent
+    iconLoadingStartBarrier.await();
     // Wait iconContent loading completion
     waitingComponentBarrier.await();
     if (goodIcon) {
@@ -128,43 +145,6 @@ public class IconManagerTest extends TestCase {
     // Check that icon is stored in cache
     Icon iconFromCache = iconManager.getIcon(iconContent, HEIGHT, waitingComponent);
     assertSame("Test icon reloaded", icon, iconFromCache);
-  }
-  
-  /**
-   * Returns a barrier that blocks the loading task of icons in iconManager.
-   */
-  private CyclicBarrier createBarrierInIconManager(IconManager iconManager) 
-        throws NoSuchFieldException, IllegalAccessException {
-    final CyclicBarrier barrier = new CyclicBarrier(2);    
-    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
-    // Set maximum pool size of iconsLoader in iconManager to 1
-    // so we can control the task it will run with a barrier in a RejectedExecutionHandler instance
-    iconsLoader.setMaximumPoolSize(1);
-    // Execute a dummy task that will reject the task executed by iconsLoader
-    iconsLoader.execute(new Runnable() {
-        public void run() {
-          awaitBarrier(barrier); // First meeting
-          barrier.reset();
-          awaitBarrier(barrier); // Second meeting
-        }
-      });
-    // Set a RejectedExecutionHandler to control the launch of a task executed
-    // by iconsLoader from test thread
-    iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
-        public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
-          awaitBarrier(barrier); // Second meeting
-          barrier.reset();
-          executor.execute(new Runnable() {
-            public void run() {
-              awaitBarrier(barrier); // Third meeting
-              r.run();
-            }
-          });
-        }
-      });
-    // Ensure the dummy task is launched
-    awaitBarrier(barrier); // First meeting
-    return barrier;
   }
   
   private void awaitBarrier(CyclicBarrier barrier) {
