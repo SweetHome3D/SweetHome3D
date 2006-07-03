@@ -50,24 +50,6 @@ public class CatalogTree extends JTree {
   }
 
   /**
-   * Returns the furniture currently selected in the tree.
-   * @return a list of furniture. If no furniture is selected, the list is empty.
-   */
-  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
-    TreePath [] selectionPaths  = getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath path : selectionPaths) {
-        // Add to selectedFurniture all the nodes that matches a piece of furniture
-        if (path.getPathCount() == 3) {
-          selectedFurniture.add((CatalogPieceOfFurniture)path.getLastPathComponent());
-        }        
-      }
-    }
-    return selectedFurniture;
-  }  
-  
-  /**
    * Cell renderer for this catalog tree.
    */
   private class CatalogCellRenderer extends DefaultTreeCellRenderer {

@@ -45,7 +45,7 @@ import com.eteks.sweethome3d.viewcontroller.CatalogView;
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree implements CatalogView {
+public class CatalogTree {
   private TreeViewer treeViewer; 
   
   public CatalogTree(Composite parent, Catalog catalog) {
@@ -53,19 +53,6 @@ public class CatalogTree implements CatalogView {
     this.treeViewer.setContentProvider(new CatalogTreeContentProvider(catalog));
     this.treeViewer.setLabelProvider(new CatalogLabelProvider());
     this.treeViewer.setInput(catalog);
-  }
-
-  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
-    IStructuredSelection selection = (IStructuredSelection)this.treeViewer.getSelection();
-    for (Iterator it = selection.iterator(); it.hasNext(); ) {
-      Object item = it.next();
-      // Add to selectedFurniture all the nodes that matches a piece of furniture
-      if (item instanceof CatalogPieceOfFurniture) {
-        selectedFurniture.add((CatalogPieceOfFurniture)item);
-      }        
-    }
-    return selectedFurniture;
   }
 
   /**
