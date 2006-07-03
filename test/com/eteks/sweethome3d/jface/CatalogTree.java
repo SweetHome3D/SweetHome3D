@@ -21,13 +21,9 @@ package com.eteks.sweethome3d.jface;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
@@ -39,7 +35,6 @@ import org.eclipse.swt.widgets.Display;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
-import com.eteks.sweethome3d.viewcontroller.CatalogView;
 
 /**
  * Furniture catalog tree JFace implementation.
