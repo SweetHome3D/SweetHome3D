@@ -45,17 +45,15 @@ import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 
 /**
  * A table displaying furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable implements FurnitureView {
+public class FurnitureTable {
   private TableViewer tableViewer;
   
-  public FurnitureTable(Composite parent, Home home, UserPreferences preferences, FurnitureController controller) {
+  public FurnitureTable(Composite parent, Home home, UserPreferences preferences) {
     this.tableViewer = new TableViewer(parent); 
     String [] columnNames = getColumnNames();
     // Create SWT table columns
@@ -69,7 +67,7 @@ public class FurnitureTable implements FurnitureView {
     this.tableViewer.getTable().setHeaderVisible(true);
     
     this.tableViewer.setColumnProperties(columnNames);
-    this.tableViewer.setContentProvider(new FurnitureTableContentProvider(home));
+    this.tableViewer.setContentProvider(new FurnitureTableContentProvider());
     this.tableViewer.setLabelProvider(new FurnitureLabelProvider(preferences));
     this.tableViewer.setInput(home);
   }
@@ -90,23 +88,6 @@ public class FurnitureTable implements FurnitureView {
        resource.getString("doorOrWindowColumn"),
        resource.getString("visibleColumn")};
     return columnNames;
-  }
-
-  /**
-   * Returns the list of selected furniture in table.
-   * @return a list of furniture. If no furniture is selected, the list is empty.
-   */
-  public List<HomePieceOfFurniture> getSelectedFurniture() {
-    return ((IStructuredSelection)this.tableViewer.getSelection()).toList();
-  }
-
-  /**
-   * Sets the list of selected furniture in table and ensures the first and the
-   * last one is visible.
-   * @param furniture the furniture to select
-   */
-  public void setSelectedFurniture(List<HomePieceOfFurniture> furniture) {
-    this.tableViewer.setSelection(new StructuredSelection(furniture), true);
   }
 
   /**
@@ -185,35 +166,6 @@ public class FurnitureTable implements FurnitureView {
    * Table content provider adaptor to Home class.  
    */
   public class FurnitureTableContentProvider implements IStructuredContentProvider {
-
-    public FurnitureTableContentProvider(Home home) {
-      addHomeListener(home);
-    }
-
-    private void addHomeListener(Home home)
-    {
-      home.addFurnitureListener(new FurnitureListener () { 
-        public void pieceOfFurnitureAdded(FurnitureEvent ev) {
-          addPieceOfFurniture((Home)ev.getSource(), 
-              (HomePieceOfFurniture)ev.getPieceOfFurniture()); 
-        }
-        public void pieceOfFurnitureDeleted(FurnitureEvent ev) {
-          removePieceOfFurniture(
-            (HomePieceOfFurniture)ev.getPieceOfFurniture()); 
-        }
-      });
-    }
-
-    private void addPieceOfFurniture(Home home, 
-                     HomePieceOfFurniture piece) {
-      int row = home.getFurniture().indexOf(piece);
-      tableViewer.insert(piece, row);
-    }
-
-    private void removePieceOfFurniture(HomePieceOfFurniture piece) {
-      tableViewer.remove(piece);
-    }
-
     public Object [] getElements(Object inputElement) {
       return ((Home)inputElement).getFurniture().toArray();
     }

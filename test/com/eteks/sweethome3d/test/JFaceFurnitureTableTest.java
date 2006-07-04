@@ -19,12 +19,16 @@
  */
 package com.eteks.sweethome3d.test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -36,10 +40,17 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+import com.eteks.sweethome3d.io.DefaultCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.jface.CatalogTree;
+import com.eteks.sweethome3d.jface.FurnitureTable;
 import com.eteks.sweethome3d.jface.HomeComposite;
 import com.eteks.sweethome3d.jface.JFaceViewFactory;
+import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
@@ -50,76 +61,24 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 public class JFaceFurnitureTableTest {
   public static void main(String [] args) {
     final UserPreferences preferences = new DefaultUserPreferences();
-    final Home home = new Home();
-    
-    // Create an application window that displays an instance of HomeComposite with a toolbar
+    Catalog catalog = preferences.getCatalog();
+    List<HomePieceOfFurniture> homeFurniture = new ArrayList<HomePieceOfFurniture>();
+    for (Category category : catalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        homeFurniture.add(new HomePieceOfFurniture(piece));
+      }
+    }
+    final Home home = new Home(homeFurniture);
+    // Create an application window that displays an instance of CatalogTree
     ApplicationWindow window = new ApplicationWindow(null) {
-      private HomeController controller;
-      
-      protected void configureShell(Shell shell) {
-        shell.setText("Furniture Table Test");
-        shell.setLayout(new GridLayout());
+       protected void configureShell(Shell shell) {
+        shell.setText("Category Tree Test");
+        shell.setLayout(new FillLayout(SWT.VERTICAL));
       }
 
       protected Control createContents(Composite parent) {
-        CoolBar coolBar = createCoolBar(parent);
-        // Create controller and the other view components
-        this.controller = new HomeController(new JFaceViewFactory(parent), home, preferences);
-        Composite homeComposite = ((HomeComposite)controller.getView()).getHomeComposite();
-        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+        new FurnitureTable(parent, home, preferences);
         return parent;
-      }
-
-      private CoolBar createCoolBar(Composite parent) {
-        CoolBar coolBar = new CoolBar(parent, SWT.NONE);
-        ToolBar editToolBar = new ToolBar(coolBar, SWT.NONE);
-        // Add button
-        ToolItem addToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        addToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Add16.gif")));
-        addToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.addHomeFurniture();
-          } 
-        });
-        // Delete button
-        ToolItem deleteToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        deleteToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Delete16.gif")));
-        deleteToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.getFurnitureController().deleteSelectedFurniture();
-          } 
-        });
-        // Undo button
-        ToolItem undoToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        undoToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Undo16.gif")));
-        undoToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.undo();
-          } 
-        });
-        // Redo button
-        ToolItem redoToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        redoToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Redo16.gif")));
-        redoToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.redo();
-          } 
-        });
-
-        CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
-        coolItem.setControl(editToolBar);
-        // Compute coolItem size
-        Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        coolItem.setSize(coolItem.computeSize(size.x, size.y));
-        return coolBar;
       }
     };
     window.setBlockOnOpen(true);
