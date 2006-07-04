@@ -35,6 +35,10 @@ public abstract class UserPreferences {
     public static float centimerToInch(float length) {
       return length / 2.54f;
     }
+
+    public static float inchToCentimer(float length) {
+      return length * 2.54f;
+    }
   }
 
   private Catalog catalog;
