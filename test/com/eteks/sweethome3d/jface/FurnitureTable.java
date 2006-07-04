@@ -23,15 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -40,8 +37,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.TableColumn;
 
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;

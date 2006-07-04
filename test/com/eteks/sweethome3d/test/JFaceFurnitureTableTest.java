@@ -24,35 +24,20 @@ import java.util.List;
 
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.CoolBar;
-import org.eclipse.swt.widgets.CoolItem;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
 
-import com.eteks.sweethome3d.io.DefaultCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.jface.CatalogTree;
 import com.eteks.sweethome3d.jface.FurnitureTable;
-import com.eteks.sweethome3d.jface.HomeComposite;
-import com.eteks.sweethome3d.jface.JFaceViewFactory;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * Tests furniture furniture table JFace implementation.
