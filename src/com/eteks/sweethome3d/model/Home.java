@@ -29,76 +29,19 @@ import java.util.List;
  */
 public class Home {
   private List<HomePieceOfFurniture> furniture;
-  private List<FurnitureListener>    furnitureListeners;
 
   /**
-   * Creates a home with no furniture.
+   * Creates a home with the given <code>furniture</code>.
    */
-  public Home() {
-    this.furniture = new ArrayList<HomePieceOfFurniture>();
-    this.furnitureListeners = new ArrayList<FurnitureListener>();
-  }
-
-  /**
-   * Adds the furniture <code>listener</code> in parameter to this home.
-   */
-  public void addFurnitureListener(FurnitureListener listener) {
-    this.furnitureListeners.add(listener);
-  }
-
-  /**
-   * Removes the furniture <code>listener</code> in parameter from this home.
-   */
-  public void removeFurnitureListener(FurnitureListener listener) {
-    this.furnitureListeners.remove(listener);
+  public Home(List<HomePieceOfFurniture> furniture) {
+    this.furniture = 
+      new ArrayList<HomePieceOfFurniture>(furniture);
   }
 
   /**
    * Returns an unmodifiable list of the furniture managed by this home.
-   * @return the furniture in the order they were
-   *         {@link #add(HomePieceOfFurniture, int) added}.
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
-  }
-
-  /**
-   * Adds a <code>piece</code> in parameter at a given <code>index</code>.
-   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureAdded(FurnitureEvent) pieceOfFurnitureAdded}
-   * notification.
-   */
-  public void add(HomePieceOfFurniture piece, int index) {
-    this.furniture.add(index, piece);
-    if (!this.furnitureListeners.isEmpty()) {
-      FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      FurnitureListener [] listeners = this.furnitureListeners.
-        toArray(new FurnitureListener [this.furnitureListeners.size()]);
-      for (FurnitureListener listener : listeners) {
-        listener.pieceOfFurnitureAdded(furnitureEvent);
-      }
-    }
-  }
-
-  /**
-   * Removes a given <code>piece</code> of furniture from this home.
-   * Once the <code>piece</code> is removed, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureDeleted(FurnitureEvent) pieceOfFurnitureDeleted}
-   * notification.
-   */
-  public void delete(HomePieceOfFurniture piece) {
-    this.furniture.remove(piece);
-    if (!this.furnitureListeners.isEmpty()) {
-      FurnitureEvent furnitureEvent = new FurnitureEvent(this, piece);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      FurnitureListener [] listeners = this.furnitureListeners.
-        toArray(new FurnitureListener [this.furnitureListeners.size()]);
-      for (FurnitureListener listener : listeners) {
-        listener.pieceOfFurnitureDeleted(furnitureEvent);
-      }
-    }
   }
 }
