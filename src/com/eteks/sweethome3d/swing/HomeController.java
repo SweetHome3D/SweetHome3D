@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JComponent;
@@ -75,7 +74,7 @@ public class HomeController  {
   }
 
   /**
-   * Deletes the selected furniture from home and deselects all items in home.  
+   * Deletes the selected furniture from home.  
    */
   public void deleteHomeFurniture() {
     List<HomePieceOfFurniture> selectedFurniture = new ArrayList<HomePieceOfFurniture>();
