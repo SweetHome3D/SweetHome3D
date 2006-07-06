@@ -19,9 +19,7 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**

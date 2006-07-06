@@ -32,7 +32,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
-public class HomeController implements Controller {
+public class HomeController {
   private Home            home;
   private UserPreferences preferences;
   private View            homeView;
