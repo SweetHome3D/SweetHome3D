@@ -21,38 +21,24 @@ package com.eteks.sweethome3d.jface;
 
 import org.eclipse.swt.widgets.Composite;
 
-import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.CatalogView;
-import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * A factory for SWT / JFace widgets.
  * @author Emmanuel Puybaret
  */
-public class JFaceViewFactory extends AbstractViewFactory {
-  private HomeComposite homeView;
+public class JFaceViewFactory implements ViewFactory {
+  private Composite root;
 
   public JFaceViewFactory(Composite root) {
-    // SWT/JFace doesn't support composite design pattern. We're obliged
-    // to create right now HomeComposite to make its composite component available
-    // to catalogTree and furnitureTable as a parent
-    this.homeView = new HomeComposite(root);
+    this.root = root;
   }
 
-  public HomeView createHomeView(HomeController controller) {
-    return this.homeView;
-  }
-
-  public CatalogView createCatalogView(Catalog catalog) {
-    return new CatalogTree(this.homeView.getCatalogFurnitureComposite(), catalog);
-  }
-
-  public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
-    return new FurnitureTable(this.homeView.getCatalogFurnitureComposite(), home, preferences, controller);
+  public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
+    return new HomeComposite(home, preferences, this.root);
   }
 }

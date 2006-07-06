@@ -21,11 +21,16 @@ package com.eteks.sweethome3d.jface;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.graphics.Image;
@@ -35,19 +40,55 @@ import org.eclipse.swt.widgets.Display;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 
 /**
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
 public class CatalogTree {
-  private TreeViewer treeViewer; 
+  private TreeViewer treeViewer;
+  private ISelectionChangedListener tableSelectionListener; 
   
   public CatalogTree(Composite parent, Catalog catalog) {
     this.treeViewer = new TreeViewer(parent);
     this.treeViewer.setContentProvider(new CatalogTreeContentProvider(catalog));
     this.treeViewer.setLabelProvider(new CatalogLabelProvider());
     this.treeViewer.setInput(catalog);
+    addSelectionListeners(catalog);
+  }
+  
+  /**
+   * Adds selection listeners to this tree.
+   */
+  private void addSelectionListeners(final Catalog catalog) {   
+    final SelectionListener homeSelectionListener  = 
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          treeViewer.removeSelectionChangedListener(tableSelectionListener);
+          treeViewer.setSelection(new StructuredSelection(ev.getSelectedItems()), true);
+          treeViewer.addSelectionChangedListener(tableSelectionListener);
+        }
+      };
+    this.tableSelectionListener = 
+      new ISelectionChangedListener () {
+        public void selectionChanged(SelectionChangedEvent ev) {
+          catalog.removeSelectionListener(homeSelectionListener);
+          List<CatalogPieceOfFurniture> selectedFurniture = 
+              new ArrayList<CatalogPieceOfFurniture>();
+          for (Object item : ((StructuredSelection)ev.getSelection()).toList()) {
+            if (item instanceof CatalogPieceOfFurniture) {
+              selectedFurniture.add((CatalogPieceOfFurniture)item);
+            }          
+          }        
+          // Set the new selection in home
+          catalog.setSelectedFurniture(selectedFurniture);
+          catalog.addSelectionListener(homeSelectionListener);
+        }
+      };
+    this.treeViewer.addSelectionChangedListener(this.tableSelectionListener);
+    catalog.addSelectionListener(homeSelectionListener );
   }
 
   /**

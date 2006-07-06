@@ -22,13 +22,18 @@ package com.eteks.sweethome3d.jface;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -37,8 +42,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.TableColumn;
 
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -47,6 +56,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class FurnitureTable {
   private TableViewer tableViewer;
+  private ISelectionChangedListener tableSelectionListener;
   
   public FurnitureTable(Composite parent, Home home, UserPreferences preferences) {
     this.tableViewer = new TableViewer(parent); 
@@ -62,9 +72,41 @@ public class FurnitureTable {
     this.tableViewer.getTable().setHeaderVisible(true);
     
     this.tableViewer.setColumnProperties(columnNames);
-    this.tableViewer.setContentProvider(new FurnitureTableContentProvider());
+    this.tableViewer.setContentProvider(new FurnitureTableContentProvider(home));
     this.tableViewer.setLabelProvider(new FurnitureLabelProvider(preferences));
     this.tableViewer.setInput(home);
+    addSelectionListeners(home);
+  }
+  
+  /**
+   * Adds selection listeners to this table.
+   */
+  private void addSelectionListeners(final Home home) {   
+    final SelectionListener homeSelectionListener  = 
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          tableViewer.removeSelectionChangedListener(tableSelectionListener);
+          List<Object> selectedFurniture = new ArrayList<Object>();
+          for (Object item : ev.getSelectedItems()) {
+            if (item instanceof HomePieceOfFurniture) {
+              selectedFurniture.add(item);
+            }          
+          }        
+          tableViewer.setSelection(new StructuredSelection(selectedFurniture), true);
+          tableViewer.addSelectionChangedListener(tableSelectionListener);
+        }
+      };
+    this.tableSelectionListener = 
+      new ISelectionChangedListener () {
+        public void selectionChanged(SelectionChangedEvent ev) {
+          home.removeSelectionListener(homeSelectionListener);
+          // Set the new selection in home
+          home.setSelectedItems(((StructuredSelection)ev.getSelection()).toList());
+          home.addSelectionListener(homeSelectionListener);
+        }
+      };
+    this.tableViewer.addSelectionChangedListener(this.tableSelectionListener);
+    home.addSelectionListener(homeSelectionListener);
   }
 
   /**
@@ -161,6 +203,26 @@ public class FurnitureTable {
    * Table content provider adaptor to Home class.  
    */
   public class FurnitureTableContentProvider implements IStructuredContentProvider {
+    public FurnitureTableContentProvider(Home home) {
+      addHomeListener(home);
+    }
+
+    private void addHomeListener(Home home)
+    {
+      home.addFurnitureListener(new FurnitureListener() {
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          switch (ev.getType()) {
+            case ADD :
+              tableViewer.insert(ev.getPieceOfFurniture(), ev.getIndex());
+              break;
+            case DELETE :
+              tableViewer.remove(ev.getPieceOfFurniture());
+              break;
+          }
+        }
+      });
+    }
+
     public Object [] getElements(Object inputElement) {
       return ((Home)inputElement).getFurniture().toArray();
     }

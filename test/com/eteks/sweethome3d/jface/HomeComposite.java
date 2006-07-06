@@ -24,6 +24,8 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 
 /**
@@ -32,19 +34,16 @@ import com.eteks.sweethome3d.viewcontroller.HomeView;
  */
 public class HomeComposite implements HomeView {
   private Composite composite;
-  private SashForm  catalogFurnitureSashForm;
 
-  public HomeComposite(Composite parent) {
+  public HomeComposite(Home home, UserPreferences preferences, Composite parent) {
     this.composite = new Composite(parent, SWT.NONE);
-    this.catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
+    SashForm catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
+    new CatalogTree(catalogFurnitureSashForm, preferences.getCatalog());
+    new FurnitureTable(catalogFurnitureSashForm, home, preferences);
     this.composite.setLayout(new FillLayout());
   }
-  
+
   public Composite getHomeComposite() {
     return this.composite;
-  }
-
-  public Composite getCatalogFurnitureComposite() {
-    return this.catalogFurnitureSashForm;
   }
 }

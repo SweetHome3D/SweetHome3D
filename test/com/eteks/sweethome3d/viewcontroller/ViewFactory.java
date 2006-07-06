@@ -32,20 +32,5 @@ public interface ViewFactory {
   /**
    * Creates a home view.
    */
-  HomeView createHomeView(HomeController controller);
-
-  /**
-   * Creates a catalog view.
-   */
-  CatalogView createCatalogView(Catalog catalog);
-  
-  /** 
-   * Creates a furniture view. 
-   */
-  FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller);
-
-  /**
-   * Creates a plan view.
-   */
-  PlanView createPlanView(Plan plan, UserPreferences userPreferences, PlanController controller);
+  HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller);
 }
