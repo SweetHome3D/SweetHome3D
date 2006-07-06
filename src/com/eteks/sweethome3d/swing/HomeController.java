@@ -88,7 +88,6 @@ public class HomeController  {
       for (HomePieceOfFurniture piece : selectedFurniture) {
         this.home.deletePieceOfFurniture(piece);
       }
-      this.home.setSelectedItems(Collections.EMPTY_LIST);
     }
   }
 }
