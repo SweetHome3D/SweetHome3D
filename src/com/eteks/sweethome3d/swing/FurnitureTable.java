@@ -89,7 +89,7 @@ public class FurnitureTable extends JTable {
       new ListSelectionListener () {
         public void valueChanged(ListSelectionEvent ev) {
           if (!ev.getValueIsAdjusting()) {
-            home.removeSelectionListener(homeSelectionListener );
+            home.removeSelectionListener(homeSelectionListener);
             int [] selectedRows = getSelectedRows();
             // Build the list of selected furniture
             List<HomePieceOfFurniture> selectedFurniture =
@@ -100,12 +100,12 @@ public class FurnitureTable extends JTable {
             }
             // Set the new selection in home
             home.setSelectedItems(selectedFurniture);
-            home.addSelectionListener(homeSelectionListener );
+            home.addSelectionListener(homeSelectionListener);
           }
         }
       };
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);
-    home.addSelectionListener(homeSelectionListener );
+    home.addSelectionListener(homeSelectionListener);
   }
 
   /**
