@@ -1,5 +1,5 @@
 /*
- * FurnitureListener.java 21 mai 2006
+ * SelectionListener.java 26 juin 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -22,12 +22,12 @@ package com.eteks.sweethome3d.model;
 import java.util.EventListener;
 
 /**
- * Listener implemented to receive notifications of furniture changes in {@link Home}.
+ * Listener implemented to receive notifications of selection changes in {@link Home}.
  * @author Emmanuel Puybaret
  */
-public interface FurnitureListener extends EventListener {
+public interface SelectionListener extends EventListener {
   /**
-   * Invoked when furniture is added or deleted.
+   * Invoked when selection changed.
    */
-  void pieceOfFurnitureChanged(FurnitureEvent furnitureEvent);
+  void selectionChanged(SelectionEvent selectionEvent);
 }

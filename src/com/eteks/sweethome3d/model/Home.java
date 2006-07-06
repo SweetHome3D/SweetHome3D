@@ -29,13 +29,39 @@ import java.util.List;
  */
 public class Home {
   private List<HomePieceOfFurniture> furniture;
+  private List<Object>               selectedItems;
+  private List<FurnitureListener>    furnitureListeners;
+  private List<SelectionListener>    selectionListeners;
+
+  /*
+   * Creates a home with no furniture.
+   */
+  public Home() {
+    this(new ArrayList<HomePieceOfFurniture>());
+  }
 
   /**
    * Creates a home with the given <code>furniture</code>.
    */
   public Home(List<HomePieceOfFurniture> furniture) {
-    this.furniture = 
-      new ArrayList<HomePieceOfFurniture>(furniture);
+    this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
+    this.furnitureListeners = new ArrayList<FurnitureListener>();
+    this.selectedItems = new ArrayList<Object>();
+    this.selectionListeners = new ArrayList<SelectionListener>();
+  }
+  
+  /**
+   * Adds the furniture <code>listener</code> in parameter to this home.
+   */
+  public void addFurnitureListener(FurnitureListener listener) {
+    this.furnitureListeners.add(listener);
+  }
+
+  /**
+   * Removes the furniture <code>listener</code> in parameter from this home.
+   */
+  public void removeFurnitureListener(FurnitureListener listener) {
+    this.furnitureListeners.remove(listener);
   }
 
   /**
@@ -43,5 +69,95 @@ public class Home {
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
+  }
+
+  /**
+   * Adds a <code>piece</code> in parameter.
+   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void addPieceOfFurniture(HomePieceOfFurniture piece) {
+    // Make a copy of the list to avoid conflicts in the list returned by getFurniture
+    this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
+    this.furniture.add(piece);
+    firePieceOfFurnitureChanged(piece, this.furniture.size() - 1, FurnitureEvent.Type.ADD);
+  }
+
+  /**
+   * Deletes the <code>piece</code> in parameter from this home.
+   * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void deletePieceOfFurniture(HomePieceOfFurniture piece) {
+    // Ensure selectedItems don't keep a reference to piece
+    int pieceSelectionIndex = this.selectedItems.indexOf(piece);
+    if (pieceSelectionIndex != -1) {
+      List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
+      selectedItems.remove(pieceSelectionIndex);
+      setSelectedItems(selectedItems);
+    }
+    int index = this.furniture.indexOf(piece);
+    if (index != -1) {
+      // Make a copy of the list to avoid conflicts in the list returned by getFurniture
+      this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
+      this.furniture.remove(index);
+      firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.DELETE);
+    }
+  }
+
+  private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
+                                           FurnitureEvent.Type eventType) {
+    if (!this.furnitureListeners.isEmpty()) {
+      FurnitureEvent furnitureEvent = 
+          new FurnitureEvent(this, piece, index, eventType);
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      FurnitureListener [] listeners = this.furnitureListeners.
+        toArray(new FurnitureListener [this.furnitureListeners.size()]);
+      for (FurnitureListener listener : listeners) {
+        listener.pieceOfFurnitureChanged(furnitureEvent);
+      }
+    }
+  }
+
+  /**
+   * Adds the selection <code>listener</code> in parameter to this home.
+   */
+  public void addSelectionListener(SelectionListener listener) {
+    this.selectionListeners.add(listener);
+  }
+
+  /**
+   * Removes the selection <code>listener</code> in parameter from this home.
+   */
+  public void removeSelectionListener(SelectionListener listener) {
+    this.selectionListeners.remove(listener);
+  }
+
+  /**
+   * Returns an unmodifiable list of the selected items in home.
+   */
+  public List<Object> getSelectedItems() {
+    return Collections.unmodifiableList(this.selectedItems);
+  }
+  
+  /**
+   * Sets the selected items in home and notifies listeners selection change.
+   */
+  public void setSelectedItems(List<? extends Object> selectedItems) {
+    // Make a copy of the list to avoid conflicts in the list returned by getSelectedItems
+    this.selectedItems = new ArrayList<Object>(selectedItems);
+    if (!this.selectionListeners.isEmpty()) {
+      SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedItems());
+      // Work on a copy of selectionListeners to ensure a listener 
+      // can modify safely listeners list
+      SelectionListener [] listeners = this.selectionListeners.
+        toArray(new SelectionListener [this.selectionListeners.size()]);
+      for (SelectionListener listener : listeners) {
+        listener.selectionChanged(selectionEvent);
+      }
+    }
   }
 }

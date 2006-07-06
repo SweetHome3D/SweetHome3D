@@ -19,26 +19,25 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JComponent;
-import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
-public class HomeController implements Controller  {
-  private JComponent          homeView;
-  private UndoableEditSupport undoSupport;
-  private UndoManager         undoManager;
-  private CatalogController   catalogController;
-  private FurnitureController furnitureController;
+public class HomeController  {
+  private Home            home;
+  private UserPreferences preferences;
+  private JComponent      homeView;
 
   /**
    * Creates the controller of home view. 
@@ -46,14 +45,9 @@ public class HomeController implements Controller  {
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
-    // Create undo support objects
-    this.undoSupport = new UndoableEditSupport();
-    this.undoManager = new UndoManager();
-    this.undoSupport.addUndoableEditListener(this.undoManager);
-    // Create controllers composed by this controller
-    this.catalogController   = new CatalogController(preferences);
-    this.furnitureController = new FurnitureController(home, preferences, this.undoSupport);
-    this.homeView = new HomePane(this);
+    this.home = home;
+    this.preferences = preferences;
+    this.homeView = new HomePane(home, preferences, this);
   }
 
   /**
@@ -64,43 +58,37 @@ public class HomeController implements Controller  {
   }
 
   /**
-   * Returns the furniture controller managed by this controller.
-   */
-  public FurnitureController getFurnitureController() {
-    return this.furnitureController;
-  }
-
-  /**
-   * Returns the catalog controller managed by this controller.
-   */
-  public CatalogController getCatalogController() {
-    return this.catalogController;
-  }
-
-  /**
-   * Adds the selected furniture in the catalog view to home.  
+   * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
     List<CatalogPieceOfFurniture> selectedFurniture = 
-         this.catalogController.getSelectedFurniture();
-    this.furnitureController.addFurniture(selectedFurniture);    
-  }
-
-  /**
-   * Undo last undoable edit.
-   */
-  public void undo() {
-    if (this.undoManager.canUndo()) {
-      this.undoManager.undo();
+      this.preferences.getCatalog().getSelectedFurniture();
+    if (!selectedFurniture.isEmpty()) {
+      List<HomePieceOfFurniture> newFurniture = new ArrayList<HomePieceOfFurniture>();
+      for (CatalogPieceOfFurniture piece : selectedFurniture) {
+        HomePieceOfFurniture newPiece = new HomePieceOfFurniture(piece);
+        this.home.addPieceOfFurniture(newPiece);
+        newFurniture.add(newPiece);
+      }
+      this.home.setSelectedItems(newFurniture);
     }
   }
 
   /**
-   * Redo last undone edit.
+   * Deletes the selected furniture from home and deselects all items in home.  
    */
-  public void redo() {
-    if (this.undoManager.canRedo()) {
-      this.undoManager.redo();
+  public void deleteHomeFurniture() {
+    List<HomePieceOfFurniture> selectedFurniture = new ArrayList<HomePieceOfFurniture>();
+    for (Object item : this.home.getSelectedItems()) {
+      if (item instanceof HomePieceOfFurniture) {
+        selectedFurniture.add((HomePieceOfFurniture)item);
+      }
+    }
+    if (!selectedFurniture.isEmpty()) {
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        this.home.deletePieceOfFurniture(piece);
+      }
+      this.home.setSelectedItems(Collections.EMPTY_LIST);
     }
   }
 }

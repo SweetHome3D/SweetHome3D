@@ -29,8 +29,10 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public abstract class Catalog {
-  private List<Category> categories = new ArrayList<Category>();
-  private boolean        sorted;
+  private List<Category>                categories        = new ArrayList<Category>();
+  private boolean                       sorted;
+  private List<CatalogPieceOfFurniture> selectedFurniture = Collections.emptyList();
+  private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
 
   /**
    * Returns the catagories list sorted by name.
@@ -74,5 +76,43 @@ public abstract class Catalog {
     }    
     // Add current piece of furniture to category list
     category.add(piece);
+  }
+
+  /**
+   * Adds the selection <code>listener</code> in parameter to this home.
+   */
+  public void addSelectionListener(SelectionListener listener) {
+    this.selectionListeners.add(listener);
+  }
+
+  /**
+   * Removes the selection <code>listener</code> in parameter from this home.
+   */
+  public void removeSelectionListener(SelectionListener listener) {
+    this.selectionListeners.remove(listener);
+  }
+  
+  /**
+   * Returns an unmodifiable list of the selected furniture in catalog.
+   */
+  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
+    return Collections.unmodifiableList(this.selectedFurniture);
+  }
+  
+  /**
+   * Sets the selected items in home and notifies listeners selection change.
+   */
+  public void setSelectedFurniture(List<CatalogPieceOfFurniture> selectedFurniture) {
+    this.selectedFurniture = new ArrayList<CatalogPieceOfFurniture>(selectedFurniture);
+    if (!this.selectionListeners.isEmpty()) {
+      SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedFurniture());
+      // Work on a copy of selectionListeners to ensure a listener 
+      // can modify safely listeners list
+      SelectionListener [] listeners = this.selectionListeners.
+        toArray(new SelectionListener [this.selectionListeners.size()]);
+      for (SelectionListener listener : listeners) {
+        listener.selectionChanged(selectionEvent);
+      }
+    }
   }
 }

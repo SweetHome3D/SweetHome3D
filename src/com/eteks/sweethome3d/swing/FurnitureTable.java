@@ -24,17 +24,26 @@ import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -42,6 +51,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable {
+  private ListSelectionListener tableSelectionListener;
+
   /**
    * Creates a table that displays furniture of <code>home</code>.
    * @param home        the home displayed by this view
@@ -51,6 +62,64 @@ public class FurnitureTable extends JTable {
     String [] columnNames = getColumnNames();
     setModel(new FurnitureTableModel(home, columnNames));
     setColumnRenderers(preferences);
+    addSelectionListeners(home);
+  }
+  
+  /**
+   * Adds selection listeners to this table.
+   */
+  private void addSelectionListeners(final Home home) {   
+    final SelectionListener homeSelectionListener  = 
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          getSelectionModel().removeListSelectionListener(tableSelectionListener);
+          List<HomePieceOfFurniture> furniture = home.getFurniture();
+          clearSelection();
+          for (Object item : ev.getSelectedItems()) {
+            if (item instanceof HomePieceOfFurniture) {
+              int index = furniture.indexOf(item); 
+              addRowSelectionInterval(index, index);
+              makeRowVisible(index);
+            }          
+          }        
+          getSelectionModel().addListSelectionListener(tableSelectionListener);
+        }
+      };
+    this.tableSelectionListener = 
+      new ListSelectionListener () {
+        public void valueChanged(ListSelectionEvent ev) {
+          if (!ev.getValueIsAdjusting()) {
+            home.removeSelectionListener(homeSelectionListener );
+            int [] selectedRows = getSelectedRows();
+            // Build the list of selected furniture
+            List<HomePieceOfFurniture> selectedFurniture =
+              new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+            List<HomePieceOfFurniture> furniture = home.getFurniture();
+            for (int index : selectedRows) {
+              selectedFurniture.add(furniture.get(index));
+            }
+            // Set the new selection in home
+            home.setSelectedItems(selectedFurniture);
+            home.addSelectionListener(homeSelectionListener );
+          }
+        }
+      };
+    getSelectionModel().addListSelectionListener(this.tableSelectionListener);
+    home.addSelectionListener(homeSelectionListener );
+  }
+
+  /**
+   * Ensures the rectangle which displays row is visible.
+   */
+  private void makeRowVisible(int row) {
+    // Compute the rectangle that includes a row 
+    Rectangle includingRectangle = getCellRect(row, 0, true);
+    if (getAutoResizeMode() == AUTO_RESIZE_OFF) {
+      int lastColumn = getColumnCount() - 1;
+      includingRectangle = includingRectangle.
+          union(getCellRect(row, lastColumn, true));
+    }
+    scrollRectToVisible(includingRectangle);
   }
 
   /**
@@ -164,6 +233,23 @@ public class FurnitureTable extends JTable {
     public FurnitureTableModel(Home home, String [] columnNames) {
       this.home = home;
       this.columnNames = columnNames;
+      addHomeListener(home);
+    }
+
+    private void addHomeListener(Home home) {
+      home.addFurnitureListener(new FurnitureListener() {
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          int pieceIndex = ev.getIndex();
+          switch (ev.getType()) {
+            case ADD :
+              fireTableRowsInserted(pieceIndex, pieceIndex);
+              break;
+            case DELETE :
+              fireTableRowsDeleted(pieceIndex, pieceIndex);
+              break;
+          }
+        }
+      });
     }
 
     @Override

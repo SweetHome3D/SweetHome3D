@@ -22,18 +22,26 @@ package com.eteks.sweethome3d.model;
 import java.util.EventObject;
 
 /**
- * Type of event notified when {@link Home home} furniture is added or deleted.
+ * Type of event notified when {@link Home home} furniture is added, updated or deleted.
  * @author Emmanuel Puybaret
  */
 public class FurnitureEvent extends EventObject {
+  public enum Type {ADD, DELETE}
+
   private PieceOfFurniture piece;
+  private int index;
+  private Type type;
 
   /**
    * Creates an event with <code>home</code> as source, and an associated <code>piece</code>.
+   * @param index 
+   * @param eventType 
    */
-  public FurnitureEvent(Object source, PieceOfFurniture piece) {
+  public FurnitureEvent(Object source, PieceOfFurniture piece, int index, Type type) {
     super(source);
     this.piece = piece;
+    this.index = index;
+    this.type =  type;
   }
 
   /**
@@ -41,5 +49,19 @@ public class FurnitureEvent extends EventObject {
    */
   public PieceOfFurniture getPieceOfFurniture() {
     return this.piece;
+  }
+
+  /**
+   * Returns the index of the piece of furniture in home.
+   */
+  public int getIndex() {
+    return this.index;
+  }
+
+  /**
+   * Returns the type of event. 
+   */
+  public Type getType() {
+    return this.type;
   }
 }
