@@ -55,35 +55,35 @@ public class HomeControllerTest extends TestCase {
     HomeController homeController = 
         new HomeController(home, preferences);
     // Retrieve table object created by home pane 
-    CatalogTree tree = (CatalogTree)getComponent(
+    CatalogTree catalogTree = (CatalogTree)getComponent(
         homeController.getView(), CatalogTree.class);
     // Retrieve table object created by home pane 
-    FurnitureTable table = (FurnitureTable)getComponent(
+    FurnitureTable furnitureTable = (FurnitureTable)getComponent(
         homeController.getView(), FurnitureTable.class);
 
     // 2. Select the two first pieces of furniture in catalog and add them to the table
-    tree.expandRow(0); 
-    tree.addSelectionInterval(1, 2);
+    catalogTree.expandRow(0); 
+    catalogTree.addSelectionInterval(1, 2);
     homeController.addHomeFurniture();
 
     // Check the table contains two pieces
     assertEquals("Table doesn't contain 2 pieces", 
-        2, table.getRowCount());
+        2, furnitureTable.getRowCount());
     //  Check the two pieces in table are selected
     assertEquals("Table doesn't display 2 selected pieces", 
-        2, table.getSelectedRowCount());
+        2, furnitureTable.getSelectedRowCount());
 
     // 3. Select the first piece in table, delete it
-    table.setRowSelectionInterval(0, 0);
+    furnitureTable.setRowSelectionInterval(0, 0);
     homeController.deleteHomeFurniture();
     // Check the table contains only one piece
     assertEquals("Table doesn't contain 1 piece", 
-        1, table.getRowCount());
+        1, furnitureTable.getRowCount());
     // Check the table doesn't display any selection
     assertEquals("Table selection isn't empty", 
-        0, table.getSelectedRowCount());
+        0, furnitureTable.getSelectedRowCount());
   }
-
+  
   /**
    * Returns the first component of a given class in <code>container</code> hierarchy.
    */
