@@ -35,7 +35,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeView;
 public class HomeComposite implements HomeView {
   private Composite composite;
 
-  public HomeComposite(Home home, UserPreferences preferences, Composite parent) {
+  public HomeComposite(Composite parent, Home home, UserPreferences preferences) {
     this.composite = new Composite(parent, SWT.NONE);
     SashForm catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
     new CatalogTree(catalogFurnitureSashForm, preferences.getCatalog());

@@ -32,13 +32,13 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class JFaceViewFactory implements ViewFactory {
-  private Composite root;
+  private Composite parent;
 
-  public JFaceViewFactory(Composite root) {
-    this.root = root;
+  public JFaceViewFactory(Composite parent) {
+    this.parent = parent;
   }
 
   public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
-    return new HomeComposite(home, preferences, this.root);
+    return new HomeComposite(this.parent, home, preferences);
   }
 }
