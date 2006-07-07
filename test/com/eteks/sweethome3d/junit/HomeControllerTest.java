@@ -25,7 +25,6 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -102,7 +101,7 @@ public class HomeControllerTest extends TestCase {
     return null;
   }
 
-  public static void main(String [] args) throws InterruptedException, InvocationTargetException {
+  public static void main(String [] args) {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
     new ControllerTest(home, preferences);
