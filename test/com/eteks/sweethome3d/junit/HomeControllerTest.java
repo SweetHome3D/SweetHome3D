@@ -25,9 +25,13 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 import javax.swing.JToolBar;
@@ -36,30 +40,57 @@ import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.CatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
+import com.eteks.sweethome3d.swing.HomePane;
 
 /**
- * Tests furniture table component.
+ * Tests home controller.
  * @author Emmanuel Puybaret
  */
 public class HomeControllerTest extends TestCase {
-  public void testHomeFurniture() {
+  private Home           home;
+  private HomeController homeController;
+  private CatalogTree    catalogTree;
+  private FurnitureTable furnitureTable;
+
+  @Override
+  protected void setUp() {
     // 1. Create model objects
     UserPreferences preferences = new DefaultUserPreferences();
-    Home home = new Home();
-    // Create home controller
-    HomeController homeController = 
-        new HomeController(home, preferences);
-    // Retrieve table object created by home pane 
-    CatalogTree catalogTree = (CatalogTree)getComponent(
-        homeController.getView(), CatalogTree.class);
-    // Retrieve table object created by home pane 
-    FurnitureTable furnitureTable = (FurnitureTable)getComponent(
-        homeController.getView(), FurnitureTable.class);
+    this.home = new Home();
+    this.homeController = new HomeController(this.home, preferences);
+    this.catalogTree = (CatalogTree)getComponent(
+         this.homeController.getView(), CatalogTree.class);
+    this.furnitureTable = (FurnitureTable)getComponent(
+         this.homeController.getView(), FurnitureTable.class);
+  }
 
+  /**
+   * Returns the first component of a given class in <code>container</code> hierarchy.
+   */
+  private Component getComponent(Container container, Class componentClass) {
+    for (int i = 0, n = container.getComponentCount(); i < n; i++) {
+      Component component = container.getComponent(i);
+      if (componentClass.isInstance(component)) {
+        return component;
+      } else if (component instanceof Container) {
+        component = getComponent((Container)component, componentClass);
+        if (component != null) {
+          return component;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Tests add and delete furniture in home.
+   */
+  public void testHomeFurniture() {
     // 2. Select the two first pieces of furniture in catalog and add them to the table
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 2);
@@ -82,23 +113,107 @@ public class HomeControllerTest extends TestCase {
     assertEquals("Table selection isn't empty", 
         0, furnitureTable.getSelectedRowCount());
   }
+
+  /**
+   * Tests undo add and delete furniture in home.
+   */
+  public void testHomeFurnitureUndoableActions() {
+    // Check all buttons are disabled
+    assertActionsEnabled(false, false, false, false);
+    
+    // 2. Select the two first pieces of furniture in catalog
+    catalogTree.expandRow(0); 
+    catalogTree.addSelectionInterval(1, 2);
+    // Check only Add button is enabled
+    assertActionsEnabled(true, false, false, false);
+    
+    // 3. Add the selected furniture to the table
+    runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
+    List<HomePieceOfFurniture> furniture = this.home.getFurniture();
+    //  Check Add, Delete and Undo buttons are enabled
+    assertActionsEnabled(true, true, true, false);
+    
+    // 4. Select the first piece in table and delete it
+    furnitureTable.setRowSelectionInterval(0, 0);
+    runAction(HomePane.ActionType.DELETE_HOME_FURNITURE);
+    //  Check Add and Undo buttons are enabled
+    assertActionsEnabled(true, false, true, false);
+    
+    // 5. Undo last operation
+    runAction(HomePane.ActionType.UNDO);
+    // Check home contains the deleted piece
+    HomePieceOfFurniture firstPiece = furniture.get(0);
+    assertEquals("Deleted piece isn't undeleted", 
+        firstPiece, this.home.getFurniture().get(0));
+    assertEquals("Deleted piece isn't selected", 
+        firstPiece, this.home.getSelectedItems().get(0));
+    //  Check all buttons are enabled
+    assertActionsEnabled(true, true, true, true);
+
+    // 6. Undo first operation
+    runAction(HomePane.ActionType.UNDO);
+    // Check home is empty
+    assertTrue("Home furniture isn't empty", 
+        this.home.getFurniture().isEmpty());
+    //  Check Add and Redo buttons are enabled
+    assertActionsEnabled(true, false, false, true);
+    
+    // 7. Redo first operation
+    runAction(HomePane.ActionType.REDO);
+    // Check home contains the two previously added pieces
+    assertEquals("Home doesn't contain the two previously added pieces",
+        furniture, home.getFurniture());
+    // Check they are selected
+    assertEquals("Added pieces are selected",
+        furniture, home.getSelectedItems());
+    //  Check all buttons are enabled
+    assertActionsEnabled(true, true, true, true);
+
+    // 8. Redo second operation
+    runAction(HomePane.ActionType.REDO);
+    // Check home contains only the second piece
+    assertEquals("Home doesn't contain the second piece",
+        furniture.get(1), home.getFurniture().get(0));
+    // Check selection is empty
+    assertTrue("Selection isn't empty",
+        home.getSelectedItems().isEmpty());
+    //  Check Add and Undo buttons are enabled
+    assertActionsEnabled(true, false, true, false);
+  }
   
   /**
-   * Returns the first component of a given class in <code>container</code> hierarchy.
+   * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
+   * in <code>HomePane</code>. 
    */
-  private Component getComponent(Container container, Class componentClass) {
-    for (int i = 0, n = container.getComponentCount(); i < n; i++) {
-      Component component = container.getComponent(i);
-      if (componentClass.isInstance(component)) {
-        return component;
-      } else if (component instanceof Container) {
-        component = getComponent((Container)component, componentClass);
-        if (component != null) {
-          return component;
-        }
-      }
-    }
-    return null;
+  private void runAction(HomePane.ActionType actionType) {
+    getAction(actionType).actionPerformed(null);
+  }
+
+  /**
+   * Returns the action matching <code>actionType</code> in <code>HomePane</code>. 
+   */
+  private Action getAction(HomePane.ActionType actionType) {
+    JComponent homeView = this.homeController.getView();
+    return homeView.getActionMap().get(actionType);
+  }
+  
+  /**
+   * Asserts ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, 
+   * UNDO and REDO actions in <code>HomePane</code> 
+   * are enabled or disabled. 
+   */
+  private void assertActionsEnabled(boolean addActionEnabled, 
+                                    boolean deleteActionEnabled, 
+                                    boolean undoActionEnabled, 
+                                    boolean redoActionEnabled) {
+    assertTrue("Add action invalid state", 
+        getAction(HomePane.ActionType.ADD_HOME_FURNITURE).isEnabled() == addActionEnabled);
+    assertTrue("Delete action invalid state", 
+        getAction(HomePane.ActionType.DELETE_HOME_FURNITURE).isEnabled() == deleteActionEnabled);
+    assertTrue("Undo action invalid state", 
+        getAction(HomePane.ActionType.UNDO).isEnabled() == undoActionEnabled);
+    assertTrue("Redo action invalid state", 
+        getAction(HomePane.ActionType.REDO).isEnabled() == redoActionEnabled);
   }
 
   public static void main(String [] args) {
@@ -116,28 +231,8 @@ public class HomeControllerTest extends TestCase {
 
   private static class ViewTest extends JRootPane {
     public ViewTest(final HomeController controller) {
-      // Create buttons that will launch controler methods
-      JButton addButton = new JButton(new ImageIcon(
-          getClass().getResource("resources/Add16.gif")));
-      addButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          controller.addHomeFurniture();
-        }
-      });
-      JButton deleteButton = new JButton(new ImageIcon(
-          getClass().getResource("resources/Delete16.gif")));
-      deleteButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          controller.deleteHomeFurniture();
-        }
-      });
-      // Put them it a tool bar
-      JToolBar toolBar = new JToolBar();
-      toolBar.add(addButton);
-      toolBar.add(deleteButton);
-      // Display the tool bar and main view in this pane
-      getContentPane().add(toolBar, BorderLayout.NORTH);
-      getContentPane().add(controller.getView(), BorderLayout.CENTER);
+      // Display main view in this pane
+      getContentPane().add(controller.getView());
     }
 
     public void displayView() {

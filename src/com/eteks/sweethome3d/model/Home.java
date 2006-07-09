@@ -78,9 +78,19 @@ public class Home {
    * notification.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
+    addPieceOfFurniture(piece, this.furniture.size() - 1);
+  }
+
+  /**
+   * Adds the <code>piece</code> in parameter at a given <code>index</code>.
+   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void addPieceOfFurniture(HomePieceOfFurniture piece, int index) {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
-    this.furniture.add(piece);
+    this.furniture.add(index, piece);
     firePieceOfFurnitureChanged(piece, this.furniture.size() - 1, FurnitureEvent.Type.ADD);
   }
 
