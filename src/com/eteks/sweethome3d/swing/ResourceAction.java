@@ -41,9 +41,8 @@ public class ResourceAction extends AbstractAction {
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
-    String name = resource.getString(propertyPrefix + NAME);
-    putValue(NAME, name);
-    putValue(DEFAULT, name);
+    putValue(NAME, resource.getString(propertyPrefix + NAME));
+    putValue(DEFAULT, getValue(NAME));
     
     String shortDescription = getOptionalString(resource, propertyPrefix + SHORT_DESCRIPTION);
     if (shortDescription != null) {
