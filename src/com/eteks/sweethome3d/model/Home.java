@@ -33,7 +33,7 @@ public class Home {
   private List<FurnitureListener>    furnitureListeners;
   private List<SelectionListener>    selectionListeners;
 
-  /*
+  /**
    * Creates a home with no furniture.
    */
   public Home() {
