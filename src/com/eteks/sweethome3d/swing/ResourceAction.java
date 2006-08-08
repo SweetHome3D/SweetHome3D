@@ -24,7 +24,6 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
@@ -35,9 +34,9 @@ import javax.swing.KeyStroke;
 public class ResourceAction extends AbstractAction {
   /**
    * Creates an action with properties retrieved from a resource bundle 
-   * in which key starts with <code>action</code>.
+   * in which key starts with <code>actionPrefix</code>.
    * @param resource a resource bundle
-   * @param action  prefix used in resource bundle to search action properties
+   * @param actionPrefix  prefix used in resource bundle to search action properties
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";

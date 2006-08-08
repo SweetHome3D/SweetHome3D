@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
 import javax.swing.Action;
@@ -55,34 +54,22 @@ public class HomePane extends JRootPane {
     ResourceBundle resource = ResourceBundle.getBundle(
         HomePane.class.getName());
     ActionMap actions = getActionMap();    
-    actions.put(ActionType.ADD_HOME_FURNITURE,
-      new ResourceAction(resource, ActionType.ADD_HOME_FURNITURE.toString()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          controller.addHomeFurniture();
-        }
-      });
-    actions.put(ActionType.DELETE_HOME_FURNITURE,
-      new ResourceAction(resource, ActionType.DELETE_HOME_FURNITURE.toString()){
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          controller.deleteHomeFurniture();
-        }
-      });
-    actions.put(ActionType.UNDO,
-      new ResourceAction(resource, ActionType.UNDO.toString()){
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          controller.undo();
-        }
-      });
-    actions.put(ActionType.REDO,
-      new ResourceAction(resource, ActionType.REDO.toString()){
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          controller.redo();
-        }
-      });
+    try {
+      actions.put(ActionType.ADD_HOME_FURNITURE,
+          new ControllerAction(resource, ActionType.ADD_HOME_FURNITURE.toString(),
+              controller, "addHomeFurniture"));
+      actions.put(ActionType.DELETE_HOME_FURNITURE,
+          new ControllerAction(resource, ActionType.DELETE_HOME_FURNITURE.toString(),
+              controller, "deleteHomeFurniture"));
+      actions.put(ActionType.UNDO,
+          new ControllerAction(resource, ActionType.UNDO.toString(),
+              controller, "undo"));
+      actions.put(ActionType.REDO,
+          new ControllerAction(resource, ActionType.REDO.toString(),
+              controller, "redo"));
+    } catch (NoSuchMethodException ex) {
+      throw new RuntimeException(ex);
+    }
   }
   
   /**
