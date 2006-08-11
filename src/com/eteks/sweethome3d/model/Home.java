@@ -91,7 +91,7 @@ public class Home {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
     this.furniture.add(index, piece);
-    firePieceOfFurnitureChanged(piece, this.furniture.size() - 1, FurnitureEvent.Type.ADD);
+    firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.ADD);
   }
 
   /**
