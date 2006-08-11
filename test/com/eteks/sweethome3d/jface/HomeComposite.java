@@ -26,13 +26,12 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.HomeView;
 
 /**
  * The MVC view that edits home furniture. 
  * @author Emmanuel Puybaret
  */
-public class HomeComposite implements HomeView {
+public class HomeComposite {
   private Composite composite;
 
   public HomeComposite(Composite parent, Home home, UserPreferences preferences) {

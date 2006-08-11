@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.jface;
 
-import org.eclipse.swt.widgets.Composite;
-
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -32,13 +30,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class JFaceViewFactory implements ViewFactory {
-  private Composite parent;
-
-  public JFaceViewFactory(Composite parent) {
-    this.parent = parent;
-  }
-
   public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
-    return new HomeComposite(this.parent, home, preferences);
+    return new HomeApplication(home, preferences, controller);
   }
 }
