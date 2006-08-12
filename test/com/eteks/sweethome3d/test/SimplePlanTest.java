@@ -25,7 +25,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.model.Plan;
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.PlanComponent;
 
@@ -35,23 +35,22 @@ import com.eteks.sweethome3d.swing.PlanComponent;
  */
 public class SimplePlanTest {
   public static void main(String [] args) {
-    final int white = 0xFFFFFF;
     // Create 3 walls
-    Wall wall1 = new Wall(-100, 0, 200, 0, white, white, 25);
-    Wall wall2 = new Wall(200, 0, 500, 300, white, white, 25);
-    Wall wall3 = new Wall(-100, 0, -100, 300, white, white, 10);
+    Wall wall1 = new Wall(-100, 0, 200, 0, 25);
+    Wall wall2 = new Wall(200, 0, 500, 300, 25);
+    Wall wall3 = new Wall(-100, 0, -100, 300, 10);
     // Add them to a Plan instance
-    Plan plan = new Plan();
-    plan.addWall(wall1);
-    plan.addWall(wall2);
-    plan.addWall(wall3);
+    Home home = new Home();
+    home.addWall(wall1);
+    home.addWall(wall2);
+    home.addWall(wall3);
     // Join the two first walls
-    plan.setWallAtEnd(wall1, wall2);
-    plan.setWallAtStart(wall2, wall1);
+    home.setWallAtEnd(wall1, wall2);
+    home.setWallAtStart(wall2, wall1);
     // Create a component that displays this plan  
-    PlanComponent planComponent = new PlanComponent(plan, new DefaultUserPreferences(), null);
+    PlanComponent planComponent = new PlanComponent(home, new DefaultUserPreferences(), null);
     planComponent.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    planComponent.setSelectedWalls(Arrays.asList(new Wall [] {wall2, wall3}));
+    home.setSelectedItems(Arrays.asList(new Wall [] {wall2, wall3}));
     planComponent.setRectangleFeedback(-125, 100, 700, 225);
     // Show the component in a frame
     JFrame frame = new JFrame("Plan Test");

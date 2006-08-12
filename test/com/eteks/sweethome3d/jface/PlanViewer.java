@@ -20,13 +20,7 @@
 package com.eteks.sweethome3d.jface;
 
 import java.awt.Shape;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +56,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
-import com.eteks.sweethome3d.model.Plan;
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -76,11 +72,10 @@ import com.eteks.sweethome3d.viewcontroller.PlanView;
  */
 public class PlanViewer extends Viewer implements PlanView {
   private static final float MARGIN = 40;
-  private Plan               plan;
+  private Home               home;
   private UserPreferences    preferences;
   private float              scale = 0.5f;
 
-  private List<Wall>         selectedWalls;
   private Rectangle2D        planBoundsCache;
   
   // SWT resources used by this viewer
@@ -90,11 +85,10 @@ public class PlanViewer extends Viewer implements PlanView {
   private Cursor             crossCursor;
 
   public PlanViewer(Composite parent, 
-                    Plan plan, UserPreferences preferences,
+                    Home home, UserPreferences preferences,
                     PlanController controller) {
-    this.plan = plan;
+    this.home = home;
     this.preferences = preferences;
-    this.selectedWalls = new ArrayList<Wall>();
     // Create control associated with this viewer
     this.control = new Canvas(parent, SWT.DOUBLE_BUFFERED) {
       // Returns the preferred size of control
@@ -112,7 +106,7 @@ public class PlanViewer extends Viewer implements PlanView {
     crossCursor = new Cursor(this.control.getDisplay(), SWT.CURSOR_CROSS);
     // Add listeners
     addControlListeners();
-    addModelListener(plan);
+    addModelListeners(home);
     if (controller != null) {
       addMouseListeners(controller);
       addKeyListener(controller);
@@ -142,10 +136,11 @@ public class PlanViewer extends Viewer implements PlanView {
   }
 
   /**
-   * Adds wall listener on this component to receive wall changes notifications from plan. 
+   * Adds wall and selection listeners on this component to receive wall 
+   * changes notifications from home. 
    */
-  private void addModelListener(Plan plan) {
-    plan.addWallListener(new WallListener () {
+  private void addModelListeners(Home home) {
+    home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         planBoundsCache = null;
         // No direct SWT equivalent to Swing revalidate
@@ -156,10 +151,16 @@ public class PlanViewer extends Viewer implements PlanView {
         refresh();
       }
     });
+    home.addSelectionListener(new SelectionListener () {
+      public void selectionChanged(SelectionEvent selectionEvent) {
+        refresh();
+      }
+    });
   }
 
   /**
-   * Adds SWT mouse listeners to this component that calls back <code>controller</code> methods.  
+   * Adds SWT mouse listeners to this component that calls back 
+   * <code>controller</code> methods.  
    */
   private void addMouseListeners(final PlanController controller) {
     this.control.addMouseListener(new MouseListener() {
@@ -243,7 +244,7 @@ public class PlanViewer extends Viewer implements PlanView {
   private Rectangle2D getPlanBounds() {
     if (this.planBoundsCache == null) {
       this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
-      for (Wall wall : plan.getWalls()) {
+      for (Wall wall : home.getWalls()) {
         this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
         this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
       }
@@ -259,7 +260,8 @@ public class PlanViewer extends Viewer implements PlanView {
     // Change component coordinates system to plan system
     Rectangle2D wallsBounds = getPlanBounds();    
     Transform transform = new Transform(Display.getCurrent());
-    transform.translate(this.control.getBorderWidth() + (float)(MARGIN - wallsBounds.getMinX()) * this.scale,
+    transform.translate(
+        this.control.getBorderWidth() + (float)(MARGIN - wallsBounds.getMinX()) * this.scale,
         this.control.getBorderWidth() + (float)(MARGIN - wallsBounds.getMinY()) * this.scale);
     transform.scale(scale, scale);
     gc.setTransform(transform);
@@ -329,7 +331,8 @@ public class PlanViewer extends Viewer implements PlanView {
     if (mainGridSize != gridSize) {
       gc.setLineWidth((int)Math.round(2 / this.scale));
       // Draw main vertical lines
-      for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+      for (float x = (int) (xMin / mainGridSize) * mainGridSize; 
+           x < xMax; x += mainGridSize) {
         Path linesPath = new Path(this.control.getDisplay());
         linesPath.moveTo(x, yMin);
         linesPath.lineTo(x, yMax);
@@ -337,7 +340,8 @@ public class PlanViewer extends Viewer implements PlanView {
         linesPath.dispose();
       }
       // Draw positive main horizontal lines
-      for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+      for (float y = (int) (yMin / mainGridSize) * mainGridSize; 
+           y < yMax; y += mainGridSize) {
         Path linesPath = new Path(this.control.getDisplay());
         linesPath.moveTo(xMin, y);
         linesPath.lineTo(xMax, y);
@@ -367,7 +371,7 @@ public class PlanViewer extends Viewer implements PlanView {
    * Paints plan walls.
    */
   private void paintWalls(GC gc) {
-    Path wallsPath = getWallsPath(this.plan.getWalls());
+    Path wallsPath = getWallsPath(this.home.getWalls());
     // Fill walls area
     Pattern wallPattern = getWallPattern();
     gc.setBackgroundPattern(wallPattern);
@@ -375,19 +379,21 @@ public class PlanViewer extends Viewer implements PlanView {
     gc.setBackgroundPattern(null);
     wallPattern.dispose();
     // Draw selected walls with a surrounding shape
-    if (!this.selectedWalls.isEmpty()) {
+    if (!this.home.getSelectedItems().isEmpty()) {
       gc.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_LIST_SELECTION));
       gc.setAlpha(128);
       gc.setLineWidth((int)Math.round(6 / this.scale));
       gc.setLineJoin(SWT.JOIN_ROUND);
       Path selectedPaths = new Path(this.control.getDisplay());
-      for (Wall wall : this.selectedWalls) {
-        float [][] wallPoints = getWallPoints(wall);
-        selectedPaths.moveTo(wallPoints [0][0], wallPoints [0][1]);
-        for (int i = 1; i < wallPoints.length; i++) {
-          selectedPaths.lineTo(wallPoints [i][0], wallPoints [i][1]);        
+      for (Object item : this.home.getSelectedItems()) {
+        if (item instanceof Wall) {
+          float [][] wallPoints = ((Wall)item).getPoints();
+          selectedPaths.moveTo(wallPoints [0][0], wallPoints [0][1]);
+          for (int i = 1; i < wallPoints.length; i++) {
+            selectedPaths.lineTo(wallPoints [i][0], wallPoints [i][1]);        
+          }
+          selectedPaths.close();
         }
-        selectedPaths.close();
       }
       gc.drawPath(selectedPaths);
       selectedPaths.dispose();
@@ -410,7 +416,8 @@ public class PlanViewer extends Viewer implements PlanView {
     // Create an image displaying a line in its diagonal
     imageGC.setBackground(this.control.getDisplay().getSystemColor(SWT.COLOR_WHITE));
     imageGC.fillRectangle(0, 0, 10, 10);
-    imageGC.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_LIST_FOREGROUND));
+    imageGC.setForeground(
+        this.control.getDisplay().getSystemColor(SWT.COLOR_LIST_FOREGROUND));
     imageGC.drawLine(0, 9, 9, 0);
     imageGC.dispose();
     return new Pattern(this.control.getDisplay(), image);
@@ -422,7 +429,7 @@ public class PlanViewer extends Viewer implements PlanView {
   private Path getWallsPath(Collection<Wall> walls) {
     Path wallsPath = new Path(this.control.getDisplay());
     for (Wall wall : walls) {
-      float [][] wallPoints = getWallPoints(wall);
+      float [][] wallPoints = wall.getPoints();
       wallsPath.moveTo(wallPoints [0][0], wallPoints [0][1]);
       for (int i = 1; i < wallPoints.length; i++) {
         wallsPath.lineTo(wallPoints [i][0], wallPoints [i][1]);        
@@ -430,141 +437,6 @@ public class PlanViewer extends Viewer implements PlanView {
       wallsPath.close();
     }    
     return wallsPath;
-  }
-  
-  /**
-   * Returns an area matching the union of all wall shapes. 
-   */
-  private Area getWallsArea(Collection<Wall> walls) {
-    Area area = new Area();
-    for (Wall wall : walls) {
-      area.add(new Area(getWallShape(wall)));
-    }    
-    return area;
-  }
-  
-  /**
-   * Returns the shape of a <code>wall</code>.
-   */
-  private Shape getWallShape(Wall wall) {
-    float [][] wallPoints = getWallRectangle(wall);
-    float limit = 2 * wall.getThickness();
-    Wall wallAtStart = wall.getWallAtStart();
-    // If wall is joined to a wall at its start, 
-    // compute the intersection between their outlines 
-    if (wallAtStart != null) {
-      float [][] wallAtStartPoints = getWallRectangle(wallAtStart);
-      if (wallAtStart.getWallAtEnd() == wall) {
-        computeIntersection(wallPoints [0], wallPoints [1], 
-            wallAtStartPoints [1], wallAtStartPoints [0], limit);
-        computeIntersection(wallPoints [3], wallPoints [2],  
-            wallAtStartPoints [2], wallAtStartPoints [3], limit);
-      } else if (wallAtStart.getWallAtStart() == wall) {
-        computeIntersection(wallPoints [0], wallPoints [1], 
-            wallAtStartPoints [2], wallAtStartPoints [3], limit);
-        computeIntersection(wallPoints [3], wallPoints [2],  
-            wallAtStartPoints [0], wallAtStartPoints [1], limit);
-      }
-    }
-  
-    Wall wallAtEnd = wall.getWallAtEnd();
-    // If wall is joined to a wall at its end, 
-    // compute the intersection between their outlines 
-    if (wallAtEnd != null) {
-      float [][] wallAtEndPoints = getWallRectangle(wallAtEnd);
-      if (wallAtEnd.getWallAtStart() == wall) {
-        computeIntersection(wallPoints [1], wallPoints [0], 
-            wallAtEndPoints [0], wallAtEndPoints [1], limit);
-        computeIntersection(wallPoints [2], wallPoints [3], 
-            wallAtEndPoints [3], wallAtEndPoints [2], limit);
-      
-      } else if (wallAtEnd.getWallAtEnd() == wall) {
-        computeIntersection(wallPoints [1], wallPoints [0],  
-            wallAtEndPoints [3], wallAtEndPoints [2], limit);
-        computeIntersection(wallPoints [2], wallPoints [3], 
-            wallAtEndPoints [0], wallAtEndPoints [1], limit);
-      }
-    }
-
-    return getShape(wallPoints);
-  }
-
-  /**
-   * Compute the rectangle of a wall with its thickness.
-   */  
-  private float [][] getWallRectangle(Wall wall) {
-    double angle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
-                              wall.getXEnd() - wall.getXStart());
-    float dx = (float)Math.sin(angle) * wall.getThickness() / 2;
-    float dy = (float)Math.cos(angle) * wall.getThickness() / 2;
-    return new float [][] {
-       {wall.getXStart() + dx, wall.getYStart() - dy},
-       {wall.getXEnd()   + dx, wall.getYEnd()   - dy},
-       {wall.getXEnd()   - dx, wall.getYEnd()   + dy},
-       {wall.getXStart() - dx, wall.getYStart() + dy}};
-  }
-  
-  /**
-   * Compute the intersection between the line that joins <code>point1</code> to <code>point2</code>
-   * and the line that joins <code>point3</code> and <code>point4</code>, and stores the result 
-   * in <code>point1</code>.
-   */
-  private void computeIntersection(float [] point1, float [] point2, 
-                                   float [] point3, float [] point4, float limit) {
-    float x = point1 [0];
-    float y = point1 [1];
-    float alpha1 = (point2 [1] - point1 [1]) / (point2 [0] - point1 [0]);
-    float beta1  = point2 [1] - alpha1 * point2 [0];
-    float alpha2 = (point4 [1] - point3 [1]) / (point4 [0] - point3 [0]);
-    float beta2  = point4 [1] - alpha2 * point4 [0];
-    // If the two lines are not parallel
-    if (alpha1 != alpha2) {
-      // If first line is vertical
-      if (point1 [0] == point2 [0]) {
-        x = point1 [0];
-        y = alpha2 * x + beta2;
-      // If second line is vertical
-      } else if (point3 [0] == point4 [0]) {
-        x = point3 [0];
-        y = alpha1 * x + beta1;
-      } else  {
-        x = (beta2 - beta1) / (alpha1 - alpha2);
-        y = alpha1 * x + beta1;
-      } 
-    }
-    if (Point2D.distanceSq(x, y, point1 [0], point1 [1]) < limit * limit) {
-      point1 [0] = x;
-      point1 [1] = y;
-    }
-  }
-  
-  /**
-   * Returns the shape matching the coordinates in <code>points</code> array.
-   */
-  private Shape getShape(float [][] points) {
-    GeneralPath wallPath = new GeneralPath();
-    wallPath.moveTo(points [0][0], points [0][1]);
-    for (int i = 1; i < points.length; i++) {
-      wallPath.lineTo(points [i][0], points [i][1]);
-    }
-    wallPath.closePath();
-    return wallPath;
-  }
-
-  /**
-   * Returns an unmodifiable list of the selected walls in plan.
-   */
-  public List<Wall> getSelectedWalls() {
-    return Collections.unmodifiableList(this.selectedWalls);
-  }
-  
-  /**
-   * Sets the selected walls in plan.
-   * @param selectedWalls the list of walls to select.
-   */
-  public void setSelectedWalls(List<Wall> selectedWalls) {
-    this.selectedWalls = new ArrayList<Wall>(selectedWalls);
-    refresh();
   }
   
   /**
@@ -588,88 +460,36 @@ public class PlanViewer extends Viewer implements PlanView {
   }
 
   /**
-   * Returns <code>true</code> if <code>wall</code> intersects
-   * with the horizontal rectangle which opposite corners are at points
-   * (<code>x0</code>, <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
-   */
-  public boolean doesWallIntersectRectangle(Wall wall, float x0, float y0, float x1, float y1) {
-    Rectangle2D rectangle = new Rectangle2D.Float(x0, y0, 0, 0);
-    rectangle.add(x1, y1);
-    return getWallShape(wall).intersects(rectangle);
-  }
-  
-  /**
-   * Returns <code>true</code> if <code>wall</code> contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a margin of 2 pixels.
-   */
-  public boolean containsWallAt(Wall wall, float x, float y) {
-    return containsShapeAtWithMargin(getWallShape(wall), x, y);
-  }
-  
-  /**
-   * Returns <code>true</code> if <code>wall</code> start line contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a margin of 2 pixels around the wall start line.
-   */
-  public boolean containsWallStartAt(Wall wall, float x, float y) {
-    float [][] wallPoints = getWallPoints(wall);
-    Line2D startLine = new Line2D.Float(wallPoints [0][0], wallPoints [0][1], wallPoints [3][0], wallPoints [3][1]);
-    return containsShapeAtWithMargin(startLine, x, y);
-  }
-  
-  /**
-   * Returns <code>true</code> if <code>wall</code> end line contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a margin of 2 pixels around the wall end line.
-   */
-  public boolean containsWallEndAt(Wall wall, float x, float y) {
-    float [][] wallPoints = getWallPoints(wall);
-    Line2D endLine = new Line2D.Float(wallPoints [1][0], wallPoints [1][1], wallPoints [2][0], wallPoints [2][1]); 
-    return containsShapeAtWithMargin(endLine, x, y);
-  }
-  
-  /**
-   * Returns <code>true</code> if <code>shape</code> contains 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a margin of 2 pixels around the wall end line.
-   */
-  private boolean containsShapeAtWithMargin(Shape shape, float x, float y) {
-    float margin = 2 / getScale();
-    return shape.intersects(x - margin, y - margin, 2 * margin, 2 * margin);
-  }
-  
-  /**
-   * Returns the points of a wall shape.
-   */
-  private float [][] getWallPoints(Wall wall) {
-    float [][] wallPoints = new float[4][2];
-    PathIterator it = getWallShape(wall).getPathIterator(null);
-    for (int i = 0; i < wallPoints.length; i++) {
-      it.currentSegment(wallPoints [i]);
-      it.next();
-    }
-    return wallPoints;
-  }
-  
-  /**
    * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
-  public void ensureSelectionIsVisible() {
-    Shape wallsArea = getWallsArea(this.selectedWalls);
-    Rectangle2D wallsBounds = wallsArea.getBounds2D();
-    ensurePointIsVisible((float)wallsBounds.getMinX(), (float)wallsBounds.getMinY());
+  public void makeSelectionVisible() {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (!selectedItems.isEmpty()) {
+      float minX = Float.MAX_VALUE;
+      float minY = Float.MAX_VALUE;
+      for (Object item : selectedItems) {
+        if (item instanceof Wall) {
+          float [][] wallPoints = ((Wall)item).getPoints();
+          for (int i = 0; i < wallPoints.length; i++) {
+            minX = Math.min(minX, wallPoints [i][0]);
+            minY = Math.min(minY, wallPoints [i][1]);
+          }
+        }
+      }      
+      makePointVisible(minX, minY);
+    }
   }
  
   /**
    * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
    * moving scroll bars if needed.
    */
-  public void ensurePointIsVisible(float x, float y) {
+  public void makePointVisible(float x, float y) {
     // No direct SWT equivalent to Swing scrollRectToVisible
     if (this.control.getParent() instanceof ScrolledComposite) {
-      Rectangle pixelBounds = getShapePixelBounds(new Rectangle2D.Float(x, y, 1 / this.scale, 1 / this.scale));
+      Rectangle pixelBounds = getShapePixelBounds(
+          new Rectangle2D.Float(x, y, 1 / this.scale, 1 / this.scale));
       ScrolledComposite parent = (ScrolledComposite)this.control.getParent();
       parent.setOrigin(pixelBounds.x, pixelBounds.y);
     }
@@ -750,35 +570,36 @@ public class PlanViewer extends Viewer implements PlanView {
 
   @Override
   public Object getInput() {
-    return this.plan;
+    return this.home;
   }
 
   @Override
   public void setInput(Object input) {
-    this.plan = (Plan)input;
+    this.home = (Home)input;
     refresh();
   }
 
   @Override
   public ISelection getSelection() {
-    return new StructuredSelection(this.selectedWalls);
+    return new StructuredSelection(this.home.getSelectedItems());
   }
 
   @Override
   public void setSelection(ISelection selection, boolean reveal) {
-    List<Wall> selectedWalls;
+    List<Object> selectedWalls;
     if (selection.isEmpty()) {
       selectedWalls = Collections.emptyList();
     } else if (selection instanceof IStructuredSelection) {
       // Check selection contains only walls
-      selectedWalls = Collections.checkedList(((IStructuredSelection)selection).toList(), Wall.class);
+      selectedWalls = Collections.checkedList(
+          ((IStructuredSelection)selection).toList(), Wall.class);
     } else {
       throw new IllegalArgumentException("Wrong selection class");
     }
     
-    setSelectedWalls(selectedWalls);
+    this.home.setSelectedItems(selectedWalls);
     if (reveal) {
-      ensureSelectionIsVisible();
+      makeSelectionVisible();
     }
   }
 }

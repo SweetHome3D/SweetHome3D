@@ -30,10 +30,8 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.CoolBar;
@@ -46,7 +44,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.jface.AbstractViewFactory;
 import com.eteks.sweethome3d.jface.PlanViewer;
-import com.eteks.sweethome3d.model.Plan;
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -59,7 +57,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 public class JFacePlanViewerTest {
   public static void main(String [] args) {
     final UserPreferences preferences = new DefaultUserPreferences();
-    final Plan plan = new Plan();
+    final Home home = new Home();
     
     // Create an application window that displays an instance of HomeComposite with a toolbar
     ApplicationWindow window = new ApplicationWindow(null) {
@@ -76,16 +74,17 @@ public class JFacePlanViewerTest {
         final ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         
         // Set how plan view will be created
-        ViewFactory planControlFactory = new AbstractViewFactory(){
+        ViewFactory planControlFactory = new AbstractViewFactory() {
           public PlanView createPlanView(
-              Plan plan, UserPreferences userPreferences, PlanController controller) {
-            return new PlanViewer(scrolledComposite, plan, preferences, controller);
-          }};
+              Home home, UserPreferences userPreferences, PlanController controller) {
+            return new PlanViewer(scrolledComposite, home, preferences, controller);
+          }
+        };
         // Create controller and the plan view 
         UndoableEditSupport undoSupport = new UndoableEditSupport(); 
         undoSupport.addUndoableEditListener(undoManager);
         this.controller = new PlanController(
-            planControlFactory, plan, preferences, undoSupport);
+            planControlFactory, home, preferences, undoSupport);
         
         Viewer planViewer = (Viewer)controller.getView();
         // Configure scrolledComposite content with planViewer control 

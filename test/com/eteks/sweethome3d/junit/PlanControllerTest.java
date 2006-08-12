@@ -30,12 +30,11 @@ import javax.swing.undo.UndoableEditSupport;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.model.Plan;
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
-import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.PlanController;
 
 /**
@@ -49,17 +48,16 @@ public class PlanControllerTest extends TestCase {
    */
   public void testPlanContoller() {
     // 1. Create a frame that displays a PlanComponent at its preferred size, 
-    Plan plan = new Plan();
+    Home home = new Home();
     UserPreferences preferences = new DefaultUserPreferences();
     UndoableEditSupport undoSupport = new UndoableEditSupport();
     UndoManager undoManager = new UndoManager();
     undoSupport.addUndoableEditListener(undoManager);
-    PlanController planController = new PlanController(plan, preferences, undoSupport);
-    PlanComponent planComponent = (PlanComponent)planController.getView();    
+    PlanController planController = new PlanController(home, preferences, undoSupport);
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
-    plan.addWallListener(new WallListener () {
+    home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         if (ev.getType() == WallEvent.Type.ADD) {
           orderedWalls.add(ev.getWall());
@@ -97,7 +95,7 @@ public class PlanControllerTest extends TestCase {
     assertWallsAreJoined(wall1, wall2, wall3); 
     assertWallsAreJoined(wall2, wall3, null); 
     // Check they are selected
-    assertSelectionContains(planComponent, wall3);
+    assertSelectionContains(home, wall3);
 
     // 3. Click at (0, 300), then double click at (20, 20) with Alt key depressed
     planController.moveMouse(0, 300);
@@ -113,7 +111,7 @@ public class PlanControllerTest extends TestCase {
     // Check a forth wall was created at (0, 300), (20, 20) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
     assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);
-    assertSelectionContains(planComponent, wall4);
+    assertSelectionContains(home, wall4);
     assertWallsAreJoined(wall3, wall4, null);
 
     // 4. Use SELECTION mode
@@ -124,7 +122,7 @@ public class PlanControllerTest extends TestCase {
     // Press the delete key
     planController.deleteSelection();
     // Check plan contains only the first three walls
-    assertPlanContains(plan, wall1, wall2, wall3);
+    assertHomeContains(home, wall1, wall2, wall3);
     
     // 5. Use WALL_CREATION mode
     planController.setMode(PlanController.Mode.WALL_CREATION);
@@ -151,7 +149,7 @@ public class PlanControllerTest extends TestCase {
     planController.moveMouse(560, 320);
     planController.releaseMouse(560, 320);
     // Check the selected walls are the second and third ones
-    assertSelectionContains(planComponent, wall2, wall3);
+    assertSelectionContains(home, wall2, wall3);
 
     // 7. Press twice right arrow key     
     planController.moveSelection(2, 0);
@@ -167,14 +165,14 @@ public class PlanControllerTest extends TestCase {
     planController.pressMouse(504, 20, 1, true);
     planController.releaseMouse(504, 20);
     // Check the second wall was removed from selection
-    assertSelectionContains(planComponent, wall3);
+    assertSelectionContains(home, wall3);
 
      // 9. Drag cursor from (60, 0) to (60, 40) 
     planController.moveMouse(60, 0);
     planController.pressMouse(60, 0, 1, false);
     planController.moveMouse(60, 40);
     // Check first wall is selected and that it moved
-    assertSelectionContains(planComponent, wall1);
+    assertSelectionContains(home, wall1);
     assertCoordinatesEqualWallPoints(0, 40, 504, 40, wall1);
     // Lose focus
     planController.escape();
@@ -186,16 +184,16 @@ public class PlanControllerTest extends TestCase {
       undoManager.undo();
     }
     // Check home doesn't contain any wall
-    assertPlanContains(plan);
+    assertHomeContains(home);
     
     // 11. Redo 8 times 
     for (int i = 0; i < 8; i++) {
       undoManager.redo();
     }
     // Check plan contains the four wall
-    assertPlanContains(plan, wall1, wall2, wall3, wall4);
+    assertHomeContains(home, wall1, wall2, wall3, wall4);
     // Check the second and the third wall are selected
-    assertSelectionContains(planComponent, wall2, wall3);
+    assertSelectionContains(home, wall2, wall3);
   }
 
   /**
@@ -221,9 +219,9 @@ public class PlanControllerTest extends TestCase {
   /**
    * Asserts <code>home</code> contains <code>walls</code>.
    */
-  private void assertPlanContains(Plan plan, Wall ... walls) {
-    Collection<Wall> planWalls = plan.getWalls();
-    assertEquals("Plan walls incorrect count", 
+  private void assertHomeContains(Home home, Wall ... walls) {
+    Collection<Wall> planWalls = home.getWalls();
+    assertEquals("Home walls incorrect count", 
         walls.length, planWalls.size());
     for (Wall wall : walls) {
       assertTrue("Wall doesn't belong to plan", planWalls.contains(wall));
@@ -233,12 +231,12 @@ public class PlanControllerTest extends TestCase {
   /**
    * Asserts <code>walls</code> are the current selected ones in <code>home</code>.
    */
-  private void assertSelectionContains(PlanComponent plan, 
+  private void assertSelectionContains(Home home, 
                                        Wall ... walls) {
-    List<Wall> selectedWalls = plan.getSelectedWalls();
-    assertEquals(walls.length, selectedWalls.size());
+    List<Object> selectedItems = home.getSelectedItems();
+    assertEquals(walls.length, selectedItems.size());
     for (Wall wall : walls) {
-      assertTrue("Wall not selected", selectedWalls.contains(wall));
+      assertTrue("Wall not selected", selectedItems.contains(wall));
     }
   }
 }

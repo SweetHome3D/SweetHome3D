@@ -1,5 +1,5 @@
 /*
- * ViewFactory.java 29 mai 2006
+ * PlanView.java 29 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,21 +19,45 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.UserPreferences;
-
 /**
- * A factory for view objects.
+ * A MVC view for plan component.
  * @author Emmanuel Puybaret
  */
-public interface ViewFactory {
+public interface PlanView extends View {
   /**
-   * Creates a home view.
+   * Sets rectangle selection feedback coordinates. 
    */
-  HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller);
+  public void setRectangleFeedback(float x0, float y0, float x1, float y1);
 
   /**
-   * Creates a plan view.
+   * Deletes rectangle feed back.
    */
-  PlanView createPlanView(Home home, UserPreferences userPreferences, PlanController controller);
+  public void deleteRectangleFeedback();
+
+  /**
+   * Ensures selected walls are visible at screen and moves
+   * scroll bars if needed.
+   */
+  public void makeSelectionVisible();
+
+  /**
+   * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
+   * moving scroll bars if needed.
+   */
+  public void makePointVisible(float x, float y);
+
+  /**
+   * Sets mouse cursor, depending on mode.
+   */
+  public void setCursor(PlanController.Mode mode);
+
+  /**
+   * Returns the scale used to display the plan.
+   */
+  public float getScale();
+
+  /**
+   * Sets the scale used to display the plan.
+   */
+  public void setScale(float scale);
 }

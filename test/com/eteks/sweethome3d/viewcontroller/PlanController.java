@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package com.eteks.sweethome3d.swing;
+package com.eteks.sweethome3d.viewcontroller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import javax.swing.JComponent;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
@@ -43,7 +42,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController {
   public enum Mode {WALL_CREATION, SELECTION}
   
-  private JComponent          planView;
+  private View                planView;
   private Home                home;
   private UserPreferences     preferences;
   private UndoableEditSupport undoSupport;
@@ -63,18 +62,20 @@ public class PlanController {
 
   /**
    * Creates the controller of plan view. 
+   * @param viewFactory factory able to create views
    * @param home        the home plan edited by this controller and its view
    * @param preferences the preferences of the application
    * @param undoSupport undo support to post changes on plan by this controller
    */
-  public PlanController(Home home, UserPreferences preferences, 
+  public PlanController(ViewFactory viewFactory,
+                        Home home, UserPreferences preferences, 
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
     // Create view
-    this.planView = new PlanComponent(home, preferences, this);
+    this.planView = viewFactory.createPlanView(home, preferences, this);
     // Initialize states
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
@@ -88,7 +89,7 @@ public class PlanController {
   /**
    * Returns the view associated with this controller.
    */
-  public JComponent getView() {
+  public View getView() {
     return this.planView;
   }
 
@@ -283,7 +284,7 @@ public class PlanController {
    * which has a start point not joined to any wall. 
    */
   private Wall getWallStartAt(float x, float y, Wall ignoredWall) {
-    float margin = 2 / ((PlanComponent)getView()).getScale();
+    float margin = 2 / ((PlanView)getView()).getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtStart() == null
@@ -298,7 +299,7 @@ public class PlanController {
    * which has a end point not joined to any wall. 
    */
   private Wall getWallEndAt(float x, float y, Wall ignoredWall) {
-    float margin = 2 / ((PlanComponent)getView()).getScale();
+    float margin = 2 / ((PlanView)getView()).getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtEnd() == null
@@ -312,7 +313,7 @@ public class PlanController {
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
   Object getItemAt(float x, float y) {
-    float margin = 2 / ((PlanComponent)getView()).getScale();
+    float margin = 2 / ((PlanView)getView()).getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall.containsPoint(x, y, margin)) 
         return wall;
@@ -346,7 +347,7 @@ public class PlanController {
     List<Object> selectedItems = this.home.getSelectedItems();
     if (!selectedItems.isEmpty()) {
       moveItems(selectedItems, dx, dy);
-      ((PlanComponent)getView()).makeSelectionVisible();
+      ((PlanView)getView()).makeSelectionVisible();
       postItemsMove(selectedItems, dx, dy);
     }
   }
@@ -402,7 +403,7 @@ public class PlanController {
    */
   private void selectAndShowItems(List<? extends Object> items) {
     selectItems(items);
-    ((PlanComponent)getView()).makeSelectionVisible();
+    ((PlanView)getView()).makeSelectionVisible();
   }
   
   /**
@@ -809,7 +810,7 @@ public class PlanController {
 
     @Override
     public void enter() {
-      ((PlanComponent)getView()).setCursor(getMode());
+      ((PlanView)getView()).setCursor(getMode());
     }
 
     @Override
@@ -877,7 +878,7 @@ public class PlanController {
     public void moveMouse(float x, float y) {      
       moveItems(home.getSelectedItems(), 
           x - this.xLastMouseMove, y - this.yLastMouseMove);
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      ((PlanView)getView()).makePointVisible(x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;
       this.mouseMoved = true;
@@ -949,9 +950,9 @@ public class PlanController {
       updateSelectedWalls(getXLastMousePress(), getYLastMousePress(), 
           x, y, this.selectedItemsMousePressed);
       // Update rectangle feedback
-      ((PlanComponent)getView()).setRectangleFeedback(
+      ((PlanView)getView()).setRectangleFeedback(
           getXLastMousePress(), getYLastMousePress(), x, y);
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      ((PlanView)getView()).makePointVisible(x, y);
     }
 
     @Override
@@ -981,7 +982,7 @@ public class PlanController {
     @Override
     public void exit() {
       this.selectedItemsMousePressed = null;
-      ((PlanComponent)getView()).deleteRectangleFeedback();
+      ((PlanView)getView()).deleteRectangleFeedback();
     }
 
     /**
@@ -1034,7 +1035,7 @@ public class PlanController {
 
     @Override
     public void enter() {
-      ((PlanComponent)getView()).setCursor(getMode());
+      ((PlanView)getView()).setCursor(getMode());
     }
 
     @Override
@@ -1149,7 +1150,7 @@ public class PlanController {
       }
 
       // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      ((PlanView)getView()).makePointVisible(x, y);
       // Update move coordinates
       this.xLastEnd = xEnd;
       this.yLastEnd = yEnd;

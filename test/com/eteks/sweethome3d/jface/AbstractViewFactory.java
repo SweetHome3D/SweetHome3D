@@ -19,13 +19,8 @@
  */
 package com.eteks.sweethome3d.jface;
 
-import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.Plan;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.CatalogView;
-import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
@@ -37,21 +32,12 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class AbstractViewFactory implements ViewFactory {
-  public HomeView createHomeView(HomeController controller) {
+  public HomeView createHomeView(Home home, UserPreferences preferences, 
+                                 HomeController controller) {
     return null;
   }
 
-  public CatalogView createCatalogView(Catalog catalog) {
-    return null;
-  }
-
-  public FurnitureView createFurnitureView(Home home,
-             UserPreferences preferences,
-             FurnitureController controller) {
-    return null;
-  }
-
-  public PlanView createPlanView(Plan plan,
+  public PlanView createPlanView(Home home,
              UserPreferences userPreferences,
              PlanController controller) {
     return null;
