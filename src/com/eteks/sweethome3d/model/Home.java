@@ -33,7 +33,7 @@ public class Home {
   private List<FurnitureListener>    furnitureListeners;
   private List<SelectionListener>    selectionListeners;
 
-  /**
+  /*
    * Creates a home with no furniture.
    */
   public Home() {
@@ -78,20 +78,10 @@ public class Home {
    * notification.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
-    addPieceOfFurniture(piece, this.furniture.size() - 1);
-  }
-
-  /**
-   * Adds the <code>piece</code> in parameter at a given <code>index</code>.
-   * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void addPieceOfFurniture(HomePieceOfFurniture piece, int index) {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
-    this.furniture.add(index, piece);
-    firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.ADD);
+    this.furniture.add(piece);
+    firePieceOfFurnitureChanged(piece, this.furniture.size() - 1, FurnitureEvent.Type.ADD);
   }
 
   /**
@@ -102,12 +92,7 @@ public class Home {
    */
   public void deletePieceOfFurniture(HomePieceOfFurniture piece) {
     // Ensure selectedItems don't keep a reference to piece
-    int pieceSelectionIndex = this.selectedItems.indexOf(piece);
-    if (pieceSelectionIndex != -1) {
-      List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
-      selectedItems.remove(pieceSelectionIndex);
-      setSelectedItems(selectedItems);
-    }
+    deselectItem(piece);
     int index = this.furniture.indexOf(piece);
     if (index != -1) {
       // Make a copy of the list to avoid conflicts in the list returned by getFurniture
@@ -168,6 +153,18 @@ public class Home {
       for (SelectionListener listener : listeners) {
         listener.selectionChanged(selectionEvent);
       }
+    }
+  }
+
+  /**
+   * Deselects <code>item</code> if it's selected.
+   */
+  private void deselectItem(Object item) {
+    int pieceSelectionIndex = this.selectedItems.indexOf(item);
+    if (pieceSelectionIndex != -1) {
+      List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
+      selectedItems.remove(pieceSelectionIndex);
+      setSelectedItems(selectedItems);
     }
   }
 }
