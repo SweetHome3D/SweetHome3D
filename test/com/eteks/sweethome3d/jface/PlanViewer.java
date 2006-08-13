@@ -165,22 +165,30 @@ public class PlanViewer extends Viewer implements PlanView {
   private void addMouseListeners(final PlanController controller) {
     this.control.addMouseListener(new MouseListener() {
       public void mouseDoubleClick(MouseEvent ev) {
-        controller.pressMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y), 
-            2, (ev.stateMask & SWT.SHIFT) != 0);
+        if (control.isEnabled()) {
+          controller.pressMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y), 
+              2, (ev.stateMask & SWT.SHIFT) != 0);
+        }
       }
 
       public void mouseDown(MouseEvent ev) {
-        controller.pressMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y), 
-            1, (ev.stateMask & SWT.SHIFT) != 0);
+        if (control.isEnabled()) {
+          controller.pressMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y), 
+              1, (ev.stateMask & SWT.SHIFT) != 0);
+        }
       }
 
       public void mouseUp(MouseEvent ev) {
-        controller.releaseMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y));
+        if (control.isEnabled()) {
+          controller.releaseMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y));
+        }
       }
     });
     this.control.addMouseMoveListener(new MouseMoveListener() {
       public void mouseMove(MouseEvent ev) {
-        controller.moveMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y));
+        if (control.isEnabled()) {
+          controller.moveMouse(convertXPixelToModel(ev.x), convertYPixelToModel(ev.y));
+        }
       }
     });
   }
@@ -191,34 +199,36 @@ public class PlanViewer extends Viewer implements PlanView {
   private void addKeyListener(final PlanController controller) {
     this.control.addKeyListener(new KeyListener() {
       public void keyPressed(KeyEvent ev) {
-        switch (ev.keyCode) {
-          case SWT.BS :
-          case SWT.DEL :
-            controller.deleteSelection();
-            break;
-          case SWT.ESC :
-            controller.escape();
-            break;
-          case SWT.SHIFT :
-            controller.toggleMagnetism(true);
-            break;
-          case SWT.ARROW_LEFT :
-            controller.moveSelection(-1 / scale, 0);
-            break;
-          case SWT.ARROW_UP :
-            controller.moveSelection(0, -1 / scale);
-            break;
-          case SWT.ARROW_DOWN :
-            controller.moveSelection(0, 1 / scale);
-            break;
-          case SWT.ARROW_RIGHT :
-            controller.moveSelection(1 / scale, 0);
-            break;
+        if (control.isEnabled()) {
+          switch (ev.keyCode) {
+            case SWT.BS :
+            case SWT.DEL :
+              controller.deleteSelection();
+              break;
+            case SWT.ESC :
+              controller.escape();
+              break;
+            case SWT.SHIFT :
+              controller.toggleMagnetism(true);
+              break;
+            case SWT.ARROW_LEFT :
+              controller.moveSelection(-1 / scale, 0);
+              break;
+            case SWT.ARROW_UP :
+              controller.moveSelection(0, -1 / scale);
+              break;
+            case SWT.ARROW_DOWN :
+              controller.moveSelection(0, 1 / scale);
+              break;
+            case SWT.ARROW_RIGHT :
+              controller.moveSelection(1 / scale, 0);
+              break;
+          }
         }
       }
 
       public void keyReleased(KeyEvent ev) {
-        if (ev.keyCode == SWT.SHIFT) {
+        if (control.isEnabled() && ev.keyCode == SWT.SHIFT) {
           controller.toggleMagnetism(false);
         }
       }

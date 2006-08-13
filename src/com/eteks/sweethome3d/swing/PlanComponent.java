@@ -114,7 +114,7 @@ public class PlanComponent extends JComponent {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
       @Override
       public void mousePressed(MouseEvent ev) {
-        if (!ev.isPopupTrigger()) {
+        if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();
           controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
               ev.getClickCount(), ev.isShiftDown());
@@ -123,19 +123,23 @@ public class PlanComponent extends JComponent {
 
       @Override
       public void mouseReleased(MouseEvent ev) {
-        if (!ev.isPopupTrigger()) {
+        if (isEnabled() && !ev.isPopupTrigger()) {
           controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
         }
       }
 
       @Override
       public void mouseMoved(MouseEvent ev) {
-        controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        if (isEnabled()) {
+          controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        }
       }
 
       @Override
       public void mouseDragged(MouseEvent ev) {
-        controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        if (isEnabled()) {
+          controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        }
       }
     };
     addMouseListener(mouseListener);
@@ -149,35 +153,37 @@ public class PlanComponent extends JComponent {
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent ev) {
-        switch (ev.getKeyCode()) {
-          case KeyEvent.VK_BACK_SPACE :
-          case KeyEvent.VK_DELETE :
-            controller.deleteSelection();
-            break;
-          case KeyEvent.VK_ESCAPE :
-            controller.escape();
-            break;
-          case KeyEvent.VK_SHIFT :
-            controller.toggleMagnetism(true);
-            break;
-          case KeyEvent.VK_LEFT :
-            controller.moveSelection(-1 / scale, 0);
-            break;
-          case KeyEvent.VK_UP :
-            controller.moveSelection(0, -1 / scale);
-            break;
-          case KeyEvent.VK_DOWN :
-            controller.moveSelection(0, 1 / scale);
-            break;
-          case KeyEvent.VK_RIGHT :
-            controller.moveSelection(1 / scale, 0);
-            break;
+        if (isEnabled()) {
+          switch (ev.getKeyCode()) {
+            case KeyEvent.VK_BACK_SPACE :
+            case KeyEvent.VK_DELETE :
+              controller.deleteSelection();
+              break;
+            case KeyEvent.VK_ESCAPE :
+              controller.escape();
+              break;
+            case KeyEvent.VK_SHIFT :
+              controller.toggleMagnetism(true);
+              break;
+            case KeyEvent.VK_LEFT :
+              controller.moveSelection(-1 / scale, 0);
+              break;
+            case KeyEvent.VK_UP :
+              controller.moveSelection(0, -1 / scale);
+              break;
+            case KeyEvent.VK_DOWN :
+              controller.moveSelection(0, 1 / scale);
+              break;
+            case KeyEvent.VK_RIGHT :
+              controller.moveSelection(1 / scale, 0);
+              break;
+          }
         }
       }
 
       @Override
       public void keyReleased(KeyEvent ev) {
-        if (ev.getKeyCode() == KeyEvent.VK_SHIFT) {
+        if (isEnabled() && ev.getKeyCode() == KeyEvent.VK_SHIFT) {
           controller.toggleMagnetism(false);
         }
       }
