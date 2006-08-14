@@ -321,6 +321,21 @@ public class PlanController {
   }
 
   /**
+   * Returns the items that intersects with the rectangle of (<code>x0</code>,
+   * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite
+   * corners.
+   */
+  List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
+    List<Object> items = new ArrayList<Object>();    
+    for (Wall wall : home.getWalls()) {
+      if (wall.intersectsRectangle(x0, y0, x1, y1)) {
+        items.add(wall);
+      }
+    }
+    return items;
+  }
+  
+  /**
    * Deletes selection in plan and record it as an undoable operation.
    */
   private void deleteSelectedItems() {
@@ -905,7 +920,7 @@ public class PlanController {
     @Override
     public void escape() {
       if (this.mouseMoved) {
-        // Put walls back to their initial position
+        // Put items back to their initial position
         moveItems(home.getSelectedItems(), 
             getXLastMousePress() - this.xLastMouseMove, 
             getYLastMousePress() - this.yLastMouseMove);
@@ -917,7 +932,7 @@ public class PlanController {
 
   /**
    * Selection with rectangle state. This state manages selection when mouse
-   * press is done outside of a wall or when mouse press is done with shift key
+   * press is done outside of an item or when mouse press is done with shift key
    * down.
    */
   private class RectangleSelectionState extends ControllerState {
@@ -933,7 +948,7 @@ public class PlanController {
     public void enter() {
       Object itemUnderCursor = 
         getItemAt(getXLastMousePress(), getYLastMousePress());
-      // If no wall under cursor and shift wasn't down, deselect all
+      // If no item under cursor and shift wasn't down, deselect all
       if (itemUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
       } 
@@ -946,7 +961,7 @@ public class PlanController {
     @Override
     public void moveMouse(float x, float y) {
       this.mouseMoved = true;
-      updateSelectedWalls(getXLastMousePress(), getYLastMousePress(), 
+      updateSelectedItems(getXLastMousePress(), getYLastMousePress(), 
           x, y, this.selectedItemsMousePressed);
       // Update rectangle feedback
       ((PlanComponent)getView()).setRectangleFeedback(
@@ -959,7 +974,7 @@ public class PlanController {
       // If cursor didn't move
       if (!this.mouseMoved) {
         Object itemUnderCursor = getItemAt(x, y);
-        // Toggle selection of the wall under cursor 
+        // Toggle selection of the item under cursor 
         if (itemUnderCursor != null) {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
             this.selectedItemsMousePressed.remove(itemUnderCursor);
@@ -985,11 +1000,11 @@ public class PlanController {
     }
 
     /**
-     * Updates selection from <code>selectedWallsMousePressed</code> and the
-     * walls that intersects the rectangle at coordinates (<code>x0</code>,
+     * Updates selection from <code>selectedItemsMousePressed</code> and the
+     * items that intersects the rectangle at coordinates (<code>x0</code>,
      * <code>y0</code>) and (<code>x1</code>, <code>y1</code>).
      */
-    private void updateSelectedWalls(float x0, float y0, 
+    private void updateSelectedItems(float x0, float y0, 
                                      float x1, float y1,
                                      List<Object> selectedItemsMousePressed) {
       List<Object> selectedItems;
@@ -1000,23 +1015,21 @@ public class PlanController {
         selectedItems = new ArrayList<Object>();
       }
       
-      // For all the walls that intersects with surrounding rectangle
-      for (Wall wall : home.getWalls()) {
-        if (wall.intersectsRectangle(x0, y0, x1, y1)) {
-          // If shift was down at mouse press
-          if (shiftDown) {
-            // Toogle selection of the wall
-            if (selectedItemsMousePressed.contains(wall)) {
-              selectedItems.remove(wall);
-            } else {
-              selectedItems.add(wall);
-            }
-          } else if (!selectedItemsMousePressed.contains(wall)) {
-            // Else select the wall
-            selectedItems.add(wall);
+      // For all the items that intersects with rectangle
+      for (Object item : getRectangleItems(x0, y0, x1, y1)) {
+        // If shift was down at mouse press
+        if (shiftDown) {
+          // Toogle selection of item
+          if (selectedItemsMousePressed.contains(item)) {
+            selectedItems.remove(item);
+          } else {
+            selectedItems.add(item);
           }
-        }    
-      }
+        } else if (!selectedItemsMousePressed.contains(item)) {
+          // Else select the wall
+          selectedItems.add(item);
+        }
+      }    
       // Update selection
       selectItems(selectedItems);
     }
