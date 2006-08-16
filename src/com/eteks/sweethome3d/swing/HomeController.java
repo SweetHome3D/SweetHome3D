@@ -54,6 +54,8 @@ public class HomeController {
   private UndoManager         undoManager;
   private ResourceBundle      resource;
 
+  private PlanController      planController;
+  
   /**
    * Creates the controller of home view. 
    * @param home        the home edited by this controller and its view.
@@ -67,8 +69,10 @@ public class HomeController {
     this.undoSupport.addUndoableEditListener(this.undoManager);
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
+    this.planController = new PlanController(home, preferences, undoSupport);
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
+    enableActions();
   }
 
   /**
@@ -142,6 +146,13 @@ public class HomeController {
    */
   public void addHomeFurniture() {
     addHomeFurniture(this.preferences.getCatalog().getSelectedFurniture());
+  }
+
+  /**
+   * Enables actions at controller instantiation. 
+   */
+  private void enableActions() {
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.WALL_CREATION, true);
   }
 
   /**
@@ -276,6 +287,13 @@ public class HomeController {
     } else {
       view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
     }
+  }
+
+  /**
+   * Returns the controller of home plan.
+   */
+  public PlanController getPlanController() {
+    return this.planController;
   }
 }
 

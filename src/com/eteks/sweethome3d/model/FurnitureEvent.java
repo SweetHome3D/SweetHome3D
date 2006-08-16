@@ -26,7 +26,7 @@ import java.util.EventObject;
  * @author Emmanuel Puybaret
  */
 public class FurnitureEvent extends EventObject {
-  public enum Type {ADD, DELETE}
+  public enum Type {ADD, DELETE, UPDATE}
 
   private PieceOfFurniture piece;
   private int index;
