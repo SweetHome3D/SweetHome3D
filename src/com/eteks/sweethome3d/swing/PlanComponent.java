@@ -120,9 +120,6 @@ public class PlanComponent extends JComponent {
         // Revalidate and repaint
         revalidate();
         repaint();
-        if (ev.getType() == FurnitureEvent.Type.ADD) {
-          makeSelectionVisible();
-        }
       }
     });
   }
@@ -284,10 +281,9 @@ public class PlanComponent extends JComponent {
       }
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         if (piece.isVisible()) {
-          this.planBoundsCache.add(piece.getX() - piece.getWidth() / 2, 
-              piece.getY() - piece.getDepth() / 2);
-          this.planBoundsCache.add(piece.getX() + piece.getWidth() / 2, 
-              piece.getY() + piece.getDepth() / 2);
+          for (float [] point : piece.getPoints()) {
+            this.planBoundsCache.add(point [0], point [1]);
+          }
         }
       }
     }
@@ -312,6 +308,7 @@ public class PlanComponent extends JComponent {
         insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     // Paint component contents
     paintGrid(g2D);
     paintContent(g2D);   
