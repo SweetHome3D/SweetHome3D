@@ -109,25 +109,37 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
       Math.round(piece.getWidth() * planComponent.getScale());
     int depthPixel = 
       Math.round(piece.getDepth() * planComponent.getScale());
-    // Press mouse button at top left vertex of selected piece 
+    // Press mouse button at piece center
+    tester.actionMousePress(planComponent, new ComponentLocation( 
+        new Point(20 + widthPixel / 2, 20 + depthPixel / 2))); 
+    // Drag mouse to (100, 100) from piece center
+    tester.actionMousePress(planComponent, new ComponentLocation( 
+        new Point(20 + widthPixel / 2 + 100, 20 + depthPixel / 2 + 100))); 
+    tester.actionMouseRelease(); 
+    // Check piece moved 
+    pieceX += 200;
+    pieceY += 200;
+    assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
+    
+    // 5. Press mouse button at top left vertex of selected piece 
     tester.actionMousePress(planComponent, 
-        new ComponentLocation(new Point(20, 20)));
+        new ComponentLocation(new Point(120, 120)));
     // Drag mouse to (-depthPixel / 2 - 2, widthPixel / 2) pixels from piece center
     tester.actionMouseMove(planComponent, new ComponentLocation( 
-        new Point(20 + widthPixel / 2 - depthPixel / 2 - 2, 
-                  20 + depthPixel / 2 + widthPixel / 2))); 
+        new Point(120 + widthPixel / 2 - depthPixel / 2 - 2, 
+                  120 + depthPixel / 2 + widthPixel / 2))); 
     tester.actionMouseRelease(); 
     // Check piece angle is 3 * PI / 2 (=-90°)
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
 
-    // 5. Press mouse button at top left vertex of selected piece
+    // 6. Press mouse button at top left vertex of selected piece
     tester.actionMousePress(planComponent, new ComponentLocation(
-        new Point(20 + widthPixel / 2 - depthPixel / 2, 
-                  20 + depthPixel / 2 + widthPixel / 2)));
-    // Drag mouse to the origin plus 2 pixels
+        new Point(120 + widthPixel / 2 - depthPixel / 2, 
+                  120 + depthPixel / 2 + widthPixel / 2)));
+    // Drag mouse to the previous position plus 2 pixels along x axis
     tester.actionMouseMove(planComponent, new ComponentLocation(
-        new Point(22, 20))); 
+        new Point(122, 120))); 
     // Check piece angle is 0°
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
     // Press Shift key
@@ -142,7 +154,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
     
-    // 6. Click at point (20, 160) with Shift key depressed 
+    // 7. Click at point (20, 160) with Shift key depressed 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 20, 160); 
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
@@ -161,7 +173,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
     assertCoordinatesEqualWallPoints(0, 300, 0, 0, fifthWall);
     
-    // 7. Drap and drop mouse to (30, 160), 
+    // 8. Drag and drop mouse to (30, 160), 
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(20, 160)));
     tester.actionMouseMove(planComponent,  
@@ -172,7 +184,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceX + 20, pieceY, (float)Math.PI * 3 / 2, piece);
     assertCoordinatesEqualWallPoints(20, 300, 20, 0, fifthWall);
     
-    // 8. Click twice on undo button
+    // 9. Click twice on undo button
     tester.actionClick(frame.undoButton);
     tester.actionClick(frame.undoButton);
     // Check piece orientation and location is canceled
@@ -180,7 +192,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceX, pieceY, 0f, piece);
     assertCoordinatesEqualWallPoints(0, 300, 0, 0, fifthWall);
     
-    // 9. Click twice on redo button
+    // 10. Click twice on redo button
     tester.actionClick(frame.redoButton);
     tester.actionClick(frame.redoButton);
     // Check piece and wall location was redone
