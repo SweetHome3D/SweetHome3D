@@ -85,11 +85,13 @@ public class HomePane extends JRootPane {
     // Create Edit menu
     JMenu editMenu = new JMenu(
         new ResourceAction(resource, "EDIT_MENU"));
+    editMenu.setEnabled(true);
     editMenu.add(actions.get(ActionType.UNDO));
     editMenu.add(actions.get(ActionType.REDO));
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(
         new ResourceAction(resource, "FURNITURE_MENU"));
+    furnitureMenu.setEnabled(true);
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
     // Add menus to menu bar
