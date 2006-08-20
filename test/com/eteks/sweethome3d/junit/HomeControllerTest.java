@@ -111,25 +111,25 @@ public class HomeControllerTest extends TestCase {
    * Tests undo add and delete furniture in home.
    */
   public void testHomeFurnitureUndoableActions() {
-    // Check all buttons are disabled
+    // Check all actions are disabled
     assertActionsEnabled(false, false, false, false);
     
     // 2. Select the two first pieces of furniture in catalog
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 2);
-    // Check only Add button is enabled
+    // Check only Add action is enabled
     assertActionsEnabled(true, false, false, false);
     
     // 3. Add the selected furniture to the table
     runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
-    //  Check Add, Delete and Undo buttons are enabled
+    //  Check Add, Delete and Undo actions are enabled
     assertActionsEnabled(true, true, true, false);
     
     // 4. Select the first piece in table and delete it
     furnitureTable.setRowSelectionInterval(0, 0);
     runAction(HomePane.ActionType.DELETE_HOME_FURNITURE);
-    //  Check Add and Undo buttons are enabled
+    //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);
     
     // 5. Undo last operation
@@ -140,7 +140,7 @@ public class HomeControllerTest extends TestCase {
         firstPiece, this.home.getFurniture().get(0));
     assertEquals("Deleted piece isn't selected", 
         firstPiece, this.home.getSelectedItems().get(0));
-    //  Check all buttons are enabled
+    //  Check all actions are enabled
     assertActionsEnabled(true, true, true, true);
 
     // 6. Undo first operation
@@ -148,7 +148,7 @@ public class HomeControllerTest extends TestCase {
     // Check home is empty
     assertTrue("Home furniture isn't empty", 
         this.home.getFurniture().isEmpty());
-    //  Check Add and Redo buttons are enabled
+    //  Check Add and Redo actions are enabled
     assertActionsEnabled(true, false, false, true);
     
     // 7. Redo first operation
@@ -159,7 +159,7 @@ public class HomeControllerTest extends TestCase {
     // Check they are selected
     assertEquals("Added pieces are selected",
         furniture, home.getSelectedItems());
-    //  Check all buttons are enabled
+    //  Check all actions are enabled
     assertActionsEnabled(true, true, true, true);
 
     // 8. Redo second operation
@@ -170,7 +170,7 @@ public class HomeControllerTest extends TestCase {
     // Check selection is empty
     assertTrue("Selection isn't empty",
         home.getSelectedItems().isEmpty());
-    //  Check Add and Undo buttons are enabled
+    //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);
   }
   
