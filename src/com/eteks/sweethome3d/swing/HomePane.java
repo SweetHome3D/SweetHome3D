@@ -20,16 +20,20 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
 import com.eteks.sweethome3d.model.Home;
@@ -41,7 +45,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO, WALL_CREATION}
 
   /**
    * Create this view associated with its controller.
@@ -50,7 +54,7 @@ public class HomePane extends JRootPane {
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getCatalogFurniturePane(home, preferences));
+    getContentPane().add(getMainPane(home, preferences, controller));
   }
   
   private void createActions(final HomeController controller) {
@@ -70,6 +74,18 @@ public class HomePane extends JRootPane {
       actions.put(ActionType.REDO,
           new ControllerAction(resource, ActionType.REDO.toString(),
               controller, "redo"));
+      actions.put(ActionType.WALL_CREATION,
+          new ResourceAction (resource, ActionType.WALL_CREATION.toString()) {
+            public void actionPerformed(ActionEvent ev) {
+              if (((AbstractButton)ev.getSource()).isSelected()) {
+                controller.getPlanController().setMode(
+                    PlanController.Mode.WALL_CREATION);
+              } else {
+                controller.getPlanController().setMode(
+                    PlanController.Mode.SELECTION);
+              }
+            }
+          });
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
@@ -82,22 +98,34 @@ public class HomePane extends JRootPane {
     ResourceBundle resource = ResourceBundle.getBundle(
         HomePane.class.getName());
     ActionMap actions = getActionMap();
+    
     // Create Edit menu
     JMenu editMenu = new JMenu(
         new ResourceAction(resource, "EDIT_MENU"));
     editMenu.setEnabled(true);
     editMenu.add(actions.get(ActionType.UNDO));
     editMenu.add(actions.get(ActionType.REDO));
+    
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(
         new ResourceAction(resource, "FURNITURE_MENU"));
     furnitureMenu.setEnabled(true);
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    
+    // Create Plan menu
+    JMenu planMenu = new JMenu(
+        new ResourceAction(resource, "PLAN_MENU"));
+    planMenu.setEnabled(true);
+    JCheckBoxMenuItem wallCreationMenuItem = 
+      new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+    planMenu.add(wallCreationMenuItem);
+
     // Add menus to menu bar
     JMenuBar menuBar = new JMenuBar();
     menuBar.add(editMenu);
     menuBar.add(furnitureMenu);
+    menuBar.add(planMenu);
     return menuBar;
   }
 
@@ -107,6 +135,12 @@ public class HomePane extends JRootPane {
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
     ActionMap actions = getActionMap();    
+    JToggleButton wallCreationButton = 
+      new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Don't display text with icon
+    wallCreationButton.setText("");
+    toolBar.add(wallCreationButton);
+    toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBar.addSeparator();
@@ -147,6 +181,18 @@ public class HomePane extends JRootPane {
     action.putValue(Action.SHORT_DESCRIPTION, name);
   }
 
+  /**
+   * Returns the main pane with catalog tree, furniture table and plan pane. 
+   */
+  private JComponent getMainPane(Home home, UserPreferences preferences, 
+                                 HomeController controller) {
+    JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+        getCatalogFurniturePane(home, preferences), 
+        new JScrollPane(controller.getPlanController().getView()));
+    mainPane.setResizeWeight(0.3);
+    return mainPane;
+  }
+  
   /**
    * Returns the catalog tree and furniture table pane. 
    */
