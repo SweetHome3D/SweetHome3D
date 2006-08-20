@@ -41,12 +41,12 @@ public class ResourceAction extends Action {
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
-    defaultText = resource.getString(propertyPrefix + "Name");
-    setText(defaultText); // Mnemonic is included in defaultText
+    this.defaultText = resource.getString(propertyPrefix + "Name");
+    setText(this.defaultText); // Mnemonic is included in defaultText
         
-    defaultToolTipText = getOptionalString(resource, propertyPrefix + "ShortDescription");
-    if (defaultToolTipText != null) {
-      setToolTipText(defaultToolTipText);
+    this.defaultToolTipText = getOptionalString(resource, propertyPrefix + "ShortDescription");
+    if (this.defaultToolTipText != null) {
+      setToolTipText(this.defaultToolTipText);
     }
     
     String description = getOptionalString(resource, propertyPrefix + "LongDescription");

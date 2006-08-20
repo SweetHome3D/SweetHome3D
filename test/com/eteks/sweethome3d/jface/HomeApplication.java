@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 import org.eclipse.jface.action.CoolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
@@ -53,7 +54,8 @@ public class HomeApplication extends ApplicationWindow implements HomeView {
     super(null);
     this.home = home;
     this.preferences = preferences;
-    createActions(controller);   
+    createActions(controller);  
+    addMenuBar();
     addCoolBar(SWT.NONE);
   }
 
@@ -86,6 +88,31 @@ public class HomeApplication extends ApplicationWindow implements HomeView {
     return coolBarManager;
   }
   
+  @Override
+  protected MenuManager createMenuManager() {
+    ResourceBundle resource = ResourceBundle.getBundle(
+        HomeApplication.class.getName());
+    
+    // Create main menu manager
+    MenuManager menuManager = new MenuManager();
+    
+    // Create Edit menu manager
+    MenuManager editMenuManager = 
+      new MenuManager(new ResourceAction(resource, "EDIT_MENU").getText());
+    menuManager.add(editMenuManager);
+    editMenuManager.add(this.actions.get(ActionType.UNDO));
+    editMenuManager.add(this.actions.get(ActionType.REDO));
+
+    // Create Furniture menu manager
+    MenuManager furnitureMenuManager = 
+      new MenuManager(new ResourceAction(resource, "FURNITURE_MENU").getText());
+    menuManager.add(furnitureMenuManager);
+    furnitureMenuManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenuManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
+
+    return menuManager;
+  }
+
   private void createActions(final HomeController controller) {
     this.actions = new HashMap<ActionType, ResourceAction>();
     ResourceBundle resource = ResourceBundle.getBundle(
