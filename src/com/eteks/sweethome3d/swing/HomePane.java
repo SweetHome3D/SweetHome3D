@@ -20,17 +20,16 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
-import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
 import com.eteks.sweethome3d.model.Home;
@@ -42,15 +41,16 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO, WALL_CREATION}
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
 
   /**
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
     createActions(controller);
+    setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getMainPane(home, preferences, controller));
+    getContentPane().add(getCatalogFurniturePane(home, preferences));
   }
   
   private void createActions(final HomeController controller) {
@@ -70,36 +70,41 @@ public class HomePane extends JRootPane {
       actions.put(ActionType.REDO,
           new ControllerAction(resource, ActionType.REDO.toString(),
               controller, "redo"));
-      actions.put(ActionType.WALL_CREATION,
-          new ResourceAction (resource, ActionType.WALL_CREATION.toString()) {
-            public void actionPerformed(ActionEvent ev) {
-              if (((AbstractButton)ev.getSource()).isSelected()) {
-                controller.getPlanController().setMode(
-                    PlanController.Mode.WALL_CREATION);
-              } else {
-                controller.getPlanController().setMode(
-                    PlanController.Mode.SELECTION);
-              }
-            }
-          });
-      } catch (NoSuchMethodException ex) {
+    } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
   }
   
+  /**
+   * Returns the menu bar displayed in this pane.
+   */
+  private JMenuBar getHomeMenuBar() {
+    ResourceBundle resource = ResourceBundle.getBundle(
+        HomePane.class.getName());
+    ActionMap actions = getActionMap();
+    // Create Edit menu
+    JMenu editMenu = new JMenu(
+        new ResourceAction(resource, "EDIT_MENU"));
+    editMenu.add(actions.get(ActionType.UNDO));
+    editMenu.add(actions.get(ActionType.REDO));
+    // Create Furniture menu
+    JMenu furnitureMenu = new JMenu(
+        new ResourceAction(resource, "FURNITURE_MENU"));
+    furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    // Add menus to menu bar
+    JMenuBar menuBar = new JMenuBar();
+    menuBar.add(editMenu);
+    menuBar.add(furnitureMenu);
+    return menuBar;
+  }
+
   /**
    * Returns the tool bar displayed in this pane.
    */
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
     ActionMap actions = getActionMap();    
-    JToggleButton wallCreationButton = 
-      new JToggleButton(actions.get(ActionType.WALL_CREATION));
-    // Don't display text with icon
-    wallCreationButton.setText("");
-    toolBar.add(wallCreationButton);
-    toolBar.addSeparator();
-    // Buttons created with add method of JToolBar don't display their text
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBar.addSeparator();
@@ -140,18 +145,6 @@ public class HomePane extends JRootPane {
     action.putValue(Action.SHORT_DESCRIPTION, name);
   }
 
-  /**
-   * Returns the main pane with catalog tree, furniture table and plan pane. 
-   */
-  private JComponent getMainPane(Home home, UserPreferences preferences, 
-                                 HomeController controller) {
-    JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-        getCatalogFurniturePane(home, preferences), 
-        new JScrollPane(controller.getPlanController().getView()));
-    mainPane.setResizeWeight(0.3);
-    return mainPane;
-  }
-  
   /**
    * Returns the catalog tree and furniture table pane. 
    */
