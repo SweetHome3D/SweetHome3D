@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 
@@ -34,13 +35,13 @@ import com.sun.j3d.loaders.objectfile.ObjectFile;
  * @author Emmanuel Puybaret
  */
 public class ObjectFileTest {
-  private static BranchGroup loadObjectFile(URL file) throws IOException {
+  private static BranchGroup loadObjectFile(URL url) throws FileNotFoundException {
     ObjectFile loader = new ObjectFile();
-    Scene scene = loader.load(file);
+    Scene scene = loader.load(url);
     return scene.getSceneGroup();
   }
   
-  public static void main (String [] args) throws IOException {
+  public static void main (String [] args) throws FileNotFoundException {
     // Create the tree of the displayed scene 
     BranchGroup root = new BranchGroup();
     // Add a child that displays an .obj file
