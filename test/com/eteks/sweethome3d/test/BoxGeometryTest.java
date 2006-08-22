@@ -52,8 +52,7 @@ public class BoxGeometryTest {
     return new Shape3D(geometryInfo.getIndexedGeometryArray()); 
   }
   
-  public static void main (String [] args) 
-  {
+  public static void main (String [] args) {
     // Create the tree of the displayed scene 
     BranchGroup root = new BranchGroup();
     //  Create a transform group that applies to its children 

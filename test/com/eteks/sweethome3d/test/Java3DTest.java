@@ -31,8 +31,7 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
  * @author Emmanuel Puybaret
  */
 public class Java3DTest {
-  public static void main (String [] args) 
-  {
+  public static void main (String [] args) {
     // Create the tree of the displayed scene 
     BranchGroup root = new BranchGroup();
     // Create a colored cube of 1 unit size centered at origin
