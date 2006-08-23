@@ -32,7 +32,7 @@ import com.sun.j3d.utils.geometry.GeometryInfo;
  * @author Emmanuel Puybaret
  */
 public class BoxGeometryTest {
-  private static Shape3D createBox(float x, float y, float z) {
+  public static Shape3D createBox(float x, float y, float z) {
     // 8 vetices of a box centered at origin
     Point3f a = new Point3f(x, y, z);
     Point3f b = new Point3f(-x, y, z);

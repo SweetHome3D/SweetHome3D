@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.test;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URL;
 
 import javax.media.j3d.Background;
@@ -35,7 +34,7 @@ import com.sun.j3d.loaders.objectfile.ObjectFile;
  * @author Emmanuel Puybaret
  */
 public class ObjectFileTest {
-  private static BranchGroup loadObjectFile(URL url) throws FileNotFoundException {
+  public static BranchGroup loadObjectFile(URL url) throws FileNotFoundException {
     ObjectFile loader = new ObjectFile();
     Scene scene = loader.load(url);
     return scene.getSceneGroup();
