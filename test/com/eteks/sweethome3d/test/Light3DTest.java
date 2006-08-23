@@ -46,7 +46,7 @@ public class Light3DTest {
     ambientLight.setInfluencingBounds(new BoundingBox());
     root.addChild(ambientLight);
     
-    // Add a white ambiant light
+    // Add a white directional light
     Light light1 = new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1, -1, -1));
     light1.setInfluencingBounds(new BoundingBox());
     root.addChild(light1);
