@@ -1,5 +1,5 @@
 /*
- * BoxGeometryTest.java 22 août 2006
+ * ObjectFileTest.java 22 août 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
