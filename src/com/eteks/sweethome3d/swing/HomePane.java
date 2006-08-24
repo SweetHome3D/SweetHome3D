@@ -20,93 +20,127 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
-* The MVC view that edits home. 
+ * The MVC view that edits home. 
  * @author Emmanuel Puybaret
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
-  
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO, WALL_CREATION}
+
   /**
-  * Create this view associated with its controller.
+   * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getCatalogFurniturePane(home, preferences));
+    getContentPane().add(getMainPane(home, preferences, controller));
   }
   
   private void createActions(final HomeController controller) {
     ResourceBundle resource = ResourceBundle.getBundle(
-                                                       HomePane.class.getName());
+        HomePane.class.getName());
     ActionMap actions = getActionMap();    
     try {
       actions.put(ActionType.ADD_HOME_FURNITURE,
-                  new ControllerAction(resource, ActionType.ADD_HOME_FURNITURE.toString(),
-                                       controller, "addHomeFurniture"));
+          new ControllerAction(resource, ActionType.ADD_HOME_FURNITURE.toString(),
+              controller, "addHomeFurniture"));
       actions.put(ActionType.DELETE_HOME_FURNITURE,
-                  new ControllerAction(resource, ActionType.DELETE_HOME_FURNITURE.toString(),
-                                       controller, "deleteHomeFurniture"));
+          new ControllerAction(resource, ActionType.DELETE_HOME_FURNITURE.toString(),
+              controller, "deleteHomeFurniture"));
       actions.put(ActionType.UNDO,
-                  new ControllerAction(resource, ActionType.UNDO.toString(),
-                                       controller, "undo"));
+          new ControllerAction(resource, ActionType.UNDO.toString(),
+              controller, "undo"));
       actions.put(ActionType.REDO,
-                  new ControllerAction(resource, ActionType.REDO.toString(),
-                                       controller, "redo"));
+          new ControllerAction(resource, ActionType.REDO.toString(),
+              controller, "redo"));
+      actions.put(ActionType.WALL_CREATION,
+          new ResourceAction (resource, ActionType.WALL_CREATION.toString()) {
+            public void actionPerformed(ActionEvent ev) {
+              if (((AbstractButton)ev.getSource()).isSelected()) {
+                controller.getPlanController().setMode(
+                    PlanController.Mode.WALL_CREATION);
+              } else {
+                controller.getPlanController().setMode(
+                    PlanController.Mode.SELECTION);
+              }
+            }
+          });
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
   }
   
   /**
-  * Returns the menu bar displayed in this pane.
+   * Returns the menu bar displayed in this pane.
    */
   private JMenuBar getHomeMenuBar() {
     ResourceBundle resource = ResourceBundle.getBundle(
-                                                       HomePane.class.getName());
+        HomePane.class.getName());
     ActionMap actions = getActionMap();
+    
     // Create Edit menu
     JMenu editMenu = new JMenu(
-                               new ResourceAction(resource, "EDIT_MENU"));
+        new ResourceAction(resource, "EDIT_MENU"));
     editMenu.setEnabled(true);
     editMenu.add(actions.get(ActionType.UNDO));
     editMenu.add(actions.get(ActionType.REDO));
+    
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(
-                                    new ResourceAction(resource, "FURNITURE_MENU"));
+        new ResourceAction(resource, "FURNITURE_MENU"));
     furnitureMenu.setEnabled(true);
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    
+    // Create Plan menu
+    JMenu planMenu = new JMenu(
+        new ResourceAction(resource, "PLAN_MENU"));
+    planMenu.setEnabled(true);
+    JCheckBoxMenuItem wallCreationMenuItem = 
+      new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+    planMenu.add(wallCreationMenuItem);
+
     // Add menus to menu bar
     JMenuBar menuBar = new JMenuBar();
     menuBar.add(editMenu);
     menuBar.add(furnitureMenu);
+    menuBar.add(planMenu);
     return menuBar;
   }
-  
+
   /**
-  * Returns the tool bar displayed in this pane.
+   * Returns the tool bar displayed in this pane.
    */
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
     ActionMap actions = getActionMap();    
+    JToggleButton wallCreationButton = 
+      new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Don't display text with icon
+    wallCreationButton.setText("");
+    toolBar.add(wallCreationButton);
+    toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBar.addSeparator();
@@ -116,15 +150,15 @@ public class HomePane extends JRootPane {
   }
   
   /**
-  * Enables or disables the action matching <code>actionType</code>.
+   * Enables or disables the action matching <code>actionType</code>.
    */
   public void setEnabled(ActionType actionType, 
                          boolean enabled) {
     getActionMap().get(actionType).setEnabled(enabled);
   }
-  
+
   /**
-  * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
    * of undo and redo actions. If a parameter is null,
    * the properties will be reset to their initial values.
    */
@@ -132,9 +166,9 @@ public class HomePane extends JRootPane {
     setNameAndShortDescription(ActionType.UNDO, undoText);
     setNameAndShortDescription(ActionType.REDO, redoText);
   }
-  
+
   /**
-  * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
    * matching <code>actionType</code>. If <code>name</code> is null,
    * the properties will be reset to their initial values.
    */
@@ -146,16 +180,30 @@ public class HomePane extends JRootPane {
     action.putValue(Action.NAME, name);
     action.putValue(Action.SHORT_DESCRIPTION, name);
   }
+
+  /**
+   * Returns the main pane with catalog tree, furniture table and plan pane. 
+   */
+  private JComponent getMainPane(Home home, UserPreferences preferences, 
+                                 HomeController controller) {
+    JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+        getCatalogFurniturePane(home, preferences), 
+        new JScrollPane(controller.getPlanController().getView()));
+    mainPane.setContinuousLayout(true);
+    mainPane.setOneTouchExpandable(true);
+    mainPane.setResizeWeight(0.3);
+    return mainPane;
+  }
   
   /**
-  * Returns the catalog tree and furniture table pane. 
+   * Returns the catalog tree and furniture table pane. 
    */
   private JComponent getCatalogFurniturePane(Home home, UserPreferences preferences) {
     JComponent catalogView = new CatalogTree(preferences.getCatalog());
     JComponent furnitureView = new FurnitureTable(home, preferences);
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-                                                     new JScrollPane(catalogView), new JScrollPane(furnitureView));
+        new JScrollPane(catalogView), new JScrollPane(furnitureView));
     catalogFurniturePane.setContinuousLayout(true);
     catalogFurniturePane.setOneTouchExpandable(true);
     catalogFurniturePane.setResizeWeight(0.5);
