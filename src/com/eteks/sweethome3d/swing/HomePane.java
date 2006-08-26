@@ -20,7 +20,6 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
@@ -126,9 +125,9 @@ public class HomePane extends JRootPane {
     JMenu planMenu = new JMenu(
         new ResourceAction(resource, "PLAN_MENU"));
     planMenu.setEnabled(true);
-    wallCreationCheckBoxMenuItem = 
+    this.wallCreationCheckBoxMenuItem = 
         new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
-    planMenu.add(wallCreationCheckBoxMenuItem);
+    planMenu.add(this.wallCreationCheckBoxMenuItem);
     planMenu.add(actions.get(ActionType.DELETE_SELECTION));
 
     // Add menus to menu bar
@@ -145,15 +144,15 @@ public class HomePane extends JRootPane {
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
     ActionMap actions = getActionMap();    
-    wallCreationToggleButton = 
-        new JToggleButton(actions.get(ActionType.WALL_CREATION));
-    // Don't display text with icon
-    wallCreationToggleButton.setText("");
-    toolBar.add(wallCreationToggleButton);
-    toolBar.add(actions.get(ActionType.DELETE_SELECTION));
-    toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    toolBar.addSeparator();
+    this.wallCreationToggleButton = 
+      new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Don't display text with icon
+    this.wallCreationToggleButton.setText("");
+    toolBar.add(this.wallCreationToggleButton);
+    toolBar.add(actions.get(ActionType.DELETE_SELECTION));
     toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.UNDO));
     toolBar.add(actions.get(ActionType.REDO));
@@ -199,13 +198,13 @@ public class HomePane extends JRootPane {
                                  HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         getCatalogFurniturePane(home, preferences), 
-        getPlanView3DPane(home, controller));
+        new JScrollPane(controller.getPlanController().getView()));
     mainPane.setContinuousLayout(true);
     mainPane.setOneTouchExpandable(true);
     mainPane.setResizeWeight(0.3);
     return mainPane;
   }
-
+  
   /**
    * Returns the catalog tree and furniture table pane. 
    */
@@ -219,22 +218,5 @@ public class HomePane extends JRootPane {
     catalogFurniturePane.setOneTouchExpandable(true);
     catalogFurniturePane.setResizeWeight(0.5);
     return catalogFurniturePane;
-  }
-
-  /**
-   * Returns the plan view and 3D view pane. 
-   */
-  private JComponent getPlanView3DPane(Home home, HomeController controller) {
-    JComponent planView = controller.getPlanController().getView();
-    JComponent view3D = new HomeComponent3D(home);
-    view3D.setPreferredSize(planView.getPreferredSize());
-    view3D.setMinimumSize(new Dimension(0, 0));
-    // Create a split pane that displays both components
-    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        new JScrollPane(planView), view3D);
-    planView3DPane.setContinuousLayout(true);
-    planView3DPane.setOneTouchExpandable(true);
-    planView3DPane.setResizeWeight(0.5);
-    return planView3DPane;
   }
 }
