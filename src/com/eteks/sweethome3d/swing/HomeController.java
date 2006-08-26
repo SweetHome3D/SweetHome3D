@@ -118,8 +118,8 @@ public class HomeController {
    * Enables action bound to selection. 
    */
   private void enableActionsOnSelection() {
-    boolean wallCreationMode = 
-      this.planController.getMode() == PlanController.Mode.WALL_CREATION;
+    boolean wallCreationMode =  
+        this.planController.getMode() == PlanController.Mode.WALL_CREATION;
     
     // Search if selection contains at least one piece
     List selectedItems = this.home.getSelectedItems();
@@ -132,14 +132,12 @@ public class HomeController {
         }
       }
     // In creation mode al actions bound to selection are disabled
-    ((HomePane)getView()).setEnabled(
-        HomePane.ActionType.DELETE_HOME_FURNITURE,
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
         !wallCreationMode && selectionContainsFurniture);
-    ((HomePane)getView()).setEnabled(
-        HomePane.ActionType.DELETE_SELECTION,
+    view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
         !wallCreationMode && !selectedItems.isEmpty());
-    ((HomePane)getView()).setEnabled(
-        HomePane.ActionType.ADD_HOME_FURNITURE,
+    view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
         !wallCreationMode && !this.preferences.getCatalog().getSelectedFurniture().isEmpty());
   }
 
@@ -151,7 +149,8 @@ public class HomeController {
       new UndoableEditListener () {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomePane view = ((HomePane)getView());
-          view.setEnabled(HomePane.ActionType.UNDO, true);
+          view.setEnabled(HomePane.ActionType.UNDO, 
+              planController.getMode() != PlanController.Mode.WALL_CREATION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
         }
@@ -320,6 +319,9 @@ public class HomeController {
   public void setWallCreationMode() {
     this.planController.setMode(PlanController.Mode.WALL_CREATION);
     enableActionsOnSelection();
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.UNDO, false);
+    view.setEnabled(HomePane.ActionType.REDO, false);
   }
 
   /**
@@ -329,6 +331,9 @@ public class HomeController {
   public void setSelectionMode() {
     this.planController.setMode(PlanController.Mode.SELECTION);
     enableActionsOnSelection();
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
+    view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
   }
 }
 
