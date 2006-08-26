@@ -84,7 +84,9 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEquals("Wrong walls count", 5, 
         frame.home.getWalls().size());
 
-    // 3. Select the first piece in catalog tree
+    // 3. Use SELECTION mode
+    tester.actionClick(frame.modeButton);
+    // Select the first piece in catalog tree
     JTree tree = (JTree)getComponent(
           frame.homeController.getView(), CatalogTree.class);
     JTreeTester treeTester = new JTreeTester();
@@ -99,17 +101,16 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEquals("Wrong selected items count", 
         1, frame.home.getSelectedItems().size());
     
-    // 4. Use SELECTION mode
-    tester.actionClick(frame.modeButton);
     HomePieceOfFurniture piece = frame.home.getFurniture().get(0);
     float pieceX = piece.getWidth() / 2;
     float pieceY = piece.getDepth() / 2;
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
+    
+    // 4. Press mouse button at piece center
     int widthPixel = 
       Math.round(piece.getWidth() * planComponent.getScale());
     int depthPixel = 
       Math.round(piece.getDepth() * planComponent.getScale());
-    // Press mouse button at piece center
     tester.actionMousePress(planComponent, new ComponentLocation( 
         new Point(20 + widthPixel / 2, 20 + depthPixel / 2))); 
     // Drag mouse to (100, 100) from piece center
