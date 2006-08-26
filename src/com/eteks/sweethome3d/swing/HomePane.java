@@ -44,6 +44,9 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomePane extends JRootPane {
+  private JCheckBoxMenuItem wallCreationCheckBoxMenuItem;
+  private JToggleButton     wallCreationToggleButton;
+
   public enum ActionType {
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO, WALL_CREATION, DELETE_SELECTION}
 
@@ -77,11 +80,15 @@ public class HomePane extends JRootPane {
       actions.put(ActionType.WALL_CREATION,
           new ResourceAction (resource, ActionType.WALL_CREATION.toString()) {
             public void actionPerformed(ActionEvent ev) {
-              if (((AbstractButton)ev.getSource()).isSelected()) {
+              boolean selected = ((AbstractButton)ev.getSource()).isSelected();
+              if (selected) {
                 controller.setWallCreationMode();
               } else {
                 controller.setSelectionMode();
               }
+              // Update selected state of tool bar button and menu item
+              wallCreationToggleButton.setSelected(selected);
+              wallCreationCheckBoxMenuItem.setSelected(selected);
             }
           });
       actions.put(ActionType.DELETE_SELECTION, 
@@ -118,9 +125,9 @@ public class HomePane extends JRootPane {
     JMenu planMenu = new JMenu(
         new ResourceAction(resource, "PLAN_MENU"));
     planMenu.setEnabled(true);
-    JCheckBoxMenuItem wallCreationMenuItem = 
-      new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
-    planMenu.add(wallCreationMenuItem);
+    wallCreationCheckBoxMenuItem = 
+        new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+    planMenu.add(wallCreationCheckBoxMenuItem);
     planMenu.add(actions.get(ActionType.DELETE_SELECTION));
 
     // Add menus to menu bar
@@ -137,15 +144,15 @@ public class HomePane extends JRootPane {
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
     ActionMap actions = getActionMap();    
+    wallCreationToggleButton = 
+        new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Don't display text with icon
+    wallCreationToggleButton.setText("");
+    toolBar.add(wallCreationToggleButton);
+    toolBar.add(actions.get(ActionType.DELETE_SELECTION));
+    toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
-    toolBar.addSeparator();
-    JToggleButton wallCreationButton = 
-      new JToggleButton(actions.get(ActionType.WALL_CREATION));
-    // Don't display text with icon
-    wallCreationButton.setText("");
-    toolBar.add(wallCreationButton);
-    toolBar.add(actions.get(ActionType.DELETE_SELECTION));
     toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.UNDO));
     toolBar.add(actions.get(ActionType.REDO));
