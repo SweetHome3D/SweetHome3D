@@ -98,9 +98,7 @@ public class HomeController {
     this.preferences.getCatalog().addSelectionListener(
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          ((HomePane)getView()).setEnabled(
-              HomePane.ActionType.ADD_HOME_FURNITURE,
-              !ev.getSelectedItems().isEmpty());
+          enableActionsOnSelection();
         }
       });
   }
@@ -111,19 +109,38 @@ public class HomeController {
   private void addHomeSelectionListener() {
     this.home.addSelectionListener(new SelectionListener() {
       public void selectionChanged(SelectionEvent ev) {
-        // Search if selection contains at least one piece
-        boolean selectionContainsFurniture = false;
-        for (Object item : ev.getSelectedItems()) {
-          if (item instanceof HomePieceOfFurniture) {
-            selectionContainsFurniture = true;
-            break;
-          }
-        }
-        ((HomePane)getView()).setEnabled(
-            HomePane.ActionType.DELETE_HOME_FURNITURE,
-            selectionContainsFurniture);
+        enableActionsOnSelection();
       }
     });
+  }
+  
+  /**
+   * Enables action bound to selection. 
+   */
+  private void enableActionsOnSelection() {
+    boolean wallCreationMode = 
+      this.planController.getMode() == PlanController.Mode.WALL_CREATION;
+    
+    // Search if selection contains at least one piece
+    List selectedItems = this.home.getSelectedItems();
+    boolean selectionContainsFurniture = false;
+    if (!wallCreationMode)
+      for (Object item : selectedItems) {
+        if (item instanceof HomePieceOfFurniture) {
+          selectionContainsFurniture = true;
+          break;
+        }
+      }
+    // In creation mode al actions bound to selection are disabled
+    ((HomePane)getView()).setEnabled(
+        HomePane.ActionType.DELETE_HOME_FURNITURE,
+        !wallCreationMode && selectionContainsFurniture);
+    ((HomePane)getView()).setEnabled(
+        HomePane.ActionType.DELETE_SELECTION,
+        !wallCreationMode && !selectedItems.isEmpty());
+    ((HomePane)getView()).setEnabled(
+        HomePane.ActionType.ADD_HOME_FURNITURE,
+        !wallCreationMode && !this.preferences.getCatalog().getSelectedFurniture().isEmpty());
   }
 
   /**
@@ -294,6 +311,24 @@ public class HomeController {
    */
   public PlanController getPlanController() {
     return this.planController;
+  }
+
+  /**
+   * Sets wall creation mode in plan controller, 
+   * and disables forbidden actions in this mode.  
+   */
+  public void setWallCreationMode() {
+    this.planController.setMode(PlanController.Mode.WALL_CREATION);
+    enableActionsOnSelection();
+  }
+
+  /**
+   * Sets wall creation mode in plan controller, 
+   * and enables authorized actions in this mode.  
+   */
+  public void setSelectionMode() {
+    this.planController.setMode(PlanController.Mode.SELECTION);
+    enableActionsOnSelection();
   }
 }
 
