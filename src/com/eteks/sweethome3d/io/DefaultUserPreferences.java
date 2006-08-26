@@ -40,5 +40,6 @@ public class DefaultUserPreferences extends UserPreferences {
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setDefaultThickness(Float.parseFloat(resource.getString("defaultThickness")));
+    setDefaultWallHeight(Float.parseFloat(resource.getString("defaultWallHeight")));
   }
 }
