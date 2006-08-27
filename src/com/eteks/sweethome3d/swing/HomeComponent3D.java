@@ -310,8 +310,8 @@ public class HomeComponent3D extends JComponent {
       // Add wall shape to branch
       addChild(getWallShape());
       // Set wall shape geometry and appearance
-      setWallGeometry();
-      setWallAppearance();
+      updateWallGeometry();
+      updateWallAppearance();
     }
 
     /**
@@ -326,13 +326,13 @@ public class HomeComponent3D extends JComponent {
 
     @Override
     public void update() {
-      setWallGeometry();
+      updateWallGeometry();
     }
 
     /**
      * Sets the 3D geometry of this wall that matches its 2D geometry.  
      */
-    private void setWallGeometry() {
+    private void updateWallGeometry() {
       float [][] wallPoints = ((Wall)getUserData()).getPoints();
       // Create points for the bottom and the top of the wall
       Point3f [] bottom = new Point3f [4];
@@ -366,7 +366,7 @@ public class HomeComponent3D extends JComponent {
     /**
      * Sets wall appearance with a white color.
      */
-    private void setWallAppearance() {
+    private void updateWallAppearance() {
       Appearance wallAppearance = new Appearance();
       Material material = new Material();
       wallAppearance.setMaterial(material);
@@ -389,7 +389,7 @@ public class HomeComponent3D extends JComponent {
       addChild(getPieceOfFurnitureNode());
 
       // Set piece model initial location, orientation and size 
-      setPieceOfFurnitureTransform();
+      updatePieceOfFurnitureTransform();
     }
 
     /**
@@ -407,14 +407,14 @@ public class HomeComponent3D extends JComponent {
 
     @Override
     public void update() {
-      setPieceOfFurnitureTransform();
+      updatePieceOfFurnitureTransform();
     }
 
     /**
      * Sets the transformation applied to piece model to match
      * its location, its angle and its size.
      */
-    public void setPieceOfFurnitureTransform() {
+    private void updatePieceOfFurnitureTransform() {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
       // Set piece size
       Transform3D scale = new Transform3D();
