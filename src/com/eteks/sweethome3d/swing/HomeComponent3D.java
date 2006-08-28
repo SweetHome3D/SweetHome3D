@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,6 +27,9 @@ import java.io.Reader;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
@@ -155,7 +159,7 @@ public class HomeComponent3D extends JComponent {
                            new Vector3f(1, -1, -1)), 
       new DirectionalLight(new Color3f(1, 1, 1), 
                            new Vector3f(-1, -1, -1)), 
-      new AmbientLight(new Color3f(0.8f, 0.8f, 0.8f))}; 
+      new AmbientLight(new Color3f(0.6f, 0.6f, 0.6f))}; 
 
     for (Light light : lights) {
       light.setInfluencingBounds(new BoundingBox());
@@ -341,7 +345,7 @@ public class HomeComponent3D extends JComponent {
         bottom [i] = new Point3f(
             wallPoints[i][0], 0, wallPoints[i][1]);
         top [i] = new Point3f(
-            wallPoints[i][0], home.getWallHeight(), wallPoints[i][1]);
+            wallPoints[i][0], this.home.getWallHeight(), wallPoints[i][1]);
       }
       // List of the 6 quadrilaterals of the wall
       Point3f [] wallCoordinates = {
@@ -378,6 +382,8 @@ public class HomeComponent3D extends JComponent {
    * Root of piece of furniture branch.
    */
   private static class HomePieceOfFurniture3D extends ObjectBranch {
+    private static Executor modelLoader = Executors.newSingleThreadExecutor();
+
     public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
       setUserData(piece);      
 
@@ -396,12 +402,35 @@ public class HomeComponent3D extends JComponent {
      * Returns piece node with its transform group. 
      */
     private Node getPieceOfFurnitureNode() {
-      TransformGroup pieceTransformGroup = new TransformGroup();
+      final TransformGroup pieceTransformGroup = new TransformGroup();
       // Allow the change of the transformation that sets piece size and position
       pieceTransformGroup.setCapability(
           TransformGroup.ALLOW_TRANSFORM_WRITE);
-      // Add piece model to transform group
-      pieceTransformGroup.addChild(getModelNode());
+
+      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
+      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+
+      // While loading model use a temporary node that displays a white box  
+      final BranchGroup waitBranch = new BranchGroup();
+      waitBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+      waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
+      
+      waitBranch.addChild(getModelBox(Color.WHITE));      
+      pieceTransformGroup.addChild(waitBranch);
+      
+      // Load piece real 3D model
+      modelLoader.execute(new Runnable() {
+        public void run() {
+          BranchGroup modelBranch = new BranchGroup();
+          modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+          modelBranch.setCapability(BranchGroup.ALLOW_DETACH);
+          modelBranch.addChild(getModelNode());
+          pieceTransformGroup.addChild(modelBranch);
+          // Remove temporary node
+          waitBranch.detach();
+        }
+      });
+      
       return pieceTransformGroup;
     }
 
@@ -473,11 +502,11 @@ public class HomeComponent3D extends JComponent {
         return modelTransformGroup;
       } catch (IOException ex) {
         // In case of problem return a default box
-        return getModelBox();
+        return getModelBox(Color.RED);
       } catch (IncorrectFormatException ex) {
-        return getModelBox();
+        return getModelBox(Color.RED);
       } catch (ParsingErrorException ex) {
-        return getModelBox();
+        return getModelBox(Color.RED);
       } finally {
         try {
           if (modelReader != null) {
@@ -492,9 +521,13 @@ public class HomeComponent3D extends JComponent {
     /**
      * Returns a box that may replace model. 
      */
-    private Node getModelBox() {
+    private Node getModelBox(Color color) {
+      Material material = new Material();
+      material.setDiffuseColor(new Color3f(color));
+      material.setAmbientColor(new Color3f(color.darker()));
+      
       Appearance boxAppearance = new Appearance();
-      boxAppearance.setMaterial(new Material());
+      boxAppearance.setMaterial(material);
       return new Box(0.5f, 0.5f, 0.5f, boxAppearance);
     }
 
