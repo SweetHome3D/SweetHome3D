@@ -1,5 +1,5 @@
 /*
- * CubeTest.java 18 août 2006
+ * Java3DTest.java 18 août 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
