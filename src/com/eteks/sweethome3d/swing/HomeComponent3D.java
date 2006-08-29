@@ -29,12 +29,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingBox;
+import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
@@ -163,7 +163,7 @@ public class HomeComponent3D extends JComponent {
       new AmbientLight(new Color3f(0.6f, 0.6f, 0.6f))}; 
 
     for (Light light : lights) {
-      light.setInfluencingBounds(new BoundingBox());
+      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 1000000));
     }
     return lights;
   }
