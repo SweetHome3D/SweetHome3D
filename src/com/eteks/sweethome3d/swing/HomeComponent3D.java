@@ -135,7 +135,8 @@ public class HomeComponent3D extends JComponent {
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     MouseRotate mouseBehavior = new MouseRotate(transformGroup);
     mouseBehavior.setFactor(mouseBehavior.getXFactor(), 0);
-    mouseBehavior.setSchedulingBounds(new BoundingBox());
+    Bounds schedulingBounds = new BoundingBox();
+    mouseBehavior.setSchedulingBounds(schedulingBounds);
     // Add behavior to transform group to activate it
     transformGroup.addChild(mouseBehavior);    
     return transformGroup;
