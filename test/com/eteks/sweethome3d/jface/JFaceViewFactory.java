@@ -31,6 +31,6 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  */
 public class JFaceViewFactory extends AbstractViewFactory {
   public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
-    return new HomeApplication(home, preferences, controller);
+    return new HomeApplicationWindow(home, preferences, controller);
   }
 }
