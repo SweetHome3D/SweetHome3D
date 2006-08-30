@@ -29,7 +29,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * A factory for SWT / JFace widgets.
  * @author Emmanuel Puybaret
  */
-public class JFaceViewFactory extends AbstractViewFactory {
+public class JFaceViewFactory implements ViewFactory {
   public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
     return new HomeApplicationWindow(home, preferences, controller);
   }
