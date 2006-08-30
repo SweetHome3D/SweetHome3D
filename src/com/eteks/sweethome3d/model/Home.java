@@ -20,12 +20,11 @@
 package com.eteks.sweethome3d.model;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * The home managed by the application with its furniture and walls.
+ * The home managed by the application with its furniture.
  * @author Emmanuel Puybaret
  */
 public class Home {
@@ -33,43 +32,24 @@ public class Home {
   private List<Object>               selectedItems;
   private List<FurnitureListener>    furnitureListeners;
   private List<SelectionListener>    selectionListeners;
-  private Collection<Wall>           walls;
-  private List<WallListener>         wallListeners;
-  private float                      wallHeight;
 
   /**
-   * Creates a home with no furniture, no walls, 
-   * and a height equal to 250 cm.
+   * Creates a home with no furniture.
    */
   public Home() {
-    this(250);
+    this(new ArrayList<HomePieceOfFurniture>());
   }
 
   /**
-   * Creates a home with no furniture and no walls.
-   */
-  public Home(float wallHeight) {
-    this(new ArrayList<HomePieceOfFurniture>(), wallHeight);
-  }
-
-  /**
-   * Creates a home with the given <code>furniture</code>, 
-   * no walls and a height equal to 250 cm.
+   * Creates a home with the given <code>furniture</code>.
    */
   public Home(List<HomePieceOfFurniture> furniture) {
-    this(furniture, 250);
-  }
-
-  private Home(List<HomePieceOfFurniture> furniture, float wallHeight) {
     this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectedItems = new ArrayList<Object>();
     this.selectionListeners = new ArrayList<SelectionListener>();
-    this.walls = new ArrayList<Wall>();
-    this.wallListeners = new ArrayList<WallListener>();
-    this.wallHeight = wallHeight;
   }
-
+  
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
@@ -98,7 +78,7 @@ public class Home {
    * notification.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
-    addPieceOfFurniture(piece, this.furniture.size() - 1);
+    addPieceOfFurniture(piece, this.furniture.size());
   }
 
   /**
@@ -130,31 +110,6 @@ public class Home {
       this.furniture.remove(index);
       firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.DELETE);
     }
-  }
-
-  /**
-   * Updates the location of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureLocation(HomePieceOfFurniture piece, 
-                                          float x, float y) {
-    piece.setX(x);
-    piece.setY(y);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-  }
-  
-  /**
-   * Updates the angle of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureAngle(HomePieceOfFurniture piece, 
-                                      float angle) {
-    piece.setAngle(angle);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
   }
 
   private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
@@ -221,179 +176,5 @@ public class Home {
       selectedItems.remove(pieceSelectionIndex);
       setSelectedItems(selectedItems);
     }
-  }
-
-  /**
-   * Adds the wall <code>listener</code> in parameter to this plan.
-   */
-  public void addWallListener(WallListener listener) {
-    this.wallListeners.add(listener);
-  }
-  
-  /**
-   * Removes the wall <code>listener</code> in parameter from this plan.
-   */
-  public void removeWallListener(WallListener listener) {
-    this.wallListeners.remove(listener); 
-  } 
-
-  /**
-   * Returns an unmodifiable collection of the walls of this plan.
-   */
-  public Collection<Wall> getWalls() {
-    return Collections.unmodifiableCollection(this.walls);
-  }
-
-  /**
-   * Adds a given <code>wall</code> to the set of walls of this plan.
-   * Once the <code>wall</code> is added, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#ADD ADD}. 
-   */
-  public void addWall(Wall wall) {
-    this.walls.add(wall);
-    fireWallEvent(wall, WallEvent.Type.ADD);
-  }
-
-  /**
-   * Removes a given <code>wall</code> from the set of walls of this plan.
-   * Once the <code>wall</code> is removed, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#DELETE DELETE}.
-   * If any wall is attached to <code>wall</code> they will be detached from it ;
-   * therefore wall listeners will receive a 
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void deleteWall(Wall wall) {
-    //  Ensure selectedItems don't keep a reference to wall
-    deselectItem(wall);
-    // Detach any other wall attached to wall
-    for (Wall otherWall : getWalls()) {
-      if (wall.equals(otherWall.getWallAtStart())) {
-        setWallAtStart(otherWall, null);
-      } else if (wall.equals(otherWall.getWallAtEnd())) {
-        setWallAtEnd(otherWall, null);
-      }
-    }
-    this.walls.remove(wall);
-    fireWallEvent(wall, WallEvent.Type.DELETE);
-  }
-
-  /**
-   * Moves <code>wall</code> start point to (<code>x</code>, <code>y</code>).
-   * Once the <code>wall</code> is updated, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * No change is made on walls attached to <code>wall</code>.
-   */
-  public void moveWallStartPointTo(Wall wall, float x, float y) {
-    if (x != wall.getXStart() || y != wall.getYStart()) {
-      wall.setXStart(x);
-      wall.setYStart(y);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Moves <code>wall</code> end point to (<code>x</code>, <code>y</code>) pixels.
-   * Once the <code>wall</code> is updated, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * No change is made on walls attached to <code>wall</code>.
-   */
-  public void moveWallEndPointTo(Wall wall, float x, float y) {
-    if (x != wall.getXEnd() || y != wall.getYEnd()) {
-      wall.setXEnd(x);
-      wall.setYEnd(y);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the wall at start of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> start point is attached itself
-   * to <code>wall</code>, this wall will be detached from <code>wall</code>, 
-   * and wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * @param wallAtStart a wall or <code>null</code> to detach <code>wall</code>
-   *          from any wall it was attached to before.
-   */
-  public void setWallAtStart(Wall wall, Wall wallAtStart) {
-    detachJoinedWall(wall, wall.getWallAtStart());    
-    wall.setWallAtStart(wallAtStart);
-    fireWallEvent(wall, WallEvent.Type.UPDATE);
-  }
-
-  /**
-   * Sets the wall at end of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, wall listeners added to this plan will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> end point is attached itself
-   * to <code>wall</code>, this wall will be detached from <code>wall</code>, 
-   * and wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * @param wallAtEnd a wall or <code>null</code> to detach <code>wall</code>
-   *          from any wall it was attached to before.
-   */
-  public void setWallAtEnd(Wall wall, Wall wallAtEnd) {
-    detachJoinedWall(wall, wall.getWallAtEnd());    
-    wall.setWallAtEnd(wallAtEnd);
-    fireWallEvent(wall, WallEvent.Type.UPDATE);
-  }
-
-  /**
-   * Detaches <code>joinedWall</code> from <code>wall</code>.
-   */
-  private void detachJoinedWall(Wall wall, Wall joinedWall) {
-    // Detach the previously attached wall to wall in parameter
-    if (joinedWall != null) {
-      if (wall.equals(joinedWall.getWallAtStart())) {
-        joinedWall.setWallAtStart(null);
-        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
-      } else if (wall.equals(joinedWall.getWallAtEnd())) {
-        joinedWall.setWallAtEnd(null);
-        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
-      } 
-    }
-  }
-
-  /**
-   * Notifies all wall listeners added to this plan an event of 
-   * a given <code>type</code>.
-   */
-  private void fireWallEvent(Wall wall, WallEvent.Type eventType) {
-    if (!this.wallListeners.isEmpty()) {
-      WallEvent wallEvent = new WallEvent(this, wall, eventType);
-      // Work on a copy of wallListeners to ensure a listener 
-      // can modify safely listeners list
-      WallListener [] listeners = this.wallListeners.
-        toArray(new WallListener [this.wallListeners.size()]);
-      for (WallListener listener : listeners) {
-        listener.wallChanged(wallEvent);
-      }
-    }
-  }
-
-  /**
-   * Returns the wall height of ths home.
-   */
-  public float getWallHeight() {
-    return this.wallHeight;
   }
 }
