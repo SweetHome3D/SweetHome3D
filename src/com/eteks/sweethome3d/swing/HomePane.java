@@ -41,7 +41,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
+    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE}
   
   /**
   * Create this view associated with its controller.
