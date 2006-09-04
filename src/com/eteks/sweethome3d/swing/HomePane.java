@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
@@ -30,6 +31,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -51,13 +53,13 @@ public class HomePane extends JRootPane {
   private JCheckBoxMenuItem wallCreationCheckBoxMenuItem;
   private JToggleButton     wallCreationToggleButton;
   private ResourceBundle    resource;
-
+  
   /**
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
-    this.resource = ResourceBundle.getBundle(
-        HomePane.class.getName());    
+    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
+    JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
@@ -197,13 +199,13 @@ public class HomePane extends JRootPane {
                                  HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         getCatalogFurniturePane(home, preferences), 
-        new JScrollPane(controller.getPlanController().getView()));
+        getPlanView3DPane(home, controller));
     mainPane.setContinuousLayout(true);
     mainPane.setOneTouchExpandable(true);
     mainPane.setResizeWeight(0.3);
     return mainPane;
   }
-  
+
   /**
    * Returns the catalog tree and furniture table pane. 
    */
@@ -217,5 +219,22 @@ public class HomePane extends JRootPane {
     catalogFurniturePane.setOneTouchExpandable(true);
     catalogFurniturePane.setResizeWeight(0.5);
     return catalogFurniturePane;
+  }
+
+  /**
+   * Returns the plan view and 3D view pane. 
+   */
+  private JComponent getPlanView3DPane(Home home, HomeController controller) {
+    JComponent planView = controller.getPlanController().getView();
+    JComponent view3D = new HomeComponent3D(home);
+    view3D.setPreferredSize(planView.getPreferredSize());
+    view3D.setMinimumSize(new Dimension(0, 0));
+    // Create a split pane that displays both components
+    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
+        new JScrollPane(planView), view3D);
+    planView3DPane.setContinuousLayout(true);
+    planView3DPane.setOneTouchExpandable(true);
+    planView3DPane.setResizeWeight(0.5);
+    return planView3DPane;
   }
 }
