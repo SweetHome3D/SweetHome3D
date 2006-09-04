@@ -35,39 +35,24 @@ public class Home {
   private List<SelectionListener>    selectionListeners;
   private Collection<Wall>           walls;
   private List<WallListener>         wallListeners;
-  private float                      wallHeight;
-
-  /**
-   * Creates a home with no furniture, no walls, 
-   * and a height equal to 250 cm.
-   */
-  public Home() {
-    this(250);
-  }
 
   /**
    * Creates a home with no furniture and no walls.
    */
-  public Home(float wallHeight) {
-    this(new ArrayList<HomePieceOfFurniture>(), wallHeight);
+  public Home() {
+    this(new ArrayList<HomePieceOfFurniture>());
   }
 
   /**
-   * Creates a home with the given <code>furniture</code>, 
-   * no walls and a height equal to 250 cm.
+   * Creates a home with the given <code>furniture</code> and no walls.
    */
   public Home(List<HomePieceOfFurniture> furniture) {
-    this(furniture, 250);
-  }
-
-  private Home(List<HomePieceOfFurniture> furniture, float wallHeight) {
     this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectedItems = new ArrayList<Object>();
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.walls = new ArrayList<Wall>();
     this.wallListeners = new ArrayList<WallListener>();
-    this.wallHeight = wallHeight;
   }
 
   /**
@@ -130,31 +115,6 @@ public class Home {
       this.furniture.remove(index);
       firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.DELETE);
     }
-  }
-
-  /**
-   * Updates the location of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureLocation(HomePieceOfFurniture piece, 
-                                          float x, float y) {
-    piece.setX(x);
-    piece.setY(y);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-  }
-  
-  /**
-   * Updates the angle of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureAngle(HomePieceOfFurniture piece, 
-                                      float angle) {
-    piece.setAngle(angle);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
   }
 
   private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
@@ -252,6 +212,8 @@ public class Home {
    * equal to {@link WallEvent.Type#ADD ADD}. 
    */
   public void addWall(Wall wall) {
+    // Make a copy of the list to avoid conflicts in the list returned by getWalls
+    this.walls = new ArrayList<Wall>(this.walls);
     this.walls.add(wall);
     fireWallEvent(wall, WallEvent.Type.ADD);
   }
@@ -279,6 +241,8 @@ public class Home {
         setWallAtEnd(otherWall, null);
       }
     }
+    // Make a copy of the list to avoid conflicts in the list returned by getWalls
+    this.walls = new ArrayList<Wall>(this.walls);
     this.walls.remove(wall);
     fireWallEvent(wall, WallEvent.Type.DELETE);
   }
@@ -388,12 +352,5 @@ public class Home {
         listener.wallChanged(wallEvent);
       }
     }
-  }
-
-  /**
-   * Returns the wall height of ths home.
-   */
-  public float getWallHeight() {
-    return this.wallHeight;
   }
 }
