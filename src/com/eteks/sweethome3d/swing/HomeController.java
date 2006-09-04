@@ -72,7 +72,7 @@ public class HomeController {
     this.planController = new PlanController(home, preferences, undoSupport);
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
-    enableActions();
+    enableDefaultActions();
   }
 
   /**
@@ -167,7 +167,7 @@ public class HomeController {
   /**
    * Enables actions at controller instantiation. 
    */
-  private void enableActions() {
+  private void enableDefaultActions() {
     ((HomePane)getView()).setEnabled(HomePane.ActionType.WALL_CREATION, true);
   }
 
@@ -336,4 +336,3 @@ public class HomeController {
     view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
   }
 }
-
