@@ -35,24 +35,39 @@ public class Home {
   private List<SelectionListener>    selectionListeners;
   private Collection<Wall>           walls;
   private List<WallListener>         wallListeners;
+  private float                      wallHeight;
+
+  /**
+   * Creates a home with no furniture, no walls, 
+   * and a height equal to 250 cm.
+   */
+  public Home() {
+    this(250);
+  }
 
   /**
    * Creates a home with no furniture and no walls.
    */
-  public Home() {
-    this(new ArrayList<HomePieceOfFurniture>());
+  public Home(float wallHeight) {
+    this(new ArrayList<HomePieceOfFurniture>(), wallHeight);
   }
 
   /**
-   * Creates a home with the given <code>furniture</code> and no walls.
+   * Creates a home with the given <code>furniture</code>, 
+   * no walls and a height equal to 250 cm.
    */
   public Home(List<HomePieceOfFurniture> furniture) {
+    this(furniture, 250);
+  }
+
+  private Home(List<HomePieceOfFurniture> furniture, float wallHeight) {
     this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectedItems = new ArrayList<Object>();
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.walls = new ArrayList<Wall>();
     this.wallListeners = new ArrayList<WallListener>();
+    this.wallHeight = wallHeight;
   }
 
   /**
@@ -377,5 +392,12 @@ public class Home {
         listener.wallChanged(wallEvent);
       }
     }
+  }
+
+  /**
+   * Returns the wall height of ths home.
+   */
+  public float getWallHeight() {
+    return this.wallHeight;
   }
 }
