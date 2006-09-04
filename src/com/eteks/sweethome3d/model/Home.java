@@ -117,6 +117,31 @@ public class Home {
     }
   }
 
+  /**
+   * Updates the location of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureLocation(HomePieceOfFurniture piece, 
+                                          float x, float y) {
+    piece.setX(x);
+    piece.setY(y);
+    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+  }
+  
+  /**
+   * Updates the angle of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureAngle(HomePieceOfFurniture piece, 
+                                      float angle) {
+    piece.setAngle(angle);
+    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+  }
+
   private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
                                            FurnitureEvent.Type eventType) {
     if (!this.furnitureListeners.isEmpty()) {
