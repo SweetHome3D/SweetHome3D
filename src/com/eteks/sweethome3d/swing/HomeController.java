@@ -395,7 +395,7 @@ public class HomeController {
 
   /**
    * Manages home close operation. If the home managed by this controller is modified,
-   * this method will {@link HomePane#confirmSave() confirm} 
+   * this method will {@link HomePane#confirmSave(String) confirm} 
    * in view whether home should be saved. Once home is actually saved,
    * home is removed from application homes list.
    */
@@ -429,7 +429,7 @@ public class HomeController {
 
   /**
    * Saves the home managed by this controller with a different name. 
-   * This method displays a {@link HomePane#showSaveDialog() save dialog} in   view, 
+   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in   view, 
    * and saves home with the choosen name if any. 
    * If this name already exists, the user will be 
    * {@link HomePane#confirmOverwrite(String) prompted} in view whether 
