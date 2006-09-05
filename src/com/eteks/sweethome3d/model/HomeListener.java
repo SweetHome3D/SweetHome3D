@@ -1,5 +1,5 @@
 /*
- * Content.java 25 avr. 2006
+ * HomeListener.java 1 sept. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,18 +19,15 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.util.EventListener;
 
 /**
- * Content for files, images...
+ * Listener implemented to receive notifications of home changes in {@link HomeApplication}.
  * @author Emmanuel Puybaret
  */
-public interface Content extends Serializable {
+public interface HomeListener extends EventListener {
   /**
-   * Returns an input stream to a content.
-   * @throws IOException If the input stream can't be opened.
+   * Invoked when a home is added or deleted.
    */
-  InputStream openStream() throws IOException;
+  void homeChanged(HomeEvent homeEvent);
 }

@@ -1,5 +1,5 @@
 /*
- * Content.java 25 avr. 2006
+ * HomeRecorder.java 30 août 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,18 +19,28 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-
 /**
- * Content for files, images...
+ * Homes recorder.
  * @author Emmanuel Puybaret
  */
-public interface Content extends Serializable {
+public interface HomeRecorder {
   /**
-   * Returns an input stream to a content.
-   * @throws IOException If the input stream can't be opened.
+   * Writes <code>home</code> data.
+   * @param home  the home to write.
+   * @param name  the name of the resource in which the home will be written. 
    */
-  InputStream openStream() throws IOException;
+  public void writeHome(Home home, String name) throws RecorderException;
+  
+  /**
+   * Returns a home instance read from its <code>name</code>.
+   * @param name  the name of the resource from which the home will be read. 
+   */
+  public Home readHome(String name) throws RecorderException;
+
+  /**
+   * Returns <code>true</code> if the home with a given <code>name</code>
+   * exists.
+   * @param name the name of the resource to check
+   */
+  public boolean exists(String name) throws RecorderException;
 }

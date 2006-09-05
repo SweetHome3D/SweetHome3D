@@ -1,5 +1,5 @@
 /*
- * Content.java 25 avr. 2006
+ * HomeEvent.java 1 sept. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,18 +19,39 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.util.EventObject;
 
 /**
- * Content for files, images...
+ * Type of event notified when a {@link Home home} is added to or deleted 
+ * from an {@link HomeApplication application}.
  * @author Emmanuel Puybaret
  */
-public interface Content extends Serializable {
+public class HomeEvent extends EventObject {
+  public enum Type {ADD, DELETE}
+
+  private Home home;
+  private Type type;
+
   /**
-   * Returns an input stream to a content.
-   * @throws IOException If the input stream can't be opened.
+   * Creates an event with <code>home</code> as source, and an associated <code>piece</code>.
    */
-  InputStream openStream() throws IOException;
+  public HomeEvent(Object source, Home home, Type type) {
+    super(source);
+    this.home = home;
+    this.type =  type;
+  }
+
+  /**
+   * Returns the home added or deleted.
+   */
+  public Home getHome() {
+    return this.home;
+  }
+
+  /**
+   * Returns the type of event. 
+   */
+  public Type getType() {
+    return this.type;
+  }
 }

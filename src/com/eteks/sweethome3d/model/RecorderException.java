@@ -1,5 +1,5 @@
 /*
- * Content.java 25 avr. 2006
+ * RecorderException.java 30 août 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,18 +19,32 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-
 /**
- * Content for files, images...
+ * Exception thrown by methods that access to data in IO layer.
  * @author Emmanuel Puybaret
  */
-public interface Content extends Serializable {
+public class RecorderException extends Exception {
+  private static final long serialVersionUID = 1L;
+
   /**
-   * Returns an input stream to a content.
-   * @throws IOException If the input stream can't be opened.
+   * Creates a default <code>RecorderException</code>.
    */
-  InputStream openStream() throws IOException;
+  public RecorderException() {
+    super();
+  }
+
+  /**
+   * Creates a <code>RecorderException</code> from its message.
+   */
+  public RecorderException(String message) {
+    super(message);
+  }
+
+  /**
+   * Creates a <code>RecorderException</code> with its message 
+   * and the internal cause that initiated this exception.
+   */
+  public RecorderException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

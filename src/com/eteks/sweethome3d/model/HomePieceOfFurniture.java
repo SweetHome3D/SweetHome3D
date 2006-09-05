@@ -30,6 +30,8 @@ import java.awt.geom.Rectangle2D;
  * @author Emmanuel Puybaret
  */
 public class HomePieceOfFurniture implements PieceOfFurniture {
+  private static final long serialVersionUID = 1L;
+  
   private String  name;
   private Content icon;
   private Content model;

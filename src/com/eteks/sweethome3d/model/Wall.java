@@ -24,12 +24,15 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.Serializable;
 
 /**
  * A wall of a plan.
  * @author Emmanuel Puybaret
  */
-public class Wall {
+public class Wall implements Serializable  {
+  private static final long serialVersionUID = 1L;
+  
   private float xStart;
   private float yStart;
   private float xEnd;

@@ -30,6 +30,8 @@ import com.eteks.sweethome3d.model.Content;
  * @author Emmanuel Puybaret
  */
 public class URLContent implements Content {
+  private static final long serialVersionUID = 1L;
+
   private URL url;
   
   public URLContent(URL url) {
