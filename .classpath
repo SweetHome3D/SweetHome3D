@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="libtest/jdom.jar"/>
 	<classpathentry kind="lib" path="libtest/abbot.jar"/>
 	<classpathentry kind="con" path="SWT_CONTAINER/JFACE/PLATFORM"/>
+	<classpathentry kind="lib" path="libtest/AppleJavaExtensions.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
