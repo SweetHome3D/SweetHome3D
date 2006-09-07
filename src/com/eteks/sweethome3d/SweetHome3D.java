@@ -30,7 +30,9 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JRootPane;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -91,17 +93,21 @@ public class SweetHome3D extends HomeApplication {
   public static void main(String [] args) {
     HomeApplication application = new SweetHome3D();
     Home firstHome; 
-    if (args.length == 0) {
+    if (args.length == 2 && args [0].equals("-open")) {
+      try {
+        // Read home file in args [1] if args [0] == "-file"
+        firstHome = application.getHomeRecorder().readHome(args [1]);
+       } catch (RecorderException ex) {
+        return;
+       }
+    } else {
       // Create a default home
       firstHome = new Home(application.getUserPreferences().getDefaultWallHeight());
-    } else {
-     try {
-       // Read home file in args [0]
-       firstHome = application.getHomeRecorder().readHome(args [0]);
-      } catch (RecorderException ex) {
-       return;
-      }
     }
+    // Change Mac OS X application menu name
+    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
+    // Use Mac OS X screen menu bar for frames menu bar
+    System.setProperty("apple.laf.useScreenMenuBar", "true");
     try {
       // Apply current system look and feel
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -116,9 +122,9 @@ public class SweetHome3D extends HomeApplication {
    * A frame that displays a home.
    */
   public static class HomeFrame extends JFrame {
-    private static int     newHomeCount;
-    private int            newHomeNumber;
-    private ResourceBundle resource;
+    private static int         newHomeCount;
+    private int                newHomeNumber;
+    private ResourceBundle     resource;
     
     private HomeFrame(Home home,
                       HomeApplication application,
@@ -135,8 +141,12 @@ public class SweetHome3D extends HomeApplication {
       setIconImage(new ImageIcon(
           HomeFrame.class.getResource("resources/frameIcon.png")).getImage());
       updateTitle(home);
-      
-      setContentPane(controller.getView());
+      // Replace frame rootPane by home controller view
+      // The best solution should be to program the following statement : 
+      //   add(controller.getView());
+      // but Mac OS X accepts to display the menu bar of a frame in the screen 
+      // menu bar only if this menu bar depends directly on its root pane  
+      setRootPane((JRootPane)controller.getView());
       // Compute frame size and location
       pack();
       fitInScreen();
@@ -184,6 +194,9 @@ public class SweetHome3D extends HomeApplication {
             updateTitle(home);
           }
         });
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        MacOSXConfiguration.bindControllerToApplicationMenu(this, controller);
+      }
     }
     
     /**
@@ -211,9 +224,17 @@ public class SweetHome3D extends HomeApplication {
       } else {
         name = new File(name).getName();
       }
-      String title = name + " - Sweet Home 3D"; 
-      if (home.isModified()) {
-        title = "* " + title;
+      
+      String title = name;
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        // Use black indicator in close icon to show home is modified
+        getRootPane().putClientProperty("windowModified", 
+            Boolean.valueOf(home.isModified())); 
+      } else {
+        title += " - Sweet Home 3D"; 
+        if (home.isModified()) {
+          title = "* " + title;
+        }
       }
       setTitle(title);
     }

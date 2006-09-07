@@ -20,9 +20,12 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractButton;
@@ -148,8 +151,11 @@ public class HomePane extends JRootPane {
     fileMenu.add(actions.get(ActionType.CLOSE));
     fileMenu.add(actions.get(ActionType.SAVE));
     fileMenu.add(actions.get(ActionType.SAVE_AS));
-    fileMenu.addSeparator();
-    fileMenu.add(actions.get(ActionType.EXIT));
+    // Don't add EXIT menu under Mac OS X, it's displayed in application menu  
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      fileMenu.addSeparator();
+      fileMenu.add(actions.get(ActionType.EXIT));
+    }
 
     // Create Edit menu
     JMenu editMenu = new JMenu(
@@ -262,7 +268,7 @@ public class HomePane extends JRootPane {
     JComponent furnitureView = new FurnitureTable(home, preferences);
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        new JScrollPane(catalogView), new JScrollPane(furnitureView));
+        new HomeScrollPane(catalogView), new HomeScrollPane(furnitureView));
     catalogFurniturePane.setContinuousLayout(true);
     catalogFurniturePane.setOneTouchExpandable(true);
     catalogFurniturePane.setResizeWeight(0.5);
@@ -279,7 +285,7 @@ public class HomePane extends JRootPane {
     view3D.setMinimumSize(new Dimension(0, 0));
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        new JScrollPane(planView), view3D);
+        new HomeScrollPane(planView), view3D);
     planView3DPane.setContinuousLayout(true);
     planView3DPane.setOneTouchExpandable(true);
     planView3DPane.setResizeWeight(0.5);
@@ -290,14 +296,25 @@ public class HomePane extends JRootPane {
    * Displays a file chooser dialog to open a .sh3d file.
    */
   public String showOpenDialog() {
-    return showFileChooser(false, null);
+    // Use native file dialog under Mac OS X
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      return showFileDialog(false, null);
+    } else {
+      return showFileChooser(false, null);
+    }
   }
 
   /**
    * Displays a file chooser dialog to save a home in a .sh3d file.
    */
   public String showSaveDialog(String name) {
-    String file = showFileChooser(true, name);
+    String file;
+    // Use native file dialog under Mac OS X
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      file = showFileDialog(true, name);
+    } else {
+      file = showFileChooser(true, name);
+    }
     if (file != null && !file.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
       file += SWEET_HOME_3D_EXTENSION;
     }
@@ -305,9 +322,9 @@ public class HomePane extends JRootPane {
   }
   
   /**
-   * Displays a file chooser.
+   * Displays a Swing file chooser.
    */
-  public String showFileChooser(boolean save, String name) {
+  private String showFileChooser(boolean save, String name) {
     JFileChooser fileChooser = new JFileChooser();
     // Choose file chooser type
     if (save && name != null) {
@@ -328,8 +345,49 @@ public class HomePane extends JRootPane {
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve current directory for future calls
       currentDirectory = fileChooser.getCurrentDirectory();
-      // Return choosen file
+      // Return selected file
       return fileChooser.getSelectedFile().toString();
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Displays an AWT file dialog.
+   */
+  private String showFileDialog(boolean save, String name) {
+    FileDialog fileDialog = 
+      new FileDialog(JOptionPane.getFrameForComponent(this));
+
+    // Choose file chooser type
+    if (save && name != null) {
+      fileDialog.setFile(new File(name).getName());
+    }
+    // Set .sh3d files filter 
+    fileDialog.setFilenameFilter(new FilenameFilter() {
+        public boolean accept(File dir, String name) {
+          return name.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION);
+        }
+      });
+    // Update current directory
+    if (currentDirectory != null) {
+      fileDialog.setDirectory(currentDirectory.toString());
+    }
+    if (save) {
+      fileDialog.setMode(FileDialog.SAVE);
+      fileDialog.setTitle(this.resource.getString("fileDialog.saveTitle"));
+    } else {
+      fileDialog.setMode(FileDialog.LOAD);
+      fileDialog.setTitle(this.resource.getString("fileDialog.openTitle"));
+    }
+    fileDialog.setVisible(true);
+    String selectedFile = fileDialog.getFile();
+    // If user choosed a file
+    if (selectedFile != null) {
+      // Retrieve current directory for future calls
+      currentDirectory = new File(fileDialog.getDirectory());
+      // Return selected file
+      return currentDirectory + File.separator + selectedFile;
     } else {
       return null;
     }
@@ -406,5 +464,18 @@ public class HomePane extends JRootPane {
     String title = this.resource.getString("confirmExit.title");
     return JOptionPane.showConfirmDialog(this, message, title, 
         JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+  }
+  
+  private static class HomeScrollPane extends JScrollPane {
+    /**
+     * Creates a scroll pane that always displays scroll bar on Mac OS X.
+     */
+    public HomeScrollPane(Component view) {
+      super(view);
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_ALWAYS);
+        setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+      }
+    }
   }
 }
