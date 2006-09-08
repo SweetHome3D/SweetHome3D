@@ -83,14 +83,15 @@ public class SweetHome3DSwingDraft extends JFrame {
   private JMenu       planMenu            = null;
   private JMenuItem   newMenuItem         = null;
   private JMenuItem   openMenuItem        = null;
+  private JMenuItem   closeMenuItem       = null;
   private JMenuItem   saveAsMenuItem      = null;
   private JMenuItem   preferencesMenuItem = null;
   private JMenuItem   undoMenuItem        = null;
   private JMenuItem   redoMenuItem        = null;
   private JMenuItem   addMenuItem         = null;
   private JMenuItem   deleteMenuItem      = null;
+  private JMenuItem   createWallsMenuItem = null;
   private JMenuItem   importImageMenuItem = null;
-  private JMenuItem   showRulesMenuItem   = null;
 
   /**
    * This is the default constructor.
@@ -150,6 +151,7 @@ public class SweetHome3DSwingDraft extends JFrame {
       fileMenu.setText("File");
       fileMenu.add(getNewMenuItem());
       fileMenu.add(getOpenMenuItem());
+      fileMenu.add(getCloseMenuItem());
       fileMenu.add(getSaveMenuItem());
       fileMenu.add(getSaveAsMenuItem());
       fileMenu.add(getPreferencesMenuItem());
@@ -194,8 +196,8 @@ public class SweetHome3DSwingDraft extends JFrame {
     if (planMenu == null) {
       planMenu = new JMenu();
       planMenu.setText("Plan");
-      planMenu.add(getImportImageMenuItem());
       planMenu.add(getShowRulesMenuItem());
+      planMenu.add(getImportImageMenuItem());
     }
     return planMenu;
   }
@@ -383,11 +385,11 @@ public class SweetHome3DSwingDraft extends JFrame {
    * This method initializes showRulesMenuItem.
    */
   private JMenuItem getShowRulesMenuItem() {
-    if (showRulesMenuItem == null) {
-      showRulesMenuItem = new JMenuItem();
-      showRulesMenuItem.setText("Show rules");
+    if (createWallsMenuItem == null) {
+      createWallsMenuItem = new JMenuItem();
+      createWallsMenuItem.setText("Create walls");
     }
-    return showRulesMenuItem;
+    return createWallsMenuItem;
   }
 
   /**
@@ -602,6 +604,19 @@ public class SweetHome3DSwingDraft extends JFrame {
   }
 
   /**
+ * This method initializes closeMenuItem	
+ * 	
+ * @return javax.swing.JMenuItem	
+ */
+private JMenuItem getCloseMenuItem() {
+  if (closeMenuItem == null) {
+    closeMenuItem = new JMenuItem();
+    closeMenuItem.setText("Close");
+  }
+  return closeMenuItem;
+}
+
+/**
    * Launches this application.
    */
   public static void main(String [] args) {

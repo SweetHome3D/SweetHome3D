@@ -290,8 +290,7 @@ public class SweetHome3DSwtDraft {
     aboutMenuItem.setText("About");
     aboutMenuItem
         .addSelectionListener(new org.eclipse.swt.events.SelectionListener() {
-          public void widgetSelected(
-                                     org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
             MessageBox aboutMessageBox = new MessageBox(sShell,
                 SWT.OK);
             aboutMessageBox
@@ -300,16 +299,15 @@ public class SweetHome3DSwtDraft {
             aboutMessageBox.open();
           }
 
-          public void widgetDefaultSelected(
-                                            org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent e) {
           }
         });
     helpMenuItem.setMenu(helpMenu);
     planMenu = new Menu(planMenuItem);
+    MenuItem createWallsMenuItem = new MenuItem(planMenu, SWT.PUSH);
+    createWallsMenuItem.setText("Create walls");
     MenuItem importImageMenuItem = new MenuItem(planMenu, SWT.PUSH);
     importImageMenuItem.setText("Import image...");
-    MenuItem showRulesMenuItem = new MenuItem(planMenu, SWT.PUSH);
-    showRulesMenuItem.setText("Show rules");
     planMenuItem.setMenu(planMenu);
     furnitureMenu = new Menu(furnitureMenuItem);
     MenuItem addMenuItem = new MenuItem(furnitureMenu, SWT.PUSH);
@@ -334,6 +332,8 @@ public class SweetHome3DSwtDraft {
     newMenuItem.setText("New");
     MenuItem openMenuItem = new MenuItem(fileMenu, SWT.PUSH);
     openMenuItem.setText("Open...");
+    MenuItem closeMenuItem = new MenuItem(fileMenu, SWT.PUSH);
+    closeMenuItem.setText("Close");
     MenuItem saveMenuItem = new MenuItem(fileMenu, SWT.PUSH);
     saveMenuItem.setText("Save...");
     MenuItem saveAsMenuItem = new MenuItem(fileMenu, SWT.PUSH);
@@ -344,13 +344,11 @@ public class SweetHome3DSwtDraft {
     exitMenuItem.setText("Exit");
     exitMenuItem
         .addSelectionListener(new org.eclipse.swt.events.SelectionListener() {
-          public void widgetSelected(
-                                     org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetSelected(org.eclipse.swt.events.SelectionEvent e) {
             System.exit(0);
           }
 
-          public void widgetDefaultSelected(
-                                            org.eclipse.swt.events.SelectionEvent e) {
+          public void widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent e) {
           }
         });
     fileMenuItem.setMenu(fileMenu);
