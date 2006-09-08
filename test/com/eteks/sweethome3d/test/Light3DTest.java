@@ -44,11 +44,15 @@ public class Light3DTest {
     // Add a gray ambient light 
     Light ambientLight = new AmbientLight(new Color3f(0.8f, 0.8f, 0.8f));
     ambientLight.setInfluencingBounds(new BoundingBox());
+    // Uncomment next line if you want to turn off ambientLight
+    // ambientLight.setEnable(false);
     root.addChild(ambientLight);
     
     // Add a white directional light
     Light light1 = new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1, -1, -1));
     light1.setInfluencingBounds(new BoundingBox());
+    // Uncomment next line if you want to turn off light1
+    // light1.setEnable(false);
     root.addChild(light1);
 
     Java3DTest.viewSceneTree(root);
