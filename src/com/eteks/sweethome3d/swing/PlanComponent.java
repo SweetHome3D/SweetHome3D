@@ -27,36 +27,33 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Paint;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.TexturePaint;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-import javax.swing.Icon;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -69,14 +66,17 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class PlanComponent extends JComponent {
+  private enum ActionType {DELETE_SELECTION, ESCAPE, 
+    MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
+    TOGGLE_MAGNTISM_ON, TOGGLE_MAGNTISM_OFF}
+  
   private static final float MARGIN = 40;
   private Home               home;
   private UserPreferences    preferences;
-  private float              scale  = 0.5f;
+  private float              scale = 0.5f;
 
   private Rectangle2D        rectangleFeedback;
   private Rectangle2D        planBoundsCache;
-  private Cursor             rotationCursor;
 
   public PlanComponent(Home home, UserPreferences preferences,
                        PlanController controller) {
@@ -88,12 +88,12 @@ public class PlanComponent extends JComponent {
     addModelListeners(home);
     if (controller != null) {
       addMouseListeners(controller);
-      addKeyListener(controller);
+      createActions(controller);
+      installKeyboardActions();
       addFocusListener(controller);
       setFocusable(true);
       setAutoscrolls(true);
     }
-    createRotationCursor();
   }
 
   /**
@@ -110,15 +110,7 @@ public class PlanComponent extends JComponent {
       }
     });
     home.addSelectionListener(new SelectionListener () {
-      public void selectionChanged(SelectionEvent ev) {
-        repaint();
-      }
-    });
-    home.addFurnitureListener(new FurnitureListener() {
-      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-        planBoundsCache = null;
-        // Revalidate and repaint
-        revalidate();
+      public void selectionChanged(SelectionEvent selectionEvent) {
         repaint();
       }
     });
@@ -164,50 +156,6 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Adds AWT key listener to this component that calls back <code>controller</code> methods.  
-   */
-  private void addKeyListener(final PlanController controller) {
-    addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent ev) {
-        if (isEnabled()) {
-          switch (ev.getKeyCode()) {
-            case KeyEvent.VK_BACK_SPACE :
-            case KeyEvent.VK_DELETE :
-              controller.deleteSelection();
-              break;
-            case KeyEvent.VK_ESCAPE :
-              controller.escape();
-              break;
-            case KeyEvent.VK_SHIFT :
-              controller.toggleMagnetism(true);
-              break;
-            case KeyEvent.VK_LEFT :
-              controller.moveSelection(-1 / scale, 0);
-              break;
-            case KeyEvent.VK_UP :
-              controller.moveSelection(0, -1 / scale);
-              break;
-            case KeyEvent.VK_DOWN :
-              controller.moveSelection(0, 1 / scale);
-              break;
-            case KeyEvent.VK_RIGHT :
-              controller.moveSelection(1 / scale, 0);
-              break;
-          }
-        }
-      }
-
-      @Override
-      public void keyReleased(KeyEvent ev) {
-        if (isEnabled() && ev.getKeyCode() == KeyEvent.VK_SHIFT) {
-          controller.toggleMagnetism(false);
-        }
-      }
-    });
-  }
-  
-  /**
    * Adds AWT focus listener to this component that calls back <code>controller</code> 
    * escape method on focus lost event.  
    */
@@ -221,34 +169,72 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Create custom rotation cursor.
-   */ 
-  private void createRotationCursor() {
-    // Retrieve system cursor size
-    Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
-    String cursorImageResource;
-    // If returned cursor size is 0, system doesn't support custom cursor  
-    if (cursorSize.width == 0) {      
-      this.rotationCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);      
-    } else {
-      // Use a different cursor image depending on system cursor size 
-      if (cursorSize.width > 16) {
-        cursorImageResource = "resources/rotationCursor32x32.png";
-      } else {
-        cursorImageResource = "resources/rotationCursor16x16.png";
+   * Installs keys bound to actions. 
+   */
+  private void installKeyboardActions() {
+    InputMap inputMap = getInputMap(WHEN_FOCUSED);
+    inputMap.put(KeyStroke.getKeyStroke("DELETE"), ActionType.DELETE_SELECTION);
+    inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
+    inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.MOVE_SELECTION_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
+    inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
+    inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNTISM_ON);
+    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNTISM_OFF);
+  }
+ 
+  /**
+   * Creates actions that calls back <code>controller</code> methods.  
+   */
+  private void createActions(final PlanController controller) {
+    // Delete selection action mapped to back space and delete keys
+    Action deleteSelectionAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        controller.deleteSelection();
       }
-      try {
-        // Read cursor image
-        BufferedImage cursorImage = 
-          ImageIO.read(getClass().getResource(cursorImageResource));
-        // Create custom cursor from image
-        this.rotationCursor = getToolkit().createCustomCursor(cursorImage, 
-            new Point(cursorSize.width / 2, cursorSize.height / 2),
-            "Rotation cursor");
-      } catch (IOException ex) {
-        throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
+    };
+    // Escape action mapped to Esc key
+    Action escapeAction = new AbstractAction() {
+      public void actionPerformed(ActionEvent e) {
+        controller.escape();
+      }
+    };
+    // Move selection action mapped to arrow keys 
+    class MoveSelectionAction extends AbstractAction {
+      private final int dx;
+      private final int dy;
+      
+      public MoveSelectionAction(int dx, int dy) {
+        this.dx = dx;
+        this.dy = dy;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.moveSelection(this.dx / scale, this.dy / scale);
       }
     }
+    // Temporary magnestism mapped to alt key
+    class ToggleMagnetismAction extends AbstractAction {
+      private final boolean toggle;
+      
+      public ToggleMagnetismAction(boolean toggle) {
+        this.toggle = toggle;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.toggleMagnetism(this.toggle);
+      }
+    }
+    ActionMap actionMap = getActionMap();
+    actionMap.put(ActionType.DELETE_SELECTION, deleteSelectionAction);
+    actionMap.put(ActionType.ESCAPE, escapeAction);
+    actionMap.put(ActionType.MOVE_SELECTION_LEFT, new MoveSelectionAction(-1, 0));
+    actionMap.put(ActionType.MOVE_SELECTION_UP, new MoveSelectionAction(0, -1));
+    actionMap.put(ActionType.MOVE_SELECTION_DOWN, new MoveSelectionAction(0, 1));
+    actionMap.put(ActionType.MOVE_SELECTION_RIGHT, new MoveSelectionAction(1, 0));
+    actionMap.put(ActionType.TOGGLE_MAGNTISM_ON, new ToggleMagnetismAction(true));
+    actionMap.put(ActionType.TOGGLE_MAGNTISM_OFF, new ToggleMagnetismAction(false));
   }
 
   /**
@@ -279,13 +265,6 @@ public class PlanComponent extends JComponent {
         this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
         this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
       }
-      for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible()) {
-          for (float [] point : piece.getPoints()) {
-            this.planBoundsCache.add(point [0], point [1]);
-          }
-        }
-      }
     }
     return this.planBoundsCache;
   }
@@ -308,7 +287,6 @@ public class PlanComponent extends JComponent {
         insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     // Paint component contents
     paintGrid(g2D);
     paintContent(g2D);   
@@ -403,42 +381,17 @@ public class PlanComponent extends JComponent {
     g2D.fill(wallsArea);
     // Draw selected walls with a surrounding shape
     Color selectionColor = UIManager.getColor("textHighlight");
-    Paint selectionPaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
-        selectionColor.getBlue(), 128);
-    Stroke selectionStroke = new BasicStroke(6 / this.scale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    g2D.setPaint(selectionPaint);
-    g2D.setStroke(selectionStroke);
-    List<Object> selectedItems = this.home.getSelectedItems();
-    for (Object item : selectedItems) {
+    g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 128));
+    g2D.setStroke(new BasicStroke(6 / this.scale, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    for (Object item : this.home.getSelectedItems()) {
       if (item instanceof Wall) {
         g2D.draw(getShape(((Wall)item).getPoints()));
-      }  
+      }
     }
     // Draw walls area
     g2D.setPaint(getForeground());
     g2D.setStroke(new BasicStroke(2f / this.scale));
     g2D.draw(wallsArea);
-    
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible()) {
-        Shape pieceShape = getShape(piece.getPoints());
-        // Fill piece area
-        g2D.setPaint(UIManager.getColor("window"));
-        g2D.fill(pieceShape);
-        // Draw its icon
-        paintPieceOfFurnitureIcon(g2D, piece);
-        if (selectedItems.contains(piece)) {
-          g2D.setPaint(selectionPaint);
-          g2D.setStroke(selectionStroke);
-          g2D.draw(pieceShape);
-        }        
-        // Draw its border
-        g2D.setPaint(getForeground());
-        g2D.setStroke(new BasicStroke(1f / this.scale));
-        g2D.draw(pieceShape);
-      }
-    }
   }
 
   /**
@@ -455,26 +408,6 @@ public class PlanComponent extends JComponent {
     imageGraphics.dispose();
     return new TexturePaint(image, 
         new Rectangle2D.Float(0, 0, 10 / this.scale, 10 / this.scale));
-  }
-
-  /**
-   * Paints <code>piece</code> icon with <code>g2D</code>.
-   */
-  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece) {
-    // Get piece icon
-    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
-    // Translate to piece center
-    g2D.translate(piece.getX(), piece.getY());
-    // Scale icon to fit in its area
-    float minDimension = Math.min(piece.getWidth(), piece.getDepth());
-    float scale = minDimension / icon.getIconHeight();
-    g2D.scale(scale, scale);
-    // Paint piece icon
-    icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
-    // Revert g2D transformation to previous value
-    scale = 1 / scale;
-    g2D.scale(scale, scale);
-    g2D.translate(-piece.getX(), -piece.getY());
   }
 
   /**
@@ -519,21 +452,20 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Ensures selected items are visible at screen and moves
+   * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
   public void makeSelectionVisible() {
-    Area area = new Area();
+    List<Wall> selectedWalls = new ArrayList<Wall>();
     for (Object item : this.home.getSelectedItems()) {
       if (item instanceof Wall) {
-        area.add(new Area(getShape(((Wall)item).getPoints())));
-      } else if (item instanceof HomePieceOfFurniture) {
-        area.add(new Area(getShape(((HomePieceOfFurniture)item).getPoints())));        
+        selectedWalls.add((Wall)item); 
       }
     }      
-    scrollRectToVisible(getShapePixelBounds(area));
+    Shape wallsArea = getWallsArea(selectedWalls);
+    scrollRectToVisible(getShapePixelBounds(wallsArea));
   }
-
+ 
   /**
    * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
    * moving scroll bars if needed.
@@ -601,12 +533,5 @@ public class PlanComponent extends JComponent {
         (int)Math.round((shapeBounds.getMinY() - planBounds.getMinY() + MARGIN) * this.scale) + insets.top,
         (int)Math.round(shapeBounds.getWidth() * this.scale),
         (int)Math.round(shapeBounds.getHeight() * this.scale));
-  }
-  
-  /**
-   * Sets the cursor of this component as rotation cursor. 
-   */
-  public void setRotationCursor() {
-    setCursor(this.rotationCursor);
   }
 }
