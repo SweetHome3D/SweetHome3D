@@ -173,7 +173,7 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-    * Adds AWT focus listener to this component that calls back <code>controller</code> 
+   * Adds AWT focus listener to this component that calls back <code>controller</code> 
    * escape method on focus lost event.  
    */
   private void addFocusListener(final PlanController controller) {
