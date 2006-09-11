@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.test;
 
-import java.awt.BorderLayout;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -32,7 +31,6 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.swing.IconManager;
