@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.test;
 
+import java.awt.BorderLayout;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -31,6 +32,7 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.swing.IconManager;
@@ -59,14 +61,14 @@ public class DropImageFileTest {
    * with the file received from a drop operation.
    */
   private static class LabelIconTransferHandler extends TransferHandler {
-    public boolean canImport(JComponent dropComponent, 
+    public boolean canImport(JComponent destinationComponent, 
                              DataFlavor [] flavors) {
       // This handler accepts only a list of files dropped on a label
-      return dropComponent instanceof JLabel
+      return destinationComponent instanceof JLabel
              && Arrays.asList(flavors).contains(DataFlavor.javaFileListFlavor); 
     }
 
-    public boolean importData(JComponent dropComponent, 
+    public boolean importData(JComponent destinationComponent, 
                               Transferable transferedFiles) {
       try {
         // Get the transfered files
@@ -74,9 +76,9 @@ public class DropImageFileTest {
             getTransferData(DataFlavor.javaFileListFlavor);
         // Get an icon from the content of the first file
         URLContent imageContent = new URLContent(files.get(0).toURL());
-        Icon icon = IconManager.getInstance().getIcon(imageContent, 128, dropComponent);
+        Icon icon = IconManager.getInstance().getIcon(imageContent, 128, destinationComponent);
         // Update label icon
-        JLabel label = (JLabel)dropComponent;
+        JLabel label = (JLabel)destinationComponent;
         label.setIcon(icon);
         label.setText("");
         return true;
