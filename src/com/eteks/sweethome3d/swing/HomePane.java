@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
@@ -30,6 +31,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -48,20 +50,20 @@ public class HomePane extends JRootPane {
     UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, 
     WALL_CREATION, DELETE_SELECTION}
 
-  private ResourceBundle                  resource;
+  private ResourceBundle    resource;
   // Button model shared by Wall creation menu item and the matching tool bar button
   private JToggleButton.ToggleButtonModel wallCreationToggleModel;
-
+  
   /**
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
-    this.resource = ResourceBundle.getBundle(
-        HomePane.class.getName());    
+    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     // Create a unique toggle button model for Wall creation / Selection states
     // so Wall creation menu item and tool bar button 
     // always reflect the same toggle state at screen
     this.wallCreationToggleModel = new JToggleButton.ToggleButtonModel();
+    JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
@@ -126,7 +128,7 @@ public class HomePane extends JRootPane {
         new ResourceAction(this.resource, "PLAN_MENU"));
     planMenu.setEnabled(true);
     JCheckBoxMenuItem wallCreationCheckBoxMenuItem = 
-        new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+      new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
     // Use the same model as Wall creation tool bar button
     wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
     planMenu.add(wallCreationCheckBoxMenuItem);
@@ -202,13 +204,13 @@ public class HomePane extends JRootPane {
                                  HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         getCatalogFurniturePane(home, preferences), 
-        new JScrollPane(controller.getPlanController().getView()));
+        getPlanView3DPane(home, controller));
     mainPane.setContinuousLayout(true);
     mainPane.setOneTouchExpandable(true);
     mainPane.setResizeWeight(0.3);
     return mainPane;
   }
-  
+
   /**
    * Returns the catalog tree and furniture table pane. 
    */
@@ -222,5 +224,22 @@ public class HomePane extends JRootPane {
     catalogFurniturePane.setOneTouchExpandable(true);
     catalogFurniturePane.setResizeWeight(0.5);
     return catalogFurniturePane;
+  }
+
+  /**
+   * Returns the plan view and 3D view pane. 
+   */
+  private JComponent getPlanView3DPane(Home home, HomeController controller) {
+    JComponent planView = controller.getPlanController().getView();
+    JComponent view3D = new HomeComponent3D(home);
+    view3D.setPreferredSize(planView.getPreferredSize());
+    view3D.setMinimumSize(new Dimension(0, 0));
+    // Create a split pane that displays both components
+    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
+        new JScrollPane(planView), view3D);
+    planView3DPane.setContinuousLayout(true);
+    planView3DPane.setOneTouchExpandable(true);
+    planView3DPane.setResizeWeight(0.5);
+    return planView3DPane;
   }
 }
