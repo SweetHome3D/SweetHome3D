@@ -312,8 +312,6 @@ public class SweetHome3DSwtDraft {
     furnitureMenu = new Menu(furnitureMenuItem);
     MenuItem addMenuItem = new MenuItem(furnitureMenu, SWT.PUSH);
     addMenuItem.setText("Add");
-    MenuItem deleteMenuItem = new MenuItem(furnitureMenu, SWT.PUSH);
-    deleteMenuItem.setText("Delete");
     furnitureMenuItem.setMenu(furnitureMenu);
     editMenu = new Menu(editMenuItem);
     MenuItem undoMenuItem = new MenuItem(editMenu, SWT.PUSH);
@@ -326,6 +324,8 @@ public class SweetHome3DSwtDraft {
     copyMenuItem.setText("Copy");
     MenuItem pasteMenuItem = new MenuItem(editMenu, SWT.PUSH);
     pasteMenuItem.setText("Paste");
+    MenuItem deleteMenuItem = new MenuItem(editMenu, SWT.PUSH);
+    deleteMenuItem.setText("Delete");
     editMenuItem.setMenu(editMenu);
     fileMenu = new Menu(fileMenuItem);
     MenuItem newMenuItem = new MenuItem(fileMenu, SWT.PUSH);

@@ -88,8 +88,8 @@ public class SweetHome3DSwingDraft extends JFrame {
   private JMenuItem   preferencesMenuItem = null;
   private JMenuItem   undoMenuItem        = null;
   private JMenuItem   redoMenuItem        = null;
-  private JMenuItem   addMenuItem         = null;
   private JMenuItem   deleteMenuItem      = null;
+  private JMenuItem   addMenuItem         = null;
   private JMenuItem   createWallsMenuItem = null;
   private JMenuItem   importImageMenuItem = null;
 
@@ -172,6 +172,7 @@ public class SweetHome3DSwingDraft extends JFrame {
       editMenu.add(getCutMenuItem());
       editMenu.add(getCopyMenuItem());
       editMenu.add(getPasteMenuItem());
+      editMenu.add(getDeleteMenuItem());
     }
     return editMenu;
   }
@@ -184,7 +185,6 @@ public class SweetHome3DSwingDraft extends JFrame {
       furnitureMenu = new JMenu();
       furnitureMenu.setText("Furniture");
       furnitureMenu.add(getAddMenuItem());
-      furnitureMenu.add(getDeleteMenuItem());
     }
     return furnitureMenu;
   }
