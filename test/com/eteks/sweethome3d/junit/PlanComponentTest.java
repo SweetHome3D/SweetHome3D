@@ -100,7 +100,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall1, wall2, wall3); 
     assertWallsAreJoined(wall2, wall3, null); 
     // Check they are selected
-    assertSelectionContains(frame.home, wall3);
+    assertSelectionContains(frame.home, wall1, wall2, wall3);
 
     // 3. Click at (20, 170), then double click at (30, 30) with Shift key depressed
     tester.actionClick(planComponent, 20, 170);
@@ -176,15 +176,15 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check the wall didn't move at end
     assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
 
-    // 10. Click 8 times on undo button
-    for (int i = 0; i < 8; i++) {
+    // 10. Click 6 times on undo button
+    for (int i = 0; i < 6; i++) {
       tester.actionClick(frame.undoButton);
     }
     // Check home doesn't contain any wall
     assertHomeContains(frame.home);
     
-    // 11. Click 8 times on redo button
-    for (int i = 0; i < 8; i++) {
+    // 11. Click 6 times on redo button
+    for (int i = 0; i < 6; i++) {
       tester.actionClick(frame.redoButton);
     }
     // Check plan contains the four wall

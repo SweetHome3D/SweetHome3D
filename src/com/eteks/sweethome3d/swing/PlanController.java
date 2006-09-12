@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.TreeMap;
 
 import javax.swing.JComponent;
 import javax.swing.undo.AbstractUndoableEdit;
@@ -35,7 +33,6 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -59,7 +56,6 @@ public class PlanController {
   private ControllerState     selectionMoveState;
   private ControllerState     wallCreationState;
   private ControllerState     newWallState;
-  private ControllerState     pieceOfFurnitureRotationState;
   // Mouse cursor position at last mouse press
   private float               xLastMousePress;
   private float               yLastMousePress;
@@ -85,7 +81,6 @@ public class PlanController {
     this.rectangleSelectionState = new RectangleSelectionState();
     this.wallCreationState = new WallCreationState();
     this.newWallState = new NewWallState();
-    this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
     // Set defaut state to selectionState
     setState(this.selectionState);
   }
@@ -210,13 +205,6 @@ public class PlanController {
   protected ControllerState getNewWallState() {
     return this.newWallState;
   }
-  
-  /**
-   * Returns the piece rotation state.
-   */
-  protected ControllerState getPieceOfFurnitureRotationState() {
-    return this.pieceOfFurnitureRotationState;
-  }
 
   /**
    * Returns the abscissa of mouse position at last mouse press.
@@ -267,23 +255,17 @@ public class PlanController {
    * Joins the end point of <code>wall</code> to the start of
    * <code>wallStartAtEnd</code> or the end of <code>wallEndAtEnd</code>.
    */
-  private void joinNewWallEndToWall(Wall wall, JoinedWall joinedWall, 
-                                 Wall wallStartAtEnd, Wall wallEndAtEnd) {
+  private void joinNewWallEndToWall(Wall wall, 
+                                    Wall wallStartAtEnd, Wall wallEndAtEnd) {
     if (wallStartAtEnd != null) {
       this.home.setWallAtEnd(wall, wallStartAtEnd);
       this.home.setWallAtStart(wallStartAtEnd, wall);
-      // Update joinedWall data created by postAddWall
-      joinedWall.setWallAtEnd(wallStartAtEnd);
-      joinedWall.setJoinedAtStartOfWallAtEnd(true);
       // Make wall end at the exact same position as wallAtEnd start point
       this.home.moveWallEndPointTo(wall, wallStartAtEnd.getXStart(),
           wallStartAtEnd.getYStart());
     } else if (wallEndAtEnd != null) {
       this.home.setWallAtEnd(wall, wallEndAtEnd);
       this.home.setWallAtEnd(wallEndAtEnd, wall);
-      // Update joinedWall data created by postAddWall
-      joinedWall.setWallAtEnd(wallEndAtEnd);
-      joinedWall.setJoinedAtEndOfWallAtEnd(true);
       // Make wall end at the exact same position as wallAtEnd end point
       this.home.moveWallEndPointTo(wall, wallEndAtEnd.getXEnd(),
           wallEndAtEnd.getYEnd());
@@ -323,16 +305,8 @@ public class PlanController {
   /**
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
-  private Object getItemAt(float x, float y) {
+  Object getItemAt(float x, float y) {
     float margin = 2 / ((PlanComponent)getView()).getScale();
-    List<HomePieceOfFurniture> furniture = this.home.getFurniture();
-    // Loop on home furniture in reverse order to give pripority to last drawn piece
-    // in case it covers an other piece
-    for (int i = furniture.size() - 1; i >= 0; i--) {
-      HomePieceOfFurniture piece = furniture.get(i);
-      if (piece.isVisible() && piece.containsPoint(x, y, margin)) 
-        return piece;
-    }
     for (Wall wall : this.home.getWalls()) {
       if (wall.containsPoint(x, y, margin)) 
         return wall;
@@ -345,37 +319,14 @@ public class PlanController {
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite
    * corners.
    */
-  private List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
-    List<Object> items = new ArrayList<Object>();
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible() && piece.intersectsRectangle(x0, y0, x1, y1)) {
-        items.add(piece);
-      }
-    }
+  List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
+    List<Object> items = new ArrayList<Object>();    
     for (Wall wall : home.getWalls()) {
       if (wall.intersectsRectangle(x0, y0, x1, y1)) {
         items.add(wall);
       }
     }
     return items;
-  }
-  
-  /**
-   * Returns the piece of furniture in selected items with a vertex 
-   * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
-   */
-  private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
-    if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture piece = ((HomePieceOfFurniture)selectedItems.get(0));
-      float margin = 2 / ((PlanComponent)getView()).getScale();
-      if (piece.containsPoint(x, y, margin)
-          && piece.isVertexAt(x, y, margin)) {
-        return (HomePieceOfFurniture)selectedItems.get(0);
-      }
-    } 
-    return null;
   }
   
   /**
@@ -391,8 +342,6 @@ public class PlanController {
       for (Object item : selectedItems) {
         if (item instanceof Wall) {
           this.home.deleteWall((Wall)item);
-        } else if (item instanceof HomePieceOfFurniture) {
-          this.home.deletePieceOfFurniture((HomePieceOfFurniture)item);
         }
       }
     }      
@@ -453,10 +402,6 @@ public class PlanController {
                 wallAtEnd.getYEnd() + dy);
           }
         }
-      } else if (item instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        this.home.setPieceOfFurnitureLocation(
-            piece, piece.getX() + dx, piece.getY() + dy);
       }
     }
   }
@@ -491,34 +436,38 @@ public class PlanController {
   }
 
   /**
-   * Posts an undoable new wall operation, about <code>newWall</code>.
+   * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
-  private JoinedWall postAddWall(Wall newWall, List<Object> oldSelection) {
-    // Retrieve data about joined walls to newWall
-    final JoinedWall [] joinedNewWall = {new JoinedWall(newWall)};
-    final Object [] oldSelectedItems = 
-      oldSelection.toArray(new Object [oldSelection.size()]);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doDeleteWalls(joinedNewWall);
-        selectAndShowItems(Arrays.asList(oldSelectedItems));
+  private void postAddWalls(List<Wall> newWalls, List<Object> oldSelection) {
+    if (newWalls.size() > 0) {
+      // Retrieve data about joined walls to newWalls
+      final JoinedWall [] joinedNewWalls = new JoinedWall [newWalls.size()];
+      for (int i = 0; i < joinedNewWalls.length; i++) {
+         joinedNewWalls [i] = new JoinedWall(newWalls.get(i));
       }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doAddAndShowWalls(joinedNewWall);       
-      }      
-
-      @Override
-      public String getPresentationName() {
-        return resource.getString("undoAddWallsName");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
-    return joinedNewWall [0];
+      final Object [] oldSelectedItems = 
+        oldSelection.toArray(new Object [oldSelection.size()]);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          doDeleteWalls(joinedNewWalls);
+          selectAndShowItems(Arrays.asList(oldSelectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          doAddAndShowWalls(joinedNewWalls);       
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoAddWallsName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
   }
 
   /**
@@ -557,10 +506,9 @@ public class PlanController {
   }
 
   /**
-   * Posts an undoable delete items operation about <code>deletedItems</code>.
+   * Posts an undoable delete items operation, about <code>deletedItems</code>.
    */
-  private void postDeleteItems(final List<Object> deletedItems) {
-    // Manage walls
+  private void postDeleteItems(List<Object> deletedItems) {
     List<Wall> deletedWalls = new ArrayList<Wall>();
     for (Object item : deletedItems) {
       if (item instanceof Wall) {
@@ -570,41 +518,17 @@ public class PlanController {
     // Get joined walls data for undo operation
     final JoinedWall [] joinedDeletedWalls = 
       JoinedWall.getJoinedWalls(deletedWalls);
-
-    // Manage furniture
-    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
-    // Sort the selected furniture in the ascending order of their index in home
-    Map<Integer, HomePieceOfFurniture> sortedMap = 
-      new TreeMap<Integer, HomePieceOfFurniture>();
-    for (Object item : deletedItems) {
-      if (item instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        sortedMap.put(homeFurniture.indexOf(piece), piece);
-      }
-    }
-    final HomePieceOfFurniture [] furniture = 
-      sortedMap.values().toArray(new HomePieceOfFurniture [sortedMap.size()]);
-    final int [] furnitureIndex = new int [furniture.length];
-    int i = 0;
-    for (int index : sortedMap.keySet()) {
-      furnitureIndex [i++] = index;
-    }
-    
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
         doAddAndShowWalls(joinedDeletedWalls);       
-        doAddFurniture(furniture, furnitureIndex);
-        selectAndShowItems(deletedItems);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
         doDeleteWalls(joinedDeletedWalls);       
-        home.setSelectedItems(Arrays.asList(furniture));
-        doDeleteFurniture(furniture);
       }      
 
       @Override
@@ -624,25 +548,6 @@ public class PlanController {
     }
   }
 
-  /**
-   * Adds furniture to home at the given indices. 
-   */
-  private void doAddFurniture(HomePieceOfFurniture [] furniture,
-                              int [] furnitureIndex) {
-    for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.addPieceOfFurniture(furniture [i], furnitureIndex [i]);
-    }
-  }
-
-  /**
-   * Deletes furniture from home. 
-   */
-  private void doDeleteFurniture(HomePieceOfFurniture [] furniture) {
-    for (HomePieceOfFurniture piece : furniture) {
-      this.home.deletePieceOfFurniture(piece);
-    }
-  }
-  
   /**
    * Posts an undoable operation of a (<code>dx</code>, <code>dy</code>) move 
    * of <code>movedItems</code>.
@@ -687,63 +592,34 @@ public class PlanController {
   }
 
   /**
-   * Post to undo support an angle change on <code>piece</code>. 
-   */
-  private void postPieceOfFurnitureRotation(final HomePieceOfFurniture piece, final float oldAngle) {
-    final float newAngle = piece.getAngle();
-    if (newAngle != oldAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          home.setPieceOfFurnitureAngle(piece, oldAngle);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          home.setPieceOfFurnitureAngle(piece, newAngle);
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
-  }
-
-  /**
    * Stores the walls at start and at end of a given wall. This data are usefull
    * to add a collection of walls after an undo/redo delete operation.
    */
-  private static class JoinedWall {
-    private Wall wall;
-    private Wall wallAtStart;
-    private Wall wallAtEnd;
-    private boolean joinedAtStartOfWallAtStart;
-    private boolean joinedAtEndOfWallAtStart; 
-    private boolean joinedAtStartOfWallAtEnd;
-    private boolean joinedAtEndOfWallAtEnd;
+  private static final class JoinedWall {
+    private final Wall wall;
+    private final Wall wallAtStart;
+    private final Wall wallAtEnd;
+    private final boolean joinedAtStartOfWallAtStart;
+    private final boolean joinedAtEndOfWallAtStart; 
+    private final boolean joinedAtStartOfWallAtEnd;
+    private final boolean joinedAtEndOfWallAtEnd;
     
     public JoinedWall(Wall wall) {
       this.wall = wall;
       this.wallAtStart = wall.getWallAtStart();
-      if (this.wallAtStart != null) {
-        this.joinedAtEndOfWallAtStart = 
-          this.wallAtStart.getWallAtEnd() == wall;
-        this.joinedAtStartOfWallAtStart = 
-          this.wallAtStart.getWallAtStart() == wall;
-      }
+      this.joinedAtEndOfWallAtStart =
+          this.wallAtStart != null
+          && this.wallAtStart.getWallAtEnd() == wall;
+      this.joinedAtStartOfWallAtStart =
+          this.wallAtStart != null
+          && this.wallAtStart.getWallAtStart() == wall;
       this.wallAtEnd = wall.getWallAtEnd();
-      if (this.wallAtEnd != null) {
-        this.joinedAtEndOfWallAtEnd = 
-          wallAtEnd.getWallAtEnd() == wall;
-        this.joinedAtStartOfWallAtEnd = 
-          wallAtEnd.getWallAtStart() == wall;
-      }
+      this.joinedAtEndOfWallAtEnd =
+          this.wallAtEnd != null
+          && wallAtEnd.getWallAtEnd() == wall;
+      this.joinedAtStartOfWallAtEnd =
+          this.wallAtEnd != null
+          && wallAtEnd.getWallAtStart() == wall;
     }
 
     public Wall getWall() {
@@ -752,10 +628,6 @@ public class PlanController {
 
     public Wall getWallAtEnd() {
       return this.wallAtEnd;
-    }
-
-    public void setWallAtEnd(Wall wallAtEnd) {
-      this.wallAtEnd = wallAtEnd;
     }
 
     public Wall getWallAtStart() {
@@ -770,22 +642,12 @@ public class PlanController {
       return this.joinedAtStartOfWallAtStart;
     }
 
-    public void setJoinedAtEndOfWallAtEnd(
-                     boolean joinedAtEndOfWallAtEnd) {
-      this.joinedAtEndOfWallAtEnd = joinedAtEndOfWallAtEnd;
-    }
-
     public boolean isJoinedAtEndOfWallAtEnd() {
       return this.joinedAtEndOfWallAtEnd;
     }
 
     public boolean isJoinedAtStartOfWallAtEnd() {
       return this.joinedAtStartOfWallAtEnd;
-    }
-
-    public void setJoinedAtStartOfWallAtEnd(
-                     boolean joinedAtStartOfWallAtEnd) {
-      this.joinedAtStartOfWallAtEnd = joinedAtStartOfWallAtEnd;
     }
 
     /**
@@ -816,7 +678,7 @@ public class PlanController {
   /**
    * A point which coordinates are computed with a magnetism algorithm.
    */
-  private static class PointWithMagnetism {
+  public static class PointWithMagnetism {
     private static final int STEP_COUNT = 24; // 15 degres step 
     private float xEnd;
     private float yEnd;
@@ -967,25 +829,12 @@ public class PlanController {
     }
 
     @Override
-    public void moveMouse(float x, float y) {
-      if (getRotatedPieceOfFurnitureAt(x, y) != null) {
-        ((PlanComponent)getView()).setRotationCursor();
-      } else {
-        ((PlanComponent)getView()).setCursor(getMode());
-      }
-    }
-
-    @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown) {
       // If shift isn't pressed, and an item is under cursor position
       if (!shiftDown && getItemAt(x, y) != null) {
-        if (getRotatedPieceOfFurnitureAt(x, y) != null) {
-          setState(getPieceOfFurnitureRotationState());
-        } else {
-          // Change state to SelectionMoveState
-          setState(getSelectionMoveState());
-        }  
+        // Change state to SelectionMoveState
+        setState(getSelectionMoveState());
       } else {
         // Otherwise change state to RectangleSelectionState
         setState(getRectangleSelectionState());
@@ -1217,8 +1066,8 @@ public class PlanController {
     private Wall         wallStartAtEnd;
     private Wall         wallEndAtEnd;
     private Wall         lastWall;
-    private JoinedWall   joinedLastWall;
     private List<Object> oldSelection;
+    private List<Wall>   newWalls;
     private boolean      magnetismEnabled;
     
     @Override
@@ -1252,6 +1101,7 @@ public class PlanController {
       this.wallStartAtEnd = null;
       this.wallEndAtEnd = null;
       this.lastWall = null;
+      this.newWalls = new ArrayList<Wall>();
     }
 
     @Override
@@ -1274,6 +1124,7 @@ public class PlanController {
         // Create a new one
         this.newWall = createNewWall(this.xStart, this.yStart, 
             xEnd, yEnd, this.wallStartAtStart, this.wallEndAtStart);
+        this.newWalls.add(this.newWall);
       } else {
         // Otherwise update its end point
         home.moveWallEndPointTo(this.newWall, xEnd, yEnd); 
@@ -1311,9 +1162,12 @@ public class PlanController {
       if (clickCount == 2) {
         if (this.lastWall != null) {
           // Join last wall to the selected wall at its end
-          joinNewWallEndToWall(this.lastWall, this.joinedLastWall,
+          joinNewWallEndToWall(this.lastWall, 
               this.wallStartAtEnd, this.wallEndAtEnd);
         }
+        // Post walls creation to undo support
+        postAddWalls(this.newWalls, this.oldSelection);
+        selectItems(this.newWalls);
         // Change state to WallCreationState 
         setState(getWallCreationState());
       } else {
@@ -1321,9 +1175,6 @@ public class PlanController {
         // meaning after the first mouse move
         if (this.newWall != null) {
           selectItem(this.newWall);
-          // Post wall creation to undo support
-          this.joinedLastWall = postAddWall(this.newWall, this.oldSelection);
-          this.oldSelection = Arrays.asList(new Object [] {this.newWall});
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
           this.wallStartAtStart = null;
@@ -1350,82 +1201,13 @@ public class PlanController {
     public void escape() {
       if (this.newWall != null) {
         home.deleteWall(this.newWall);
+        this.newWalls.remove(this.newWall);
       }
+      // Post other walls creation to undo support
+      postAddWalls(this.newWalls, this.oldSelection);
+      selectItems(this.newWalls);
       // Change state to WallCreationState 
       setState(getWallCreationState());
-    }
-  }
-
-  /**
-   * Furniture rotation state. This states manages the rotation of a piece of furniture.
-   */
-  private class PieceOfFurnitureRotationState extends ControllerState {
-    private static final int     STEP_COUNT = 24;
-    private float                xLastMouseMove;
-    private float                yLastMouseMove;
-    private boolean              magnetismEnabled;
-    private HomePieceOfFurniture selectedPiece;
-    private float                angleMousePress;
-    private float                oldAngle;
-
-    @Override
-    public Mode getMode() {
-      return Mode.SELECTION;
-    }
-    
-    @Override
-    public void enter() {
-      this.xLastMouseMove = getXLastMousePress();
-      this.yLastMouseMove = getYLastMousePress();
-      this.selectedPiece = getRotatedPieceOfFurnitureAt(xLastMouseMove, yLastMouseMove);
-      this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
-          getXLastMousePress() - this.selectedPiece.getX()); 
-      this.oldAngle = this.selectedPiece.getAngle();
-      this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();
-    }
-
-    @Override
-    public void moveMouse(float x, float y) {      
-      // Compute the new angle of the piece
-      float angleMouseMove = (float)Math.atan2(this.selectedPiece.getY() - y, 
-          x - this.selectedPiece.getX()); 
-      float newAngle = oldAngle - angleMouseMove + angleMousePress;
-      
-      if (this.magnetismEnabled) {
-        float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
-        // Compute angles closest to a step angle (multiple of angleStep) 
-        newAngle = Math.round(newAngle / angleStep) * angleStep;
-      }
-
-      // Update piece new angle
-      home.setPieceOfFurnitureAngle(this.selectedPiece, newAngle); 
-
-      // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
-      this.xLastMouseMove = x;
-      this.yLastMouseMove = y;      
-    }
-
-    @Override
-    public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureRotation(this.selectedPiece, oldAngle);
-      setState(getSelectionState());
-    }
-
-    @Override
-    public void toggleMagnetism(boolean magnetismToggled) {
-      // Compute active magnetism
-      this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ magnetismToggled;
-      // Compute again angle as if mouse moved
-      moveMouse(this.xLastMouseMove, this.yLastMouseMove);
-    }
-
-    @Override
-    public void escape() {
-      home.setPieceOfFurnitureAngle(this.selectedPiece, oldAngle);
-      setState(getSelectionState());
     }
   }
 }
