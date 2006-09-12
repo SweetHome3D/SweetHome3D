@@ -95,7 +95,7 @@ public class PlanControllerTest extends TestCase {
     assertWallsAreJoined(wall1, wall2, wall3); 
     assertWallsAreJoined(wall2, wall3, null); 
     // Check they are selected
-    assertSelectionContains(home, wall3);
+    assertSelectionContains(home, wall1, wall2, wall3);
 
     // 3. Click at (0, 300), then double click at (20, 20) with Alt key depressed
     planController.moveMouse(0, 300);
@@ -180,14 +180,14 @@ public class PlanControllerTest extends TestCase {
     assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
 
     // 10. Undo 8 times 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 6; i++) {
       undoManager.undo();
     }
     // Check home doesn't contain any wall
     assertHomeContains(home);
     
     // 11. Redo 8 times 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 6; i++) {
       undoManager.redo();
     }
     // Check plan contains the four wall
