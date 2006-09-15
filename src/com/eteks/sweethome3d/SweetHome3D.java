@@ -105,7 +105,6 @@ public class SweetHome3D extends HomeApplication {
       firstHome = new Home(application.getUserPreferences().getDefaultWallHeight());
     }
     
-    // TODO
     // Enables Java 5 bug correction about dragging directly
     // a tree element without selecting it before :
     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
