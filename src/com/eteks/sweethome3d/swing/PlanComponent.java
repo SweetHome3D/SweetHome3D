@@ -608,7 +608,7 @@ public class PlanComponent extends JComponent {
   /**
    * Returns <code>x</code> converted in model coordinates space.
    */
-  private float convertXPixelToModel(int x) {
+  public float convertXPixelToModel(int x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
     return (x - insets.left) / this.scale - MARGIN + (float)planBounds.getMinX();
@@ -617,7 +617,7 @@ public class PlanComponent extends JComponent {
   /**
    * Returns <code>y</code> converted in model coordinates space.
    */
-  private float convertYPixelToModel(int y) {
+  public float convertYPixelToModel(int y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
     return (y - insets.top) / this.scale - MARGIN + (float)planBounds.getMinY();

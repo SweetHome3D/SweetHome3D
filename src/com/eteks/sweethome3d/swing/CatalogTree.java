@@ -54,6 +54,7 @@ public class CatalogTree extends JTree {
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
     addSelectionListeners(catalog);
+    setDragEnabled(true);
   }
   
   /**

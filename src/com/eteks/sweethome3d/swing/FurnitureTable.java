@@ -24,6 +24,7 @@ import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.JViewport;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
@@ -223,6 +225,18 @@ public class FurnitureTable extends JTable {
     };
   }
 
+  /**
+   * Returns <code>true</code> if this table preferred height is
+   * smaller that its viewport height, when table's parent is viewed 
+   * in a <code>JScrollPane</code>.
+   */
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    Container viewport = getParent();
+    return !(viewport instanceof JViewport)
+           || getPreferredSize().getHeight() < viewport.getHeight();
+  }
+  
   /**
    * Model used by this table
    */
