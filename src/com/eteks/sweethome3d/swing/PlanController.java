@@ -305,7 +305,7 @@ public class PlanController {
   /**
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
-  Object getItemAt(float x, float y) {
+  private Object getItemAt(float x, float y) {
     float margin = 2 / ((PlanComponent)getView()).getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall.containsPoint(x, y, margin)) 
@@ -319,7 +319,7 @@ public class PlanController {
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite
    * corners.
    */
-  List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
+  private List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
     List<Object> items = new ArrayList<Object>();    
     for (Wall wall : home.getWalls()) {
       if (wall.intersectsRectangle(x0, y0, x1, y1)) {
@@ -677,7 +677,7 @@ public class PlanController {
   /**
    * A point which coordinates are computed with a magnetism algorithm.
    */
-  public static class PointWithMagnetism {
+  private static class PointWithMagnetism {
     private static final int STEP_COUNT = 24; // 15 degres step 
     private float xEnd;
     private float yEnd;
