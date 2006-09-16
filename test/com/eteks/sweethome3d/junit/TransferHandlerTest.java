@@ -83,11 +83,10 @@ public class TransferHandlerTest extends ComponentTestFixture {
     
     // 3. Drag and drop selected piece in tree to point (120, 120) in plan component
     Rectangle selectedRowBounds = catalogTree.getRowBounds(1);
-    tester.actionMousePress(catalogTree, new ComponentLocation( 
+    tester.actionDrag(catalogTree, new ComponentLocation( 
         new Point(selectedRowBounds.x, selectedRowBounds.y)));
-    tester.actionMouseMove(planComponent, new ComponentLocation( 
+    tester.actionDrop(planComponent, new ComponentLocation( 
         new Point(120, 120))); 
-    tester.actionMouseRelease();
     // Check a piece was added to home
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     // Check top left corner of the piece is at (200, 200) 
