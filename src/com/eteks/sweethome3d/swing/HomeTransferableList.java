@@ -71,7 +71,7 @@ public class HomeTransferableList implements Transferable {
         list.add(new Wall((Wall)obj));
       } else {
         throw new RuntimeException(
-            "TransferableList can't contain " + obj.getClass().getName());
+            "HomeTransferableList can't contain " + obj.getClass().getName());
       }
     }
     return list;
