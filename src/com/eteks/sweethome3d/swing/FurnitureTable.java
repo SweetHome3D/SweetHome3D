@@ -224,19 +224,7 @@ public class FurnitureTable extends JTable {
       } 
     };
   }
-
-  /**
-   * Returns <code>true</code> if this table preferred height is
-   * smaller that its viewport height, when table's parent is viewed 
-   * in a <code>JScrollPane</code>.
-   */
-  @Override
-  public boolean getScrollableTracksViewportHeight() {
-    Container viewport = getParent();
-    return !(viewport instanceof JViewport)
-           || getPreferredSize().getHeight() < viewport.getHeight();
-  }
-  
+ 
   /**
    * Model used by this table
    */

@@ -26,6 +26,9 @@ import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ResourceBundle;
@@ -46,6 +49,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.JViewport;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
@@ -318,10 +322,12 @@ public class HomePane extends JRootPane {
       this.catalogView.setTransferHandler(this.catalogTransferHandler);
       this.furnitureView.setTransferHandler(this.furnitureTransferHandler);
       this.planView.setTransferHandler(this.planTransferHandler);
+      ((JViewport)this.furnitureView.getParent()).setTransferHandler(this.furnitureTransferHandler);
     } else {
       this.catalogView.setTransferHandler(null);
       this.furnitureView.setTransferHandler(null);
       this.planView.setTransferHandler(null);
+      ((JViewport)this.furnitureView.getParent()).setTransferHandler(null);
     }
   }
 
@@ -355,6 +361,15 @@ public class HomePane extends JRootPane {
     // Add focus listener to furniture table 
     this.furnitureView.addFocusListener(new ActivationListener (
         controller, furnitureScrollPane, ActiveView.FURNITURE));
+    // Add a mouse listener that gives focus to furniture view when
+    // user clicks in its viewport
+    ((JViewport)this.furnitureView.getParent()).addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent ev) {
+            furnitureView.requestFocusInWindow();
+          }
+        });    
     
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
