@@ -59,11 +59,19 @@ public class SweetHome3D extends HomeApplication {
     // Add a listener that opens a frame when a home is added to application
     addHomeListener(new HomeListener() {
         public void homeChanged(HomeEvent ev) {
-          if (ev.getType() == HomeEvent.Type.ADD) {
-            Home home = ev.getHome();
-            HomeController controller = 
-                new HomeController(home, SweetHome3D.this);
-            new HomeFrame(home, SweetHome3D.this, controller);  
+          switch (ev.getType()) {
+            case ADD :
+              Home home = ev.getHome();
+              HomeController controller = 
+                  new HomeController(home, SweetHome3D.this);
+              new HomeFrame(home, SweetHome3D.this, controller);
+              break;
+            case DELETE :
+              // Exit if application has no more home
+              if (getHomes().isEmpty()) {
+                System.exit(0);
+              }
+              break;
           }
         };
       });
@@ -103,16 +111,10 @@ public class SweetHome3D extends HomeApplication {
       // Create a default home
       firstHome = new Home(application.getUserPreferences().getDefaultWallHeight());
     }
-    
-    // Enables Java 5 bug correction about dragging directly
-    // a tree element without selecting it before :
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-    System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     // Change Mac OS X application menu name
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
     System.setProperty("apple.laf.useScreenMenuBar", "true");
-    
     try {
       // Apply current system look and feel
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -181,10 +183,6 @@ public class SweetHome3D extends HomeApplication {
                 && ev.getType() == HomeEvent.Type.DELETE) {
               application.removeHomeListener(this);
               dispose();
-              // Exit if application has no more home
-              if (application.getHomes().isEmpty()) {
-                System.exit(0);
-              }
             }
           };
         });
