@@ -37,13 +37,14 @@ public class ChoicePanelTest {
     final JDialog choiceDialog = choiceOptionPane.createDialog(
         JOptionPane.getRootFrame(), "Choose your cities");
     choiceDialog.setResizable(true);
-    choiceDialog.setVisible(true);
     // No effect under Java 5 but works with Java 6
     choiceDialog.setMinimumSize(choiceDialog.getPreferredSize());
+    choiceDialog.setVisible(true);
     // Dispose dialog otherwise it's only hidden 
     // and application won't stop at the end of main
     choiceDialog.dispose();
-    if (choiceOptionPane.getValue().equals(JOptionPane.OK_OPTION)) {
+    if (new Integer(JOptionPane.OK_OPTION).equals(
+            choiceOptionPane.getValue())) {
       JOptionPane.showMessageDialog(null, 
           new Object [] {"You chose :", choicePanel.getChoice()});
     }

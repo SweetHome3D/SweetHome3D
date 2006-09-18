@@ -34,7 +34,7 @@ import javax.swing.JScrollPane;
 
 /**
  * A panel that displays a list into which the user can pick
- * values that are displayed in second list.
+ * values that are displayed in a second list.
  * @author Emmanuel Puybaret
  */
 public class ChoicePanel extends JPanel {
