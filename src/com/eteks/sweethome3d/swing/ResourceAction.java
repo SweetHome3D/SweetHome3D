@@ -92,9 +92,9 @@ public class ResourceAction extends AbstractAction {
 
   /**
    * Unsupported operation. Subclasses should override this method if they want
-   * to assiciate a real action to this class.
+   * to associate a real action to this class.
    */
-  public void actionPerformed(ActionEvent e) {
+  public void actionPerformed(ActionEvent ev) {
     throw new UnsupportedOperationException();
   }
 }
