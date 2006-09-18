@@ -38,7 +38,7 @@ public class ChoicePanelTest {
         JOptionPane.getRootFrame(), "Choose your cities");
     choiceDialog.setResizable(true);
     // No effect under Java 5 but works with Java 6
-    choiceDialog.setMinimumSize(choiceDialog.getPreferredSize());
+    choiceDialog.setMinimumSize(choiceDialog.getSize());
     choiceDialog.setVisible(true);
     // Dispose dialog otherwise it's only hidden 
     // and application won't stop at the end of main
