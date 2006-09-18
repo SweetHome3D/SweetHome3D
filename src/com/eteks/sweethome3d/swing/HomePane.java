@@ -631,6 +631,8 @@ public class HomePane extends JRootPane {
     
     public void focusLost(FocusEvent ev) {
       this.feedbackComponent.setBorder(INACTIVE_BORDER);
+      // Notify controller that active view changed
+      this.controller.activeViewChanged(null);
     }
   }
 }
