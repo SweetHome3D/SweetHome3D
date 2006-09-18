@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.model;
 
-import com.eteks.sweethome3d.io.DefaultCatalog;
-
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -43,9 +41,6 @@ public abstract class UserPreferences {
 
   private Catalog catalog;
   private Unit    unit;
-  private boolean magnetismEnabled = true;
-  private float   defaultThickness;
-  private float   defaultWallHeight;
   
   /**
    * Returns the catalog.
@@ -54,7 +49,7 @@ public abstract class UserPreferences {
     return this.catalog;
   }
 
-  protected void setCatalog(DefaultCatalog catalog) {
+  protected void setCatalog(Catalog catalog) {
     this.catalog = catalog;
   }
 
@@ -71,50 +66,5 @@ public abstract class UserPreferences {
    */
   public void setUnit(Unit unit) {
     this.unit = unit;
-  }
-
-  /**
-   * Returns <code>true</code> if magnetism is enabled.
-   * @return <code>true</code> by default.
-   */
-  public boolean isMagnetismEnabled() {
-    return this.magnetismEnabled;
-  }
-
-  /**
-   * Sets whether magnetism is enabled or not.
-   * @param magnetismEnabled <code>true</code> if magnetism is enabled,
-   *          <code>false</code> otherwise.
-   */
-  public void setMagnetismEnabled(boolean magnetismEnabled) {
-    this.magnetismEnabled = magnetismEnabled;
-  }
-
-  /**
-   * Returns default thickness of new walls in home. 
-   */
-  public float getDefaultThickness() {
-    return this.defaultThickness;
-  }
-
-  /**
-   * Sets default thickness of new walls in home. 
-   */
-  public void setDefaultThickness(float defaultThickness) {
-    this.defaultThickness = defaultThickness;
-  }
-
-  /**
-   * Returns default height of home walls. 
-   */
-  public float getDefaultWallHeight() {
-    return this.defaultWallHeight;
-  }
-
-  /**
-   * Sets default height of home walls. 
-   */
-  public void setDefaultWallHeight(float defaultwallHeight) {
-    this.defaultWallHeight = defaultwallHeight;
   }
 }
