@@ -87,8 +87,10 @@ public class ChoicePanel extends JPanel {
         1, 2, 1, 1, 0, 0.5, GridBagConstraints.NORTH, 
         GridBagConstraints.HORIZONTAL, buttonInsets, 0, 0));
     
-    // Change preferred size of the second list 
-    // so they are laid out with the same size 
+    // Change preferred size of both list scroll panes 
+    // so they are always laid out with the same size 
+    valuesScrollPane.setPreferredSize(
+        valuesScrollPane.getPreferredSize());
     choiceScrollPane.setPreferredSize(
         valuesScrollPane.getPreferredSize());
   }
