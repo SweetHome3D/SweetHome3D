@@ -34,7 +34,7 @@ public class ChoicePanelTest {
             "Madrid", "Brussels", "New York", "Ottawa", "Tokyo"});
     JOptionPane choiceOptionPane =  new JOptionPane(choicePanel, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog choiceDialog = choiceOptionPane.createDialog(
+    JDialog choiceDialog = choiceOptionPane.createDialog(
         JOptionPane.getRootFrame(), "Choose your cities");
     choiceDialog.setResizable(true);
     // No effect under Java 5 but works with Java 6
