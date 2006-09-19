@@ -105,12 +105,12 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check Cut, Copy and Delete actions are enabled in plan view
     assertActionsEnabled(controller, true, true, false, true);
 
-    // 4. Use Wall creation mode
+    // 5. Use Wall creation mode
     controller.setWallCreationMode();
     // Check Cut, Copy, Paste actions are disabled
     assertActionsEnabled(controller, false, false, false, false);
     
-    // 5. Create a wall between points (20, 20) and (100, 20)
+    // 6. Create a wall between points (20, 20) and (100, 20)
     tester.actionClick(planComponent, 20, 20);
     tester.actionClick(planComponent, 100, 20, InputEvent.BUTTON1_MASK, 2);
     // Use Selection mode 
@@ -118,7 +118,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check Cut, Copy and Delete actions are enabled
     assertActionsEnabled(controller, true, true, false, true);
     
-    // 6. Select the wall and the piece 
+    // 7. Select the wall and the piece 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 120, 120); 
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
@@ -130,13 +130,13 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check only Paste action is enabled
     assertActionsEnabled(controller, false, false, true, false);
 
-    // 7. Paste selected items in plan component
+    // 8. Paste selected items in plan component
     runAction(controller, HomePane.ActionType.PASTE);
     // Check home contains one wall and one piece
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
 
-    // 8. Transfer focus to furniture table
+    // 9. Transfer focus to furniture table
     tester.actionKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK);
     // Check furniture table has focus
     assertTrue("Table doesn't have the focus", furnitureTable.isFocusOwner());
@@ -148,7 +148,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check only Paste action is enabled
     assertActionsEnabled(controller, false, false, true, false);
 
-    // 9. Paste selected items in furniture table
+    // 10. Paste selected items in furniture table
     runAction(controller, HomePane.ActionType.PASTE);
     // Check home contains one wall and one piece
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
