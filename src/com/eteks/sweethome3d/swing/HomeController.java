@@ -44,24 +44,23 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.HomePane.ActiveView;
 
 /**
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
 public class HomeController {
-  private Home                home;
-  private UserPreferences     preferences;
-  private HomeApplication     application;
-  private JComponent          homeView;
-  private UndoableEditSupport undoSupport;
-  private UndoManager         undoManager;
-  private ResourceBundle      resource;
-  private int                 saveUndoLevel; 
-  private ActiveView    activeView;
-  
-  private PlanController      planController;
+  private Home                   home;
+  private UserPreferences        preferences;
+  private HomeApplication        application;
+  private JComponent             homeView;
+  private UndoableEditSupport    undoSupport;
+  private UndoManager            undoManager;
+  private ResourceBundle         resource;
+  private int                    saveUndoLevel;
+  private HomePane.FocusableView focusedView;
+
+  private PlanController         planController;
   
   /**
    * Creates the controller of home view. 
@@ -159,12 +158,12 @@ public class HomeController {
 
     List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
     HomePane view = ((HomePane)getView());
-    if (this.activeView == null) {
+    if (this.focusedView == null) {
       view.setEnabled(HomePane.ActionType.COPY, false);
       view.setEnabled(HomePane.ActionType.CUT, false);
       view.setEnabled(HomePane.ActionType.DELETE, false);
     } else {
-      switch (this.activeView) {
+      switch (this.focusedView) {
         case CATALOG :
           view.setEnabled(HomePane.ActionType.COPY,
               !wallCreationMode && !catalogSelectedItems.isEmpty());
@@ -199,8 +198,8 @@ public class HomeController {
    */
   public void enablePasteAction() {
     HomePane view = ((HomePane)getView());
-    if (this.activeView == HomePane.ActiveView.FURNITURE
-        || this.activeView == HomePane.ActiveView.PLAN) {
+    if (this.focusedView == HomePane.FocusableView.FURNITURE
+        || this.focusedView == HomePane.FocusableView.PLAN) {
       boolean wallCreationMode =  
         this.planController.getMode() == PlanController.Mode.WALL_CREATION;
       view.setEnabled(HomePane.ActionType.PASTE,
@@ -465,7 +464,7 @@ public class HomeController {
    * Deletes the selection in the focused component.
    */
   public void delete() {
-    switch (this.activeView) {
+    switch (this.focusedView) {
       case FURNITURE :
         deleteHomeFurniture();
         break;
@@ -476,10 +475,10 @@ public class HomeController {
   }
   
   /**
-   * Updates actions when focus changed.
+   * Updates actions when focused view changed.
    */
-  public void activeViewChanged(ActiveView activeView) {
-    this.activeView = activeView;
+  public void focusedViewChanged(HomePane.FocusableView focusedView) {
+    this.focusedView = focusedView;
     enableActionsOnSelection();
     enablePasteAction();
   }

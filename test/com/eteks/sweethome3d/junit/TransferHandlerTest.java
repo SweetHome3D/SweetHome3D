@@ -70,18 +70,19 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // Show home plan frame
     showWindow(frame);
+    // Check catalog tree has default focus
+    assertTrue("Tree doesn't have the focus", catalogTree.isFocusOwner());
     // Check Cut, Copy, Paste and Delete actions are disable
     assertActionsEnabled(controller, false, false, false, false);
     
     // 2. Select the first piece of furniture in catalog
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
-    JComponentTester tester = new JComponentTester();
-    tester.focus(catalogTree);
     // Check only Copy action is enabled
     assertActionsEnabled(controller, false, true, false, false);
     
     // 3. Drag and drop selected piece in tree to point (120, 120) in plan component
+    JComponentTester tester = new JComponentTester();
     Rectangle selectedRowBounds = catalogTree.getRowBounds(1);
     tester.actionDrag(catalogTree, new ComponentLocation( 
         new Point(selectedRowBounds.x, selectedRowBounds.y)));
@@ -95,8 +96,13 @@ public class TransferHandlerTest extends ComponentTestFixture {
         Math.abs(200 - piece.getX() + piece.getWidth() / 2) < 1E-10);
     assertTrue("Incorrect Y " + piece.getY(), 
         Math.abs(200 - piece.getY() + piece.getDepth() / 2) < 1E-10);
+
+    // 4.  Transfer focus to plan view with TAB keys
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    // Check plan component has focus
+    assertTrue("Plan doesn't have the focus", planComponent.isFocusOwner());
     // Check Cut, Copy and Delete actions are enabled in plan view
-    tester.focus(planComponent);
     assertActionsEnabled(controller, true, true, false, true);
 
     // 4. Use Wall creation mode
@@ -130,8 +136,10 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
 
-    // 8. Give focus to furniture table
-    tester.focus(furnitureTable);
+    // 8. Transfer focus to furniture table
+    tester.actionKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK);
+    // Check furniture table has focus
+    assertTrue("Table doesn't have the focus", furnitureTable.isFocusOwner());
     // Delete selection 
     runAction(controller, HomePane.ActionType.DELETE);
     // Check home contains one wall and no piece

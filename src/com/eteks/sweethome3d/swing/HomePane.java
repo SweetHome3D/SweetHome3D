@@ -23,6 +23,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -68,7 +69,7 @@ public class HomePane extends JRootPane {
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
     WALL_CREATION, DELETE_SELECTION}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
-  public enum ActiveView {CATALOG, FURNITURE, PLAN}
+  public enum FocusableView {CATALOG, FURNITURE, PLAN}
 
   private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
   private static final FileFilter SWEET_HOME_3D_FILTER = new FileFilter() {
@@ -90,7 +91,7 @@ public class HomePane extends JRootPane {
   private ResourceBundle                  resource;
   // Button model shared by Wall creation menu item and the matching tool bar button
   private JToggleButton.ToggleButtonModel wallCreationToggleModel;
-  private JComponent                      activeView;
+  private JComponent                      focusedComponent;
   private JComponent                      catalogView;
   private JComponent                      furnitureView;
   private JComponent                      planView;
@@ -172,7 +173,7 @@ public class HomePane extends JRootPane {
     getActionMap().put(actionType,
         new ResourceAction (this.resource, actionType.toString()) {
           public void actionPerformed(ActionEvent ev) {
-            ev = new ActionEvent(activeView, ActionEvent.ACTION_PERFORMED, null);
+            ev = new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, null);
             clipboardAction.actionPerformed(ev);
           }
         });
@@ -278,6 +279,12 @@ public class HomePane extends JRootPane {
     toolBar.add(actions.get(ActionType.PASTE));
     toolBar.addSeparator();
     toolBar.add(actions.get(ActionType.DELETE));
+    
+    // Remove focuable property on buttons
+    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
+      toolBar.getComponentAtIndex(i).setFocusable(false);
+    }
+    
     return toolBar;
   }
 
@@ -352,14 +359,26 @@ public class HomePane extends JRootPane {
     this.catalogView = new CatalogTree(preferences.getCatalog());
     JScrollPane catalogScrollPane = new HomeScrollPane(this.catalogView);
     // Add focus listener to catalog tree
-    this.catalogView.addFocusListener(new ActivationListener (
-        controller, catalogScrollPane, ActiveView.CATALOG));
+    this.catalogView.addFocusListener(new FocusableViewListener(
+        controller, catalogScrollPane, FocusableView.CATALOG));
     
     this.furnitureView = new FurnitureTable(home, preferences);
     JScrollPane furnitureScrollPane = new HomeScrollPane(this.furnitureView);
+    // Set default traversal keys of furniture view
+    KeyboardFocusManager focusManager =
+        KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    this.furnitureView.setFocusTraversalKeys(
+        KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+        focusManager.getDefaultFocusTraversalKeys(
+            KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+    this.furnitureView.setFocusTraversalKeys(
+        KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+        focusManager.getDefaultFocusTraversalKeys(
+            KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
+    
     // Add focus listener to furniture table 
-    this.furnitureView.addFocusListener(new ActivationListener (
-        controller, furnitureScrollPane, ActiveView.FURNITURE));
+    this.furnitureView.addFocusListener(new FocusableViewListener(
+        controller, furnitureScrollPane, FocusableView.FURNITURE));
     // Add a mouse listener that gives focus to furniture view when
     // user clicks in its viewport
     ((JViewport)this.furnitureView.getParent()).addMouseListener(
@@ -385,8 +404,8 @@ public class HomePane extends JRootPane {
   private JComponent getPlanView3DPane(Home home, HomeController controller) {
     this.planView = controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(this.planView);
-    this.planView.addFocusListener(new ActivationListener (
-        controller, planScrollPane, ActiveView.PLAN));
+    this.planView.addFocusListener(new FocusableViewListener(
+        controller, planScrollPane, FocusableView.PLAN));
 
     JComponent view3D = new HomeComponent3D(home);
     view3D.setPreferredSize(this.planView.getPreferredSize());
@@ -597,42 +616,40 @@ public class HomePane extends JRootPane {
     }
   }
 
-  private static final Border INACTIVE_BORDER = 
+  private static final Border UNFOCUSED_BORDER = 
     BorderFactory.createEmptyBorder(2, 2, 2, 2);
-  private static final Border ACTIVE_BORDER = 
+  private static final Border FOCUSED_BORDER = 
     BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2); 
 
   /**
    * A focus listener that calls <code>focusChanged</code> in 
    * home controller.
    */
-  private class ActivationListener implements FocusListener {
+  private class FocusableViewListener implements FocusListener {
     private HomeController controller;
     private JComponent     feedbackComponent;
-    private ActiveView     viewKey;
+    private FocusableView  viewKey;
   
-    public ActivationListener(HomeController controller, 
-                             JComponent     feedbackComponent,
-                             ActiveView     viewKey) {
+    public FocusableViewListener(HomeController controller, 
+                                 JComponent     feedbackComponent,
+                                 FocusableView  viewKey) {
       this.controller = controller;
       this.feedbackComponent = feedbackComponent;
       this.viewKey  = viewKey;
-      feedbackComponent.setBorder(INACTIVE_BORDER);
+      feedbackComponent.setBorder(UNFOCUSED_BORDER);
     }
         
     public void focusGained(FocusEvent ev) {
       // Display a colored border
-      this.feedbackComponent.setBorder(ACTIVE_BORDER);
-      // Update the view used by clipboard actions
-      activeView = (JComponent)ev.getComponent();
+      this.feedbackComponent.setBorder(FOCUSED_BORDER);
+      // Update the component used by clipboard actions
+      focusedComponent = (JComponent)ev.getComponent();
       // Notify controller that active view changed
-      this.controller.activeViewChanged(this.viewKey);
+      this.controller.focusedViewChanged(this.viewKey);
     }
     
     public void focusLost(FocusEvent ev) {
-      this.feedbackComponent.setBorder(INACTIVE_BORDER);
-      // Notify controller that active view changed
-      this.controller.activeViewChanged(null);
+      this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
     }
   }
 }
