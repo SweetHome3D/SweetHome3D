@@ -30,6 +30,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
+import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 
 import com.eteks.sweethome3d.model.Home;
@@ -88,7 +89,9 @@ public class HomeFramePane extends JRootPane {
     // The best solution should be to avoid the following statement 
     // but Mac OS X accepts to display the menu bar of a frame in the screen 
     // menu bar only if this menu bar depends directly on its root pane  
-    setJMenuBar(((HomePane)controller.getView()).getJMenuBar());
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      setJMenuBar(((HomePane)controller.getView()).getJMenuBar());
+    }
     
     // Show frame
     homeFrame.setVisible(true);
