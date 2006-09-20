@@ -39,7 +39,8 @@ import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.swing.HomePane;
 
 /**
- * A pane that displays a home pane in a frame.
+ * A pane that displays a 
+ * {@link com.eteks.sweethome3d.swing.HomePane home pane} in a frame.
  * @author Emmanuel Puybaret
  */
 public class HomeFramePane extends JRootPane {
@@ -97,7 +98,7 @@ public class HomeFramePane extends JRootPane {
   }
   
   /**
-   * Add listeners to frame and home.
+   * Add listeners to <code>frame</code> and model objects.
    */
   private void addListeners(final Home home,
                             final HomeApplication application,
@@ -140,7 +141,7 @@ public class HomeFramePane extends JRootPane {
   }
   
   /**
-   * Computes frame size and location to fit into screen.
+   * Computes <code>frame</code> size and location to fit into screen.
    */
   private void computeFrameBounds(JFrame frame) {
     frame.setLocationByPlatform(true);
@@ -154,7 +155,7 @@ public class HomeFramePane extends JRootPane {
   }
   
   /**
-   * Updates frame title from <code>home</code> name.
+   * Updates <code>frame</code> title from <code>home</code> name.
    */
   private void updateFrameTitle(JFrame frame, Home home) {
     String name = home.getName();
