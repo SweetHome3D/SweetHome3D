@@ -19,19 +19,6 @@
  */
 package com.eteks.sweethome3d;
 
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.File;
-import java.util.ResourceBundle;
-
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JRootPane;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
@@ -43,7 +30,6 @@ import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.HomeController;
 
 /**
  * Sweet Home 3D main class.
@@ -62,9 +48,7 @@ public class SweetHome3D extends HomeApplication {
           switch (ev.getType()) {
             case ADD :
               Home home = ev.getHome();
-              HomeController controller = 
-                  new HomeController(home, SweetHome3D.this);
-              new HomeFrame(home, SweetHome3D.this, controller);
+              new HomeFrameController(home, SweetHome3D.this);
               break;
             case DELETE :
               // Exit if application has no more home
@@ -111,11 +95,6 @@ public class SweetHome3D extends HomeApplication {
       // Create a default home
       firstHome = new Home(application.getUserPreferences().getDefaultWallHeight());
     }
-    
-    // Enables Java 5 bug correction about dragging directly
-    // a tree element without selecting it before :
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-    System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     // Change Mac OS X application menu name
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
@@ -128,123 +107,5 @@ public class SweetHome3D extends HomeApplication {
     }
     // Opening a frame at the end of a main is ok as this method work is over
     application.addHome(firstHome);
-  }
-
-  /**
-   * A frame that displays a home.
-   */
-  public static class HomeFrame extends JFrame {
-    private static int         newHomeCount;
-    private int                newHomeNumber;
-    private ResourceBundle     resource;
-    
-    private HomeFrame(Home home,
-                      HomeApplication application,
-                      HomeController  controller) {
-      if (home.getName() == null) {
-        newHomeNumber = ++newHomeCount;
-      }
-      this.resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-      // Enable windows to update their content while window resizing
-      addListeners(home, application, controller);
-      // Let windows layout their content while resizing
-      Toolkit.getDefaultToolkit().setDynamicLayout(true); 
-      // Update frame image ans title 
-      setIconImage(new ImageIcon(
-          HomeFrame.class.getResource("resources/frameIcon.png")).getImage());
-      updateTitle(home);
-      // Replace frame rootPane by home controller view
-      // The best solution should be to program the following statement : 
-      //   add(controller.getView());
-      // but Mac OS X accepts to display the menu bar of a frame in the screen 
-      // menu bar only if this menu bar depends directly on its root pane  
-      setRootPane((JRootPane)controller.getView());
-      // Compute frame size and location
-      pack();
-      fitInScreen();
-      setLocationByPlatform(true);
-      // Show frame
-      setVisible(true);
-    }
-    
-    /**
-     * Add listeners to frame.
-     */
-    private void addListeners(final Home home, 
-                              final HomeApplication application, 
-                              final HomeController controller) {
-      // Control window closing 
-      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-      addWindowListener(new WindowAdapter () {
-          @Override
-          public void windowClosing(WindowEvent ev) {
-            controller.close();
-          }
-        });
-      // Dispose window when a home is deleted 
-      application.addHomeListener(new HomeListener() {
-          public void homeChanged(HomeEvent ev) {
-            if (ev.getHome() == home
-                && ev.getType() == HomeEvent.Type.DELETE) {
-              application.removeHomeListener(this);
-              dispose();
-            }
-          };
-        });
-      // Update title when the name or the modified state of home changes
-      home.addPropertyChangeListener("name", new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateTitle(home);
-          }
-        });
-      home.addPropertyChangeListener("modified", new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateTitle(home);
-          }
-        });
-      if (System.getProperty("os.name").startsWith("Mac OS X")) {
-        MacOSXConfiguration.bindControllerToApplicationMenu(this, controller);
-      }
-    }
-    
-    /**
-     * Computes frame size to fit into screen.
-     */
-    private void fitInScreen() {
-      Dimension screenSize = getToolkit().getScreenSize();
-      Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
-      screenSize.width -= screenInsets.left + screenInsets.right;
-      screenSize.height -= screenInsets.top + screenInsets.bottom;
-      setSize(Math.min(screenSize.width * 4 / 5, getWidth()), 
-              Math.min(screenSize.height * 4 / 5, getHeight()));
-    }
-    
-    /**
-     * Updates frame title from <code>home</code> name.
-     */
-    private void updateTitle(final Home home) {
-      String name = home.getName();
-      if (name == null) {
-        name = this.resource.getString("untitled"); 
-        if (newHomeNumber > 1) {
-          name += " " + newHomeNumber;
-        }
-      } else {
-        name = new File(name).getName();
-      }
-      
-      String title = name;
-      if (System.getProperty("os.name").startsWith("Mac OS X")) {
-        // Use black indicator in close icon to show home is modified
-        getRootPane().putClientProperty("windowModified", 
-            Boolean.valueOf(home.isModified())); 
-      } else {
-        title += " - Sweet Home 3D"; 
-        if (home.isModified()) {
-          title = "* " + title;
-        }
-      }
-      setTitle(title);
-    }
   }
 }

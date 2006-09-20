@@ -49,8 +49,20 @@ class MacOSXConfiguration {
       public void handleQuit(ApplicationEvent ev) {
         currentController.exit();
       }
+      
+      // TODO
+      @Override
+      public void handlePreferences(ApplicationEvent ev) {
+        currentController.editPreferences();
+      }
+
+      @Override
+      public void handleAbout(ApplicationEvent ev) {
+        currentController.about();
+        ev.setHandled(true);
+      }
     });
-    application.setEnabledAboutMenu(false);
+    application.setEnabledPreferencesMenu(true);
   }
 
   /**
