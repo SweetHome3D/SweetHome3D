@@ -76,15 +76,15 @@ public class HomeFramePane extends JRootPane {
         setRootPane(HomeFramePane.this);
       }
     };
-    // Enable windows to update their content while window resizing
-    getToolkit().setDynamicLayout(true); 
     // Update frame image ans title 
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
     updateFrameTitle(homeFrame, this.home);
     // Compute frame size and location
     computeFrameBounds(homeFrame);
-    
+    // Enable windows to update their content while window resizing
+    getToolkit().setDynamicLayout(true); 
+    // Add listeners to model and frame    
     addListeners(this.home, this.application, this.controller, homeFrame);
     // The best solution should be to avoid the 3 following statements 
     // but Mac OS X accepts to display the menu bar of a frame in the screen 
