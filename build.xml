@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="deploy" name="SweetHome3D">
+  <target name="deploy">
+    <echo message="Compile ${ant.project.name}"/>
+    <mkdir dir="classes"/>
+    <javac srcdir="src" destdir="classes">
+       <classpath>
+         <pathelement location="lib/windows/vecmath.jar"/>
+         <pathelement location="lib/windows/j3dutils.jar"/>
+         <pathelement location="lib/windows/j3dcore.jar"/>
+         <pathelement location="libtest/AppleJavaExtensions.jar"/>
+        </classpath>
+    </javac>
+    
+    <echo message="Copy resources"/>
+    <copy todir="classes">
+      <fileset dir="src">
+        <exclude name="**/*.java"/>
+        <exclude name=".*"/>
+      </fileset>
+    </copy>
+    
+    <echo message="Create SweetHome3D.jar"/>
+    <jar destfile="deploy/SweetHome3D.jar" basedir="classes"/>
+  
+    <echo message="Create Java 3D DLL jar files"/>
+    <mkdir dir="deploy/windows" />
+    <jar destfile="deploy/windows/java3d.jar">
+      <fileset dir="lib/windows">
+         <include name="**/*.dll"/>
+      </fileset>
+    </jar>
+
+    <mkdir dir="deploy/linux/i386"/>
+    <jar destfile="deploy/linux/i386/java3d.jar">
+      <fileset dir="lib/linux/i386">
+         <include name="**/*.so"/>
+      </fileset>
+    </jar>
+ 
+    <echo message="Copy Java 3D jar files"/>
+    <copy todir="deploy">
+      <fileset dir="lib">
+         <include name="**/*.jar"/>
+      </fileset>
+    </copy>
+    
+    <input message="Enter Passphrase for keystore:" 
+           addproperty="password"/> 
+    <echo message="Sign jars"/>
+    <signjar keystore="keys.keytool" 
+           alias="SweetHome3D" storepass="${password}">
+      <fileset dir="deploy">
+         <include name="**/*.jar"/>
+      </fileset>
+    </signjar>
+      
+    <echo message="deploy dir ready for ftp"/>
+  </target>
+</project>
