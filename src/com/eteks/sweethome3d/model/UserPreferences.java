@@ -19,11 +19,16 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+
 /**
  * User preferences.
  * @author Emmanuel Puybaret
  */
 public abstract class UserPreferences {
+  private PropertyChangeSupport propertyChangeSupport;
+
   /**
    * Unit used for dimensions.
    */
@@ -44,7 +49,35 @@ public abstract class UserPreferences {
   private boolean magnetismEnabled = true;
   private float   newWallThickness;
   private float   newHomeWallHeight;
+
+  public UserPreferences() {
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+  }
   
+  /**
+   * Writes user preferences.
+   * @throws RecorderException if user preferences couldn'y be saved.
+   */
+  public abstract void write() throws RecorderException;
+  
+  /**
+   * Adds the <code>listener</code> in parameter to these preferences.
+   */
+  public void addPropertyChangeListener(String property, 
+                                        PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(
+        property, listener);
+  }
+
+  /**
+   * Removes the <code>listener</code> in parameter from these preferences.
+   */
+  public void removeProrertyChangeistener(String property, 
+                                          PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(
+        property, listener);
+  }
+
   /**
    * Returns the catalog.
    */
@@ -64,11 +97,16 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Changes the unit currently in use.
+   * Changes the unit currently in use, and notifies
+   * listeners of this change. 
    * @param unit one of the values of Unit.
    */
   public void setUnit(Unit unit) {
-    this.unit = unit;
+    if (this.unit != unit) {
+      Unit oldUnit = this.unit;
+      this.unit = unit;
+      this.propertyChangeSupport.firePropertyChange("unit", oldUnit, unit);
+    }
   }
 
   /**
@@ -80,12 +118,18 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets whether magnetism is enabled or not.
+   * Sets whether magnetism is enabled or not, and notifies
+   * listeners of this change. 
    * @param magnetismEnabled <code>true</code> if magnetism is enabled,
    *          <code>false</code> otherwise.
    */
   public void setMagnetismEnabled(boolean magnetismEnabled) {
-    this.magnetismEnabled = magnetismEnabled;
+    if (this.magnetismEnabled != magnetismEnabled) {
+      boolean oldMagnetismEnabled = this.magnetismEnabled;
+      this.magnetismEnabled = magnetismEnabled;
+      this.propertyChangeSupport.firePropertyChange("magnetismEnabled", 
+          oldMagnetismEnabled, magnetismEnabled);
+    }
   }
 
   /**
@@ -96,10 +140,16 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets default thickness of new walls in home. 
+   * Sets default thickness of new walls in home, and notifies
+   * listeners of this change.  
    */
   public void setNewWallThickness(float newWallThickness) {
-    this.newWallThickness = newWallThickness;
+    if (this.newWallThickness != newWallThickness) {
+      float oldDefaultThickness = this.newWallThickness;
+      this.newWallThickness = newWallThickness;
+      this.propertyChangeSupport.firePropertyChange("newWallThickness", 
+          oldDefaultThickness, newWallThickness);
+    }
   }
 
   /**
@@ -110,9 +160,15 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets default wall height of new home walls. 
+   * Sets default wall height of new home walls, and notifies
+   * listeners of this change. 
    */
   public void setNewHomeWallHeight(float newHomeWallHeight) {
-    this.newHomeWallHeight = newHomeWallHeight;
+    if (this.newHomeWallHeight != newHomeWallHeight) {
+      float oldHomeWallHeight = this.newHomeWallHeight;
+      this.newHomeWallHeight = newHomeWallHeight;
+      this.propertyChangeSupport.firePropertyChange("newHomeWallHeight", 
+          oldHomeWallHeight, newHomeWallHeight);
+    }
   }
 }
