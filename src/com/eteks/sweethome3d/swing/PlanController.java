@@ -375,7 +375,7 @@ public class PlanController {
   /**
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
-  private void deleteItems(List<? extends Object> items) {
+  public void deleteItems(List<? extends Object> items) {
     if (!items.isEmpty()) {
       // First post to undo support that walls are deleted, 
       // otherwise data about joined walls can't be stored 
@@ -408,7 +408,7 @@ public class PlanController {
    * Moves <code>items</code> of (<code>dx</code>,
    * <code>dy</code>) units.
    */
-  private void moveItems(List<? extends Object> items, float dx, float dy) {
+  public void moveItems(List<? extends Object> items, float dx, float dy) {
     for (Object item : items) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
@@ -457,7 +457,7 @@ public class PlanController {
   /**
    * Selects <code>items</code> and make them visible at screen.
    */
-  private void selectAndShowItems(List<? extends Object> items) {
+  public void selectAndShowItems(List<? extends Object> items) {
     selectItems(items);
     ((PlanComponent)getView()).makeSelectionVisible();
   }
@@ -483,6 +483,16 @@ public class PlanController {
     selectItems(Collections.emptyList());
   }
 
+  /**
+   * Add <code>newWalls</code> to home and post an undoable new wall operation.
+   */
+  public void addWalls(List<Wall> newWalls) {
+    for (Wall wall : newWalls) {
+      this.home.addWall(wall);
+    }
+    postAddWalls(newWalls, this.home.getSelectedItems());
+  }
+  
   /**
    * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
