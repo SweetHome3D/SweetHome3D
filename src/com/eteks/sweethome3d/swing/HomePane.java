@@ -617,8 +617,8 @@ public class HomePane extends JRootPane {
    * Displays an about dialog.
    */
   public void showAboutDialog() {
-    String title   = this.resource.getString("about.title");
     String message = this.resource.getString("about.message");
+    String title   = this.resource.getString("about.title");
     URL    iconUrl = HomePane.class.getResource(
         this.resource.getString("about.icon"));
     JOptionPane.showMessageDialog(this, message, title,  
