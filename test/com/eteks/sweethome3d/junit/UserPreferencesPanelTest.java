@@ -29,7 +29,7 @@ import javax.swing.SpinnerModel;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.io.SystemUserPreferences;
+import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.UserPreferencesPanel;
@@ -45,7 +45,7 @@ public class UserPreferencesPanelTest extends TestCase {
     Locale.setDefault(Locale.FRANCE);
     UserPreferences defaultPreferences = new DefaultUserPreferences();
     // Copy this preferences into system preferences
-    UserPreferences preferences = new SystemUserPreferences();
+    UserPreferences preferences = new FileUserPreferences();
     preferences.setUnit(defaultPreferences.getUnit());
     preferences.setMagnetismEnabled(
         defaultPreferences.isMagnetismEnabled());
@@ -96,7 +96,7 @@ public class UserPreferencesPanelTest extends TestCase {
     
     // 5. Save preferences and read them in an other system preferences object
     preferences.write();
-    UserPreferences readPreferences = new SystemUserPreferences();
+    UserPreferences readPreferences = new FileUserPreferences();
     // Check if readPreferences and preferences have the same values
     assertPreferencesEqual(preferences.getUnit(),
         preferences.isMagnetismEnabled(), 

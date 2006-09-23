@@ -22,7 +22,7 @@ package com.eteks.sweethome3d;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.HomeFileRecorder;
-import com.eteks.sweethome3d.io.SystemUserPreferences;
+import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -41,7 +41,7 @@ public class SweetHome3D extends HomeApplication {
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
-    this.userPreferences = new SystemUserPreferences();
+    this.userPreferences = new FileUserPreferences();
     // Add a listener that opens a frame when a home is added to application
     addHomeListener(new HomeListener() {
         public void homeChanged(HomeEvent ev) {

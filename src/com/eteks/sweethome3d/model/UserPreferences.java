@@ -125,10 +125,9 @@ public abstract class UserPreferences {
    */
   public void setMagnetismEnabled(boolean magnetismEnabled) {
     if (this.magnetismEnabled != magnetismEnabled) {
-      boolean oldMagnetismEnabled = this.magnetismEnabled;
       this.magnetismEnabled = magnetismEnabled;
       this.propertyChangeSupport.firePropertyChange("magnetismEnabled", 
-          oldMagnetismEnabled, magnetismEnabled);
+          !magnetismEnabled, magnetismEnabled);
     }
   }
 

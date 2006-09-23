@@ -1,5 +1,5 @@
 /*
- * SystemUserPreferences.java 18 sept 2006
+ * FileUserPreferences.java 18 sept 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -28,15 +28,15 @@ import com.eteks.sweethome3d.model.UserPreferences;
 /**
  * User preferences intialized from 
  * {@link com.eteks.sweethome3d.io.DefaultUserPreferences default user preferences}
- * and stored in system current user preferences. 
+ * and stored in user preferences on local file system. 
  * @author Emmanuel Puybaret
  */
-public class SystemUserPreferences extends UserPreferences {
+public class FileUserPreferences extends UserPreferences {
   /**
-   * Creates user preferences read either from current user preferences in system, 
+   * Creates user preferences read either from user preferences in file system, 
    * or from resource files.
    */
-  public SystemUserPreferences() {
+  public FileUserPreferences() {
     DefaultUserPreferences defaultPreferences = 
       new DefaultUserPreferences();
     // Use default catalog at this time as user has no way to modified it
@@ -75,6 +75,6 @@ public class SystemUserPreferences extends UserPreferences {
    * Returns Java preferences for current system user.
    */
   private Preferences getPreferences() {
-    return Preferences.userNodeForPackage(SystemUserPreferences.class);
+    return Preferences.userNodeForPackage(FileUserPreferences.class);
   }
 }
