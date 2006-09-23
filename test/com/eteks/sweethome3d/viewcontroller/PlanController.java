@@ -240,7 +240,7 @@ public class PlanController {
                              Wall wallEndAtStart) {
     // Create a new wall
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, 
-        this.preferences.getDefaultThickness());
+        this.preferences.getNewWallThickness());
     this.home.addWall(newWall);
     if (wallStartAtStart != null) {
       this.home.setWallAtStart(newWall, wallStartAtStart);

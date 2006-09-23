@@ -42,8 +42,7 @@ public abstract class UserPreferences {
   private Catalog catalog;
   private Unit    unit;
   private boolean magnetismEnabled = true;
-  private float   defaultThickness;
-  private float   defaultWallHeight;
+  private float   newWallThickness;
   
   /**
    * Returns the catalog.
@@ -89,30 +88,16 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns default thickness of new walls in home. 
+   * Returns thickness of new walls in home. 
    */
-  public float getDefaultThickness() {
-    return this.defaultThickness;
+  public float getNewWallThickness() {
+    return this.newWallThickness;
   }
 
   /**
-   * Sets default thickness of new walls in home. 
+   * Sets thickness of new walls in home. 
    */
-  public void setDefaultThickness(float defaultThickness) {
-    this.defaultThickness = defaultThickness;
-  }
-
-  /**
-   * Returns default height of home walls. 
-   */
-  public float getDefaultWallHeight() {
-    return this.defaultWallHeight;
-  }
-
-  /**
-   * Sets default height of home walls. 
-   */
-  public void setDefaultWallHeight(float defaultwallHeight) {
-    this.defaultWallHeight = defaultwallHeight;
+  public void setNewWallThickness(float newWallThickness) {
+    this.newWallThickness = newWallThickness;
   }
 }
