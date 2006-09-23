@@ -93,13 +93,8 @@ public class SweetHome3D extends HomeApplication {
        }
     } else {
       // Create a default home
-      firstHome = new Home(application.getUserPreferences().getDefaultWallHeight());
+      firstHome = new Home(application.getUserPreferences().getNewHomeWallHeight());
     }
-    
-    // Enables Java 5 bug correction about dragging directly
-    // a tree element without selecting it before :
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-    System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     // Change Mac OS X application menu name
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
