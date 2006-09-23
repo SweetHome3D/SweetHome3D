@@ -1,5 +1,5 @@
 /*
- * MacOSX.java 6 sept. 2006
+ * MacOSXConfiguraton.java 6 sept. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -50,18 +50,18 @@ class MacOSXConfiguration {
         currentController.exit();
       }
       
-      // TODO
-      @Override
-      public void handlePreferences(ApplicationEvent ev) {
-        currentController.editPreferences();
-      }
-
       @Override
       public void handleAbout(ApplicationEvent ev) {
         currentController.about();
         ev.setHandled(true);
       }
+
+      @Override
+      public void handlePreferences(ApplicationEvent ev) {
+        currentController.editPreferences();
+      }
     });
+    application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
   }
 

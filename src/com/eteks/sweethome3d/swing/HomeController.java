@@ -237,8 +237,10 @@ public class HomeController {
     view.setEnabled(HomePane.ActionType.CLOSE, true);
     view.setEnabled(HomePane.ActionType.SAVE, true);
     view.setEnabled(HomePane.ActionType.SAVE_AS, true);
+    view.setEnabled(HomePane.ActionType.PREFERENCES, true);
     view.setEnabled(HomePane.ActionType.EXIT, true);
     view.setEnabled(HomePane.ActionType.WALL_CREATION, true);
+    view.setEnabled(HomePane.ActionType.ABOUT, true);
     view.setTransferEnabled(true);
   }
 
@@ -634,5 +636,31 @@ public class HomeController {
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
+  }
+
+  /**
+   * Edits preferences and changes them if user agrees.
+   */
+  public void editPreferences() {
+    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel(this.preferences);
+    if (preferencesPanel.showDialog(getView())) {
+      preferences.setUnit(preferencesPanel.getUnit());
+      preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
+      preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
+      preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
+      try {
+        preferences.write();
+      } catch (RecorderException ex) {
+        ((HomePane)getView()).showError(
+            this.resource.getString("savePreferencesError"));
+      }
+    }
+  }
+
+  /**
+   * Displays about dialog.
+   */
+  public void about() {
+    ((HomePane)getView()).showAboutDialog();
   }
 }
