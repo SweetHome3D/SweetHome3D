@@ -56,7 +56,7 @@ public class IconManagerTest extends TestCase {
       throws NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException, ClassNotFoundException {
     // Stop iconsLoader of iconManager 
     IconManager iconManager = IconManager.getInstance();
-    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getFieldValue(iconManager, "iconsLoader");
+    ThreadPoolExecutor iconsLoader = (ThreadPoolExecutor)getField(iconManager, "iconsLoader");
     iconsLoader.shutdownNow();
     // Replace it by an excecutor that controls the start of a task with a barrier
     final CyclicBarrier iconLoadingStartBarrier = new CyclicBarrier(2);
@@ -76,7 +76,7 @@ public class IconManagerTest extends TestCase {
     });
     
     // Empty existing icons to prove IconManager work
-    ((Map)getFieldValue(iconManager, "icons")).clear();
+    ((Map)getField(iconManager, "icons")).clear();
     
     // Test icon loading on a good image
     testIconLoading(getClass().getResource("resources/test.png"), true, iconLoadingStartBarrier);
@@ -84,8 +84,8 @@ public class IconManagerTest extends TestCase {
     testIconLoading(getClass().getResource("IconManagerTest.class"), false, iconLoadingStartBarrier);
 
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
-    URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
-    URLContent errorIconContent = (URLContent)getFieldValue(iconManager, "errorIconContent");
+    URLContent waitIconContent = (URLContent)getField(iconManager, "waitIconContent");
+    URLContent errorIconContent = (URLContent)getField(iconManager, "errorIconContent");
 
     // Check waitIcon is loaded directly without proxy
     Icon waitIcon = iconManager.getIcon(waitIconContent, HEIGHT, null);
@@ -112,8 +112,8 @@ public class IconManagerTest extends TestCase {
     IconManager iconManager = IconManager.getInstance();
     Class iconProxyClass = Class.forName(iconManager.getClass().getName() + "$IconProxy");
     
-    URLContent waitIconContent = (URLContent)getFieldValue(iconManager, "waitIconContent");
-    URLContent errorIconContent = (URLContent)getFieldValue(iconManager, "errorIconContent");
+    URLContent waitIconContent = (URLContent)getField(iconManager, "waitIconContent");
+    URLContent errorIconContent = (URLContent)getField(iconManager, "errorIconContent");
     
     final CyclicBarrier waitingComponentBarrier = new CyclicBarrier(2);
     // A dummy waiting component that waits on a barrier in its repaint method 
@@ -154,9 +154,10 @@ public class IconManagerTest extends TestCase {
   }
 
   /**
-   * Returns the value of <code>fieldName</code> in a given <code>instance</code> by reflection.
+   * Returns a reference to <code>fieldName</code> 
+   * in a given <code>instance</code> by reflection.
    */
-  private Object getFieldValue(Object instance, String fieldName)
+  private Object getField(Object instance, String fieldName)
       throws NoSuchFieldException, IllegalAccessException {
     Field field = instance.getClass().getDeclaredField(fieldName);
     field.setAccessible(true);
