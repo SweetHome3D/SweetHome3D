@@ -642,7 +642,8 @@ public class HomeController {
    * Edits preferences and changes them if user agrees.
    */
   public void editPreferences() {
-    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel(this.preferences);
+    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
+    preferencesPanel.setPreferences(this.preferences);
     if (preferencesPanel.showDialog(getView())) {
       preferences.setUnit(preferencesPanel.getUnit());
       preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
