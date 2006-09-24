@@ -55,7 +55,8 @@ public class UserPreferencesPanelTest extends TestCase {
         defaultPreferences.getNewHomeWallHeight());
     
     // 2. Create a user preferences panel 
-    UserPreferencesPanel panel = new UserPreferencesPanel(preferences);
+    UserPreferencesPanel panel = new UserPreferencesPanel();
+    panel.setPreferences(preferences);
     JRadioButton centimeterRadioButton = 
         (JRadioButton)getField(panel, "centimeterRadioButton");
     JRadioButton inchRadioButton = 
@@ -65,7 +66,7 @@ public class UserPreferencesPanelTest extends TestCase {
     SpinnerModel newWallThicknessModel = 
         (SpinnerModel)getField(panel, "newWallThicknessModel");
     SpinnerModel newHomeWallHeightModel = 
-        (SpinnerModel)getField(panel, "newWallHeightModel");
+        (SpinnerModel)getField(panel, "newHomeWallHeightModel");
     // Check panel components value
     assertTrue("Centimeter radio button isn't selected", 
         centimeterRadioButton.isSelected());
