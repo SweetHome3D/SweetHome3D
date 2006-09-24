@@ -24,7 +24,7 @@ import java.util.Locale;
 
 import javax.swing.JCheckBox;
 import javax.swing.JRadioButton;
-import javax.swing.SpinnerModel;
+import javax.swing.JSpinner;
 
 import junit.framework.TestCase;
 
@@ -63,10 +63,10 @@ public class UserPreferencesPanelTest extends TestCase {
         (JRadioButton)getField(panel, "inchRadioButton");
     JCheckBox    magnetismCheckBox = 
         (JCheckBox)getField(panel, "magnetismCheckBox");
-    SpinnerModel newWallThicknessModel = 
-        (SpinnerModel)getField(panel, "newWallThicknessModel");
-    SpinnerModel newHomeWallHeightModel = 
-        (SpinnerModel)getField(panel, "newHomeWallHeightModel");
+    JSpinner newWallThicknessSpinner = 
+        (JSpinner)getField(panel, "newWallThicknessSpinner");
+    JSpinner newHomeWallHeightSpinner = 
+        (JSpinner)getField(panel, "newHomeWallHeightSpinner");
     // Check panel components value
     assertTrue("Centimeter radio button isn't selected", 
         centimeterRadioButton.isSelected());
@@ -74,15 +74,15 @@ public class UserPreferencesPanelTest extends TestCase {
         inchRadioButton.isSelected());
     assertTrue("Magnestism isn't selected", magnetismCheckBox.isSelected());
     assertEquals("Wrong default thickness", 
-        newWallThicknessModel.getValue(), defaultPreferences.getNewWallThickness());
+        newWallThicknessSpinner.getValue(), defaultPreferences.getNewWallThickness());
     assertEquals("Wrong default wall height", 
-        newHomeWallHeightModel.getValue(), defaultPreferences.getNewHomeWallHeight());
+        newHomeWallHeightSpinner.getValue(), defaultPreferences.getNewHomeWallHeight());
     
     // 3. Change panel values
     inchRadioButton.setSelected(true);
     magnetismCheckBox.setSelected(false);
-    newWallThicknessModel.setValue(2.54f);
-    newHomeWallHeightModel.setValue(254);
+    newWallThicknessSpinner.setValue(1);
+    newHomeWallHeightSpinner.setValue(100);
     
     // 4. Retrieve panel values into preferences 
     preferences.setUnit(panel.getUnit());

@@ -44,12 +44,16 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class UserPreferencesPanel extends JPanel {
-  private ResourceBundle       resource;
-  private JRadioButton         centimeterRadioButton;
-  private JRadioButton         inchRadioButton;
-  private JCheckBox            magnetismCheckBox;
-  private SpinnerLengthModel   newWallThicknessModel;
-  private SpinnerLengthModel   newHomeWallHeightModel;
+  private ResourceBundle resource;
+  private JLabel         unitLabel;
+  private JRadioButton   centimeterRadioButton;
+  private JRadioButton   inchRadioButton;
+  private JLabel         magnetismEnabledLabel;
+  private JCheckBox      magnetismCheckBox;
+  private JLabel         newWallThicknessLabel;
+  private JSpinner       newWallThicknessSpinner;
+  private JLabel         newHomeWallHeightLabel;
+  private JSpinner       newHomeWallHeightSpinner;
   
   /**
    * Creates a preferences panel that layouts the mutable properties
@@ -59,68 +63,68 @@ public class UserPreferencesPanel extends JPanel {
     super(new GridBagLayout());
     this.resource = ResourceBundle.getBundle(
             UserPreferencesPanel.class.getName());
-    createComponentsAndModels();
+    createComponents();
+    setMnemonics();
     layoutComponents();
   }
   
   /**
    * Creates and initializes components and spinners model.
    */
-  private void createComponentsAndModels() {
+  private void createComponents() {
+    unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
     this.centimeterRadioButton = new JRadioButton(
         this.resource.getString("centimeterRadioButton.text"), true);
-    this.centimeterRadioButton.setMnemonic(
-        this.resource.getString("centimeterRadioButton.mnemonic").charAt(0));
     this.inchRadioButton = new JRadioButton(
         this.resource.getString("inchRadioButton.text"));    
-    this.inchRadioButton.setMnemonic(
-        this.resource.getString("inchRadioButton.mnemonic").charAt(0));
     
     ButtonGroup unitButtonGroup = new ButtonGroup();
     unitButtonGroup.add(this.centimeterRadioButton);
     unitButtonGroup.add(this.inchRadioButton);
   
+    this.magnetismEnabledLabel = new JLabel(this.resource.getString("magnetismLabel.text"));
     this.magnetismCheckBox = new JCheckBox(
         this.resource.getString("magnetismCheckBox.text"));
-    this.magnetismCheckBox.setMnemonic(
-        this.resource.getString("magnetismCheckBox.mnemonic").charAt(0));
     
-    this.newWallThicknessModel = new SpinnerLengthModel(
-        0.5f, 100f, 0.5f, 0.125f, 
+    this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
+    this.newWallThicknessSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 2));
+    this.newWallThicknessSpinner = new JSpinner(new SpinnerLengthModel(
+        0.5f, 0.125f, 
         this.centimeterRadioButton.getModel(), 
-        this.inchRadioButton.getModel());
-    this.newHomeWallHeightModel = new SpinnerLengthModel(
-        1f, 1000f, 10f, 2f, 
+        this.inchRadioButton.getModel()));
+    this.newHomeWallHeightLabel = new JLabel(this.resource.getString("newHomeWallHeightLabel.text"));
+    this.newHomeWallHeightSpinner = new JSpinner(new SpinnerLengthModel(
+        10f, 2f, 
         this.centimeterRadioButton.getModel(), 
-        this.inchRadioButton.getModel());
+        this.inchRadioButton.getModel()));
+  }
+  
+  /**
+   * Sets components mnemonics and label / component associations.
+   */
+  private void setMnemonics() {
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      this.centimeterRadioButton.setMnemonic(
+          this.resource.getString("centimeterRadioButton.mnemonic").charAt(0));
+      this.inchRadioButton.setMnemonic(
+          this.resource.getString("inchRadioButton.mnemonic").charAt(0));
+      this.magnetismCheckBox.setMnemonic(
+          this.resource.getString("magnetismCheckBox.mnemonic").charAt(0));
+      this.newWallThicknessLabel.setDisplayedMnemonic(
+          this.resource.getString("newWallThicknessLabel.mnemonic").charAt(0));
+      this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
+      this.newHomeWallHeightLabel.setDisplayedMnemonic(
+          this.resource.getString("newHomeWallHeightLabel.mnemonic").charAt(0));
+      this.newHomeWallHeightLabel.setLabelFor(this.newHomeWallHeightSpinner);
+    }
   }
   
   /**
    * Layouts panel composants in panel with their labels. 
    */
   private void layoutComponents() {
-    JLabel unitLabel = 
-      new JLabel(this.resource.getString("unitLabel.text"));
-    JLabel magnetismEnabledLabel = 
-        new JLabel(this.resource.getString("magnetismLabel.text"));
-    JLabel newWallThicknessLabel = 
-        new JLabel(this.resource.getString("newWallThicknessLabel.text"));
-    newWallThicknessLabel.setDisplayedMnemonic(
-        this.resource.getString("newWallThicknessLabel.mnemonic").charAt(0));
-    JLabel newHomeWallHeightLabel = 
-        new JLabel(this.resource.getString("newHomeWallHeightLabel.text"));
-    newHomeWallHeightLabel.setDisplayedMnemonic(
-        this.resource.getString("newHomeWallHeightLabel.mnemonic").charAt(0));
-    
-    JSpinner newWallThicknessSpinner = 
-        new JSpinner(this.newWallThicknessModel);
-    newWallThicknessLabel.setLabelFor(newWallThicknessSpinner.getEditor());
-    JSpinner newHomeWallHeightSpinner = 
-        new JSpinner(this.newHomeWallHeightModel);
-    newHomeWallHeightLabel.setLabelFor(newHomeWallHeightSpinner.getEditor());
-    
     Insets labelInsets = new Insets(0, 0, 5, 5);
-    add(unitLabel, new GridBagConstraints(
+    add(this.unitLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.centimeterRadioButton, new GridBagConstraints(
@@ -131,24 +135,24 @@ public class UserPreferencesPanel extends JPanel {
         2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     
-    add(magnetismEnabledLabel, new GridBagConstraints(
+    add(this.magnetismEnabledLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.magnetismCheckBox, new GridBagConstraints(
         1, 1, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
-    add(newWallThicknessLabel, new GridBagConstraints(
+    add(this.newWallThicknessLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(newWallThicknessSpinner, new GridBagConstraints(
+    add(this.newWallThicknessSpinner, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     
-    add(newHomeWallHeightLabel, new GridBagConstraints(
+    add(this.newHomeWallHeightLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(newHomeWallHeightSpinner, new GridBagConstraints(
+    add(this.newHomeWallHeightSpinner, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
@@ -159,9 +163,9 @@ public class UserPreferencesPanel extends JPanel {
   public void setPreferences(UserPreferences preferences) {
     this.magnetismCheckBox.setSelected(
         preferences.isMagnetismEnabled());    
-    this.newWallThicknessModel.setValue(
+    this.newWallThicknessSpinner.setValue(
         preferences.getNewWallThickness());
-    this.newHomeWallHeightModel.setValue(
+    this.newHomeWallHeightSpinner.setValue(
         preferences.getNewHomeWallHeight());
     // Initialize radio buttons at end because this may change
     // values displayed in spinners
@@ -177,7 +181,6 @@ public class UserPreferencesPanel extends JPanel {
    */
   public boolean showDialog(JComponent parent) {
     String dialogTitle = resource.getString("preferences.title");
-    // TODO test setAlwaysOnTop
     return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
@@ -195,63 +198,59 @@ public class UserPreferencesPanel extends JPanel {
   }
 
   /**
-   * Returns the new wall thickness in panel.
-   */
-  public float getNewWallThickness() {
-    return this.newWallThicknessModel.getLength();
-  }
-
-  /**
-   * Returns the new home wall height in panel.
-   */
-  public float getNewHomeWallHeight() {
-    return this.newHomeWallHeightModel.getLength();
-  }
-
-  /**
    * Returns <code>true</code> if magnetism is enabled in panel.
    */
   public boolean isMagnetismEnabled() {
     return this.magnetismCheckBox.isSelected();
   } 
   
+  /**
+   * Returns the new wall thickness in panel.
+   */
+  public float getNewWallThickness() {
+    return ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).getLength();
+  }
+
+  /**
+   * Returns the new home wall height in panel.
+   */
+  public float getNewHomeWallHeight() {
+    return ((SpinnerLengthModel)this.newHomeWallHeightSpinner.getModel()).getLength();
+  }
+
   private static class SpinnerLengthModel extends SpinnerNumberModel {
     private UserPreferences.Unit unit = 
       UserPreferences.Unit.CENTIMETER;
 
-    public SpinnerLengthModel(final float centimeterMin, 
-                              final float centimeterMax, 
-                              final float centimeterStepSize, 
+    public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
                               final ButtonModel centimeterButtonModel,
                               final ButtonModel inchButtonModel) {
-      super(centimeterMin, centimeterMin, centimeterMax, centimeterStepSize);
+      super(1, 0, 100000, centimeterStepSize);
       // Add a listener to convert value, main, max and step 
       // to cemtimeter when button model is selected 
-      centimeterButtonModel.addChangeListener(new ChangeListener () {
+      centimeterButtonModel.addChangeListener(
+        new ChangeListener () {
           public void stateChanged(ChangeEvent ev) {
             if (unit == UserPreferences.Unit.INCH
                 && centimeterButtonModel.isSelected()) {
+              setStepSize(centimeterStepSize);
               setValue(UserPreferences.Unit.inchToCentimer(
                   getNumber().floatValue()));
-              setStepSize(centimeterStepSize);
-              setMinimum(centimeterMin);
-              setMaximum(centimeterMax);
               unit = UserPreferences.Unit.CENTIMETER;
             }
           }
         });
       // Add a listener to convert value, min, max and step 
       // to inch when button model is selected 
-      inchButtonModel.addChangeListener(new ChangeListener () {
+      inchButtonModel.addChangeListener(
+        new ChangeListener () {
           public void stateChanged(ChangeEvent ev) {
             if (unit == UserPreferences.Unit.CENTIMETER
                 && inchButtonModel.isSelected()) {
+              setStepSize(inchStepSize);
               setValue(UserPreferences.Unit.centimerToInch(
                   getNumber().floatValue()));
-              setStepSize(inchStepSize);
-              setMinimum(UserPreferences.Unit.centimerToInch(centimeterMin));
-              setMaximum(UserPreferences.Unit.centimerToInch(centimeterMax));
               unit = UserPreferences.Unit.INCH;
             }
           }
