@@ -87,7 +87,6 @@ public class UserPreferencesPanel extends JPanel {
         this.resource.getString("magnetismCheckBox.text"));
     
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
-    this.newWallThicknessSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 2));
     this.newWallThicknessSpinner = new JSpinner(new SpinnerLengthModel(
         0.5f, 0.125f, 
         this.centimeterRadioButton.getModel(), 
