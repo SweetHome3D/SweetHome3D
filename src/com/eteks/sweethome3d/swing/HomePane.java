@@ -34,13 +34,18 @@ import java.io.FilenameFilter;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -55,6 +60,8 @@ import javax.swing.JViewport;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Home;
@@ -617,12 +624,38 @@ public class HomePane extends JRootPane {
    * Displays an about dialog.
    */
   public void showAboutDialog() {
-    String message = this.resource.getString("about.message");
-    String title   = this.resource.getString("about.title");
-    URL    iconUrl = HomePane.class.getResource(
-        this.resource.getString("about.icon"));
-    JOptionPane.showMessageDialog(this, message, title,  
-        JOptionPane.INFORMATION_MESSAGE, new ImageIcon(iconUrl));
+    // Use an uneditable editor pane to let user select text in dialog
+    JEditorPane messagePane = new JEditorPane("text/html", 
+        this.resource.getString("about.message"));
+    messagePane.setOpaque(false);
+    messagePane.setEditable(false);
+    messagePane.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent ev) {
+        if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          viewURL(ev.getURL());
+        }
+      }
+    });
+    
+    String title = this.resource.getString("about.title");
+    Icon   icon  = new ImageIcon(HomePane.class.getResource(
+        this.resource.getString("about.icon")));
+    JOptionPane.showMessageDialog(this, messagePane, title,  
+        JOptionPane.INFORMATION_MESSAGE, icon);
+  }
+
+  /**
+   * Launches browser with <code>url</code>.
+   */
+  private void viewURL(URL url) {
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      BasicService service = 
+        (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      service.showDocument(url); 
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable 
+    } 
   }
 
   /**
@@ -633,7 +666,7 @@ public class HomePane extends JRootPane {
     return !getToolkit().getSystemClipboard().
         isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR);
   }
-  
+
   /**
    * A scroll pane that always displays scroll bar on Mac OS X.
    */
