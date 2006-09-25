@@ -24,6 +24,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.ButtonModel;
 import javax.swing.JCheckBox;
@@ -88,14 +89,10 @@ public class UserPreferencesPanel extends JPanel {
     
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
     this.newWallThicknessSpinner = new JSpinner(new SpinnerLengthModel(
-        0.5f, 0.125f, 
-        this.centimeterRadioButton.getModel(), 
-        this.inchRadioButton.getModel()));
+        0.5f, 0.125f, this.centimeterRadioButton));
     this.newHomeWallHeightLabel = new JLabel(this.resource.getString("newHomeWallHeightLabel.text"));
     this.newHomeWallHeightSpinner = new JSpinner(new SpinnerLengthModel(
-        10f, 2f, 
-        this.centimeterRadioButton.getModel(), 
-        this.inchRadioButton.getModel()));
+        10f, 2f, this.centimeterRadioButton));
   }
   
   /**
@@ -223,34 +220,27 @@ public class UserPreferencesPanel extends JPanel {
 
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
-                              final ButtonModel centimeterButtonModel,
-                              final ButtonModel inchButtonModel) {
+                              final AbstractButton centimeterButton) {
       super(1, 0, 100000, centimeterStepSize);
       // Add a listener to convert value, main, max and step 
       // to cemtimeter when button model is selected 
-      centimeterButtonModel.addChangeListener(
+      centimeterButton.addChangeListener(
         new ChangeListener () {
           public void stateChanged(ChangeEvent ev) {
-            if (unit == UserPreferences.Unit.INCH
-                && centimeterButtonModel.isSelected()) {
-              setStepSize(centimeterStepSize);
-              setValue(UserPreferences.Unit.inchToCentimer(
-                  getNumber().floatValue()));
-              unit = UserPreferences.Unit.CENTIMETER;
-            }
-          }
-        });
-      // Add a listener to convert value, min, max and step 
-      // to inch when button model is selected 
-      inchButtonModel.addChangeListener(
-        new ChangeListener () {
-          public void stateChanged(ChangeEvent ev) {
-            if (unit == UserPreferences.Unit.CENTIMETER
-                && inchButtonModel.isSelected()) {
-              setStepSize(inchStepSize);
-              setValue(UserPreferences.Unit.centimerToInch(
-                  getNumber().floatValue()));
-              unit = UserPreferences.Unit.INCH;
+            if (centimeterButton.isSelected()) {
+              if (unit == UserPreferences.Unit.INCH) {
+                setStepSize(centimeterStepSize);
+                setValue(UserPreferences.Unit.inchToCentimer(
+                    getNumber().floatValue()));
+                unit = UserPreferences.Unit.CENTIMETER;
+              }
+            } else {
+              if (unit == UserPreferences.Unit.CENTIMETER) {
+                setStepSize(inchStepSize);
+                setValue(UserPreferences.Unit.centimerToInch(
+                    getNumber().floatValue()));
+                unit = UserPreferences.Unit.INCH;
+              }
             }
           }
         });
