@@ -157,19 +157,17 @@ public class UserPreferencesPanel extends JPanel {
    * Sets components value from <code>preferences</code>.
    */
   public void setPreferences(UserPreferences preferences) {
-    this.magnetismCheckBox.setSelected(
-        preferences.isMagnetismEnabled());    
-    this.newWallThicknessSpinner.setValue(
-        preferences.getNewWallThickness());
-    this.newHomeWallHeightSpinner.setValue(
-        preferences.getNewHomeWallHeight());
-    // Initialize radio buttons at end because this may change
-    // values displayed in spinners
     if (preferences.getUnit() == UserPreferences.Unit.INCH) {
       this.inchRadioButton.setSelected(true);
     } else {
       this.centimeterRadioButton.setSelected(true);
     }
+    this.magnetismCheckBox.setSelected(
+        preferences.isMagnetismEnabled());    
+    ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).
+        setLength(preferences.getNewWallThickness());
+    ((SpinnerLengthModel)this.newHomeWallHeightSpinner.getModel()).
+        setLength(preferences.getNewHomeWallHeight());
   }
   
   /**
@@ -255,6 +253,16 @@ public class UserPreferencesPanel extends JPanel {
       } else {
         return getNumber().floatValue();
       }
+    }
+
+    /**
+     * Sets the length in centimeter displayed in this model.
+     */
+    public void setLength(float length) {
+      if (unit == UserPreferences.Unit.INCH) {
+        length = UserPreferences.Unit.centimerToInch(length);
+      } 
+      setValue(length);
     }
   }
 }
