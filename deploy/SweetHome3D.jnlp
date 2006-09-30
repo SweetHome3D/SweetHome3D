@@ -19,6 +19,7 @@
                  mime-type="application/SweetHome3D"/>
   </information>
   <information locale="fr">
+    <title>Sweet Home 3D</title>
     <description kind="short">Amenagez les meubles de votre logement</description>
     <offline-allowed/>
   </information>
