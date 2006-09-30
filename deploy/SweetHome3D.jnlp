@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0"?>
 <jnlp spec="1.0+" 
       codebase="http://sweethome3d.sourceforge.net/" 
       href="SweetHome3D.jnlp">
@@ -19,9 +19,7 @@
                  mime-type="application/SweetHome3D"/>
   </information>
   <information locale="fr">
-    <title>Sweet Home 3D</title>
-    <description kind="short">Aménagez les meubles de votre logement</description>
-    <offline-allowed/>
+    <description kind="short">Amenagez les meubles de votre logement</description>
   </information>
 
   <security>
