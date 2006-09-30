@@ -20,6 +20,7 @@
   </information>
   <information locale="fr">
     <description kind="short">Amenagez les meubles de votre logement</description>
+    <offline-allowed/>
   </information>
 
   <security>
