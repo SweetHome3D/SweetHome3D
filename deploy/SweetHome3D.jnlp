@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<jnlp spec="1.0+" 
+<jnlp spec="1.5+" 
       codebase="http://sweethome3d.sourceforge.net/" 
       href="SweetHome3D.jnlp">
   <information>
