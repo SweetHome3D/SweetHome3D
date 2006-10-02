@@ -2,18 +2,19 @@
 <project basedir="." default="deploy" name="SweetHome3D">
   <target name="deploy">
     <echo message="Compile ${ant.project.name}"/>
-    <mkdir dir="classes"/>
-    <javac srcdir="src" destdir="classes">
+    <mkdir dir="deploy/classes"/>
+    <javac srcdir="src" destdir="deploy/classes">
        <classpath>
          <pathelement location="lib/windows/vecmath.jar"/>
          <pathelement location="lib/windows/j3dutils.jar"/>
          <pathelement location="lib/windows/j3dcore.jar"/>
          <pathelement location="libtest/AppleJavaExtensions.jar"/>
+         <pathelement location="libtest/jnlp.jar"/>
         </classpath>
     </javac>
     
     <echo message="Copy resources"/>
-    <copy todir="classes">
+    <copy todir="deploy/classes">
       <fileset dir="src">
         <exclude name="**/*.java"/>
         <exclude name=".*"/>
@@ -21,7 +22,9 @@
     </copy>
     
     <echo message="Create SweetHome3D.jar"/>
-    <jar destfile="deploy/SweetHome3D.jar" basedir="classes"/>
+    <jar destfile="deploy/SweetHome3D.jar" 
+    	     basedir="deploy/classes"/>
+    <delete dir="deploy/classes"/>
   
     <echo message="Create Java 3D DLL jar files"/>
     <mkdir dir="deploy/windows" />
