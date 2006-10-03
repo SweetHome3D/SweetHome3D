@@ -21,14 +21,13 @@ package com.eteks.sweethome3d;
 
 import javax.swing.UIManager;
 
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
-import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
-import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -41,24 +40,7 @@ public class SweetHome3D extends HomeApplication {
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
-    this.userPreferences = new FileUserPreferences();
-    // Add a listener that opens a frame when a home is added to application
-    addHomeListener(new HomeListener() {
-        public void homeChanged(HomeEvent ev) {
-          switch (ev.getType()) {
-            case ADD :
-              Home home = ev.getHome();
-              new HomeFrameController(home, SweetHome3D.this);
-              break;
-            case DELETE :
-              // Exit if application has no more home
-              if (getHomes().isEmpty()) {
-                System.exit(0);
-              }
-              break;
-          }
-        };
-      });
+    this.userPreferences = new DefaultUserPreferences();
   }
 
   /**
@@ -82,10 +64,6 @@ public class SweetHome3D extends HomeApplication {
    * @param args may contain one .sh3d file to open, following a <code>-open</code> option.  
    */
   public static void main(String [] args) {
-    // Enables Java 5 bug correction about dragging directly
-    // a tree element without selecting it before :
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-    System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     // Change Mac OS X application menu name
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
@@ -97,20 +75,28 @@ public class SweetHome3D extends HomeApplication {
       // Too bad keep current look and feel
     }
 
-    HomeApplication application = new SweetHome3D();
-    Home firstHome; 
-    if (args.length == 2 && args [0].equals("-open")) {
-      try {
-        // Read home file in args [1] if args [0] == "-open"
-        firstHome = application.getHomeRecorder().readHome(args [1]);
-       } catch (RecorderException ex) {
-        return;
-       }
-    } else {
-      // Create a default home
-      firstHome = new Home(application.getUserPreferences().getNewHomeWallHeight());
-    }
-    // Opening a frame at the end of a main is ok as this method work is over
+    // Create the application that manages homes
+    final HomeApplication application = new SweetHome3D();
+    // Add a listener that opens a frame when a home is added to application
+    application.addHomeListener(new HomeListener() {
+        public void homeChanged(HomeEvent ev) {
+          switch (ev.getType()) {
+            case ADD :
+              Home home = ev.getHome();
+              new HomeFrameController(home, application);
+              break;
+            case DELETE :
+              // Exit if application has no more home
+              if (application.getHomes().isEmpty()) {
+                System.exit(0);
+              }
+              break;
+          }
+        };
+      });
+
+    Home firstHome = new Home(application.getUserPreferences().getNewHomeWallHeight());
+    // Opening a frame at the end of a main is ok as main method work is over after this call
     application.addHome(firstHome);
   }
 }
