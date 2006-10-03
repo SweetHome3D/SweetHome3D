@@ -79,7 +79,7 @@ public class SweetHome3D extends HomeApplication {
 
   /**
    * Sweet Home 3D entry point.
-   * @param args may contain one .sh3d file to open.  
+   * @param args may contain one .sh3d file to open, following a <code>-open</code> option.  
    */
   public static void main(String [] args) {
     // Change Mac OS X application menu name
@@ -97,7 +97,7 @@ public class SweetHome3D extends HomeApplication {
     Home firstHome; 
     if (args.length == 2 && args [0].equals("-open")) {
       try {
-        // Read home file in args [1] if args [0] == "-file"
+        // Read home file in args [1] if args [0] == "-open"
         firstHome = application.getHomeRecorder().readHome(args [1]);
        } catch (RecorderException ex) {
         return;
