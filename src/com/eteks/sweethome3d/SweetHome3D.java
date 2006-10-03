@@ -82,6 +82,10 @@ public class SweetHome3D extends HomeApplication {
    * @param args may contain one .sh3d file to open, following a <code>-open</code> option.  
    */
   public static void main(String [] args) {
+    // Enables Java 5 bug correction about dragging directly
+    // a tree element without selecting it before :
+    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
+    System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     // Change Mac OS X application menu name
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
