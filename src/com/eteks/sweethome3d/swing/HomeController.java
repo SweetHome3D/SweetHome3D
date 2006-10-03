@@ -393,10 +393,10 @@ public class HomeController {
     final String homeName = ((HomePane)getView()).showOpenDialog();
     if (homeName != null) {
       try {
-        Home openedHome = application.getHomeRecorder().readHome(homeName); 
-        application.addHome(openedHome);
+        Home openedHome = this.application.getHomeRecorder().readHome(homeName); 
+        this.application.addHome(openedHome);
       } catch (RecorderException ex) {
-        String message = String.format(resource.getString("openError"), homeName);
+        String message = String.format(this.resource.getString("openError"), homeName);
         ((HomePane)getView()).showError(message);
       }
     }
