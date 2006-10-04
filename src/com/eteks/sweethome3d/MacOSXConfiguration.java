@@ -60,6 +60,14 @@ class MacOSXConfiguration {
       public void handlePreferences(ApplicationEvent ev) {
         currentController.editPreferences();
       }
+
+      @Override
+      public void handleOpenFile(ApplicationEvent ev) {
+        // handleOpenFile is called when user opens a document
+        // associated with a Java Web Start application
+        // Just call main with -open file arguments as JNLP specifies 
+        SweetHome3D.main(new String [] {"-open", ev.getFilename()});
+      }
     });
     application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
