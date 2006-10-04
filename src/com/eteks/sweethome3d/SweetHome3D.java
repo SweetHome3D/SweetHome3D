@@ -19,16 +19,25 @@
  */
 package com.eteks.sweethome3d;
 
+import java.util.ResourceBundle;
+
+import javax.jnlp.ServiceManager;
+import javax.jnlp.SingleInstanceListener;
+import javax.jnlp.SingleInstanceService;
+import javax.jnlp.UnavailableServiceException;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.HomeController;
 
 /**
  * Sweet Home 3D main class.
@@ -40,7 +49,7 @@ public class SweetHome3D extends HomeApplication {
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
-    this.userPreferences = new DefaultUserPreferences();
+    this.userPreferences = new FileUserPreferences();
   }
 
   /**
@@ -58,11 +67,45 @@ public class SweetHome3D extends HomeApplication {
   public UserPreferences getUserPreferences() {
     return this.userPreferences;
   }
+  
+  // Only one application may be created with main method or SingleInstanceService
+  private static HomeApplication application;
 
   /**
    * Sweet Home 3D entry point.
+   * @param args may contain one .sh3d file to open, following a <code>-open</code> option.  
    */
   public static void main(String [] args) {
+    // At first main call
+    if (application == null) {
+      initLookAndFeel();
+      application = createApplication();
+    }
+
+    if (args.length == 2 && args [0].equals("-open")) {
+      try {
+        // Read home file in args [1] if args [0] == "-open"
+        Home home = application.getHomeRecorder().readHome(args [1]);
+        application.addHome(home);
+       } catch (RecorderException ex) {
+         // Show an error message dialog if home couldn't be read
+         ResourceBundle resource = ResourceBundle.getBundle(
+             HomeController.class.getName());
+         String message = String.format(resource.getString("openError"), args [1]);
+         JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
+             JOptionPane.ERROR_MESSAGE);
+       }
+    } else  {
+      // Create a default home 
+      Home home = new Home(application.getUserPreferences().getNewHomeWallHeight());
+      application.addHome(home);
+    }
+  }
+
+  /**
+   * Sets application look anf feel and various <code>System</code> properties.
+   */
+  private static void initLookAndFeel() {
     // Enables Java 5 bug correction about dragging directly
     // a tree element without selecting it before :
     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
@@ -77,8 +120,34 @@ public class SweetHome3D extends HomeApplication {
     } catch (Exception e) {
       // Too bad keep current look and feel
     }
+  }
 
-    // Create the application that manages homes
+  /**
+   * Returns main application object. 
+   */
+  private static HomeApplication createApplication() {
+    SingleInstanceService service = null;
+    final SingleInstanceListener singleInstanceListener = 
+      new SingleInstanceListener() {
+        public void newActivation(String [] args) {
+          // Just call main with the arguments it should have received
+          main(args);
+        }
+      };
+    try {
+      // Retrieve Java Web Start SingleInstanceService
+      service = (SingleInstanceService)
+          ServiceManager.lookup("javax.jnlp.SingleInstanceService");
+      service.addSingleInstanceListener(singleInstanceListener);
+    } catch (UnavailableServiceException ex) {
+      // Just ignore SingleInstanceService if it's not available 
+      // to let application work outside of Java Web Start
+    } 
+    
+    // Make a final copy of service
+    final SingleInstanceService singleInstanceService = service;
+          
+    // Create the application that manages homes 
     final HomeApplication application = new SweetHome3D();
     // Add a listener that opens a frame when a home is added to application
     application.addHomeListener(new HomeListener() {
@@ -89,17 +158,19 @@ public class SweetHome3D extends HomeApplication {
               new HomeFrameController(home, application);
               break;
             case DELETE :
-              // Exit if application has no more home
+              // If application has no more home
               if (application.getHomes().isEmpty()) {
+                // If SingleInstanceService is available, remove the listener that was added on it
+                if (singleInstanceService != null) {
+                  singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
+                }
+                // Exit
                 System.exit(0);
               }
               break;
           }
         };
       });
-
-    Home firstHome = new Home(application.getUserPreferences().getNewHomeWallHeight());
-    // Opening a frame at the end of a main is ok as main method work is over after this call
-    application.addHome(firstHome);
+    return application;
   }
 }
