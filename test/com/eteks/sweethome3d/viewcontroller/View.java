@@ -20,7 +20,7 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 /**
- * A MVC view associated to a {@link Controller controller}. 
+ * A MVC view associated to a controller. 
  * Any specific view should create a subinterface of this interface. 
  * @author Emmanuel Puybaret
  */
