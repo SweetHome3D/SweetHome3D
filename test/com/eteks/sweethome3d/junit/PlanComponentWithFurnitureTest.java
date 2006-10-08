@@ -39,7 +39,6 @@ import javax.swing.JTree;
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.tester.ComponentLocation;
 import abbot.tester.JButtonTester;
-import abbot.tester.JTreeTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
