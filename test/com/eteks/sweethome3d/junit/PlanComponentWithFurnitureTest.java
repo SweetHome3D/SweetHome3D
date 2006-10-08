@@ -65,12 +65,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     showWindow(frame);
     
     // 2. Use WALL_CREATION mode
-    JComponentTester tester = new JComponentTester();
     frame.modeButton.doClick();
     PlanComponent planComponent = (PlanComponent)
       frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
     // then double click at (30, 30)
+    JComponentTester tester = new JComponentTester();
     tester.actionClick(planComponent, 30, 30);
     tester.actionClick(planComponent, 220, 30);
     tester.actionClick(planComponent, 270, 80);
