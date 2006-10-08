@@ -41,7 +41,6 @@ import javax.swing.undo.UndoableEditSupport;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.tester.ComponentLocation;
-import abbot.tester.JButtonTester;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
