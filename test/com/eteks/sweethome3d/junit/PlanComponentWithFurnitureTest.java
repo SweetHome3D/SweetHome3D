@@ -38,7 +38,7 @@ import javax.swing.JTree;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.tester.ComponentLocation;
-import abbot.tester.JButtonTester;
+import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
@@ -65,31 +65,31 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     showWindow(frame);
     
     // 2. Use WALL_CREATION mode
-    JButtonTester tester = new JButtonTester();
-    tester.actionClick(frame.modeButton);
+    JComponentTester tester = new JComponentTester();
+    frame.modeButton.doClick();
     PlanComponent planComponent = (PlanComponent)
       frame.homeController.getPlanController().getView();
-    // Click at (20, 20), (220, 20), (270, 70), (270, 170), (20, 170) 
-    // then double click at (20, 20)
-    tester.actionClick(planComponent, 20, 20);
-    tester.actionClick(planComponent, 220, 20);
-    tester.actionClick(planComponent, 270, 70);
+    // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
+    // then double click at (30, 30)
+    tester.actionClick(planComponent, 30, 30);
+    tester.actionClick(planComponent, 220, 30);
+    tester.actionClick(planComponent, 270, 80);
     tester.actionClick(planComponent, 270, 170);
-    tester.actionClick(planComponent, 20, 170);
-    tester.actionClick(planComponent, 20, 20, InputEvent.BUTTON1_MASK, 2);
+    tester.actionClick(planComponent, 30, 170);
+    tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
     // Check 5 walls were added to home plan
     assertEquals("Wrong walls count", 5, 
         frame.home.getWalls().size());
 
     // 3. Use SELECTION mode
-    tester.actionClick(frame.modeButton);
+    frame.modeButton.doClick();
     // Select the first piece in catalog tree
     JTree catalogTree = (JTree)getComponent(
           frame.homeController.getView(), CatalogTree.class);
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
     // Click on Add furniture button
-    tester.actionClick(frame.addButton);
+    frame.addButton.doClick();
     // Check home contains one selected piece
     assertEquals("Wrong piece count", 
         1, frame.home.getFurniture().size());
@@ -150,9 +150,9 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
     
-    // 7. Click at point (20, 160) with Shift key depressed 
+    // 7. Click at point (30, 160) with Shift key depressed 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
-    tester.actionClick(planComponent, 20, 160); 
+    tester.actionClick(planComponent, 30, 160); 
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check selected items contains the piece of furniture and the fifth wall
     List<Object> selectedItems = 
@@ -167,34 +167,34 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Check piece and wall coordinates
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
-    assertCoordinatesEqualWallPoints(0, 300, 0, 0, fifthWall);
+    assertCoordinatesEqualWallPoints(20, 300, 20, 20, fifthWall);
     
-    // 8. Drag and drop mouse to (30, 160), 
+    // 8. Drag and drop mouse to (40, 160), 
     tester.actionMousePress(planComponent, 
-        new ComponentLocation(new Point(20, 160)));
+        new ComponentLocation(new Point(30, 160)));
     tester.actionMouseMove(planComponent,  
-        new ComponentLocation(new Point(30, 160))); 
+        new ComponentLocation(new Point(40, 160))); 
     tester.actionMouseRelease(); 
     // Check the piece of furniture moved 20 cm along x axis
     assertLocationAndOrientationEqualPiece(
         pieceX + 20, pieceY, (float)Math.PI * 3 / 2, piece);
-    assertCoordinatesEqualWallPoints(20, 300, 20, 0, fifthWall);
+    assertCoordinatesEqualWallPoints(40, 300, 40, 20, fifthWall);
     
     // 9. Click twice on undo button
-    tester.actionClick(frame.undoButton);
-    tester.actionClick(frame.undoButton);
+    frame.undoButton.doClick();
+    frame.undoButton.doClick();
     // Check piece orientation and location is canceled
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, 0f, piece);
-    assertCoordinatesEqualWallPoints(0, 300, 0, 0, fifthWall);
+    assertCoordinatesEqualWallPoints(20, 300, 20, 20, fifthWall);
     
     // 10. Click twice on redo button
-    tester.actionClick(frame.redoButton);
-    tester.actionClick(frame.redoButton);
+    frame.redoButton.doClick();
+    frame.redoButton.doClick();
     // Check piece and wall location was redone
     assertLocationAndOrientationEqualPiece(
         pieceX + 20, pieceY, (float)Math.PI * 3 / 2, piece);
-    assertCoordinatesEqualWallPoints(20, 300, 20, 0, fifthWall);
+    assertCoordinatesEqualWallPoints(40, 300, 40, 20, fifthWall);
     // Check selected items contains the piece of furniture and the fifth wall
     selectedItems = frame.home.getSelectedItems();
     assertEquals("Wrong selected items count", 
