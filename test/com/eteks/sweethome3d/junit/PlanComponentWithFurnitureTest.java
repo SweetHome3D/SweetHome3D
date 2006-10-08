@@ -85,12 +85,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // 3. Use SELECTION mode
     tester.actionClick(frame.modeButton);
     // Select the first piece in catalog tree
-    JTree tree = (JTree)getComponent(
+    JTree catalogTree = (JTree)getComponent(
           frame.homeController.getView(), CatalogTree.class);
-    JTreeTester treeTester = new JTreeTester();
-    treeTester.actionClickRow(tree, 0);
-    treeTester.actionClickRow(tree, 0);
-    treeTester.actionClickRow(tree, 1);
+    catalogTree.expandRow(0); 
+    catalogTree.addSelectionInterval(1, 1);
     // Click on Add furniture button
     tester.actionClick(frame.addButton);
     // Check home contains one selected piece
