@@ -25,6 +25,8 @@ import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -74,6 +76,7 @@ public class FurnitureTable extends JTable {
     if (controller != null) {
       addSelectionListeners(home, controller);
     }
+    addUserPreferencesListener(preferences);
   }
   
   /**
@@ -118,6 +121,19 @@ public class FurnitureTable extends JTable {
       };
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);
     home.addSelectionListener(homeSelectionListener);
+  }
+
+  /**
+   * Adds a listener to <code>preferences</code> to repaint this table
+   * when unit changes.  
+   */
+  private void addUserPreferencesListener(UserPreferences preferences) {
+    preferences.addPropertyChangeListener("unit", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          repaint();
+        }
+      });
   }
 
   /**
