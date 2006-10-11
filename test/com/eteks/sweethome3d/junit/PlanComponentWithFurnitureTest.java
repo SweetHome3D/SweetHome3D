@@ -21,8 +21,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -45,8 +43,6 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.CatalogController;
-import com.eteks.sweethome3d.swing.CatalogTree;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
