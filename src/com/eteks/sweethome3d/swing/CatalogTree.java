@@ -48,19 +48,32 @@ import com.eteks.sweethome3d.model.SelectionListener;
 public class CatalogTree extends JTree {
   private TreeSelectionListener treeSelectionListener;
 
+  /**
+   * Creates a tree that displays <code>catalog</code> content.
+   */
   public CatalogTree(Catalog catalog) {
+    this(catalog, null);
+  }
+
+  /**
+   * Creates a tree controlled by <code>controller</code>
+   * that displays <code>catalog</code> content.
+   */
+  public CatalogTree(Catalog catalog, CatalogController controller) {
     setModel(new CatalogTreeModel (catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
-    addSelectionListeners(catalog);
-    setDragEnabled(true);
+    if (controller != null) {
+      addSelectionListeners(catalog, controller);
+    }
   }
   
   /**
    * Adds selection listeners to this tree.
    */
-  private void addSelectionListeners(final Catalog catalog) {    
+  private void addSelectionListeners(final Catalog catalog, 
+                                     final CatalogController controller) {    
     final SelectionListener modelSelectionListener = 
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
@@ -76,8 +89,8 @@ public class CatalogTree extends JTree {
       new TreeSelectionListener () {
         public void valueChanged(TreeSelectionEvent ev) {
           catalog.removeSelectionListener(modelSelectionListener);
-          // Set the new selection in catalog
-          catalog.setSelectedFurniture(getSelectedFurniture());
+          // Set the new selection in catalog with controller
+          controller.setSelectedFurniture(getSelectedFurniture());
           catalog.addSelectionListener(modelSelectionListener);
         }
       };
