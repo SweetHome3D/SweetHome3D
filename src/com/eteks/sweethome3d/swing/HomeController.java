@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.event.UndoableEditEvent;
