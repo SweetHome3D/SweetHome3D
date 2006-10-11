@@ -49,13 +49,11 @@ public class HomePane extends JRootPane {
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
-    this.resource = 
-      ResourceBundle.getBundle(HomePane.class.getName());
+    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(
-        getCatalogFurniturePane(home, preferences, controller));
+    getContentPane().add(getCatalogFurniturePane(home, preferences, controller));
   }
   
   /**
@@ -153,10 +151,8 @@ public class HomePane extends JRootPane {
    */
   private JComponent getCatalogFurniturePane(Home home, UserPreferences preferences, 
                                              HomeController controller) {
-    JComponent catalogView =
-        controller.getCatalogController().getView();
-    JComponent furnitureView =
-        controller.getFurnitureController().getView();
+    JComponent catalogView = controller.getCatalogController().getView();
+    JComponent furnitureView = controller.getFurnitureController().getView();
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         new JScrollPane(catalogView), new JScrollPane(furnitureView));
