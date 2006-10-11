@@ -45,6 +45,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.swing.CatalogController;
 import com.eteks.sweethome3d.swing.CatalogTree;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -84,8 +85,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // 3. Use SELECTION mode
     frame.modeButton.doClick();
     // Select the first piece in catalog tree
-    JTree catalogTree = (JTree)getComponent(
-          frame.homeController.getView(), CatalogTree.class);
+    JTree catalogTree = (JTree)
+        frame.homeController.getCatalogController().getView();
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
     // Click on Add furniture button
@@ -203,24 +204,6 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         selectedItems.contains(piece));
     assertTrue("Fifth wall not selected", 
         selectedItems.contains(fifthWall));
-  }
-  
-  /**
-  * Returns the first component of a given class in <code>container</code> hierarchy.
-  */
-  private Component getComponent(Container container, Class componentClass) {
-   for (int i = 0, n = container.getComponentCount(); i < n; i++) {
-     Component component = container.getComponent(i);
-     if (componentClass.isInstance(component)) {
-       return component;
-     } else if (component instanceof Container) {
-       component = getComponent((Container)component, componentClass);
-       if (component != null) {
-         return component;
-       }
-     }
-   }
-   return null;
   }
 
   /**
