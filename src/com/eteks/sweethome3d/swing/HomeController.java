@@ -138,7 +138,7 @@ public class HomeController  {
    */
   private void enableActionsOnSelection() {
     boolean wallCreationMode =  
-        this.planController.getMode() == PlanController.Mode.WALL_CREATION;
+        getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
     
     // Search if selection contains at least one piece
     List selectedItems = this.home.getSelectedItems();
@@ -239,7 +239,7 @@ public class HomeController  {
    * and disables forbidden actions in this mode.  
    */
   public void setWallCreationMode() {
-    this.planController.setMode(PlanController.Mode.WALL_CREATION);
+    getPlanController().setMode(PlanController.Mode.WALL_CREATION);
     enableActionsOnSelection();
     HomePane view = ((HomePane)getView());
     view.setEnabled(HomePane.ActionType.UNDO, false);
@@ -251,7 +251,7 @@ public class HomeController  {
    * and enables authorized actions in this mode.  
    */
   public void setSelectionMode() {
-    this.planController.setMode(PlanController.Mode.SELECTION);
+    getPlanController().setMode(PlanController.Mode.SELECTION);
     enableActionsOnSelection();
     HomePane view = ((HomePane)getView());
     view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
