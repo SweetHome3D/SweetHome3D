@@ -30,14 +30,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.net.URL;
 import java.util.ResourceBundle;
 
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -53,6 +60,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Home;
@@ -64,10 +73,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, EXIT, 
+    NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, 
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
-    WALL_CREATION, DELETE_SELECTION}
+    WALL_CREATION, DELETE_SELECTION, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
   public enum FocusableView {CATALOG, FURNITURE, PLAN}
 
@@ -126,6 +135,7 @@ public class HomePane extends JRootPane {
     createAction(ActionType.CLOSE, controller, "close");
     createAction(ActionType.SAVE, controller, "save");
     createAction(ActionType.SAVE_AS, controller, "saveAs");
+    createAction(ActionType.PREFERENCES, controller, "editPreferences");
     createAction(ActionType.EXIT, controller, "exit");
     createAction(ActionType.UNDO, controller, "undo");
     createAction(ActionType.REDO, controller, "redo");
@@ -150,6 +160,7 @@ public class HomePane extends JRootPane {
         });
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
+    createAction(ActionType.ABOUT, controller, "about");
   }
 
   /**
@@ -213,6 +224,8 @@ public class HomePane extends JRootPane {
     // Don't add EXIT menu under Mac OS X, it's displayed in application menu  
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       fileMenu.addSeparator();
+      fileMenu.add(actions.get(ActionType.PREFERENCES));
+      fileMenu.addSeparator();
       fileMenu.add(actions.get(ActionType.EXIT));
     }
 
@@ -242,12 +255,25 @@ public class HomePane extends JRootPane {
     wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
     planMenu.add(wallCreationCheckBoxMenuItem);
 
+    // Create Help menu
+    JMenu helpMenu = null;
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      helpMenu = new JMenu(
+          new ResourceAction(this.resource, "HELP_MENU"));
+      helpMenu.setEnabled(true);
+      helpMenu.add(actions.get(ActionType.ABOUT));
+    }
+
     // Add menus to menu bar
     JMenuBar menuBar = new JMenuBar();
     menuBar.add(fileMenu);
     menuBar.add(editMenu);
     menuBar.add(furnitureMenu);
     menuBar.add(planMenu);
+    if (helpMenu != null) {
+      menuBar.add(helpMenu);
+    }
+
     return menuBar;
   }
   
@@ -597,6 +623,44 @@ public class HomePane extends JRootPane {
         JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
   }
   
+  /**
+   * Displays an about dialog.
+   */
+  public void showAboutDialog() {
+    // Use an uneditable editor pane to let user select text in dialog
+    JEditorPane messagePane = new JEditorPane("text/html", 
+        this.resource.getString("about.message"));
+    messagePane.setOpaque(false);
+    messagePane.setEditable(false);
+    messagePane.addHyperlinkListener(new HyperlinkListener() {
+      public void hyperlinkUpdate(HyperlinkEvent ev) {
+        if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          viewURL(ev.getURL());
+        }
+      }
+    });
+    
+    String title = this.resource.getString("about.title");
+    Icon   icon  = new ImageIcon(HomePane.class.getResource(
+        this.resource.getString("about.icon")));
+    JOptionPane.showMessageDialog(this, messagePane, title,  
+        JOptionPane.INFORMATION_MESSAGE, icon);
+  }
+
+  /**
+   * Launches browser with <code>url</code>.
+   */
+  private void viewURL(URL url) {
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      BasicService service = 
+          (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      service.showDocument(url); 
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable 
+    } 
+  }
+
   /**
    * Returns <code>true</code> if clipboard contains data that
    * components are able to handle.
