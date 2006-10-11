@@ -45,6 +45,7 @@ public class HomeController  {
   private JComponent          homeView; 
   private CatalogController   catalogController;
   private FurnitureController furnitureController;
+  private PlanController      planController;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
 
@@ -59,12 +60,17 @@ public class HomeController  {
     this.undoSupport = new UndoableEditSupport();
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
+    
     this.catalogController   = new CatalogController(
         preferences.getCatalog());
     this.furnitureController = new FurnitureController(
         home, preferences, this.undoSupport);
+    this.planController = new PlanController(
+        home, preferences, undoSupport);
+    
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
+    enableDefaultActions();
   }
 
   /**
@@ -89,6 +95,13 @@ public class HomeController  {
   }
 
   /**
+   * Returns the controller of home plan.
+   */
+  public PlanController getPlanController() {
+    return this.planController;
+  }
+
+  /**
    * Adds listeners that updates the enabled / disabled state of actions.
    */
   private void addListeners() {
@@ -104,9 +117,7 @@ public class HomeController  {
     this.preferences.getCatalog().addSelectionListener(
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          ((HomePane)getView()).setEnabled(
-              HomePane.ActionType.ADD_HOME_FURNITURE,
-              !ev.getSelectedItems().isEmpty());
+          enableActionsOnSelection();
         }
       });
   }
@@ -117,19 +128,36 @@ public class HomeController  {
   private void addHomeSelectionListener() {
     this.home.addSelectionListener(new SelectionListener() {
       public void selectionChanged(SelectionEvent ev) {
-        // Search if selection contains at least one piece
-        boolean selectionContainsFurniture = false;
-        for (Object item : ev.getSelectedItems()) {
-          if (item instanceof HomePieceOfFurniture) {
-            selectionContainsFurniture = true;
-            break;
-          }
-        }
-        ((HomePane)getView()).setEnabled(
-            HomePane.ActionType.DELETE_HOME_FURNITURE,
-            selectionContainsFurniture);
+        enableActionsOnSelection();
       }
     });
+  }
+
+  /**
+   * Enables action bound to selection. 
+   */
+  private void enableActionsOnSelection() {
+    boolean wallCreationMode =  
+        this.planController.getMode() == PlanController.Mode.WALL_CREATION;
+    
+    // Search if selection contains at least one piece
+    List selectedItems = this.home.getSelectedItems();
+    boolean selectionContainsFurniture = false;
+    if (!wallCreationMode)
+      for (Object item : selectedItems) {
+        if (item instanceof HomePieceOfFurniture) {
+          selectionContainsFurniture = true;
+          break;
+        }
+      }
+    // In creation mode al actions bound to selection are disabled
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
+        !wallCreationMode && selectionContainsFurniture);
+    view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
+        !wallCreationMode && !selectedItems.isEmpty());
+    view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
+        !wallCreationMode && !this.preferences.getCatalog().getSelectedFurniture().isEmpty());
   }
 
   /**
@@ -140,11 +168,19 @@ public class HomeController  {
       new UndoableEditListener () {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomePane view = ((HomePane)getView());
-          view.setEnabled(HomePane.ActionType.UNDO, true);
+          view.setEnabled(HomePane.ActionType.UNDO, 
+              planController.getMode() != PlanController.Mode.WALL_CREATION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
         }
       });
+  }
+
+  /**
+   * Enables actions at controller instantiation. 
+   */
+  private void enableDefaultActions() {
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.WALL_CREATION, true);
   }
 
   /**
@@ -196,5 +232,29 @@ public class HomeController  {
     } else {
       view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
     }
+  }
+
+  /**
+   * Sets wall creation mode in plan controller, 
+   * and disables forbidden actions in this mode.  
+   */
+  public void setWallCreationMode() {
+    this.planController.setMode(PlanController.Mode.WALL_CREATION);
+    enableActionsOnSelection();
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.UNDO, false);
+    view.setEnabled(HomePane.ActionType.REDO, false);
+  }
+
+  /**
+   * Sets wall creation mode in plan controller, 
+   * and enables authorized actions in this mode.  
+   */
+  public void setSelectionMode() {
+    this.planController.setMode(PlanController.Mode.SELECTION);
+    enableActionsOnSelection();
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
+    view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
   }
 }
