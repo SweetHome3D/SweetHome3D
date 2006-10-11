@@ -19,27 +19,13 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.TreeMap;
 
 import javax.swing.JComponent;
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.UndoableEdit;
-import javax.swing.undo.UndoableEditSupport;
 
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.Wall;
 
 /**
  * A MVC controller for the furniture table.

@@ -25,7 +25,6 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for the furniture catalog.
