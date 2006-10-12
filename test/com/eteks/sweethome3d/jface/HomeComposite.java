@@ -24,25 +24,27 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 
 /**
  * The MVC view that edits home furniture. 
  * @author Emmanuel Puybaret
  */
-public class HomeComposite {
+public class HomeComposite implements HomeView {
   private Composite composite;
+  private SashForm  catalogFurnitureSashForm;
 
-  public HomeComposite(Composite parent, Home home, UserPreferences preferences) {
+  public HomeComposite(Composite parent) {
     this.composite = new Composite(parent, SWT.NONE);
-    SashForm catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
-    new CatalogTree(catalogFurnitureSashForm, preferences.getCatalog());
-    new FurnitureTable(catalogFurnitureSashForm, home, preferences);
+    this.catalogFurnitureSashForm = new SashForm(this.composite, SWT.VERTICAL);
     this.composite.setLayout(new FillLayout());
   }
-
+  
   public Composite getHomeComposite() {
     return this.composite;
+  }
+
+  public Composite getCatalogFurnitureComposite() {
+    return this.catalogFurnitureSashForm;
   }
 }

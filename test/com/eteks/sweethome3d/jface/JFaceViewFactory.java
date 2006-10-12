@@ -19,8 +19,15 @@
  */
 package com.eteks.sweethome3d.jface;
 
+import org.eclipse.swt.widgets.Composite;
+
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.CatalogController;
+import com.eteks.sweethome3d.viewcontroller.CatalogView;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
@@ -29,8 +36,29 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * A factory for SWT / JFace widgets.
  * @author Emmanuel Puybaret
  */
-public class JFaceViewFactory extends AbstractViewFactory {
-  public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
-    return new HomeApplicationWindow(home, preferences, controller);
+public class JFaceViewFactory implements ViewFactory {
+  private HomeComposite homeView;
+
+  public JFaceViewFactory(Composite root) {
+    // SWT/JFace doesn't support composite design pattern. We're obliged
+    // to create right now HomeComposite to make its composite component available
+    // to catalogTree and furnitureTable as a parent
+    this.homeView = new HomeComposite(root);
+  }
+
+  public HomeView createHomeView(Home home, UserPreferences preferences, 
+                                 HomeController controller) {
+    return this.homeView;
+  }
+
+  public FurnitureView createFurnitureView(Home home, UserPreferences preferences, 
+                                           FurnitureController controller) {
+    return new FurnitureTable(this.homeView.getCatalogFurnitureComposite(), 
+        home, preferences, controller);
+  }
+
+  public CatalogView createCatalogView(Catalog catalog, CatalogController controller) {
+    return new CatalogTree(this.homeView.getCatalogFurnitureComposite(), 
+        catalog, controller);
   }
 }

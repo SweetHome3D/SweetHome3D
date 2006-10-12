@@ -49,16 +49,22 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 
 /**
  * A table displaying furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable {
+public class FurnitureTable implements FurnitureView {
   private TableViewer tableViewer;
   private ISelectionChangedListener tableSelectionListener;
   
   public FurnitureTable(Composite parent, Home home, UserPreferences preferences) {
+    this(parent, home, preferences, null);
+  }
+  public FurnitureTable(Composite parent, Home home, UserPreferences preferences, 
+                        FurnitureController controller) {
     this.tableViewer = new TableViewer(parent); 
     String [] columnNames = getColumnNames();
     // Create SWT table columns
@@ -75,13 +81,17 @@ public class FurnitureTable {
     this.tableViewer.setContentProvider(new FurnitureTableContentProvider(home));
     this.tableViewer.setLabelProvider(new FurnitureLabelProvider(preferences));
     this.tableViewer.setInput(home);
-    addSelectionListeners(home);
+    if (controller != null) {
+      addSelectionListeners(home, controller);
+    }
   }
   
   /**
    * Adds selection listeners to this table.
+   * @param controller 
    */
-  private void addSelectionListeners(final Home home) {   
+  private void addSelectionListeners(final Home home, 
+                                     final FurnitureController controller) {   
     final SelectionListener homeSelectionListener  = 
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
@@ -101,7 +111,7 @@ public class FurnitureTable {
         public void selectionChanged(SelectionChangedEvent ev) {
           home.removeSelectionListener(homeSelectionListener);
           // Set the new selection in home
-          home.setSelectedItems(((StructuredSelection)ev.getSelection()).toList());
+          controller.setSelectedFurniture(((StructuredSelection)ev.getSelection()).toList());
           home.addSelectionListener(homeSelectionListener);
         }
       };
@@ -132,7 +142,7 @@ public class FurnitureTable {
    */
   private class FurnitureLabelProvider extends LabelProvider implements ITableLabelProvider {
     // Label images cache (we're obliged to keep track of all the images
-    // to dispose them when tree will be disposed)
+    // to dispose them when table will be disposed)
     private Map<HomePieceOfFurniture, Image> imagesCache = 
       new HashMap<HomePieceOfFurniture, Image>();
     private UserPreferences preferences;
@@ -192,7 +202,7 @@ public class FurnitureTable {
     }
 
     public void dispose() {
-      // Dispose all the images created for the tree
+      // Dispose all the images created for the table
       for (Image image : imagesCache.values()) {
         image.dispose();
       }

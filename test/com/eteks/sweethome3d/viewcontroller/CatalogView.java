@@ -1,5 +1,5 @@
 /*
- * ViewFactory.java 29 mai 2006
+ * CatalogView.java 29 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -19,27 +19,10 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.Catalog;
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.UserPreferences;
-
 /**
- * A factory for view objects.
+ * A MVC view for catalog tree.
  * @author Emmanuel Puybaret
  */
-public interface ViewFactory {
-  /**
-   * Creates a home view.
-   */
-  HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller);
-
-  /**
-   * Creates a catalog view.
-   */
-  CatalogView createCatalogView(Catalog catalog, CatalogController controller);
+public interface CatalogView extends View {
   
-  /** 
-   * Creates a furniture view. 
-   */
-  FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller);
 }

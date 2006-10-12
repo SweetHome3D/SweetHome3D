@@ -1,0 +1,85 @@
+/*
+ * FurnitureController.java 15 mai 2006
+ *
+ * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+package com.eteks.sweethome3d.viewcontroller;
+
+import java.util.List;
+
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
+
+/**
+ * A MVC controller for the furniture table.
+ * @author Emmanuel Puybaret
+ */
+public class FurnitureController {
+  private View furnitureView;
+  private Home home;
+
+  /**
+   * Creates the controller of home furniture view.
+   * @param viewFactory factory able to create views
+   * @param home the home edited by this controller and its view
+   * @param preferences the preferences of the application
+   */
+  public FurnitureController(ViewFactory viewFactory, Home home,
+                             UserPreferences preferences) {
+    this.home = home;
+    this.furnitureView = viewFactory.createFurnitureView(home, preferences, this);
+  }
+
+  /**
+   * Returns the view associated with this controller.
+   */
+  public View getView() {
+    return this.furnitureView;
+  }
+
+  /**
+   * Controls new furniture added to home. Once added the furniture will be selected in view..
+   * @param furniture the furniture to add.
+   */
+  public void addFurniture(List<HomePieceOfFurniture> furniture) {
+    for (HomePieceOfFurniture piece : furniture) {
+      this.home.addPieceOfFurniture(piece);
+    }
+    this.home.setSelectedItems(furniture);
+  }
+
+  /**
+   * Controls the deletion of the current selected furniture in home.
+   */
+  public void deleteSelection() {
+    for (Object item : this.home.getSelectedItems()) {
+      if (item instanceof HomePieceOfFurniture) {
+        this.home.deletePieceOfFurniture(
+            (HomePieceOfFurniture)item);
+      }
+    }
+  }
+
+  /**
+   * Updates the selected furniture in home.
+   */
+  public void setSelectedFurniture(
+           List<HomePieceOfFurniture> selectedFurniture) {
+    this.home.setSelectedItems(selectedFurniture);
+  }
+}

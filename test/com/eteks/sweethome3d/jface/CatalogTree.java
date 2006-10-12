@@ -42,27 +42,35 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.viewcontroller.CatalogController;
+import com.eteks.sweethome3d.viewcontroller.CatalogView;
 
 /**
  * Furniture catalog tree JFace implementation.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree {
+public class CatalogTree implements CatalogView {
   private TreeViewer treeViewer;
   private ISelectionChangedListener tableSelectionListener; 
   
   public CatalogTree(Composite parent, Catalog catalog) {
+  }
+  
+  public CatalogTree(Composite parent, Catalog catalog, CatalogController controller) {
     this.treeViewer = new TreeViewer(parent);
     this.treeViewer.setContentProvider(new CatalogTreeContentProvider(catalog));
     this.treeViewer.setLabelProvider(new CatalogLabelProvider());
     this.treeViewer.setInput(catalog);
-    addSelectionListeners(catalog);
+    if (controller != null) {
+      addSelectionListeners(catalog, controller);
+    }
   }
   
   /**
    * Adds selection listeners to this tree.
    */
-  private void addSelectionListeners(final Catalog catalog) {   
+  private void addSelectionListeners(final Catalog catalog, 
+                                     final CatalogController controller) {   
     final SelectionListener homeSelectionListener  = 
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
@@ -83,7 +91,7 @@ public class CatalogTree {
             }          
           }        
           // Set the new selection in home
-          catalog.setSelectedFurniture(selectedFurniture);
+          controller.setSelectedFurniture(selectedFurniture);
           catalog.addSelectionListener(homeSelectionListener);
         }
       };
