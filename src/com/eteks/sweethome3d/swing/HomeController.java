@@ -56,7 +56,7 @@ public class HomeController  {
   private UndoManager            undoManager;
   private ResourceBundle         resource;
   private int                    saveUndoLevel;
-  private HomePane.FocusableView focusedView;
+  private JComponent             focusedView;
 
   /**
    * Creates the controller of home view. 
@@ -175,30 +175,24 @@ public class HomeController  {
 
     List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
     HomePane view = ((HomePane)getView());
-    if (this.focusedView == null) {
+    if (this.focusedView == getCatalogController().getView()) {
+      view.setEnabled(HomePane.ActionType.COPY,
+          !wallCreationMode && !catalogSelectedItems.isEmpty());
+      view.setEnabled(HomePane.ActionType.CUT, false);
+      view.setEnabled(HomePane.ActionType.DELETE, false);
+    } else if (this.focusedView == getFurnitureController().getView()) {
+      view.setEnabled(HomePane.ActionType.COPY, selectionContainsFurniture);
+      view.setEnabled(HomePane.ActionType.CUT, selectionContainsFurniture);
+      view.setEnabled(HomePane.ActionType.DELETE, selectionContainsFurniture);
+    } else if (this.focusedView == getPlanController().getView()) {
+      boolean copyEnabled = !wallCreationMode && !selectedItems.isEmpty();
+      view.setEnabled(HomePane.ActionType.COPY, copyEnabled);
+      view.setEnabled(HomePane.ActionType.CUT, copyEnabled);
+      view.setEnabled(HomePane.ActionType.DELETE, copyEnabled);
+    } else {
       view.setEnabled(HomePane.ActionType.COPY, false);
       view.setEnabled(HomePane.ActionType.CUT, false);
       view.setEnabled(HomePane.ActionType.DELETE, false);
-    } else {
-      switch (this.focusedView) {
-        case CATALOG :
-          view.setEnabled(HomePane.ActionType.COPY,
-              !wallCreationMode && !catalogSelectedItems.isEmpty());
-          view.setEnabled(HomePane.ActionType.CUT, false);
-          view.setEnabled(HomePane.ActionType.DELETE, false);
-          break;
-        case FURNITURE :
-          view.setEnabled(HomePane.ActionType.COPY, selectionContainsFurniture);
-          view.setEnabled(HomePane.ActionType.CUT, selectionContainsFurniture);
-          view.setEnabled(HomePane.ActionType.DELETE, selectionContainsFurniture);
-          break;
-        case PLAN :
-          boolean copyEnabled = !wallCreationMode && !selectedItems.isEmpty();
-          view.setEnabled(HomePane.ActionType.COPY, copyEnabled);
-          view.setEnabled(HomePane.ActionType.CUT, copyEnabled);
-          view.setEnabled(HomePane.ActionType.DELETE, copyEnabled);
-          break;
-      }
     }
 
     // In creation mode all actions bound to selection are disabled
@@ -215,8 +209,8 @@ public class HomeController  {
    */
   public void enablePasteAction() {
     HomePane view = ((HomePane)getView());
-    if (this.focusedView == HomePane.FocusableView.FURNITURE
-        || this.focusedView == HomePane.FocusableView.PLAN) {
+    if (this.focusedView == getFurnitureController().getView()
+        || this.focusedView == getPlanController().getView()) {
       boolean wallCreationMode =  
         getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
       view.setEnabled(HomePane.ActionType.PASTE,
@@ -254,10 +248,8 @@ public class HomeController  {
     view.setEnabled(HomePane.ActionType.CLOSE, true);
     view.setEnabled(HomePane.ActionType.SAVE, true);
     view.setEnabled(HomePane.ActionType.SAVE_AS, true);
-    view.setEnabled(HomePane.ActionType.PREFERENCES, true);
     view.setEnabled(HomePane.ActionType.EXIT, true);
     view.setEnabled(HomePane.ActionType.WALL_CREATION, true);
-    view.setEnabled(HomePane.ActionType.ABOUT, true);
     view.setTransferEnabled(true);
   }
 
@@ -385,20 +377,17 @@ public class HomeController  {
    * Deletes the selection in the focused component.
    */
   public void delete() {
-    switch (this.focusedView) {
-      case FURNITURE :
-        getFurnitureController().deleteSelection();
-        break;
-      case PLAN :
-        getPlanController().deleteSelection();
-        break;
+    if (this.focusedView == getFurnitureController().getView()) {
+      getFurnitureController().deleteSelection();
+    } if (this.focusedView == getPlanController().getView()) {
+      getPlanController().deleteSelection();
     }
   }
   
   /**
    * Updates actions when focused view changed.
    */
-  public void focusedViewChanged(HomePane.FocusableView focusedView) {
+  public void focusedViewChanged(JComponent focusedView) {
     this.focusedView = focusedView;
     enableActionsOnSelection();
     enablePasteAction();
@@ -556,32 +545,5 @@ public class HomeController  {
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
-  }
-
-  /**
-   * Edits preferences and changes them if user agrees.
-   */
-  public void editPreferences() {
-    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
-    preferencesPanel.setPreferences(this.preferences);
-    if (preferencesPanel.showDialog(getView())) {
-      this.preferences.setUnit(preferencesPanel.getUnit());
-      this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
-      this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
-      this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
-      try {
-        this.preferences.write();
-      } catch (RecorderException ex) {
-        ((HomePane)getView()).showError(
-            this.resource.getString("savePreferencesError"));
-      }
-    }
-  }
-
-  /**
-   * Displays about dialog.
-   */
-  public void about() {
-    ((HomePane)getView()).showAboutDialog();
   }
 }
