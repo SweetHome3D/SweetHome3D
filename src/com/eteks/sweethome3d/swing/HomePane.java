@@ -20,16 +20,20 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
 import com.eteks.sweethome3d.model.Home;
@@ -41,19 +45,26 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE}
+    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, 
+    WALL_CREATION, DELETE_SELECTION}
 
-  private ResourceBundle resource;
+  private ResourceBundle                  resource;
+  // Button model shared by Wall creation menu item and the matching tool bar button
+  private JToggleButton.ToggleButtonModel wallCreationToggleModel;
 
 /**
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
+    // Create a unique toggle button model for Wall creation / Selection states
+    // so Wall creation menu item and tool bar button 
+    // always reflect the same toggle state at screen
+    this.wallCreationToggleModel = new JToggleButton.ToggleButtonModel();
     createActions(controller);
     setJMenuBar(getHomeMenuBar());
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getCatalogFurniturePane(controller));
+    getContentPane().add(getMainPane(home, controller));
   }
   
   /**
@@ -66,6 +77,19 @@ public class HomePane extends JRootPane {
         controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
+    getActionMap().put(ActionType.WALL_CREATION,
+        new ResourceAction (this.resource, ActionType.WALL_CREATION.toString()) {
+          public void actionPerformed(ActionEvent ev) {
+            boolean selected = ((AbstractButton)ev.getSource()).isSelected();
+            if (selected) {
+              controller.setWallCreationMode();
+            } else {
+              controller.setSelectionMode();
+            }
+          }
+        });
+    createAction(ActionType.DELETE_SELECTION, 
+        controller.getPlanController(), "deleteSelection");
   }
 
   private void createAction(ActionType action, Object controller,
@@ -83,20 +107,34 @@ public class HomePane extends JRootPane {
    */
   private JMenuBar getHomeMenuBar() {
     ActionMap actions = getActionMap();
+
     // Create Edit menu
     JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU"));
     editMenu.setEnabled(true);
     editMenu.add(actions.get(ActionType.UNDO));
     editMenu.add(actions.get(ActionType.REDO));
+
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU"));
     furnitureMenu.setEnabled(true);
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    
+    // Create Plan menu
+    JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU"));
+    planMenu.setEnabled(true);
+    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = 
+        new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+    // Use the same model as Wall creation tool bar button
+    wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
+    planMenu.add(wallCreationCheckBoxMenuItem);
+    planMenu.add(actions.get(ActionType.DELETE_SELECTION));
+
     // Add menus to menu bar
     JMenuBar menuBar = new JMenuBar();
     menuBar.add(editMenu);
     menuBar.add(furnitureMenu);
+    menuBar.add(planMenu);
     return menuBar;
   }
   
@@ -109,6 +147,17 @@ public class HomePane extends JRootPane {
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBar.addSeparator();
+
+    JToggleButton wallCreationToggleButton = 
+      new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Use the same model as Wall creation menu item
+    wallCreationToggleButton.setModel(this.wallCreationToggleModel);
+    // Don't display text with icon
+    wallCreationToggleButton.setText("");
+    toolBar.add(wallCreationToggleButton);
+    toolBar.add(actions.get(ActionType.DELETE_SELECTION));
+    toolBar.addSeparator();
+
     toolBar.add(actions.get(ActionType.UNDO));
     toolBar.add(actions.get(ActionType.REDO));
     return toolBar;
@@ -144,6 +193,20 @@ public class HomePane extends JRootPane {
     }
     action.putValue(Action.NAME, name);
     action.putValue(Action.SHORT_DESCRIPTION, name);
+  }
+
+  /**
+   * Returns the main pane with catalog tree, furniture table and plan pane. 
+   */
+  private JComponent getMainPane(Home home,  
+                                 HomeController controller) {
+    JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+        getCatalogFurniturePane(controller), 
+        new JScrollPane(controller.getPlanController().getView()));
+    mainPane.setContinuousLayout(true);
+    mainPane.setOneTouchExpandable(true);
+    mainPane.setResizeWeight(0.3);
+    return mainPane;
   }
 
   /**
