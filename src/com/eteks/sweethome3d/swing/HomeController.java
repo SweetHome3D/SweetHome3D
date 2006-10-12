@@ -218,7 +218,7 @@ public class HomeController  {
     if (this.focusedView == HomePane.FocusableView.FURNITURE
         || this.focusedView == HomePane.FocusableView.PLAN) {
       boolean wallCreationMode =  
-        this.planController.getMode() == PlanController.Mode.WALL_CREATION;
+        getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
       view.setEnabled(HomePane.ActionType.PASTE,
           !wallCreationMode && !view.isClipboardEmpty());
     } else {
@@ -235,7 +235,7 @@ public class HomeController  {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomePane view = ((HomePane)getView());
           view.setEnabled(HomePane.ActionType.UNDO, 
-              planController.getMode() != PlanController.Mode.WALL_CREATION);
+              getPlanController().getMode() != PlanController.Mode.WALL_CREATION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
           saveUndoLevel++;
@@ -254,10 +254,8 @@ public class HomeController  {
     view.setEnabled(HomePane.ActionType.CLOSE, true);
     view.setEnabled(HomePane.ActionType.SAVE, true);
     view.setEnabled(HomePane.ActionType.SAVE_AS, true);
-    view.setEnabled(HomePane.ActionType.PREFERENCES, true);
     view.setEnabled(HomePane.ActionType.EXIT, true);
     view.setEnabled(HomePane.ActionType.WALL_CREATION, true);
-    view.setEnabled(HomePane.ActionType.ABOUT, true);
     view.setTransferEnabled(true);
   }
 
@@ -367,7 +365,7 @@ public class HomeController  {
           @Override
           public void redo() throws CannotRedoException {
             super.redo();
-            planController.selectAndShowItems(items);
+            getPlanController().selectAndShowItems(items);
           }
   
           @Override
@@ -556,32 +554,5 @@ public class HomeController  {
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
-  }
-
-  /**
-   * Edits preferences and changes them if user agrees.
-   */
-  public void editPreferences() {
-    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
-    preferencesPanel.setPreferences(this.preferences);
-    if (preferencesPanel.showDialog(getView())) {
-      this.preferences.setUnit(preferencesPanel.getUnit());
-      this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
-      this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
-      this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
-      try {
-        this.preferences.write();
-      } catch (RecorderException ex) {
-        ((HomePane)getView()).showError(
-            this.resource.getString("savePreferencesError"));
-      }
-    }
-  }
-
-  /**
-   * Displays about dialog.
-   */
-  public void about() {
-    ((HomePane)getView()).showAboutDialog();
   }
 }
