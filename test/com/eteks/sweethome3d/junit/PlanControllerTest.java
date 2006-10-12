@@ -67,29 +67,29 @@ public class PlanControllerTest extends TestCase {
     
     // 2. Use WALL_CREATION mode
     planController.setMode(PlanController.Mode.WALL_CREATION);
-    // Click at (0, 0), (500, 2), (498, 300), then double click at (0, 302) in home coordinates space 
-    planController.moveMouse(0, 0);
-    planController.pressMouse(0, 0, 1, false);
+    // Click at (20, 20), (500, 22), (498, 300), then double click at (20, 302) in home coordinates space 
+    planController.moveMouse(20, 20);
+    planController.pressMouse(20, 20, 1, false);
     planController.toggleMagnetism(false);
-    planController.releaseMouse(0, 0);
-    planController.moveMouse(500, 2);
-    planController.pressMouse(500, 2, 1, false);
-    planController.releaseMouse(500, 2);
+    planController.releaseMouse(20, 20);
+    planController.moveMouse(500, 22);
+    planController.pressMouse(500, 22, 1, false);
+    planController.releaseMouse(500, 22);
     planController.moveMouse(498, 300);
     planController.pressMouse(498, 300, 1, false);
     planController.releaseMouse(498, 300);
-    planController.moveMouse(0, 302);
-    planController.pressMouse(0, 302, 1, false);
-    planController.releaseMouse(0, 302);
-    planController.pressMouse(0, 302, 2, false);
-    planController.releaseMouse(0, 302);
-    // Check 3 walls were created at (0, 0), (500, 0), (500, 300) and (0, 300) coordinates
+    planController.moveMouse(20, 302);
+    planController.pressMouse(20, 302, 1, false);
+    planController.releaseMouse(20, 302);
+    planController.pressMouse(20, 302, 2, false);
+    planController.releaseMouse(20, 302);
+    // Check 3 walls were created at (20, 20), (500, 20), (500, 300) and (20, 300) coordinates
     Wall wall1 = orderedWalls.get(0);
-    assertCoordinatesEqualWallPoints(0, 0, 500, 0, wall1);
+    assertCoordinatesEqualWallPoints(20, 20, 500, 20, wall1);
     Wall wall2 = orderedWalls.get(1);
-    assertCoordinatesEqualWallPoints(500, 0, 500, 300, wall2);
+    assertCoordinatesEqualWallPoints(500, 20, 500, 300, wall2);
     Wall wall3 = orderedWalls.get(2);
-    assertCoordinatesEqualWallPoints(500, 300, 0, 300, wall3);
+    assertCoordinatesEqualWallPoints(500, 300, 20, 300, wall3);
     // Check they are joined to each other end point
     assertWallsAreJoined(null, wall1, wall2); 
     assertWallsAreJoined(wall1, wall2, wall3); 
@@ -97,20 +97,20 @@ public class PlanControllerTest extends TestCase {
     // Check they are selected
     assertSelectionContains(home, wall1, wall2, wall3);
 
-    // 3. Click at (0, 300), then double click at (20, 20) with Alt key depressed
-    planController.moveMouse(0, 300);
-    planController.pressMouse(0, 300, 1, false);
-    planController.releaseMouse(0, 300);
+    // 3. Click at (20, 300), then double click at (60, 60) with Alt key depressed
+    planController.moveMouse(20, 300);
+    planController.pressMouse(20, 300, 1, false);
+    planController.releaseMouse(20, 300);
     planController.toggleMagnetism(true);
-    planController.moveMouse(20, 20);
-    planController.pressMouse(20, 20, 1, false);
-    planController.releaseMouse(20, 20);
-    planController.pressMouse(20, 20, 2, false);
-    planController.releaseMouse(20, 20);
+    planController.moveMouse(60, 60);
+    planController.pressMouse(60, 60, 1, false);
+    planController.releaseMouse(60, 60);
+    planController.pressMouse(60, 60, 2, false);
+    planController.releaseMouse(60, 60);
     planController.toggleMagnetism(false);
-    // Check a forth wall was created at (0, 300), (20, 20) coordinates
+    // Check a forth wall was created at (20, 300), (60, 60) coordinates
     Wall wall4 = orderedWalls.get(orderedWalls.size() - 1);
-    assertCoordinatesEqualWallPoints(0, 300, 20, 20, wall4);
+    assertCoordinatesEqualWallPoints(20, 300, 60, 60, wall4);
     assertSelectionContains(home, wall4);
     assertWallsAreJoined(wall3, wall4, null);
 
@@ -126,18 +126,18 @@ public class PlanControllerTest extends TestCase {
     
     // 5. Use WALL_CREATION mode
     planController.setMode(PlanController.Mode.WALL_CREATION);
-    //  Click at (2, -2), then double click at (0, 300)
-    planController.moveMouse(2,-2);
-    planController.pressMouse(2, -2, 1, false);
-    planController.releaseMouse(2, -2);
-    planController.moveMouse(0, 300);
-    planController.pressMouse(0, 300, 1, false);
-    planController.releaseMouse(0, 300);
-    planController.pressMouse(0, 300, 2, false);
-    planController.releaseMouse(0, 300);
-    // Check a new forth wall was created at (0, 0), (0, 300) coordinates
+    //  Click at (22, 18), then double click at (20, 300)
+    planController.moveMouse(22, 18);
+    planController.pressMouse(22, 18, 1, false);
+    planController.releaseMouse(22, 18);
+    planController.moveMouse(20, 300);
+    planController.pressMouse(20, 300, 1, false);
+    planController.releaseMouse(20, 300);
+    planController.pressMouse(20, 300, 2, false);
+    planController.releaseMouse(20, 300);
+    // Check a new forth wall was created at (20, 20), (20, 300) coordinates
     wall4 = orderedWalls.get(orderedWalls.size() - 1);
-    assertCoordinatesEqualWallPoints(0, 0, 0, 300, wall4);
+    assertCoordinatesEqualWallPoints(20, 20, 20, 300, wall4);
     // Check its end points are joined to the first and third wall
     assertWallsAreJoined(wall1, wall4, wall3);
     
@@ -154,30 +154,30 @@ public class PlanControllerTest extends TestCase {
     // 7. Press twice right arrow key     
     planController.moveSelection(2, 0);
     planController.moveSelection(2, 0);
-    // Check the 4 walls coordinates are (0, 0), (504, 0), (504, 300), (4, 300) 
-    assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
-    assertCoordinatesEqualWallPoints(504, 0, 504, 300, wall2);
-    assertCoordinatesEqualWallPoints(504, 300, 4, 300, wall3);
-    assertCoordinatesEqualWallPoints(0, 0, 4, 300, wall4);
+    // Check the 4 walls coordinates are (20, 20), (504, 20), (504, 300), (24, 300) 
+    assertCoordinatesEqualWallPoints(20, 20, 504, 20, wall1);
+    assertCoordinatesEqualWallPoints(504, 20, 504, 300, wall2);
+    assertCoordinatesEqualWallPoints(504, 300, 24, 300, wall3);
+    assertCoordinatesEqualWallPoints(20, 20, 24, 300, wall4);
 
-    // 8. Click at (504, 20) with Shift key depressed
-    planController.moveMouse(504, 20);
-    planController.pressMouse(504, 20, 1, true);
-    planController.releaseMouse(504, 20);
+    // 8. Click at (504, 40) with Shift key depressed
+    planController.moveMouse(504, 40);
+    planController.pressMouse(504, 40, 1, true);
+    planController.releaseMouse(504, 40);
     // Check the second wall was removed from selection
     assertSelectionContains(home, wall3);
 
-     // 9. Drag cursor from (60, 0) to (60, 40) 
-    planController.moveMouse(60, 0);
-    planController.pressMouse(60, 0, 1, false);
-    planController.moveMouse(60, 40);
+     // 9. Drag cursor from (60, 20) to (60, 60) 
+    planController.moveMouse(60, 20);
+    planController.pressMouse(60, 20, 1, false);
+    planController.moveMouse(60, 60);
     // Check first wall is selected and that it moved
     assertSelectionContains(home, wall1);
-    assertCoordinatesEqualWallPoints(0, 40, 504, 40, wall1);
+    assertCoordinatesEqualWallPoints(20, 60, 504, 60, wall1);
     // Lose focus
     planController.escape();
     // Check the wall didn't move at end
-    assertCoordinatesEqualWallPoints(0, 0, 504, 0, wall1);
+    assertCoordinatesEqualWallPoints(20, 20, 504, 20, wall1);
 
     // 10. Undo 8 times 
     for (int i = 0; i < 6; i++) {
