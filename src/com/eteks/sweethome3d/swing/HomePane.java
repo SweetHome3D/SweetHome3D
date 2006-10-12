@@ -19,10 +19,18 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BorderLayout;
+import java.util.ResourceBundle;
+
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.JComponent;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JToolBar;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -32,21 +40,118 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomePane extends JRootPane {
-  /**
+  public enum ActionType {
+    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE}
+
+  private ResourceBundle resource;
+
+/**
    * Create this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
-    setContentPane(getCatalogFurniturePane(controller));
+    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
+    createActions(controller);
+    setJMenuBar(getHomeMenuBar());
+    getContentPane().add(getToolBar(), BorderLayout.NORTH);
+    getContentPane().add(getCatalogFurniturePane(controller));
   }
   
+  /**
+   * Create the actions map of this component.
+   */
+  private void createActions(final HomeController controller) {
+    createAction(ActionType.UNDO, controller, "undo");
+    createAction(ActionType.REDO, controller, "redo");
+    createAction(ActionType.ADD_HOME_FURNITURE,
+        controller, "addHomeFurniture");
+    createAction(ActionType.DELETE_HOME_FURNITURE,
+        controller.getFurnitureController(), "deleteSelection");
+  }
+
+  private void createAction(ActionType action, Object controller,
+                     String method) {
+    try {
+      getActionMap().put(action, new ControllerAction(
+          this.resource, action.toString(), controller, method));
+    } catch (NoSuchMethodException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+  
+  /**
+   * Returns the menu bar displayed in this pane.
+   */
+  private JMenuBar getHomeMenuBar() {
+    ActionMap actions = getActionMap();
+    // Create Edit menu
+    JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU"));
+    editMenu.setEnabled(true);
+    editMenu.add(actions.get(ActionType.UNDO));
+    editMenu.add(actions.get(ActionType.REDO));
+    // Create Furniture menu
+    JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU"));
+    furnitureMenu.setEnabled(true);
+    furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenu.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    // Add menus to menu bar
+    JMenuBar menuBar = new JMenuBar();
+    menuBar.add(editMenu);
+    menuBar.add(furnitureMenu);
+    return menuBar;
+  }
+  
+  /**
+   * Returns the tool bar displayed in this pane.
+   */
+  private JToolBar getToolBar() {
+    JToolBar toolBar = new JToolBar();
+    ActionMap actions = getActionMap();    
+    toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    toolBar.add(actions.get(ActionType.DELETE_HOME_FURNITURE));
+    toolBar.addSeparator();
+    toolBar.add(actions.get(ActionType.UNDO));
+    toolBar.add(actions.get(ActionType.REDO));
+    return toolBar;
+  }
+  
+  /**
+   * Enables or disables the action matching <code>actionType</code>.
+   */
+  public void setEnabled(ActionType actionType, 
+                         boolean enabled) {
+    getActionMap().get(actionType).setEnabled(enabled);
+  }
+  
+  /**
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * of undo and redo actions. If a parameter is null,
+   * the properties will be reset to their initial values.
+   */
+  public void setUndoRedoName(String undoText, String redoText) {
+    setNameAndShortDescription(ActionType.UNDO, undoText);
+    setNameAndShortDescription(ActionType.REDO, redoText);
+  }
+  
+  /**
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * matching <code>actionType</code>. If <code>name</code> is null,
+   * the properties will be reset to their initial values.
+   */
+  private void setNameAndShortDescription(ActionType actionType, String name) {
+    Action action = getActionMap().get(actionType);
+    if (name == null) {
+      name = (String)action.getValue(Action.DEFAULT);
+    }
+    action.putValue(Action.NAME, name);
+    action.putValue(Action.SHORT_DESCRIPTION, name);
+  }
+
   /**
    * Returns the catalog tree and furniture table pane. 
    */
   private JComponent getCatalogFurniturePane(HomeController controller) {
-    JComponent catalogView =
-        controller.getCatalogController().getView();
-    JComponent furnitureView =
-        controller.getFurnitureController().getView();
+    JComponent catalogView = controller.getCatalogController().getView();
+    JComponent furnitureView = controller.getFurnitureController().getView();
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         new JScrollPane(catalogView), new JScrollPane(furnitureView));
