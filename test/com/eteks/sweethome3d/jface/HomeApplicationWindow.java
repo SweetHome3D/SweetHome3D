@@ -26,6 +26,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -72,6 +73,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   protected Control createContents(Composite parent) {
     CoolBar coolBar = createCoolBar(parent);
     this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
+    this.catalogFurnitureSashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
     // Create controller and the other view components
     this.controller = new HomeController(this, home, preferences);
     return parent;
