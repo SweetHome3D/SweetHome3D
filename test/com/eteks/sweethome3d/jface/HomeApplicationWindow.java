@@ -45,8 +45,6 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.PlanController;
-import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -69,7 +67,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     // Create actions first because createCoolBarManager and createMenuManager needs it 
     createActions();
     addMenuBar();
-    addCoolBar(SWT.NONE);
+    addToolBar(SWT.FLAT);
   }
 
   protected void configureShell(Shell shell) {
@@ -87,17 +85,14 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   }
 
   @Override
-  protected CoolBarManager createCoolBarManager(int style) {    
+  protected ToolBarManager createToolBarManager(int style) {    
     ToolBarManager toolBarManager = new ToolBarManager();
     toolBarManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBarManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBarManager.add(new Separator());
     toolBarManager.add(this.actions.get(ActionType.UNDO));
     toolBarManager.add(this.actions.get(ActionType.REDO));
-    
-    CoolBarManager coolBarManager = new CoolBarManager(style);
-    coolBarManager.add(toolBarManager);
-    return coolBarManager;
+    return toolBarManager;
   }
   
   @Override
@@ -206,10 +201,5 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(this.catalogFurnitureSashForm, home, preferences, controller);
-  }
-
-  public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
-    // No Plan view in this scenario yet
-    return null;
   }
 }
