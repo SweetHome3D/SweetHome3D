@@ -42,4 +42,9 @@ public interface ViewFactory {
    * Creates a furniture view. 
    */
   FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller);
+
+  /** 
+   * Creates a plan view. 
+   */
+  PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller);
 }

@@ -42,10 +42,16 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.jface.AbstractViewFactory;
 import com.eteks.sweethome3d.jface.PlanViewer;
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.CatalogController;
+import com.eteks.sweethome3d.viewcontroller.CatalogView;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureView;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
@@ -74,17 +80,32 @@ public class JFacePlanViewerTest {
         final ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         
         // Set how plan view will be created
-        ViewFactory planControlFactory = new AbstractViewFactory() {
+        ViewFactory planViewFactory = new ViewFactory() {
           public PlanView createPlanView(
               Home home, UserPreferences userPreferences, PlanController controller) {
             return new PlanViewer(scrolledComposite, home, preferences, controller);
+          }
+
+          // Other components won't be created in this test
+          public HomeView createHomeView(Home home, UserPreferences preferences, 
+                                         HomeController controller) {
+            return null;
+          }
+
+          public CatalogView createCatalogView(Catalog catalog, CatalogController controller) {
+            return null;
+          }
+
+          public FurnitureView createFurnitureView(Home home, UserPreferences preferences, 
+                                                   FurnitureController controller) {
+            return null;
           }
         };
         // Create controller and the plan view 
         UndoableEditSupport undoSupport = new UndoableEditSupport(); 
         undoSupport.addUndoableEditListener(undoManager);
         this.controller = new PlanController(
-            planControlFactory, home, preferences, undoSupport);
+            planViewFactory, home, preferences, undoSupport);
         
         Viewer planViewer = (Viewer)controller.getView();
         // Configure scrolledComposite content with planViewer control 
