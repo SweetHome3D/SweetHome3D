@@ -54,6 +54,7 @@ public class CatalogTree implements CatalogView {
   private ISelectionChangedListener tableSelectionListener; 
   
   public CatalogTree(Composite parent, Catalog catalog) {
+    this(parent, catalog, null);
   }
   
   public CatalogTree(Composite parent, Catalog catalog, CatalogController controller) {
