@@ -64,7 +64,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     super(null);
     this.home = home;
     this.preferences = preferences;
-    // Create actions first because createCoolBarManager and createMenuManager needs it 
+    // Create actions first because createToolBarManager and createMenuManager needs them 
     createActions();
     addMenuBar();
     addToolBar(SWT.FLAT);
@@ -79,7 +79,6 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   @Override
   protected Control createContents(Composite parent) {
     this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
-    this.catalogFurnitureSashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
     // Create controller and the other view components
     this.controller = new HomeController(this, home, preferences);
     return parent;
@@ -205,10 +204,5 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(this.catalogFurnitureSashForm, home, preferences, controller);
-  }
-
-  public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
-    // No Plan view in this scenario yet
-    return null;
   }
 }
