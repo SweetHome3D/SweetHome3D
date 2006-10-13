@@ -42,8 +42,6 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.PlanController;
-import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -65,7 +63,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     super(null);
     this.home = home;
     this.preferences = preferences;
-    resource = ResourceBundle.getBundle(
+    this.resource = ResourceBundle.getBundle(
         HomeApplicationWindow.class.getName());
     // Create actions first because createToolBarManager and createMenuManager needs them 
     createActions();
@@ -202,10 +200,5 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(this.catalogFurnitureSashForm, home, preferences, controller);
-  }
-
-  public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
-    // No Plan view in this scenario yet
-    return null;
   }
 }
