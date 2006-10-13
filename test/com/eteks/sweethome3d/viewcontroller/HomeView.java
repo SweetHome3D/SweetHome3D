@@ -25,7 +25,7 @@ package com.eteks.sweethome3d.viewcontroller;
  */
 public interface HomeView extends View {
   public enum ActionType {
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
+    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE}
 
   /**
    * Enables or disables the action matching <code>actionType</code>.
