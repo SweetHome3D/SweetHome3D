@@ -121,7 +121,7 @@ public class JFacePlanViewerTest {
       }
 
       private ToolBar createToolBar(Composite parent, final UndoManager undoManager) {
-        ToolBar toolBar = new ToolBar(parent, SWT.NONE);
+        ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
         // Add button
         final ToolItem addToolItem = new ToolItem(toolBar, SWT.CHECK);
         addToolItem.setImage(new Image(Display.getCurrent(),
