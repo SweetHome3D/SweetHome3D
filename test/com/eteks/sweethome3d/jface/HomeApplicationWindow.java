@@ -70,12 +70,13 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     addToolBar(SWT.FLAT);
   }
 
+  @Override
   protected void configureShell(Shell shell) {
     super.configureShell(shell);
     shell.setText("Home Controller Test");
-    shell.setLayout(new GridLayout());
   }
 
+  @Override
   protected Control createContents(Composite parent) {
     this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
     this.catalogFurnitureSashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -86,7 +87,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   @Override
   protected ToolBarManager createToolBarManager(int style) {    
-    ToolBarManager toolBarManager = new ToolBarManager();
+    ToolBarManager toolBarManager = new ToolBarManager(style);
     toolBarManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBarManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBarManager.add(new Separator());
@@ -120,6 +121,9 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     return menuManager;
   }
 
+  /**
+   * Create menu and tool bar actions. 
+   */
   private void createActions() {
     this.actions = new HashMap<ActionType, ResourceAction>();
     ResourceBundle resource = ResourceBundle.getBundle(
