@@ -19,23 +19,22 @@
  */
 package com.eteks.sweethome3d.jface;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ResourceBundle;
+
+import org.eclipse.jface.action.CoolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.CoolBar;
-import org.eclipse.swt.widgets.CoolItem;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
@@ -57,23 +56,28 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   private HomeController  controller;
   private Home            home;
   private UserPreferences preferences;
+
   private SashForm        catalogFurnitureSashForm;
+  private Map<ActionType, ResourceAction> actions;
   
   public HomeApplicationWindow(Home home, UserPreferences preferences) {
     super(null);
     this.home = home;
     this.preferences = preferences;
+    // Create actions first because createCoolBarManager and createMenuManager needs it 
+    createActions();
+    addMenuBar();
+    addToolBar(SWT.FLAT);
   }
 
   @Override
   protected void configureShell(Shell shell) {
+    super.configureShell(shell);
     shell.setText("Home Controller Test");
   }
 
   @Override
   protected Control createContents(Composite parent) {
-    parent.setLayout(new GridLayout());
-    CoolBar coolBar = createCoolBar(parent);
     this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
     this.catalogFurnitureSashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
     // Create controller and the other view components
@@ -81,36 +85,111 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     return parent;
   }
 
-  private CoolBar createCoolBar(Composite parent) {
-    CoolBar coolBar = new CoolBar(parent, SWT.NONE);
-    ToolBar editToolBar = new ToolBar(coolBar, SWT.NONE);
-    // Add button
-    ToolItem addToolItem = new ToolItem(editToolBar, SWT.PUSH);
-    addToolItem.setImage(new Image(Display.getCurrent(),
-            getClass().getResourceAsStream("resources/Add16.gif")));
-    addToolItem.addSelectionListener(new SelectionAdapter () {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        controller.addHomeFurniture();
-      } 
-    });
-    // Delete button
-    ToolItem deleteToolItem = new ToolItem(editToolBar, SWT.PUSH);
-    deleteToolItem.setImage(new Image(Display.getCurrent(),
-            getClass().getResourceAsStream("resources/Delete16.gif")));
-    deleteToolItem.addSelectionListener(new SelectionAdapter () {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        controller.getFurnitureController().deleteSelection();
-      } 
-    });
+  @Override
+  protected ToolBarManager createToolBarManager(int style) {    
+    ToolBarManager toolBarManager = new ToolBarManager(style);
+    toolBarManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
+    toolBarManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
+    toolBarManager.add(new Separator());
+    toolBarManager.add(this.actions.get(ActionType.UNDO));
+    toolBarManager.add(this.actions.get(ActionType.REDO));
+    return toolBarManager;
+  }
+  
+  @Override
+  protected MenuManager createMenuManager() {
+    ResourceBundle resource = ResourceBundle.getBundle(
+        HomeApplicationWindow.class.getName());
+    
+    // Create main menu manager
+    MenuManager menuManager = new MenuManager();
+    
+    // Create Edit menu manager
+    MenuManager editMenuManager = 
+      new MenuManager(new ResourceAction(resource, "EDIT_MENU").getText());
+    menuManager.add(editMenuManager);
+    editMenuManager.add(this.actions.get(ActionType.UNDO));
+    editMenuManager.add(this.actions.get(ActionType.REDO));
 
-    CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
-    coolItem.setControl(editToolBar);
-    // Compute coolItem size
-    Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-    coolItem.setSize(coolItem.computeSize(size.x, size.y));
-    return coolBar;
+    // Create Furniture menu manager
+    MenuManager furnitureMenuManager = 
+      new MenuManager(new ResourceAction(resource, "FURNITURE_MENU").getText());
+    menuManager.add(furnitureMenuManager);
+    furnitureMenuManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenuManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
+
+    return menuManager;
+  }
+
+  /**
+   * Create menu and tool bar actions. 
+   */
+  private void createActions() {
+    this.actions = new HashMap<ActionType, ResourceAction>();
+    ResourceBundle resource = ResourceBundle.getBundle(
+        HomeApplicationWindow.class.getName());
+    this.actions.put(ActionType.ADD_HOME_FURNITURE,
+      new ResourceAction(resource, ActionType.ADD_HOME_FURNITURE.toString()) {
+        @Override
+        public void run() {
+          controller.addHomeFurniture();
+        }
+      });
+    this.actions.put(ActionType.DELETE_HOME_FURNITURE,
+      new ResourceAction(resource, ActionType.DELETE_HOME_FURNITURE.toString()) {
+        @Override
+        public void run() {
+          controller.getFurnitureController().deleteSelection();
+        }
+      });
+    this.actions.put(ActionType.UNDO,
+      new ResourceAction(resource, ActionType.UNDO.toString()){
+        @Override
+        public void run() {
+          controller.undo();
+        }
+      });
+    this.actions.put(ActionType.REDO,
+      new ResourceAction(resource, ActionType.REDO.toString()){
+        @Override
+        public void run() {
+          controller.redo();
+        }
+      });
+  }
+
+  /**
+   * Enables or disables the action matching <code>actionType</code>.
+   */
+  public void setEnabled(ActionType actionType, 
+                         boolean enabled) {
+    this.actions.get(actionType).setEnabled(enabled);
+  }
+
+  /**
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * of undo and redo actions. If a parameter is null,
+   * the properties will be reset to their initial values.
+   */
+  public void setUndoRedoName(String undoText, String redoText) {
+    setNameAndShortDescription(ActionType.UNDO, undoText);
+    setNameAndShortDescription(ActionType.REDO, redoText);
+  }
+
+  /**
+   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
+   * matching <code>actionType</code>. If <code>name</code> is null,
+   * the properties will be reset to their initial values.
+   */
+  private void setNameAndShortDescription(ActionType actionType, String name) {
+    ResourceAction action = this.actions.get(actionType);
+    if (name == null) {
+      action.setText(action.getDefaultText());
+      action.setToolTipText(action.getDefaultToolTipText());
+    } else {
+      action.setText("&" + name);
+      action.setToolTipText(name);
+    }
   }
 
   /**
