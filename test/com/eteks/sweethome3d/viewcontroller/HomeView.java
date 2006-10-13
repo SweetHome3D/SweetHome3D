@@ -24,5 +24,17 @@ package com.eteks.sweethome3d.viewcontroller;
  * @author Emmanuel Puybaret
  */
 public interface HomeView extends View {
+  public enum ActionType {
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, UNDO, REDO}
 
+  /**
+   * Enables or disables the action matching <code>actionType</code>.
+   */
+  public void setEnabled(ActionType actionType, boolean enabled);
+
+  /**
+   * Sets the name of undo and redo actions. If a parameter is null,
+   * the properties will be reset to their initial values.
+   */
+  public void setUndoRedoName(String undoText, String redoText);
 }

@@ -23,22 +23,30 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEditSupport;
+
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for the home view.
  * @author Emmanuel Puybaret
  */
-public class HomeController {
+public class HomeController  {
   private Home                home;
   private UserPreferences     preferences;
-  private View                homeView;
+  private View                homeView; 
   private CatalogController   catalogController;
   private FurnitureController furnitureController;
-
+  private UndoableEditSupport undoSupport;
+  private UndoManager         undoManager;
 
   /**
    * Creates the controller of home view.
@@ -50,9 +58,13 @@ public class HomeController {
                         UserPreferences preferences) {
     this.home = home;
     this.preferences = preferences;
+    this.undoSupport = new UndoableEditSupport();
+    this.undoManager = new UndoManager();
+    this.undoSupport.addUndoableEditListener(this.undoManager);
     this.catalogController   = new CatalogController(viewFactory, preferences.getCatalog());
-    this.furnitureController = new FurnitureController(viewFactory, home, preferences);
+    this.furnitureController = new FurnitureController(viewFactory, home, preferences, undoSupport);
     this.homeView = viewFactory.createHomeView(home, preferences, this);
+    addListeners();
   }
 
   /**
@@ -77,6 +89,65 @@ public class HomeController {
   }
 
   /**
+   * Adds listeners that updates the enabled / disabled state of actions.
+   */
+  private void addListeners() {
+    addCatalogSelectionListener();
+    addHomeSelectionListener();
+    addUndoSupportListener();
+  }
+
+  /**
+   * Adds a selection listener on catalog that enables / disables Add Furniture action.
+   */
+  private void addCatalogSelectionListener() {
+    this.preferences.getCatalog().addSelectionListener(
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          ((HomeView)getView()).setEnabled(
+              HomeView.ActionType.ADD_HOME_FURNITURE,
+              !ev.getSelectedItems().isEmpty());
+        }
+      });
+  }
+
+  /**
+   *  Adds a selection listener on home that enables / disables Delete Furniture action.
+   */
+  private void addHomeSelectionListener() {
+    this.home.addSelectionListener(new SelectionListener() {
+      public void selectionChanged(SelectionEvent ev) {
+        // Search if selection contains at least one piece
+        boolean selectionContainsFurniture = false;
+        for (Object item : ev.getSelectedItems()) {
+          if (item instanceof HomePieceOfFurniture) {
+            selectionContainsFurniture = true;
+            break;
+          }
+        }
+        ((HomeView)getView()).setEnabled(
+            HomeView.ActionType.DELETE_HOME_FURNITURE,
+            selectionContainsFurniture);
+      }
+    });
+  }
+
+  /**
+   * Adds undoable edit listener on undo support that enables Undo action.
+   */
+  private void addUndoSupportListener() {
+    this.undoSupport.addUndoableEditListener(
+      new UndoableEditListener () {
+        public void undoableEditHappened(UndoableEditEvent ev) {
+          HomeView view = ((HomeView)getView());
+          view.setEnabled(HomeView.ActionType.UNDO, true);
+          view.setEnabled(HomeView.ActionType.REDO, false);
+          view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
+        }
+      });
+  }
+
+  /**
    * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
@@ -92,5 +163,38 @@ public class HomeController {
       getFurnitureController().addFurniture(newFurniture);
     }
   }
-}
 
+  /**
+   * Undoes last operation.
+   */
+  public void undo() {
+    this.undoManager.undo();
+    HomeView view = ((HomeView)getView());
+    boolean moreUndo = this.undoManager.canUndo();
+    view.setEnabled(HomeView.ActionType.UNDO, moreUndo);
+    view.setEnabled(HomeView.ActionType.REDO, true);
+    if (moreUndo) {
+      view.setUndoRedoName(this.undoManager.getUndoPresentationName(),
+          this.undoManager.getRedoPresentationName());
+    } else {
+      view.setUndoRedoName(null, this.undoManager.getRedoPresentationName());
+    }
+  }
+  
+  /**
+   * Redoes last undone operation.
+   */
+  public void redo() {
+    this.undoManager.redo();
+    HomeView view = ((HomeView)getView());
+    boolean moreRedo = this.undoManager.canRedo();
+    view.setEnabled(HomeView.ActionType.UNDO, true);
+    view.setEnabled(HomeView.ActionType.REDO, moreRedo);
+    if (moreRedo) {
+      view.setUndoRedoName(this.undoManager.getUndoPresentationName(),
+          this.undoManager.getRedoPresentationName());
+    } else {
+      view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
+    }
+  }
+}
