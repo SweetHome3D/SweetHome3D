@@ -69,14 +69,16 @@ public class JFacePlanViewerTest {
     ApplicationWindow window = new ApplicationWindow(null) {
       private PlanController controller;
       
+      @Override
       protected void configureShell(Shell shell) {
         shell.setText("Plan Control Test");
-        shell.setLayout(new GridLayout());
       }
 
+      @Override
       protected Control createContents(final Composite parent) {
+        parent.setLayout(new GridLayout());
         UndoManager undoManager = new UndoManager();
-        CoolBar coolBar = createCoolBar(parent, undoManager);
+        ToolBar toolBar = createToolBar(parent, undoManager);
         final ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
         
         // Set how plan view will be created
@@ -118,11 +120,10 @@ public class JFacePlanViewerTest {
         return parent;
       }
 
-      private CoolBar createCoolBar(Composite parent, final UndoManager undoManager) {
-        CoolBar coolBar = new CoolBar(parent, SWT.NONE);
-        ToolBar editToolBar = new ToolBar(coolBar, SWT.NONE);
+      private ToolBar createToolBar(Composite parent, final UndoManager undoManager) {
+        ToolBar toolBar = new ToolBar(parent, SWT.NONE);
         // Add button
-        final ToolItem addToolItem = new ToolItem(editToolBar, SWT.CHECK);
+        final ToolItem addToolItem = new ToolItem(toolBar, SWT.CHECK);
         addToolItem.setImage(new Image(Display.getCurrent(),
                 getClass().getResourceAsStream("resources/Add16.gif")));
         addToolItem.addSelectionListener(new SelectionAdapter () {
@@ -136,7 +137,7 @@ public class JFacePlanViewerTest {
           } 
         });
         // Undo button
-        ToolItem undoToolItem = new ToolItem(editToolBar, SWT.PUSH);
+        ToolItem undoToolItem = new ToolItem(toolBar, SWT.PUSH);
         undoToolItem.setImage(new Image(Display.getCurrent(),
                 getClass().getResourceAsStream("resources/Undo16.gif")));
         undoToolItem.addSelectionListener(new SelectionAdapter () {
@@ -146,7 +147,7 @@ public class JFacePlanViewerTest {
           } 
         });
         // Redo button
-        ToolItem redoToolItem = new ToolItem(editToolBar, SWT.PUSH);
+        ToolItem redoToolItem = new ToolItem(toolBar, SWT.PUSH);
         redoToolItem.setImage(new Image(Display.getCurrent(),
                 getClass().getResourceAsStream("resources/Redo16.gif")));
         redoToolItem.addSelectionListener(new SelectionAdapter () {
@@ -155,13 +156,7 @@ public class JFacePlanViewerTest {
             undoManager.redo();
           } 
         });
-
-        CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
-        coolItem.setControl(editToolBar);
-        // Compute coolItem size
-        Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        coolItem.setSize(coolItem.computeSize(size.x, size.y));
-        return coolBar;
+        return toolBar;
       }
     };
     window.setBlockOnOpen(true);
