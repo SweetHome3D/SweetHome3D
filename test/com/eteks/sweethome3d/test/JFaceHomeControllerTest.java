@@ -20,88 +20,23 @@
 package com.eteks.sweethome3d.test;
 
 import org.eclipse.jface.window.ApplicationWindow;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.CoolBar;
-import org.eclipse.swt.widgets.CoolItem;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.ToolBar;
-import org.eclipse.swt.widgets.ToolItem;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.jface.HomeComposite;
-import com.eteks.sweethome3d.jface.JFaceViewFactory;
+import com.eteks.sweethome3d.jface.HomeApplicationWindow;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.viewcontroller.HomeController;
+
 
 /**
- * Tests furniture furniture table JFace implementation.
+ * Tests home controller JFace implementation.
  * @author Emmanuel Puybaret
  */
 public class JFaceHomeControllerTest {
   public static void main(String [] args) {
-    final UserPreferences preferences = new DefaultUserPreferences();
-    final Home home = new Home();
-    
-    // Create an application window that displays an instance of HomeComposite with a toolbar
-    ApplicationWindow window = new ApplicationWindow(null) {
-      private HomeController controller;
-      
-      protected void configureShell(Shell shell) {
-        shell.setText("Furniture Table Test");
-        shell.setLayout(new GridLayout());
-      }
-
-      protected Control createContents(Composite parent) {
-        CoolBar coolBar = createCoolBar(parent);
-        // Create controller and the other view components
-        this.controller = new HomeController(new JFaceViewFactory(parent), home, preferences);
-        Composite homeComposite = ((HomeComposite)controller.getView()).getHomeComposite();
-        homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
-        return parent;
-      }
-
-      private CoolBar createCoolBar(Composite parent) {
-        CoolBar coolBar = new CoolBar(parent, SWT.NONE);
-        ToolBar editToolBar = new ToolBar(coolBar, SWT.NONE);
-        // Add button
-        ToolItem addToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        addToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Add16.gif")));
-        addToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.addHomeFurniture();
-          } 
-        });
-        // Delete button
-        ToolItem deleteToolItem = new ToolItem(editToolBar, SWT.PUSH);
-        deleteToolItem.setImage(new Image(Display.getCurrent(),
-                getClass().getResourceAsStream("resources/Delete16.gif")));
-        deleteToolItem.addSelectionListener(new SelectionAdapter () {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            controller.getFurnitureController().deleteSelection();
-          } 
-        });
-
-        CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
-        coolItem.setControl(editToolBar);
-        // Compute coolItem size
-        Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        coolItem.setSize(coolItem.computeSize(size.x, size.y));
-        return coolBar;
-      }
-    };
+    UserPreferences preferences = new DefaultUserPreferences();
+    Home home = new Home();
+    ApplicationWindow window = new HomeApplicationWindow(home, preferences);
     window.setBlockOnOpen(true);
     window.open();
     Display.getCurrent().dispose(); 

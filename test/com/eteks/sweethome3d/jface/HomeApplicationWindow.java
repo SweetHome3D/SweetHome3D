@@ -19,152 +19,108 @@
  */
 package com.eteks.sweethome3d.jface;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
-
-import org.eclipse.jface.action.CoolBarManager;
-import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.CoolBar;
+import org.eclipse.swt.widgets.CoolItem;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.viewcontroller.CatalogController;
+import com.eteks.sweethome3d.viewcontroller.CatalogView;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
- * The MVC application view of Sweet Home 3D. 
+ * The MVC application view of Sweet Home 3D. This class implements <code>ViewFactory</code>
+ * interface to keep control on the creation order of components and their parent. 
  * @author Emmanuel Puybaret
  */
-public class HomeApplicationWindow extends ApplicationWindow implements HomeView {
-  private Home home;
+public class HomeApplicationWindow extends ApplicationWindow implements ViewFactory, HomeView {
+  private HomeController  controller;
+  private Home            home;
   private UserPreferences preferences;
-
-  private Map<ActionType, ResourceAction> actions;
-
-  public HomeApplicationWindow(Home home, UserPreferences preferences, HomeController controller) {
+  private SashForm        catalogFurnitureSashForm;
+  
+  public HomeApplicationWindow(Home home, UserPreferences preferences) {
     super(null);
     this.home = home;
     this.preferences = preferences;
-    createActions(controller);  
-    addMenuBar();
-    addCoolBar(SWT.NONE);
   }
 
-  @Override
   protected void configureShell(Shell shell) {
-    super.configureShell(shell);
-    shell.setText("Sweet Home 3D");
+    shell.setText("Home Controller Test");
     shell.setLayout(new GridLayout());
   }
 
-  @Override
   protected Control createContents(Composite parent) {
-    // Create the other view components
-    Composite homeComposite = new HomeComposite(parent, home, preferences).getHomeComposite();
-    homeComposite.setLayoutData(new GridData(GridData.FILL_BOTH));
+    CoolBar coolBar = createCoolBar(parent);
+    this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
+    // Create controller and the other view components
+    this.controller = new HomeController(this, home, preferences);
     return parent;
   }
-  
-  @Override
-  protected CoolBarManager createCoolBarManager(int style) {    
-    ToolBarManager toolBarManager = new ToolBarManager();
-    toolBarManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
-    toolBarManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
-    toolBarManager.add(new Separator());
-    toolBarManager.add(this.actions.get(ActionType.UNDO));
-    toolBarManager.add(this.actions.get(ActionType.REDO));
-    
-    CoolBarManager coolBarManager = new CoolBarManager(style);
-    coolBarManager.add(toolBarManager);
-    return coolBarManager;
-  }
-  
-  @Override
-  protected MenuManager createMenuManager() {
-    ResourceBundle resource = ResourceBundle.getBundle(
-        HomeApplicationWindow.class.getName());
-    
-    // Create main menu manager
-    MenuManager menuManager = new MenuManager();
-    
-    // Create Edit menu manager
-    MenuManager editMenuManager = 
-      new MenuManager(new ResourceAction(resource, "EDIT_MENU").getText());
-    menuManager.add(editMenuManager);
-    editMenuManager.add(this.actions.get(ActionType.UNDO));
-    editMenuManager.add(this.actions.get(ActionType.REDO));
 
-    // Create Furniture menu manager
-    MenuManager furnitureMenuManager = 
-      new MenuManager(new ResourceAction(resource, "FURNITURE_MENU").getText());
-    menuManager.add(furnitureMenuManager);
-    furnitureMenuManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
-    furnitureMenuManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
+  private CoolBar createCoolBar(Composite parent) {
+    CoolBar coolBar = new CoolBar(parent, SWT.NONE);
+    ToolBar editToolBar = new ToolBar(coolBar, SWT.NONE);
+    // Add button
+    ToolItem addToolItem = new ToolItem(editToolBar, SWT.PUSH);
+    addToolItem.setImage(new Image(Display.getCurrent(),
+            getClass().getResourceAsStream("resources/Add16.gif")));
+    addToolItem.addSelectionListener(new SelectionAdapter () {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        controller.addHomeFurniture();
+      } 
+    });
+    // Delete button
+    ToolItem deleteToolItem = new ToolItem(editToolBar, SWT.PUSH);
+    deleteToolItem.setImage(new Image(Display.getCurrent(),
+            getClass().getResourceAsStream("resources/Delete16.gif")));
+    deleteToolItem.addSelectionListener(new SelectionAdapter () {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        controller.getFurnitureController().deleteSelection();
+      } 
+    });
 
-    return menuManager;
-  }
-
-  private void createActions(final HomeController controller) {
-    this.actions = new HashMap<ActionType, ResourceAction>();
-    ResourceBundle resource = ResourceBundle.getBundle(
-        HomeApplicationWindow.class.getName());
-    try {
-      this.actions.put(ActionType.ADD_HOME_FURNITURE,
-          new ControllerAction(resource, ActionType.ADD_HOME_FURNITURE.toString(),
-              controller, "addHomeFurniture"));
-      this.actions.put(ActionType.DELETE_HOME_FURNITURE,
-          new ControllerAction(resource, ActionType.DELETE_HOME_FURNITURE.toString(),
-              controller, "deleteHomeFurniture"));
-      this.actions.put(ActionType.UNDO,
-          new ControllerAction(resource, ActionType.UNDO.toString(),
-              controller, "undo"));
-      this.actions.put(ActionType.REDO,
-          new ControllerAction(resource, ActionType.REDO.toString(),
-              controller, "redo"));
-    } catch (NoSuchMethodException ex) {
-      throw new RuntimeException(ex);
-    }
+    CoolItem coolItem = new CoolItem(coolBar, SWT.NONE);
+    coolItem.setControl(editToolBar);
+    // Compute coolItem size
+    Point size = editToolBar.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+    coolItem.setSize(coolItem.computeSize(size.x, size.y));
+    return coolBar;
   }
 
   /**
-   * Enables or disables the action matching <code>actionType</code>.
+   * Returns this application object. 
    */
-  public void setEnabled(ActionType actionType, 
-                         boolean enabled) {
-    this.actions.get(actionType).setEnabled(enabled);
+  public HomeView createHomeView(Home home, UserPreferences preferences, HomeController controller) {
+    return this;
   }
 
-  /**
-   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
-   * of undo and redo actions. If a parameter is null,
-   * the properties will be reset to their initial values.
-   */
-  public void setUndoRedoName(String undoText, String redoText) {
-    setNameAndShortDescription(ActionType.UNDO, undoText);
-    setNameAndShortDescription(ActionType.REDO, redoText);
+  public CatalogView createCatalogView(Catalog catalog, CatalogController controller) {
+    return new CatalogTree(this.catalogFurnitureSashForm, catalog, controller);
   }
 
-  /**
-   * Sets the <code>NAME</code> and <code>SHORT_DESCRIPTION</code> properties value 
-   * matching <code>actionType</code>. If <code>name</code> is null,
-   * the properties will be reset to their initial values.
-   */
-  private void setNameAndShortDescription(ActionType actionType, String name) {
-    ResourceAction action = this.actions.get(actionType);
-    if (name == null) {
-      action.setText(action.getDefaultText());
-      action.setToolTipText(action.getDefaultToolTipText());
-    }
-    action.setText("&" + name);
-    action.setToolTipText(name);
+  public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
+    return new FurnitureTable(this.catalogFurnitureSashForm, home, preferences, controller);
   }
 }
