@@ -205,4 +205,9 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   public FurnitureView createFurnitureView(Home home, UserPreferences preferences, FurnitureController controller) {
     return new FurnitureTable(this.catalogFurnitureSashForm, home, preferences, controller);
   }
+
+  public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
+    // No Plan view in this scenario yet
+    return null;
+  }
 }
