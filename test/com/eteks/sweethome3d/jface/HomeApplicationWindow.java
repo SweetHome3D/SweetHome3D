@@ -29,7 +29,6 @@ import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
@@ -56,6 +55,8 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   private HomeController  controller;
   private Home            home;
   private UserPreferences preferences;
+  
+  private ResourceBundle  resource;
 
   private SashForm        catalogFurnitureSashForm;
   private Map<ActionType, ResourceAction> actions;
@@ -64,6 +65,8 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     super(null);
     this.home = home;
     this.preferences = preferences;
+    resource = ResourceBundle.getBundle(
+        HomeApplicationWindow.class.getName());
     // Create actions first because createToolBarManager and createMenuManager needs them 
     createActions();
     addMenuBar();
@@ -97,9 +100,6 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   
   @Override
   protected MenuManager createMenuManager() {
-    ResourceBundle resource = ResourceBundle.getBundle(
-        HomeApplicationWindow.class.getName());
-    
     // Create main menu manager
     MenuManager menuManager = new MenuManager();
     
@@ -125,8 +125,6 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
    */
   private void createActions() {
     this.actions = new HashMap<ActionType, ResourceAction>();
-    ResourceBundle resource = ResourceBundle.getBundle(
-        HomeApplicationWindow.class.getName());
     this.actions.put(ActionType.ADD_HOME_FURNITURE,
       new ResourceAction(resource, ActionType.ADD_HOME_FURNITURE.toString()) {
         @Override
