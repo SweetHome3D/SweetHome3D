@@ -73,7 +73,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   @Override
   protected Control createContents(Composite parent) {
     parent.setLayout(new GridLayout());
-    ToolBar toolBar = createCoolBar(parent);
+    ToolBar toolBar = createToolBar(parent);
     this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
     this.catalogFurnitureSashForm.setLayoutData(new GridData(GridData.FILL_BOTH));
     // Create controller and the other view components
@@ -81,7 +81,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     return parent;
   }
 
-  private ToolBar createCoolBar(Composite parent) {
+  private ToolBar createToolBar(Composite parent) {
     ToolBar toolBar = new ToolBar(parent, SWT.FLAT);
     // Add button
     ToolItem addToolItem = new ToolItem(toolBar, SWT.PUSH);
