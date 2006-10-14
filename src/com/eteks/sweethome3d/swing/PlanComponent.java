@@ -27,11 +27,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Paint;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.TexturePaint;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -42,27 +40,20 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
-import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -82,11 +73,10 @@ public class PlanComponent extends JComponent {
   private static final float MARGIN = 40;
   private Home               home;
   private UserPreferences    preferences;
-  private float              scale  = 0.5f;
+  private float              scale = 0.5f;
 
   private Rectangle2D        rectangleFeedback;
   private Rectangle2D        planBoundsCache;
-  private Cursor             rotationCursor;
 
   public PlanComponent(Home home, UserPreferences preferences,
                        PlanController controller) {
@@ -95,7 +85,7 @@ public class PlanComponent extends JComponent {
     // Set JComponent default properties
     setOpaque(true);
     // Add listeners
-    addModelListeners(home, preferences);
+    addModelListeners(home);
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
@@ -104,14 +94,13 @@ public class PlanComponent extends JComponent {
       setFocusable(true);
       setAutoscrolls(true);
     }
-    createRotationCursor();
   }
 
   /**
    * Adds wall and selection listeners on this component to receive wall 
    * changes notifications from home. 
    */
-  private void addModelListeners(Home home, UserPreferences preferences) {
+  private void addModelListeners(Home home) {
     home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
         planBoundsCache = null;
@@ -121,24 +110,10 @@ public class PlanComponent extends JComponent {
       }
     });
     home.addSelectionListener(new SelectionListener () {
-      public void selectionChanged(SelectionEvent ev) {
+      public void selectionChanged(SelectionEvent selectionEvent) {
         repaint();
       }
     });
-    home.addFurnitureListener(new FurnitureListener() {
-      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-        planBoundsCache = null;
-        // Revalidate and repaint
-        revalidate();
-        repaint();
-      }
-    });
-    preferences.addPropertyChangeListener("unit", 
-      new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
-          repaint();
-        }
-      });
   }
 
   /**
@@ -171,9 +146,7 @@ public class PlanComponent extends JComponent {
 
       @Override
       public void mouseDragged(MouseEvent ev) {
-        if (isEnabled()) {
-          controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
-        }
+        mouseMoved(ev);
       }
     };
     addMouseListener(mouseListener);
@@ -192,7 +165,7 @@ public class PlanComponent extends JComponent {
       }
     });
   }
-  
+
   /**
    * Installs keys bound to actions. 
    */
@@ -263,37 +236,6 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Create custom rotation cursor.
-   */ 
-  private void createRotationCursor() {
-    // Retrieve system cursor size
-    Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
-    String cursorImageResource;
-    // If returned cursor size is 0, system doesn't support custom cursor  
-    if (cursorSize.width == 0) {      
-      this.rotationCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);      
-    } else {
-      // Use a different cursor image depending on system cursor size 
-      if (cursorSize.width > 16) {
-        cursorImageResource = "resources/rotationCursor32x32.png";
-      } else {
-        cursorImageResource = "resources/rotationCursor16x16.png";
-      }
-      try {
-        // Read cursor image
-        BufferedImage cursorImage = 
-          ImageIO.read(getClass().getResource(cursorImageResource));
-        // Create custom cursor from image
-        this.rotationCursor = getToolkit().createCustomCursor(cursorImage, 
-            new Point(cursorSize.width / 2, cursorSize.height / 2),
-            "Rotation cursor");
-      } catch (IOException ex) {
-        throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
-      }
-    }
-  }
-
-  /**
    * Returns the preferred size of this component.
    */
   @Override
@@ -321,13 +263,6 @@ public class PlanComponent extends JComponent {
         this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
         this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
       }
-      for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible()) {
-          for (float [] point : piece.getPoints()) {
-            this.planBoundsCache.add(point [0], point [1]);
-          }
-        }
-      }
     }
     return this.planBoundsCache;
   }
@@ -350,7 +285,6 @@ public class PlanComponent extends JComponent {
         insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
     g2D.scale(scale, scale);
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     // Paint component contents
     paintGrid(g2D);
     paintContent(g2D);   
@@ -445,42 +379,17 @@ public class PlanComponent extends JComponent {
     g2D.fill(wallsArea);
     // Draw selected walls with a surrounding shape
     Color selectionColor = UIManager.getColor("textHighlight");
-    Paint selectionPaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
-        selectionColor.getBlue(), 128);
-    Stroke selectionStroke = new BasicStroke(6 / this.scale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    g2D.setPaint(selectionPaint);
-    g2D.setStroke(selectionStroke);
-    List<Object> selectedItems = this.home.getSelectedItems();
-    for (Object item : selectedItems) {
+    g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 128));
+    g2D.setStroke(new BasicStroke(6 / this.scale, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+    for (Object item : this.home.getSelectedItems()) {
       if (item instanceof Wall) {
         g2D.draw(getShape(((Wall)item).getPoints()));
-      }  
+      }
     }
     // Draw walls area
     g2D.setPaint(getForeground());
     g2D.setStroke(new BasicStroke(2f / this.scale));
     g2D.draw(wallsArea);
-    
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible()) {
-        Shape pieceShape = getShape(piece.getPoints());
-        // Fill piece area
-        g2D.setPaint(UIManager.getColor("window"));
-        g2D.fill(pieceShape);
-        // Draw its icon
-        paintPieceOfFurnitureIcon(g2D, piece);
-        if (selectedItems.contains(piece)) {
-          g2D.setPaint(selectionPaint);
-          g2D.setStroke(selectionStroke);
-          g2D.draw(pieceShape);
-        }        
-        // Draw its border
-        g2D.setPaint(getForeground());
-        g2D.setStroke(new BasicStroke(1f / this.scale));
-        g2D.draw(pieceShape);
-      }
-    }
   }
 
   /**
@@ -497,26 +406,6 @@ public class PlanComponent extends JComponent {
     imageGraphics.dispose();
     return new TexturePaint(image, 
         new Rectangle2D.Float(0, 0, 10 / this.scale, 10 / this.scale));
-  }
-
-  /**
-   * Paints <code>piece</code> icon with <code>g2D</code>.
-   */
-  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece) {
-    // Get piece icon
-    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
-    // Translate to piece center
-    g2D.translate(piece.getX(), piece.getY());
-    // Scale icon to fit in its area
-    float minDimension = Math.min(piece.getWidth(), piece.getDepth());
-    float scale = minDimension / icon.getIconHeight();
-    g2D.scale(scale, scale);
-    // Paint piece icon
-    icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
-    // Revert g2D transformation to previous value
-    scale = 1 / scale;
-    g2D.scale(scale, scale);
-    g2D.translate(-piece.getX(), -piece.getY());
   }
 
   /**
@@ -561,21 +450,20 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Ensures selected items are visible at screen and moves
+   * Ensures selected walls are visible at screen and moves
    * scroll bars if needed.
    */
   public void makeSelectionVisible() {
-    Area area = new Area();
+    List<Wall> selectedWalls = new ArrayList<Wall>();
     for (Object item : this.home.getSelectedItems()) {
       if (item instanceof Wall) {
-        area.add(new Area(getShape(((Wall)item).getPoints())));
-      } else if (item instanceof HomePieceOfFurniture) {
-        area.add(new Area(getShape(((HomePieceOfFurniture)item).getPoints())));        
+        selectedWalls.add((Wall)item); 
       }
     }      
-    scrollRectToVisible(getShapePixelBounds(area));
+    Shape wallsArea = getWallsArea(selectedWalls);
+    scrollRectToVisible(getShapePixelBounds(wallsArea));
   }
-
+ 
   /**
    * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
    * moving scroll bars if needed.
@@ -616,7 +504,7 @@ public class PlanComponent extends JComponent {
   /**
    * Returns <code>x</code> converted in model coordinates space.
    */
-  public float convertXPixelToModel(int x) {
+  private float convertXPixelToModel(int x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
     return (x - insets.left) / this.scale - MARGIN + (float)planBounds.getMinX();
@@ -625,7 +513,7 @@ public class PlanComponent extends JComponent {
   /**
    * Returns <code>y</code> converted in model coordinates space.
    */
-  public float convertYPixelToModel(int y) {
+  private float convertYPixelToModel(int y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
     return (y - insets.top) / this.scale - MARGIN + (float)planBounds.getMinY();
@@ -643,12 +531,5 @@ public class PlanComponent extends JComponent {
         (int)Math.round((shapeBounds.getMinY() - planBounds.getMinY() + MARGIN) * this.scale) + insets.top,
         (int)Math.round(shapeBounds.getWidth() * this.scale),
         (int)Math.round(shapeBounds.getHeight() * this.scale));
-  }
-  
-  /**
-   * Sets the cursor of this component as rotation cursor. 
-   */
-  public void setRotationCursor() {
-    setCursor(this.rotationCursor);
   }
 }
