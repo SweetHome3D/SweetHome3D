@@ -95,9 +95,6 @@ public class HomeComponent3D extends JComponent {
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
-    // This component doesn't manage keyboard at this time, 
-    // so it's useless to let its canvas be focusable  
-    canvas3D.setFocusable(false);
   }
 
   /**
@@ -416,7 +413,6 @@ public class HomeComponent3D extends JComponent {
 
       // While loading model use a temporary node that displays a white box  
       final BranchGroup waitBranch = new BranchGroup();
-      waitBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
       
       waitBranch.addChild(getModelBox(Color.WHITE));      
@@ -426,8 +422,6 @@ public class HomeComponent3D extends JComponent {
       modelLoader.execute(new Runnable() {
         public void run() {
           BranchGroup modelBranch = new BranchGroup();
-          modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-          modelBranch.setCapability(BranchGroup.ALLOW_DETACH);
           modelBranch.addChild(getModelNode());
           pieceTransformGroup.addChild(modelBranch);
           // Remove temporary node
