@@ -82,7 +82,6 @@ public class HomeFileRecorder implements HomeRecorder {
       in = new HomeInputStream(new FileInputStream(name));
       // Read home with HomeInputStream
       Home home = in.readHome();
-      home.setName(name);
       return home;
     } catch (IOException ex) {
       throw new RecorderException("Can't read home from " + name, ex);
