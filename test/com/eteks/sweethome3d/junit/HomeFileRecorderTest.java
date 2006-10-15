@@ -55,13 +55,13 @@ public class HomeFileRecorderTest extends TestCase {
     
     // 2. Record home in a file named test.sh3d in current directory
     HomeRecorder recorder = new HomeFileRecorder();
-    recorder.writeHome(home1,
-        new File("test.sh3d").getAbsolutePath()); 
+    String testFile = new File("test.sh3d").getAbsolutePath();
+    recorder.writeHome(home1, testFile); 
     // Check test.sh3d file exists
-    assertTrue("File test.sh3d doesn't exist", recorder.exists(home1.getName()));
+    assertTrue("File test.sh3d doesn't exist", recorder.exists(testFile));
     
     // 3. Read test.sh3d file in a new home
-    Home home2 = recorder.readHome(home1.getName());
+    Home home2 = recorder.readHome(testFile);
     // Compare home content
     assertNotSame("Home not loaded", home1, home2);
     assertEquals("Home wall height", 
@@ -74,8 +74,8 @@ public class HomeFileRecorderTest extends TestCase {
     assertEquals(piece, home2.getFurniture().get(0));
 
     // Delete file
-    if (!new File(home1.getName()).delete()) {
-      fail("Couldn't delete file " + home1.getName());
+    if (!new File(testFile).delete()) {
+      fail("Couldn't delete file " + testFile);
     }
   }
   
