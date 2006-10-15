@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.event.UndoableEditEvent;
@@ -30,7 +31,9 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -42,12 +45,24 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class HomeController  {
   private Home                home;
   private UserPreferences     preferences;
+  private HomeApplication     application;
   private JComponent          homeView; 
   private CatalogController   catalogController;
   private FurnitureController furnitureController;
   private PlanController      planController;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
+  private ResourceBundle      resource;
+  private int                 saveUndoLevel; 
+
+  /**
+   * Creates the controller of home view. 
+   * @param home        the home edited by this controller and its view.
+   * @param application the instance of current application.
+   */
+  public HomeController(Home home, HomeApplication application) {
+    this(home, application.getUserPreferences(), application);
+  }
 
   /**
    * Creates the controller of home view. 
@@ -55,11 +70,19 @@ public class HomeController  {
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
+    this(home, preferences, null);
+  }
+
+  private HomeController(Home home, UserPreferences preferences, 
+                         HomeApplication application) {
     this.home = home;
     this.preferences = preferences;
+    this.application = application;
     this.undoSupport = new UndoableEditSupport();
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
+    this.resource = ResourceBundle.getBundle(
+        HomeController.class.getName());
     
     this.catalogController   = new CatalogController(
         preferences.getCatalog());
@@ -77,6 +100,12 @@ public class HomeController  {
    * Enables actions at controller instantiation. 
    */
   private void enableDefaultActions(HomePane homeView) {
+    homeView.setEnabled(HomePane.ActionType.NEW_HOME, true);
+    homeView.setEnabled(HomePane.ActionType.OPEN, true);
+    homeView.setEnabled(HomePane.ActionType.CLOSE, true);
+    homeView.setEnabled(HomePane.ActionType.SAVE, true);
+    homeView.setEnabled(HomePane.ActionType.SAVE_AS, true);
+    homeView.setEnabled(HomePane.ActionType.EXIT, true);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
   }
 
@@ -179,6 +208,8 @@ public class HomeController  {
               planController.getMode() != PlanController.Mode.WALL_CREATION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
+          saveUndoLevel++;
+          home.setModified(true);
         }
       });
   }
@@ -215,6 +246,8 @@ public class HomeController  {
     } else {
       view.setUndoRedoName(null, this.undoManager.getRedoPresentationName());
     }
+    this.saveUndoLevel--;
+    this.home.setModified(this.saveUndoLevel != 0);
   }
   
   /**
@@ -232,6 +265,8 @@ public class HomeController  {
     } else {
       view.setUndoRedoName(this.undoManager.getUndoPresentationName(), null);
     }
+    this.saveUndoLevel++;
+    this.home.setModified(this.saveUndoLevel != 0);
   }
 
   /**
@@ -256,5 +291,131 @@ public class HomeController  {
     HomePane view = ((HomePane)getView());
     view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
     view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
+  }
+
+
+  /**
+   * Creates a new home and adds it to application home list.
+   */
+  public void newHome() {
+    this.application.addHome(
+        new Home(this.preferences.getNewHomeWallHeight()));
+  }
+
+  /**
+   * Opens a home. This method displays an {@link HomePane#showOpenDialog() open dialog} 
+   * in view, reads the home from the choosen name and adds it to application home list.
+   */
+  public void open() {
+    final String homeName = ((HomePane)getView()).showOpenDialog();
+    if (homeName != null) {
+      try {
+        Home openedHome = this.application.getHomeRecorder().readHome(homeName); 
+        this.application.addHome(openedHome);
+      } catch (RecorderException ex) {
+        String message = String.format(this.resource.getString("openError"), homeName);
+        ((HomePane)getView()).showError(message);
+      }
+    }
+  }
+
+  /**
+   * Manages home close operation. If the home managed by this controller is modified,
+   * this method will {@link HomePane#confirmSave(String) confirm} 
+   * in view whether home should be saved. Once home is actually saved,
+   * home is removed from application homes list.
+   */
+  public void close() {
+    boolean willClose = true;
+    if (this.home.isModified()) {
+      switch (((HomePane)getView()).confirmSave(this.home.getName())) {
+        case SAVE   : willClose = save();
+                      break;
+        case CANCEL : willClose = false;
+                      break;
+      }  
+    }
+    if (willClose) {
+      this.application.deleteHome(home);
+    }
+  }
+
+  /**
+   * Saves the home managed by this controller. If home name doesn't exist, 
+   * this method will act as {@link #saveAs() saveAs} method.
+   * @return <code>true</code> if home was saved.
+   */
+  public boolean save() {
+    if (this.home.getName() == null) {
+      return saveAs();
+    } else {
+      return save(this.home.getName());
+    }
+  }
+
+  /**
+   * Saves the home managed by this controller with a different name. 
+   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in   view, 
+   * and saves home with the choosen name if any. 
+   * If this name already exists, the user will be 
+   * {@link HomePane#confirmOverwrite(String) prompted} in view whether 
+   * he wants to overwrite this existing name. 
+   * @return <code>true</code> if home was saved.
+   */
+  public boolean saveAs() {
+    String newName = ((HomePane)getView()).showSaveDialog(this.home.getName());
+    if (newName != null) {
+      try {
+        if (!this.application.getHomeRecorder().exists(newName)
+            || ((HomePane)getView()).confirmOverwrite(newName)) {
+          return save(newName);
+        } else {
+          return saveAs();
+        }
+      } catch (RecorderException ex) {
+        String message = String.format(this.resource.getString("saveError"), newName);
+        ((HomePane)getView()).showError(message);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Actually saves the home managed by this controller.
+   * @return <code>true</code> if home was saved.
+   */
+  private boolean save(String homeName) {
+    try {
+      this.application.getHomeRecorder().writeHome(this.home, homeName);
+      this.saveUndoLevel = 0;
+      this.home.setModified(false);
+      return true;
+    } catch (RecorderException ex) {
+      String message = String.format(this.resource.getString("saveError"), homeName);
+      ((HomePane)getView()).showError(message);
+      return false;
+    }
+  }
+
+  /**
+   * Manages application exit. If any home in application homes list is modified,
+   * the user will {@link HomePane#confirmExit() prompted} in view whether he wants
+   * to discard his modifications.  
+   */
+  public void exit() {
+    for (Home home : this.application.getHomes()) {
+      if (home.isModified()) {
+        if (((HomePane)getView()).confirmExit()) {
+          break;
+        } else {
+          return;
+        }
+      }
+    }
+    // Remove all homes from application
+    for (Home home : this.application.getHomes()) {
+      this.application.deleteHome(home);
+    }
+    // Let application decide what to do when there's no more home
   }
 }
