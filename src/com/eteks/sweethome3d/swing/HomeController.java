@@ -26,8 +26,6 @@ import java.util.ResourceBundle;
 import javax.swing.JComponent;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEditSupport;
 
@@ -48,19 +46,18 @@ public class HomeController  {
   private Home                home;
   private UserPreferences     preferences;
   private HomeApplication     application;
-  private JComponent          homeView;
+  private JComponent          homeView; 
   private CatalogController   catalogController;
   private FurnitureController furnitureController;
   private PlanController      planController;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
   private ResourceBundle      resource;
-  private int                 saveUndoLevel;
-  private JComponent          focusedView;
+  private int                 saveUndoLevel; 
 
   /**
-   * Creates the controller of home view.
-   * @param home the home edited by this controller and its view.
+   * Creates the controller of home view. 
+   * @param home        the home edited by this controller and its view.
    * @param application the instance of current application.
    */
   public HomeController(Home home, HomeApplication application) {
@@ -108,11 +105,8 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.CLOSE, true);
     homeView.setEnabled(HomePane.ActionType.SAVE, true);
     homeView.setEnabled(HomePane.ActionType.SAVE_AS, true);
-    homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, true);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
-    homeView.setEnabled(HomePane.ActionType.ABOUT, true);
-    homeView.setTransferEnabled(true);
   }
 
   /**
@@ -183,57 +177,23 @@ public class HomeController  {
         getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
     
     // Search if selection contains at least one piece
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List selectedItems = this.home.getSelectedItems();
     boolean selectionContainsFurniture = false;
-    if (!wallCreationMode) {
-      selectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
-    }
-
-    List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
+    if (!wallCreationMode)
+      for (Object item : selectedItems) {
+        if (item instanceof HomePieceOfFurniture) {
+          selectionContainsFurniture = true;
+          break;
+        }
+      }
+    // In creation mode al actions bound to selection are disabled
     HomePane view = ((HomePane)getView());
-    if (this.focusedView == getCatalogController().getView()) {
-      view.setEnabled(HomePane.ActionType.COPY,
-          !wallCreationMode && !catalogSelectedItems.isEmpty());
-      view.setEnabled(HomePane.ActionType.CUT, false);
-      view.setEnabled(HomePane.ActionType.DELETE, false);
-    } else if (this.focusedView == getFurnitureController().getView()) {
-      view.setEnabled(HomePane.ActionType.COPY, selectionContainsFurniture);
-      view.setEnabled(HomePane.ActionType.CUT, selectionContainsFurniture);
-      view.setEnabled(HomePane.ActionType.DELETE, selectionContainsFurniture);
-    } else if (this.focusedView == getPlanController().getView()) {
-      boolean copyEnabled = !wallCreationMode && !selectedItems.isEmpty();
-      view.setEnabled(HomePane.ActionType.COPY, copyEnabled);
-      view.setEnabled(HomePane.ActionType.CUT, copyEnabled);
-      view.setEnabled(HomePane.ActionType.DELETE, copyEnabled);
-    } else {
-      view.setEnabled(HomePane.ActionType.COPY, false);
-      view.setEnabled(HomePane.ActionType.CUT, false);
-      view.setEnabled(HomePane.ActionType.DELETE, false);
-    }
-
-    // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
         !wallCreationMode && selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
         !wallCreationMode && !selectedItems.isEmpty());
     view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
-        !wallCreationMode && !catalogSelectedItems.isEmpty());
-  }
-
-  /**
-   * Enables clipboard paste action if clipboard isn't empty.
-   */
-  public void enablePasteAction() {
-    HomePane view = ((HomePane)getView());
-    if (this.focusedView == getFurnitureController().getView()
-        || this.focusedView == getPlanController().getView()) {
-      boolean wallCreationMode =  
-        getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
-      view.setEnabled(HomePane.ActionType.PASTE,
-          !wallCreationMode && !view.isClipboardEmpty());
-    } else {
-      view.setEnabled(HomePane.ActionType.PASTE, false);
-    }
+        !wallCreationMode && !this.preferences.getCatalog().getSelectedFurniture().isEmpty());
   }
 
   /**
@@ -245,7 +205,7 @@ public class HomeController  {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomePane view = ((HomePane)getView());
           view.setEnabled(HomePane.ActionType.UNDO, 
-              getPlanController().getMode() != PlanController.Mode.WALL_CREATION);
+              planController.getMode() != PlanController.Mode.WALL_CREATION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
           saveUndoLevel++;
@@ -310,91 +270,6 @@ public class HomeController  {
   }
 
   /**
-   * Deletes items and post a cut operation to undo support.
-   */
-  public void cut(List<? extends Object> items) {
-    // Start a compound edit that deletes items and changes presentation name
-    this.undoSupport.beginUpdate();
-    getPlanController().deleteItems(items);
-    // Add a undoable edit to change presentation name
-    this.undoSupport.postEdit(new AbstractUndoableEdit() { 
-        @Override
-        public String getPresentationName() {
-          return resource.getString("undoCutName");
-        }      
-      });
-    // End compound edit
-    this.undoSupport.endUpdate();
-  }
-  
-  /**
-   * Adds items to home and post a paste operation to undo support.
-   */
-  public void paste(final List<? extends Object> items) {
-    addItems(items, 20, 20, resource.getString("undoPasteName"));
-  }
-
-  /**
-   * Adds items to home, moves them of (dx, dy) 
-   * and post a drop operation to undo support.
-   */
-  public void drop(final List<? extends Object> items, float dx, float dy) {
-    addItems(items, dx, dy, resource.getString("undoDropName"));
-  }
-
-  /**
-   * Adds items to home.
-   */
-  private void addItems(final List<? extends Object> items, 
-                        float dx, float dy, final String presentationName) {
-    if (!items.isEmpty()) {
-      // Start a compound edit that adds walls and furniture to home
-      this.undoSupport.beginUpdate();
-      getFurnitureController().addFurniture(Home.getFurnitureSubList(items));
-      getPlanController().addWalls(Home.getWallsSubList(items));
-      getPlanController().moveItems(items, dx, dy);
-      getPlanController().selectAndShowItems(items);
-  
-      // Add a undoable edit that will select all the items at redo
-      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            getPlanController().selectAndShowItems(items);
-          }
-  
-          @Override
-          public String getPresentationName() {
-            return presentationName;
-          }      
-        });
-     
-      // End compound edit
-      this.undoSupport.endUpdate();
-    }
-  }
-
-  /**
-   * Deletes the selection in the focused component.
-   */
-  public void delete() {
-    if (this.focusedView == getFurnitureController().getView()) {
-      getFurnitureController().deleteSelection();
-    } if (this.focusedView == getPlanController().getView()) {
-      getPlanController().deleteSelection();
-    }
-  }
-  
-  /**
-   * Updates actions when focused view changed.
-   */
-  public void focusedViewChanged(JComponent focusedView) {
-    this.focusedView = focusedView;
-    enableActionsOnSelection();
-    enablePasteAction();
-  }
-  
-  /**
    * Sets wall creation mode in plan controller, 
    * and disables forbidden actions in this mode.  
    */
@@ -402,8 +277,6 @@ public class HomeController  {
     getPlanController().setMode(PlanController.Mode.WALL_CREATION);
     enableActionsOnSelection();
     HomePane view = ((HomePane)getView());
-    view.setTransferEnabled(false);
-    view.setEnabled(HomePane.ActionType.PASTE, false);
     view.setEnabled(HomePane.ActionType.UNDO, false);
     view.setEnabled(HomePane.ActionType.REDO, false);
   }
@@ -415,9 +288,7 @@ public class HomeController  {
   public void setSelectionMode() {
     getPlanController().setMode(PlanController.Mode.SELECTION);
     enableActionsOnSelection();
-    enablePasteAction();
     HomePane view = ((HomePane)getView());
-    view.setTransferEnabled(true);
     view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
     view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
   }
@@ -516,6 +387,7 @@ public class HomeController  {
   private boolean save(String homeName) {
     try {
       this.application.getHomeRecorder().writeHome(this.home, homeName);
+      this.home.setName(homeName);
       this.saveUndoLevel = 0;
       this.home.setModified(false);
       return true;
@@ -546,32 +418,5 @@ public class HomeController  {
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
-  }
-
-  /**
-   * Edits preferences and changes them if user agrees.
-   */
-  public void editPreferences() {
-    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
-    preferencesPanel.setPreferences(this.preferences);
-    if (preferencesPanel.showDialog(getView())) {
-      this.preferences.setUnit(preferencesPanel.getUnit());
-      this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
-      this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
-      this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
-      try {
-        this.preferences.write();
-      } catch (RecorderException ex) {
-        ((HomePane)getView()).showError(
-            this.resource.getString("savePreferencesError"));
-      }
-    }
-  }
-
-  /**
-   * Displays about dialog.
-   */
-  public void about() {
-    ((HomePane)getView()).showAboutDialog();
   }
 }
