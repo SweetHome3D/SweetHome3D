@@ -95,6 +95,9 @@ public class HomeComponent3D extends JComponent {
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
+    // This component doesn't manage keyboard at this time, 
+    // so it's useless to let its canvas be focusable  
+    canvas3D.setFocusable(false);
   }
 
   /**
