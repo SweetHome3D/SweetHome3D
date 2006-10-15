@@ -68,8 +68,6 @@ public class HomeFileRecorder implements HomeRecorder {
         throw new RecorderException("Can't close file " + name, ex);
       }
     }
-    // Change home name
-    home.setName(name);
   }
 
   /**
