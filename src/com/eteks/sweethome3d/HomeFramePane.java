@@ -62,8 +62,8 @@ public class HomeFramePane extends JRootPane {
     if (home.getName() == null) {
       newHomeNumber = ++newHomeCount;
     }
-    // Add controller view to this root pane
-    getContentPane().add(controller.getView());
+    // Set controller view as content pane
+    setContentPane(controller.getView());
   }
 
   /**
