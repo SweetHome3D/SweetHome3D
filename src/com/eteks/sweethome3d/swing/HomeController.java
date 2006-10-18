@@ -45,22 +45,22 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomeController  {
-  private Home                home;
-  private UserPreferences     preferences;
-  private HomeApplication     application;
-  private JComponent          homeView;
-  private CatalogController   catalogController;
-  private FurnitureController furnitureController;
-  private PlanController      planController;
-  private UndoableEditSupport undoSupport;
-  private UndoManager         undoManager;
-  private ResourceBundle      resource;
-  private int                 saveUndoLevel;
-  private JComponent          focusedView;
+  private Home                   home;
+  private UserPreferences        preferences;
+  private HomeApplication        application;
+  private JComponent             homeView;
+  private CatalogController      catalogController;
+  private FurnitureController    furnitureController;
+  private PlanController         planController;
+  private UndoableEditSupport    undoSupport;
+  private UndoManager            undoManager;
+  private ResourceBundle         resource;
+  private int                    saveUndoLevel;
+  private JComponent             focusedView;
 
   /**
-   * Creates the controller of home view.
-   * @param home the home edited by this controller and its view.
+   * Creates the controller of home view. 
+   * @param home        the home edited by this controller and its view.
    * @param application the instance of current application.
    */
   public HomeController(Home home, HomeApplication application) {
@@ -108,10 +108,8 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.CLOSE, true);
     homeView.setEnabled(HomePane.ActionType.SAVE, true);
     homeView.setEnabled(HomePane.ActionType.SAVE_AS, true);
-    homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, true);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
-    homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
   }
 
@@ -380,7 +378,7 @@ public class HomeController  {
   public void delete() {
     if (this.focusedView == getFurnitureController().getView()) {
       getFurnitureController().deleteSelection();
-    } if (this.focusedView == getPlanController().getView()) {
+    } else if (this.focusedView == getPlanController().getView()) {
       getPlanController().deleteSelection();
     }
   }
@@ -548,32 +546,5 @@ public class HomeController  {
       this.application.deleteHome(home);
     }
     // Let application decide what to do when there's no more home
-  }
-
-  /**
-   * Edits preferences and changes them if user agrees.
-   */
-  public void editPreferences() {
-    UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
-    preferencesPanel.setPreferences(this.preferences);
-    if (preferencesPanel.showDialog(getView())) {
-      this.preferences.setUnit(preferencesPanel.getUnit());
-      this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
-      this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
-      this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
-      try {
-        this.preferences.write();
-      } catch (RecorderException ex) {
-        ((HomePane)getView()).showError(
-            this.resource.getString("savePreferencesError"));
-      }
-    }
-  }
-
-  /**
-   * Displays about dialog.
-   */
-  public void about() {
-    ((HomePane)getView()).showAboutDialog();
   }
 }
