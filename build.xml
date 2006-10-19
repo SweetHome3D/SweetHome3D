@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <project basedir="." default="deploy" name="SweetHome3D">
   <target name="deploy">
-    <echo message="Compile ${ant.project.name}"/>
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes">
        <classpath>
@@ -13,20 +12,17 @@
         </classpath>
     </javac>
     
-    <echo message="Copy resources"/>
-    <copy todir="deploy/classes">
+     <copy todir="deploy/classes">
       <fileset dir="src">
         <exclude name="**/*.java"/>
         <exclude name=".*"/>
       </fileset>
     </copy>
     
-    <echo message="Create SweetHome3D.jar"/>
     <jar destfile="deploy/SweetHome3D.jar" 
     	     basedir="deploy/classes"/>
     <delete dir="deploy/classes"/>
   
-    <echo message="Create Java 3D DLL jar files"/>
     <mkdir dir="deploy/windows" />
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
@@ -41,8 +37,7 @@
       </fileset>
     </jar>
  
-    <echo message="Copy Java 3D jar files"/>
-    <copy todir="deploy">
+     <copy todir="deploy">
       <fileset dir="lib">
          <include name="**/*.jar"/>
       </fileset>
@@ -50,7 +45,6 @@
     
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
-    <echo message="Sign jars"/>
     <signjar keystore="keys.keytool" 
            alias="SweetHome3D" storepass="${password}">
       <fileset dir="deploy">
