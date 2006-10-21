@@ -21,9 +21,13 @@ package com.eteks.sweethome3d.jface;
 
 import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -46,6 +50,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.graphics.Pattern;
 import org.eclipse.swt.graphics.Point;
@@ -56,7 +61,10 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -83,6 +91,11 @@ public class PlanViewer extends Viewer implements PlanView {
   private Path               rectangleFeedback;
   private Cursor             arrowCursor;
   private Cursor             crossCursor;
+  private Cursor             rotationCursor;
+  // Furniture images cache (we're obliged to keep track of all the images
+  // to dispose them when tree will be disposed)
+  private Map<HomePieceOfFurniture, Image> imagesCache = 
+    new HashMap<HomePieceOfFurniture, Image>();
 
   public PlanViewer(Composite parent, 
                     Home home, UserPreferences preferences,
@@ -104,6 +117,7 @@ public class PlanViewer extends Viewer implements PlanView {
     }; 
     arrowCursor = new Cursor(this.control.getDisplay(), SWT.CURSOR_ARROW);
     crossCursor = new Cursor(this.control.getDisplay(), SWT.CURSOR_CROSS);
+    createRotationCursor();
     // Add listeners
     addControlListeners();
     addModelListeners(home);
@@ -131,6 +145,11 @@ public class PlanViewer extends Viewer implements PlanView {
         }
         arrowCursor.dispose();
         crossCursor.dispose();
+        rotationCursor.dispose();
+        // Dispose all the images created for the control
+        for (Image image : imagesCache.values()) {
+          image.dispose();
+        }
       }
     });
   }
@@ -153,6 +172,16 @@ public class PlanViewer extends Viewer implements PlanView {
     });
     home.addSelectionListener(new SelectionListener () {
       public void selectionChanged(SelectionEvent selectionEvent) {
+        refresh();
+      }
+    });
+    home.addFurnitureListener(new FurnitureListener() {
+      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+        planBoundsCache = null;
+        if (control.getParent() instanceof ScrolledComposite) {
+          ((ScrolledComposite)control.getParent()).setMinSize(
+              control.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+        }
         refresh();
       }
     });
@@ -249,6 +278,39 @@ public class PlanViewer extends Viewer implements PlanView {
   }
 
   /**
+   * Create custom rotation cursor.
+   */ 
+  private void createRotationCursor() {
+    // Retrieve system cursor size
+    Point [] cursorSizes = this.control.getDisplay().getCursorSizes();
+    String cursorImageResource;
+    // If returned cursor size is 0, system doesn't support custom cursor  
+    if (cursorSizes.length == 0) {      
+      this.rotationCursor = new Cursor(this.control.getDisplay(), SWT.CURSOR_SIZEALL);      
+    } else {
+      // Use a different cursor image depending on system cursor size 
+      if (cursorSizes [0].x > 16) {
+        cursorImageResource = "resources/rotationCursor32x32.gif";
+      } else {
+        cursorImageResource = "resources/rotationCursor16x16.gif";
+      }
+      // Create custom cursor from image
+      InputStream imageInput = getClass().getResourceAsStream(cursorImageResource);
+      try {
+        this.rotationCursor = new Cursor(this.control.getDisplay(),
+            new ImageData(imageInput),
+            cursorSizes [0].x / 2, cursorSizes [0].y / 2);
+      } finally {
+        try {
+          imageInput.close();
+        } catch (IOException ex) {
+          // Nothing to do
+        }
+      }
+    }
+  }
+
+  /**
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
@@ -257,6 +319,13 @@ public class PlanViewer extends Viewer implements PlanView {
       for (Wall wall : home.getWalls()) {
         this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
         this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
+      }
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
+        if (piece.isVisible()) {
+          for (float [] point : piece.getPoints()) {
+            this.planBoundsCache.add(point [0], point [1]);
+          }
+        }
       }
     }
     return this.planBoundsCache;
@@ -389,13 +458,14 @@ public class PlanViewer extends Viewer implements PlanView {
     gc.setBackgroundPattern(null);
     wallPattern.dispose();
     // Draw selected walls with a surrounding shape
-    if (!this.home.getSelectedItems().isEmpty()) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (!selectedItems.isEmpty()) {
       gc.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_LIST_SELECTION));
       gc.setAlpha(128);
       gc.setLineWidth((int)Math.round(6 / this.scale));
       gc.setLineJoin(SWT.JOIN_ROUND);
       Path selectedPaths = new Path(this.control.getDisplay());
-      for (Object item : this.home.getSelectedItems()) {
+      for (Object item : selectedItems) {
         if (item instanceof Wall) {
           float [][] wallPoints = ((Wall)item).getPoints();
           selectedPaths.moveTo(wallPoints [0][0], wallPoints [0][1]);
@@ -415,6 +485,36 @@ public class PlanViewer extends Viewer implements PlanView {
     gc.setLineJoin(SWT.JOIN_MITER);
     gc.drawPath(wallsPath);
     wallsPath.dispose();
+    
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        Path piecePath = new Path(this.control.getDisplay());
+        float [][] piecePoints = piece.getPoints();
+        piecePath.moveTo(piecePoints [0][0], piecePoints [0][1]);
+        for (int i = 1; i < piecePoints.length; i++) {
+          piecePath.lineTo(piecePoints [i][0], piecePoints [i][1]);        
+        }
+        piecePath.close();
+        // Fill piece area
+        gc.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+        gc.fillPath(piecePath);
+        // Draw its icon
+        paintPieceOfFurnitureIcon(gc, piece);
+        if (selectedItems.contains(piece)) {
+          gc.setForeground(this.control.getDisplay().getSystemColor(SWT.COLOR_LIST_SELECTION));
+          gc.setAlpha(128);
+          gc.setLineWidth((int)Math.round(6 / this.scale));
+          gc.setLineJoin(SWT.JOIN_ROUND);
+          gc.drawPath(piecePath);
+        }        
+        // Draw its border
+        gc.setForeground(this.control.getForeground());
+        gc.setAlpha(255);
+        gc.setLineWidth((int)Math.round(1 / this.scale));
+        gc.setLineJoin(SWT.JOIN_MITER);
+        gc.drawPath(piecePath);
+      }
+    }
   }
 
   /**
@@ -431,6 +531,43 @@ public class PlanViewer extends Viewer implements PlanView {
     imageGC.drawLine(0, 9, 9, 0);
     imageGC.dispose();
     return new Pattern(this.control.getDisplay(), image);
+  }
+
+  /**
+   * Paints <code>piece</code> icon with <code>g2D</code>.
+   */
+  private void paintPieceOfFurnitureIcon(GC gc, HomePieceOfFurniture piece) {
+    try {
+      Image image = imagesCache.get(piece);
+      if (image == null) {
+        // Read the icon of the piece 
+        InputStream iconStream = piece.getIcon().openStream();
+        image = new Image(Display.getCurrent(), iconStream);
+        iconStream.close();
+        imagesCache.put(piece, image);
+      }
+      Transform transform = new Transform(Display.getCurrent());
+      gc.getTransform(transform);
+      // Translate to piece center
+      transform.translate(piece.getX(), piece.getY());
+      // Scale icon to fit in its area
+      float minDimension = Math.min(piece.getWidth(), piece.getDepth());
+      Rectangle imageBounds = image.getBounds();
+      float scale = minDimension / imageBounds.height;
+      transform.scale(scale, scale);
+      gc.setTransform(transform);
+      // Paint piece icon
+      gc.drawImage(image, -imageBounds.width / 2, -imageBounds.height / 2);
+      // Revert g2D transformation to previous value
+      scale = 1 / scale;
+      transform.scale(scale, scale);
+      transform.translate(-piece.getX(), -piece.getY());
+      gc.setTransform(transform);      
+      transform.dispose();
+    } catch (IOException ex) {
+      // Too bad the icon can't be read
+      ex.printStackTrace();
+    }
   }
 
   /**
@@ -481,6 +618,12 @@ public class PlanViewer extends Viewer implements PlanView {
       for (Object item : selectedItems) {
         if (item instanceof Wall) {
           float [][] wallPoints = ((Wall)item).getPoints();
+          for (int i = 0; i < wallPoints.length; i++) {
+            minX = Math.min(minX, wallPoints [i][0]);
+            minY = Math.min(minY, wallPoints [i][1]);
+          }
+        } else if (item instanceof HomePieceOfFurniture) {
+          float [][] wallPoints = ((HomePieceOfFurniture)item).getPoints();
           for (int i = 0; i < wallPoints.length; i++) {
             minX = Math.min(minX, wallPoints [i][0]);
             minY = Math.min(minY, wallPoints [i][1]);
@@ -614,5 +757,12 @@ public class PlanViewer extends Viewer implements PlanView {
     if (reveal) {
       makeSelectionVisible();
     }
+  }
+
+  /**
+   * Sets the cursor of this component as rotation cursor. 
+   */
+  public void setRotationCursor() {
+    this.control.setCursor(this.rotationCursor);
   }
 }
