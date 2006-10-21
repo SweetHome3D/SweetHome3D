@@ -23,12 +23,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.undo.UndoableEditSupport;
+
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
@@ -58,6 +63,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   
   private ResourceBundle  resource;
 
+  private SashForm        mainSashForm;
   private SashForm        catalogFurnitureSashForm;
   private Map<ActionType, ResourceAction> actions;
   
@@ -67,6 +73,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     this.preferences = preferences;
     this.resource = ResourceBundle.getBundle(
         HomeApplicationWindow.class.getName());
+    
     // Create actions first because createToolBarManager and createMenuManager needs them 
     createActions();
     addMenuBar();
@@ -81,7 +88,8 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   @Override
   protected Control createContents(Composite parent) {
-    this.catalogFurnitureSashForm = new SashForm(parent, SWT.VERTICAL);
+    this.mainSashForm = new SashForm(parent, SWT.HORIZONTAL);
+    this.catalogFurnitureSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
     // Create controller and the other view components
     this.controller = new HomeController(this, home, preferences);
     return parent;
@@ -93,6 +101,11 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     toolBarManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
     toolBarManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
     toolBarManager.add(new Separator());
+    
+    toolBarManager.add(this.actions.get(ActionType.WALL_CREATION));
+    toolBarManager.add(this.actions.get(ActionType.DELETE_SELECTION));
+    toolBarManager.add(new Separator());
+    
     toolBarManager.add(this.actions.get(ActionType.UNDO));
     toolBarManager.add(this.actions.get(ActionType.REDO));
     return toolBarManager;
@@ -105,18 +118,26 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     
     // Create Edit menu manager
     MenuManager editMenuManager = 
-      new MenuManager(new ResourceAction(resource, "EDIT_MENU").getText());
+      new MenuManager(new ResourceAction(this.resource, "EDIT_MENU").getText());
     menuManager.add(editMenuManager);
     editMenuManager.add(this.actions.get(ActionType.UNDO));
     editMenuManager.add(this.actions.get(ActionType.REDO));
 
     // Create Furniture menu manager
     MenuManager furnitureMenuManager = 
-      new MenuManager(new ResourceAction(resource, "FURNITURE_MENU").getText());
+      new MenuManager(new ResourceAction(this.resource, "FURNITURE_MENU").getText());
     menuManager.add(furnitureMenuManager);
     furnitureMenuManager.add(this.actions.get(ActionType.ADD_HOME_FURNITURE));
     furnitureMenuManager.add(this.actions.get(ActionType.DELETE_HOME_FURNITURE));
 
+    
+    // Create Plan menu
+    MenuManager planMenuManager = 
+      new MenuManager(new ResourceAction(this.resource, "PLAN_MENU").getText());
+    menuManager.add(planMenuManager);
+    planMenuManager.add(this.actions.get(ActionType.WALL_CREATION));
+    planMenuManager.add(this.actions.get(ActionType.DELETE_SELECTION));
+    
     return menuManager;
   }
 
@@ -126,31 +147,54 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   private void createActions() {
     this.actions = new HashMap<ActionType, ResourceAction>();
     this.actions.put(ActionType.ADD_HOME_FURNITURE,
-      new ResourceAction(resource, ActionType.ADD_HOME_FURNITURE.toString()) {
+      new ResourceAction(this.resource, ActionType.ADD_HOME_FURNITURE.toString()) {
         @Override
         public void run() {
           controller.addHomeFurniture();
         }
       });
     this.actions.put(ActionType.DELETE_HOME_FURNITURE,
-      new ResourceAction(resource, ActionType.DELETE_HOME_FURNITURE.toString()) {
+      new ResourceAction(this.resource, ActionType.DELETE_HOME_FURNITURE.toString()) {
         @Override
         public void run() {
           controller.getFurnitureController().deleteSelection();
         }
       });
     this.actions.put(ActionType.UNDO,
-      new ResourceAction(resource, ActionType.UNDO.toString()){
+      new ResourceAction(this.resource, ActionType.UNDO.toString()){
         @Override
         public void run() {
           controller.undo();
         }
       });
     this.actions.put(ActionType.REDO,
-      new ResourceAction(resource, ActionType.REDO.toString()){
+      new ResourceAction(this.resource, ActionType.REDO.toString()){
         @Override
         public void run() {
           controller.redo();
+        }
+      });
+    this.actions.put(ActionType.WALL_CREATION,
+        new ResourceAction (this.resource, ActionType.WALL_CREATION.toString()) {
+          @Override
+          public int getStyle() {
+            return AS_CHECK_BOX;
+          }
+
+          @Override
+          public void run() {
+            if (isChecked()) {
+              controller.setWallCreationMode();
+            } else {
+              controller.setSelectionMode();
+            }
+          }
+        });
+    this.actions.put(ActionType.DELETE_SELECTION,
+      new ResourceAction(this.resource, ActionType.DELETE_SELECTION.toString()) {
+        @Override
+        public void run() {
+          controller.getPlanController().deleteSelection();
         }
       });
   }
@@ -205,7 +249,13 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   }
 
   public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
-    // No Plan view in this scenario yet
-    return null;
+    ScrolledComposite scrolledComposite = new ScrolledComposite(this.mainSashForm, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+    PlanViewer planViewer = new PlanViewer(scrolledComposite, home, preferences, controller);
+    // Configure scrolledComposite content with planViewer control 
+    scrolledComposite.setContent(planViewer.getControl());
+    scrolledComposite.setMinSize(planViewer.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT));
+    scrolledComposite.setExpandHorizontal(true);
+    scrolledComposite.setExpandVertical(true);
+    return planViewer;
   }
 }
