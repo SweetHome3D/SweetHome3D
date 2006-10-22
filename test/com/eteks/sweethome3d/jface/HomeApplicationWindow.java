@@ -482,7 +482,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
       fileDialog.setFileName(new File(name).getName());
     }
     // Set .sh3d files filter 
-    fileDialog.setFilterExtensions(new String [] {SWEET_HOME_3D_EXTENSION});
+    fileDialog.setFilterExtensions(new String [] {"*" + SWEET_HOME_3D_EXTENSION});
     fileDialog.setFilterNames(new String [] {SWEET_HOME_3D_FILTER_NAME});
     // Update current directory
     if (currentPath != null) {
