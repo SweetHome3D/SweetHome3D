@@ -25,8 +25,11 @@ package com.eteks.sweethome3d.viewcontroller;
  */
 public interface HomeView extends View {
   public enum ActionType {
-    UNDO, REDO, ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, 
+    NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, EXIT, 
+    UNDO, REDO, 
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
     WALL_CREATION, DELETE_SELECTION}
+  public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
   /**
    * Enables or disables the action matching <code>actionType</code>.
@@ -38,4 +41,42 @@ public interface HomeView extends View {
    * the properties will be reset to their initial values.
    */
   public void setUndoRedoName(String undoText, String redoText);
+  
+  /**
+   * Displays a file chooser dialog to open a .sh3d file.
+   */
+  public String showOpenDialog();
+
+  /**
+   * Displays a file chooser dialog to save a home in a .sh3d file.
+   */
+  public String showSaveDialog(String name);
+
+  /**
+   * Displays <code>message</code> in an error message box.
+   */
+  public void showError(String message);
+
+  /**
+   * Displays a dialog that let user choose whether he wants to overwrite 
+   * file <code>name</code> or not.
+   * @return <code>true</code> if user confirmed to overwrite.
+   */
+  public boolean confirmOverwrite(String name);
+
+  /**
+   * Displays a dialog that let user choose whether he wants to save
+   * the current home or not.
+   * @return {@link SaveAnswer#SAVE} if user choosed to save home,
+   * {@link SaveAnswer#DO_NOT_SAVE} if user don't want to save home,
+   * or {@link SaveAnswer#CANCEL} if doesn't want to continue current operation.
+   */
+  public SaveAnswer confirmSave(String name);
+  
+  /**
+   * Displays a dialog that let user choose whether he wants to exit 
+   * application or not.
+   * @return <code>true</code> if user confirmed to exit.
+   */
+  public boolean confirmExit();
 }
