@@ -125,7 +125,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     //  Update frame image ans title 
     try {
       // Load shell images in two different resolutions 
-      // to let the system the one that fits best
+      // to let the system choose the one that fits best
       InputStream iconStream = HomeApplicationWindow.class.
           getResource("resources/frameIcon16x16.png").openStream();
       this.shellImage16x16 = new Image(Display.getCurrent(), iconStream);
