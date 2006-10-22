@@ -63,9 +63,6 @@ public class SweetHome3D extends HomeApplication {
    * Sweet Home 3D entry point.
    */
   public static void main(String [] args) {
-    // Change Mac OS X application menu name
-    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
-
     // Create the application that manages homes
     final HomeApplication application = new SweetHome3D();
     // Add a listener that opens a frame when a home is added to application
