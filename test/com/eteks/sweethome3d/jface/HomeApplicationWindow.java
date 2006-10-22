@@ -259,15 +259,24 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
     scrolledComposite.setExpandHorizontal(true);
     scrolledComposite.setExpandVertical(true);
 
+    // Add a 3D view at bottom of planViewer
+    createView3D(home);
+    
+    return planViewer;
+  }
+
+  /**
+   * Creates a home 3D view.
+   */
+  private void createView3D(Home home) {
     Composite homeComponent3DParent = new Composite(this.planView3DSashForm, SWT.EMBEDDED);
     try {
-      // Add a Swing HomeComponent3D component at bottom of planViewer with SWT/AWT bridge
+      // Add a Swing HomeComponent3D component with SWT/AWT bridge
       Frame frame = SWT_AWT.new_Frame(homeComponent3DParent);
       frame.add(new HomeComponent3D(home));
     } catch (SWTError ex) {
       // If SWT/AWT bridge isn't supported, dispose 3D component
       homeComponent3DParent.dispose();
     }
-    return planViewer;
   }
 }
