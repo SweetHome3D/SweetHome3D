@@ -108,7 +108,7 @@ public class HomeControllerTest extends TestCase {
     
     // 3. Add the selected furniture to the table
     runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
-    List<HomePieceOfFurniture> furniture = this.home.getFurniture();
+    List<HomePieceOfFurniture> furniture = home.getFurniture();
     //  Check Add, Delete and Undo actions are enabled
     assertActionsEnabled(true, true, true, false);
     
@@ -123,9 +123,9 @@ public class HomeControllerTest extends TestCase {
     // Check home contains the deleted piece
     HomePieceOfFurniture firstPiece = furniture.get(0);
     assertEquals("Deleted piece isn't undeleted", 
-        firstPiece, this.home.getFurniture().get(0));
+        firstPiece, home.getFurniture().get(0));
     assertEquals("Deleted piece isn't selected", 
-        firstPiece, this.home.getSelectedItems().get(0));
+        firstPiece, home.getSelectedItems().get(0));
     //  Check all actions are enabled
     assertActionsEnabled(true, true, true, true);
 
@@ -133,7 +133,7 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.UNDO);
     // Check home is empty
     assertTrue("Home furniture isn't empty", 
-        this.home.getFurniture().isEmpty());
+        home.getFurniture().isEmpty());
     //  Check Add and Redo actions are enabled
     assertActionsEnabled(true, false, false, true);
     
