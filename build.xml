@@ -10,7 +10,7 @@
          <pathelement location="lib/windows/j3dcore.jar"/>
          <pathelement location="libtest/AppleJavaExtensions.jar"/>
          <pathelement location="libtest/jnlp.jar"/>
-        </classpath>
+       </classpath>
     </javac>
     
     <!-- Copy resources -->
