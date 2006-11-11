@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.jface;
 
+import java.awt.Frame;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -28,6 +29,8 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.window.ApplicationWindow;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
+import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.widgets.Composite;
@@ -37,6 +40,7 @@ import org.eclipse.swt.widgets.Shell;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.viewcontroller.CatalogController;
 import com.eteks.sweethome3d.viewcontroller.CatalogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
@@ -61,6 +65,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
 
   private SashForm        mainSashForm;
   private SashForm        catalogFurnitureSashForm;
+  private SashForm        planView3DSashForm;
   private Map<ActionType, ResourceAction> actions;
   
   public HomeApplicationWindow(Home home, UserPreferences preferences) {
@@ -86,6 +91,7 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   protected Control createContents(Composite parent) {
     this.mainSashForm = new SashForm(parent, SWT.HORIZONTAL);
     this.catalogFurnitureSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
+    this.planView3DSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
     // Create controller and the other view components
     this.controller = new HomeController(this, home, preferences);
     return parent;
@@ -245,13 +251,32 @@ public class HomeApplicationWindow extends ApplicationWindow implements ViewFact
   }
 
   public PlanView createPlanView(Home home, UserPreferences preferences, PlanController controller) {
-    ScrolledComposite scrolledComposite = new ScrolledComposite(this.mainSashForm, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+    ScrolledComposite scrolledComposite = new ScrolledComposite(this.planView3DSashForm, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
     PlanViewer planViewer = new PlanViewer(scrolledComposite, home, preferences, controller);
     // Configure scrolledComposite content with planViewer control 
     scrolledComposite.setContent(planViewer.getControl());
     scrolledComposite.setMinSize(planViewer.getControl().computeSize(SWT.DEFAULT, SWT.DEFAULT));
     scrolledComposite.setExpandHorizontal(true);
     scrolledComposite.setExpandVertical(true);
+
+    // Add a 3D view at bottom of planViewer
+    createView3D(home);
+    
     return planViewer;
+  }
+
+  /**
+   * Creates a home 3D view.
+   */
+  private void createView3D(Home home) {
+    Composite homeComponent3DParent = new Composite(this.planView3DSashForm, SWT.EMBEDDED);
+    try {
+      // Add a Swing HomeComponent3D component with SWT/AWT bridge
+      Frame frame = SWT_AWT.new_Frame(homeComponent3DParent);
+      frame.add(new HomeComponent3D(home));
+    } catch (SWTError ex) {
+      // If SWT/AWT bridge isn't supported, dispose 3D component
+      homeComponent3DParent.dispose();
+    }
   }
 }
