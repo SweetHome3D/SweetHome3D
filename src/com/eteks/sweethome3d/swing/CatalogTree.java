@@ -20,12 +20,16 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.event.TreeModelListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -34,17 +38,102 @@ import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 
 /**
  * A tree displaying furniture catalog by category.
  * @author Emmanuel Puybaret
  */
 public class CatalogTree extends JTree {
+  private TreeSelectionListener treeSelectionListener;
+
+  /**
+   * Creates a tree that displays <code>catalog</code> content.
+   */
   public CatalogTree(Catalog catalog) {
+    this(catalog, null);
+  }
+
+  /**
+   * Creates a tree controlled by <code>controller</code>
+   * that displays <code>catalog</code> content.
+   */
+  public CatalogTree(Catalog catalog, CatalogController controller) {
     setModel(new CatalogTreeModel (catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
+    if (controller != null) {
+      addSelectionListeners(catalog, controller);
+    }
+  }
+  
+  /**
+   * Adds selection listeners to this tree.
+   */
+  private void addSelectionListeners(final Catalog catalog, 
+                                     final CatalogController controller) {    
+    final SelectionListener modelSelectionListener = 
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
+          clearSelection();
+          for (Object item : ev.getSelectedItems()) {
+            selectPieceOfFurniture(catalog, (CatalogPieceOfFurniture)item);
+          }        
+          getSelectionModel().addTreeSelectionListener(treeSelectionListener);
+        }
+      };
+    this.treeSelectionListener = 
+      new TreeSelectionListener () {
+        public void valueChanged(TreeSelectionEvent ev) {
+          catalog.removeSelectionListener(modelSelectionListener);
+          // Set the new selection in catalog with controller
+          controller.setSelectedFurniture(getSelectedFurniture());
+          catalog.addSelectionListener(modelSelectionListener);
+        }
+      };
+    getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
+    catalog.addSelectionListener(modelSelectionListener);
+  }
+
+  /**
+   * Selects in the tree the piece <code>selectedPiece</code>. 
+   */
+  private void selectPieceOfFurniture(Catalog catalog, 
+                                      CatalogPieceOfFurniture selectedPiece) {
+    // Search the parent category of piece
+    for (Category category : catalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        // Don't use list methods to search to avoid equality between pieces with same name
+        if (piece == selectedPiece) {
+          TreePath path = new TreePath(new Object [] {catalog, category, piece});
+          addSelectionPath(path);
+          scrollRowToVisible(getRowForPath(path));
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the selected furniture in tree.
+   */
+  private List<CatalogPieceOfFurniture> getSelectedFurniture() {
+    // Build the list of selected furniture
+    List<CatalogPieceOfFurniture> selectedFurniture =
+      new ArrayList<CatalogPieceOfFurniture>();
+    TreePath [] selectionPaths = getSelectionPaths(); 
+    if (selectionPaths != null) {
+      for (TreePath path : selectionPaths) {
+        // Add to selectedFurniture all the nodes that matches a piece of furniture
+        if (path.getPathCount() == 3) {
+          selectedFurniture.add((CatalogPieceOfFurniture)path.getLastPathComponent());
+        }        
+      }
+    }   
+    return selectedFurniture;
   }
 
   /**
