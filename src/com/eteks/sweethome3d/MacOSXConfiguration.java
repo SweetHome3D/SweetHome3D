@@ -1,5 +1,5 @@
 /*
- * MacOSXConfiguraton.java 6 sept. 2006
+ * MacOSX.java 6 sept. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -49,36 +49,16 @@ class MacOSXConfiguration {
       public void handleQuit(ApplicationEvent ev) {
         currentController.exit();
       }
-      
-      @Override
-      public void handleAbout(ApplicationEvent ev) {
-        currentController.about();
-        ev.setHandled(true);
-      }
-
-      @Override
-      public void handlePreferences(ApplicationEvent ev) {
-        currentController.editPreferences();
-      }
-
-      @Override
-      public void handleOpenFile(ApplicationEvent ev) {
-        // handleOpenFile is called when user opens a document
-        // associated with a Java Web Start application
-        // Just call main with -open file arguments as JNLP specifies 
-        SweetHome3D.main(new String [] {"-open", ev.getFilename()});
-      }
     });
-    application.setEnabledAboutMenu(true);
-    application.setEnabledPreferencesMenu(true);
+    application.setEnabledAboutMenu(false);
   }
 
   /**
    * Binds the home <code>controller</code> methods of a <code>frame</code>
    * to Mac OS X application menu.
    */
-  public static void bindControllerToApplicationMenu(final JFrame frame, final HomeController controller)
-  {
+  public static void bindControllerToApplicationMenu(final JFrame frame, 
+                                                     final HomeController controller) {
     frame.addWindowListener(new WindowAdapter () {
         @Override
         public void windowActivated(WindowEvent ev) {
