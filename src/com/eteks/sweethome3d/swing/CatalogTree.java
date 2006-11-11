@@ -67,6 +67,7 @@ public class CatalogTree extends JTree {
     if (controller != null) {
       addSelectionListeners(catalog, controller);
     }
+    setDragEnabled(true);
   }
   
   /**
