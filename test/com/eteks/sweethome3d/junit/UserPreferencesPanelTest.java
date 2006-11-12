@@ -112,7 +112,7 @@ public class UserPreferencesPanelTest extends TestCase {
   private void assertPreferencesEqual(UserPreferences.Unit unit,
                                       boolean magnetism,
                                       float newWallThickness,
-                                      float newHomeWallHeigt,
+                                      float newHomeWallHeight,
                                       UserPreferences preferences) {
     
     assertEquals("Wrong unit", unit, preferences.getUnit());
@@ -120,7 +120,7 @@ public class UserPreferencesPanelTest extends TestCase {
         preferences.isMagnetismEnabled());
     assertEquals("Wrong new wall thickness", newWallThickness, 
         preferences.getNewWallThickness());
-    assertEquals("Wrong new home wall height", newHomeWallHeigt,
+    assertEquals("Wrong new home wall height", newHomeWallHeight,
         preferences.getNewHomeWallHeight());
   }
 
