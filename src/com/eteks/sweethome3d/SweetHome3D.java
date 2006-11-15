@@ -86,6 +86,7 @@ public class SweetHome3D extends HomeApplication {
       try {
         // Read home file in args [1] if args [0] == "-open"
         Home home = application.getHomeRecorder().readHome(args [1]);
+        home.setName(args [1]); 
         application.addHome(home);
        } catch (RecorderException ex) {
          // Show an error message dialog if home couldn't be read
