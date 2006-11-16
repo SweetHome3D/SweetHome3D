@@ -88,14 +88,14 @@ public class SweetHome3D extends HomeApplication {
         Home home = application.getHomeRecorder().readHome(args [1]);
         home.setName(args [1]); 
         application.addHome(home);
-       } catch (RecorderException ex) {
-         // Show an error message dialog if home couldn't be read
-         ResourceBundle resource = ResourceBundle.getBundle(
-             HomeController.class.getName());
-         String message = String.format(resource.getString("openError"), args [1]);
-         JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
-             JOptionPane.ERROR_MESSAGE);
-       }
+      } catch (RecorderException ex) {
+        // Show an error message dialog if home couldn't be read
+        ResourceBundle resource = ResourceBundle.getBundle(
+            HomeController.class.getName());
+        String message = String.format(resource.getString("openError"), args [1]);
+        JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
+            JOptionPane.ERROR_MESSAGE);
+      }
     } else  {
       // Create a default home 
       Home home = new Home(application.getUserPreferences().getNewHomeWallHeight());
