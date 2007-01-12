@@ -31,6 +31,8 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
@@ -40,6 +42,7 @@ import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -50,6 +53,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -76,6 +80,9 @@ public class HomePane extends JRootPane {
     NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, 
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
+    SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_HEIGHT, SORT_HOME_FURNITURE_BY_DEPTH, 
+    SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
+    SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
     WALL_CREATION, DELETE_SELECTION, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
@@ -120,7 +127,7 @@ public class HomePane extends JRootPane {
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
     createActions(controller);
     createTransferHandlers(home, preferences, controller);
-    setJMenuBar(getHomeMenuBar());
+    setJMenuBar(getHomeMenuBar(home));
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
     getContentPane().add(getMainPane(home, controller));
   }
@@ -136,16 +143,27 @@ public class HomePane extends JRootPane {
     createAction(ActionType.SAVE_AS, controller, "saveAs");
     createAction(ActionType.PREFERENCES, controller, "editPreferences");
     createAction(ActionType.EXIT, controller, "exit");
+    
     createAction(ActionType.UNDO, controller, "undo");
     createAction(ActionType.REDO, controller, "redo");
     createClipboardAction(ActionType.CUT, TransferHandler.getCutAction());
     createClipboardAction(ActionType.COPY, TransferHandler.getCopyAction());
     createClipboardAction(ActionType.PASTE, TransferHandler.getPasteAction());
     createAction(ActionType.DELETE, controller, "delete");
-    createAction(ActionType.ADD_HOME_FURNITURE,
-        controller, "addHomeFurniture");
+    
+    createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, controller, "toggleFurnitureSort", "name");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, controller, "toggleFurnitureSort", "width");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, controller, "toggleFurnitureSort", "height");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, controller, "toggleFurnitureSort", "depth");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, controller, "toggleFurnitureSort", "color");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, controller, "toggleFurnitureSort", "movable");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE, controller, "toggleFurnitureSort", "doorOrWindow");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, controller, "toggleFurnitureSort", "visible");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, controller, "toggleFurnitureSortOrder");
+    
     getActionMap().put(ActionType.WALL_CREATION,
         new ResourceAction (this.resource, ActionType.WALL_CREATION.toString()) {
           public void actionPerformed(ActionEvent ev) {
@@ -163,14 +181,13 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Creates a <code>ControllerAction</code> object that calls a given
-   * <code>method</code> on <code>controller</code>.
+   * Creates a <code>ControllerAction</code> object that calls on <code>controller</code> a given
+   * <code>method</code> with its <code>parameters</code>.
    */
-  private void createAction(ActionType action, Object controller,
-                     String method) {
+  private void createAction(ActionType action, Object controller, String method, Object ... parameters) {
     try {
       getActionMap().put(action, new ControllerAction(
-          this.resource, action.toString(), controller, method));
+          this.resource, action.toString(), controller, method, parameters));
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
@@ -191,7 +208,7 @@ public class HomePane extends JRootPane {
           }
         });
   }
-  
+
   /**
    * Creates components transfer handlers.
    */
@@ -208,12 +225,11 @@ public class HomePane extends JRootPane {
   /**
    * Returns the menu bar displayed in this pane.
    */
-  private JMenuBar getHomeMenuBar() {
+  private JMenuBar getHomeMenuBar(final Home home) {
     ActionMap actions = getActionMap();
 
     // Create File menu
-    JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU"));
-    fileMenu.setEnabled(true);
+    JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU", true));
     fileMenu.add(actions.get(ActionType.NEW_HOME));
     fileMenu.add(actions.get(ActionType.OPEN));
     fileMenu.addSeparator();
@@ -229,8 +245,7 @@ public class HomePane extends JRootPane {
     }
 
     // Create Edit menu
-    JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU"));
-    editMenu.setEnabled(true);
+    JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU", true));
     editMenu.add(actions.get(ActionType.UNDO));
     editMenu.add(actions.get(ActionType.REDO));
     editMenu.addSeparator();
@@ -241,13 +256,51 @@ public class HomePane extends JRootPane {
     editMenu.add(actions.get(ActionType.DELETE));
 
     // Create Furniture menu
-    JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU"));
-    furnitureMenu.setEnabled(true);
+    JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    // Create Furniture Sort submenu
+    JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
+    Map<String, JRadioButtonMenuItem> sortRadioButtonMenuItems = new LinkedHashMap<String, JRadioButtonMenuItem>(); 
+    sortRadioButtonMenuItems.put("name", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_NAME))); 
+    sortRadioButtonMenuItems.put("width", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_WIDTH)));
+    sortRadioButtonMenuItems.put("height", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT)));
+    sortRadioButtonMenuItems.put("depth", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_DEPTH)));
+    sortRadioButtonMenuItems.put("color", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_COLOR)));
+    sortRadioButtonMenuItems.put("movable", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY)));
+    sortRadioButtonMenuItems.put("doorOrWindow", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_TYPE)));
+    sortRadioButtonMenuItems.put("visible", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY)));
+    // Add radio button menu items to sub menu and make them share the same radio button group
+    ButtonGroup sortButtonGroup = new ButtonGroup();
+    for (Map.Entry<String, JRadioButtonMenuItem> entry : sortRadioButtonMenuItems.entrySet()) {
+      final String furnitureProperty = entry.getKey();
+      JRadioButtonMenuItem item = entry.getValue();
+      // Use a special model for sort radio button menu item that is selected if
+      // home is sorted on furnitureProperty criterion
+      item.setModel(new JToggleButton.ToggleButtonModel() {
+          @Override
+          public boolean isSelected() {
+            return furnitureProperty.equals(home.getFurnitureSortedProperty());
+          }
+        }); 
+      sortMenu.add(item);
+      sortButtonGroup.add(item);
+    }
+    sortMenu.addSeparator();
+    JCheckBoxMenuItem sortOrderCheckBoxMenuItem = 
+      new JCheckBoxMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
+    // Use a special model for sort order check box menu item that is selected depending on
+    // home sort order property
+    sortOrderCheckBoxMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+        @Override
+        public boolean isSelected() {
+          return home.isFurnitureDescendingSorted();
+        }
+      });
+    sortMenu.add(sortOrderCheckBoxMenuItem);
+    furnitureMenu.add(sortMenu);
     
     // Create Plan menu
-    JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU"));
-    planMenu.setEnabled(true);
+    JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
     JCheckBoxMenuItem wallCreationCheckBoxMenuItem = 
         new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
     // Use the same model as Wall creation tool bar button
@@ -258,8 +311,7 @@ public class HomePane extends JRootPane {
     JMenu helpMenu = null;
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       helpMenu = new JMenu(
-          new ResourceAction(this.resource, "HELP_MENU"));
-      helpMenu.setEnabled(true);
+          new ResourceAction(this.resource, "HELP_MENU", true));
       helpMenu.add(actions.get(ActionType.ABOUT));
     }
 

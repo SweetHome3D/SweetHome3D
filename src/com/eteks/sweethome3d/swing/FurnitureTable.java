@@ -25,19 +25,35 @@ import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumnModel;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureEvent;
@@ -72,10 +88,16 @@ public class FurnitureTable extends JTable {
                        FurnitureController controller) {
     String [] columnNames = getColumnNames();
     setModel(new FurnitureTableModel(home, columnNames));
+    setColumnIdentifiers();
     setColumnRenderers(preferences);
+    setTableHeaderRenderer(home);
+    // Add listeners to model
     if (controller != null) {
       addSelectionListeners(home, controller);
+      // Enable sort in table with click in header
+      setTableHeaderListener(controller);
     }
+    addHomeListener(home);
     addUserPreferencesListener(preferences);
   }
   
@@ -87,17 +109,7 @@ public class FurnitureTable extends JTable {
     final SelectionListener homeSelectionListener  = 
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          getSelectionModel().removeListSelectionListener(tableSelectionListener);
-          List<HomePieceOfFurniture> furniture = home.getFurniture();
-          clearSelection();
-          for (Object item : ev.getSelectedItems()) {
-            if (item instanceof HomePieceOfFurniture) {
-              int index = furniture.indexOf(item); 
-              addRowSelectionInterval(index, index);
-              makeRowVisible(index);
-            }          
-          }        
-          getSelectionModel().addListSelectionListener(tableSelectionListener);
+          updateTableSelectedFurniture(ev.getSelectedItems());        
         }
       };
     this.tableSelectionListener = 
@@ -109,9 +121,10 @@ public class FurnitureTable extends JTable {
             // Build the list of selected furniture
             List<HomePieceOfFurniture> selectedFurniture =
               new ArrayList<HomePieceOfFurniture>(selectedRows.length);
-            List<HomePieceOfFurniture> furniture = home.getFurniture();
+            FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
             for (int index : selectedRows) {
-              selectedFurniture.add(furniture.get(index));
+              // Add to selectedFurniture table model first column value that stores piece
+              selectedFurniture.add((HomePieceOfFurniture)tableModel.getValueAt(index, 0));
             }
             // Set the new selection in home with controller
             controller.setSelectedFurniture(selectedFurniture);
@@ -124,6 +137,24 @@ public class FurnitureTable extends JTable {
   }
 
   /**
+   * Updates selected furniture in table from <code>selectedItems</code>. 
+   */
+  private void updateTableSelectedFurniture(List<Object> selectedItems) {
+    getSelectionModel().removeListSelectionListener(tableSelectionListener);
+    clearSelection();
+    FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+    for (Object item : selectedItems) {
+      if (item instanceof HomePieceOfFurniture) {
+        // Search index of piece in sorted table model
+        int index = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
+        addRowSelectionInterval(index, index);
+        makeRowVisible(index);
+      }          
+    }
+    getSelectionModel().addListSelectionListener(tableSelectionListener);
+  }
+  
+  /**
    * Adds a listener to <code>preferences</code> to repaint this table
    * when unit changes.  
    */
@@ -134,6 +165,25 @@ public class FurnitureTable extends JTable {
           repaint();
         }
       });
+  }
+
+  /**
+   * Adds a <code>PropertyChange</code> listener to home to update furniture sort
+   * in table when <code>furnitureSortedProperty</code> or <code>furnitureAscendingSorted</code> 
+   * in <code>home</code> changes.
+   */
+  private void addHomeListener(final Home home) {
+    PropertyChangeListener sortListener = 
+      new PropertyChangeListener () {
+        public void propertyChange(PropertyChangeEvent ev) {
+          ((FurnitureTableModel)getModel()).sortFurniture(home);
+          // Update selected rows
+          updateTableSelectedFurniture(home.getSelectedItems());
+          getTableHeader().repaint();
+        }
+      };
+    home.addPropertyChangeListener("furnitureSortedProperty", sortListener);
+    home.addPropertyChangeListener("furnitureDescendingSorted", sortListener);    
   }
 
   /**
@@ -169,6 +219,19 @@ public class FurnitureTable extends JTable {
   }
 
   /**
+   * Sets column unique identifiers matching furniture properties
+   */
+  private void setColumnIdentifiers() {
+    String [] furnitureProperties = 
+        {"name", "width", "height", "depth", "color", "movable", "doorOrWindow", "visible"};
+    // Set identifiers of each column
+    TableColumnModel columnModel = getColumnModel();
+    for (int i = 0, n = columnModel.getColumnCount(); i < n; i++) {
+      columnModel.getColumn(i).setIdentifier(furnitureProperties [i]);
+    }
+  }
+
+  /**
    * Sets column renderers.
    */
   private void setColumnRenderers(UserPreferences preferences) {
@@ -184,8 +247,9 @@ public class FurnitureTable extends JTable {
       checkBoxRenderer, checkBoxRenderer, checkBoxRenderer};
     
     // Set renderers of each column
+    TableColumnModel columnModel = getColumnModel();
     for (int i = 0, n = getColumnCount(); i < n; i++) {
-      getColumn(getColumnName(i)).setCellRenderer(columnRenderers [i]);
+      columnModel.getColumn(i).setCellRenderer(columnRenderers [i]);
     }
   }
 
@@ -198,10 +262,10 @@ public class FurnitureTable extends JTable {
       public Component getTableCellRendererComponent(JTable table, 
            Object value, boolean isSelected, boolean hasFocus, 
            int row, int column) {
-       HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
-       JLabel label = (JLabel)super.getTableCellRendererComponent(
-         table, piece.getName(), isSelected, hasFocus, row, column); 
-       Content iconContent = piece.getIcon(); 
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
+        JLabel label = (JLabel)super.getTableCellRendererComponent(
+          table, piece.getName(), isSelected, hasFocus, row, column); 
+        Content iconContent = piece.getIcon(); 
         label.setIcon(IconManager.getInstance().getIcon(
             iconContent, getRowHeight(), table)); 
         return label;
@@ -252,29 +316,123 @@ public class FurnitureTable extends JTable {
   }
  
   /**
+   * Sets header renderer that displays an ascending or a descending icon when column is sorted.
+   */
+  private void setTableHeaderRenderer(final Home home) {
+    JTableHeader tableHeader = getTableHeader();
+    final TableCellRenderer currentRenderer = tableHeader.getDefaultRenderer();
+    // Change table renderer to display the icon matching current sort
+    tableHeader.setDefaultRenderer(new TableCellRenderer() {
+      final ImageIcon ascendingSortIcon = new ImageIcon(getClass().getResource("resources/ascending.png"));
+      final ImageIcon descendingSortIcon = new ImageIcon(getClass().getResource("resources/descending.png"));
+      
+      public Component getTableCellRendererComponent(JTable table, 
+           Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        // Get default label
+        JLabel label = (JLabel)currentRenderer.getTableCellRendererComponent(
+            table, value, isSelected, hasFocus, row, column);
+        // Add to column an icon matching sort
+        TableColumnModel columnModel = getColumnModel();
+        if (columnModel.getColumn(column).getIdentifier().equals(
+            home.getFurnitureSortedProperty())) {
+          label.setHorizontalTextPosition(JLabel.LEADING);
+          if (home.isFurnitureDescendingSorted()) {
+            label.setIcon(descendingSortIcon);
+          } else {
+            label.setIcon(ascendingSortIcon);
+          }
+        } else {
+          label.setIcon(null);
+        }
+        return label;
+      }
+    });
+  }
+  
+  /**
+   * Adds a mouse listener on table header that will call <code>controller</code> sort method.
+   */
+  private void setTableHeaderListener(final FurnitureController controller) {
+    // Sort on click in column header 
+    getTableHeader().addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent ev) {
+        int columnIndex = getTableHeader().columnAtPoint(ev.getPoint());
+        String property = (String)getColumnModel().getColumn(columnIndex).getIdentifier();
+        controller.sortFurniture(property);
+      }
+    });
+  }
+
+  /**
    * Model used by this table
    */
   private static class FurnitureTableModel extends AbstractTableModel {
-    private Home      home;
-    private String [] columnNames;
+    private String []                        columnNames;
+    private List<HomePieceOfFurniture>       sortedFurniture;
+    private static final Map<String, Method> FURNITURE_PROPERTIES_ACCESSORS;
+    
+    static {
+      // Get bean info of HomePieceOfFurniture
+      BeanInfo homeBeanInfo;
+      try {
+        homeBeanInfo = Introspector.getBeanInfo(HomePieceOfFurniture.class);
+      } catch (IntrospectionException ex) {
+        // As HomePieceOfFurniture class must exist, if there's a problem it means 
+        // that this class isn't in the classpath 
+        // => let's exit with an unchecked TypeNotPresentException
+        throw new TypeNotPresentException(HomePieceOfFurniture.class.getName(), ex);
+      }
+      
+      // Create a map of accessors to properties accessible by their property name
+      PropertyDescriptor [] descriptors = homeBeanInfo.getPropertyDescriptors();
+      FURNITURE_PROPERTIES_ACCESSORS = new HashMap<String, Method>();
+      for (PropertyDescriptor descriptor : descriptors) {
+        FURNITURE_PROPERTIES_ACCESSORS.put(descriptor.getName(), descriptor.getReadMethod());
+      }
+    }
     
     public FurnitureTableModel(Home home, String [] columnNames) {
-      this.home = home;
       this.columnNames = columnNames;
       addHomeListener(home);
+      sortFurniture(home);
     }
 
-    private void addHomeListener(Home home) {
+    private void addHomeListener(final Home home) {
       home.addFurnitureListener(new FurnitureListener() {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {
           int pieceIndex = ev.getIndex();
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
           switch (ev.getType()) {
             case ADD :
-              fireTableRowsInserted(pieceIndex, pieceIndex);
+              int sortedIndex = getPieceOfFurnitureIndex(piece, home, pieceIndex);
+              sortedFurniture.add(sortedIndex, piece);
+              fireTableRowsInserted(sortedIndex, sortedIndex);
               break;
             case DELETE :
-              fireTableRowsDeleted(pieceIndex, pieceIndex);
+              sortedIndex = getPieceOfFurnitureIndex(piece, home, pieceIndex);
+              sortedFurniture.remove(sortedIndex);
+              fireTableRowsDeleted(sortedIndex, sortedIndex);
               break;
+          }
+        }
+
+        /**
+         * Returns the index of <code>piece</code> in furniture table, with a default index
+         * of <code>homePieceIndex</code> if <code>home</code> furniture isn't sorted.
+         * If <code>piece</code> isn't added to furniture table, the returned value is
+         * equals to the insertion index where piece should be added.
+         */
+        private int getPieceOfFurnitureIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
+          if (home.getFurnitureSortedProperty() == null) {
+            return homePieceIndex;
+          } else {
+            int sortedIndex = Collections.binarySearch(sortedFurniture, piece, getFurnitureComparator(home));
+            if (sortedIndex >= 0) {
+              return sortedIndex;
+            } else {
+              return -(sortedIndex + 1);
+            }              
           }
         }
       });
@@ -290,11 +448,11 @@ public class FurnitureTable extends JTable {
     }
 
     public int getRowCount() {
-      return this.home.getFurniture().size();
+      return this.sortedFurniture.size();
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      HomePieceOfFurniture piece = this.home.getFurniture().get(rowIndex);
+      HomePieceOfFurniture piece = this.sortedFurniture.get(rowIndex);
       switch (columnIndex) {
         case 0 : return piece;
         case 1 : return piece.getWidth();
@@ -305,6 +463,67 @@ public class FurnitureTable extends JTable {
         case 6 : return piece.isDoorOrWindow();
         case 7 : return piece.isVisible();
         default : throw new IllegalArgumentException("Unknown column " + columnIndex);
+      }
+    }
+
+    /**
+     * Returns the index of <code>piece</code> in furniture table.
+     */
+    public int getPieceOfFurnitureIndex(HomePieceOfFurniture piece) {
+      return this.sortedFurniture.indexOf(piece);
+    }
+
+    /**
+     * Sorts <code>home</code> furniture.
+     */
+    public void sortFurniture(Home home) {
+      this.sortedFurniture = new ArrayList<HomePieceOfFurniture>(home.getFurniture());           
+      if (home.getFurnitureSortedProperty() != null) {
+        Comparator<HomePieceOfFurniture> furnitureComparator = getFurnitureComparator(home);
+        Collections.sort(this.sortedFurniture, furnitureComparator);         
+      }
+      
+      fireTableRowsUpdated(0, getRowCount() - 1);
+    }
+
+    /**
+     * Returns a comparator that accesses to furniture sorted property with reflection.
+     */
+    private Comparator<HomePieceOfFurniture> getFurnitureComparator(Home home) {
+      final String sortedProperty = home.getFurnitureSortedProperty();
+      final Method propertyAccessor = FURNITURE_PROPERTIES_ACCESSORS.get(sortedProperty);
+      final Collator collator = Collator.getInstance();
+      Comparator<HomePieceOfFurniture> furnitureComparator = new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          Object value1 = getPiecePropertyValue(piece1, propertyAccessor);
+          Object value2 = getPiecePropertyValue(piece2, propertyAccessor);
+          if (value1 == null) {
+            return -1;
+          } else if (value2 == null) {
+            return 1;
+          } else if (value1 instanceof String) {
+            // Use collator to compare strings
+            return collator.compare(value1, value2);
+          } else {
+            // User default comparator for values of other types (numbers and booleans)
+            return ((Comparable)value1).compareTo(value2);
+          }
+        }
+      };
+      if (home.isFurnitureDescendingSorted()) {
+        furnitureComparator = Collections.reverseOrder(furnitureComparator);
+      }
+      return furnitureComparator;
+    }
+
+    private Object getPiecePropertyValue(HomePieceOfFurniture piece, Method propertyAccessor) {
+      try {
+        // Get column value from the read method of piece 
+         return propertyAccessor.invoke(piece);
+      } catch (InvocationTargetException ex) {
+        throw new RuntimeException(ex);
+      } catch (IllegalAccessException ex) {
+        throw new RuntimeException("Can't retrieve sorted value", ex);
       }
     }
   }

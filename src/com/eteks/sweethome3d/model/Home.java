@@ -42,6 +42,8 @@ public class Home implements Serializable {
   private transient List<WallListener>      wallListeners;
   private float                             wallHeight;
   private String                            name;
+  private String                            furnitureSortedProperty;
+  private boolean                           furnitureDescendingSorted;
   private transient boolean                 modified;
   private transient PropertyChangeSupport   propertyChangeSupport;
 
@@ -95,7 +97,8 @@ public class Home implements Serializable {
   }
 
   /**
-   * Returns an unmodifiable list of the furniture managed by this home.
+   * Returns an unmodifiable list of the furniture managed by this home. 
+   * This furniture in this list is always sorted in the index order they were added to home. 
    */
   public List<HomePieceOfFurniture> getFurniture() {
     return Collections.unmodifiableList(this.furniture);
@@ -489,12 +492,56 @@ public class Home implements Serializable {
   }
   
   /**
+   * Returns the furniture property on which home is sorted or <code>null</code> if
+   * home furniture isn't sorted.
+   */
+  public String getFurnitureSortedProperty() {
+    return this.furnitureSortedProperty;
+  }
+
+  /**
+   * Sets the furniture property on which this home should be sorted 
+   * and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setFurnitureSortedProperty(String furnitureSortedProperty) {
+    if (furnitureSortedProperty != this.furnitureSortedProperty
+        || (furnitureSortedProperty != null && !furnitureSortedProperty.equals(this.furnitureSortedProperty))) {
+      String oldFurnitureSortedProperty = this.furnitureSortedProperty;
+      this.furnitureSortedProperty = furnitureSortedProperty;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("furnitureSortedProperty", 
+            oldFurnitureSortedProperty, furnitureSortedProperty);
+      }
+    }
+  }
+
+  /**
+   * Returns whether furniture is sorted in ascending or descending order.
+   */
+  public boolean isFurnitureDescendingSorted() {
+    return this.furnitureDescendingSorted;
+  }
+  
+  /**
+   * Sets the furniture sort order on which home should be sorted 
+   * and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setFurnitureDescendingSorted(boolean furnitureDescendingSorted) {
+    if (furnitureDescendingSorted != this.furnitureDescendingSorted) {
+      this.furnitureDescendingSorted = furnitureDescendingSorted;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("furnitureDescendingSorted", 
+            !furnitureDescendingSorted, furnitureDescendingSorted);
+      }
+    }
+  }
+
+  /**
    * Returns a sub list of <code>items</code> that contains only home furniture.
    */
   public static List<HomePieceOfFurniture> getFurnitureSubList(List<? extends Object> items) {
     return getSubList(items, HomePieceOfFurniture.class);
   }
-
 
   /**
    * Returns a sub list of <code>items</code> that contains only walls.
@@ -503,6 +550,7 @@ public class Home implements Serializable {
     return getSubList(items, Wall.class);
   }
 
+  @SuppressWarnings("unchecked")
   private static <T> List<T> getSubList(List<? extends Object> items, 
                                         Class<T> subListClass) {
     List<T> subList = new ArrayList<T>();

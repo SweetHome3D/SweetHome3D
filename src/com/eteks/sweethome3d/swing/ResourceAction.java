@@ -33,12 +33,23 @@ import javax.swing.KeyStroke;
  */
 public class ResourceAction extends AbstractAction {
   /**
-   * Creates an action with properties retrieved from a resource bundle 
+   * Creates a disabled action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.
    * @param resource a resource bundle
    * @param actionPrefix  prefix used in resource bundle to search action properties
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix) {
+    this(resource, actionPrefix, false);
+  }
+  
+  /**
+   * Creates an action with properties retrieved from a resource bundle 
+   * in which key starts with <code>actionPrefix</code>.
+   * @param resource a resource bundle
+   * @param actionPrefix  prefix used in resource bundle to search action properties
+   * @param enabled <code>true</code> if the action should be enabled at creation.
+   */
+  public ResourceAction(ResourceBundle resource, String actionPrefix, boolean enabled) {
     String propertyPrefix = actionPrefix + ".";
     putValue(NAME, resource.getString(propertyPrefix + NAME));
     putValue(DEFAULT, getValue(NAME));
@@ -75,7 +86,7 @@ public class ResourceAction extends AbstractAction {
       putValue(MNEMONIC_KEY, Integer.valueOf(mnemonicKey.charAt(0)));
     }
     
-    setEnabled(false);
+    setEnabled(enabled);
   }
 
   /**

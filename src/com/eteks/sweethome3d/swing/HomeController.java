@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -110,6 +112,16 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SAVE_AS, true);
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DEPTH, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_COLOR, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
+        home.getFurnitureSortedProperty() != null);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
@@ -149,6 +161,7 @@ public class HomeController  {
   private void addListeners() {
     addCatalogSelectionListener();
     addHomeSelectionListener();
+    addFurnitureSortListener();
     addUndoSupportListener();
   }
 
@@ -165,7 +178,7 @@ public class HomeController  {
   }
 
   /**
-   *  Adds a selection listener on home that enables / disables Delete Furniture action.
+   *  Adds a selection listener on home that enables / disables actions on selection.
    */
   private void addHomeSelectionListener() {
     this.home.addSelectionListener(new SelectionListener() {
@@ -173,6 +186,19 @@ public class HomeController  {
         enableActionsOnSelection();
       }
     });
+  }
+
+  /**
+   *  Adds a property change listener on home that enables / disables sort order action.
+   */
+  private void addFurnitureSortListener() {
+    this.home.addPropertyChangeListener("furnitureSortedProperty", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          ((HomePane)getView()).setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
+              ev.getNewValue() != null);
+        }
+      });
   }
 
   /**
@@ -575,5 +601,25 @@ public class HomeController  {
    */
   public void about() {
     ((HomePane)getView()).showAboutDialog();
+  }
+
+  /**
+   * Uses <code>furnitureProperty</code> to sort home furniture 
+   * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>
+   * @param furnitureProperty a property of {@link HomePieceOfFurniture HomePieceOfFurniture} class.
+   */
+  public void toggleFurnitureSort(String furnitureProperty) {
+    if (furnitureProperty.equals(this.home.getFurnitureSortedProperty())) {
+      this.home.setFurnitureSortedProperty(null);
+    } else {
+      this.home.setFurnitureSortedProperty(furnitureProperty);      
+    }
+  }
+
+  /**
+   * Toggles home furniture sort order.
+   */
+  public void toggleFurnitureSortOrder() {
+    this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
   }
 }

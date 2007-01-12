@@ -192,4 +192,30 @@ public class FurnitureController {
            List<HomePieceOfFurniture> selectedFurniture) {
     this.home.setSelectedItems(selectedFurniture);
   }
+
+  /**
+   * Controls the sort of the furniture in home. If home furniture isn't sorted
+   * or is sorted on an other property, it will be sorted on the given
+   * <code>property</code> in ascending order. If home furniture is already
+   * sorted on the given <code>property<code>, it will be sorted in descending 
+   * order, if the sort is in ascending order, otherwise it won't be sorted at all 
+   * and home furniture will be listed in insertion order. 
+    * @param property  the furniture property on which the view wants
+   *          to sort the furniture it displays.
+   */
+  public void sortFurniture(String furnitureProperty) {
+    // Compute sort algorithm described in javadoc
+    final String  oldProperty  = this.home.getFurnitureSortedProperty();
+    final boolean oldDescending = this.home.isFurnitureDescendingSorted(); 
+    boolean descending = false;
+    if (furnitureProperty.equals(oldProperty)) {
+      if (oldDescending) {
+        furnitureProperty = null;
+      } else {
+        descending = true;
+      }
+    }
+    this.home.setFurnitureSortedProperty(furnitureProperty);
+    this.home.setFurnitureDescendingSorted(descending);
+  }
 }

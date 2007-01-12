@@ -21,10 +21,12 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -42,6 +44,7 @@ import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 
 /**
@@ -49,6 +52,9 @@ import com.eteks.sweethome3d.swing.FurnitureTable;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTableTest extends TestCase {
+  /**
+   * Tests furniture table creation and localization.
+   */
   public void testFurnitureTableCreation()  {
     // 1. Choose a locale that displays furniture dimensions in inches
     Locale.setDefault(Locale.US);
@@ -80,7 +86,7 @@ public class FurnitureTableTest extends TestCase {
     assertFalse("Same depth in different units", 
         widthInInch.equals(widthInMeter));
   }
-
+  
   private static List<HomePieceOfFurniture> createHomeFurnitureFromCatalog(
       Catalog catalog) {
     List<HomePieceOfFurniture> homeFurniture = new ArrayList<HomePieceOfFurniture>();
@@ -94,10 +100,7 @@ public class FurnitureTableTest extends TestCase {
   
   private String getRenderedDepth(JTable table, int row) {
     // Get index of detph column in model
-    ResourceBundle resource = 
-      ResourceBundle.getBundle(table.getClass().getName());
-    String columnName = resource.getString("depthColumn");
-    int modelColumnIndex = table.getColumn(columnName).getModelIndex();
+    int modelColumnIndex = table.getColumn("depth").getModelIndex();
 
     // Get depth value at row
     TableModel model = table.getModel();
@@ -111,6 +114,50 @@ public class FurnitureTableTest extends TestCase {
     
     // Return rendered depth
     return ((JLabel)cellLabel).getText();
+  }
+
+  /**
+   * Tests sort in furniture table. 
+   */
+  public void testFurnitureTableSort() {
+    // 1.  Create a home that contains furniture matching catalog furniture
+    UserPreferences preferences = new DefaultUserPreferences();
+    List<HomePieceOfFurniture> homeFurniture = 
+      createHomeFurnitureFromCatalog(preferences.getCatalog());
+    Home home = new Home(homeFurniture);
+    // Check home furniture isn't empty
+    assertTrue("Home furniture is empty", homeFurniture.size() > 0);
+
+    // 2. Create a table that displays home furniture with its controller  
+    FurnitureController furnitureController = new FurnitureController(home, preferences);
+    FurnitureTable table = (FurnitureTable)furnitureController.getView();
+    
+    // 3. Sort furniture table in alphabetical order of furniture name
+    furnitureController.sortFurniture("name");
+  
+    // Check the alphabetical order of table data
+    assertFurnitureIsSortedByName(table, true);
+    // Sort in descending order and check order
+    furnitureController.sortFurniture("name");
+    assertFurnitureIsSortedByName(table, false);
+  }
+
+  private void assertFurnitureIsSortedByName(JTable table,
+                                             boolean ascendingOrder) {
+    int modelColumnIndex = table.getColumn("name").getModelIndex();
+    TableModel model = table.getModel();
+    Comparator<Object> comparator = Collator.getInstance();
+    if (!ascendingOrder)
+      comparator = Collections.reverseOrder(comparator);
+    // For each row
+    for (int row = 0, n = model.getRowCount() - 1; row < n; row++) {
+      Object value = model.getValueAt(row, modelColumnIndex);
+      Object nextValue = model.getValueAt(row + 1, modelColumnIndex);
+      // Check alphatical order of values at a row and next row
+      assertTrue("Column not sorted", 
+          comparator.compare(((HomePieceOfFurniture)value).getName(), 
+                             ((HomePieceOfFurniture)nextValue).getName()) <= 0);
+    }
   }
 
   public static void main(String [] args) {
