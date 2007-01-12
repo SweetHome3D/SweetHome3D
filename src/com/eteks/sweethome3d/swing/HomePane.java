@@ -260,34 +260,37 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
-    Map<String, JRadioButtonMenuItem> sortRadioButtonMenuItems = new LinkedHashMap<String, JRadioButtonMenuItem>(); 
-    sortRadioButtonMenuItems.put("name", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_NAME))); 
-    sortRadioButtonMenuItems.put("width", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_WIDTH)));
-    sortRadioButtonMenuItems.put("height", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT)));
-    sortRadioButtonMenuItems.put("depth", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_DEPTH)));
-    sortRadioButtonMenuItems.put("color", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_COLOR)));
-    sortRadioButtonMenuItems.put("movable", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY)));
-    sortRadioButtonMenuItems.put("doorOrWindow", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_TYPE)));
-    sortRadioButtonMenuItems.put("visible", new JRadioButtonMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY)));
+    // Map sort furniture properties to sort actions
+    Map<String, Action> sortActions = new LinkedHashMap<String, Action>(); 
+    sortActions.put("name", actions.get(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
+    sortActions.put("width", actions.get(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
+    sortActions.put("height", actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
+    sortActions.put("depth", actions.get(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
+    sortActions.put("color", actions.get(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
+    sortActions.put("movable", actions.get(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
+    sortActions.put("doorOrWindow", actions.get(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
+    sortActions.put("visible", actions.get(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
     // Add radio button menu items to sub menu and make them share the same radio button group
     ButtonGroup sortButtonGroup = new ButtonGroup();
-    for (Map.Entry<String, JRadioButtonMenuItem> entry : sortRadioButtonMenuItems.entrySet()) {
+    for (Map.Entry<String, Action> entry : sortActions.entrySet()) {
       final String furnitureProperty = entry.getKey();
-      JRadioButtonMenuItem item = entry.getValue();
+      Action sortAction = entry.getValue();
+      JRadioButtonMenuItem sortMenuItem = new JRadioButtonMenuItem();
       // Use a special model for sort radio button menu item that is selected if
       // home is sorted on furnitureProperty criterion
-      item.setModel(new JToggleButton.ToggleButtonModel() {
+      sortMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
           @Override
           public boolean isSelected() {
             return furnitureProperty.equals(home.getFurnitureSortedProperty());
           }
         }); 
-      sortMenu.add(item);
-      sortButtonGroup.add(item);
+      // Configure check box menu item action after setting its model to avoid losing its mnemonic
+      sortMenuItem.setAction(sortAction);
+      sortMenu.add(sortMenuItem);
+      sortButtonGroup.add(sortMenuItem);
     }
     sortMenu.addSeparator();
-    JCheckBoxMenuItem sortOrderCheckBoxMenuItem = 
-      new JCheckBoxMenuItem(actions.get(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
+    JCheckBoxMenuItem sortOrderCheckBoxMenuItem = new JCheckBoxMenuItem();
     // Use a special model for sort order check box menu item that is selected depending on
     // home sort order property
     sortOrderCheckBoxMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
@@ -296,15 +299,18 @@ public class HomePane extends JRootPane {
           return home.isFurnitureDescendingSorted();
         }
       });
+    sortOrderCheckBoxMenuItem.setAction(
+        actions.get(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
     sortMenu.add(sortOrderCheckBoxMenuItem);
     furnitureMenu.add(sortMenu);
     
     // Create Plan menu
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
-    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = 
-        new JCheckBoxMenuItem(actions.get(ActionType.WALL_CREATION));
+    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = new JCheckBoxMenuItem();
     // Use the same model as Wall creation tool bar button
     wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
+    // Configure check box menu item action after setting its model to avoid losing its mnemonic
+    wallCreationCheckBoxMenuItem.setAction(actions.get(ActionType.WALL_CREATION));
     planMenu.add(wallCreationCheckBoxMenuItem);
 
     // Create Help menu
