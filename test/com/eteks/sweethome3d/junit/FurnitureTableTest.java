@@ -100,7 +100,7 @@ public class FurnitureTableTest extends TestCase {
   
   private String getRenderedDepth(JTable table, int row) {
     // Get index of detph column in model
-    int modelColumnIndex = table.getColumn("depth").getModelIndex();
+    int modelColumnIndex = table.getColumn(HomePieceOfFurniture.SortableProperty.DEPTH).getModelIndex();
 
     // Get depth value at row
     TableModel model = table.getModel();
@@ -133,18 +133,18 @@ public class FurnitureTableTest extends TestCase {
     FurnitureTable table = (FurnitureTable)furnitureController.getView();
     
     // 3. Sort furniture table in alphabetical order of furniture name
-    furnitureController.sortFurniture("name");
+    furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
   
     // Check the alphabetical order of table data
     assertFurnitureIsSortedByName(table, true);
     // Sort in descending order and check order
-    furnitureController.sortFurniture("name");
+    furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
     assertFurnitureIsSortedByName(table, false);
   }
 
   private void assertFurnitureIsSortedByName(JTable table,
                                              boolean ascendingOrder) {
-    int modelColumnIndex = table.getColumn("name").getModelIndex();
+    int modelColumnIndex = table.getColumn(HomePieceOfFurniture.SortableProperty.NAME).getModelIndex();
     TableModel model = table.getModel();
     Comparator<Object> comparator = Collator.getInstance();
     if (!ascendingOrder)

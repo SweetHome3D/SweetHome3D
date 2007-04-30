@@ -24,6 +24,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
+import java.text.Collator;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A piece of furniture in {@link Home home}.
@@ -31,6 +35,96 @@ import java.awt.geom.Rectangle2D;
  */
 public class HomePieceOfFurniture implements PieceOfFurniture {
   private static final long serialVersionUID = 1L;
+  /** 
+   * Properties on which home furniture may be sorted.  
+   */
+  public enum SortableProperty {NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
+                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ANGLE};
+  private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
+  
+  static {
+    final Collator collator = Collator.getInstance();
+    // Init piece property comparators
+    SORTABLE_PROPERTY_COMPARATORS = new HashMap<SortableProperty, Comparator<HomePieceOfFurniture>>();
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.NAME, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return collator.compare(piece1.name, piece2.name);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.WIDTH, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.width, piece2.width);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.HEIGHT, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.height, piece2.height);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.DEPTH, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.depth, piece2.depth);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.MOVABLE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.movable, piece2.movable);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.DOOR_OR_WINDOW, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.doorOrWindow, piece2.doorOrWindow);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.DOOR_OR_WINDOW, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.doorOrWindow, piece2.doorOrWindow);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.COLOR, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.color == null) {
+            return -1;
+          } else if (piece2.color == null) {
+            return 1; 
+          } else {
+            return piece1.color - piece2.color;
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.VISIBLE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.visible, piece2.visible);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.X, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.x, piece2.x);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.Y, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.y, piece2.y);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.ANGLE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.angle, piece2.angle);
+        }
+      });
+  }
+  
+  private static int compare(float value1, float value2) {
+    return value1 < value2 
+               ? -1
+               : (value1 == value2 ? 0 : 1);
+  }
+  
+  private static int compare(boolean value1, boolean value2) {
+    return value1 == value2 
+               ? 0
+               : (value1 ? -1 : 1);
+  }
   
   private String  name;
   private Content icon;
@@ -251,5 +345,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     GeneralPath pieceShape = new GeneralPath();
     pieceShape.append(it, false);
     return pieceShape;
+  }
+  
+  /**
+   * Returns a comparator that compares furniture on a given <code>property</code> in ascending order.
+   */
+  public static Comparator<HomePieceOfFurniture> getFurnitureComparator(SortableProperty property) {
+    return SORTABLE_PROPERTY_COMPARATORS.get(property);    
   }
 }

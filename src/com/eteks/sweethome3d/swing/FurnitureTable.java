@@ -27,21 +27,12 @@ import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
@@ -63,6 +54,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 
 /**
  * A table displaying furniture.
@@ -219,11 +211,13 @@ public class FurnitureTable extends JTable {
   }
 
   /**
-   * Sets column unique identifiers matching furniture properties
+   * Sets column unique identifiers matching furniture sortable properties.
    */
   private void setColumnIdentifiers() {
-    String [] furnitureProperties = 
-        {"name", "width", "height", "depth", "color", "movable", "doorOrWindow", "visible"};
+    HomePieceOfFurniture.SortableProperty [] furnitureProperties = 
+        {SortableProperty.NAME, SortableProperty.WIDTH, SortableProperty.HEIGHT, SortableProperty.DEPTH, 
+         SortableProperty.COLOR, SortableProperty.MOVABLE, 
+         SortableProperty.DOOR_OR_WINDOW, SortableProperty.VISIBLE};
     // Set identifiers of each column
     TableColumnModel columnModel = getColumnModel();
     for (int i = 0, n = columnModel.getColumnCount(); i < n; i++) {
@@ -358,7 +352,8 @@ public class FurnitureTable extends JTable {
       @Override
       public void mouseClicked(MouseEvent ev) {
         int columnIndex = getTableHeader().columnAtPoint(ev.getPoint());
-        String property = (String)getColumnModel().getColumn(columnIndex).getIdentifier();
+        HomePieceOfFurniture.SortableProperty property = 
+            (HomePieceOfFurniture.SortableProperty)getColumnModel().getColumn(columnIndex).getIdentifier();
         controller.sortFurniture(property);
       }
     });
@@ -370,27 +365,6 @@ public class FurnitureTable extends JTable {
   private static class FurnitureTableModel extends AbstractTableModel {
     private String []                        columnNames;
     private List<HomePieceOfFurniture>       sortedFurniture;
-    private static final Map<String, Method> FURNITURE_PROPERTIES_ACCESSORS;
-    
-    static {
-      // Get bean info of HomePieceOfFurniture
-      BeanInfo homeBeanInfo;
-      try {
-        homeBeanInfo = Introspector.getBeanInfo(HomePieceOfFurniture.class);
-      } catch (IntrospectionException ex) {
-        // As HomePieceOfFurniture class must exist, if there's a problem it means 
-        // that this class isn't in the classpath 
-        // => let's exit with an unchecked TypeNotPresentException
-        throw new TypeNotPresentException(HomePieceOfFurniture.class.getName(), ex);
-      }
-      
-      // Create a map of accessors to properties accessible by their property name
-      PropertyDescriptor [] descriptors = homeBeanInfo.getPropertyDescriptors();
-      FURNITURE_PROPERTIES_ACCESSORS = new HashMap<String, Method>();
-      for (PropertyDescriptor descriptor : descriptors) {
-        FURNITURE_PROPERTIES_ACCESSORS.put(descriptor.getName(), descriptor.getReadMethod());
-      }
-    }
     
     public FurnitureTableModel(Home home, String [] columnNames) {
       this.columnNames = columnNames;
@@ -486,45 +460,13 @@ public class FurnitureTable extends JTable {
       fireTableRowsUpdated(0, getRowCount() - 1);
     }
 
-    /**
-     * Returns a comparator that accesses to furniture sorted property with reflection.
-     */
     private Comparator<HomePieceOfFurniture> getFurnitureComparator(Home home) {
-      final String sortedProperty = home.getFurnitureSortedProperty();
-      final Method propertyAccessor = FURNITURE_PROPERTIES_ACCESSORS.get(sortedProperty);
-      final Collator collator = Collator.getInstance();
-      Comparator<HomePieceOfFurniture> furnitureComparator = new Comparator<HomePieceOfFurniture>() {
-        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          Object value1 = getPiecePropertyValue(piece1, propertyAccessor);
-          Object value2 = getPiecePropertyValue(piece2, propertyAccessor);
-          if (value1 == null) {
-            return -1;
-          } else if (value2 == null) {
-            return 1;
-          } else if (value1 instanceof String) {
-            // Use collator to compare strings
-            return collator.compare(value1, value2);
-          } else {
-            // User default comparator for values of other types (numbers and booleans)
-            return ((Comparable)value1).compareTo(value2);
-          }
-        }
-      };
+      Comparator<HomePieceOfFurniture> furnitureComparator = 
+        HomePieceOfFurniture.getFurnitureComparator(home.getFurnitureSortedProperty());
       if (home.isFurnitureDescendingSorted()) {
         furnitureComparator = Collections.reverseOrder(furnitureComparator);
       }
       return furnitureComparator;
-    }
-
-    private Object getPiecePropertyValue(HomePieceOfFurniture piece, Method propertyAccessor) {
-      try {
-        // Get column value from the read method of piece 
-         return propertyAccessor.invoke(piece);
-      } catch (InvocationTargetException ex) {
-        throw new RuntimeException(ex);
-      } catch (IllegalAccessException ex) {
-        throw new RuntimeException("Can't retrieve sorted value", ex);
-      }
     }
   }
 }

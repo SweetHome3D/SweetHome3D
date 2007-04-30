@@ -608,7 +608,7 @@ public class HomeController  {
    * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>
    * @param furnitureProperty a property of {@link HomePieceOfFurniture HomePieceOfFurniture} class.
    */
-  public void toggleFurnitureSort(String furnitureProperty) {
+  public void toggleFurnitureSort(HomePieceOfFurniture.SortableProperty furnitureProperty) {
     if (furnitureProperty.equals(this.home.getFurnitureSortedProperty())) {
       this.home.setFurnitureSortedProperty(null);
     } else {

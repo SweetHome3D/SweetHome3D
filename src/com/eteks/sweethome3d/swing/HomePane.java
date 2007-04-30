@@ -69,6 +69,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -154,14 +155,22 @@ public class HomePane extends JRootPane {
     createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, controller, "toggleFurnitureSort", "name");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, controller, "toggleFurnitureSort", "width");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, controller, "toggleFurnitureSort", "height");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, controller, "toggleFurnitureSort", "depth");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, controller, "toggleFurnitureSort", "color");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, controller, "toggleFurnitureSort", "movable");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE, controller, "toggleFurnitureSort", "doorOrWindow");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, controller, "toggleFurnitureSort", "visible");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.NAME);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.WIDTH);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.HEIGHT);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.DEPTH);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.COLOR);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.MOVABLE);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.VISIBLE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, controller, "toggleFurnitureSortOrder");
     
     getActionMap().put(ActionType.WALL_CREATION,
