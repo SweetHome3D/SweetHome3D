@@ -34,18 +34,18 @@ import java.util.List;
 public class Home implements Serializable {
   private static final long serialVersionUID = 1L;
   
-  private List<HomePieceOfFurniture>        furniture;
-  private transient List<Object>            selectedItems;
-  private transient List<FurnitureListener> furnitureListeners;
-  private transient List<SelectionListener> selectionListeners;
-  private Collection<Wall>                  walls;
-  private transient List<WallListener>      wallListeners;
-  private float                             wallHeight;
-  private String                            name;
-  private String                            furnitureSortedProperty;
-  private boolean                           furnitureDescendingSorted;
-  private transient boolean                 modified;
-  private transient PropertyChangeSupport   propertyChangeSupport;
+  private List<HomePieceOfFurniture>            furniture;
+  private transient List<Object>                selectedItems;
+  private transient List<FurnitureListener>     furnitureListeners;
+  private transient List<SelectionListener>     selectionListeners;
+  private Collection<Wall>                      walls;
+  private transient List<WallListener>          wallListeners;
+  private float                                 wallHeight;
+  private String                                name;
+  private HomePieceOfFurniture.SortableProperty furnitureSortedProperty;
+  private boolean                               furnitureDescendingSorted;
+  private transient boolean                     modified;
+  private transient PropertyChangeSupport       propertyChangeSupport;
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -495,7 +495,7 @@ public class Home implements Serializable {
    * Returns the furniture property on which home is sorted or <code>null</code> if
    * home furniture isn't sorted.
    */
-  public String getFurnitureSortedProperty() {
+  public HomePieceOfFurniture.SortableProperty getFurnitureSortedProperty() {
     return this.furnitureSortedProperty;
   }
 
@@ -503,10 +503,10 @@ public class Home implements Serializable {
    * Sets the furniture property on which this home should be sorted 
    * and fires a <code>PropertyChangeEvent</code>.
    */
-  public void setFurnitureSortedProperty(String furnitureSortedProperty) {
+  public void setFurnitureSortedProperty(HomePieceOfFurniture.SortableProperty furnitureSortedProperty) {
     if (furnitureSortedProperty != this.furnitureSortedProperty
         || (furnitureSortedProperty != null && !furnitureSortedProperty.equals(this.furnitureSortedProperty))) {
-      String oldFurnitureSortedProperty = this.furnitureSortedProperty;
+      HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
       if (this.propertyChangeSupport != null) {
         this.propertyChangeSupport.firePropertyChange("furnitureSortedProperty", 
