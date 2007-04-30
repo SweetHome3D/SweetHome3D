@@ -87,7 +87,7 @@ public class FurnitureTable extends JTable {
     if (controller != null) {
       addSelectionListeners(home, controller);
       // Enable sort in table with click in header
-      setTableHeaderListener(controller);
+      addTableHeaderListener(controller);
     }
     addHomeListener(home);
     addUserPreferencesListener(preferences);
@@ -346,7 +346,7 @@ public class FurnitureTable extends JTable {
   /**
    * Adds a mouse listener on table header that will call <code>controller</code> sort method.
    */
-  private void setTableHeaderListener(final FurnitureController controller) {
+  private void addTableHeaderListener(final FurnitureController controller) {
     // Sort on click in column header 
     getTableHeader().addMouseListener(new MouseAdapter() {
       @Override
