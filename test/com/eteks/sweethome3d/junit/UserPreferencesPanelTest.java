@@ -44,7 +44,7 @@ public class UserPreferencesPanelTest extends TestCase {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences defaultPreferences = new DefaultUserPreferences();
-    // Copy this preferences into system preferences
+    // Copy these preferences into system preferences
     UserPreferences preferences = new FileUserPreferences();
     preferences.setUnit(defaultPreferences.getUnit());
     preferences.setMagnetismEnabled(
