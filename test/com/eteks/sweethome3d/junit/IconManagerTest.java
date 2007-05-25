@@ -23,7 +23,6 @@ package com.eteks.sweethome3d.junit;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
