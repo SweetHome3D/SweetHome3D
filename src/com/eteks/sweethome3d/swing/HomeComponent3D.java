@@ -491,6 +491,9 @@ public class HomeComponent3D extends JComponent {
                                                      (color & 0xFF) / 256f);
         setMaterial(getChild(0), 
             new Material(materialColor, new Color3f(), materialColor, materialColor, 64));
+      } else {
+        // Set default material of model
+        setMaterial(getChild(0), null);
       }
     }
 
@@ -614,6 +617,7 @@ public class HomeComponent3D extends JComponent {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance != null) {
           // Allow future material and rendering attributes changes
+          appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
           appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
           appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
           appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
@@ -635,12 +639,24 @@ public class HomeComponent3D extends JComponent {
           setMaterial((Node)enumeration.nextElement(), material);
         }
       } else if (node instanceof Shape3D) {
-        Appearance appearance = ((Shape3D)node).getAppearance();
+        Shape3D shape = (Shape3D)node;
+        Appearance appearance = shape.getAppearance();
         if (appearance == null) {
-          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapability());
+          shape.setAppearance(createAppearanceWithChangeCapability());
+        }
+        // Use shape user data to store shape default material
+        Material defaultMaterial = (Material)shape.getUserData();
+        if (defaultMaterial == null) {
+          defaultMaterial = appearance.getMaterial();
+          shape.setUserData(defaultMaterial);
         }
         // Change material
-        appearance.setMaterial(material);
+        if (material != null) {
+          appearance.setMaterial(material);
+        } else {
+          // Restore default material
+          appearance.setMaterial(defaultMaterial);
+        }
       }
     }
 
@@ -674,6 +690,7 @@ public class HomeComponent3D extends JComponent {
     private Appearance createAppearanceWithChangeCapability() {
       Appearance appearance = new Appearance();
       // Allow future material and rendering attributes changes
+      appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
       appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
