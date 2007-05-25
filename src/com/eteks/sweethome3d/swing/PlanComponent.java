@@ -37,7 +37,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -79,7 +82,7 @@ public class PlanComponent extends JComponent {
     MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
     TOGGLE_MAGNTISM_ON, TOGGLE_MAGNTISM_OFF}
   
-  private static final float MARGIN = 40;
+  private static final float MARGIN = 40;  
   private Home               home;
   private UserPreferences    preferences;
   private float              scale  = 0.5f;
@@ -87,6 +90,34 @@ public class PlanComponent extends JComponent {
   private Rectangle2D        rectangleFeedback;
   private Rectangle2D        planBoundsCache;
   private Cursor             rotationCursor;
+  private Cursor             resizeCursor;
+  
+  private static final GeneralPath ROTATION_VERTEX_PATH;
+  private static final GeneralPath SIZE_VERTEX_PATH;
+  
+  static {
+    // Create a path that draws an arrow used as a rotation indicator 
+    // at top left vertex of a piece of furniture
+    ROTATION_VERTEX_PATH = new GeneralPath();
+    ROTATION_VERTEX_PATH.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
+    ROTATION_VERTEX_PATH.append(new Arc2D.Float(-8, -8, 16, 16, 45, 180, Arc2D.OPEN), false);
+    ROTATION_VERTEX_PATH.moveTo(2.66f, -5.66f);
+    ROTATION_VERTEX_PATH.lineTo(5.66f, -5.66f);
+    ROTATION_VERTEX_PATH.lineTo(4f, -8.3f);
+    
+    // Create a path as a size indicator 
+    // at bottom right vertex of a piece of furniture
+    SIZE_VERTEX_PATH = new GeneralPath();
+    SIZE_VERTEX_PATH.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
+    SIZE_VERTEX_PATH.moveTo(6, -3);
+    SIZE_VERTEX_PATH.lineTo(6, 6);
+    SIZE_VERTEX_PATH.lineTo(-3, 6);
+    SIZE_VERTEX_PATH.moveTo(3.5f, 3.5f);
+    SIZE_VERTEX_PATH.lineTo(8, 8);
+    SIZE_VERTEX_PATH.moveTo(6, 8.5f);
+    SIZE_VERTEX_PATH.lineTo(9, 9);
+    SIZE_VERTEX_PATH.lineTo(8.5f, 6);
+  }
 
   public PlanComponent(Home home, UserPreferences preferences,
                        PlanController controller) {
@@ -104,7 +135,10 @@ public class PlanComponent extends JComponent {
       setFocusable(true);
       setAutoscrolls(true);
     }
-    createRotationCursor();
+    this.rotationCursor = createCustomCursor("resources/rotationCursor16x16.png",
+        "resources/rotationCursor32x32.png", "Rotation cursor");
+    this.resizeCursor = createCustomCursor("resources/resizeCursor16x16.png",
+        "resources/resizeCursor32x32.png", "Resize cursor");
   }
 
   /**
@@ -261,30 +295,32 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Create custom rotation cursor.
+   * Create custom rotation cursor with a hot spot point at center of cursor.
    */ 
-  private void createRotationCursor() {
+  private Cursor createCustomCursor(String smallCursorImageResource, 
+                                    String largeCursorImageResource,
+                                    String cursorName) {
     // Retrieve system cursor size
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
     String cursorImageResource;
     // If returned cursor size is 0, system doesn't support custom cursor  
     if (cursorSize.width == 0) {      
-      this.rotationCursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);      
+      return Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);      
     } else {
       // Use a different cursor image depending on system cursor size 
       if (cursorSize.width > 16) {
-        cursorImageResource = "resources/rotationCursor32x32.png";
+        cursorImageResource = largeCursorImageResource;
       } else {
-        cursorImageResource = "resources/rotationCursor16x16.png";
+        cursorImageResource = smallCursorImageResource;
       }
       try {
         // Read cursor image
         BufferedImage cursorImage = 
           ImageIO.read(getClass().getResource(cursorImageResource));
         // Create custom cursor from image
-        this.rotationCursor = getToolkit().createCustomCursor(cursorImage, 
+        return getToolkit().createCustomCursor(cursorImage, 
             new Point(cursorSize.width / 2, cursorSize.height / 2),
-            "Rotation cursor");
+            cursorName);
       } catch (IOException ex) {
         throw new IllegalArgumentException("Unknown resource " + cursorImageResource);
       }
@@ -462,7 +498,8 @@ public class PlanComponent extends JComponent {
     
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
-        Shape pieceShape = getShape(piece.getPoints());
+        float [][] piecePoints = piece.getPoints();
+        Shape pieceShape = getShape(piecePoints);
         // Fill piece area
         g2D.setPaint(UIManager.getColor("window"));
         g2D.fill(pieceShape);
@@ -477,6 +514,25 @@ public class PlanComponent extends JComponent {
         g2D.setPaint(getForeground());
         g2D.setStroke(new BasicStroke(1f / this.scale));
         g2D.draw(pieceShape);
+        
+        if (selectedItems.size() == 1 && selectedItems.contains(piece)) {
+          g2D.setStroke(new BasicStroke(1.5f));
+          
+          AffineTransform previousTransform = g2D.getTransform();
+          // Draw rotation indicator at top left vertex of the piece
+          g2D.translate(piecePoints [0][0], piecePoints [0][1]);
+          g2D.scale(1 / this.scale, 1 / this.scale);
+          g2D.rotate(piece.getAngle());
+          g2D.draw(ROTATION_VERTEX_PATH);
+          g2D.setTransform(previousTransform);
+
+          // Draw size indicator at top left vertex of the piece
+          g2D.translate(piecePoints [2][0], piecePoints [2][1]);
+          g2D.scale(1 / this.scale, 1 / this.scale);
+          g2D.rotate(piece.getAngle());
+          g2D.draw(SIZE_VERTEX_PATH);
+          g2D.setTransform(previousTransform);
+        }
       }
     }
   }
@@ -501,6 +557,7 @@ public class PlanComponent extends JComponent {
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
   private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece) {
+    AffineTransform previousTransform = g2D.getTransform();
     // Get piece icon
     Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
     // Translate to piece center
@@ -512,9 +569,7 @@ public class PlanComponent extends JComponent {
     // Paint piece icon
     icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
     // Revert g2D transformation to previous value
-    scale = 1 / scale;
-    g2D.scale(scale, scale);
-    g2D.translate(-piece.getX(), -piece.getY());
+    g2D.setTransform(previousTransform);
   }
 
   /**
@@ -648,5 +703,12 @@ public class PlanComponent extends JComponent {
    */
   public void setRotationCursor() {
     setCursor(this.rotationCursor);
+  }
+
+  /**
+   * Sets the cursor of this component as resize cursor. 
+   */
+  public void setResizeCursor() {
+    setCursor(this.resizeCursor);
   }
 }

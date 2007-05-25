@@ -359,7 +359,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
   
   /**
-   * Returns <code>true</code> if one of the vertex of this piece vertex is 
+   * Returns <code>true</code> if one of the vertex of this piece is 
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code>.
    */
@@ -370,6 +370,26 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       }
     } 
     return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the top left vertex of this piece is 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isTopLeftVertexAt(float x, float y, float margin) {
+    float [][] points = getPoints();
+    return (Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin);
+  }
+
+  /**
+   * Returns <code>true</code> if the bottom right vertex of this piece is 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isBottomRightVertexAt(float x, float y, float margin) {
+    float [][] points = getPoints();
+    return (Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin);
   }
 
   /**

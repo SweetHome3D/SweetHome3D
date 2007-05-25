@@ -101,11 +101,11 @@ public class HomeFurniturePanel extends JPanel {
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
     this.angleSpinner = new NullableSpinner(new NullableSpinnerNumberModel(0, 0, 360, 1));
     this.widthLabel = new JLabel(this.resource.getString("widthLabel.text"));
-    this.widthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0));
+    this.widthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
     this.depthLabel = new JLabel(this.resource.getString("depthLabel.text"));
-    this.depthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0));
+    this.depthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
     this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
-    this.heightSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0));
+    this.heightSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleLabel.text"));
@@ -551,7 +551,7 @@ public class HomeFurniturePanel extends JPanel {
     private final UserPreferences preferences;
 
     public NullableSpinnerLengthModel(UserPreferences preferences, double minimum) {
-      super(0, minimum, 100000, 
+      super(minimum, minimum, 100000, 
             preferences.getUnit() == UserPreferences.Unit.INCH
               ? 0.125f : 0.5f);
       this.preferences = preferences;

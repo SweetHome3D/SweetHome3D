@@ -94,15 +94,15 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         1, frame.home.getSelectedItems().size());
     
     HomePieceOfFurniture piece = frame.home.getFurniture().get(0);
-    float pieceX = piece.getWidth() / 2;
-    float pieceY = piece.getDepth() / 2;
+    float pieceWidth = piece.getWidth();
+    float pieceDepth = piece.getDepth();
+    float pieceX = pieceWidth / 2;
+    float pieceY = pieceDepth / 2;
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
     
     // 4. Press mouse button at piece center
-    int widthPixel = 
-      Math.round(piece.getWidth() * planComponent.getScale());
-    int depthPixel = 
-      Math.round(piece.getDepth() * planComponent.getScale());
+    int widthPixel = Math.round(pieceWidth * planComponent.getScale());
+    int depthPixel = Math.round(pieceDepth * planComponent.getScale());
     tester.actionMousePress(planComponent, new ComponentLocation( 
         new Point(20 + widthPixel / 2, 20 + depthPixel / 2))); 
     // Drag mouse to (100, 100) from piece center
@@ -166,7 +166,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
     assertCoordinatesEqualWallPoints(20, 300, 20, 20, fifthWall);
     
-    // 8. Drag and drop mouse to (40, 160), 
+    // 8. Drag and drop mouse to (40, 160) 
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(30, 160)));
     tester.actionMouseMove(planComponent,  
@@ -180,7 +180,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // 9. Click twice on undo button
     frame.undoButton.doClick();
     frame.undoButton.doClick();
-    // Check piece orientation and location is canceled
+    // Check piece orientation and location are canceled
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, 0f, piece);
     assertCoordinatesEqualWallPoints(20, 300, 20, 20, fifthWall);
@@ -200,6 +200,28 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         selectedItems.contains(piece));
     assertTrue("Fifth wall not selected", 
         selectedItems.contains(fifthWall));
+    
+    // 11. Click at point (156 + depthPixel / 2, 135 - widthPixel / 2) 
+    //     at resize vertex of the piece
+    tester.actionClick(planComponent, 156 + depthPixel / 2, 135 - widthPixel / 2);
+    // Check selected items contains only the piece of furniture 
+    selectedItems = frame.home.getSelectedItems();
+    assertEquals("Wrong selected items count", 1, selectedItems.size());
+    assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
+    // Drag mouse (4,4) pixels out of piece box
+    tester.actionMousePress(planComponent, 
+        new ComponentLocation(new Point(156 + depthPixel / 2, 135 - widthPixel / 2)));
+    tester.actionMouseMove(planComponent,  
+        new ComponentLocation(new Point(156 + depthPixel / 2 + 4, 135 - widthPixel / 2 + 4))); 
+    tester.actionMouseRelease();
+    // Check piece was resized (caution : piece angle is oriented at 90°)
+    assertDimensionEqualPiece(pieceWidth - 2 * 4 / planComponent.getScale(), 
+        pieceDepth + 2 * 4 / planComponent.getScale(), piece);
+
+    // 12. Click once on undo button
+    frame.undoButton.doClick();
+    // Check piece dimension is canceled
+    assertDimensionEqualPiece(pieceWidth, pieceDepth, piece);
   }
 
   /**
@@ -228,6 +250,16 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertTrue("Incorrect X", Math.abs(x - piece.getX()) < 1E-10);
     assertTrue("Incorrect Y", Math.abs(y - piece.getY()) < 1E-10);
     assertTrue("Incorrect angle", Math.abs(angle - piece.getAngle()) < 1E-10);
+  }
+  
+  /**
+   * Asserts width and depth of <code>piece</code>  
+   * are at <code>width</code> and <code>depth</code>). 
+   */
+  private void assertDimensionEqualPiece(float width, float depth, 
+                              HomePieceOfFurniture piece) {
+    assertTrue("Incorrect width", Math.abs(width - piece.getWidth()) < 1E-10);
+    assertTrue("Incorrect depth", Math.abs(depth - piece.getDepth()) < 1E-10);
   }
   
   private static class TestFrame extends JFrame {
