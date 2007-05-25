@@ -134,11 +134,18 @@ public class FurnitureTableTest extends TestCase {
     
     // 3. Sort furniture table in alphabetical order of furniture name
     furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
-  
     // Check the alphabetical order of table data
     assertFurnitureIsSortedByName(table, true);
-    // Sort in descending order and check order
+    
+    // 4. Sort in descending order and check order
     furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
+    // Check table data is sorted in alphabetical descending order
+    assertFurnitureIsSortedByName(table, false);
+    
+    // 5. Change first furniture name
+    HomePieceOfFurniture firstPiece = home.getFurniture().get(0);
+    home.setPieceOfFurnitureName(firstPiece, "Aaaa");
+    // Check table data is sorted in alphabetical descending order
     assertFurnitureIsSortedByName(table, false);
   }
 

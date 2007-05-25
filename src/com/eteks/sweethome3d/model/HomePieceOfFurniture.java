@@ -171,15 +171,29 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Returns the name of this piece of furniture.
    */
-   public String getName() {
+  public String getName() {
     return this.name;
   }
 
+  /**
+   * Sets the name of this piece of furniture.
+   */
+  void setName(String name) {
+    this.name = name;
+  }
+   
   /**
    * Returns the depth of this piece of furniture.
    */
   public float getDepth() {
     return this.depth;
+  }
+
+  /**
+   * Sets the depth of this piece of furniture.
+   */
+  void setDepth(float depth) {
+    this.depth = depth;
   }
 
   /**
@@ -190,10 +204,24 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
 
   /**
+   * Sets the height of this piece of furniture.
+   */
+  void setHeight(float height) {
+    this.height = height;
+  }
+
+  /**
    * Returns the width of this piece of furniture.
    */
   public float getWidth() {
     return this.width;
+  }
+
+  /**
+   * Sets the width of this piece of furniture.
+   */
+  void setWidth(float width) {
+    this.width = width;
   }
 
   /**
@@ -233,12 +261,26 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
   
   /**
+   * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged.
+   */
+  void setColor(Integer color) {
+    this.color = color;
+  }
+
+  /**
    * Returns <code>true</code> if this piece of furniture is visible.
    */
   public boolean isVisible() {
     return this.visible;
   }
   
+  /**
+   * Sets whether this piece of furniture is visible or not.
+   */
+  void setVisible(boolean visible) {
+    this.visible = visible;
+  }
+
   /**
    * Returns the abscissa of this piece of furniture.
    */
@@ -252,6 +294,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   void setX(float x) {
     this.x = x;
   }
+  
   /**
    * Returns the ordinate of this piece of furniture.
    */

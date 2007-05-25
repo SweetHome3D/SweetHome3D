@@ -711,6 +711,7 @@ public class PlanController {
         public void redo() throws CannotRedoException {
           super.redo();
           home.setPieceOfFurnitureAngle(piece, newAngle);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
   
         @Override
@@ -1219,6 +1220,15 @@ public class PlanController {
       return Mode.WALL_CREATION;
     }
     
+    @Override
+    public void setMode(Mode mode) {
+      if (mode != Mode.WALL_CREATION) {
+        // Escape current creation and change state to SelectionState
+        escape();
+        setState(getSelectionState());
+      }
+    }
+
     @Override
     public void enter() {
       this.oldSelection = home.getSelectedItems();

@@ -80,8 +80,8 @@ public class HomePane extends JRootPane {
   public enum ActionType {
     NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, 
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE,
-    SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_HEIGHT, SORT_HOME_FURNITURE_BY_DEPTH, 
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_HOME_FURNITURE,
+    SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
     WALL_CREATION, DELETE_SELECTION, ABOUT}
@@ -155,14 +155,16 @@ public class HomePane extends JRootPane {
     createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
+    createAction(ActionType.MODIFY_HOME_FURNITURE,
+        controller.getFurnitureController(), "modifySelection");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, controller, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.NAME);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, controller, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.WIDTH);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, controller, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.HEIGHT);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, controller, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.DEPTH);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, controller, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.HEIGHT);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, controller, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.COLOR);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, controller, "toggleFurnitureSort", 
@@ -267,14 +269,15 @@ public class HomePane extends JRootPane {
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
     furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenu.add(actions.get(ActionType.MODIFY_HOME_FURNITURE));
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
     // Map sort furniture properties to sort actions
     Map<String, Action> sortActions = new LinkedHashMap<String, Action>(); 
     sortActions.put("name", actions.get(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
     sortActions.put("width", actions.get(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
-    sortActions.put("height", actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
     sortActions.put("depth", actions.get(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
+    sortActions.put("height", actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
     sortActions.put("color", actions.get(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
     sortActions.put("movable", actions.get(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
     sortActions.put("doorOrWindow", actions.get(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
@@ -377,7 +380,7 @@ public class HomePane extends JRootPane {
     
     // Remove focuable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
-      toolBar.getComponentAtIndex(i).setFocusable(false);
+      toolBar.getComponentAtIndex(i).setFocusable(false);      
     }
     
     return toolBar;

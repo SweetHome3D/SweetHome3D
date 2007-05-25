@@ -146,6 +146,21 @@ public class Home implements Serializable {
   }
 
   /**
+   * Updates the name of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureName(HomePieceOfFurniture piece, 
+                                      String name) {
+    if ((piece.getName() == null && name != null)
+        || (piece.getName() != null && !piece.getName().equals(name))) {
+      piece.setName(name);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Updates the location of <code>piece</code>. 
    * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
@@ -153,9 +168,12 @@ public class Home implements Serializable {
    */
   public void setPieceOfFurnitureLocation(HomePieceOfFurniture piece, 
                                           float x, float y) {
-    piece.setX(x);
-    piece.setY(y);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    if (piece.getX() != x
+        || piece.getY() != y) {
+      piece.setX(x);
+      piece.setY(y);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
   }
   
   /**
@@ -165,8 +183,56 @@ public class Home implements Serializable {
    * notification.
    */
   public void setPieceOfFurnitureAngle(HomePieceOfFurniture piece, 
-                                      float angle) {
-    piece.setAngle(angle);
+                                       float angle) {
+    if (piece.getAngle() != angle) {
+      piece.setAngle(angle);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Updates the dimension of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureDimension(HomePieceOfFurniture piece, 
+                                           float width, float depth, float height) {
+    if (piece.getWidth() != width
+        || piece.getDepth() != depth
+        || piece.getHeight() != height) {
+      piece.setWidth(width);
+      piece.setDepth(depth);
+      piece.setHeight(height);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+  
+  /**
+   * Updates the color of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureColor(HomePieceOfFurniture piece, 
+                                       Integer color) {
+    Integer pieceColor = piece.getColor(); 
+    if ((pieceColor == null && color != null)
+        || (pieceColor != null && !pieceColor.equals(color))) {
+      piece.setColor(color);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Updates the visibility of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureVisible(HomePieceOfFurniture piece, 
+                                         boolean visible) {
+    piece.setVisible(visible);
     firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
   }
 
