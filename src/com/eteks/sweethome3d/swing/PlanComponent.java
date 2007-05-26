@@ -109,9 +109,11 @@ public class PlanComponent extends JComponent {
     // at bottom right vertex of a piece of furniture
     SIZE_VERTEX_PATH = new GeneralPath();
     SIZE_VERTEX_PATH.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
-    SIZE_VERTEX_PATH.moveTo(6, -3);
+    SIZE_VERTEX_PATH.moveTo(5, -3);
+    SIZE_VERTEX_PATH.lineTo(6, -3);
     SIZE_VERTEX_PATH.lineTo(6, 6);
     SIZE_VERTEX_PATH.lineTo(-3, 6);
+    SIZE_VERTEX_PATH.lineTo(-3, 5);
     SIZE_VERTEX_PATH.moveTo(3.5f, 3.5f);
     SIZE_VERTEX_PATH.lineTo(8, 8);
     SIZE_VERTEX_PATH.moveTo(6, 8.5f);
@@ -516,6 +518,7 @@ public class PlanComponent extends JComponent {
         g2D.draw(pieceShape);
         
         if (selectedItems.size() == 1 && selectedItems.contains(piece)) {
+          g2D.setPaint(UIManager.getColor("textHighlight"));         
           g2D.setStroke(new BasicStroke(1.5f));
           
           AffineTransform previousTransform = g2D.getTransform();
