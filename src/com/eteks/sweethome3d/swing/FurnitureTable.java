@@ -85,6 +85,7 @@ public class FurnitureTable extends JTable {
     setColumnIdentifiers();
     setColumnRenderers(preferences);
     setTableHeaderRenderer(home);
+    updateTableSelectedFurniture(home.getSelectedItems());
     // Add listeners to model
     if (controller != null) {
       addSelectionListeners(home, controller);
