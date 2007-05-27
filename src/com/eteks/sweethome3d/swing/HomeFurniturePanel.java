@@ -39,6 +39,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -55,6 +56,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomeFurniturePanel extends JPanel {
+  private static JColorChooser FURNITURE_COLOR_CHOOSER = new JColorChooser();
+  
   private ResourceBundle   resource;
   private JLabel           nameLabel;
   private JTextField       nameTextField;
@@ -396,14 +399,21 @@ public class HomeFurniturePanel extends JPanel {
       // Add a listener to update color
       addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Color newColor = JColorChooser.showDialog(getParent(), 
+          // Update edited color in furniture color chooser
+          FURNITURE_COLOR_CHOOSER.setColor(ColorButton.this.color != null 
+              ? new Color(ColorButton.this.color)
+              : null);
+          JDialog colorDialog = JColorChooser.createDialog(getParent(), 
               resource.getString("colorDialog.title"),
-              ColorButton.this.color != null 
-                ? new Color(ColorButton.this.color)
-                : null);
-
-          if (newColor != null)
-            setColor(newColor.getRGB());
+              true, FURNITURE_COLOR_CHOOSER,
+              new ActionListener () { 
+                public void actionPerformed(ActionEvent e) {
+                  // Change button color when user click on ok button
+                  ColorButton.this.setColor(
+                      FURNITURE_COLOR_CHOOSER.getColor().getRGB());
+                }
+              }, null);
+          colorDialog.setVisible(true);
         }
       });
     }
