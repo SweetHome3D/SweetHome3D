@@ -181,7 +181,6 @@ public class FurnitureController {
   private void doDeleteFurniture(
                       HomePieceOfFurniture [] furniture) { 
     for (HomePieceOfFurniture piece : furniture) {
-  
       this.home.deletePieceOfFurniture(piece);
     }
   }
