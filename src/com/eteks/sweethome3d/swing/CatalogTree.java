@@ -64,6 +64,7 @@ public class CatalogTree extends JTree {
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
+    selectFurniture(catalog); 
     if (controller != null) {
       addSelectionListeners(catalog, controller);
     }
@@ -80,9 +81,7 @@ public class CatalogTree extends JTree {
         public void selectionChanged(SelectionEvent ev) {
           getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
           clearSelection();
-          for (Object item : ev.getSelectedItems()) {
-            selectPieceOfFurniture(catalog, (CatalogPieceOfFurniture)item);
-          }        
+          selectFurniture(catalog);        
           getSelectionModel().addTreeSelectionListener(treeSelectionListener);
         }
       };
@@ -100,19 +99,20 @@ public class CatalogTree extends JTree {
   }
 
   /**
-   * Selects in the tree the piece <code>selectedPiece</code>. 
+   * Selects the tree nodes matching selected furniture in <code>catalog </code>. 
    */
-  private void selectPieceOfFurniture(Catalog catalog, 
-                                      CatalogPieceOfFurniture selectedPiece) {
-    // Search the parent category of piece
-    for (Category category : catalog.getCategories()) {
-      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-        // Don't use list methods to search to avoid equality between pieces with same name
-        if (piece == selectedPiece) {
-          TreePath path = new TreePath(new Object [] {catalog, category, piece});
-          addSelectionPath(path);
-          scrollRowToVisible(getRowForPath(path));
-          break;
+  private void selectFurniture(Catalog catalog) {
+    for (Object selectedPiece : catalog.getSelectedFurniture()) {
+      // Search the parent category of piece
+      for (Category category : catalog.getCategories()) {
+        for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+          // Don't use list methods to search to avoid equality between pieces with same name
+          if (piece == selectedPiece) {
+            TreePath path = new TreePath(new Object [] {catalog, category, piece});
+            addSelectionPath(path);
+            scrollRowToVisible(getRowForPath(path));
+            break;
+          }
         }
       }
     }
