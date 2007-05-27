@@ -60,11 +60,11 @@ public class CatalogTree extends JTree {
    * that displays <code>catalog</code> content.
    */
   public CatalogTree(Catalog catalog, CatalogController controller) {
-    setModel(new CatalogTreeModel (catalog));
+    setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
-    selectFurniture(catalog); 
+    updateTreeSelectedFurniture(catalog); 
     if (controller != null) {
       addSelectionListeners(catalog, controller);
     }
@@ -81,7 +81,7 @@ public class CatalogTree extends JTree {
         public void selectionChanged(SelectionEvent ev) {
           getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
           clearSelection();
-          selectFurniture(catalog);        
+          updateTreeSelectedFurniture(catalog);        
           getSelectionModel().addTreeSelectionListener(treeSelectionListener);
         }
       };
@@ -99,11 +99,11 @@ public class CatalogTree extends JTree {
   }
 
   /**
-   * Selects the tree nodes matching selected furniture in <code>catalog </code>. 
+   * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
    */
-  private void selectFurniture(Catalog catalog) {
-    for (Object selectedPiece : catalog.getSelectedFurniture()) {
-      // Search the parent category of piece
+  private void updateTreeSelectedFurniture(Catalog catalog) {
+    for (CatalogPieceOfFurniture selectedPiece : catalog.getSelectedFurniture()) {
+      // Search the parent category of selectedPiece
       for (Category category : catalog.getCategories()) {
         for (CatalogPieceOfFurniture piece : category.getFurniture()) {
           // Don't use list methods to search to avoid equality between pieces with same name
