@@ -20,34 +20,23 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.ParseException;
 import java.util.ResourceBundle;
 
-import javax.swing.Icon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.SpinnerNumberModel;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -56,8 +45,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HomeFurniturePanel extends JPanel {
-  private static JColorChooser FURNITURE_COLOR_CHOOSER = new JColorChooser();
-  
   private ResourceBundle   resource;
   private JLabel           nameLabel;
   private JTextField       nameTextField;
@@ -98,19 +85,26 @@ public class HomeFurniturePanel extends JPanel {
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(10);
     this.xLabel = new JLabel(this.resource.getString("xLabel.text"));
-    this.xSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, -100000));
+    this.xSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
     this.yLabel = new JLabel(this.resource.getString("yLabel.text"));
-    this.ySpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, -100000));
+    this.ySpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
-    this.angleSpinner = new NullableSpinner(new NullableSpinnerNumberModel(0, 0, 360, 1));
+    this.angleSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
     this.widthLabel = new JLabel(this.resource.getString("widthLabel.text"));
-    this.widthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
+    this.widthSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
     this.depthLabel = new JLabel(this.resource.getString("depthLabel.text"));
-    this.depthSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
+    this.depthSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
     this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
-    this.heightSpinner = new NullableSpinner(new NullableSpinnerLengthModel(preferences, 0.1f));
+    this.heightSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
+    this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
     this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleLabel.text"));
   }
   
@@ -240,33 +234,33 @@ public class HomeFurniturePanel extends JPanel {
    * @param height the height of the furniture or <code>null</code>
    */
   public void setFurnitureDimension(Float width, Float depth, Float height) {
-    ((NullableSpinnerLengthModel)this.widthSpinner.getModel()).setNullable(width == null);
-    ((NullableSpinnerLengthModel)this.widthSpinner.getModel()).setLength(width);
-    ((NullableSpinnerLengthModel)this.depthSpinner.getModel()).setNullable(depth == null);
-    ((NullableSpinnerLengthModel)this.depthSpinner.getModel()).setLength(depth);
-    ((NullableSpinnerLengthModel)this.heightSpinner.getModel()).setNullable(height == null);
-    ((NullableSpinnerLengthModel)this.heightSpinner.getModel()).setLength(height);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setNullable(width == null);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setLength(width);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setNullable(depth == null);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setLength(depth);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setNullable(height == null);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setLength(height);
   }
 
   /**
    * Returns the edited width of the furniture or <code>null</code>.
    */
   public Float getFurnitureWidth() {
-    return ((NullableSpinnerLengthModel)this.widthSpinner.getModel()).getLength();
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the edited depth of the furniture or <code>null</code>.
    */
   public Float getFurnitureDepth() {
-    return ((NullableSpinnerLengthModel)this.depthSpinner.getModel()).getLength();
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the edited height of the furniture or <code>null</code>.
    */
   public Float getFurnitureHeight() {
-    return ((NullableSpinnerLengthModel)this.heightSpinner.getModel()).getLength();
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).getLength();
   }
 
   /**
@@ -306,24 +300,24 @@ public class HomeFurniturePanel extends JPanel {
    * @param y the ordinate of the furniture or <code>null</code>
    */
   public void setFurnitureLocation(Float x, Float y) {
-    ((NullableSpinnerLengthModel)this.xSpinner.getModel()).setNullable(x == null);
-    ((NullableSpinnerLengthModel)this.xSpinner.getModel()).setLength(x);
-    ((NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
-    ((NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setNullable(x == null);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setLength(x);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
+    ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
   }
 
   /**
    * Returns the edited abscissa of the furniture or <code>null</code>.
    */
   public Float getFurnitureX() {
-    return ((NullableSpinnerLengthModel)this.xSpinner.getModel()).getLength();
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the edited ordinate of the furniture or <code>null</code>.
    */
   public Float getFurnitureY() {
-    return ((NullableSpinnerLengthModel)this.ySpinner.getModel()).getLength();
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).getLength();
   }
 
   /**
@@ -331,7 +325,7 @@ public class HomeFurniturePanel extends JPanel {
    * @param angle the angle of the furniture or <code>null</code>
    */
   public void setFurnitureAngle(Float angle) {
-    ((NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
+    ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
     if (angle == null) {
       this.angleSpinner.setValue(null);
     } else {
@@ -361,237 +355,6 @@ public class HomeFurniturePanel extends JPanel {
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
   }
 
-  /**
-   * Button displaying a color as an icon.
-   */
-  private class ColorButton extends JButton {
-    private Integer color;
-
-    /**
-     * Creates a color button.
-     * @param color RGB code of the color or <code>null</code>.
-     */
-    public ColorButton() {
-      JLabel colorLabel = new JLabel("Color");
-      Dimension iconDimension = colorLabel.getPreferredSize();
-      final int iconWidth = iconDimension.width;
-      final int iconHeight = iconDimension.height;
-      setIcon(new Icon() {
-        public int getIconWidth() {
-          return iconWidth;
-        }
-
-        public int getIconHeight() {
-          return iconHeight;
-        }
-
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-          g.setColor(Color.BLACK);
-          g.drawRect(x + 2, y + 2, iconWidth - 5, iconHeight - 5);
-          if (ColorButton.this.color != null) {
-            g.setColor(new Color(ColorButton.this.color));
-            g.fillRect(x + 3, y + 3, iconWidth - 6,
-                    iconHeight - 6);
-          }
-        }
-      });
-
-      // Add a listener to update color
-      addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          // Update edited color in furniture color chooser
-          FURNITURE_COLOR_CHOOSER.setColor(ColorButton.this.color != null 
-              ? new Color(ColorButton.this.color)
-              : null);
-          JDialog colorDialog = JColorChooser.createDialog(getParent(), 
-              resource.getString("colorDialog.title"),
-              true, FURNITURE_COLOR_CHOOSER,
-              new ActionListener () { 
-                public void actionPerformed(ActionEvent e) {
-                  // Change button color when user click on ok button
-                  ColorButton.this.setColor(
-                      FURNITURE_COLOR_CHOOSER.getColor().getRGB());
-                }
-              }, null);
-          colorDialog.setVisible(true);
-        }
-      });
-    }
-
-    /**
-     * Returns the color displayed by this button.
-     * @return the RGB code of the color of this button or <code>null</code>.
-     */
-    public Integer getColor() {
-      return this.color;
-    }
-
-    /**
-     * Sets the color displayed by this button.
-     * @param color RGB code of the color or <code>null</code>.
-     */
-    public void setColor(Integer color) {
-      this.color = color;
-      repaint();
-    }
-  }
-  
-  /**
-   * Spinner that accepts empty string values. 
-   */
-  public static class NullableSpinner extends JSpinner {
-    public NullableSpinner(NullableSpinnerNumberModel model) {
-      super(model);
-      final JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
-      final JFormattedTextField.AbstractFormatter formatter = textField.getFormatter();
-      // Change formatted text field formatter to enable the edition of empty values
-      textField.setFormatterFactory(new JFormattedTextField.AbstractFormatterFactory() {
-          @Override
-          public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField tf) {
-            return new JFormattedTextField.AbstractFormatter () {
-                @Override
-                public Object stringToValue(String text) throws ParseException {
-                  if (text.length() == 0 && ((NullableSpinnerNumberModel)getModel()).isNullable()) {
-                    // Return null for empty text 
-                    return null;
-                  } else {
-                    return formatter.stringToValue(text);
-                  }
-                }
-  
-                @Override
-                public String valueToString(Object value) throws ParseException {
-                  if (value == null && ((NullableSpinnerNumberModel)getModel()).isNullable()) {
-                    // Return empty text forn null values
-                    return "";
-                  } else {
-                    return formatter.valueToString(value);
-                  }
-                }
-              };
-          }
-        });
-    }
-  }
-  
-  /**
-   * Spinner number model that accepts <code>null</code> values. 
-   */
-  private static class NullableSpinnerNumberModel extends SpinnerNumberModel {
-    private boolean isNull;
-    private boolean nullable;
-
-    public NullableSpinnerNumberModel(int value, int minimum, int maximum, int stepSize) {
-      super(value, minimum, maximum, stepSize);
-    }
-
-    public NullableSpinnerNumberModel(double value, double minimum, double maximum, double stepSize) {
-      super(value, minimum, maximum, stepSize);
-    }
-
-    @Override
-    public Object getNextValue() {
-      if (this.isNull) {
-        setValue(getMinimum());
-      } 
-      return super.getNextValue();
-    }
-
-    @Override
-    public Object getPreviousValue() {
-      if (this.isNull) {
-        setValue(getMinimum());
-      } 
-      return super.getPreviousValue();
-    }
-
-    @Override
-    public Object getValue() {
-      if (this.isNull) {
-        return null;
-      } else {
-        return super.getValue();
-      }
-    }
-
-    /**
-     * Sets model value. This method is overriden to store whether current value is <code>null</code> 
-     * or not (super class <code>setValue</code> doesn't accept <code>null</code> value).
-     */
-    @Override
-    public void setValue(Object value) {
-      if (value == null && isNullable()) {
-        if (!this.isNull) {
-          this.isNull = true;
-          fireStateChanged();
-        }
-      } else { 
-        this.isNull = false;
-        super.setValue(value);
-      }
-    }
-
-    @Override
-    public Number getNumber() {
-      return (Number)getValue();
-    }
-
-    /**
-     * Returns <code>true</code> if this spinner model is nullable.
-     */
-    public boolean isNullable() {
-      return this.nullable;
-    }
-
-    /**
-     * Sets whether this spinner model is nullable.
-     */
-    public void setNullable(boolean nullable) {
-      this.nullable = nullable;
-      if (!nullable && getValue() == null) {
-        setValue(getMinimum());
-      }
-    }
-  }
-  
-  /**
-   * Nullable spinner model displaying length values matching preferences unit. 
-   */
-  private static class NullableSpinnerLengthModel extends NullableSpinnerNumberModel {
-    private final UserPreferences preferences;
-
-    public NullableSpinnerLengthModel(UserPreferences preferences, double minimum) {
-      super(minimum, minimum, 100000, 
-            preferences.getUnit() == UserPreferences.Unit.INCH
-              ? 0.125f : 0.5f);
-      this.preferences = preferences;
-    }
-
-    /**
-     * Returns the diplayed value in centimeter.
-     */
-    public Float getLength() {
-      if (getValue() == null) {
-        return null;
-      } else if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        return UserPreferences.Unit.inchToCentimer(((Number)getValue()).floatValue());
-      } else {
-        return ((Number)getValue()).floatValue();
-      }
-    }
-
-    /**
-     * Sets the length in centimeter displayed in this model.
-     */
-    public void setLength(Float length) {
-      if (length != null 
-          && this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        length = UserPreferences.Unit.centimerToInch(length);
-      } 
-      setValue(length);
-    }
-  }
-  
   /**
    * A check box that accepts <code>null</code> values. Thus this check box is able to
    * display 3 states : <code>null</code>, <code>false</code> and <code>true</code>.

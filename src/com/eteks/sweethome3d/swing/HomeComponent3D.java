@@ -40,6 +40,7 @@ import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.Geometry;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
@@ -306,6 +307,8 @@ public class HomeComponent3D extends JComponent {
    * Root of wall branch.
    */
   private static class Wall3D extends ObjectBranch {
+    private static final Material DEFAULT_MATERIAL = new Material();
+    
     private Home home;
 
     public Wall3D(Wall wall, Home home) {
@@ -314,46 +317,84 @@ public class HomeComponent3D extends JComponent {
 
       // Allow wall branch to be removed from its parent
       setCapability(BranchGroup.ALLOW_DETACH);
-      // Allow to read branch shape child
+      // Allow to read branch shape children
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
-      // Add wall shape to branch
-      addChild(getWallShape());
+      // Add wall left and right empty shapes to branch
+      addChild(getWallPartShape());
+      addChild(getWallPartShape());
       // Set wall shape geometry and appearance
       updateWallGeometry();
       updateWallAppearance();
     }
 
     /**
-     * Returns an empty wall shape.
+     * Returns a wall part shape with no geometry and an appearance with a white material.
      */
-    private Node getWallShape() {
+    private Node getWallPartShape() {
       Shape3D wallShape = new Shape3D();
       // Allow wall shape to change its geometry
       wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+      wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+
+      Appearance wallAppearance = new Appearance();
+      wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      wallAppearance.setMaterial(DEFAULT_MATERIAL);
+      wallShape.setAppearance(wallAppearance);
+      
       return wallShape;
     }
 
     @Override
     public void update() {
       updateWallGeometry();
+      updateWallAppearance();
     }
 
     /**
-     * Sets the 3D geometry of this wall that matches its 2D geometry.  
+     * Sets the 3D geometry of this wall shapes that matches its 2D geometry.  
      */
     private void updateWallGeometry() {
       float [][] wallPoints = ((Wall)getUserData()).getPoints();
-      // Create points for the bottom and the top of the wall
+      // Compute coordinates of the point at middle of wallPoints[0] and wallPoints[3]
+      float xP0P3Middle = (wallPoints[0][0] + wallPoints[3][0]) / 2;
+      float zP0P3Middle = (wallPoints[0][1] + wallPoints[3][1]) / 2;
+      // Compute coordinates of the point at middle of wallPoints[1] and wallPoints[2]
+      float xP1P2Middle = (wallPoints[1][0] + wallPoints[2][0]) / 2;
+      float zP1P2Middle = (wallPoints[1][1] + wallPoints[2][1]) / 2;
+      // Create points for the bottom and the top of the wall right part
       Point3f [] bottom = new Point3f [4];
       Point3f [] top    = new Point3f [4];
-      for (int i = 0; i < bottom.length; i++) {
+      for (int i = 0; i < 2; i++) {
         bottom [i] = new Point3f(
             wallPoints[i][0], 0, wallPoints[i][1]);
         top [i] = new Point3f(
             wallPoints[i][0], this.home.getWallHeight(), wallPoints[i][1]);
       }
-      // List of the 6 quadrilaterals of the wall
+      bottom [2] = new Point3f(xP1P2Middle, 0, zP1P2Middle);
+      top [2] = new Point3f(xP1P2Middle, this.home.getWallHeight(), zP1P2Middle);
+      bottom [3] = new Point3f(xP0P3Middle, 0, zP0P3Middle);
+      top [3] = new Point3f(xP0P3Middle, this.home.getWallHeight(), zP0P3Middle);      
+      // Change geometry of the wall left part 
+      ((Shape3D)getChild(0)).setGeometry(getBoxGeometry(bottom, top));
+
+      // Create points for the bottom and the top of the wall right part
+      bottom [0] = bottom [3];
+      top [0] = top [3];
+      bottom [1] = bottom [2];
+      top [1] = top [2];
+      for (int i = 2; i < bottom.length; i++) {
+        bottom [i] = new Point3f(
+            wallPoints[i][0], 0, wallPoints[i][1]);
+        top [i] = new Point3f(
+            wallPoints[i][0], this.home.getWallHeight(), wallPoints[i][1]);
+      }
+      // Change geometry of the wall right part
+      ((Shape3D)getChild(1)).setGeometry(getBoxGeometry(bottom, top));
+    }
+    
+    private Geometry getBoxGeometry(Point3f [] bottom, Point3f [] top) {
+      // List of the 6 quadrilaterals of the box
       Point3f [] wallCoordinates = {
           bottom [0], bottom [1], bottom [2], bottom [3],
           bottom [1], bottom [0], top [0], top [1],
@@ -362,26 +403,50 @@ public class HomeComponent3D extends JComponent {
           bottom [0], bottom [3], top [3], top [0],  
           top [3],    top [2],    top [1], top [0]};
       
-      // Build wall geomtry
+      // Build box geomtry
       GeometryInfo geometryInfo = 
         new GeometryInfo(GeometryInfo.QUAD_ARRAY);
       geometryInfo.setCoordinates(wallCoordinates);
       // Generates normals
       new NormalGenerator(0).generateNormals(geometryInfo);
-      // Change wall geometry 
-      ((Shape3D)getChild(0)).setGeometry(
-          geometryInfo.getIndexedGeometryArray());
+      return geometryInfo.getIndexedGeometryArray();
     }
     
     /**
-     * Sets wall appearance with a white color.
+     * Sets wall appearance with its color.
      */
     private void updateWallAppearance() {
-      Appearance wallAppearance = new Appearance();
-      Material material = new Material();
-      wallAppearance.setMaterial(material);
-      ((Shape3D)getChild(0)).setAppearance(wallAppearance);
-    }    
+      Wall wall = (Wall)getUserData();
+      // Update material of wall left part
+      Integer leftSideColor = wall.getLeftSideColor();
+      Appearance wallAppearance = ((Shape3D)getChild(0)).getAppearance();
+      if (leftSideColor == null && wallAppearance.getUserData() != null
+          || leftSideColor != null && !leftSideColor.equals(wallAppearance.getUserData())) {
+        // Store color in appearance user data to avoid appearance update at each wall update 
+        wallAppearance.setUserData(leftSideColor);
+        wallAppearance.setMaterial(getMaterial(leftSideColor));
+      }
+      // Update material of wall right part
+      Integer rightSideColor = wall.getRightSideColor();
+      wallAppearance = ((Shape3D)getChild(1)).getAppearance();
+      if (rightSideColor == null && wallAppearance.getUserData() != null
+          || rightSideColor != null && !rightSideColor.equals(wallAppearance.getUserData())) {
+        // Store color in appearance user data to avoid appearance update at each wall update 
+        wallAppearance.setUserData(rightSideColor);
+        wallAppearance.setMaterial(getMaterial(rightSideColor));
+      }
+    }
+    
+    private Material getMaterial(Integer color) {
+      if (color != null) {
+        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
+                                            ((color >>> 8) & 0xFF) / 256f,
+                                                    (color & 0xFF) / 256f);
+        return new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+      } else {
+        return DEFAULT_MATERIAL;
+      }
+    }
   }
 
   /**

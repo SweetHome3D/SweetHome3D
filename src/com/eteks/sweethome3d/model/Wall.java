@@ -40,11 +40,13 @@ public class Wall implements Serializable  {
   private Wall  wallAtStart;
   private Wall  wallAtEnd;
   private float thickness;
+  private Integer leftSideColor;
+  private Integer rightSideColor;
 
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
    * to (<code>xEnd</code>, <code>yEnd</code>), 
-   * with given thickness.
+   * with given thickness. Left and right colors are <code>null</code>.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness) {
     this.xStart = xStart;
@@ -61,6 +63,8 @@ public class Wall implements Serializable  {
   public Wall(Wall wall) {
     this(wall.getXStart(), wall.getYStart(), 
          wall.getXEnd(), wall.getYEnd(), wall.getThickness());
+    this.leftSideColor = wall.getLeftSideColor();
+    this.rightSideColor = wall.getRightSideColor();
   }
   
   /**
@@ -157,6 +161,43 @@ public class Wall implements Serializable  {
    */
   public float getThickness() {
     return this.thickness;
+  }
+
+  /**
+   * Set wall thickness.
+   */
+  void setThickness(float thickness) {
+    this.thickness = thickness;
+  }
+
+  /**
+   * Returns left side color of this wall. This is the color of the left side 
+   * of this wall when you go through wall from start point to end point.
+   */
+  public Integer getLeftSideColor() {
+    return this.leftSideColor;
+  }
+
+  /**
+   * Sets left side color of this wall. 
+   */
+  void setLeftSideColor(Integer leftColor) {
+    this.leftSideColor = leftColor;
+  }
+
+  /**
+   * Returns right side color of this wall. This is the color of the right side 
+   * of this wall when you go through wall from start point to end point.
+   */
+  public Integer getRightSideColor() {
+    return this.rightSideColor;
+  }
+
+  /**
+   * Sets right side color of this wall. 
+   */
+  void setRightSideColor(Integer rightColor) {
+    this.rightSideColor = rightColor;
   }
 
   /**

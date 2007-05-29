@@ -1,0 +1,124 @@
+/*
+ * ColorButton.java 29 mai 07
+ *
+ * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+package com.eteks.sweethome3d.swing;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+
+/**
+ * Button displaying a color as an icon.
+ */
+public class ColorButton extends JButton {
+  // Share color chooser between ColorButton instances to keep recent colors
+  private static JColorChooser FURNITURE_COLOR_CHOOSER = new JColorChooser();
+  
+  private Integer color;
+  private String  colorDialogTitle;
+
+  /**
+   * Creates a color button.
+   */
+  public ColorButton() {
+    JLabel colorLabel = new JLabel("Color");
+    Dimension iconDimension = colorLabel.getPreferredSize();
+    final int iconWidth = iconDimension.width;
+    final int iconHeight = iconDimension.height;
+    setIcon(new Icon() {
+      public int getIconWidth() {
+        return iconWidth;
+      }
+
+      public int getIconHeight() {
+        return iconHeight;
+      }
+
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        g.setColor(Color.BLACK);
+        g.drawRect(x + 2, y + 2, iconWidth - 5, iconHeight - 5);
+        if (color != null) {
+          g.setColor(new Color(color));
+          g.fillRect(x + 3, y + 3, iconWidth - 6,
+                  iconHeight - 6);
+        }
+      }
+    });
+
+    // Add a listener to update color
+    addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent ev) {
+        // Update edited color in furniture color chooser
+        FURNITURE_COLOR_CHOOSER.setColor(color != null 
+            ? new Color(color)
+            : null);
+        JDialog colorDialog = JColorChooser.createDialog(getParent(), 
+            colorDialogTitle,
+            true, FURNITURE_COLOR_CHOOSER,
+            new ActionListener () { 
+              public void actionPerformed(ActionEvent e) {
+                // Change button color when user click on ok button
+                setColor(FURNITURE_COLOR_CHOOSER.getColor().getRGB());
+              }
+            }, null);
+        colorDialog.setVisible(true);
+      }
+    });
+  }
+
+  /**
+   * Returns the color displayed by this button.
+   * @return the RGB code of the color of this button or <code>null</code>.
+   */
+  public Integer getColor() {
+    return this.color;
+  }
+
+  /**
+   * Sets the color displayed by this button.
+   * @param color RGB code of the color or <code>null</code>.
+   */
+  public void setColor(Integer color) {
+    this.color = color;
+    repaint();
+  }
+
+  /**
+   * Returns the title of color dialog displayed when this button is pressed.  
+   */
+  public String getColorDialogTitle() {
+    return this.colorDialogTitle;
+  }
+
+  /**
+   * Sets the title of color dialog displayed when this button is pressed.  
+   */
+  public void setColorDialogTitle(String colorDialogTitle) {
+    this.colorDialogTitle = colorDialogTitle;
+  }
+}

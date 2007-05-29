@@ -84,7 +84,7 @@ public class HomePane extends JRootPane {
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-    WALL_CREATION, DELETE_SELECTION, ABOUT}
+    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
   private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
@@ -188,6 +188,7 @@ public class HomePane extends JRootPane {
         });
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
+    createAction(ActionType.MODIFY_WALL, controller, "modifySelectedWalls");
     createAction(ActionType.ABOUT, controller, "about");
   }
 
@@ -322,8 +323,9 @@ public class HomePane extends JRootPane {
     // Use the same model as Wall creation tool bar button
     wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    wallCreationCheckBoxMenuItem.setAction(actions.get(ActionType.WALL_CREATION));
+    wallCreationCheckBoxMenuItem.setAction(actions.get(ActionType.WALL_CREATION));    
     planMenu.add(wallCreationCheckBoxMenuItem);
+    planMenu.add(actions.get(ActionType.MODIFY_WALL));
 
     // Create Help menu
     JMenu helpMenu = null;

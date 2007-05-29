@@ -416,6 +416,52 @@ public class Home implements Serializable {
   }
 
   /**
+   * Sets the <code>thickness</code> of <code>wall</code>.
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged}
+   * notification, with an {@link WallEvent#getType() event type} 
+   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallThickness(Wall wall, float thickness) {
+    if (thickness != wall.getThickness()) {
+      wall.setThickness(thickness);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }    
+  }
+
+  /**
+   * Sets the left side <code>color</code> of <code>wall</code>.
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged}
+   * notification, with an {@link WallEvent#getType() event type} 
+   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallLeftSideColor(Wall wall, Integer color) {
+    Integer wallColor = wall.getLeftSideColor(); 
+    if ((wallColor == null && color != null)
+        || (wallColor != null && !wallColor.equals(color))) {
+      wall.setLeftSideColor(color);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Sets the right side <code>color</code> of <code>wall</code>.
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged}
+   * notification, with an {@link WallEvent#getType() event type} 
+   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallRightSideColor(Wall wall, Integer color) {
+    Integer wallColor = wall.getRightSideColor(); 
+    if ((wallColor == null && color != null)
+        || (wallColor != null && !wallColor.equals(color))) {
+      wall.setRightSideColor(color);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Sets the wall at start of <code>wall</code> as <code>wallAtEnd</code>. 
    * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with

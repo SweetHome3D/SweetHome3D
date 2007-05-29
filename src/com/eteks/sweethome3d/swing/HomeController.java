@@ -30,7 +30,9 @@ import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -41,6 +43,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 
 /**
  * A MVC controller for the home view.
@@ -208,11 +211,13 @@ public class HomeController  {
     boolean wallCreationMode =  
         getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
     
-    // Search if selection contains at least one piece
+    // Search if selection contains at least one piece or one wall
     List<Object> selectedItems = this.home.getSelectedItems();
     boolean selectionContainsFurniture = false;
+    boolean selectionContainsWalls = false;
     if (!wallCreationMode) {
       selectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
+      selectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
     }
 
     List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
@@ -246,6 +251,8 @@ public class HomeController  {
         !wallCreationMode && selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
         !wallCreationMode && !catalogSelectedItems.isEmpty());
+    view.setEnabled(HomePane.ActionType.MODIFY_WALL,
+        !wallCreationMode && selectionContainsWalls);
   }
 
   /**
@@ -623,5 +630,215 @@ public class HomeController  {
    */
   public void toggleFurnitureSortOrder() {
     this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
+  }
+  
+  /**
+   * Controls the modification of selected walls.
+   */
+  public void modifySelectedWalls() {
+    final List<Object> oldSelection = this.home.getSelectedItems(); 
+    List<Wall> selectedWalls = Home.getWallsSubList(oldSelection);
+    if (!selectedWalls.isEmpty()) {
+      // Search the common properties among selected walls
+      float editedXStart = selectedWalls.get(0).getXStart();
+      float editedYStart = selectedWalls.get(0).getYStart();
+      float editedXEnd = selectedWalls.get(0).getXEnd();
+      float editedYEnd = selectedWalls.get(0).getYEnd();
+      Integer editedLeftSideColor = selectedWalls.get(0).getLeftSideColor();
+      if (editedLeftSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!editedLeftSideColor.equals(selectedWalls.get(i).getLeftSideColor())) {
+            editedLeftSideColor = null;
+            break;
+          }
+        }
+      }
+      Integer editedRightSideColor = selectedWalls.get(0).getRightSideColor();
+      if (editedRightSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!editedRightSideColor.equals(selectedWalls.get(i).getRightSideColor())) {
+            editedRightSideColor = null;
+            break;
+          }
+        }
+      }
+      Float editedThickness = selectedWalls.get(0).getThickness();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (editedThickness != selectedWalls.get(i).getThickness()) {
+          editedThickness = null;
+          break;
+        }
+      }
+      
+      // Create a wall panel to edit wall(s) properties
+      WallPanel wallPanel = new WallPanel(this.preferences);
+      if (selectedWalls.size() == 1) {
+        wallPanel.setWallStartPoint(editedXStart, editedYStart);
+        wallPanel.setWallEndPoint(editedXEnd, editedYEnd);
+      } else {
+        // If multiple walls are modified, don't edit their coordinates
+        wallPanel.setWallPointsVisible(false);
+      }
+      wallPanel.setWallLeftSideColor(editedLeftSideColor);
+      wallPanel.setWallRightSideColor(editedRightSideColor);
+      wallPanel.setWallThickness(editedThickness);
+      // Display wall panel in a dialog box
+      if (wallPanel.showDialog(getView())) {
+        final float xStart = wallPanel.getWallXStart();
+        final float yStart = wallPanel.getWallYStart();
+        final float xEnd = wallPanel.getWallXEnd();
+        final float yEnd = wallPanel.getWallYEnd();
+        final Integer leftSideColor = wallPanel.getWallLeftSideColor();
+        final Integer rightSideColor = wallPanel.getWallRightSideColor();
+        final Float thickness = wallPanel.getWallThickness();
+        
+        // Create an array of modified walls with their current properties values
+        final ModifiedWall [] modifiedWalls = 
+            new ModifiedWall [selectedWalls.size()]; 
+        for (int i = 0; i < modifiedWalls.length; i++) {
+          modifiedWalls [i] = new ModifiedWall(selectedWalls.get(i));
+        }
+        // Apply modification
+        doModifyWalls(modifiedWalls, 
+            xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, thickness); 
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            doRestoreWalls(modifiedWalls); 
+            home.setSelectedItems(oldSelection); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            doModifyWalls(modifiedWalls, 
+                xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, thickness); 
+            home.setSelectedItems(oldSelection); 
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoModifyWallsName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+  
+  /**
+   * Modifies walls properties with the values in parameter.
+   */
+  private void doModifyWalls(ModifiedWall [] modifiedWalls, 
+                                 float xStart, float yStart, float xEnd, float yEnd,
+                                 Integer leftSideColor, Integer rightSideColor,
+                                 Float thickness) {
+    for (ModifiedWall modifiedWall : modifiedWalls) {
+      Wall wall = modifiedWall.getWall();
+      if (modifiedWalls.length == 1) {
+        this.home.moveWallStartPointTo(wall, xStart, yStart);
+        Wall wallAtStart = wall.getWallAtStart();
+        // If wall is joined to a wall at its start 
+        if (wallAtStart != null) {
+          // Move the wall start point or end point
+          if (wallAtStart.getWallAtStart() == wall) {
+            this.home.moveWallStartPointTo(wallAtStart, xStart, yStart);
+          } else if (wallAtStart.getWallAtEnd() == wall) {
+            this.home.moveWallEndPointTo(wallAtStart, xStart, yStart);
+          }
+        }
+        this.home.moveWallEndPointTo(wall, xEnd, yEnd);
+        Wall wallAtEnd = wall.getWallAtEnd();
+        // If wall is joined to a wall at its end  
+        if (wallAtEnd != null) {
+          // Move the wall start point or end point
+          if (wallAtEnd.getWallAtStart() == wall) {
+            this.home.moveWallStartPointTo(wallAtEnd, xEnd, yEnd);
+          } else if (wallAtEnd.getWallAtEnd() == wall) {
+            this.home.moveWallEndPointTo(wallAtEnd, xEnd, yEnd);
+          }
+        }
+      }
+      this.home.setWallLeftSideColor(wall, 
+          leftSideColor != null ? leftSideColor : wall.getLeftSideColor());
+      this.home.setWallRightSideColor(wall, 
+          rightSideColor != null ? rightSideColor : wall.getRightSideColor());
+      this.home.setWallThickness(wall, 
+          thickness != null ? thickness.floatValue() : wall.getThickness());
+    }
+  }
+
+  /**
+   * Restores wall properties from the values stored in <code>modifiedWalls</code>.
+   */
+  private void doRestoreWalls(ModifiedWall [] modifiedWalls) {
+    for (ModifiedWall modifiedWall : modifiedWalls) {
+      Wall wall = modifiedWall.getWall();
+      if (modifiedWalls.length == 1) {
+        this.home.moveWallStartPointTo(wall, modifiedWall.getXStart(), modifiedWall.getYStart());
+        this.home.moveWallEndPointTo(wall, modifiedWall.getXEnd(), modifiedWall.getYEnd());
+      }
+      this.home.setWallLeftSideColor(wall, modifiedWall.getLeftSideColor());
+      this.home.setWallRightSideColor(wall, modifiedWall.getRightSideColor());
+      this.home.setWallThickness(wall, modifiedWall.getThickness());
+    }
+  }
+
+  /**
+   * Stores the current properties values of a modified wall.
+   */
+  private static class ModifiedWall {
+    private final Wall    wall;
+    private final float   xStart;
+    private final float   yStart;
+    private final float   xEnd;
+    private final float   yEnd;
+    private final float   thickness;
+    private final Integer leftSideColor;
+    private final Integer rightSideColor;
+
+    public ModifiedWall(Wall wall) {
+      this.wall = wall;
+      this.xStart = wall.getXStart();
+      this.yStart = wall.getYStart();
+      this.xEnd = wall.getXEnd();
+      this.yEnd = wall.getYEnd();
+      this.leftSideColor = wall.getLeftSideColor();
+      this.rightSideColor = wall.getRightSideColor();
+      this.thickness = wall.getThickness();
+    }
+
+    public Wall getWall() {
+      return this.wall;
+    }
+
+    public Integer getLeftSideColor() {
+      return this.leftSideColor;
+    }
+
+    public Integer getRightSideColor() {
+      return this.rightSideColor;
+    }
+
+    public float getThickness() {
+      return this.thickness;
+    }
+
+    public float getXEnd() {
+      return this.xEnd;
+    }
+
+    public float getXStart() {
+      return this.xStart;
+    }
+
+    public float getYEnd() {
+      return this.yEnd;
+    }
+
+    public float getYStart() {
+      return this.yStart;
+    }    
   }
 }
