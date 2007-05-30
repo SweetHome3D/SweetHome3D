@@ -220,7 +220,7 @@ public class UserPreferencesPanel extends JPanel {
                               final float inchStepSize,
                               final AbstractButton centimeterButton) {
       super(1, 0, 100000, centimeterStepSize);
-      // Add a listener to convert value, main, max and step 
+      // Add a listener to convert value and step 
       // to cemtimeter when button model is selected 
       centimeterButton.addChangeListener(
         new ChangeListener () {
