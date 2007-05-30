@@ -83,7 +83,7 @@ public class ResourceAction extends AbstractAction {
     
     String mnemonicKey = getOptionalString(resource, propertyPrefix + MNEMONIC_KEY);
     if (mnemonicKey != null) {
-      putValue(MNEMONIC_KEY, Integer.valueOf(mnemonicKey.charAt(0)));
+      putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
     
     setEnabled(enabled);
