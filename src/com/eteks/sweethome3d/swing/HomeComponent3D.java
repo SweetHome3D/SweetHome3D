@@ -22,12 +22,22 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.GridLayout;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -50,6 +60,7 @@ import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -81,6 +92,7 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
 public class HomeComponent3D extends JComponent {
   private Map<Object, ObjectBranch> homeObjects = 
       new HashMap<Object, ObjectBranch>();
+  private Collection<Object> homeObjectsToUpdate;
 
   /**
    * Creates a 3D component that displays <code>home</code> walls and furniture.
@@ -245,6 +257,10 @@ public class HomeComponent3D extends JComponent {
             deleteObject(piece);
             break;
         }
+        // If added piece is a door or a window, update all walls
+        if (piece.isDoorOrWindow()) {
+          updateObjects(home.getWalls());
+        }
       }
     });
   }
@@ -263,13 +279,15 @@ public class HomeComponent3D extends JComponent {
    * and the walls at its end or start.
    */
   private void updateWall(Wall wall) {
-    this.homeObjects.get(wall).update();
+    Collection<Wall> wallsToUpdate = new ArrayList<Wall>(3);
+    wallsToUpdate.add(wall);
     if (wall.getWallAtStart() != null) {
-      this.homeObjects.get(wall.getWallAtStart()).update();                
+      wallsToUpdate.add(wall.getWallAtStart());                
     }
     if (wall.getWallAtEnd() != null) {
-      this.homeObjects.get(wall.getWallAtEnd()).update();                
+      wallsToUpdate.add(wall.getWallAtEnd());                
     }
+    updateObjects(wallsToUpdate);
   }
   
   /**
@@ -293,7 +311,31 @@ public class HomeComponent3D extends JComponent {
    * Updates <code>piece</code> scale, angle and location.
    */
   private void updatePieceOfFurniture(HomePieceOfFurniture piece) {
-    this.homeObjects.get(piece).update();
+    updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+  }
+
+  /**
+   * Updates <code>objects</code> later. Sould be invoked from Event Dispatch Thread.
+   */
+  private void updateObjects(Collection<? extends Object> objects) {
+    if (this.homeObjectsToUpdate != null) {
+      this.homeObjectsToUpdate.addAll(objects);
+    } else {
+      this.homeObjectsToUpdate = new HashSet<Object>(objects);
+      // Invoke later the update of objects of homeObjectsToUpdate
+      SwingUtilities.invokeLater(new Runnable () {
+        public void run() {
+          for (Object object : homeObjectsToUpdate) {
+            ObjectBranch objectBranch = homeObjects.get(object);
+            // Check object wasn't deleted since updateObjects call
+            if (objectBranch != null) { 
+              homeObjects.get(object).update();
+            }
+          }
+          homeObjectsToUpdate = null;
+        }
+      });
+    }
   }
   
   /**
@@ -308,6 +350,8 @@ public class HomeComponent3D extends JComponent {
    */
   private static class Wall3D extends ObjectBranch {
     private static final Material DEFAULT_MATERIAL = new Material();
+    private static final int LEFT_WALL_SIDE  = 0;
+    private static final int RIGHT_WALL_SIDE = 1;
     
     private Home home;
 
@@ -329,12 +373,14 @@ public class HomeComponent3D extends JComponent {
     }
 
     /**
-     * Returns a wall part shape with no geometry and an appearance with a white material.
+     * Returns a wall part shape with no geometry  
+     * and a default appearance with a white material.
      */
     private Node getWallPartShape() {
       Shape3D wallShape = new Shape3D();
       // Allow wall shape to change its geometry
       wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+      wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
       wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 
       Appearance wallAppearance = new Appearance();
@@ -350,66 +396,172 @@ public class HomeComponent3D extends JComponent {
       updateWallGeometry();
       updateWallAppearance();
     }
-
+    
     /**
      * Sets the 3D geometry of this wall shapes that matches its 2D geometry.  
      */
     private void updateWallGeometry() {
+      updateWallSideGeometry(LEFT_WALL_SIDE);
+      updateWallSideGeometry(RIGHT_WALL_SIDE);
+    }
+    
+    private void updateWallSideGeometry(int wallSide) {
+      Shape3D wallShape = (Shape3D)getChild(wallSide);
+      int currentGeometriesCount = wallShape.numGeometries();
+      for (Geometry wallGeometry : getWallGeometries(wallSide)) {
+        wallShape.addGeometry(wallGeometry);
+      }
+      for (int i = currentGeometriesCount - 1; i >= 0; i--) {
+        wallShape.removeGeometry(i);
+      }
+    }
+    
+    /**
+     * Returns <code>wall</code> geometries computed with windows or doors 
+     * that intersect wall.
+     */
+    private Geometry[] getWallGeometries(int wallSide) {
+      Shape wallShape = getShape(getWallSidePoints(wallSide));
+      // Search which doors or windows intersect with this wall side
+      Map<HomePieceOfFurniture, Area> intersections = new HashMap<HomePieceOfFurniture, Area>();
+      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+        if (piece.isDoorOrWindow()) {
+          Shape pieceShape = getShape(piece.getPoints());
+          Area wallArea = new Area(wallShape);
+          wallArea.intersect(new Area(pieceShape));
+          if (!wallArea.isEmpty()) {
+            intersections.put(piece, wallArea);
+          }
+        }
+      }
+      List<Geometry> wallGeometries = new ArrayList<Geometry>();
+      List<float[]> wallPoints = new ArrayList<float[]>(4);
+      // Get wall shape excluding window intersections
+      Area wallArea = new Area(wallShape);
+      for (Area intersection : intersections.values()) {
+        wallArea.exclusiveOr(intersection);
+      }
+      // Generate geometry for each wall part that doesn't contain a window
+      for (PathIterator it = wallArea.getPathIterator(null); !it.isDone(); ) {
+        float [] wallPoint = new float[2];
+        if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
+          float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+          // Compute geometry for vertical part
+          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, this.home.getWallHeight()));
+          // Compute geometry for bottom part
+          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
+          // Compute geometry for top part
+          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, this.home.getWallHeight()));
+          wallPoints.clear();
+        } else {
+          wallPoints.add(wallPoint);
+        }
+        it.next();
+      }
+      // Generate geometry for each wall part above a window
+      for (Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
+        for (PathIterator it = windowIntersection.getValue().getPathIterator(null); !it.isDone(); ) {
+          float [] wallPoint = new float[2];
+          if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
+            float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+            wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 
+                windowIntersection.getKey().getHeight(), this.home.getWallHeight()));
+            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, windowIntersection.getKey().getHeight()));
+            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, this.home.getWallHeight()));
+            wallPoints.clear();
+          } else {
+            wallPoints.add(wallPoint);
+          }
+          it.next();
+        }
+      }
+      return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
+    }
+    
+    /**
+     * Returns the shape matching the coordinates in <code>points</code> array.
+     */
+    private Shape getShape(float [][] points) {
+      GeneralPath wallPath = new GeneralPath();
+      wallPath.moveTo(points [0][0], points [0][1]);
+      for (int i = 1; i < points.length; i++) {
+        wallPath.lineTo(points [i][0], points [i][1]);
+      }
+      wallPath.closePath();
+      return wallPath;
+    }
+    
+    /**
+     * Returns the points of one of the side of this wall. 
+     */
+    private float [][] getWallSidePoints(int wallSide) {
       float [][] wallPoints = ((Wall)getUserData()).getPoints();
       // Compute coordinates of the point at middle of wallPoints[0] and wallPoints[3]
       float xP0P3Middle = (wallPoints[0][0] + wallPoints[3][0]) / 2;
-      float zP0P3Middle = (wallPoints[0][1] + wallPoints[3][1]) / 2;
+      float yP0P3Middle = (wallPoints[0][1] + wallPoints[3][1]) / 2;
       // Compute coordinates of the point at middle of wallPoints[1] and wallPoints[2]
       float xP1P2Middle = (wallPoints[1][0] + wallPoints[2][0]) / 2;
-      float zP1P2Middle = (wallPoints[1][1] + wallPoints[2][1]) / 2;
-      // Create points for the bottom and the top of the wall right part
-      Point3f [] bottom = new Point3f [4];
-      Point3f [] top    = new Point3f [4];
-      for (int i = 0; i < 2; i++) {
-        bottom [i] = new Point3f(
-            wallPoints[i][0], 0, wallPoints[i][1]);
-        top [i] = new Point3f(
-            wallPoints[i][0], this.home.getWallHeight(), wallPoints[i][1]);
-      }
-      bottom [2] = new Point3f(xP1P2Middle, 0, zP1P2Middle);
-      top [2] = new Point3f(xP1P2Middle, this.home.getWallHeight(), zP1P2Middle);
-      bottom [3] = new Point3f(xP0P3Middle, 0, zP0P3Middle);
-      top [3] = new Point3f(xP0P3Middle, this.home.getWallHeight(), zP0P3Middle);      
-      // Change geometry of the wall left part 
-      ((Shape3D)getChild(0)).setGeometry(getBoxGeometry(bottom, top));
-
-      // Create points for the bottom and the top of the wall right part
-      bottom [0] = bottom [3];
-      top [0] = top [3];
-      bottom [1] = bottom [2];
-      top [1] = top [2];
-      for (int i = 2; i < bottom.length; i++) {
-        bottom [i] = new Point3f(
-            wallPoints[i][0], 0, wallPoints[i][1]);
-        top [i] = new Point3f(
-            wallPoints[i][0], this.home.getWallHeight(), wallPoints[i][1]);
-      }
-      // Change geometry of the wall right part
-      ((Shape3D)getChild(1)).setGeometry(getBoxGeometry(bottom, top));
-    }
-    
-    private Geometry getBoxGeometry(Point3f [] bottom, Point3f [] top) {
-      // List of the 6 quadrilaterals of the box
-      Point3f [] wallCoordinates = {
-          bottom [0], bottom [1], bottom [2], bottom [3],
-          bottom [1], bottom [0], top [0], top [1],
-          bottom [2], bottom [1], top [1], top [2],
-          bottom [3], bottom [2], top [2], top [3],
-          bottom [0], bottom [3], top [3], top [0],  
-          top [3],    top [2],    top [1], top [0]};
+      float yP1P2Middle = (wallPoints[1][1] + wallPoints[2][1]) / 2;
       
-      // Build box geomtry
-      GeometryInfo geometryInfo = 
-        new GeometryInfo(GeometryInfo.QUAD_ARRAY);
-      geometryInfo.setCoordinates(wallCoordinates);
-      // Generates normals
+      if (wallSide == LEFT_WALL_SIDE) {
+        wallPoints [2][0] = xP1P2Middle;
+        wallPoints [2][1] = yP1P2Middle;
+        wallPoints [3][0] = xP0P3Middle;
+        wallPoints [3][1] = yP0P3Middle;
+      } else { // RIGHT_WALL_SIDE
+        wallPoints [1][0] = xP1P2Middle;
+        wallPoints [1][1] = yP1P2Middle;
+        wallPoints [0][0] = xP0P3Middle;
+        wallPoints [0][1] = yP0P3Middle;
+      }
+      return wallPoints;
+    }
+
+    /**
+     * Returns the vertical rectangles that join each point of <code>points</code>
+     * and spread from <code>yMin</code> to <code>yMax</code>.
+     */
+    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, float yMax) {
+      Point3f [] bottom = new Point3f [points.length];
+      Point3f [] top    = new Point3f [points.length];
+      for (int i = 0; i < points.length; i++) {
+        bottom [i] = new Point3f(points[i][0], yMin, points[i][1]);
+        top [i]    = new Point3f(points[i][0], yMax, points[i][1]);
+      }
+      Point3f [] coords = new Point3f [points.length * 4];
+      int j = 0;
+      for (int i = 0; i < points.length - 1; i++) {
+        coords [j++] = bottom [i];
+        coords [j++] = bottom [i + 1];
+        coords [j++] = top [i + 1];
+        coords [j++] = top [i];
+      }
+      coords [j++] = bottom [points.length - 1];
+      coords [j++] = bottom [0];
+      coords [j++] = top [0];
+      coords [j++] = top [points.length - 1];
+      
+      GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
+      geometryInfo.setCoordinates (coords);
+      // Generate normals
+      new NormalGenerator(0).generateNormals (geometryInfo);
+      return geometryInfo.getIndexedGeometryArray ();
+    }
+
+    /**
+     * Returns the geometry of the top or bottom part of a wall at <code>y</code>.
+     */
+    private Geometry getWallHorizontalPartGeometry(float [][] points, float y) {
+      Point3f [] coords = new Point3f [points.length];
+      for (int i = 0; i < points.length; i++) {
+        coords [i] = new Point3f(points[i][0], y, points[i][1]);
+      }
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+      geometryInfo.setCoordinates (coords);
+      geometryInfo.setStripCounts(new int [] {coords.length});
+      // Generate normals
       new NormalGenerator(0).generateNormals(geometryInfo);
-      return geometryInfo.getIndexedGeometryArray();
+      return geometryInfo.getIndexedGeometryArray ();
     }
     
     /**
@@ -419,7 +571,7 @@ public class HomeComponent3D extends JComponent {
       Wall wall = (Wall)getUserData();
       // Update material of wall left part
       Integer leftSideColor = wall.getLeftSideColor();
-      Appearance wallAppearance = ((Shape3D)getChild(0)).getAppearance();
+      Appearance wallAppearance = ((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance();
       if (leftSideColor == null && wallAppearance.getUserData() != null
           || leftSideColor != null && !leftSideColor.equals(wallAppearance.getUserData())) {
         // Store color in appearance user data to avoid appearance update at each wall update 
@@ -428,7 +580,7 @@ public class HomeComponent3D extends JComponent {
       }
       // Update material of wall right part
       Integer rightSideColor = wall.getRightSideColor();
-      wallAppearance = ((Shape3D)getChild(1)).getAppearance();
+      wallAppearance = ((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance();
       if (rightSideColor == null && wallAppearance.getUserData() != null
           || rightSideColor != null && !rightSideColor.equals(wallAppearance.getUserData())) {
         // Store color in appearance user data to avoid appearance update at each wall update 
@@ -761,6 +913,5 @@ public class HomeComponent3D extends JComponent {
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
       return appearance;
     }
-    
   }
 }
