@@ -249,6 +249,24 @@ public class PlanController {
   }
 
   /**
+   * Controls the modification of selected walls.
+   */
+  public void modifySelectedWalls() {
+    if (!Home.getWallsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new WallController(this.home, this.preferences, this.undoSupport);
+    }
+  }
+  
+  /**
+   * Controls the modification of selected furniture.
+   */
+  private void modifySelectedFurniture() {
+    if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
+      new HomeFurnitureController(this.home, this.preferences, this.undoSupport);
+    }
+  }
+  
+  /**
    * Returns a new wall instance between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>)
    * end points. The new wall start point is joined to the start of
@@ -1034,16 +1052,26 @@ public class PlanController {
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown) {
+      Object item = getItemAt(x, y);
       // If shift isn't pressed, and an item is under cursor position
-      if (!shiftDown && getItemAt(x, y) != null) {
-        if (getResizedPieceOfFurnitureAt(x, y) != null) {
-          setState(getPieceOfFurnitureResizeState());
-        } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
-          setState(getPieceOfFurnitureRotationState());
-        } else {
-          // Change state to SelectionMoveState
-          setState(getSelectionMoveState());
-        }  
+      if (!shiftDown && item != null) {
+        if (clickCount == 1) {
+          if (getResizedPieceOfFurnitureAt(x, y) != null) {
+            setState(getPieceOfFurnitureResizeState());
+          } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
+            setState(getPieceOfFurnitureRotationState());
+          } else {
+            // Change state to SelectionMoveState
+            setState(getSelectionMoveState());
+          }
+        } else if (clickCount == 2) {
+          // Modify selected item on a double click
+          if (item instanceof Wall) {
+            modifySelectedWalls();
+          } else if (item instanceof HomePieceOfFurniture) {
+            modifySelectedFurniture();
+          } 
+        }
       } else {
         // Otherwise change state to RectangleSelectionState
         setState(getRectangleSelectionState());

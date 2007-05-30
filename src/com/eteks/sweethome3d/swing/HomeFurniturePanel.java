@@ -20,13 +20,16 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.JCheckBox;
@@ -38,44 +41,59 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 
 /**
  * Home furniture editing panel.
  * @author Emmanuel Puybaret
  */
 public class HomeFurniturePanel extends JPanel {
-  private ResourceBundle   resource;
-  private JLabel           nameLabel;
-  private JTextField       nameTextField;
-  private JLabel           xLabel;
-  private JSpinner         xSpinner;
-  private JLabel           yLabel;
-  private JSpinner         ySpinner;
-  private JLabel           angleLabel;
-  private JSpinner         angleSpinner;
-  private JLabel           widthLabel;
-  private JSpinner         widthSpinner;
-  private JLabel           depthLabel;
-  private JSpinner         depthSpinner;
-  private JLabel           heightLabel;
-  private JSpinner         heightSpinner;
-  private JLabel           colorLabel;
-  private ColorButton      colorButton;
-  private NullableCheckBox visibleCheckBox;
+  private HomeFurnitureController controller;
+  private ResourceBundle          resource;
+  private JLabel                  nameLabel;
+  private JTextField              nameTextField;
+  private JLabel                  xLabel;
+  private JSpinner                xSpinner;
+  private JLabel                  yLabel;
+  private JSpinner                ySpinner;
+  private JLabel                  angleLabel;
+  private JSpinner                angleSpinner;
+  private JLabel                  widthLabel;
+  private JSpinner                widthSpinner;
+  private JLabel                  depthLabel;
+  private JSpinner                depthSpinner;
+  private JLabel                  heightLabel;
+  private JSpinner                heightSpinner;
+  private JLabel                  colorLabel;
+  private ColorButton             colorButton;
+  private NullableCheckBox        visibleCheckBox;
 
+  /**
+   * Creates a panel that displays home furniture data according to the units 
+   * set in <code>preferences</code>.
+   * @param home home from which selected furniture is edited by this panel
+   * @param preferences user preferences
+   * @param controller the controller of this panel
+   */
   /**
    * Creates a panel that will displayed piece dimensions according to the units
    * set in <code>preferences</code>.
    * @param preferences user preferences
    */
-  public HomeFurniturePanel(UserPreferences preferences) {
+  public HomeFurniturePanel(Home home,
+                            UserPreferences preferences,
+                            HomeFurnitureController controller) {
     super(new GridBagLayout());
+    this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         HomeFurniturePanel.class.getName());
     createComponents(preferences);
     setMnemonics();
     layoutComponents();
+    updateComponents(home);
   }
 
   /**
@@ -208,11 +226,112 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Sets the edited name of the furniture.
-   * @param name the name of the furniture or <code>null</code>
+   * Updates components values from selected walls in <code>home</code>.
    */
-  public void setFurnitureName(String name) {
-    this.nameTextField.setText(name);
+  private void updateComponents(Home home) {
+    List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(home.getSelectedItems());
+    if (selectedFurniture.isEmpty()) {
+      setVisible(false); // Nothing to edit
+    } else {
+      setVisible(true);
+      // Search the common properties among selected furniture
+      HomePieceOfFurniture firstPiece = selectedFurniture.get(0);
+      String name = firstPiece.getName();
+      if (name != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (!name.equals(selectedFurniture.get(i).getName())) {
+            name = null;
+            break;
+          }
+        }
+      }
+      this.nameTextField.setText(name);
+      
+      Float x = firstPiece.getX();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (x.floatValue() != selectedFurniture.get(i).getX()) {
+          x = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setNullable(x == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setLength(x);
+
+      Float y = firstPiece.getY();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (y.floatValue() != selectedFurniture.get(i).getY()) {
+          y = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
+
+      Float angle = firstPiece.getAngle();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (angle.floatValue() != selectedFurniture.get(i).getAngle()) {
+          angle = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
+      if (angle == null) {
+        this.angleSpinner.setValue(null);
+      } else {
+        this.angleSpinner.setValue((Math.round(Math.toDegrees(angle)) + 360) % 360);
+      }
+
+      Float width = firstPiece.getWidth();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (width.floatValue() != selectedFurniture.get(i).getWidth()) {
+          width = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setNullable(width == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setLength(width);
+
+      Float depth = firstPiece.getDepth();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (depth.floatValue() != selectedFurniture.get(i).getDepth()) {
+          depth = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setNullable(depth == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setLength(depth);
+
+      Float height = firstPiece.getHeight();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (height.floatValue() != selectedFurniture.get(i).getHeight()) {
+          height = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setNullable(height == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setLength(height);
+
+      Integer color = firstPiece.getColor();
+      if (color != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (!color.equals(selectedFurniture.get(i).getColor())) {
+            color = null;
+            break;
+          }
+        }
+      }
+      this.colorButton.setColor(color);
+
+      Boolean visible = firstPiece.isVisible();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (visible != selectedFurniture.get(i).isVisible()) {
+          visible = null;
+          break;
+        }
+      }
+      this.visibleCheckBox.setNullable(visible == null);
+      this.visibleCheckBox.setValue(visible);           
+    }
   }
 
   /**
@@ -227,21 +346,6 @@ public class HomeFurniturePanel extends JPanel {
     }
   }
   
-  /**
-   * Sets the edited dimension of the furniture.
-   * @param width  the width of the furniture or <code>null</code> 
-   * @param depth  the depth of the furniture or <code>null</code>
-   * @param height the height of the furniture or <code>null</code>
-   */
-  public void setFurnitureDimension(Float width, Float depth, Float height) {
-    ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setNullable(width == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setLength(width);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setNullable(depth == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setLength(depth);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setNullable(height == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setLength(height);
-  }
-
   /**
    * Returns the edited width of the furniture or <code>null</code>.
    */
@@ -264,14 +368,6 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Sets the edited color of the furniture.
-   * @param color  the color of the furniture or <code>null</code>
-   */ 
-  public void setFurnitureColor(Integer color) {
-    this.colorButton.setColor(color);
-  }
-
-  /**
    * Returns the edited color of the furniture or <code>null</code>.
    */
   public Integer getFurnitureColor() {
@@ -279,31 +375,10 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Sets whether the furniture is visible or not.
-   * @param visible <code>Boolean.TRUE</code>, <code>Boolean.FALSE</code> or <code>null</code>
-   */
-  public void setFurnitureVisible(Boolean visible) {
-    this.visibleCheckBox.setNullable(visible == null);
-    this.visibleCheckBox.setValue(visible);   
-  }
-
-  /**
    * Returns whether the furniture is visible or not.
    */
   public Boolean isFurnitureVisible() {
     return this.visibleCheckBox.getValue();
-  }
-
-  /**
-   * Sets the edited location of the furniture.
-   * @param x the abscissa of the furniture or <code>null</code>
-   * @param y the ordinate of the furniture or <code>null</code>
-   */
-  public void setFurnitureLocation(Float x, Float y) {
-    ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setNullable(x == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setLength(x);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
   }
 
   /**
@@ -321,19 +396,6 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Sets the edited angle of the furniture.
-   * @param angle the angle of the furniture or <code>null</code>
-   */
-  public void setFurnitureAngle(Float angle) {
-    ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
-    if (angle == null) {
-      this.angleSpinner.setValue(null);
-    } else {
-      this.angleSpinner.setValue((Math.round(Math.toDegrees(angle)) + 360) % 360);
-    }
-  }
-  
-  /**
    * Returns the edited angle of the furniture or <code>null</code>.
    */
   public Float getFurnitureAngle() {
@@ -346,13 +408,23 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Displays this panel in a dialog box. 
+   * Displays this panel in a modal dialog box. 
    */
-  public boolean showDialog(JComponent parent) {
+  public void displayView() {
     String dialogTitle = resource.getString("homeFurniture.title");
-    return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
-        JOptionPane.OK_CANCEL_OPTION, 
-        JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
+    Component parent = null;
+    for (Frame frame : Frame.getFrames()) {
+      if (frame.isActive()) {
+        parent = frame;
+        break;
+      }
+    }
+    if (JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
+          JOptionPane.OK_CANCEL_OPTION, 
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+        && this.controller != null) {
+      this.controller.modifySelection();
+    }
   }
 
   /**

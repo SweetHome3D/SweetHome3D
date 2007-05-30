@@ -19,13 +19,17 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomeFurniturePanel;
+import com.eteks.sweethome3d.swing.WallPanel;
 
 import junit.framework.TestCase;
 
@@ -38,34 +42,37 @@ public class HomeFurniturePanelTest extends TestCase {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
-    // Create a home piece of furniture from first piece in catalog
+    // Create a home and add a selected piece of furniture to it
+    Home home = new Home();
     PieceOfFurniture firstPiece = preferences.getCatalog().
         getCategories().get(0).getFurniture().get(0);
-    HomePieceOfFurniture piece = new HomePieceOfFurniture(firstPiece); 
-    
-    // 2. Create a home piece of furniture panel to edit piece
-    HomeFurniturePanel panel = new HomeFurniturePanel(preferences);
-    panel.setFurnitureName(piece.getName());
-    panel.setFurnitureLocation(piece.getX(), piece.getY());
-    panel.setFurnitureAngle(piece.getAngle());
-    panel.setFurnitureDimension(piece.getWidth(), piece.getDepth(), piece.getHeight());
-    panel.setFurnitureColor(piece.getColor());
-    panel.setFurnitureVisible(piece.isVisible());
-    // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, piece.getName(),
-        piece.getX(), piece.getY(), piece.getAngle(),
-        piece.getWidth(), piece.getDepth(), piece.getHeight(),
-        piece.getColor(), piece.isVisible());
+    HomePieceOfFurniture piece1 = new HomePieceOfFurniture(firstPiece); 
+    home.addPieceOfFurniture(piece1);
+    home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
 
-    // 3. Check if furniture panel is able to edit null values
-    panel.setFurnitureName(null);
-    panel.setFurnitureLocation(null, null);
-    panel.setFurnitureAngle(null);
-    panel.setFurnitureDimension(null, null, null);
-    panel.setFurnitureColor(null);
-    panel.setFurnitureVisible(null);
+    // 2. Create a home piece of furniture panel to edit piece
+    HomeFurniturePanel panel = new HomeFurniturePanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, null, null, null, null, null, null, null, null, null);
+    assertFurniturePanelEquals(panel, piece1.getName(),
+        piece1.getX(), piece1.getY(), piece1.getAngle(),
+        piece1.getWidth(), piece1.getDepth(), piece1.getHeight(),
+        piece1.getColor(), piece1.isVisible());
+
+    // 3. Add a second selected piece to home
+    HomePieceOfFurniture piece2 = new HomePieceOfFurniture(firstPiece); 
+    home.addPieceOfFurniture(piece2);
+    home.setPieceOfFurnitureLocation(piece2, piece1.getX(), piece1.getY() + 10);
+    home.setPieceOfFurnitureDimension(piece2, 
+        piece1.getWidth(), piece1.getDepth() + 10, piece1.getHeight() + 10);
+    home.setPieceOfFurnitureColor(piece2, 0xFF00FF);
+    home.setPieceOfFurnitureVisible(piece2, !piece1.isVisible());
+    home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1, piece2}));
+    // Check if furniture panel edits null values 
+    // if some furniture properties are the same
+    panel = new HomeFurniturePanel(home, preferences, null);
+    // Check values stored by furniture panel components are equal to the ones set
+    assertFurniturePanelEquals(panel, piece1.getName(), piece1.getX(), null, 
+        piece1.getAngle(), piece1.getWidth(), null, null, null, null);
   }
   
   /**
@@ -88,6 +95,17 @@ public class HomeFurniturePanelTest extends TestCase {
   }
 
   public static void main(String [] args) {
-    new HomeFurniturePanel(new DefaultUserPreferences()).showDialog(null);
+    // Create a selected piece of furniture in a home and display it in a furniture panel
+    UserPreferences preferences = new DefaultUserPreferences();
+    Home home = new Home();
+    PieceOfFurniture firstPiece = preferences.getCatalog().
+        getCategories().get(0).getFurniture().get(0);
+    HomePieceOfFurniture piece1 = new HomePieceOfFurniture(firstPiece); 
+    home.addPieceOfFurniture(piece1);
+    home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
+    
+    HomeFurniturePanel furniturePanel = 
+        new HomeFurniturePanel(home, preferences, null);
+    furniturePanel.displayView();
   }
 }

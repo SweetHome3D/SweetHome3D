@@ -54,7 +54,7 @@ import com.eteks.sweethome3d.swing.PlanComponent;
  * @author Emmanuel Puybaret
  */
 public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
-  public void testPlanComponentWithFurniture() {
+  public void testPlanComponentWithFurniture() throws InterruptedException {
     // 1. Create a frame that displays a home view and a tool bar
     // with Mode, Add furniture, Undo and Redo buttons
     TestFrame frame = new TestFrame();    
@@ -166,7 +166,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
     assertCoordinatesEqualWallPoints(20, 300, 20, 20, fifthWall);
     
-    // 8. Drag and drop mouse to (40, 160) 
+    // 8. Drag and drop mouse to (40, 160)
+    Thread.sleep(1000); // Wait 1s to avoid double click
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(30, 160)));
     tester.actionMouseMove(planComponent,  
@@ -209,6 +210,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEquals("Wrong selected items count", 1, selectedItems.size());
     assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
     // Drag mouse (4,4) pixels out of piece box
+    Thread.sleep(1000); // Wait 1s to avoid double click
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(156 + depthPixel / 2, 135 - widthPixel / 2)));
     tester.actionMouseMove(planComponent,  

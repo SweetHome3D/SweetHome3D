@@ -19,9 +19,12 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
@@ -32,40 +35,49 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 
 /**
  * Wall editing panel.
  * @author Emmanuel Puybaret
  */
 public class WallPanel extends JPanel {
-  private ResourceBundle   resource;
-  private JLabel           xStartLabel;
-  private JSpinner         xStartSpinner;
-  private JLabel           yStartLabel;
-  private JSpinner         yStartSpinner;
-  private JLabel           xEndLabel;
-  private JSpinner         xEndSpinner;
-  private JLabel           yEndLabel;
-  private JSpinner         yEndSpinner;
-  private JLabel           thicknessLabel;
-  private JSpinner         thicknessSpinner;
-  private JLabel           leftSideColorLabel;
-  private ColorButton      leftSideColorButton;
-  private JLabel           rightSideColorLabel;
-  private ColorButton      rightSideColorButton;
+  private WallController controller;
+  private ResourceBundle resource;
+  private JLabel         xStartLabel;
+  private JSpinner       xStartSpinner;
+  private JLabel         yStartLabel;
+  private JSpinner       yStartSpinner;
+  private JLabel         xEndLabel;
+  private JSpinner       xEndSpinner;
+  private JLabel         yEndLabel;
+  private JSpinner       yEndSpinner;
+  private JLabel         thicknessLabel;
+  private JSpinner       thicknessSpinner;
+  private JLabel         leftSideColorLabel;
+  private ColorButton    leftSideColorButton;
+  private JLabel         rightSideColorLabel;
+  private ColorButton    rightSideColorButton;
+  
 
   /**
-   * Creates a panel that will displayed wall data according to the units
-   * set in <code>preferences</code>.
+   * Creates a panel that displays wall data according to the units set in
+   * <code>preferences</code>.
+   * @param home home from which selected walls are edited by this panel
    * @param preferences user preferences
+   * @param controller the controller of this panel
    */
-  public WallPanel(UserPreferences preferences) {
+  public WallPanel(Home home, UserPreferences preferences,
+                   WallController controller) {
     super(new GridBagLayout());
+    this.controller = controller;
     this.resource = ResourceBundle.getBundle(WallPanel.class.getName());
     createComponents(preferences);
     setMnemonics();
     layoutComponents();
+    updateComponents(home);
   }
 
   /**
@@ -180,69 +192,100 @@ public class WallPanel extends JPanel {
   }
 
   /**
-   * Sets the start point of the wall.
-   * @param x the abscissa of the start point
-   * @param y the ordinate of the start point
+   * Updates components values from selected walls in <code>home</code>.
    */
-  public void setWallStartPoint(float x, float y) {
-    ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel()).setLength(x);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel()).setLength(y);
-  }
+  private void updateComponents(Home home) {
+    List<Wall> selectedWalls = Home.getWallsSubList(home.getSelectedItems());
+    if (selectedWalls.isEmpty()) {
+      setVisible(false); // Nothing to edit
+    } else {
+      setVisible(true);
+      // Search the common properties among selected walls
+      Wall firstWall = selectedWalls.get(0);
+      boolean multipleSelection = selectedWalls.size() > 1;
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel())
+          .setNullable(multipleSelection);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel())
+          .setLength(multipleSelection ? null : firstWall.getXStart());
+      ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel())
+          .setNullable(multipleSelection);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel())
+          .setLength(multipleSelection ? null : firstWall.getYStart());
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
+          .setNullable(multipleSelection);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
+          .setLength(multipleSelection ? null : firstWall.getXEnd());
+      ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())
+          .setNullable(multipleSelection);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())
+          .setLength(multipleSelection ? null : firstWall.getYEnd());
+      
+      // Make start and end points panels visible only if one wall is selected
+      this.xStartLabel.getParent().setVisible(!multipleSelection);
+      this.xEndLabel.getParent().setVisible(!multipleSelection);
 
-  /**
-   * Sets the end point of the wall.
-   * @param x the abscissa of the end point
-   * @param y the ordinate of the end point
-   */
-  public void setWallEndPoint(float x, float y) {
-    ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel()).setLength(x);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel()).setLength(y);
+      Integer leftSideColor = firstWall.getLeftSideColor();
+      if (leftSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!leftSideColor.equals(selectedWalls.get(i).getLeftSideColor())) {
+            leftSideColor = null;
+            break;
+          }
+        }
+      }
+      this.leftSideColorButton.setColor(leftSideColor);
+      
+      Integer rightSideColor = firstWall.getRightSideColor();
+      if (rightSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!rightSideColor.equals(selectedWalls.get(i).getRightSideColor())) {
+            rightSideColor = null;
+            break;
+          }
+        }
+      }
+      this.rightSideColorButton.setColor(rightSideColor);
+      
+      Float thickness = firstWall.getThickness();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (thickness != selectedWalls.get(i).getThickness()) {
+          thickness = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
+          .setNullable(thickness == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
+          .setLength(thickness);
+    }
   }
 
   /**
    * Returns the abscissa of the start point of the wall.
    */
-  public float getWallXStart() {
+  public Float getWallXStart() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the ordinate of the start point of the wall.
    */
-  public float getWallYStart() {
+  public Float getWallYStart() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the abscissa of the end point of the wall.
    */
-  public float getWallXEnd() {
+  public Float getWallXEnd() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel()).getLength();
   }
 
   /**
    * Returns the ordinate of the end point of the wall.
    */
-  public float getWallYEnd() {
+  public Float getWallYEnd() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Sets whether start and end points fields should be visible.
-   */
-  public void setWallPointsVisible(boolean visible) {
-    // Change visibility of start and end points panel
-    this.xStartLabel.getParent().setVisible(visible);
-    this.xEndLabel.getParent().setVisible(visible);
-  }
-  
-  /**
-   * Sets the edited thickness of the wall(s).
-   * @param thickness  the thickness of the walls or <code>null</code> 
-   */
-  public void setWallThickness(Float thickness) {
-    ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel()).setNullable(thickness == null);
-    ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel()).setLength(thickness);
   }
 
   /**
@@ -253,26 +296,10 @@ public class WallPanel extends JPanel {
   }
 
   /**
-   * Sets the edited color of the wall(s) left part.
-   * @param color  the color of the wall(s) left part or <code>null</code>
-   */ 
-  public void setWallLeftSideColor(Integer color) {
-    this.leftSideColorButton.setColor(color);
-  }
-
-  /**
    * Returns the edited color of the wall(s) left part or <code>null</code>.
    */
   public Integer getWallLeftSideColor() {
     return this.leftSideColorButton.getColor();
-  }
-
-  /**
-   * Sets the edited color of the wall(s) right part.
-   * @param color  the color of the wall(s) right part or <code>null</code>
-   */ 
-  public void setWallRightSideColor(Integer color) {
-    this.rightSideColorButton.setColor(color);
   }
 
   /**
@@ -283,12 +310,22 @@ public class WallPanel extends JPanel {
   }
   
   /**
-   * Displays this panel in a dialog box. 
+   * Displays this panel in a modal dialog box. 
    */
-  public boolean showDialog(JComponent parent) {
+  public void displayView() {
     String dialogTitle = resource.getString("wall.title");
-    return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
-        JOptionPane.OK_CANCEL_OPTION, 
-        JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
+    Component parent = null;
+    for (Frame frame : Frame.getFrames()) {
+      if (frame.isActive()) {
+        parent = frame;
+        break;
+      }
+    }
+    if (JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
+          JOptionPane.OK_CANCEL_OPTION, 
+          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+        && this.controller != null) {
+      this.controller.modifySelection();
+    }
   }
 }

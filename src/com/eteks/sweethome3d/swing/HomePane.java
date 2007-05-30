@@ -188,7 +188,8 @@ public class HomePane extends JRootPane {
         });
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
-    createAction(ActionType.MODIFY_WALL, controller, "modifySelectedWalls");
+    createAction(ActionType.MODIFY_WALL, 
+        controller.getPlanController(), "modifySelectedWalls");
     createAction(ActionType.ABOUT, controller, "about");
   }
 
