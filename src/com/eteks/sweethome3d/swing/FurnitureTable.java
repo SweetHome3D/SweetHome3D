@@ -139,13 +139,19 @@ public class FurnitureTable extends JTable {
     getSelectionModel().removeListSelectionListener(tableSelectionListener);
     clearSelection();
     FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+    int minIndex = Integer.MAX_VALUE;
+    int maxIndex = Integer.MIN_VALUE;
     for (Object item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
         // Search index of piece in sorted table model
         int index = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
         addRowSelectionInterval(index, index);
-        makeRowVisible(index);
+        minIndex = Math.min(minIndex, index);
+        maxIndex = Math.max(maxIndex, index);
       }          
+    }
+    if (minIndex != Integer.MIN_VALUE) {
+      makeRowsVisible(minIndex, maxIndex);
     }
     getSelectionModel().addListSelectionListener(tableSelectionListener);
   }
@@ -208,15 +214,23 @@ public class FurnitureTable extends JTable {
   }
 
   /**
-   * Ensures the rectangle which displays row is visible.
+   * Ensures the rectangle which displays rows from <code>minIndex</code> to <code>maxIndex</code> is visible.
    */
-  private void makeRowVisible(int row) {
+  private void makeRowsVisible(int minRow, int maxRow) {    
     // Compute the rectangle that includes a row 
-    Rectangle includingRectangle = getCellRect(row, 0, true);
+    Rectangle includingRectangle = getCellRect(minRow, 0, true);
+    if (minRow != maxRow) {
+      includingRectangle = includingRectangle.
+          union(getCellRect(maxRow, 0, true));      
+    }
     if (getAutoResizeMode() == AUTO_RESIZE_OFF) {
       int lastColumn = getColumnCount() - 1;
       includingRectangle = includingRectangle.
-          union(getCellRect(row, lastColumn, true));
+          union(getCellRect(minRow, lastColumn, true));
+      if (minRow != maxRow) {
+        includingRectangle = includingRectangle.
+            union(getCellRect(maxRow, lastColumn, true));      
+      }
     }
     scrollRectToVisible(includingRectangle);
   }
