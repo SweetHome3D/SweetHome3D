@@ -30,9 +30,7 @@ import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -43,7 +41,6 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.Wall;
 
 /**
  * A MVC controller for the home view.
