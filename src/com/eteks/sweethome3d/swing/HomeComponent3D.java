@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Shape;
 import java.awt.geom.Area;
@@ -51,6 +52,7 @@ import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
+import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
@@ -98,9 +100,12 @@ public class HomeComponent3D extends JComponent {
    * Creates a 3D component that displays <code>home</code> walls and furniture.
    */
   public HomeComponent3D(Home home) {
+    // Try to get antialiasing
+    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
     // Create the Java 3D canvas that will display home 
-    Canvas3D canvas3D = new Canvas3D(
-        SimpleUniverse.getPreferredConfiguration());
+    Canvas3D canvas3D = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
+        getDefaultScreenDevice().getBestConfiguration(gc));
     // Link it to a default univers
     SimpleUniverse universe = new SimpleUniverse(canvas3D);
     universe.getViewingPlatform().setNominalViewingTransform();
