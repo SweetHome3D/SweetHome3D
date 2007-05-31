@@ -106,7 +106,7 @@ public class WallPanel extends JPanel {
     this.rightSideColorLabel = new JLabel(this.resource.getString("rightSideColorLabel.text"));
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
-    // wallOrientationLabel shows an HTML exlanation of wall orientation with an image URL in resource
+    // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
             WallPanel.class.getResource("resources/wallOrientation.png")), JLabel.CENTER);
