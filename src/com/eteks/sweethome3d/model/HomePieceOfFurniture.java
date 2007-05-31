@@ -140,6 +140,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private float   y;
   private float   angle;
 
+  private transient Shape shape;
+
   /**
    * Creates a home piece of furniture from an existing piece.
    * @param piece the piece from which data are copied
@@ -177,6 +179,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the name of this piece of furniture.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setName(String name) {
     this.name = name;
@@ -191,9 +195,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the depth of this piece of furniture.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setDepth(float depth) {
     this.depth = depth;
+    this.shape = null;
   }
 
   /**
@@ -205,9 +212,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the height of this piece of furniture.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setHeight(float height) {
     this.height = height;
+    this.shape = null;
   }
 
   /**
@@ -219,9 +229,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the width of this piece of furniture.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setWidth(float width) {
     this.width = width;
+    this.shape = null;
   }
 
   /**
@@ -262,6 +275,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   
   /**
    * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setColor(Integer color) {
     this.color = color;
@@ -276,6 +291,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   
   /**
    * Sets whether this piece of furniture is visible or not.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setVisible(boolean visible) {
     this.visible = visible;
@@ -290,9 +307,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the abscissa of this piece.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setX(float x) {
     this.x = x;
+    this.shape = null;
   }
   
   /**
@@ -304,9 +324,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the ordinate of this piece.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setY(float y) {
     this.y = y;
+    this.shape = null;
   }
 
   /**
@@ -318,9 +341,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the angle of this piece.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setAngle(float angle) {
     this.angle = angle;
+    this.shape = null;
   }
 
   /**
@@ -396,18 +422,22 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Returns the shape matching this piece.
    */
   private Shape getShape() {
-    // Create the rectangle that matches piece bounds
-    Rectangle2D pieceRectangle = new Rectangle2D.Float(
-        this.x - this.width / 2,
-        this.y - this.depth / 2,
-        this.width, this.depth);
-    // Apply rotation to the rectangle
-    AffineTransform rotation = new AffineTransform();
-    rotation.setToRotation(this.angle, this.x, this.y);
-    PathIterator it = pieceRectangle.getPathIterator(rotation);
-    GeneralPath pieceShape = new GeneralPath();
-    pieceShape.append(it, false);
-    return pieceShape;
+    if (this.shape == null) {
+      // Create the rectangle that matches piece bounds
+      Rectangle2D pieceRectangle = new Rectangle2D.Float(
+          this.x - this.width / 2,
+          this.y - this.depth / 2,
+          this.width, this.depth);
+      // Apply rotation to the rectangle
+      AffineTransform rotation = new AffineTransform();
+      rotation.setToRotation(this.angle, this.x, this.y);
+      PathIterator it = pieceRectangle.getPathIterator(rotation);
+      GeneralPath pieceShape = new GeneralPath();
+      pieceShape.append(it, false);
+      // Cache shape
+      this.shape = pieceShape;
+    }
+    return this.shape;
   }
   
   /**
