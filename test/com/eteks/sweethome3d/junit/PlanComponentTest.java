@@ -214,6 +214,8 @@ public class PlanComponentTest extends ComponentTestFixture {
    * and <code>wallAtEnd</code>.
    */
   private void assertWallsAreJoined(Wall wallAtStart, Wall wall, Wall wallAtEnd) {
+    assertSame("Incorrect wall at start", wallAtStart, wall.getWallAtStart());
+    assertSame("Incorrect wall at end", wallAtEnd, wall.getWallAtEnd());
   }
 
   /**
