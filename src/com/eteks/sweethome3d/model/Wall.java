@@ -42,8 +42,6 @@ public class Wall implements Serializable  {
   private float thickness;
   private Integer leftSideColor;
   private Integer rightSideColor;
-  
-  private transient float [][] points;
 
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
@@ -83,7 +81,6 @@ public class Wall implements Serializable  {
    */
   void setXStart(float xStart) {
     this.xStart = xStart;
-    this.points = null;
   }
 
   /**
@@ -100,7 +97,6 @@ public class Wall implements Serializable  {
    */
   void setYStart(float yStart) {
     this.yStart = yStart;
-    this.points = null;
   }
 
   /**
@@ -117,7 +113,6 @@ public class Wall implements Serializable  {
    */
   void setXEnd(float xEnd) {
     this.xEnd = xEnd;
-    this.points = null;
   }
 
   /**
@@ -134,7 +129,6 @@ public class Wall implements Serializable  {
    */
   void setYEnd(float yEnd) {
     this.yEnd = yEnd;
-    this.points = null;
   }
 
   /**
@@ -151,7 +145,6 @@ public class Wall implements Serializable  {
    */
   void setWallAtStart(Wall wallAtStart) {
     this.wallAtStart = wallAtStart;
-    this.points = null;
   }
 
   /**
@@ -169,7 +162,6 @@ public class Wall implements Serializable  {
    */
   void setWallAtEnd(Wall wallAtEnd) {
     this.wallAtEnd = wallAtEnd;
-    this.points = null;
   }
 
   /**
@@ -186,7 +178,6 @@ public class Wall implements Serializable  {
    */
   void setThickness(float thickness) {
     this.thickness = thickness;
-    this.points = null;
   }
 
   /**
@@ -224,52 +215,43 @@ public class Wall implements Serializable  {
    * @return an array of the 4 (x,y) coordinates of the wall corners.
    */
   public float [][] getPoints() {
-    if (this.points == null) {
-      float [][] wallPoints = getRectanglePoints();
-      float limit = 2 * this.thickness;
-      // If wall is joined to a wall at its start, 
-      // compute the intersection between their outlines 
-      if (this.wallAtStart != null) {
-        float [][] wallAtStartPoints = this.wallAtStart.getRectanglePoints();
-        if (this.wallAtStart.getWallAtEnd() == this) {
-          computeIntersection(wallPoints [0], wallPoints [1], 
-              wallAtStartPoints [1], wallAtStartPoints [0], limit);
-          computeIntersection(wallPoints [3], wallPoints [2],  
-              wallAtStartPoints [2], wallAtStartPoints [3], limit);
-        } else if (this.wallAtStart.getWallAtStart() == this) {
-          computeIntersection(wallPoints [0], wallPoints [1], 
-              wallAtStartPoints [2], wallAtStartPoints [3], limit);
-          computeIntersection(wallPoints [3], wallPoints [2],  
-              wallAtStartPoints [0], wallAtStartPoints [1], limit);
-        }
+    float [][] wallPoints = getRectanglePoints();
+    float limit = 2 * this.thickness;
+    // If wall is joined to a wall at its start, 
+    // compute the intersection between their outlines 
+    if (this.wallAtStart != null) {
+      float [][] wallAtStartPoints = this.wallAtStart.getRectanglePoints();
+      if (this.wallAtStart.getWallAtEnd() == this) {
+        computeIntersection(wallPoints [0], wallPoints [1], 
+            wallAtStartPoints [1], wallAtStartPoints [0], limit);
+        computeIntersection(wallPoints [3], wallPoints [2],  
+            wallAtStartPoints [2], wallAtStartPoints [3], limit);
+      } else if (this.wallAtStart.getWallAtStart() == this) {
+        computeIntersection(wallPoints [0], wallPoints [1], 
+            wallAtStartPoints [2], wallAtStartPoints [3], limit);
+        computeIntersection(wallPoints [3], wallPoints [2],  
+            wallAtStartPoints [0], wallAtStartPoints [1], limit);
       }
-    
-      // If wall is joined to a wall at its end, 
-      // compute the intersection between their outlines 
-      if (this.wallAtEnd != null) {
-        float [][] wallAtEndPoints = this.wallAtEnd.getRectanglePoints();
-        if (wallAtEnd.getWallAtStart() == this) {
-          computeIntersection(wallPoints [1], wallPoints [0], 
-              wallAtEndPoints [0], wallAtEndPoints [1], limit);
-          computeIntersection(wallPoints [2], wallPoints [3], 
-              wallAtEndPoints [3], wallAtEndPoints [2], limit);
-        
-        } else if (wallAtEnd.getWallAtEnd() == this) {
-          computeIntersection(wallPoints [1], wallPoints [0],  
-              wallAtEndPoints [3], wallAtEndPoints [2], limit);
-          computeIntersection(wallPoints [2], wallPoints [3], 
-              wallAtEndPoints [0], wallAtEndPoints [1], limit);
-        }
-      }
-      // Cache points
-      this.points = wallPoints;
     }
-
-    // Return a clone of points of this wall
-    return new float [][] {{this.points [0][0], this.points [0][1]},
-                           {this.points [1][0], this.points [1][1]},
-                           {this.points [2][0], this.points [2][1]},
-                           {this.points [3][0], this.points [3][1]}};
+  
+    // If wall is joined to a wall at its end, 
+    // compute the intersection between their outlines 
+    if (this.wallAtEnd != null) {
+      float [][] wallAtEndPoints = this.wallAtEnd.getRectanglePoints();
+      if (wallAtEnd.getWallAtStart() == this) {
+        computeIntersection(wallPoints [1], wallPoints [0], 
+            wallAtEndPoints [0], wallAtEndPoints [1], limit);
+        computeIntersection(wallPoints [2], wallPoints [3], 
+            wallAtEndPoints [3], wallAtEndPoints [2], limit);
+      
+      } else if (wallAtEnd.getWallAtEnd() == this) {
+        computeIntersection(wallPoints [1], wallPoints [0],  
+            wallAtEndPoints [3], wallAtEndPoints [2], limit);
+        computeIntersection(wallPoints [2], wallPoints [3], 
+            wallAtEndPoints [0], wallAtEndPoints [1], limit);
+      }
+    }
+    return wallPoints;
   }
 
   /**
