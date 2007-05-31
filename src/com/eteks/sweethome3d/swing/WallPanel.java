@@ -32,6 +32,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 
@@ -60,7 +61,7 @@ public class WallPanel extends JPanel {
   private ColorButton    leftSideColorButton;
   private JLabel         rightSideColorLabel;
   private ColorButton    rightSideColorButton;
-  
+  private JLabel         wallOrientationLabel;
 
   /**
    * Creates a panel that displays wall data according to the units set in
@@ -98,13 +99,17 @@ public class WallPanel extends JPanel {
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
     this.thicknessLabel = new JLabel(this.resource.getString("thicknessLabel.text"));
     this.thicknessSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000));
     this.leftSideColorLabel = new JLabel(this.resource.getString("leftSideColorLabel.text"));
     this.leftSideColorButton = new ColorButton();
     this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
     this.rightSideColorLabel = new JLabel(this.resource.getString("rightSideColorLabel.text"));
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
+    // wallOrientationLabel shows an HTML exlanation of wall orientation with an image URL in resource
+    this.wallOrientationLabel = new JLabel(
+        String.format(this.resource.getString("wallOrientationLabel.text"), 
+            WallPanel.class.getResource("resources/wallOrientation.png")), JLabel.CENTER);
   }
   
   /**
@@ -165,13 +170,17 @@ public class WallPanel extends JPanel {
     add(colorsPanel, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
-    // Last row
+    // Fourth row
     add(this.thicknessLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
     add(this.thicknessSpinner, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+    // Last row
+    add(this.wallOrientationLabel, new GridBagConstraints(
+        0, 4, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
   private JPanel createTitledPanel(String title, JComponent [] components) {

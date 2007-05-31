@@ -113,13 +113,13 @@ public class HomeFurniturePanel extends JPanel {
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
     this.widthLabel = new JLabel(this.resource.getString("widthLabel.text"));
     this.widthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
     this.depthLabel = new JLabel(this.resource.getString("depthLabel.text"));
     this.depthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
     this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
     this.heightSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));

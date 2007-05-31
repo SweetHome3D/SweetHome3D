@@ -43,6 +43,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -94,9 +95,11 @@ public class PlanComponent extends JComponent {
   
   private static final GeneralPath ROTATION_VERTEX_PATH;
   private static final GeneralPath SIZE_VERTEX_PATH;
+  private static final GeneralPath WALL_ORIENTATION_PATH;
+  private static final Shape       WALL_POINT_PATH;
   
   static {
-    // Create a path that draws an arrow used as a rotation indicator 
+    // Create a path that draws an round arrow used as a rotation indicator 
     // at top left vertex of a piece of furniture
     ROTATION_VERTEX_PATH = new GeneralPath();
     ROTATION_VERTEX_PATH.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
@@ -105,7 +108,7 @@ public class PlanComponent extends JComponent {
     ROTATION_VERTEX_PATH.lineTo(5.66f, -5.66f);
     ROTATION_VERTEX_PATH.lineTo(4f, -8.3f);
     
-    // Create a path as a size indicator 
+    // Create a path used as a size indicator 
     // at bottom right vertex of a piece of furniture
     SIZE_VERTEX_PATH = new GeneralPath();
     SIZE_VERTEX_PATH.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
@@ -119,6 +122,15 @@ public class PlanComponent extends JComponent {
     SIZE_VERTEX_PATH.moveTo(6, 8.5f);
     SIZE_VERTEX_PATH.lineTo(9, 9);
     SIZE_VERTEX_PATH.lineTo(8.5f, 6);
+    
+    // Create a path used an orientation indicator
+    // at start and end points of a selected wall
+    WALL_ORIENTATION_PATH = new GeneralPath();
+    WALL_ORIENTATION_PATH.moveTo(-4, -4);
+    WALL_ORIENTATION_PATH.lineTo(4, 0);
+    WALL_ORIENTATION_PATH.lineTo(-4, 4);
+
+    WALL_POINT_PATH = new Ellipse2D.Float(-3, -3, 6, 6);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -490,7 +502,48 @@ public class PlanComponent extends JComponent {
     List<Object> selectedItems = this.home.getSelectedItems();
     for (Object item : selectedItems) {
       if (item instanceof Wall) {
-        g2D.draw(getShape(((Wall)item).getPoints()));
+        Wall wall = (Wall)item;
+        g2D.draw(getShape(wall.getPoints()));
+        
+        g2D.setPaint(selectionColor);         
+        g2D.setStroke(new BasicStroke(2));
+        
+        AffineTransform previousTransform = g2D.getTransform();
+        g2D.translate(wall.getXStart(), wall.getYStart());
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        // Draw start point of the wall
+        g2D.fill(WALL_POINT_PATH);
+        
+        double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+            wall.getXEnd() - wall.getXStart());
+        double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
+            wall.getXEnd(), wall.getYEnd()) * this.scale;
+        g2D.rotate(wallAngle);
+        // If the distance between start and end points is < 30
+        if (distanceAtScale < 30) { 
+          // Draw only one orientation indicator between the two points
+          g2D.translate(distanceAtScale / 2, 0);
+        } else {
+          // Draw orientation indicator at start of the wall
+          g2D.translate(8, 0);
+        }
+        g2D.draw(WALL_ORIENTATION_PATH);
+        g2D.setTransform(previousTransform);
+        
+        // Draw end point of the wall
+        g2D.translate(wall.getXEnd(), wall.getYEnd());
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.fill(WALL_POINT_PATH);
+        g2D.rotate(wallAngle);
+        if (distanceAtScale >= 30) { 
+          // Draw orientation indicator at end of the wall
+          g2D.translate(-10, 0);
+          g2D.draw(WALL_ORIENTATION_PATH);
+        }        
+        g2D.setTransform(previousTransform);
+
+        g2D.setPaint(selectionPaint);
+        g2D.setStroke(selectionStroke);
       }  
     }
     // Draw walls area
@@ -498,6 +551,7 @@ public class PlanComponent extends JComponent {
     g2D.setStroke(new BasicStroke(2f / this.scale));
     g2D.draw(wallsArea);
     
+    // Draw furniture
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         float [][] piecePoints = piece.getPoints();
@@ -518,7 +572,7 @@ public class PlanComponent extends JComponent {
         g2D.draw(pieceShape);
         
         if (selectedItems.size() == 1 && selectedItems.contains(piece)) {
-          g2D.setPaint(UIManager.getColor("textHighlight"));         
+          g2D.setPaint(selectionColor);         
           g2D.setStroke(new BasicStroke(1.5f));
           
           AffineTransform previousTransform = g2D.getTransform();
