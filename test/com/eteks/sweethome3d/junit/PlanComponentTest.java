@@ -196,6 +196,19 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertWallsAreJoined(wall1, wall4, wall3); 
     // Check the second and the third wall are selected
     assertSelectionContains(frame.home, wall2, wall3);
+    
+    // 12. Select first wall
+    tester.actionClick(planComponent, 100, 100); // Give focus first
+    tester.actionClick(planComponent, 40, 30);
+    // Drag cursor from (30, 30) to (50, 50) 
+    tester.actionMousePress(planComponent, 
+        new ComponentLocation(new Point(30, 30))); 
+    tester.actionMouseMove(planComponent, 
+        new ComponentLocation(new Point(50, 50))); 
+    tester.actionMouseRelease(); 
+    // Check wall start point moved to (60, 60)
+    assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
+    assertCoordinatesEqualWallPoints(60, 60, 24, 300, wall4);
   }
 
   /**

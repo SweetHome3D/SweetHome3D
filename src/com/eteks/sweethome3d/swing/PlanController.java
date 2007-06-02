@@ -23,12 +23,10 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
-import java.util.prefs.Preferences;
 
 import javax.swing.JComponent;
 import javax.swing.undo.AbstractUndoableEdit;
@@ -65,12 +63,15 @@ public class PlanController {
   private ControllerState     selectionMoveState;
   private ControllerState     wallCreationState;
   private ControllerState     newWallState;
+  private ControllerState     wallResizeState;
   private ControllerState     pieceOfFurnitureRotationState;
   private ControllerState     pieceOfFurnitureResizeState;
   // Mouse cursor position at last mouse press
   private float               xLastMousePress;
   private float               yLastMousePress;
   private boolean             shiftDownLastMousePress;
+  private float               xLastMouseMove;
+  private float               yLastMouseMove;
 
   /**
    * Creates the controller of plan view. 
@@ -92,8 +93,9 @@ public class PlanController {
     this.rectangleSelectionState = new RectangleSelectionState();
     this.wallCreationState = new WallCreationState();
     this.newWallState = new NewWallState();
+    this.wallResizeState = new WallResizeState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
-    this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
+    this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();    
     // Set defaut state to selectionState
     setState(this.selectionState);
     
@@ -183,6 +185,9 @@ public class PlanController {
    * Processes a mouse button moved event.
    */
   public void moveMouse(float x, float y) {
+    // Store the last coordinates of a mouse move
+    this.xLastMouseMove = x;
+    this.yLastMouseMove = y;
     this.state.moveMouse(x, y);
   }
 
@@ -222,6 +227,13 @@ public class PlanController {
   }
   
   /**
+   * Returns the wall resize state.
+   */
+  protected ControllerState getWallResizeState() {
+    return this.wallResizeState;
+  }
+  
+  /**
    * Returns the piece rotation state.
    */
   protected ControllerState getPieceOfFurnitureRotationState() {
@@ -256,6 +268,20 @@ public class PlanController {
     return this.shiftDownLastMousePress;
   }
 
+  /**
+   * Returns the abscissa of mouse position at last mouse move.
+   */
+  protected float getXLastMouseMove() {
+    return this.xLastMouseMove;
+  }
+
+  /**
+   * Returns the ordinate of mouse position at last mouse move.
+   */
+  protected float getYLastMouseMove() {
+    return this.yLastMouseMove;
+  }
+  
   /**
    * Controls the modification of selected walls.
    */
@@ -373,10 +399,44 @@ public class PlanController {
   }
 
   /**
+   * Returns the selected wall with a start point 
+   * at (<code>x</code>, <code>y</code>).
+   */
+  private Wall getResizedWallStartAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Wall) {
+      Wall wall = (Wall)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (wall.containsWallStartAt(x, y, margin)) {
+        return wall;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected wall with an end point 
+   * at (<code>x</code>, <code>y</code>).
+   */
+  private Wall getResizedWallEndAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Wall) {
+      Wall wall = (Wall)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (wall.containsWallEndAt(x, y, margin)) {
+        return wall;
+      }
+    } 
+    return null;
+  }
+  
+  /**
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
   private Object getItemAt(float x, float y) {
-    float margin = 2 / ((PlanComponent)getView()).getScale();
+    float margin = 3 / ((PlanComponent)getView()).getScale();
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
     // Loop on home furniture in reverse order to give pripority to last drawn piece
     // in case it covers an other piece
@@ -413,36 +473,36 @@ public class PlanController {
   }
   
   /**
-   * Returns the piece of furniture in selected items with a vertex 
+   * Returns the selected piece of furniture with a vertex 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
     List<Object> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture piece = ((HomePieceOfFurniture)selectedItems.get(0));
-      float margin = 2 / ((PlanComponent)getView()).getScale();
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
       if (piece.containsPoint(x, y, margin)
           && piece.isTopLeftVertexAt(x, y, margin)) {
-        return (HomePieceOfFurniture)selectedItems.get(0);
+        return piece;
       }
     } 
     return null;
   }
   
   /**
-   * Returns the piece of furniture in selected items with a vertex 
+   * Returns the selected piece of furniture with a vertex 
    * at (<code>x</code>, <code>y</code>) that can be used to resize the piece.
    */
   private HomePieceOfFurniture getResizedPieceOfFurnitureAt(float x, float y) {
     List<Object> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
-      HomePieceOfFurniture piece = ((HomePieceOfFurniture)selectedItems.get(0));
-      float margin = 2 / ((PlanComponent)getView()).getScale();
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
       if (piece.containsPoint(x, y, margin)
           && piece.isBottomRightVertexAt(x, y, margin)) {
-        return (HomePieceOfFurniture)selectedItems.get(0);
+        return piece;
       }
     } 
     return null;
@@ -488,46 +548,73 @@ public class PlanController {
     for (Object item : items) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
-        this.home.moveWallStartPointTo(wall, 
-            wall.getXStart() + dx, wall.getYStart() + dy);
-        this.home.moveWallEndPointTo(wall, 
-            wall.getXEnd() + dx, wall.getYEnd() + dy);
-        Wall wallAtStart = wall.getWallAtStart();
-        // If wall is joined to a wall at its start 
-        // and this wall doesn't belong to the list of moved walls
-        if (wallAtStart != null && !items.contains(wallAtStart)) {
-          // Move the wall start point or end point
-          if (wallAtStart.getWallAtStart() == wall) {
-            this.home.moveWallStartPointTo(wallAtStart, 
-                wallAtStart.getXStart() + dx, 
-                wallAtStart.getYStart() + dy);
-          } else if (wallAtStart.getWallAtEnd() == wall) {
-            this.home.moveWallEndPointTo(wallAtStart, 
-                wallAtStart.getXEnd() + dx, 
-                wallAtStart.getYEnd() + dy);
-          }
-        }
-        Wall wallAtEnd = wall.getWallAtEnd();
-        // If wall is joined to a wall at its end  
-        // and this wall doesn't belong to the list of moved walls
-        if (wallAtEnd != null && !items.contains(wallAtEnd)) {
-          // Move the wall start point or end point
-          if (wallAtEnd.getWallAtStart() == wall) {
-            this.home.moveWallStartPointTo(wallAtEnd, 
-                wallAtEnd.getXStart() + dx, 
-                wallAtEnd.getYStart() + dy);
-          } else if (wallAtEnd.getWallAtEnd() == wall) {
-            this.home.moveWallEndPointTo(wallAtEnd, 
-                wallAtEnd.getXEnd() + dx, 
-                wallAtEnd.getYEnd() + dy);
-          }
-        }
+        moveWallStartPoint(wall, 
+            wall.getXStart() + dx, wall.getYStart() + dy,
+            !items.contains(wall.getWallAtStart()));
+        moveWallEndPoint(wall, 
+            wall.getXEnd() + dx, wall.getYEnd() + dy,
+            !items.contains(wall.getWallAtEnd()));
       } else if (item instanceof HomePieceOfFurniture) {
         HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
         this.home.setPieceOfFurnitureLocation(
             piece, piece.getX() + dx, piece.getY() + dy);
       }
     }
+  }
+  
+  /**
+   * Moves <code>wall</code> start point to (<code>xStart</code>, <code>yStart</code>)
+   * and the wall point joined to its start point if <code>moveWallAtStart</code> is true.
+   */
+  private void moveWallStartPoint(Wall wall, float xStart, float yStart,
+                                  boolean moveWallAtStart) {
+    this.home.moveWallStartPointTo(wall, xStart, yStart);
+    Wall wallAtStart = wall.getWallAtStart();
+    // If wall is joined to a wall at its start 
+    // and this wall doesn't belong to the list of moved walls
+    if (wallAtStart != null && moveWallAtStart) {
+      // Move the wall start point or end point
+      if (wallAtStart.getWallAtStart() == wall) {
+        this.home.moveWallStartPointTo(wallAtStart, 
+            xStart, yStart);
+      } else if (wallAtStart.getWallAtEnd() == wall) {
+        this.home.moveWallEndPointTo(wallAtStart, 
+            xStart, yStart);
+      }
+    }
+  }
+  
+  /**
+   * Moves <code>wall</code> end point to (<code>xEnd</code>, <code>yEnd</code>)
+   * and the wall point joined to its end if <code>moveWallAtEnd</code> is true.
+   */
+  private void moveWallEndPoint(Wall wall, float xEnd, float yEnd,
+                                boolean moveWallAtEnd) {
+    this.home.moveWallEndPointTo(wall, xEnd, yEnd);
+    Wall wallAtEnd = wall.getWallAtEnd();
+    // If wall is joined to a wall at its end  
+    // and this wall doesn't belong to the list of moved walls
+    if (wallAtEnd != null && moveWallAtEnd) {
+      // Move the wall start point or end point
+      if (wallAtEnd.getWallAtStart() == wall) {
+        this.home.moveWallStartPointTo(wallAtEnd, xEnd, yEnd);
+      } else if (wallAtEnd.getWallAtEnd() == wall) {
+        this.home.moveWallEndPointTo(wallAtEnd, xEnd, yEnd);
+      }
+    }
+  }
+  
+  /**
+   * Moves <code>wall</code> start point to (<code>x</code>, <code>y</code>)
+   * if <code>startPoint</code> is true or <code>wall</code> end point 
+   * to (<code>x</code>, <code>y</code>) if <code>startPoint</code> is false.
+   */
+  private void moveWallPoint(Wall wall, float x, float y, boolean startPoint) {
+    if (startPoint) {
+      moveWallStartPoint(wall, x, y, true);
+    } else {
+      moveWallEndPoint(wall, x, y, true);
+    }    
   }
   
   /**
@@ -557,7 +644,7 @@ public class PlanController {
   }
 
   /**
-   * Deselect all walls in plan. 
+   * Deselects all walls in plan. 
    */
   private void deselectAll() {
     selectItems(Collections.emptyList());
@@ -772,6 +859,45 @@ public class PlanController {
     selectAndShowItems(itemsList);
   }
 
+  /**
+   * Posts an undoable operation about <code>wall</code> resizing.
+   */
+  private void postWallResize(final Wall wall, final float oldX, final float oldY, 
+                              final boolean startPoint) {
+    final float newX;
+    final float newY;
+    if (startPoint) {
+      newX = wall.getXStart();
+      newY = wall.getYStart();
+    } else {
+      newX = wall.getXEnd();
+      newY = wall.getYEnd();
+    }
+    if (newX != oldX || newY != oldY) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          moveWallPoint(wall, oldX, oldY, startPoint);
+          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          moveWallPoint(wall, newX, newY, startPoint);
+          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoWallResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+  
   /**
    * Post to undo support an angle change on <code>piece</code>. 
    */
@@ -1057,9 +1183,9 @@ public class PlanController {
 
     @Override
     public void enter() {
-      ((PlanComponent)getView()).setCursor(getMode());
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
-
+    
     @Override
     public void setMode(Mode mode) {
       if (mode == Mode.WALL_CREATION) {
@@ -1079,12 +1205,14 @@ public class PlanController {
 
     @Override
     public void moveMouse(float x, float y) {
-      if (getResizedPieceOfFurnitureAt(x, y) != null) {
+      if (getResizedPieceOfFurnitureAt(x, y) != null
+          || getResizedWallStartAt(x, y) != null
+          || getResizedWallEndAt(x, y) != null) {
         ((PlanComponent)getView()).setResizeCursor();
       } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
       } else {
-        ((PlanComponent)getView()).setCursor(getMode());
+        ((PlanComponent)getView()).setCursor(Mode.SELECTION);
       }
     }
 
@@ -1099,6 +1227,9 @@ public class PlanController {
             setState(getPieceOfFurnitureResizeState());
           } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureRotationState());
+          } else if (getResizedWallStartAt(x, y) != null
+                     || getResizedWallEndAt(x, y) != null) {
+            setState(getWallResizeState());
           } else {
             // Change state to SelectionMoveState
             setState(getSelectionMoveState());
@@ -1147,7 +1278,7 @@ public class PlanController {
         selectItem(itemUnderCursor);
       }
     }
-
+    
     @Override
     public void moveMouse(float x, float y) {      
       moveItems(home.getSelectedItems(), 
@@ -1307,7 +1438,7 @@ public class PlanController {
 
     @Override
     public void enter() {
-      ((PlanComponent)getView()).setCursor(getMode());
+      ((PlanComponent)getView()).setCursor(Mode.WALL_CREATION);
     }
 
     @Override
@@ -1327,9 +1458,28 @@ public class PlanController {
   }
 
   /**
+   * Wall modification state.  
+   */
+  private abstract class AbstractWallState extends ControllerState {
+    private String centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
+    private String inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
+    
+    protected String getToolTipFeedbackText(Wall wall) {
+      float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
+          wall.getXEnd(), wall.getYEnd());
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        return String.format(this.centimerWallLengthToolTipFeedback, length);
+      } else {
+        return String.format(this.inchWallLengthToolTipFeedback, 
+            UserPreferences.Unit.centimerToInch(length));
+      }
+    }
+  }
+
+  /**
    * New wall state. This state manages wall creation at each mouse press. 
    */
-  private class NewWallState extends ControllerState {
+  private class NewWallState extends AbstractWallState {
     private float        xStart;
     private float        yStart;
     private float        xLastEnd;
@@ -1345,8 +1495,6 @@ public class PlanController {
     private List<Object> oldSelection;
     private List<Wall>   newWalls;
     private boolean      magnetismEnabled;
-    private String       centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
-    private String       inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
     
     @Override
     public Mode getMode() {
@@ -1490,6 +1638,7 @@ public class PlanController {
     @Override
     public void escape() {
       if (this.newWall != null) {
+        // Delete current created wall
         home.deleteWall(this.newWall);
         this.newWalls.remove(this.newWall);
       }
@@ -1500,17 +1649,68 @@ public class PlanController {
       // Change state to WallCreationState 
       setState(getWallCreationState());
     }
+  }
 
-    private String getToolTipFeedbackText(Wall wall) {
-      float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
-          wall.getXEnd(), wall.getYEnd());
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerWallLengthToolTipFeedback, length);
-      } else {
-        return String.format(this.inchWallLengthToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(length));
-      }
+  /**
+   * Wall resize state. This state manages wall resizing. 
+   */
+  private class WallResizeState extends AbstractWallState {
+    private Wall         selectedWall;
+    private boolean      startPoint;
+    private float        oldX;
+    private float        oldY;
+    private float        deltaXToResizePoint;
+    private float        deltaYToResizePoint;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
     }
+    
+    @Override
+    public void enter() {
+      this.selectedWall = (Wall)home.getSelectedItems().get(0);
+      this.startPoint = this.selectedWall 
+          == getResizedWallStartAt(getXLastMousePress(), getYLastMousePress());
+      if (this.startPoint) {
+        this.oldX = this.selectedWall.getXStart();
+        this.oldY = this.selectedWall.getYStart();
+      } else {
+        this.oldX = this.selectedWall.getXEnd();
+        this.oldY = this.selectedWall.getYEnd();
+      }
+      this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
+      this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      moveWallPoint(this.selectedWall, 
+            x - this.deltaXToResizePoint, y - this.deltaYToResizePoint, 
+            this.startPoint);
+
+      ((PlanComponent)getView()).setToolTipFeedback(
+          getToolTipFeedbackText(this.selectedWall), x, y);
+      // Ensure point at (x,y) is visible
+      ((PlanComponent)getView()).makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postWallResize(this.selectedWall, this.oldX, this.oldY, this.startPoint);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      moveWallPoint(this.selectedWall, this.oldX, this.oldY, this.startPoint);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteToolTipFeedback();
+    }  
   }
 
   /**
@@ -1535,7 +1735,7 @@ public class PlanController {
     public void enter() {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
-      this.selectedPiece = getRotatedPieceOfFurnitureAt(xLastMouseMove, yLastMouseMove);
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
       this.oldAngle = this.selectedPiece.getAngle();
@@ -1544,7 +1744,7 @@ public class PlanController {
       ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
           this.xLastMouseMove, this.yLastMouseMove);
     }
-
+    
     @Override
     public void moveMouse(float x, float y) {      
       // Compute the new angle of the piece
@@ -1572,7 +1772,6 @@ public class PlanController {
     @Override
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureRotation(this.selectedPiece, this.oldAngle);
-      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
 
@@ -1588,9 +1787,13 @@ public class PlanController {
     @Override
     public void escape() {
       home.setPieceOfFurnitureAngle(this.selectedPiece, oldAngle);
-      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
+    
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteToolTipFeedback();
+    }  
 
     private String getToolTipFeedbackText(float angle) {
       return String.format(this.rotationToolTipFeedback, 
@@ -1619,7 +1822,7 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.selectedPiece = getResizedPieceOfFurnitureAt(getXLastMousePress(), getYLastMousePress());
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
       this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
@@ -1630,7 +1833,7 @@ public class PlanController {
       ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
           getXLastMousePress(), getYLastMousePress());
     }
-
+    
     @Override
     public void moveMouse(float x, float y) {
       // Compute the new location and dimension of the piece to let 
@@ -1665,7 +1868,6 @@ public class PlanController {
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureResize(this.selectedPiece, this.oldX, this.oldY, 
           this.oldWidth, this.oldDepth);
-      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
 
@@ -1674,9 +1876,13 @@ public class PlanController {
       home.setPieceOfFurnitureLocation(this.selectedPiece, this.oldX, this.oldY);
       home.setPieceOfFurnitureDimension(this.selectedPiece, 
           this.oldWidth, this.oldDepth, this.selectedPiece.getHeight());
-      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteToolTipFeedback();
+    }  
     
     private String getToolTipFeedbackText(float width, float depth) {
       if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {

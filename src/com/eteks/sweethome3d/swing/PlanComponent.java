@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -106,6 +105,7 @@ public class PlanComponent extends JComponent {
   private static final GeneralPath SIZE_VERTEX_PATH;
   private static final GeneralPath WALL_ORIENTATION_PATH;
   private static final Shape       WALL_POINT_PATH;
+  private static final GeneralPath WALL_SIZE_PATH;
   
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
@@ -140,6 +140,17 @@ public class PlanComponent extends JComponent {
     WALL_ORIENTATION_PATH.lineTo(-4, 4);
 
     WALL_POINT_PATH = new Ellipse2D.Float(-3, -3, 6, 6);
+
+    // Create a path used as a size indicator 
+    // at start and end points of a selected wall
+    WALL_SIZE_PATH = new GeneralPath();
+    WALL_SIZE_PATH.moveTo(5, -2);
+    WALL_SIZE_PATH.lineTo(5, 2);
+    WALL_SIZE_PATH.moveTo(6, 0);
+    WALL_SIZE_PATH.lineTo(11, 0);
+    WALL_SIZE_PATH.moveTo(8.7f, -1.8f);
+    WALL_SIZE_PATH.lineTo(12, 0);
+    WALL_SIZE_PATH.lineTo(8.7f, 1.8f);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -506,21 +517,22 @@ public class PlanComponent extends JComponent {
         selectionColor.getBlue(), 128);
     Stroke selectionStroke = new BasicStroke(6 / this.scale, 
         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    g2D.setPaint(selectionPaint);
-    g2D.setStroke(selectionStroke);
+    Stroke indicatorStroke = new BasicStroke(1.5f);
+    Stroke wallIndicatorStroke = new BasicStroke(2f);
     List<Object> selectedItems = this.home.getSelectedItems();
     for (Object item : selectedItems) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
+        g2D.setPaint(selectionPaint);
+        g2D.setStroke(selectionStroke);
         g2D.draw(getShape(wall.getPoints()));
-        
-        g2D.setPaint(selectionColor);         
-        g2D.setStroke(new BasicStroke(2));
         
         AffineTransform previousTransform = g2D.getTransform();
         g2D.translate(wall.getXStart(), wall.getYStart());
         g2D.scale(1 / this.scale, 1 / this.scale);
         // Draw start point of the wall
+        g2D.setPaint(selectionColor);         
+        g2D.setStroke(wallIndicatorStroke);
         g2D.fill(WALL_POINT_PATH);
         
         double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
@@ -528,6 +540,13 @@ public class PlanComponent extends JComponent {
         double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
             wall.getXEnd(), wall.getYEnd()) * this.scale;
         g2D.rotate(wallAngle);
+        if (selectedItems.size() == 1 && selectedItems.contains(wall)) {
+          g2D.rotate(Math.PI);
+          g2D.setStroke(indicatorStroke);
+          g2D.draw(WALL_SIZE_PATH);
+          g2D.rotate(-Math.PI);
+          g2D.setStroke(wallIndicatorStroke);
+        }        
         // If the distance between start and end points is < 30
         if (distanceAtScale < 30) { 
           // Draw only one orientation indicator between the two points
@@ -544,15 +563,17 @@ public class PlanComponent extends JComponent {
         g2D.scale(1 / this.scale, 1 / this.scale);
         g2D.fill(WALL_POINT_PATH);
         g2D.rotate(wallAngle);
+        if (selectedItems.size() == 1 && selectedItems.contains(wall)) {
+          g2D.setStroke(indicatorStroke);
+          g2D.draw(WALL_SIZE_PATH);
+          g2D.setStroke(wallIndicatorStroke);
+        }        
         if (distanceAtScale >= 30) { 
           // Draw orientation indicator at end of the wall
           g2D.translate(-10, 0);
           g2D.draw(WALL_ORIENTATION_PATH);
         }        
         g2D.setTransform(previousTransform);
-
-        g2D.setPaint(selectionPaint);
-        g2D.setStroke(selectionStroke);
       }  
     }
     // Draw walls area
@@ -560,13 +581,15 @@ public class PlanComponent extends JComponent {
     g2D.setStroke(new BasicStroke(1.5f / this.scale));
     g2D.draw(wallsArea);
     
+    Color pieceAreaColor = UIManager.getColor("window");
+    BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
     // Draw furniture
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         float [][] piecePoints = piece.getPoints();
         Shape pieceShape = getShape(piecePoints);
         // Fill piece area
-        g2D.setPaint(UIManager.getColor("window"));
+        g2D.setPaint(pieceAreaColor);
         g2D.fill(pieceShape);
         // Draw its icon
         paintPieceOfFurnitureIcon(g2D, piece);
@@ -577,12 +600,12 @@ public class PlanComponent extends JComponent {
         }        
         // Draw its border
         g2D.setPaint(getForeground());
-        g2D.setStroke(new BasicStroke(1f / this.scale));
+        g2D.setStroke(pieceBorderStroke);
         g2D.draw(pieceShape);
         
         if (selectedItems.size() == 1 && selectedItems.contains(piece)) {
           g2D.setPaint(selectionColor);         
-          g2D.setStroke(new BasicStroke(1.5f));
+          g2D.setStroke(indicatorStroke);
           
           AffineTransform previousTransform = g2D.getTransform();
           // Draw rotation indicator at top left vertex of the piece
@@ -834,12 +857,12 @@ public class PlanComponent extends JComponent {
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
     if (cursorSize.width != 0) {
       point.x += cursorSize.width / 2 + 2;
-      point.y += cursorSize.height / 2 + 2;
+      point.y -= cursorSize.height / 2 + 2;
     } else {
       // If custom cursor isn't supported let's consider 
       // default cursor size is 16 pixels wide
       point.x += 10;
-      point.y += 10;
+      point.y -= 10;
     }
     // Show popup to display tool tip
     this.toolTipPopup = PopupFactory.getSharedInstance().
