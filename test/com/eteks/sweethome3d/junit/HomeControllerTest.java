@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.PlanController;
 
 /**
  * Tests home controller.
@@ -158,6 +159,24 @@ public class HomeControllerTest extends TestCase {
         home.getSelectedItems().isEmpty());
     //  Check Add and Undo actions are enabled
     assertActionsEnabled(true, false, true, false);
+  }
+  
+  /**
+   * Tests zoom and alignment tools. 
+   */
+  public void testZoom() {
+    PlanController planController = homeController.getPlanController();
+    float scale = planController.getScale();
+    
+    // 1. Zoom in 
+    runAction(HomePane.ActionType.ZOOM_IN);    
+    // Check scale changed
+    assertEquals("Scale is incorrect", scale * 1.5f, planController.getScale()); 
+    
+    // 2. Zoom out 
+    runAction(HomePane.ActionType.ZOOM_OUT);    
+    // Check scale is back to its previous value
+    assertEquals("Scale is incorrect", scale, planController.getScale()); 
   }
   
   /**

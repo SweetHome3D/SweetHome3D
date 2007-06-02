@@ -84,7 +84,7 @@ public class HomePane extends JRootPane {
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ABOUT}
+    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ZOOM_OUT, ZOOM_IN, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
   private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
@@ -190,6 +190,8 @@ public class HomePane extends JRootPane {
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
         controller.getPlanController(), "modifySelectedWalls");
+    createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
+    createAction(ActionType.ZOOM_IN, controller, "zoomIn");
     createAction(ActionType.ABOUT, controller, "about");
   }
 
@@ -327,6 +329,9 @@ public class HomePane extends JRootPane {
     wallCreationCheckBoxMenuItem.setAction(actions.get(ActionType.WALL_CREATION));    
     planMenu.add(wallCreationCheckBoxMenuItem);
     planMenu.add(actions.get(ActionType.MODIFY_WALL));
+    planMenu.addSeparator();
+    planMenu.add(actions.get(ActionType.ZOOM_OUT));
+    planMenu.add(actions.get(ActionType.ZOOM_IN));
 
     // Create Help menu
     JMenu helpMenu = null;
@@ -380,6 +385,10 @@ public class HomePane extends JRootPane {
     toolBar.addSeparator();
     
     toolBar.add(actions.get(ActionType.DELETE));
+    toolBar.addSeparator();
+    
+    toolBar.add(actions.get(ActionType.ZOOM_OUT));
+    toolBar.add(actions.get(ActionType.ZOOM_IN));
     
     // Remove focuable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {

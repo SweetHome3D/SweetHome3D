@@ -217,8 +217,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         new ComponentLocation(new Point(156 + depthPixel / 2 + 4, 135 - widthPixel / 2 + 4))); 
     tester.actionMouseRelease();
     // Check piece was resized (caution : piece angle is oriented at 90°)
-    assertDimensionEqualPiece(pieceWidth - 2 * 4 / planComponent.getScale(), 
-        pieceDepth + 2 * 4 / planComponent.getScale(), piece);
+    assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
+        pieceDepth + 4 / planComponent.getScale(), piece);
 
     // 12. Click once on undo button
     frame.undoButton.doClick();

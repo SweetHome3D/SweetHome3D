@@ -36,6 +36,8 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -51,6 +53,7 @@ public class PlanController {
   private UserPreferences     preferences;
   private UndoableEditSupport undoSupport;
   private ResourceBundle      resource;
+  private SelectionListener   selectionListener;
   // Current state
   private ControllerState     state;
   // Possibles states
@@ -90,6 +93,8 @@ public class PlanController {
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
     // Set defaut state to selectionState
     setState(this.selectionState);
+    
+    addHomeSelectionListener();
   }
 
   /**
@@ -266,6 +271,29 @@ public class PlanController {
     }
   }
   
+  /**
+   * Returns the scale in plan view. 
+   */
+  public float getScale() {
+    return ((PlanComponent)getView()).getScale();
+  }
+
+  /**
+   * Controls the scale in plan view. 
+   */
+  public void setScale(float newScale) {
+    ((PlanComponent)getView()).setScale(newScale);
+  }
+  
+  private void addHomeSelectionListener() {
+    this.selectionListener = new SelectionListener() {
+        public void selectionChanged(SelectionEvent selectionEvent) {
+          ((PlanComponent)getView()).makeSelectionVisible();
+        }
+      };
+    this.home.addSelectionListener(this.selectionListener);
+  }
+
   /**
    * Returns a new wall instance between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>)
@@ -502,7 +530,7 @@ public class PlanController {
   /**
    * Selects <code>items</code> and make them visible at screen.
    */
-  public void selectAndShowItems(List<? extends Object> items) {
+  private void selectAndShowItems(List<? extends Object> items) {
     selectItems(items);
     ((PlanComponent)getView()).makeSelectionVisible();
   }
@@ -511,7 +539,11 @@ public class PlanController {
    * Selects <code>items</code>.
    */
   private void selectItems(List<? extends Object> items) {
+    // Remove selectionListener when selection is done from this controller
+    // to control when selection should be made visible
+    this.home.removeSelectionListener(this.selectionListener);
     this.home.setSelectedItems(items);
+    this.home.addSelectionListener(this.selectionListener);
   }
   
   /**
@@ -561,7 +593,8 @@ public class PlanController {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddAndShowWalls(joinedNewWalls);       
+          doAddWalls(joinedNewWalls);       
+          selectAndShowItems(JoinedWall.getWalls(joinedNewWalls));
         }      
   
         @Override
@@ -577,7 +610,7 @@ public class PlanController {
    * Adds the walls in <code>joinedNewWalls</code> to plan component, joins
    * them to other walls if necessary and select the added walls.
    */
-  private void doAddAndShowWalls(JoinedWall [] joinedNewWalls) {
+  private void doAddWalls(JoinedWall [] joinedNewWalls) {
     // First add all walls to home
     for (JoinedWall joinedNewWall : joinedNewWalls) {
       this.home.addWall(joinedNewWall.getWall());
@@ -604,8 +637,6 @@ public class PlanController {
         }
       }
     }      
-    // Select added walls
-    selectAndShowItems(JoinedWall.getWalls(joinedNewWalls));
   }
 
   /**
@@ -646,7 +677,7 @@ public class PlanController {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doAddAndShowWalls(joinedDeletedWalls);       
+        doAddWalls(joinedDeletedWalls);       
         doAddFurniture(furniture, furnitureIndex);
         selectAndShowItems(deletedItems);
       }
@@ -654,8 +685,8 @@ public class PlanController {
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
+        selectItems(deletedItems);
         doDeleteWalls(joinedDeletedWalls);       
-        home.setSelectedItems(Arrays.asList(furniture));
         doDeleteFurniture(furniture);
       }      
 
@@ -772,7 +803,10 @@ public class PlanController {
    * Post to undo support a width and depth change on <code>piece</code>. 
    */
   private void postPieceOfFurnitureResize(final HomePieceOfFurniture piece, 
+                                          final float oldX, final float oldY,
                                           final float oldWidth, final float oldDepth) {
+    final float newX = piece.getX();
+    final float newY = piece.getY();
     final float newWidth = piece.getWidth();
     final float newDepth = piece.getDepth();
     if (newWidth != oldWidth
@@ -781,6 +815,7 @@ public class PlanController {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
+          home.setPieceOfFurnitureLocation(piece, oldX, oldY);
           home.setPieceOfFurnitureDimension(piece, oldWidth, oldDepth, piece.getHeight());
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
@@ -788,6 +823,7 @@ public class PlanController {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
+          home.setPieceOfFurnitureLocation(piece, newX, newY);
           home.setPieceOfFurnitureDimension(piece, newWidth, newDepth, piece.getHeight());
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
@@ -1537,6 +1573,8 @@ public class PlanController {
     private float                deltaXToResizeVertex;
     private float                deltaYToResizeVertex;
     private HomePieceOfFurniture selectedPiece;
+    private float                oldX;
+    private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
 
@@ -1551,31 +1589,35 @@ public class PlanController {
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
       this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
+      this.oldX = this.selectedPiece.getX();
+      this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
       this.oldDepth = this.selectedPiece.getDepth();
     }
 
     @Override
     public void moveMouse(float x, float y) {
-      // Compute the new dimension of the piece
+      // Compute the new location and dimension of the piece to let 
+      // its bottom right point be at mouse location
       float angle = this.selectedPiece.getAngle();
       double cos = Math.cos(angle); 
       double sin = Math.sin(angle); 
-      double xToCenter = x - this.deltaXToResizeVertex - this.selectedPiece.getX();
-      double yToCenter = y - this.deltaYToResizeVertex - this.selectedPiece.getY();
-      float newWidth = (float)(2. * (xToCenter * cos + yToCenter * sin));
-      float newDepth = (float)(2. * (-xToCenter * sin + yToCenter * cos));
+      float [] topLeftPoint = this.selectedPiece.getPoints() [0];
+      float deltaX = x - this.deltaXToResizeVertex - topLeftPoint[0];
+      float deltaY = y - this.deltaYToResizeVertex - topLeftPoint[1];
+      float newWidth =  (float)(deltaY * sin + deltaX * cos);
+      float newDepth =  (float)(deltaY * cos - deltaX * sin);
 
-      newWidth = Math.round(newWidth * 10f) / 10f;
-      newDepth = Math.round(newDepth * 10f) / 10f;
-      
+      newWidth = Math.max(Math.round(newWidth * 10f) / 10f, 0.1f);
+      newDepth = Math.max(Math.round(newDepth * 10f) / 10f, 0.1f);
+
+      // Update piece new location
+      float newX = (float)(topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
+      float newY = (float)(topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
+      home.setPieceOfFurnitureLocation(this.selectedPiece, newX, newY);
       // Update piece new dimension
-      if (newWidth > 0.1f || newDepth > 0.1f) {
-        home.setPieceOfFurnitureDimension(this.selectedPiece, 
-            newWidth > 0.1f ? newWidth : this.selectedPiece.getWidth(), 
-            newDepth > 0.1f ? newDepth : this.selectedPiece.getDepth(), 
-            this.selectedPiece.getHeight());
-      }
+      home.setPieceOfFurnitureDimension(this.selectedPiece, newWidth, newDepth, 
+          this.selectedPiece.getHeight());
 
       // Ensure point at (x,y) is visible
       ((PlanComponent)getView()).makePointVisible(x, y);
@@ -1583,14 +1625,16 @@ public class PlanController {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureResize(this.selectedPiece, this.oldWidth, this.oldDepth);
+      postPieceOfFurnitureResize(this.selectedPiece, this.oldX, this.oldY, 
+          this.oldWidth, this.oldDepth);
       setState(getSelectionState());
     }
 
     @Override
     public void escape() {
+      home.setPieceOfFurnitureLocation(this.selectedPiece, this.oldX, this.oldY);
       home.setPieceOfFurnitureDimension(this.selectedPiece, 
-          oldWidth, oldDepth, selectedPiece.getHeight());
+          this.oldWidth, this.oldDepth, this.selectedPiece.getHeight());
       setState(getSelectionState());
     }
   }

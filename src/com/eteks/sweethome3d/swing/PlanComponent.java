@@ -23,6 +23,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -90,6 +91,7 @@ public class PlanComponent extends JComponent {
 
   private Rectangle2D        rectangleFeedback;
   private Rectangle2D        planBoundsCache;
+  private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
   private Cursor             resizeCursor;
   
@@ -445,7 +447,7 @@ public class PlanComponent extends JComponent {
     float yMax = convertYPixelToModel(getHeight());
 
     g2D.setColor(Color.LIGHT_GRAY);
-    g2D.setStroke(new BasicStroke(1 / this.scale));
+    g2D.setStroke(new BasicStroke(0.5f / this.scale));
     // Draw vertical lines
     for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
       g2D.draw(new Line2D.Float(x, yMin, x, yMax));
@@ -456,7 +458,7 @@ public class PlanComponent extends JComponent {
     }
 
     if (mainGridSize != gridSize) {
-      g2D.setStroke(new BasicStroke(2 / this.scale,
+      g2D.setStroke(new BasicStroke(1.5f / this.scale,
           BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
       // Draw main vertical lines
       for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
@@ -548,7 +550,7 @@ public class PlanComponent extends JComponent {
     }
     // Draw walls area
     g2D.setPaint(getForeground());
-    g2D.setStroke(new BasicStroke(2f / this.scale));
+    g2D.setStroke(new BasicStroke(1.5f / this.scale));
     g2D.draw(wallsArea);
     
     // Draw furniture
@@ -621,7 +623,7 @@ public class PlanComponent extends JComponent {
     g2D.translate(piece.getX(), piece.getY());
     // Scale icon to fit in its area
     float minDimension = Math.min(piece.getWidth(), piece.getDepth());
-    float scale = minDimension / icon.getIconHeight();
+    float scale = Math.min(1 / this.scale, minDimension / icon.getIconHeight());
     g2D.scale(scale, scale);
     // Paint piece icon
     icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
@@ -675,15 +677,29 @@ public class PlanComponent extends JComponent {
    * scroll bars if needed.
    */
   public void makeSelectionVisible() {
-    Area area = new Area();
-    for (Object item : this.home.getSelectedItems()) {
-      if (item instanceof Wall) {
-        area.add(new Area(getShape(((Wall)item).getPoints())));
-      } else if (item instanceof HomePieceOfFurniture) {
-        area.add(new Area(getShape(((HomePieceOfFurniture)item).getPoints())));        
-      }
-    }      
-    scrollRectToVisible(getShapePixelBounds(area));
+    // As multiple selections may happen during an action, 
+    // make the selection visible the latest possible to avoid multiple changes
+    if (!this.selectionScrollUpdated) {
+      this.selectionScrollUpdated = true;
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            selectionScrollUpdated = false;
+            if (!home.getSelectedItems().isEmpty()) {
+              Area area = new Area();
+              for (Object item : home.getSelectedItems()) {
+                if (item instanceof Wall) {
+                  area.add(new Area(getShape(((Wall)item).getPoints())));
+                } else if (item instanceof HomePieceOfFurniture) {
+                  area.add(new Area(getShape(((HomePieceOfFurniture)item).getPoints())));        
+                }
+              }      
+              Rectangle pixelBounds = getShapePixelBounds(area);
+              pixelBounds.grow(5, 5);
+              scrollRectToVisible(pixelBounds);
+            }
+          }
+        });
+    }
   }
 
   /**

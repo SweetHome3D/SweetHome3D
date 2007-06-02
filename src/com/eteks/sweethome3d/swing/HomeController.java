@@ -123,6 +123,8 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         home.getFurnitureSortedProperty() != null);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
+    homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
+    homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
   }
@@ -385,14 +387,14 @@ public class HomeController  {
       getFurnitureController().addFurniture(Home.getFurnitureSubList(items));
       getPlanController().addWalls(Home.getWallsSubList(items));
       getPlanController().moveItems(items, dx, dy);
-      getPlanController().selectAndShowItems(items);
+      this.home.setSelectedItems(items);
   
       // Add a undoable edit that will select all the items at redo
       this.undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public void redo() throws CannotRedoException {
             super.redo();
-            getPlanController().selectAndShowItems(items);
+            home.setSelectedItems(items);
           }
   
           @Override
@@ -627,5 +629,27 @@ public class HomeController  {
    */
   public void toggleFurnitureSortOrder() {
     this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
+  }
+
+  /**
+   * Zooms out in plan.
+   */
+  public void zoomOut() {
+    PlanController planController = getPlanController();
+    float newScale = planController.getScale() / 1.5f;
+    planController.setScale(newScale);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_IN, true);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_OUT, newScale >= 0.1f);
+  }
+
+  /**
+   * Zooms in in plan.
+   */
+  public void zoomIn() {
+    PlanController planController = getPlanController();
+    float newScale = planController.getScale() * 1.5f;
+    planController.setScale(newScale);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_IN, newScale <= 5);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_OUT, true);
   }
 }
