@@ -19,13 +19,16 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
+import java.util.prefs.Preferences;
 
 import javax.swing.JComponent;
 import javax.swing.undo.AbstractUndoableEdit;
@@ -1342,6 +1345,8 @@ public class PlanController {
     private List<Object> oldSelection;
     private List<Wall>   newWalls;
     private boolean      magnetismEnabled;
+    private String       centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
+    private String       inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
     
     @Override
     public Mode getMode() {
@@ -1410,6 +1415,8 @@ public class PlanController {
       } else {
         // Otherwise update its end point
         home.moveWallEndPointTo(this.newWall, xEnd, yEnd); 
+        ((PlanComponent)getView()).setToolTipFeedback(
+            getToolTipFeedbackText(this.newWall), x, y);
       }         
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
@@ -1456,6 +1463,7 @@ public class PlanController {
         // Create a new wall only when it will have a length > 0
         // meaning after the first mouse move
         if (this.newWall != null) {
+          ((PlanComponent)getView()).deleteToolTipFeedback();
           selectItem(this.newWall);
           this.lastWall = 
           this.wallEndAtStart = this.newWall;
@@ -1488,8 +1496,20 @@ public class PlanController {
       // Post other walls creation to undo support
       postAddWalls(this.newWalls, this.oldSelection);
       selectItems(this.newWalls);
+      ((PlanComponent)getView()).deleteToolTipFeedback();
       // Change state to WallCreationState 
       setState(getWallCreationState());
+    }
+
+    private String getToolTipFeedbackText(Wall wall) {
+      float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
+          wall.getXEnd(), wall.getYEnd());
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        return String.format(this.centimerWallLengthToolTipFeedback, length);
+      } else {
+        return String.format(this.inchWallLengthToolTipFeedback, 
+            UserPreferences.Unit.centimerToInch(length));
+      }
     }
   }
 
@@ -1504,6 +1524,7 @@ public class PlanController {
     private HomePieceOfFurniture selectedPiece;
     private float                angleMousePress;
     private float                oldAngle;
+    private String               rotationToolTipFeedback = resource.getString("rotationToolTipFeedback");
 
     @Override
     public Mode getMode() {
@@ -1520,6 +1541,8 @@ public class PlanController {
       this.oldAngle = this.selectedPiece.getAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
+      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
+          this.xLastMouseMove, this.yLastMouseMove);
     }
 
     @Override
@@ -1539,7 +1562,9 @@ public class PlanController {
       home.setPieceOfFurnitureAngle(this.selectedPiece, newAngle); 
 
       // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      PlanComponent planView = ((PlanComponent)getView());
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newAngle), x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;      
     }
@@ -1547,6 +1572,7 @@ public class PlanController {
     @Override
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureRotation(this.selectedPiece, this.oldAngle);
+      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
 
@@ -1562,7 +1588,13 @@ public class PlanController {
     @Override
     public void escape() {
       home.setPieceOfFurnitureAngle(this.selectedPiece, oldAngle);
+      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
+    }
+
+    private String getToolTipFeedbackText(float angle) {
+      return String.format(this.rotationToolTipFeedback, 
+          (Math.round(Math.toDegrees(angle)) + 360) % 360);
     }
   }
 
@@ -1577,6 +1609,8 @@ public class PlanController {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
+    private String               centimerResizeToolTipFeedback = resource.getString("centimerResizeToolTipFeedback");
+    private String               inchResizeToolTipFeedback = resource.getString("inchResizeToolTipFeedback");
 
     @Override
     public Mode getMode() {
@@ -1593,6 +1627,8 @@ public class PlanController {
       this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
       this.oldDepth = this.selectedPiece.getDepth();
+      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
+          getXLastMousePress(), getYLastMousePress());
     }
 
     @Override
@@ -1619,14 +1655,17 @@ public class PlanController {
       home.setPieceOfFurnitureDimension(this.selectedPiece, newWidth, newDepth, 
           this.selectedPiece.getHeight());
 
+      PlanComponent planView = ((PlanComponent)getView());
       // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newWidth, newDepth), x, y);
     }
 
     @Override
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureResize(this.selectedPiece, this.oldX, this.oldY, 
           this.oldWidth, this.oldDepth);
+      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
     }
 
@@ -1635,7 +1674,18 @@ public class PlanController {
       home.setPieceOfFurnitureLocation(this.selectedPiece, this.oldX, this.oldY);
       home.setPieceOfFurnitureDimension(this.selectedPiece, 
           this.oldWidth, this.oldDepth, this.selectedPiece.getHeight());
+      ((PlanComponent)getView()).deleteToolTipFeedback();
       setState(getSelectionState());
+    }
+    
+    private String getToolTipFeedbackText(float width, float depth) {
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        return String.format(this.centimerResizeToolTipFeedback, width, depth);
+      } else {
+        return String.format(this.inchResizeToolTipFeedback, 
+            UserPreferences.Unit.centimerToInch(width), 
+            UserPreferences.Unit.centimerToInch(depth));
+      }
     }
   }
 }

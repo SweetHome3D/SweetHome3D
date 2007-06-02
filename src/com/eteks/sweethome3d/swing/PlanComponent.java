@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -60,7 +61,11 @@ import javax.swing.ActionMap;
 import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JToolTip;
 import javax.swing.KeyStroke;
+import javax.swing.Popup;
+import javax.swing.PopupFactory;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
@@ -94,6 +99,8 @@ public class PlanComponent extends JComponent {
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
   private Cursor             resizeCursor;
+  private JToolTip           toolTip;
+  private Popup              toolTipPopup;
   
   private static final GeneralPath ROTATION_VERTEX_PATH;
   private static final GeneralPath SIZE_VERTEX_PATH;
@@ -758,6 +765,24 @@ public class PlanComponent extends JComponent {
   }
 
   /**
+   * Returns <code>x</code> converted in view coordinates space.
+   */
+  private int convertXModelToPixel(float x) {
+    Insets insets = getInsets();
+    Rectangle2D planBounds = getPlanBounds();    
+    return (int)Math.round((x - planBounds.getMinX() + MARGIN) * this.scale) + insets.left;
+  }
+
+  /**
+   * Returns <code>y</code> converted in view coordinates space.
+   */
+  private int convertYModelToPixel(float y) {
+    Insets insets = getInsets();
+    Rectangle2D planBounds = getPlanBounds();    
+    return (int)Math.round((y - planBounds.getMinY() + MARGIN) * this.scale) + insets.top;
+  }
+
+  /**
    * Returns the bounds of <code>shape</code> in pixels coordinates space.
    */
   private Rectangle getShapePixelBounds(Shape shape) {
@@ -765,8 +790,8 @@ public class PlanComponent extends JComponent {
     Rectangle2D planBounds = getPlanBounds();
     Rectangle2D shapeBounds = shape.getBounds2D();
     return new Rectangle(
-        (int)Math.round((shapeBounds.getMinX() - planBounds.getMinX() + MARGIN) * this.scale) + insets.left,
-        (int)Math.round((shapeBounds.getMinY() - planBounds.getMinY() + MARGIN) * this.scale) + insets.top,
+        convertXModelToPixel((float)shapeBounds.getMinX()), 
+        convertYModelToPixel((float)shapeBounds.getMinY()),
         (int)Math.round(shapeBounds.getWidth() * this.scale),
         (int)Math.round(shapeBounds.getHeight() * this.scale));
   }
@@ -783,5 +808,55 @@ public class PlanComponent extends JComponent {
    */
   public void setResizeCursor() {
     setCursor(this.resizeCursor);
+  }
+  
+  /**
+   * Sets tool tip text displayed as feeback. 
+   * @param toolTipFeedback the text displayed in the tool tip 
+   *                    or <code>null</code> to make tool tip disapear.
+   */
+  public void setToolTipFeedback(String toolTipFeedback, float x, float y) {
+    // Create tool tip for this component
+    if (this.toolTip == null) {
+      this.toolTip = new JToolTip();
+      this.toolTip.setComponent(this);
+    }
+    // Change its text    
+    this.toolTip.setTipText(toolTipFeedback);
+    // If the popup displaying the tool tip is visible, hide it
+    if (this.toolTipPopup != null) {
+      this.toolTipPopup.hide();
+    }
+    // Convert (x, y) to screen coordinates 
+    Point point = new Point(convertXModelToPixel(x), convertYModelToPixel(y));
+    SwingUtilities.convertPointToScreen(point, this);
+    // Add to point the half of cursor size
+    Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
+    if (cursorSize.width != 0) {
+      point.x += cursorSize.width / 2 + 2;
+      point.y += cursorSize.height / 2 + 2;
+    } else {
+      // If custom cursor isn't supported let's consider 
+      // default cursor size is 16 pixels wide
+      point.x += 10;
+      point.y += 10;
+    }
+    // Show popup to display tool tip
+    this.toolTipPopup = PopupFactory.getSharedInstance().
+        getPopup(this, this.toolTip, point.x, point.y);
+    this.toolTipPopup.show();
+  }
+  
+  /**
+   * Deletes tool tip text from screen. 
+   */
+  public void deleteToolTipFeedback() {
+    if (this.toolTip != null) {
+      this.toolTip.setTipText(null);
+    }
+    if (this.toolTipPopup != null) {
+      this.toolTipPopup.hide();
+      this.toolTipPopup = null;
+    }
   }
 }

@@ -126,6 +126,9 @@ public class HomePane extends JRootPane {
     this.wallCreationToggleModel = new JToggleButton.ToggleButtonModel();
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+    // Set client property that forces the creation of heavy weight popups
+    putClientProperty("__force_heavy_weight_popup__", Boolean.TRUE);
+    
     createActions(controller);
     createTransferHandlers(home, preferences, controller);
     setJMenuBar(getHomeMenuBar(home));
