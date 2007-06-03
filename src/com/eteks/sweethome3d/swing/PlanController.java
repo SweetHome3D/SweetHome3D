@@ -1184,6 +1184,7 @@ public class PlanController {
     @Override
     public void enter() {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      ((PlanComponent)getView()).setResizeIndicatorVisible(true);
     }
     
     @Override
@@ -1277,6 +1278,7 @@ public class PlanController {
         // Select only the item under cursor position
         selectItem(itemUnderCursor);
       }
+      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
     
     @Override
@@ -1347,6 +1349,7 @@ public class PlanController {
       this.selectedItemsMousePressed = 
         new ArrayList<Object>(home.getSelectedItems());
       this.mouseMoved = false;
+      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
 
     @Override
@@ -1439,6 +1442,7 @@ public class PlanController {
     @Override
     public void enter() {
       ((PlanComponent)getView()).setCursor(Mode.WALL_CREATION);
+      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
 
     @Override

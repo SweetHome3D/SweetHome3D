@@ -100,57 +100,58 @@ public class PlanComponent extends JComponent {
   private Cursor             resizeCursor;
   private JToolTip           toolTip;
   private Popup              toolTipPopup;
+  private boolean            resizeIndicatorVisible;
   
-  private static final GeneralPath ROTATION_VERTEX_PATH;
-  private static final GeneralPath SIZE_VERTEX_PATH;
-  private static final GeneralPath WALL_ORIENTATION_PATH;
-  private static final Shape       WALL_POINT_PATH;
-  private static final GeneralPath WALL_SIZE_PATH;
+  private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
+  private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
+  private static final GeneralPath WALL_ORIENTATION_INDICATOR;
+  private static final Shape       WALL_POINT;
+  private static final GeneralPath WALL_RESIZE_INDICATOR;
   
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
     // at top left vertex of a piece of furniture
-    ROTATION_VERTEX_PATH = new GeneralPath();
-    ROTATION_VERTEX_PATH.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
-    ROTATION_VERTEX_PATH.append(new Arc2D.Float(-8, -8, 16, 16, 45, 180, Arc2D.OPEN), false);
-    ROTATION_VERTEX_PATH.moveTo(2.66f, -5.66f);
-    ROTATION_VERTEX_PATH.lineTo(5.66f, -5.66f);
-    ROTATION_VERTEX_PATH.lineTo(4f, -8.3f);
+    FURNITURE_ROTATION_INDICATOR = new GeneralPath();
+    FURNITURE_ROTATION_INDICATOR.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
+    FURNITURE_ROTATION_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 45, 180, Arc2D.OPEN), false);
+    FURNITURE_ROTATION_INDICATOR.moveTo(2.66f, -5.66f);
+    FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
+    FURNITURE_ROTATION_INDICATOR.lineTo(4f, -8.3f);
     
     // Create a path used as a size indicator 
     // at bottom right vertex of a piece of furniture
-    SIZE_VERTEX_PATH = new GeneralPath();
-    SIZE_VERTEX_PATH.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
-    SIZE_VERTEX_PATH.moveTo(5, -3);
-    SIZE_VERTEX_PATH.lineTo(6, -3);
-    SIZE_VERTEX_PATH.lineTo(6, 6);
-    SIZE_VERTEX_PATH.lineTo(-3, 6);
-    SIZE_VERTEX_PATH.lineTo(-3, 5);
-    SIZE_VERTEX_PATH.moveTo(3.5f, 3.5f);
-    SIZE_VERTEX_PATH.lineTo(8, 8);
-    SIZE_VERTEX_PATH.moveTo(6, 8.5f);
-    SIZE_VERTEX_PATH.lineTo(9, 9);
-    SIZE_VERTEX_PATH.lineTo(8.5f, 6);
+    FURNITURE_RESIZE_INDICATOR = new GeneralPath();
+    FURNITURE_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
+    FURNITURE_RESIZE_INDICATOR.moveTo(5, -3);
+    FURNITURE_RESIZE_INDICATOR.lineTo(6, -3);
+    FURNITURE_RESIZE_INDICATOR.lineTo(6, 6);
+    FURNITURE_RESIZE_INDICATOR.lineTo(-3, 6);
+    FURNITURE_RESIZE_INDICATOR.lineTo(-3, 5);
+    FURNITURE_RESIZE_INDICATOR.moveTo(3.5f, 3.5f);
+    FURNITURE_RESIZE_INDICATOR.lineTo(8, 8);
+    FURNITURE_RESIZE_INDICATOR.moveTo(6, 8.5f);
+    FURNITURE_RESIZE_INDICATOR.lineTo(9, 9);
+    FURNITURE_RESIZE_INDICATOR.lineTo(8.5f, 6);
     
     // Create a path used an orientation indicator
     // at start and end points of a selected wall
-    WALL_ORIENTATION_PATH = new GeneralPath();
-    WALL_ORIENTATION_PATH.moveTo(-4, -4);
-    WALL_ORIENTATION_PATH.lineTo(4, 0);
-    WALL_ORIENTATION_PATH.lineTo(-4, 4);
+    WALL_ORIENTATION_INDICATOR = new GeneralPath();
+    WALL_ORIENTATION_INDICATOR.moveTo(-4, -4);
+    WALL_ORIENTATION_INDICATOR.lineTo(4, 0);
+    WALL_ORIENTATION_INDICATOR.lineTo(-4, 4);
 
-    WALL_POINT_PATH = new Ellipse2D.Float(-3, -3, 6, 6);
+    WALL_POINT = new Ellipse2D.Float(-3, -3, 6, 6);
 
     // Create a path used as a size indicator 
     // at start and end points of a selected wall
-    WALL_SIZE_PATH = new GeneralPath();
-    WALL_SIZE_PATH.moveTo(5, -2);
-    WALL_SIZE_PATH.lineTo(5, 2);
-    WALL_SIZE_PATH.moveTo(6, 0);
-    WALL_SIZE_PATH.lineTo(11, 0);
-    WALL_SIZE_PATH.moveTo(8.7f, -1.8f);
-    WALL_SIZE_PATH.lineTo(12, 0);
-    WALL_SIZE_PATH.lineTo(8.7f, 1.8f);
+    WALL_RESIZE_INDICATOR = new GeneralPath();
+    WALL_RESIZE_INDICATOR.moveTo(5, -2);
+    WALL_RESIZE_INDICATOR.lineTo(5, 2);
+    WALL_RESIZE_INDICATOR.moveTo(6, 0);
+    WALL_RESIZE_INDICATOR.lineTo(11, 0);
+    WALL_RESIZE_INDICATOR.moveTo(8.7f, -1.8f);
+    WALL_RESIZE_INDICATOR.lineTo(12, 0);
+    WALL_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -533,17 +534,18 @@ public class PlanComponent extends JComponent {
         // Draw start point of the wall
         g2D.setPaint(selectionColor);         
         g2D.setStroke(wallIndicatorStroke);
-        g2D.fill(WALL_POINT_PATH);
+        g2D.fill(WALL_POINT);
         
         double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
             wall.getXEnd() - wall.getXStart());
         double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
             wall.getXEnd(), wall.getYEnd()) * this.scale;
         g2D.rotate(wallAngle);
-        if (selectedItems.size() == 1 && selectedItems.contains(wall)) {
+        if (selectedItems.size() == 1 && selectedItems.contains(wall)
+            && this.resizeIndicatorVisible) {
           g2D.rotate(Math.PI);
           g2D.setStroke(indicatorStroke);
-          g2D.draw(WALL_SIZE_PATH);
+          g2D.draw(WALL_RESIZE_INDICATOR);
           g2D.rotate(-Math.PI);
           g2D.setStroke(wallIndicatorStroke);
         }        
@@ -555,23 +557,24 @@ public class PlanComponent extends JComponent {
           // Draw orientation indicator at start of the wall
           g2D.translate(8, 0);
         }
-        g2D.draw(WALL_ORIENTATION_PATH);
+        g2D.draw(WALL_ORIENTATION_INDICATOR);
         g2D.setTransform(previousTransform);
         
         // Draw end point of the wall
         g2D.translate(wall.getXEnd(), wall.getYEnd());
         g2D.scale(1 / this.scale, 1 / this.scale);
-        g2D.fill(WALL_POINT_PATH);
+        g2D.fill(WALL_POINT);
         g2D.rotate(wallAngle);
-        if (selectedItems.size() == 1 && selectedItems.contains(wall)) {
+        if (selectedItems.size() == 1 && selectedItems.contains(wall)
+            && this.resizeIndicatorVisible) {
           g2D.setStroke(indicatorStroke);
-          g2D.draw(WALL_SIZE_PATH);
+          g2D.draw(WALL_RESIZE_INDICATOR);
           g2D.setStroke(wallIndicatorStroke);
         }        
         if (distanceAtScale >= 30) { 
           // Draw orientation indicator at end of the wall
           g2D.translate(-10, 0);
-          g2D.draw(WALL_ORIENTATION_PATH);
+          g2D.draw(WALL_ORIENTATION_INDICATOR);
         }        
         g2D.setTransform(previousTransform);
       }  
@@ -603,7 +606,8 @@ public class PlanComponent extends JComponent {
         g2D.setStroke(pieceBorderStroke);
         g2D.draw(pieceShape);
         
-        if (selectedItems.size() == 1 && selectedItems.contains(piece)) {
+        if (selectedItems.size() == 1 && selectedItems.contains(piece) 
+            && this.resizeIndicatorVisible) {
           g2D.setPaint(selectionColor);         
           g2D.setStroke(indicatorStroke);
           
@@ -612,14 +616,14 @@ public class PlanComponent extends JComponent {
           g2D.translate(piecePoints [0][0], piecePoints [0][1]);
           g2D.scale(1 / this.scale, 1 / this.scale);
           g2D.rotate(piece.getAngle());
-          g2D.draw(ROTATION_VERTEX_PATH);
+          g2D.draw(FURNITURE_ROTATION_INDICATOR);
           g2D.setTransform(previousTransform);
 
           // Draw size indicator at top left vertex of the piece
           g2D.translate(piecePoints [2][0], piecePoints [2][1]);
           g2D.scale(1 / this.scale, 1 / this.scale);
           g2D.rotate(piece.getAngle());
-          g2D.draw(SIZE_VERTEX_PATH);
+          g2D.draw(FURNITURE_RESIZE_INDICATOR);
           g2D.setTransform(previousTransform);
         }
       }
@@ -881,5 +885,14 @@ public class PlanComponent extends JComponent {
       this.toolTipPopup.hide();
       this.toolTipPopup = null;
     }
+  }
+
+  /**
+   * Sets whether the resize indicator of selected wall or piece of furniture 
+   * should be visible or not. 
+   */
+  public void setResizeIndicatorVisible(boolean resizeIndicatorVisible) {
+    this.resizeIndicatorVisible = resizeIndicatorVisible;    
+    repaint();
   }
 }
