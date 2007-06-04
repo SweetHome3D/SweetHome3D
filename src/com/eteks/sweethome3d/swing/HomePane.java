@@ -55,6 +55,7 @@ import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
@@ -119,8 +120,9 @@ public class HomePane extends JRootPane {
   private TransferHandler                 catalogTransferHandler;
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
+  
 
-/**
+  /**
    * Creates this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
@@ -136,9 +138,12 @@ public class HomePane extends JRootPane {
     
     createActions(controller);
     createTransferHandlers(home, preferences, controller);
-    setJMenuBar(getHomeMenuBar(home));
+    JMenuBar homeMenuBar = getHomeMenuBar(home);
+    setJMenuBar(homeMenuBar);
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
     getContentPane().add(getMainPane(home, controller));
+    
+    disableMenuItemsDuringDragAndDrop(this.planView, homeMenuBar);
   }
   
   /**
@@ -348,7 +353,7 @@ public class HomePane extends JRootPane {
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       helpMenu = new JMenu(
           new ResourceAction(this.resource, "HELP_MENU", true));
-      helpMenu.add(actions.get(ActionType.ABOUT));
+      helpMenu.add(actions.get(ActionType.ABOUT));      
     }
 
     // Add menus to menu bar
@@ -519,59 +524,11 @@ public class HomePane extends JRootPane {
   /**
    * Returns the plan view and 3D view pane. 
    */
-  private JComponent getPlanView3DPane(Home home, HomeController controller) {
+  private JComponent getPlanView3DPane(Home home, final HomeController controller) {
     this.planView = controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(this.planView);
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
-    // Add a mouse listener to plan to disable all actions during a drag and drop operation in plan
-    this.planView.addMouseListener(new MouseAdapter() {      
-      private PropertyChangeListener actionPropertyChangeListener = new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            if (ev.getPropertyName().equals("enabled")) {
-              Action action = (Action)ev.getSource();
-              action.removePropertyChangeListener(this);
-              // Store the new value of enabled property
-              action.putValue("enabledBackup", action.isEnabled());
-              // Continue to diable the action until mouse is released 
-              action.setEnabled(false);
-              action.addPropertyChangeListener(this);
-            }
-          }
-        };
-
-      @Override
-      public void mousePressed(MouseEvent ev) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              ActionMap actionMap = getActionMap();
-              // Disable all actions during a drap and drop in plan
-              for (final Object key : actionMap.keys()) {
-                final Action action = actionMap.get(key);
-                action.putValue("enabledBackup", action.isEnabled());
-                action.setEnabled(false);
-                // Add a listener on enabled proterty change in case action changes before mouseReleased call 
-                action.addPropertyChangeListener(actionPropertyChangeListener);
-              }
-            }
-          });
-      }
-      
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              ActionMap actionMap = getActionMap();
-              // Disable all actions during a drap and drop in plan
-              for (final Object key : actionMap.keys()) {
-                final Action action = actionMap.get(key);
-                action.removePropertyChangeListener(actionPropertyChangeListener);
-                action.setEnabled((Boolean)action.getValue("enabledBackup"));
-              }
-            }
-          });        
-      }
-    });
 
     JComponent view3D = new HomeComponent3D(home);
     view3D.setPreferredSize(this.planView.getPreferredSize());
@@ -586,6 +543,50 @@ public class HomePane extends JRootPane {
     return planView3DPane;
   }
 
+  /**
+   * Adds to <code>view</code> a mouse listener that disables all menu items of
+   * <code>menuBar</code> during a drag and drop operation in <code>view</code>.
+   */
+  private void disableMenuItemsDuringDragAndDrop(JComponent view, 
+                                                 final JMenuBar menuBar) {
+    view.addMouseListener(new MouseAdapter() {      
+      @Override
+      public void mousePressed(MouseEvent ev) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
+                setMenuItemsEnabled(menuBar.getMenu(i), false);
+              }
+            }
+          });
+      }
+      
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
+                setMenuItemsEnabled(menuBar.getMenu(i), true);
+              }
+            }
+          });
+      }
+
+      private void setMenuItemsEnabled(JMenu menu, boolean enabled) {
+        for (int i = 0, n = menu.getItemCount(); i < n; i++) {
+          JMenuItem item = menu.getItem(i);
+          if (item instanceof JMenu) {
+            setMenuItemsEnabled((JMenu)item, enabled);
+          } else if (item != null) {
+            item.setEnabled(enabled 
+                ? item.getAction().isEnabled()
+                : false);
+          }
+        }
+      }
+    });
+  }
+  
   /**
    * Displays a file chooser dialog to open a .sh3d file.
    */

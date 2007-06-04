@@ -620,16 +620,16 @@ public class HomeComponent3D extends JComponent {
       // Allow to read branch transform child
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
-      addChild(getPieceOfFurnitureNode());
+      createPieceOfFurnitureNode();
 
       // Set piece model initial location, orientation and size
       updatePieceOfFurnitureTransform();
     }
 
     /**
-     * Returns piece node with its transform group. 
+     * Creates the piece node with its transform group and add it to the piece branch. 
      */
-    private Node getPieceOfFurnitureNode() {
+    private void createPieceOfFurnitureNode() {
       final TransformGroup pieceTransformGroup = new TransformGroup();
       // Allow the change of the transformation that sets piece size and position
       pieceTransformGroup.setCapability(
@@ -647,29 +647,29 @@ public class HomeComponent3D extends JComponent {
       setAppearanceChangeCapability(waitBranch);
       
       pieceTransformGroup.addChild(waitBranch);
+      addChild(pieceTransformGroup);
       
       // Load piece real 3D model
       modelLoader.execute(new Runnable() {
-        public void run() {
-          BranchGroup modelBranch = new BranchGroup();
-          modelBranch.addChild(getModelNode());
-          // Allow appearance change on all children
-          setAppearanceChangeCapability(modelBranch);
-          // Add model branch to live scene
-          pieceTransformGroup.addChild(modelBranch);
-          // Remove temporary node
-          waitBranch.detach();
-          EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              // Update piece color and visibility
-              updatePieceOfFurnitureColor();      
-              updatePieceOfFurnitureVisibility();      
-            }
-          });
-        }
-      });
-      
-      return pieceTransformGroup;
+          public void run() {
+            BranchGroup modelBranch = new BranchGroup();
+            modelBranch.addChild(getModelNode());
+            // Allow appearance change on all children
+            setAppearanceChangeCapability(modelBranch);
+            // Add model branch to live scene
+            pieceTransformGroup.addChild(modelBranch);
+            // Remove temporary node
+            waitBranch.detach();
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  // Update piece color and visibility in dispatch thread as
+                  // these attributes may be changed that thread
+                  updatePieceOfFurnitureColor();      
+                  updatePieceOfFurnitureVisibility();
+                }
+              });
+          }
+        });
     }
 
     @Override

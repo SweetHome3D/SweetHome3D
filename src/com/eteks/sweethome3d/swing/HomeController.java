@@ -125,7 +125,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
-        home.getFurnitureSortedProperty() != null);
+        this.home.getFurnitureSortedProperty() != null);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
@@ -277,6 +277,37 @@ public class HomeController  {
   }
 
   /**
+   * Enables select all action if home isn't empty.
+   */
+  private void enableSelectAllAction() {
+    HomePane view = ((HomePane)getView());
+    boolean wallCreationMode =  
+      getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+    if (this.focusedView == getFurnitureController().getView()) {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL,
+          !wallCreationMode 
+          && this.home.getFurniture().size() > 0);
+    } else if (this.focusedView == getPlanController().getView()) {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL,
+          !wallCreationMode 
+          && (this.home.getFurniture().size() > 0 
+              || this.home.getWalls().size() > 0));
+    } else {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL, false);
+    }
+  }
+
+  /**
+   * Enables zoom actions depending on current scale.
+   */
+  private void enableZoomActions() {
+    float scale = getPlanController().getScale();
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.ZOOM_IN, scale <= 5);
+    view.setEnabled(HomePane.ActionType.ZOOM_OUT, scale >= 0.1f);    
+  }
+  
+  /**
    * Adds undoable edit listener to undo support that enables Undo action.
    */
   private void addUndoSupportListener() {
@@ -336,27 +367,6 @@ public class HomeController  {
       }
       // Add newFurniture to home with furnitureController
       getFurnitureController().addFurniture(newFurniture);
-    }
-  }
-
-  /**
-   * Enables select all action if home isn't empty.
-   */
-  private void enableSelectAllAction() {
-    HomePane view = ((HomePane)getView());
-    boolean wallCreationMode =  
-      getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
-    if (this.focusedView == getFurnitureController().getView()) {
-      view.setEnabled(HomePane.ActionType.SELECT_ALL,
-          !wallCreationMode 
-          && this.home.getFurniture().size() > 0);
-    } else if (this.focusedView == getPlanController().getView()) {
-      view.setEnabled(HomePane.ActionType.SELECT_ALL,
-          !wallCreationMode 
-          && (this.home.getFurniture().size() > 0 
-              || this.home.getWalls().size() > 0));
-    } else {
-      view.setEnabled(HomePane.ActionType.SELECT_ALL, false);
     }
   }
 
@@ -708,8 +718,7 @@ public class HomeController  {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() / 1.5f;
     planController.setScale(newScale);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_IN, true);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_OUT, newScale >= 0.1f);
+    enableZoomActions();  
   }
 
   /**
@@ -719,7 +728,6 @@ public class HomeController  {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() * 1.5f;
     planController.setScale(newScale);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_IN, newScale <= 5);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.ZOOM_OUT, true);
+    enableZoomActions();
   }
 }
