@@ -20,6 +20,7 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.Action;
@@ -30,9 +31,11 @@ import javax.swing.JRootPane;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.CatalogController;
 import com.eteks.sweethome3d.swing.CatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureController;
@@ -46,6 +49,7 @@ import com.eteks.sweethome3d.swing.PlanController;
  * @author Emmanuel Puybaret
  */
 public class HomeControllerTest extends TestCase {
+  private UserPreferences     preferences;
   private Home                home;
   private HomeController      homeController;
   private CatalogTree         catalogTree;
@@ -54,10 +58,9 @@ public class HomeControllerTest extends TestCase {
 
   @Override
   protected void setUp() {
-    // 1. Create model objects
-    UserPreferences preferences = new DefaultUserPreferences();
+    this.preferences = new DefaultUserPreferences();
     this.home = new Home();
-    this.homeController = new HomeController(this.home, preferences);
+    this.homeController = new HomeController(this.home, this.preferences);
     CatalogController catalogController = 
         homeController.getCatalogController();
     this.catalogTree = (CatalogTree)catalogController.getView();
@@ -165,7 +168,16 @@ public class HomeControllerTest extends TestCase {
    * Tests zoom and alignment tools. 
    */
   public void testZoom() {
-    PlanController planController = homeController.getPlanController();
+    // Add the first two pieces of catalog first category to home
+    Category firstCategory = this.preferences.getCatalog().getCategories().get(0);
+    this.home.addPieceOfFurniture(
+        new HomePieceOfFurniture(firstCategory.getFurniture().get(0)));
+    this.home.addPieceOfFurniture(
+        new HomePieceOfFurniture(firstCategory.getFurniture().get(1)));
+    // Add a wall to home
+    this.home.addWall(new Wall(0, 0, 100, 0, 7));
+    
+    PlanController planController = this.homeController.getPlanController();
     float scale = planController.getScale();
     
     // 1. Zoom in 
@@ -176,7 +188,21 @@ public class HomeControllerTest extends TestCase {
     // 2. Zoom out 
     runAction(HomePane.ActionType.ZOOM_OUT);    
     // Check scale is back to its previous value
-    assertEquals("Scale is incorrect", scale, planController.getScale()); 
+    assertEquals("Scale is incorrect", scale, planController.getScale());
+    
+    // 3. Select all while table has focus
+    this.homeController.focusedViewChanged(this.furnitureTable);
+    this.homeController.selectAll();
+    // Check selection contains the two pieces
+    assertEquals("Selection doesn't contain home furniture", 
+        this.home.getFurniture(), this.home.getSelectedItems());
+
+    // 4. Select all while plan has focus
+    this.homeController.focusedViewChanged(planController.getView());
+    this.homeController.selectAll();
+    // Check selection contains the two pieces and the wall
+    assertEquals("Selection doesn't contain home objects", 
+        3, this.home.getSelectedItems().size());
   }
   
   /**

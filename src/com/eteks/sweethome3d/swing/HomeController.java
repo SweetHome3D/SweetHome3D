@@ -34,6 +34,8 @@ import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -41,6 +43,8 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.WallEvent;
+import com.eteks.sweethome3d.model.WallListener;
 
 /**
  * A MVC controller for the home view.
@@ -165,10 +169,12 @@ public class HomeController  {
     addHomeSelectionListener();
     addFurnitureSortListener();
     addUndoSupportListener();
+    addHomeFurnitureListener();
+    addHomeWallListener();
   }
 
   /**
-   * Adds a selection listener on catalog that enables / disables Add Furniture action.
+   * Adds a selection listener to catalog that enables / disables Add Furniture action.
    */
   private void addCatalogSelectionListener() {
     this.preferences.getCatalog().addSelectionListener(
@@ -180,7 +186,7 @@ public class HomeController  {
   }
 
   /**
-   *  Adds a selection listener on home that enables / disables actions on selection.
+   *  Adds a selection listener to home that enables / disables actions on selection.
    */
   private void addHomeSelectionListener() {
     this.home.addSelectionListener(new SelectionListener() {
@@ -191,7 +197,7 @@ public class HomeController  {
   }
 
   /**
-   *  Adds a property change listener on home that enables / disables sort order action.
+   *  Adds a property change listener to home that enables / disables sort order action.
    */
   private void addFurnitureSortListener() {
     this.home.addPropertyChangeListener("furnitureSortedProperty", 
@@ -271,7 +277,7 @@ public class HomeController  {
   }
 
   /**
-   * Adds undoable edit listener on undo support that enables Undo action.
+   * Adds undoable edit listener to undo support that enables Undo action.
    */
   private void addUndoSupportListener() {
     this.undoSupport.addUndoableEditListener(
@@ -289,6 +295,34 @@ public class HomeController  {
   }
 
   /**
+   * Adds a furniture listener to home that enables / disables actions on furniture list change.
+   */
+  private void addHomeFurnitureListener() {
+    this.home.addFurnitureListener(new FurnitureListener() {
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          if (ev.getType() == FurnitureEvent.Type.ADD 
+              || ev.getType() == FurnitureEvent.Type.DELETE) {
+            enableSelectAllAction();
+          }
+        }
+      });
+  }
+
+  /**
+   * Adds a wall listener to home that enables / disables actions on walls list change.
+   */
+  private void addHomeWallListener() {
+    this.home.addWallListener(new WallListener() {
+      public void wallChanged(WallEvent ev) {
+        if (ev.getType() == WallEvent.Type.ADD 
+            || ev.getType() == WallEvent.Type.DELETE) {
+          enableSelectAllAction();
+        }
+      }
+    });
+  }
+
+  /**
    * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
@@ -302,6 +336,27 @@ public class HomeController  {
       }
       // Add newFurniture to home with furnitureController
       getFurnitureController().addFurniture(newFurniture);
+    }
+  }
+
+  /**
+   * Enables select all action if home isn't empty.
+   */
+  private void enableSelectAllAction() {
+    HomePane view = ((HomePane)getView());
+    boolean wallCreationMode =  
+      getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+    if (this.focusedView == getFurnitureController().getView()) {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL,
+          !wallCreationMode 
+          && this.home.getFurniture().size() > 0);
+    } else if (this.focusedView == getPlanController().getView()) {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL,
+          !wallCreationMode 
+          && (this.home.getFurniture().size() > 0 
+              || this.home.getWalls().size() > 0));
+    } else {
+      view.setEnabled(HomePane.ActionType.SELECT_ALL, false);
     }
   }
 
@@ -426,6 +481,20 @@ public class HomeController  {
     this.focusedView = focusedView;
     enableActionsOnSelection();
     enablePasteAction();
+    enableSelectAllAction();
+  }
+  
+  /**
+   * Selects everything in the focused component.
+   */
+  public void selectAll() {
+    if (this.focusedView == getFurnitureController().getView()) {
+      this.home.setSelectedItems(this.home.getFurniture());
+    } else if (this.focusedView == getPlanController().getView()) {
+      List<Object> all = new ArrayList<Object>(this.home.getFurniture());
+      all.addAll(this.home.getWalls());
+      this.home.setSelectedItems(all);
+    }
   }
   
   /**
@@ -450,6 +519,7 @@ public class HomeController  {
     getPlanController().setMode(PlanController.Mode.SELECTION);
     enableActionsOnSelection();
     enablePasteAction();
+    enableSelectAllAction();
     HomePane view = ((HomePane)getView());
     view.setTransferEnabled(true);
     view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());

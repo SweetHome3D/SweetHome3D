@@ -1649,10 +1649,14 @@ public class PlanController {
       // Post other walls creation to undo support
       postAddWalls(this.newWalls, this.oldSelection);
       selectItems(this.newWalls);
-      ((PlanComponent)getView()).deleteToolTipFeedback();
       // Change state to WallCreationState 
       setState(getWallCreationState());
     }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteToolTipFeedback();
+    }  
   }
 
   /**
@@ -1685,6 +1689,9 @@ public class PlanController {
       }
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
+      ((PlanComponent)getView()).setToolTipFeedback(
+          getToolTipFeedbackText(this.selectedWall), 
+          getXLastMousePress(), getYLastMousePress());
     }
     
     @Override

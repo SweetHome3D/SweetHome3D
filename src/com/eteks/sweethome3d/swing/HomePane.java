@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
@@ -28,9 +29,12 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -60,6 +64,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -79,7 +84,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class HomePane extends JRootPane {
   public enum ActionType {
     NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, PREFERENCES, EXIT, 
-    UNDO, REDO, CUT, COPY, PASTE, DELETE, 
+    UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_HOME_FURNITURE,
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
@@ -154,6 +159,7 @@ public class HomePane extends JRootPane {
     createClipboardAction(ActionType.COPY, TransferHandler.getCopyAction());
     createClipboardAction(ActionType.PASTE, TransferHandler.getPasteAction());
     createAction(ActionType.DELETE, controller, "delete");
+    createAction(ActionType.SELECT_ALL, controller, "selectAll");
     
     createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
@@ -272,6 +278,7 @@ public class HomePane extends JRootPane {
     editMenu.add(actions.get(ActionType.PASTE));
     editMenu.addSeparator();
     editMenu.add(actions.get(ActionType.DELETE));
+    editMenu.add(actions.get(ActionType.SELECT_ALL));
 
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
@@ -517,6 +524,54 @@ public class HomePane extends JRootPane {
     JScrollPane planScrollPane = new HomeScrollPane(this.planView);
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
+    // Add a mouse listener to plan to disable all actions during a drag and drop operation in plan
+    this.planView.addMouseListener(new MouseAdapter() {      
+      private PropertyChangeListener actionPropertyChangeListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (ev.getPropertyName().equals("enabled")) {
+              Action action = (Action)ev.getSource();
+              action.removePropertyChangeListener(this);
+              // Store the new value of enabled property
+              action.putValue("enabledBackup", action.isEnabled());
+              // Continue to diable the action until mouse is released 
+              action.setEnabled(false);
+              action.addPropertyChangeListener(this);
+            }
+          }
+        };
+
+      @Override
+      public void mousePressed(MouseEvent ev) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              ActionMap actionMap = getActionMap();
+              // Disable all actions during a drap and drop in plan
+              for (final Object key : actionMap.keys()) {
+                final Action action = actionMap.get(key);
+                action.putValue("enabledBackup", action.isEnabled());
+                action.setEnabled(false);
+                // Add a listener on enabled proterty change in case action changes before mouseReleased call 
+                action.addPropertyChangeListener(actionPropertyChangeListener);
+              }
+            }
+          });
+      }
+      
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              ActionMap actionMap = getActionMap();
+              // Disable all actions during a drap and drop in plan
+              for (final Object key : actionMap.keys()) {
+                final Action action = actionMap.get(key);
+                action.removePropertyChangeListener(actionPropertyChangeListener);
+                action.setEnabled((Boolean)action.getValue("enabledBackup"));
+              }
+            }
+          });        
+      }
+    });
 
     JComponent view3D = new HomeComponent3D(home);
     view3D.setPreferredSize(this.planView.getPreferredSize());
