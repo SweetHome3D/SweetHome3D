@@ -64,8 +64,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JToolTip;
 import javax.swing.JWindow;
 import javax.swing.KeyStroke;
-import javax.swing.Popup;
-import javax.swing.PopupFactory;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
