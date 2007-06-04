@@ -60,7 +60,9 @@ import javax.swing.ActionMap;
 import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.JToolTip;
+import javax.swing.JWindow;
 import javax.swing.KeyStroke;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
@@ -99,7 +101,7 @@ public class PlanComponent extends JComponent {
   private Cursor             rotationCursor;
   private Cursor             resizeCursor;
   private JToolTip           toolTip;
-  private Popup              toolTipPopup;
+  private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
   
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
@@ -850,9 +852,45 @@ public class PlanComponent extends JComponent {
     }
     // Change its text    
     this.toolTip.setTipText(toolTipFeedback);
-    // If the popup displaying the tool tip is visible, hide it
-    if (this.toolTipPopup != null) {
-      this.toolTipPopup.hide();
+
+    if (this.toolTipWindow == null) {
+      // Show tool tip in a window (we don't use a Swing Popup because 
+      // we require the tool tip window to move along with mouse pointer 
+      // and a Swing popup can't move without hiding then showing it again)
+      this.toolTipWindow = new JWindow(JOptionPane.getFrameForComponent(this));
+      this.toolTipWindow.add(this.toolTip);
+      // Add to window a mouse listener that redispatch mouse events to
+      // plan component (if the user moves fastly enough the mouse pointer in a way 
+      // it's in toolTipWindow, the matching event is dispatched to toolTipWindow)
+      MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          mouseMoved(ev);
+        }
+        
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          mouseMoved(ev);
+        }
+        
+        @Override
+        public void mouseMoved(MouseEvent ev) {
+          Point mouseLocationInPlan = SwingUtilities.convertPoint(toolTipWindow, 
+              ev.getX(), ev.getY(), PlanComponent.this);
+          dispatchEvent(new MouseEvent(PlanComponent.this, ev.getID(), ev.getWhen(),
+              ev.getModifiers(), mouseLocationInPlan.x, mouseLocationInPlan.y, 
+              ev.getClickCount(), ev.isPopupTrigger(), ev.getButton()));
+        }
+        
+        @Override
+        public void mouseDragged(MouseEvent ev) {
+          mouseMoved(ev);
+        }
+      };
+      this.toolTipWindow.addMouseListener(mouseAdapter);
+      this.toolTipWindow.addMouseMotionListener(mouseAdapter);
+    } else {
+      this.toolTip.revalidate();
     }
     // Convert (x, y) to screen coordinates 
     Point point = new Point(convertXModelToPixel(x), convertYModelToPixel(y));
@@ -868,10 +906,10 @@ public class PlanComponent extends JComponent {
       point.x += 10;
       point.y -= 10;
     }
-    // Show popup to display tool tip
-    this.toolTipPopup = PopupFactory.getSharedInstance().
-        getPopup(this, this.toolTip, point.x, point.y);
-    this.toolTipPopup.show();
+    this.toolTipWindow.setLocation(point);      
+    this.toolTipWindow.pack();
+    this.toolTipWindow.setVisible(true);
+    this.toolTip.paintImmediately(this.toolTip.getBounds());
   }
   
   /**
@@ -881,9 +919,8 @@ public class PlanComponent extends JComponent {
     if (this.toolTip != null) {
       this.toolTip.setTipText(null);
     }
-    if (this.toolTipPopup != null) {
-      this.toolTipPopup.hide();
-      this.toolTipPopup = null;
+    if (this.toolTipWindow != null) {
+      this.toolTipWindow.setVisible(false);
     }
   }
 
