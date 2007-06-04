@@ -32,9 +32,9 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -110,6 +110,8 @@ public class WallPanel extends JPanel {
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
             WallPanel.class.getResource("resources/wallOrientation.png")), JLabel.CENTER);
+    // Use same font for label as tooltips
+    this.wallOrientationLabel.setFont(UIManager.getFont("ToolTip.font"));
   }
   
   /**

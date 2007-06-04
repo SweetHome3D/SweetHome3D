@@ -20,10 +20,12 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeListener;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 
@@ -32,6 +34,8 @@ import javax.swing.KeyStroke;
  * @author Emmanuel Puybaret
  */
 public class ResourceAction extends AbstractAction {
+  public static final String POPUP = "Popup";
+  
   /**
    * Creates a disabled action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.
@@ -53,16 +57,12 @@ public class ResourceAction extends AbstractAction {
     String propertyPrefix = actionPrefix + ".";
     putValue(NAME, resource.getString(propertyPrefix + NAME));
     putValue(DEFAULT, getValue(NAME));
+    putValue(POPUP, getOptionalString(resource, propertyPrefix + POPUP));
     
-    String shortDescription = getOptionalString(resource, propertyPrefix + SHORT_DESCRIPTION);
-    if (shortDescription != null) {
-      putValue(SHORT_DESCRIPTION, shortDescription);
-    }
-    
-    String longDescription = getOptionalString(resource, propertyPrefix + LONG_DESCRIPTION);
-    if (longDescription != null) {
-      putValue(LONG_DESCRIPTION, longDescription);
-    }
+    putValue(SHORT_DESCRIPTION, 
+        getOptionalString(resource, propertyPrefix + SHORT_DESCRIPTION));
+    putValue(LONG_DESCRIPTION, 
+        getOptionalString(resource, propertyPrefix + LONG_DESCRIPTION));
     
     String smallIcon = getOptionalString(resource, propertyPrefix + SMALL_ICON);
     if (smallIcon != null) {
@@ -107,5 +107,56 @@ public class ResourceAction extends AbstractAction {
    */
   public void actionPerformed(ActionEvent ev) {
     throw new UnsupportedOperationException();
+  }
+  
+  /**
+   * An action decorator for popup menu items.  
+   */
+  public static class PopupAction implements Action {
+    private Action action;
+
+    public PopupAction(Action action) {
+      this.action = action;
+    }
+
+    public void actionPerformed(ActionEvent ev) {
+      this.action.actionPerformed(ev);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+      this.action.addPropertyChangeListener(listener);
+    }
+
+    public Object getValue(String key) {
+      // If it exists, return POPUP key value if NAME key is required 
+      if (key.equals(NAME)) {
+        Object value = this.action.getValue(POPUP);
+        if (value != null) {
+          return value;
+        }
+      // Avoid icons and mnemonics for Mac OS X in popup menus
+      } else if (key.equals(SMALL_ICON)
+                 || (System.getProperty("os.name").startsWith("Mac OS X")
+                     && key.equals(MNEMONIC_KEY))) {
+        return null;
+      }
+      return this.action.getValue(key);
+    }
+
+    public boolean isEnabled() {
+      return this.action.isEnabled();
+    }
+
+    public void putValue(String key, Object value) {
+      this.action.putValue(key, value);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+      this.action.removePropertyChangeListener(listener);
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.action.setEnabled(enabled);
+    }
   }
 }

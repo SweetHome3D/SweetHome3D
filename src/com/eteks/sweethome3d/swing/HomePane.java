@@ -29,12 +29,9 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -65,7 +62,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
-import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -335,12 +331,7 @@ public class HomePane extends JRootPane {
     
     // Create Plan menu
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
-    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = new JCheckBoxMenuItem();
-    // Use the same model as Wall creation tool bar button
-    wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
-    // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    wallCreationCheckBoxMenuItem.setAction(actions.get(ActionType.WALL_CREATION));    
-    planMenu.add(wallCreationCheckBoxMenuItem);
+    planMenu.add(getWallCreationCheckBoxMenuItem(false));
     planMenu.add(actions.get(ActionType.MODIFY_WALL));
     planMenu.addSeparator();
     planMenu.add(actions.get(ActionType.ZOOM_OUT));
@@ -365,6 +356,20 @@ public class HomePane extends JRootPane {
     }
 
     return menuBar;
+  }
+
+  /**
+   * Returns a check box menu item for wall creation action. 
+   */
+  private JCheckBoxMenuItem getWallCreationCheckBoxMenuItem(boolean popup) {
+    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = new JCheckBoxMenuItem();
+    // Use the same model as Wall creation tool bar button
+    wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
+    // Configure check box menu item action after setting its model to avoid losing its mnemonic
+    wallCreationCheckBoxMenuItem.setAction(
+        popup ? new ResourceAction.PopupAction(getActionMap().get(ActionType.WALL_CREATION))
+              : getActionMap().get(ActionType.WALL_CREATION));
+    return wallCreationCheckBoxMenuItem;
   }
   
   /**
@@ -482,7 +487,14 @@ public class HomePane extends JRootPane {
     // Add focus listener to catalog tree
     this.catalogView.addFocusListener(new FocusableViewListener(
         controller, catalogScrollPane));
+    
+    // Create catalog view popup menu
+    JPopupMenu catalogViewPopup = new JPopupMenu();
+    catalogViewPopup.add(getPopupAction(ActionType.COPY));
+    catalogViewPopup.add(getPopupAction(ActionType.ADD_HOME_FURNITURE));
+    this.catalogView.setComponentPopupMenu(catalogViewPopup);
 
+    // Configure furniture view
     this.furnitureView = controller.getFurnitureController().getView();
     JScrollPane furnitureScrollPane = new HomeScrollPane(this.furnitureView);
     // Set default traversal keys of furniture view
@@ -510,6 +522,22 @@ public class HomePane extends JRootPane {
           }
         });    
     
+    // Create furniture view popup menu
+    JPopupMenu furnitureViewPopup = new JPopupMenu();
+    furnitureViewPopup.add(getPopupAction(ActionType.UNDO));
+    furnitureViewPopup.add(getPopupAction(ActionType.REDO));
+    furnitureViewPopup.addSeparator();
+    furnitureViewPopup.add(getPopupAction(ActionType.CUT));
+    furnitureViewPopup.add(getPopupAction(ActionType.COPY));
+    furnitureViewPopup.add(getPopupAction(ActionType.PASTE));
+    furnitureViewPopup.addSeparator();
+    furnitureViewPopup.add(getPopupAction(ActionType.DELETE));
+    furnitureViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
+    furnitureViewPopup.addSeparator();
+    furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
+    this.furnitureView.setComponentPopupMenu(furnitureViewPopup);
+    ((JViewport)this.furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
+    
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         catalogScrollPane, furnitureScrollPane);
@@ -528,6 +556,25 @@ public class HomePane extends JRootPane {
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
 
+    // Create plan view popup menu
+    JPopupMenu planViewPopup = new JPopupMenu();
+    planViewPopup.add(getPopupAction(ActionType.UNDO));
+    planViewPopup.add(getPopupAction(ActionType.REDO));
+    planViewPopup.addSeparator();
+    planViewPopup.add(getPopupAction(ActionType.CUT));
+    planViewPopup.add(getPopupAction(ActionType.COPY));
+    planViewPopup.add(getPopupAction(ActionType.PASTE));
+    planViewPopup.addSeparator();
+    planViewPopup.add(getPopupAction(ActionType.DELETE));
+    planViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
+    planViewPopup.addSeparator();
+    planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
+    planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
+    planViewPopup.addSeparator();
+    planViewPopup.add(getPopupAction(ActionType.ZOOM_OUT));
+    planViewPopup.add(getPopupAction(ActionType.ZOOM_IN));
+    this.planView.setComponentPopupMenu(planViewPopup);
+    
     JComponent view3D = new HomeComponent3D(home);
     view3D.setPreferredSize(this.planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
@@ -539,6 +586,13 @@ public class HomePane extends JRootPane {
     planView3DPane.setOneTouchExpandable(true);
     planView3DPane.setResizeWeight(0.5);
     return planView3DPane;
+  }
+  
+  /**
+   * Returns an action decorated for popup menu items.
+   */
+  private Action getPopupAction(ActionType actionType) {
+    return new ResourceAction.PopupAction(getActionMap().get(actionType));
   }
 
   /**
