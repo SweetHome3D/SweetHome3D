@@ -110,12 +110,12 @@ public class ResourceAction extends AbstractAction {
   }
   
   /**
-   * An action decorator for popup menu items.  
+   * An action decorator for menu items.  
    */
-  public static class PopupAction implements Action {
+  public static class MenuAction implements Action {
     private Action action;
 
-    public PopupAction(Action action) {
+    public MenuAction(Action action) {
       this.action = action;
     }
 
@@ -128,16 +128,10 @@ public class ResourceAction extends AbstractAction {
     }
 
     public Object getValue(String key) {
-      // If it exists, return POPUP key value if NAME key is required 
-      if (key.equals(NAME)) {
-        Object value = this.action.getValue(POPUP);
-        if (value != null) {
-          return value;
-        }
-      // Avoid icons and mnemonics for Mac OS X in popup menus
-      } else if (key.equals(SMALL_ICON)
-                 || (System.getProperty("os.name").startsWith("Mac OS X")
-                     && key.equals(MNEMONIC_KEY))) {
+      // Avoid mnemonics and icons in Mac OS X menus
+      if (System.getProperty("os.name").startsWith("Mac OS X")
+          && (key.equals(MNEMONIC_KEY)
+              || key.equals(SMALL_ICON))) {
         return null;
       }
       return this.action.getValue(key);
@@ -157,6 +151,29 @@ public class ResourceAction extends AbstractAction {
 
     public void setEnabled(boolean enabled) {
       this.action.setEnabled(enabled);
+    }
+  }
+  
+  /**
+   * An action decorator for popup menu items.  
+   */
+  public static class PopupAction extends MenuAction {
+    public PopupAction(Action action) {
+      super(action);
+    }
+
+    public Object getValue(String key) {
+      // If it exists, return POPUP key value if NAME key is required 
+      if (key.equals(NAME)) {
+        Object value = super.getValue(POPUP);
+        if (value != null) {
+          return value;
+        }
+      } else if (key.equals(SMALL_ICON)) {
+        // Avoid icons in popus
+        return null;
+      }
+      return super.getValue(key);
     }
   }
 }

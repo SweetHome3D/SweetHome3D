@@ -117,7 +117,6 @@ public class HomePane extends JRootPane {
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
   
-
   /**
    * Creates this view associated with its controller.
    */
@@ -249,52 +248,50 @@ public class HomePane extends JRootPane {
    * Returns the menu bar displayed in this pane.
    */
   private JMenuBar getHomeMenuBar(final Home home) {
-    ActionMap actions = getActionMap();
-
     // Create File menu
     JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU", true));
-    fileMenu.add(actions.get(ActionType.NEW_HOME));
-    fileMenu.add(actions.get(ActionType.OPEN));
+    fileMenu.add(getMenuAction(ActionType.NEW_HOME));
+    fileMenu.add(getMenuAction(ActionType.OPEN));
     fileMenu.addSeparator();
-    fileMenu.add(actions.get(ActionType.CLOSE));
-    fileMenu.add(actions.get(ActionType.SAVE));
-    fileMenu.add(actions.get(ActionType.SAVE_AS));
+    fileMenu.add(getMenuAction(ActionType.CLOSE));
+    fileMenu.add(getMenuAction(ActionType.SAVE));
+    fileMenu.add(getMenuAction(ActionType.SAVE_AS));
     // Don't add EXIT menu under Mac OS X, it's displayed in application menu  
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       fileMenu.addSeparator();
-      fileMenu.add(actions.get(ActionType.PREFERENCES));
+      fileMenu.add(getMenuAction(ActionType.PREFERENCES));
       fileMenu.addSeparator();
-      fileMenu.add(actions.get(ActionType.EXIT));
+      fileMenu.add(getMenuAction(ActionType.EXIT));
     }
 
     // Create Edit menu
     JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU", true));
-    editMenu.add(actions.get(ActionType.UNDO));
-    editMenu.add(actions.get(ActionType.REDO));
+    editMenu.add(getMenuAction(ActionType.UNDO));
+    editMenu.add(getMenuAction(ActionType.REDO));
     editMenu.addSeparator();
-    editMenu.add(actions.get(ActionType.CUT));
-    editMenu.add(actions.get(ActionType.COPY));
-    editMenu.add(actions.get(ActionType.PASTE));
+    editMenu.add(getMenuAction(ActionType.CUT));
+    editMenu.add(getMenuAction(ActionType.COPY));
+    editMenu.add(getMenuAction(ActionType.PASTE));
     editMenu.addSeparator();
-    editMenu.add(actions.get(ActionType.DELETE));
-    editMenu.add(actions.get(ActionType.SELECT_ALL));
+    editMenu.add(getMenuAction(ActionType.DELETE));
+    editMenu.add(getMenuAction(ActionType.SELECT_ALL));
 
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
-    furnitureMenu.add(actions.get(ActionType.ADD_HOME_FURNITURE));
-    furnitureMenu.add(actions.get(ActionType.MODIFY_HOME_FURNITURE));
+    furnitureMenu.add(getMenuAction(ActionType.ADD_HOME_FURNITURE));
+    furnitureMenu.add(getMenuAction(ActionType.MODIFY_HOME_FURNITURE));
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
     // Map sort furniture properties to sort actions
     Map<String, Action> sortActions = new LinkedHashMap<String, Action>(); 
-    sortActions.put("name", actions.get(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
-    sortActions.put("width", actions.get(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
-    sortActions.put("depth", actions.get(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
-    sortActions.put("height", actions.get(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
-    sortActions.put("color", actions.get(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
-    sortActions.put("movable", actions.get(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
-    sortActions.put("doorOrWindow", actions.get(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
-    sortActions.put("visible", actions.get(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
+    sortActions.put("name", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
+    sortActions.put("width", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
+    sortActions.put("depth", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
+    sortActions.put("height", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
+    sortActions.put("color", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
+    sortActions.put("movable", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
+    sortActions.put("doorOrWindow", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
+    sortActions.put("visible", getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
     // Add radio button menu items to sub menu and make them share the same radio button group
     ButtonGroup sortButtonGroup = new ButtonGroup();
     for (Map.Entry<String, Action> entry : sortActions.entrySet()) {
@@ -325,24 +322,24 @@ public class HomePane extends JRootPane {
         }
       });
     sortOrderCheckBoxMenuItem.setAction(
-        actions.get(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
     sortMenu.add(sortOrderCheckBoxMenuItem);
     furnitureMenu.add(sortMenu);
     
     // Create Plan menu
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
     planMenu.add(getWallCreationCheckBoxMenuItem(false));
-    planMenu.add(actions.get(ActionType.MODIFY_WALL));
+    planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
     planMenu.addSeparator();
-    planMenu.add(actions.get(ActionType.ZOOM_OUT));
-    planMenu.add(actions.get(ActionType.ZOOM_IN));
+    planMenu.add(getMenuAction(ActionType.ZOOM_OUT));
+    planMenu.add(getMenuAction(ActionType.ZOOM_IN));
 
     // Create Help menu
     JMenu helpMenu = null;
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       helpMenu = new JMenu(
           new ResourceAction(this.resource, "HELP_MENU", true));
-      helpMenu.add(actions.get(ActionType.ABOUT));      
+      helpMenu.add(getMenuAction(ActionType.ABOUT));      
     }
 
     // Add menus to menu bar
@@ -359,6 +356,20 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Returns an action decorated for menu items.
+   */
+  private Action getMenuAction(ActionType actionType) {
+    return new ResourceAction.MenuAction(getActionMap().get(actionType));
+  }
+
+  /**
+   * Returns an action decorated for popup menu items.
+   */
+  private Action getPopupAction(ActionType actionType) {
+    return new ResourceAction.PopupAction(getActionMap().get(actionType));
+  }
+
+  /**
    * Returns a check box menu item for wall creation action. 
    */
   private JCheckBoxMenuItem getWallCreationCheckBoxMenuItem(boolean popup) {
@@ -367,8 +378,8 @@ public class HomePane extends JRootPane {
     wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     wallCreationCheckBoxMenuItem.setAction(
-        popup ? new ResourceAction.PopupAction(getActionMap().get(ActionType.WALL_CREATION))
-              : getActionMap().get(ActionType.WALL_CREATION));
+        popup ? getPopupAction(ActionType.WALL_CREATION)
+              : getMenuAction(ActionType.WALL_CREATION));
     return wallCreationCheckBoxMenuItem;
   }
   
@@ -588,13 +599,6 @@ public class HomePane extends JRootPane {
     return planView3DPane;
   }
   
-  /**
-   * Returns an action decorated for popup menu items.
-   */
-  private Action getPopupAction(ActionType actionType) {
-    return new ResourceAction.PopupAction(getActionMap().get(actionType));
-  }
-
   /**
    * Adds to <code>view</code> a mouse listener that disables all menu items of
    * <code>menuBar</code> during a drag and drop operation in <code>view</code>.
