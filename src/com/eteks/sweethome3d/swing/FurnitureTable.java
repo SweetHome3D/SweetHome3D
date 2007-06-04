@@ -164,7 +164,7 @@ public class FurnitureTable extends JTable {
         @Override
         public void mouseClicked(MouseEvent ev) {
           if (ev.getClickCount() == 2) {
-            controller.modifySelection();
+            controller.modifySelectedFurniture();
           }
         }
       });

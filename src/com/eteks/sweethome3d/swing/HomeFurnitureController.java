@@ -97,7 +97,7 @@ public class HomeFurnitureController {
           @Override
           public void undo() throws CannotUndoException {
             super.undo();
-            doRestoreFurniture(modifiedFurniture); 
+            undoModifyFurniture(modifiedFurniture); 
             home.setSelectedItems(oldSelection); 
           }
           
@@ -148,7 +148,7 @@ public class HomeFurnitureController {
   /**
    * Restores furniture properties from the values stored in <code>modifiedFurnitures</code>.
    */
-  private void doRestoreFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
+  private void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       this.home.setPieceOfFurnitureName(piece, modifiedPiece.getName());

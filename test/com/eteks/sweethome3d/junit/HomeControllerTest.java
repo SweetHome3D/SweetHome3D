@@ -167,13 +167,14 @@ public class HomeControllerTest extends TestCase {
   /**
    * Tests zoom and alignment tools. 
    */
-  public void testZoom() {
+  public void testZoomAndAligment() {
     // Add the first two pieces of catalog first category to home
     Category firstCategory = this.preferences.getCatalog().getCategories().get(0);
-    this.home.addPieceOfFurniture(
-        new HomePieceOfFurniture(firstCategory.getFurniture().get(0)));
-    this.home.addPieceOfFurniture(
-        new HomePieceOfFurniture(firstCategory.getFurniture().get(1)));
+    HomePieceOfFurniture firstPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
+    this.home.addPieceOfFurniture(firstPiece);
+    HomePieceOfFurniture secondPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(1));
+    this.home.setPieceOfFurnitureAngle(secondPiece, 15);
+    this.home.addPieceOfFurniture(secondPiece);
     // Add a wall to home
     this.home.addWall(new Wall(0, 0, 100, 0, 7));
     
@@ -192,17 +193,69 @@ public class HomeControllerTest extends TestCase {
     
     // 3. Select all while table has focus
     this.homeController.focusedViewChanged(this.furnitureTable);
-    this.homeController.selectAll();
+    runAction(HomePane.ActionType.SELECT_ALL);
     // Check selection contains the two pieces
     assertEquals("Selection doesn't contain home furniture", 
         this.home.getFurniture(), this.home.getSelectedItems());
 
     // 4. Select all while plan has focus
     this.homeController.focusedViewChanged(planController.getView());
-    this.homeController.selectAll();
+    runAction(HomePane.ActionType.SELECT_ALL);
     // Check selection contains the two pieces and the wall
     assertEquals("Selection doesn't contain home objects", 
         3, this.home.getSelectedItems().size());
+    
+    // 5. Select the first two pieces 
+    this.home.setSelectedItems(Arrays.asList(new Object [] {firstPiece, secondPiece}));
+    float secondPieceX = secondPiece.getX();
+    float secondPieceY = secondPiece.getY();
+    // Align on bottom
+    runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM);
+    // Check bottom of second piece equals bottom of first piece
+    assertFloatEquals("Second piece isn't aligned on bottom of first piece",
+        getMaxY(firstPiece), getMaxY(secondPiece));
+
+    // 6. Align on top
+    runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP);
+    // Check bottom of second piece equals bottom of first piece
+    assertFloatEquals("Second piece isn't aligned on top of first piece",
+        getMinY(firstPiece), getMinY(secondPiece));
+    
+    // 7. Align on left
+    runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT);
+    // Check bottom of second piece equals bottom of first piece
+    assertFloatEquals("Second piece isn't aligned on left of first piece",
+        getMinX(firstPiece), getMinX(secondPiece));
+    
+    // 8. Align on right
+    runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT);
+    // Check bottom of second piece equals bottom of first piece
+    assertFloatEquals("Second piece isn't aligned on right of first piece",
+        getMaxX(firstPiece), getMaxX(secondPiece));
+    float alignedPieceX = secondPiece.getX();
+    float alignedPieceY = secondPiece.getY();
+
+    // 9. Undo alignments
+    runAction(HomePane.ActionType.UNDO);
+    runAction(HomePane.ActionType.UNDO);
+    runAction(HomePane.ActionType.UNDO);
+    runAction(HomePane.ActionType.UNDO);
+    // Check second piece is back to its place
+    assertFloatEquals("Second piece abcissa is incorrect",
+        secondPieceX, secondPiece.getX());
+    assertFloatEquals("Second piece ordinate is incorrect",
+        secondPieceY, secondPiece.getY());
+
+    // 10. Redo alignments
+    runAction(HomePane.ActionType.REDO);
+    runAction(HomePane.ActionType.REDO);
+    runAction(HomePane.ActionType.REDO);
+    runAction(HomePane.ActionType.REDO);
+    // Check second piece is back to its place
+    assertFloatEquals("Second piece abcissa is incorrect",
+        alignedPieceX, secondPiece.getX());
+    assertFloatEquals("Second piece ordinate is incorrect",
+        alignedPieceY, secondPiece.getY());
   }
   
   /**
@@ -238,6 +291,61 @@ public class HomeControllerTest extends TestCase {
         getAction(HomePane.ActionType.UNDO).isEnabled() == undoActionEnabled);
     assertTrue("Redo action invalid state", 
         getAction(HomePane.ActionType.REDO).isEnabled() == redoActionEnabled);
+  }
+  
+  /**
+   * Asserts <code>value1</code> equals <code>value2</code> at epsilon.
+   */
+  private void assertFloatEquals(String message, float value1, float value2) {
+    assertTrue(message, Math.abs(value1 - value2) < 1E-5);
+  }
+
+  /**
+   * Returns the minimum abcissa of the vertices of <code>piece</code>.  
+   */
+  private float getMinX(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float minX = Float.POSITIVE_INFINITY;
+    for (float [] point : points) {
+      minX = Math.min(minX, point [0]);
+    } 
+    return minX;
+  }
+
+  /**
+   * Returns the maximum abcissa of the vertices of <code>piece</code>.  
+   */
+  private float getMaxX(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float maxX = Float.NEGATIVE_INFINITY;
+    for (float [] point : points) {
+      maxX = Math.max(maxX, point [0]);
+    } 
+    return maxX;
+  }
+
+  /**
+   * Returns the minimum ordinate of the vertices of <code>piece</code>.  
+   */
+  private float getMinY(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float minY = Float.POSITIVE_INFINITY;
+    for (float [] point : points) {
+      minY = Math.min(minY, point [1]);
+    } 
+    return minY;
+  }
+
+  /**
+   * Returns the maximum ordinate of the vertices of <code>piece</code>.  
+   */
+  private float getMaxY(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float maxY = Float.NEGATIVE_INFINITY;
+    for (float [] point : points) {
+      maxY = Math.max(maxY, point [1]);
+    } 
+    return maxY;
   }
 
   public static void main(String [] args) {

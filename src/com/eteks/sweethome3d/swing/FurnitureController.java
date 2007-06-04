@@ -34,6 +34,8 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -41,11 +43,12 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureController {
-  private Home                home;
-  private JComponent          furnitureView;
-  private ResourceBundle      resource;
-  private UndoableEditSupport undoSupport;
-  private UserPreferences     preferences;
+  private Home                 home;
+  private JComponent           furnitureView;
+  private ResourceBundle       resource;
+  private UndoableEditSupport  undoSupport;
+  private UserPreferences      preferences;
+  private HomePieceOfFurniture leadSelectedPieceOfFurniture;
 
   /**
    * Creates the controller of home furniture view.
@@ -68,8 +71,20 @@ public class FurnitureController {
     this.preferences = preferences;
     this.resource    = ResourceBundle.getBundle(
         FurnitureController.class.getName());
-    this.furnitureView = 
-        new FurnitureTable(home, preferences, this); 
+    this.furnitureView = new FurnitureTable(home, preferences, this);
+    
+    // Add a selection listener that gets the lead selected piece in home
+    this.home.addSelectionListener(new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          List<HomePieceOfFurniture> selectedFurniture = 
+              Home.getFurnitureSubList(ev.getSelectedItems());
+          if (selectedFurniture.isEmpty()) {
+            leadSelectedPieceOfFurniture = null;
+          } else if (leadSelectedPieceOfFurniture == null) {
+            leadSelectedPieceOfFurniture = selectedFurniture.get(0);
+          }
+        }
+      });
   }
 
   /**
@@ -135,8 +150,7 @@ public class FurnitureController {
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteSelection() {
-    List<HomePieceOfFurniture> homeFurniture = 
-        this.home.getFurniture(); 
+    List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
     // Sort the selected furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
         new TreeMap<Integer, HomePieceOfFurniture>(); 
@@ -223,9 +237,311 @@ public class FurnitureController {
   /**
    * Controls the modification of selected furniture.
    */
-  public void modifySelection() {
+  public void modifySelectedFurniture() {
     if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
       new HomeFurnitureController(this.home, this.preferences, this.undoSupport);
+    }
+  }
+  
+  /**
+   * Controls the alignment of selected furniture on top of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnTop() {
+    final List<HomePieceOfFurniture> selectedFurniture = 
+        Home.getFurnitureSubList(this.home.getSelectedItems());
+    if (selectedFurniture.size() >= 2) {
+      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, false);
+      doAlignFurnitureOnTop(alignedFurniture, leadPiece);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture, false); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doAlignFurnitureOnTop(alignedFurniture, leadPiece);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoAlignName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  private void doAlignFurnitureOnTop(AlignedPieceOfFurniture [] alignedFurniture, 
+                                     HomePieceOfFurniture leadPiece) {
+    float minYLeadPiece = getMinY(leadPiece);
+    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
+      if (piece != leadPiece) {
+        float minY = getMinY(piece);
+        this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
+            piece.getY() + minYLeadPiece - minY);
+      }
+    }
+  }
+
+  private void undoAlignFurniture(AlignedPieceOfFurniture [] alignedFurniture,
+                                  boolean alignX) {
+    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
+      if (alignX) {
+        this.home.setPieceOfFurnitureLocation(piece, alignedPiece.getXOrY(), 
+            piece.getY());
+      } else {
+        this.home.setPieceOfFurnitureLocation(piece, piece.getX(),
+            alignedPiece.getXOrY());
+      }
+    }
+  }
+  
+  /**
+   * Controls the alignment of selected furniture on bottom of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnBottom() {
+    final List<HomePieceOfFurniture> selectedFurniture = 
+        Home.getFurnitureSubList(this.home.getSelectedItems());
+    if (selectedFurniture.size() >= 2) {
+      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, false);
+      doAlignFurnitureOnBottom(alignedFurniture, leadPiece);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture, false); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doAlignFurnitureOnBottom(alignedFurniture, leadPiece);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoAlignName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  private void doAlignFurnitureOnBottom(AlignedPieceOfFurniture [] alignedFurniture, 
+                                        HomePieceOfFurniture leadPiece) {
+    float maxYLeadPiece = getMaxY(leadPiece);
+    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
+      if (piece != leadPiece) {
+        float maxY = getMaxY(piece);
+        this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
+            piece.getY() + maxYLeadPiece - maxY);
+      }
+    }
+  }
+
+  /**
+   * Controls the alignment of selected furniture on left of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnLeft() {
+    final List<HomePieceOfFurniture> selectedFurniture = 
+        Home.getFurnitureSubList(this.home.getSelectedItems());
+    if (selectedFurniture.size() >= 2) {
+      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, true);
+      doAlignFurnitureOnLeft(alignedFurniture, leadPiece);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture, true); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doAlignFurnitureOnLeft(alignedFurniture, leadPiece);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoAlignName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  private void doAlignFurnitureOnLeft(AlignedPieceOfFurniture [] alignedFurniture, 
+                                      HomePieceOfFurniture leadPiece) {
+    float minXLeadPiece = getMinX(leadPiece);
+    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
+      if (piece != leadPiece) {
+        float minX = getMinX(piece);
+        this.home.setPieceOfFurnitureLocation(piece, 
+            piece.getX() + minXLeadPiece - minX, piece.getY());
+      }
+    }
+  }
+
+  /**
+   * Controls the alignment of selected furniture on right of the first selected piece.
+   */
+  public void alignSelectedFurnitureOnRight() {
+    final List<HomePieceOfFurniture> selectedFurniture = 
+        Home.getFurnitureSubList(this.home.getSelectedItems());
+    if (selectedFurniture.size() >= 2) {
+      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
+      final AlignedPieceOfFurniture [] alignedFurniture = 
+          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece, true);
+      doAlignFurnitureOnRight(alignedFurniture, leadPiece);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoAlignFurniture(alignedFurniture, true); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(selectedFurniture);
+            doAlignFurnitureOnRight(alignedFurniture, leadPiece);
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoAlignName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+  
+  private void doAlignFurnitureOnRight(AlignedPieceOfFurniture [] alignedFurniture, 
+                                       HomePieceOfFurniture leadPiece) {
+    float maxXLeadPiece = getMaxX(leadPiece);
+    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
+      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
+      if (piece != leadPiece) {
+        float maxX = getMaxX(piece);
+        this.home.setPieceOfFurnitureLocation(piece, 
+            piece.getX() + maxXLeadPiece - maxX, piece.getY());
+      }
+    }
+  }
+
+  /**
+   * Returns the minimum abcissa of the vertices of <code>piece</code>.  
+   */
+  private float getMinX(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float minX = Float.POSITIVE_INFINITY;
+    for (float [] point : points) {
+      minX = Math.min(minX, point [0]);
+    } 
+    return minX;
+  }
+
+  /**
+   * Returns the maximum abcissa of the vertices of <code>piece</code>.  
+   */
+  private float getMaxX(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float maxX = Float.NEGATIVE_INFINITY;
+    for (float [] point : points) {
+      maxX = Math.max(maxX, point [0]);
+    } 
+    return maxX;
+  }
+
+  /**
+   * Returns the minimum ordinate of the vertices of <code>piece</code>.  
+   */
+  private float getMinY(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float minY = Float.POSITIVE_INFINITY;
+    for (float [] point : points) {
+      minY = Math.min(minY, point [1]);
+    } 
+    return minY;
+  }
+
+  /**
+   * Returns the maximum ordinate of the vertices of <code>piece</code>.  
+   */
+  private float getMaxY(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    float maxY = Float.NEGATIVE_INFINITY;
+    for (float [] point : points) {
+      maxY = Math.max(maxY, point [1]);
+    } 
+    return maxY;
+  }
+
+  /**
+   * Stores the current x or y value of an aligned piece of furniture.
+   */
+  private static class AlignedPieceOfFurniture {
+    private HomePieceOfFurniture piece;
+    private float                xOrY;
+    
+    public AlignedPieceOfFurniture(HomePieceOfFurniture piece, 
+                                   boolean alignX) {
+      this.piece = piece;
+      if (alignX) {
+        this.xOrY = piece.getX();
+      } else {
+        this.xOrY = piece.getY();
+      }
+    }
+
+    public HomePieceOfFurniture getPieceOfFurniture() {
+      return this.piece;
+    }
+
+    public float getXOrY() {
+      return this.xOrY;
+    }
+
+    /**
+     * A helper method that returns an array of <code>AlignedPieceOfFurniture</code>
+     * built from <code>furniture</code> pieces excepted for <code>leadPiece</code>.
+     */
+    public static AlignedPieceOfFurniture [] getAlignedFurniture(List<HomePieceOfFurniture> furniture, 
+                                                                 HomePieceOfFurniture leadPiece,
+                                                                 boolean alignX) {
+      final AlignedPieceOfFurniture[] alignedFurniture =
+          new AlignedPieceOfFurniture[furniture.size() - 1];
+      int i = 0;
+      for (HomePieceOfFurniture piece : furniture) {
+        if (piece != leadPiece) {
+          alignedFurniture[i++] = new AlignedPieceOfFurniture(piece, alignX);
+        }
+      }
+      return alignedFurniture;
     }
   }
 }

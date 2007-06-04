@@ -86,7 +86,9 @@ public class HomePane extends JRootPane {
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ZOOM_OUT, ZOOM_IN, ABOUT}
+    ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
+    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ZOOM_OUT, ZOOM_IN,  
+    ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
   private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
@@ -163,7 +165,15 @@ public class HomePane extends JRootPane {
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
     createAction(ActionType.MODIFY_HOME_FURNITURE,
-        controller.getFurnitureController(), "modifySelection");
+        controller.getFurnitureController(), "modifySelectedFurniture");
+    createAction(ActionType.ALIGN_FURNITURE_ON_TOP, 
+        controller.getFurnitureController(), "alignSelectedFurnitureOnTop");
+    createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, 
+        controller.getFurnitureController(), "alignSelectedFurnitureOnBottom");
+    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT, 
+        controller.getFurnitureController(), "alignSelectedFurnitureOnLeft");
+    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, 
+        controller.getFurnitureController(), "alignSelectedFurnitureOnRight");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, controller, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.NAME);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, controller, "toggleFurnitureSort", 
@@ -280,6 +290,12 @@ public class HomePane extends JRootPane {
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
     furnitureMenu.add(getMenuAction(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(getMenuAction(ActionType.MODIFY_HOME_FURNITURE));
+    furnitureMenu.addSeparator();
+    furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_TOP));
+    furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
+    furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
+    furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
+    furnitureMenu.addSeparator();
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
     // Map sort furniture properties to sort actions

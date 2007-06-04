@@ -219,9 +219,12 @@ public class HomeController  {
     // Search if selection contains at least one piece or one wall
     List<Object> selectedItems = this.home.getSelectedItems();
     boolean selectionContainsFurniture = false;
+    boolean selectionContainsTwoPiecesOfFurnitureOrMore = false;
     boolean selectionContainsWalls = false;
     if (!wallCreationMode) {
       selectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
+      selectionContainsTwoPiecesOfFurnitureOrMore = 
+          Home.getFurnitureSubList(selectedItems).size() >= 2;
       selectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
     }
 
@@ -248,16 +251,24 @@ public class HomeController  {
     }
 
     // In creation mode all actions bound to selection are disabled
+    view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
+        !wallCreationMode && !catalogSelectedItems.isEmpty());
     view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
-        !wallCreationMode && selectionContainsFurniture);
+        selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
         !wallCreationMode && !selectedItems.isEmpty());
     view.setEnabled(HomePane.ActionType.MODIFY_HOME_FURNITURE,
-        !wallCreationMode && selectionContainsFurniture);
-    view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
-        !wallCreationMode && !catalogSelectedItems.isEmpty());
+        selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.MODIFY_WALL,
-        !wallCreationMode && selectionContainsWalls);
+        selectionContainsWalls);
+    view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP,
+        selectionContainsTwoPiecesOfFurnitureOrMore);
+    view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM,
+        selectionContainsTwoPiecesOfFurnitureOrMore);
+    view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT,
+        selectionContainsTwoPiecesOfFurnitureOrMore);
+    view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT,
+        selectionContainsTwoPiecesOfFurnitureOrMore);
   }
 
   /**

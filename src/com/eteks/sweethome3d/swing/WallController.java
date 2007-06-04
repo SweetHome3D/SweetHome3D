@@ -93,7 +93,7 @@ public class WallController {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doRestoreWalls(modifiedWalls); 
+          undoModifyWalls(modifiedWalls); 
           home.setSelectedItems(oldSelection); 
         }
         
@@ -139,7 +139,7 @@ public class WallController {
   /**
    * Restores wall properties from the values stored in <code>modifiedWalls</code>.
    */
-  private void doRestoreWalls(ModifiedWall [] modifiedWalls) {
+  private void undoModifyWalls(ModifiedWall [] modifiedWalls) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       // Modify wall coordinates if modifiedWalls contains only one wall
