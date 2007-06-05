@@ -595,6 +595,7 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.DELETE));
     planViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     planViewPopup.addSeparator();
+    planViewPopup.add(getPopupAction(ActionType.WALL_CREATION));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.addSeparator();
@@ -621,7 +622,7 @@ public class HomePane extends JRootPane {
    */
   private void disableMenuItemsDuringDragAndDrop(JComponent view, 
                                                  final JMenuBar menuBar) {
-    view.addMouseListener(new MouseAdapter() {      
+    class MouseAndFocusListener extends MouseAdapter implements FocusListener {      
       @Override
       public void mousePressed(MouseEvent ev) {
         EventQueue.invokeLater(new Runnable() {
@@ -634,7 +635,11 @@ public class HomePane extends JRootPane {
       }
       
       @Override
-      public void mouseReleased(MouseEvent e) {
+      public void mouseReleased(MouseEvent ev) {
+        enableMenuItems(menuBar);
+      }
+
+      private void enableMenuItems(final JMenuBar menuBar) {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               for (int i = 0, n = menuBar.getMenuCount(); i < n; i++) {
@@ -656,7 +661,21 @@ public class HomePane extends JRootPane {
           }
         }
       }
-    });
+
+      // Need to take into account focus events because a mouse released event 
+      // isn't dispatched when the component loses focus  
+      public void focusGained(FocusEvent ev) {
+        enableMenuItems(menuBar);
+      }
+
+      public void focusLost(FocusEvent ev) {
+        enableMenuItems(menuBar);
+      }
+    };
+    
+    MouseAndFocusListener listener = new MouseAndFocusListener();
+    view.addMouseListener(listener);
+    view.addFocusListener(listener);
   }
   
   /**

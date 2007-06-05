@@ -94,6 +94,8 @@ public class PlanComponent extends JComponent {
   private float              scale  = 0.5f;
 
   private Rectangle2D        rectangleFeedback;
+  private Wall               wallFeedback;
+  private Point2D            wallLocationFeeback;
   private Rectangle2D        planBoundsCache;
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
@@ -423,7 +425,6 @@ public class PlanComponent extends JComponent {
     // Paint component contents
     paintGrid(g2D);
     paintContent(g2D);   
-    paintRectangleFeedback(g2D);
     g2D.dispose();
   }
 
@@ -491,49 +492,52 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Paints rectangle feedback.
-   */
-  private void paintRectangleFeedback(Graphics2D g2D) {
-    if (this.rectangleFeedback != null) {
-      Color selectionColor = UIManager.getColor("textHighlight");
-      g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 32));
-      g2D.fill(this.rectangleFeedback);
-      g2D.setPaint(selectionColor);
-      g2D.setStroke(new BasicStroke(1 / this.scale));
-      g2D.draw(this.rectangleFeedback);
-    }
-  }
-
-  /**
    * Paints plan items.
    */
   private void paintContent(Graphics2D g2D) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    Color opaqueSelectionColor = UIManager.getColor("textHighlight");
+    Paint selectionPaint = new Color(opaqueSelectionColor.getRed(), opaqueSelectionColor.getGreen(), 
+        opaqueSelectionColor.getBlue(), 128);
+    Stroke selectionStroke = new BasicStroke(6 / this.scale, 
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+    Stroke locationFeedbackStroke = new BasicStroke(
+        1 / this.scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+        new float [] {20 / this.scale, 5 / this.scale, 5 / this.scale, 5 / this.scale}, 4 / this.scale);
+    
+    paintWalls(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
+    paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke);
+    paintResizeIndicator(g2D, selectedItems, opaqueSelectionColor);
+    paintWallLocationFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
+    paintRectangleFeedback(g2D, opaqueSelectionColor);
+  }
+
+  /**
+   * Paints walls. 
+   */
+  private void paintWalls(Graphics2D g2D, List<Object> selectedItems, 
+                          Paint selectionPaint, Stroke selectionStroke, 
+                          Paint indicatorPaint) {
     Shape wallsArea = getWallsArea(this.home.getWalls());
     // Fill walls area
     g2D.setPaint(getWallPaint());
     g2D.fill(wallsArea);
-    // Draw selected walls with a surrounding shape
-    Color selectionColor = UIManager.getColor("textHighlight");
-    Paint selectionPaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
-        selectionColor.getBlue(), 128);
-    Stroke selectionStroke = new BasicStroke(6 / this.scale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    Stroke indicatorStroke = new BasicStroke(1.5f);
-    Stroke wallIndicatorStroke = new BasicStroke(2f);
-    List<Object> selectedItems = this.home.getSelectedItems();
+    
+    Stroke indicatorStroke = new BasicStroke(2f);  
     for (Object item : selectedItems) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
+        // Draw selection border
         g2D.setPaint(selectionPaint);
         g2D.setStroke(selectionStroke);
         g2D.draw(getShape(wall.getPoints()));
         
         AffineTransform previousTransform = g2D.getTransform();
+        // Draw start point of the wall
         g2D.translate(wall.getXStart(), wall.getYStart());
         g2D.scale(1 / this.scale, 1 / this.scale);
-        // Draw start point of the wall
-        g2D.setPaint(selectionColor);         
-        g2D.setStroke(wallIndicatorStroke);
+        g2D.setPaint(indicatorPaint);         
+        g2D.setStroke(indicatorStroke);
         g2D.fill(WALL_POINT);
         
         double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
@@ -541,14 +545,6 @@ public class PlanComponent extends JComponent {
         double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
             wall.getXEnd(), wall.getYEnd()) * this.scale;
         g2D.rotate(wallAngle);
-        if (selectedItems.size() == 1 && selectedItems.contains(wall)
-            && this.resizeIndicatorVisible) {
-          g2D.rotate(Math.PI);
-          g2D.setStroke(indicatorStroke);
-          g2D.draw(WALL_RESIZE_INDICATOR);
-          g2D.rotate(-Math.PI);
-          g2D.setStroke(wallIndicatorStroke);
-        }        
         // If the distance between start and end points is < 30
         if (distanceAtScale < 30) { 
           // Draw only one orientation indicator between the two points
@@ -564,15 +560,9 @@ public class PlanComponent extends JComponent {
         g2D.translate(wall.getXEnd(), wall.getYEnd());
         g2D.scale(1 / this.scale, 1 / this.scale);
         g2D.fill(WALL_POINT);
-        g2D.rotate(wallAngle);
-        if (selectedItems.size() == 1 && selectedItems.contains(wall)
-            && this.resizeIndicatorVisible) {
-          g2D.setStroke(indicatorStroke);
-          g2D.draw(WALL_RESIZE_INDICATOR);
-          g2D.setStroke(wallIndicatorStroke);
-        }        
         if (distanceAtScale >= 30) { 
           // Draw orientation indicator at end of the wall
+          g2D.rotate(wallAngle);
           g2D.translate(-10, 0);
           g2D.draw(WALL_ORIENTATION_INDICATOR);
         }        
@@ -583,53 +573,19 @@ public class PlanComponent extends JComponent {
     g2D.setPaint(getForeground());
     g2D.setStroke(new BasicStroke(1.5f / this.scale));
     g2D.draw(wallsArea);
-    
-    Color pieceAreaColor = UIManager.getColor("window");
-    BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
-    // Draw furniture
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible()) {
-        float [][] piecePoints = piece.getPoints();
-        Shape pieceShape = getShape(piecePoints);
-        // Fill piece area
-        g2D.setPaint(pieceAreaColor);
-        g2D.fill(pieceShape);
-        // Draw its icon
-        paintPieceOfFurnitureIcon(g2D, piece);
-        if (selectedItems.contains(piece)) {
-          g2D.setPaint(selectionPaint);
-          g2D.setStroke(selectionStroke);
-          g2D.draw(pieceShape);
-        }        
-        // Draw its border
-        g2D.setPaint(getForeground());
-        g2D.setStroke(pieceBorderStroke);
-        g2D.draw(pieceShape);
-        
-        if (selectedItems.size() == 1 && selectedItems.contains(piece) 
-            && this.resizeIndicatorVisible) {
-          g2D.setPaint(selectionColor);         
-          g2D.setStroke(indicatorStroke);
-          
-          AffineTransform previousTransform = g2D.getTransform();
-          // Draw rotation indicator at top left vertex of the piece
-          g2D.translate(piecePoints [0][0], piecePoints [0][1]);
-          g2D.scale(1 / this.scale, 1 / this.scale);
-          g2D.rotate(piece.getAngle());
-          g2D.draw(FURNITURE_ROTATION_INDICATOR);
-          g2D.setTransform(previousTransform);
-
-          // Draw size indicator at top left vertex of the piece
-          g2D.translate(piecePoints [2][0], piecePoints [2][1]);
-          g2D.scale(1 / this.scale, 1 / this.scale);
-          g2D.rotate(piece.getAngle());
-          g2D.draw(FURNITURE_RESIZE_INDICATOR);
-          g2D.setTransform(previousTransform);
-        }
-      }
-    }
   }
-
+  
+  /**
+   * Returns an area matching the union of all wall shapes. 
+   */
+  private Area getWallsArea(Collection<Wall> walls) {
+    Area area = new Area();
+    for (Wall wall : walls) {
+      area.add(new Area(getShape(wall.getPoints())));
+    }    
+    return area;
+  }
+  
   /**
    * Returns the <code>Paint</code> object used to fill walls.
    */
@@ -644,6 +600,37 @@ public class PlanComponent extends JComponent {
     imageGraphics.dispose();
     return new TexturePaint(image, 
         new Rectangle2D.Float(0, 0, 10 / this.scale, 10 / this.scale));
+  }
+  
+  /**
+   * Paints home furniture.
+   */
+  public void paintFurniture(Graphics2D g2D, List<Object> selectedItems, 
+                             Paint selectionPaint, Stroke selectionStroke) {
+    Color pieceAreaColor = UIManager.getColor("window");
+    BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
+    // Draw furniture
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        Shape pieceShape = getShape(piece.getPoints());
+        // Fill piece area
+        g2D.setPaint(pieceAreaColor);
+        g2D.fill(pieceShape);
+        // Draw its icon
+        paintPieceOfFurnitureIcon(g2D, piece);
+        
+        if (selectedItems.contains(piece)) {
+          // Draw selection border
+          g2D.setPaint(selectionPaint);
+          g2D.setStroke(selectionStroke);
+          g2D.draw(pieceShape);
+        }        
+        // Draw its border
+        g2D.setPaint(getForeground());
+        g2D.setStroke(pieceBorderStroke);
+        g2D.draw(pieceShape);
+      }
+    }
   }
 
   /**
@@ -666,16 +653,148 @@ public class PlanComponent extends JComponent {
   }
 
   /**
-   * Returns an area matching the union of all wall shapes. 
+   * Paints resize indicator on selected item.
    */
-  private Area getWallsArea(Collection<Wall> walls) {
-    Area area = new Area();
-    for (Wall wall : walls) {
-      area.add(new Area(getShape(wall.getPoints())));
-    }    
-    return area;
+  public void paintResizeIndicator(Graphics2D g2D, List<Object> selectedItems,
+                                   Paint indicatorPaint) {
+    if (this.resizeIndicatorVisible && selectedItems.size() == 1) {
+      Object selectedItem = selectedItems.get(0);
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(new BasicStroke(1.5f));
+      
+      if (selectedItem instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItem;
+        
+        AffineTransform previousTransform = g2D.getTransform();
+        // Draw rotation indicator at top left vertex of the piece
+        float [][] piecePoints = piece.getPoints();
+        g2D.translate(piecePoints [0][0], piecePoints [0][1]);
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.rotate(piece.getAngle());
+        g2D.draw(FURNITURE_ROTATION_INDICATOR);
+        g2D.setTransform(previousTransform);
+  
+        // Draw resize indicator at top left vertex of the piece
+        g2D.translate(piecePoints [2][0], piecePoints [2][1]);
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.rotate(piece.getAngle());
+        g2D.draw(FURNITURE_RESIZE_INDICATOR);
+        g2D.setTransform(previousTransform);
+      } else if (selectedItem instanceof Wall) {
+        Wall wall = (Wall)selectedItem;
+        double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+            wall.getXEnd() - wall.getXStart());
+        
+        AffineTransform previousTransform = g2D.getTransform();
+        // Draw resize indicator at wall start point
+        g2D.translate(wall.getXStart(), wall.getYStart());
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.rotate(wallAngle + Math.PI);
+        g2D.draw(WALL_RESIZE_INDICATOR);
+        g2D.setTransform(previousTransform);
+        
+        // Draw resize indicator at wall end point
+        g2D.translate(wall.getXEnd(), wall.getYEnd());
+        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.rotate(wallAngle);
+        g2D.draw(WALL_RESIZE_INDICATOR);
+        g2D.setTransform(previousTransform);
+      }  
+
+    }
   }
   
+  /**
+   * Paints wall location feedback.
+   */
+  public void paintWallLocationFeedback(Graphics2D g2D, 
+                                        Paint feedbackPaint, Stroke feedbackStroke) {
+    // Paint wall location feedback
+    if (this.wallLocationFeeback != null) {
+      float margin = 1f / this.scale;
+      // Seach which wall start or end point is at wallLocationFeeback abcissa or ordinate
+      // ignoring the start and end point of wallFeedback
+      float x = (float)this.wallLocationFeeback.getX(); 
+      float y = (float)this.wallLocationFeeback.getY();
+      float deltaXToClosestWall = Float.POSITIVE_INFINITY;
+      float deltaYToClosestWall = Float.POSITIVE_INFINITY;
+      for (Wall alignedWall : this.home.getWalls()) {
+        if (alignedWall != this.wallFeedback) {
+          if (Math.abs(x - alignedWall.getXStart()) < margin
+              && (this.wallFeedback == null
+                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallFeedback))) {
+            if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYStart())) {
+              deltaYToClosestWall = y - alignedWall.getYStart();
+            }
+          } else if (Math.abs(x - alignedWall.getXEnd()) < margin
+                    && (this.wallFeedback == null
+                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallFeedback))) {
+            if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYEnd())) {
+              deltaYToClosestWall = y - alignedWall.getYEnd();
+            }                
+          }
+          if (Math.abs(y - alignedWall.getYStart()) < margin
+              && (this.wallFeedback == null
+                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallFeedback))) {
+            if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXStart())) {
+              deltaXToClosestWall = x - alignedWall.getXStart();
+            }
+          } else if (Math.abs(y - alignedWall.getYEnd()) < margin
+                    && (this.wallFeedback == null
+                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallFeedback))) {
+            if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXEnd())) {
+              deltaXToClosestWall = x - alignedWall.getXEnd();
+            }                
+          }
+        }
+      }
+      
+      g2D.setPaint(feedbackPaint);         
+      g2D.setStroke(feedbackStroke);
+      if (deltaXToClosestWall != Float.POSITIVE_INFINITY) {
+        if (deltaXToClosestWall > 0) {
+          g2D.draw(new Line2D.Float(x + 25 / this.scale, y, 
+              x - deltaXToClosestWall - 25 / this.scale, y));
+        } else {
+          g2D.draw(new Line2D.Float(x - 25 / this.scale, y, 
+              x - deltaXToClosestWall + 25 / this.scale, y));
+        }
+      }
+
+      if (deltaYToClosestWall != Float.POSITIVE_INFINITY) {
+        if (deltaYToClosestWall > 0) {
+          g2D.draw(new Line2D.Float(x, y + 25 / this.scale, 
+              x, y - deltaYToClosestWall - 25 / this.scale));
+        } else {
+          g2D.draw(new Line2D.Float(x, y - 25 / this.scale, 
+              x, y - deltaYToClosestWall + 25 / this.scale));
+        }
+      }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if <code>wall</code> start or end point 
+   * equals the point (<code>x</code>, <code>y</code>).
+   */
+  private boolean equalsWallPoint(float x, float y, Wall wall) {
+    return x == wall.getXStart() && y == wall.getYStart()
+           || x == wall.getXEnd() && y == wall.getYEnd();
+  }
+  
+  /**
+   * Paints rectangle feedback.
+   */
+  private void paintRectangleFeedback(Graphics2D g2D, Color selectionColor) {
+    if (this.rectangleFeedback != null) {
+      g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 32));
+      g2D.fill(this.rectangleFeedback);
+      g2D.setPaint(selectionColor);
+      g2D.setStroke(new BasicStroke(1 / this.scale));
+      g2D.draw(this.rectangleFeedback);
+    }
+  }
+
   /**
    * Returns the shape matching the coordinates in <code>points</code> array.
    */
@@ -813,8 +932,6 @@ public class PlanComponent extends JComponent {
    * Returns the bounds of <code>shape</code> in pixels coordinates space.
    */
   private Rectangle getShapePixelBounds(Shape shape) {
-    Insets insets = getInsets();
-    Rectangle2D planBounds = getPlanBounds();
     Rectangle2D shapeBounds = shape.getBounds2D();
     return new Rectangle(
         convertXModelToPixel((float)shapeBounds.getMinX()), 
@@ -896,13 +1013,13 @@ public class PlanComponent extends JComponent {
     // Add to point the half of cursor size
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
     if (cursorSize.width != 0) {
-      point.x += cursorSize.width / 2 + 2;
-      point.y -= cursorSize.height / 2 + 2;
+      point.x += cursorSize.width / 2 + 3;
+      point.y += cursorSize.height / 2 + 3;
     } else {
       // If custom cursor isn't supported let's consider 
       // default cursor size is 16 pixels wide
-      point.x += 10;
-      point.y -= 10;
+      point.x += 11;
+      point.y += 11;
     }
     this.toolTipWindow.setLocation(point);      
     this.toolTipWindow.pack();
@@ -928,6 +1045,24 @@ public class PlanComponent extends JComponent {
    */
   public void setResizeIndicatorVisible(boolean resizeIndicatorVisible) {
     this.resizeIndicatorVisible = resizeIndicatorVisible;    
+    repaint();
+  }
+  
+  /**
+   * Sets the location point of <code>wall</code> for alignment feedback. 
+   */
+  public void setWallAlignmentFeeback(Wall wall, float x, float y) {
+    this.wallFeedback = wall;
+    this.wallLocationFeeback = new Point2D.Float(x, y);
+    repaint();
+  }
+  
+  /**
+   * Deletes the alignment feedback of selected wall. 
+   */
+  public void deleteWallAlignmentFeeback() {
+    this.wallFeedback = null;
+    this.wallLocationFeeback = null;
     repaint();
   }
 }
