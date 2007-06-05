@@ -613,7 +613,7 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.DELETE));
     planViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     planViewPopup.addSeparator();
-    planViewPopup.add(getPopupAction(ActionType.WALL_CREATION));
+    planViewPopup.add(getWallCreationCheckBoxMenuItem(true));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.addSeparator();
