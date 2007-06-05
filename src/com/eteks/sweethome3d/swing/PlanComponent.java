@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -50,6 +51,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
 
@@ -62,8 +64,11 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JToolTip;
+import javax.swing.JViewport;
 import javax.swing.JWindow;
 import javax.swing.KeyStroke;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
@@ -83,7 +88,7 @@ import com.eteks.sweethome3d.model.WallListener;
  * A component displaying the plan of a home.
  * @author Emmanuel Puybaret
  */
-public class PlanComponent extends JComponent {
+public class PlanComponent extends JComponent implements Scrollable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
     MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
     TOGGLE_MAGNTISM_ON, TOGGLE_MAGNTISM_OFF}
@@ -93,6 +98,9 @@ public class PlanComponent extends JComponent {
   private UserPreferences    preferences;
   private float              scale  = 0.5f;
 
+  private JComponent         horizontalRuler;
+  private JComponent         verticalRuler;
+  
   private Rectangle2D        rectangleFeedback;
   private Wall               wallFeedback;
   private Point2D            wallLocationFeeback;
@@ -188,7 +196,6 @@ public class PlanComponent extends JComponent {
         planBoundsCache = null;
         // Revalidate and repaint
         revalidate();
-        repaint();
       }
     });
     home.addSelectionListener(new SelectionListener () {
@@ -201,15 +208,37 @@ public class PlanComponent extends JComponent {
         planBoundsCache = null;
         // Revalidate and repaint
         revalidate();
-        repaint();
       }
     });
     preferences.addPropertyChangeListener("unit", 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
           repaint();
+          if (horizontalRuler != null) {
+            horizontalRuler.repaint();
+          }
+          if (verticalRuler != null) {
+            verticalRuler.repaint();
+          }
         }
       });
+  }
+
+  /**
+   * Revalidates and repaints this component and its rulers.
+   */
+  @Override
+  public void revalidate() {
+    super.revalidate();
+    repaint();
+    if (this.horizontalRuler != null) {
+      this.horizontalRuler.revalidate();
+      this.horizontalRuler.repaint();
+    }
+    if (this.verticalRuler != null) {
+      this.verticalRuler.revalidate();
+      this.verticalRuler.repaint();
+    }
   }
 
   /**
@@ -877,7 +906,6 @@ public class PlanComponent extends JComponent {
     if (this.scale != scale) {
       this.scale = scale;
       revalidate();
-      repaint();
     }
   }
 
@@ -1058,11 +1086,256 @@ public class PlanComponent extends JComponent {
   }
   
   /**
-   * Deletes the alignment feedback of selected wall. 
+   * Deletes wall the alignment feedback. 
    */
   public void deleteWallAlignmentFeeback() {
     this.wallFeedback = null;
     this.wallLocationFeeback = null;
     repaint();
+  }
+  
+  // Scrollable implementation
+  public Dimension getPreferredScrollableViewportSize() {
+    return getPreferredSize();
+  }
+
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    if (orientation == SwingConstants.HORIZONTAL) {
+      return visibleRect.width / 2;
+    } else { // SwingConstants.VERTICAL
+      return visibleRect.height / 2;
+    }
+  }
+
+  public boolean getScrollableTracksViewportHeight() {
+    // Return true if the plan's preferred height is smaller than the viewport height
+    return getParent() instanceof JViewport
+        && getPreferredSize().height < ((JViewport)getParent()).getHeight();
+  }
+
+  public boolean getScrollableTracksViewportWidth() {
+    // Return true if the plan's preferred width is smaller than the viewport width
+    return getParent() instanceof JViewport
+        && getPreferredSize().width < ((JViewport)getParent()).getWidth();
+  }
+
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    if (orientation == SwingConstants.HORIZONTAL) {
+      return visibleRect.width / 10;
+    } else { // SwingConstants.VERTICAL
+      return visibleRect.height / 10;
+    }
+  }
+  
+  public JComponent getHorizontalRuler() {
+    if (this.horizontalRuler == null) {
+      this.horizontalRuler = new PlanRulerComponent(SwingConstants.HORIZONTAL);
+    } 
+    return this.horizontalRuler;
+  }
+  
+  public JComponent getVerticalRuler() {
+    if (this.verticalRuler == null) {
+      this.verticalRuler = new PlanRulerComponent(SwingConstants.VERTICAL);
+    } 
+    return this.verticalRuler;
+  }
+  
+  /**
+   * A component displaying the plan horizontal or vertical ruler associated to this plan.
+   */
+  private class PlanRulerComponent extends JComponent {
+    private int orientation;    
+
+    /**
+     * Creates a plan ruler.
+     * @param orientation <code>SwingConstants.HORIZONTAL</code> or 
+     *                    <code>SwingConstants.VERTICAL</code>. 
+     */
+    public PlanRulerComponent(int orientation) {
+      this.orientation = orientation;
+      setOpaque(true);
+      // Use same font as tooltips
+      setFont(UIManager.getFont("ToolTip.font"));
+    }
+
+    /**
+     * Returns the preferred size of this component.
+     */
+    @Override
+    public Dimension getPreferredSize() {
+      if (isPreferredSizeSet()) {
+        return super.getPreferredSize();
+      } else {
+        Insets insets = getInsets();
+        Rectangle2D planBounds = getPlanBounds();
+        FontMetrics metrics = getFontMetrics(getFont());
+        int ruleHeight = metrics.getAscent() + 6;
+        if (this.orientation == SwingConstants.HORIZONTAL) {
+          return new Dimension(
+              Math.round(((float)planBounds.getWidth() + MARGIN * 2)
+                         * getScale()) + insets.left + insets.right,
+              ruleHeight);
+        } else {
+          return new Dimension(ruleHeight,
+              Math.round(((float)planBounds.getHeight() + MARGIN * 2)
+                         * getScale()) + insets.top + insets.bottom);
+        }
+      }
+    }
+    
+    /**
+     * Paints this component.
+     */
+    @Override
+    protected void paintComponent(Graphics g) {
+      Graphics2D g2D = (Graphics2D)g.create();
+      paintBackground(g2D);
+      Insets insets = getInsets();
+      // Clip componant to avoid drawing in empty borders
+      g2D.clipRect(insets.left, insets.top, 
+          getWidth() - insets.left - insets.right, 
+          getHeight() - insets.top - insets.bottom);
+      // Change component coordinates system to plan system
+      Rectangle2D planBounds = getPlanBounds();    
+      g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * getScale(),
+          insets.top + (MARGIN - planBounds.getMinY()) * getScale());
+      g2D.scale(getScale(), getScale());
+      g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      // Paint component contents
+      paintRuler(g2D);
+      g2D.dispose();
+    }
+
+    /**
+     * Fills the background with UI window background color. 
+     */
+    private void paintBackground(Graphics2D g2D) {
+      if (isOpaque()) {
+        Color backgroundColor = UIManager.getColor("window");
+        g2D.setColor(backgroundColor);
+        g2D.fillRect(0, 0, getWidth(), getHeight());
+      }
+    }
+
+    /**
+     * Paints background grid lines.
+     */
+    private void paintRuler(Graphics2D g2D) {
+      float mainGridSize;
+      float [] gridSizes;
+      if (preferences.getUnit() == UserPreferences.Unit.INCH) {
+        // Use a grid in inch and foot with a minimun grid increment of 1 inch
+        mainGridSize = 2.54f * 12; // 1 foot
+        gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
+      } else {
+        // Use a grid in cm and meters with a minimun grid increment of 1 cm
+        mainGridSize = 100;
+        gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100};
+      }
+      // Compute grid size to get a grid where the space between each line is around 10 pixels
+      float gridSize = gridSizes [0];
+      for (int i = 1; i < gridSizes.length && gridSize * getScale() < 10; i++) {
+        gridSize = gridSizes [i];
+      }
+      
+      Rectangle2D planBounds = getPlanBounds();    
+      float xMin = (float)planBounds.getMinX() - MARGIN;
+      float yMin = (float)planBounds.getMinY() - MARGIN;
+      float xMax = convertXPixelToModel(getWidth());
+      float yMax = convertYPixelToModel(getHeight());
+
+      FontMetrics metrics = getFontMetrics(getFont());
+      int fontAscent = metrics.getAscent();
+      float tickSize = 5 / getScale();
+      float mainTickSize = (fontAscent + 6) / getScale();
+      NumberFormat format = NumberFormat.getNumberInstance();
+      String maxText = getFormattedTickText(format, 100);
+      int maxTextWidth = metrics.stringWidth(maxText) + 10;
+      float textInterval =
+        mainGridSize != gridSize
+          ? mainGridSize 
+          : (float)Math.ceil(maxTextWidth / (gridSize * getScale())) * gridSize;
+      
+      g2D.setColor(getForeground());
+      float lineWidth = 0.5f / getScale();
+      g2D.setStroke(new BasicStroke(lineWidth));
+      if (this.orientation == SwingConstants.HORIZONTAL) {
+        // Draw horizontal rule base
+        g2D.draw(new Line2D.Float(xMin, yMax - lineWidth, xMax, yMax - lineWidth));
+        // Draw vertical lines
+        for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
+          if (Math.abs(Math.abs(x) % textInterval - textInterval) < 1E-2 
+              || Math.abs(Math.abs(x) % textInterval) < 1E-2) {
+            // Draw big tick
+            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
+            // Draw unit text
+            AffineTransform previousTransform = g2D.getTransform();
+            g2D.translate(x, yMax - mainTickSize);
+            g2D.scale(1 / getScale(), 1 / getScale());
+            g2D.drawString(getFormattedTickText(format, x), 3, fontAscent - 1);
+            g2D.setTransform(previousTransform);
+          } else {
+            // Draw small tick
+            g2D.draw(new Line2D.Float(x, yMax - tickSize, x, yMax));
+          }
+        }
+      } else {
+        // Draw vertical rule base
+        g2D.draw(new Line2D.Float(xMax - lineWidth, yMin, xMax - lineWidth, yMax));
+        // Draw horizontal lines
+        for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
+          if (Math.abs(Math.abs(y) % textInterval - textInterval) < 1E-2 
+              || Math.abs(Math.abs(y) % textInterval) < 1E-2) {
+            // Draw big tick
+            g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+            // Draw unit text with a vertical orientation
+            AffineTransform previousTransform = g2D.getTransform();
+            g2D.translate(xMax - mainTickSize, y);
+            g2D.scale(1 / getScale(), 1 / getScale());
+            g2D.rotate(-Math.PI / 2);
+            String yText = getFormattedTickText(format, y);
+            g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
+            g2D.setTransform(previousTransform);
+          } else {
+            // Draw small tick
+            g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
+          }
+        }
+      }
+
+      if (mainGridSize != gridSize) {
+        g2D.setStroke(new BasicStroke(1.5f / getScale(),
+            BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        if (this.orientation == SwingConstants.HORIZONTAL) {
+          // Draw main vertical lines
+          for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
+          }
+        } else {
+          // Draw positive main horizontal lines
+          for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
+            g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+          }
+        }
+      }
+    }
+
+    private String getFormattedTickText(NumberFormat format, float value) {
+      String text;
+      if (Math.abs(value) < 1E-5) {
+        value = 0; // Avoid "-0" text
+      }
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        text = format.format(value / 100);
+        if (value == 0) {
+          text += "m";
+        }
+      } else {
+        text = format.format(UserPreferences.Unit.centimerToFoot(value)) + "'"; 
+      }
+      return text;
+    }
   }
 }

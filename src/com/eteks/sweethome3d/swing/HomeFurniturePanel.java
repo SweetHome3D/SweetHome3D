@@ -99,12 +99,17 @@ public class HomeFurniturePanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences) {
+    // Get unit text matching current unit 
+    String unitText = this.resource.getString(
+        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
+            ? "centimeterUnit"
+            : "inchUnit");
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(10);
-    this.xLabel = new JLabel(this.resource.getString("xLabel.text"));
+    this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
     this.xSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
-    this.yLabel = new JLabel(this.resource.getString("yLabel.text"));
+    this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.ySpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));

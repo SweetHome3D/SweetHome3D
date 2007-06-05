@@ -314,6 +314,20 @@ public class PlanController {
     ((PlanComponent)getView()).setScale(newScale);
   }
   
+  /**
+   * Returns the horizontal ruler of the plan view. 
+   */
+  public JComponent getHorizontalRulerView() {
+    return ((PlanComponent)getView()).getHorizontalRuler();
+  }
+  
+  /**
+   * Returns the vertical ruler of the plan view. 
+   */
+  public JComponent getVerticalRulerView() {
+    return ((PlanComponent)getView()).getVerticalRuler();
+  }
+  
   private void addHomeSelectionListener() {
     this.selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent selectionEvent) {
@@ -1481,13 +1495,11 @@ public class PlanController {
     protected String getToolTipFeedbackText(Wall wall) {
       float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
           wall.getXEnd(), wall.getYEnd());
-      long angle = (Math.round(Math.toDegrees(Math.atan2(wall.getYEnd() - wall.getYStart(), 
-          wall.getXEnd() - wall.getXStart()))) + 360) % 360;
       if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerWallLengthToolTipFeedback, length, angle);
+        return String.format(this.centimerWallLengthToolTipFeedback, length);
       } else {
         return String.format(this.inchWallLengthToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(length), angle);
+            UserPreferences.Unit.centimerToInch(length));
       }
     }
   }

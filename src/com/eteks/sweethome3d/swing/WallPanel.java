@@ -77,7 +77,7 @@ public class WallPanel extends JPanel {
     this.resource = ResourceBundle.getBundle(WallPanel.class.getName());
     createComponents(preferences);
     setMnemonics();
-    layoutComponents();
+    layoutComponents(preferences);
     updateComponents(home);
   }
 
@@ -146,10 +146,15 @@ public class WallPanel extends JPanel {
   /**
    * Layouts panel composants in panel with their labels. 
    */
-  private void layoutComponents() {
+  private void layoutComponents(UserPreferences preferences) {
+    // Get unit text matching current unit 
+    String unitText = this.resource.getString(
+        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
+            ? "centimeterUnit"
+            : "inchUnit");
     // First row
     JPanel startPointPanel = createTitledPanel(
-        this.resource.getString("startPointPanel.title"),
+        String.format(this.resource.getString("startPointPanel.title"), unitText),
         new JComponent [] {this.xStartLabel, this.xStartSpinner, 
                            this.yStartLabel, this.yStartSpinner});
     Insets rowInsets = new Insets(0, 0, 5, 0);
@@ -158,7 +163,7 @@ public class WallPanel extends JPanel {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     JPanel endPointPanel = createTitledPanel(
-        this.resource.getString("endPointPanel.title"),
+        String.format(this.resource.getString("endPointPanel.title"), unitText),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner});
     add(endPointPanel, new GridBagConstraints(

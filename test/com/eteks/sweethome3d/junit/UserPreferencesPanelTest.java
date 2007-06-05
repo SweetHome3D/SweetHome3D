@@ -46,6 +46,8 @@ public class UserPreferencesPanelTest extends TestCase {
     // Copy these preferences into system preferences
     UserPreferences preferences = new FileUserPreferences();
     preferences.setUnit(defaultPreferences.getUnit());
+    preferences.setRulersVisible(
+        defaultPreferences.isRulersVisible());
     preferences.setMagnetismEnabled(
         defaultPreferences.isMagnetismEnabled());
     preferences.setNewWallThickness(
@@ -60,6 +62,8 @@ public class UserPreferencesPanelTest extends TestCase {
         (JRadioButton)TestUtilities.getField(panel, "centimeterRadioButton");
     JRadioButton inchRadioButton = 
         (JRadioButton)TestUtilities.getField(panel, "inchRadioButton");
+    JCheckBox    rulersCheckBox = 
+      (JCheckBox)TestUtilities.getField(panel, "rulersCheckBox");
     JCheckBox    magnetismCheckBox = 
         (JCheckBox)TestUtilities.getField(panel, "magnetismCheckBox");
     JSpinner newWallThicknessSpinner = 
@@ -72,6 +76,7 @@ public class UserPreferencesPanelTest extends TestCase {
     assertFalse("Inch radio button isn't selected", 
         inchRadioButton.isSelected());
     assertTrue("Magnestism isn't selected", magnetismCheckBox.isSelected());
+    assertTrue("Rulers isn't selected", rulersCheckBox.isSelected());
     assertEquals("Wrong default thickness", 
         newWallThicknessSpinner.getValue(), defaultPreferences.getNewWallThickness());
     assertEquals("Wrong default wall height", 
@@ -80,16 +85,18 @@ public class UserPreferencesPanelTest extends TestCase {
     // 3. Change panel values
     inchRadioButton.setSelected(true);
     magnetismCheckBox.setSelected(false);
+    rulersCheckBox.setSelected(false);
     newWallThicknessSpinner.setValue(1);
     newHomeWallHeightSpinner.setValue(100);
     
     // 4. Retrieve panel values into preferences 
     preferences.setUnit(panel.getUnit());
     preferences.setMagnetismEnabled(panel.isMagnetismEnabled());
+    preferences.setRulersVisible(panel.isRulersVisible());
     preferences.setNewWallThickness(panel.getNewWallThickness());
     preferences.setNewHomeWallHeight(panel.getNewHomeWallHeight());
     // Check preferences value
-    assertPreferencesEqual(UserPreferences.Unit.INCH, false, 
+    assertPreferencesEqual(UserPreferences.Unit.INCH, false, false,
         UserPreferences.Unit.inchToCentimer(1), 
         UserPreferences.Unit.inchToCentimer(100), 
         preferences);
@@ -100,6 +107,7 @@ public class UserPreferencesPanelTest extends TestCase {
     // Check if readPreferences and preferences have the same values
     assertPreferencesEqual(preferences.getUnit(),
         preferences.isMagnetismEnabled(), 
+        preferences.isRulersVisible(), 
         preferences.getNewWallThickness(),  
         preferences.getNewHomeWallHeight(), readPreferences);
   }
@@ -110,6 +118,7 @@ public class UserPreferencesPanelTest extends TestCase {
    */
   private void assertPreferencesEqual(UserPreferences.Unit unit,
                                       boolean magnetism,
+                                      boolean rulers,
                                       float newWallThickness,
                                       float newHomeWallHeight,
                                       UserPreferences preferences) {
@@ -117,6 +126,8 @@ public class UserPreferencesPanelTest extends TestCase {
     assertEquals("Wrong unit", unit, preferences.getUnit());
     assertEquals("Wrong magnestism", magnetism,
         preferences.isMagnetismEnabled());
+    assertEquals("Wrong rulers visibility", rulers,
+        preferences.isRulersVisible());
     assertEquals("Wrong new wall thickness", newWallThickness, 
         preferences.getNewWallThickness());
     assertEquals("Wrong new home wall height", newHomeWallHeight,

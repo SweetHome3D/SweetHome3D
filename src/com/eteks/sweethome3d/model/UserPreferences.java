@@ -39,6 +39,10 @@ public abstract class UserPreferences {
       return length / 2.54f;
     }
 
+    public static float centimerToFoot(float length) {
+      return length / 2.54f / 12;
+    }
+    
     public static float inchToCentimer(float length) {
       return length * 2.54f;
     }
@@ -47,6 +51,7 @@ public abstract class UserPreferences {
   private Catalog catalog;
   private Unit    unit;
   private boolean magnetismEnabled = true;
+  private boolean rulersVisible = true;
   private float   newWallThickness;
   private float   newHomeWallHeight;
 
@@ -128,6 +133,28 @@ public abstract class UserPreferences {
       this.magnetismEnabled = magnetismEnabled;
       this.propertyChangeSupport.firePropertyChange("magnetismEnabled", 
           !magnetismEnabled, magnetismEnabled);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if rulers are visible.
+   * @return <code>true</code> by default.
+   */
+  public boolean isRulersVisible() {
+    return this.rulersVisible;
+  }
+
+  /**
+   * Sets whether rulers are visible or not, and notifies
+   * listeners of this change. 
+   * @param rulersVisible <code>true</code> if rulers are visible,
+   *          <code>false</code> otherwise.
+   */
+  public void setRulersVisible(boolean rulersVisible) {
+    if (this.rulersVisible != rulersVisible) {
+      this.rulersVisible = rulersVisible;
+      this.propertyChangeSupport.firePropertyChange("rulersVisible", 
+          !rulersVisible, rulersVisible);
     }
   }
 

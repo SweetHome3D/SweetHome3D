@@ -47,6 +47,7 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.getUnit().toString()));
     setUnit(unit);
     setMagnetismEnabled(preferences.getBoolean("magnetismEnabled", true));
+    setRulersVisible(preferences.getBoolean("rulersVisible", true));
     setNewWallThickness(preferences.getFloat("newWallThickness", 
             defaultPreferences.getNewWallThickness()));
     setNewHomeWallHeight(preferences.getFloat("newHomeWallHeight",
@@ -61,6 +62,7 @@ public class FileUserPreferences extends UserPreferences {
     Preferences preferences = getPreferences();
     preferences.put("unit", getUnit().toString());   
     preferences.putBoolean("magnetismEnabled", isMagnetismEnabled());
+    preferences.putBoolean("rulersVisible", isRulersVisible());
     preferences.putFloat("newWallThickness", getNewWallThickness());   
     preferences.putFloat("newHomeWallHeight", getNewHomeWallHeight());
     try {

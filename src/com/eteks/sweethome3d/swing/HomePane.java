@@ -29,6 +29,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.net.URL;
@@ -136,7 +138,7 @@ public class HomePane extends JRootPane {
     JMenuBar homeMenuBar = getHomeMenuBar(home);
     setJMenuBar(homeMenuBar);
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getMainPane(home, controller));
+    getContentPane().add(getMainPane(home, preferences, controller));
     
     disableMenuItemsDuringDragAndDrop(this.planView, homeMenuBar);
   }
@@ -410,16 +412,6 @@ public class HomePane extends JRootPane {
     toolBar.add(actions.get(ActionType.SAVE));
     toolBar.addSeparator();
 
-    toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
-    JToggleButton wallCreationToggleButton = 
-      new JToggleButton(actions.get(ActionType.WALL_CREATION));
-    // Use the same model as Wall creation menu item
-    wallCreationToggleButton.setModel(this.wallCreationToggleModel);
-    // Don't display text with icon
-    wallCreationToggleButton.setText("");
-    toolBar.add(wallCreationToggleButton);
-    toolBar.addSeparator();
-
     toolBar.add(actions.get(ActionType.UNDO));
     toolBar.add(actions.get(ActionType.REDO));
     toolBar.addSeparator();
@@ -431,7 +423,23 @@ public class HomePane extends JRootPane {
     
     toolBar.add(actions.get(ActionType.DELETE));
     toolBar.addSeparator();
+
+    toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    JToggleButton wallCreationToggleButton = 
+      new JToggleButton(actions.get(ActionType.WALL_CREATION));
+    // Use the same model as Wall creation menu item
+    wallCreationToggleButton.setModel(this.wallCreationToggleModel);
+    // Don't display text with icon
+    wallCreationToggleButton.setText("");
+    toolBar.add(wallCreationToggleButton);
+    toolBar.addSeparator();
     
+    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_TOP));
+    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
+    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_LEFT));
+    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_RIGHT));
+    toolBar.addSeparator();
+   
     toolBar.add(actions.get(ActionType.ZOOM_OUT));
     toolBar.add(actions.get(ActionType.ZOOM_IN));
     
@@ -495,10 +503,11 @@ public class HomePane extends JRootPane {
   /**
    * Returns the main pane with catalog tree, furniture table and plan pane. 
    */
-  private JComponent getMainPane(Home home, HomeController controller) {
+  private JComponent getMainPane(Home home, UserPreferences preferences, 
+                                 HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         getCatalogFurniturePane(controller), 
-        getPlanView3DPane(home, controller));
+        getPlanView3DPane(home, preferences, controller));
     mainPane.setContinuousLayout(true);
     mainPane.setOneTouchExpandable(true);
     mainPane.setResizeWeight(0.3);
@@ -577,9 +586,18 @@ public class HomePane extends JRootPane {
   /**
    * Returns the plan view and 3D view pane. 
    */
-  private JComponent getPlanView3DPane(Home home, final HomeController controller) {
+  private JComponent getPlanView3DPane(Home home, UserPreferences preferences, 
+                                       final HomeController controller) {
     this.planView = controller.getPlanController().getView();
-    JScrollPane planScrollPane = new HomeScrollPane(this.planView);
+    final JScrollPane planScrollPane = new HomeScrollPane(this.planView);
+    setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
+    // Add a listener to update rulers visibility in preferences
+    preferences.addPropertyChangeListener("rulersVisible", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            setPlanRulersVisible(planScrollPane, controller, (Boolean)ev.getNewValue());
+          }
+        });
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
 
@@ -614,6 +632,23 @@ public class HomePane extends JRootPane {
     planView3DPane.setOneTouchExpandable(true);
     planView3DPane.setResizeWeight(0.5);
     return planView3DPane;
+  }
+  
+  /**
+   * Sets visible the rulers in plan view.
+   */
+  private void setPlanRulersVisible(JScrollPane planScrollPane, 
+                                    HomeController controller, boolean visible) {
+    if (visible) {
+      // Change column and row header views
+      planScrollPane.setColumnHeaderView(
+          controller.getPlanController().getHorizontalRulerView());
+      planScrollPane.setRowHeaderView(
+          controller.getPlanController().getVerticalRulerView());
+    } else {
+      planScrollPane.setColumnHeaderView(null);
+      planScrollPane.setRowHeaderView(null);
+    }
   }
   
   /**
