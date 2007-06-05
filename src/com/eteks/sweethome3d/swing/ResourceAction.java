@@ -128,10 +128,11 @@ public class ResourceAction extends AbstractAction {
     }
 
     public Object getValue(String key) {
-      // Avoid mnemonics and icons in Mac OS X menus
+      // Avoid mnemonics, tooltips and icons in Mac OS X menus
       if (System.getProperty("os.name").startsWith("Mac OS X")
           && (key.equals(MNEMONIC_KEY)
-              || key.equals(SMALL_ICON))) {
+              || key.equals(SMALL_ICON)
+              || key.equals(SHORT_DESCRIPTION))) {
         return null;
       }
       return this.action.getValue(key);
@@ -171,6 +172,10 @@ public class ResourceAction extends AbstractAction {
         }
       } else if (key.equals(SMALL_ICON)) {
         // Avoid icons in popus
+        return null;
+      } else if (System.getProperty("os.name").startsWith("Mac OS X")
+                 && key.equals(ACCELERATOR_KEY)) {
+        // Avoid accelerators in Mac OS X popups
         return null;
       }
       return super.getValue(key);

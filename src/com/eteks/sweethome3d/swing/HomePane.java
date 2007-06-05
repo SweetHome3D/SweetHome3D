@@ -883,8 +883,12 @@ public class HomePane extends JRootPane {
   public boolean confirmExit() {
     String message = this.resource.getString("confirmExit.message");
     String title = this.resource.getString("confirmExit.title");
-    return JOptionPane.showConfirmDialog(this, message, title, 
-        JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+    String quit = this.resource.getString("confirmExit.quit");
+    String doNotQuit = this.resource.getString("confirmExit.doNotQuit");
+    
+    return JOptionPane.showOptionDialog(this, message, title, 
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {quit, doNotQuit}, doNotQuit) == JOptionPane.YES_OPTION;
   }
   
   /**
