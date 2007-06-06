@@ -458,11 +458,11 @@ public class PlanComponent extends JComponent implements Scrollable {
   }
 
   /**
-   * Fills the background with UI window background color. 
+   * Fills the background. 
    */
   private void paintBackground(Graphics2D g2D) {
     if (isOpaque()) {
-      Color backgroundColor = UIManager.getColor("window");
+      Color backgroundColor = UIManager.getColor("TextField.background");
       g2D.setColor(backgroundColor);
       g2D.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -525,6 +525,7 @@ public class PlanComponent extends JComponent implements Scrollable {
    */
   private void paintContent(Graphics2D g2D) {
     List<Object> selectedItems = this.home.getSelectedItems();
+    Color fillColor = UIManager.getColor("TextField.background");
     Color opaqueSelectionColor = UIManager.getColor("textHighlight");
     Paint selectionPaint = new Color(opaqueSelectionColor.getRed(), opaqueSelectionColor.getGreen(), 
         opaqueSelectionColor.getBlue(), 128);
@@ -534,8 +535,8 @@ public class PlanComponent extends JComponent implements Scrollable {
         1 / this.scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / this.scale, 5 / this.scale, 5 / this.scale, 5 / this.scale}, 4 / this.scale);
     
-    paintWalls(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
-    paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
+    paintWalls(g2D, selectedItems, fillColor, selectionPaint, selectionStroke, opaqueSelectionColor);
+    paintFurniture(g2D, selectedItems, fillColor, selectionPaint, selectionStroke, opaqueSelectionColor);
     paintWallAlignmentFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
     paintRectangleFeedback(g2D, opaqueSelectionColor);
   }
@@ -543,12 +544,12 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints walls. 
    */
-  private void paintWalls(Graphics2D g2D, List<Object> selectedItems, 
+  private void paintWalls(Graphics2D g2D, List<Object> selectedItems, Paint fillPaint,  
                           Paint selectionPaint, Stroke selectionStroke, 
                           Paint indicatorPaint) {
     Shape wallsArea = getWallsArea(this.home.getWalls());
     // Fill walls area
-    g2D.setPaint(getWallPaint());
+    g2D.setPaint(getWallPaint(fillPaint));
     g2D.fill(wallsArea);
     
     Stroke indicatorStroke = new BasicStroke(2f);  
@@ -652,11 +653,11 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Returns the <code>Paint</code> object used to fill walls.
    */
-  private Paint getWallPaint() {
+  private Paint getWallPaint(Paint fillPaint) {
     BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     // Create an image displaying a line in its diagonal
-    imageGraphics.setColor(UIManager.getColor("window"));
+    imageGraphics.setPaint(fillPaint);
     imageGraphics.fillRect(0, 0, 10, 10);
     imageGraphics.setColor(getForeground());
     imageGraphics.drawLine(0, 9, 9, 0);
@@ -668,17 +669,16 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints home furniture.
    */
-  public void paintFurniture(Graphics2D g2D, List<Object> selectedItems, 
+  public void paintFurniture(Graphics2D g2D, List<Object> selectedItems, Paint pieceAreaPaint, 
                              Paint selectionPaint, Stroke selectionStroke, 
                              Paint indicatorPaint) {
-    Color pieceAreaColor = UIManager.getColor("window");
     BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
     // Draw furniture
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         Shape pieceShape = getShape(piece.getPoints());
         // Fill piece area
-        g2D.setPaint(pieceAreaColor);
+        g2D.setPaint(pieceAreaPaint);
         g2D.fill(pieceShape);
         // Draw its icon
         paintPieceOfFurnitureIcon(g2D, piece);
@@ -1231,7 +1231,7 @@ public class PlanComponent extends JComponent implements Scrollable {
      */
     private void paintBackground(Graphics2D g2D) {
       if (isOpaque()) {
-        Color backgroundColor = UIManager.getColor("window");
+        Color backgroundColor = UIManager.getColor("TextField.background");
         g2D.setColor(backgroundColor);
         g2D.fillRect(0, 0, getWidth(), getHeight());
       }
