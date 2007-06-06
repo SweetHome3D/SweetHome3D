@@ -621,6 +621,7 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.ZOOM_IN));
     this.planView.setComponentPopupMenu(planViewPopup);
     
+    // Configure 3D view
     JComponent view3D = new HomeComponent3D(home);
     view3D.setPreferredSize(this.planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
@@ -635,7 +636,7 @@ public class HomePane extends JRootPane {
   }
   
   /**
-   * Sets visible the rulers in plan view.
+   * Sets the rulers visible in plan view.
    */
   private void setPlanRulersVisible(JScrollPane planScrollPane, 
                                     HomeController controller, boolean visible) {
