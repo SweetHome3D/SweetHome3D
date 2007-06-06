@@ -25,6 +25,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A wall of a plan.
@@ -366,5 +368,31 @@ public class Wall implements Serializable  {
     }
     wallPath.closePath();
     return wallPath;
+  }
+  
+  /**
+   * Returns a deep copy of the <code>walls</code>. All existing walls 
+   * are copied and their wall at start and end point are set with copied
+   * walls only if they belong to the returned list.
+   */
+  public static List<Wall> deepCopy(List<Wall> walls) {
+    ArrayList<Wall> wallsCopy = new ArrayList<Wall>(walls.size());
+    // Deep copy walls
+    for (Wall wall : walls) {
+      wallsCopy.add(new Wall(wall));      
+    }
+    // Update walls at start and end point
+    for (int i = 0; i < walls.size(); i++) {
+      Wall wall = walls.get(i);
+      int wallAtStartIndex = walls.indexOf(wall.getWallAtStart());
+      if (wallAtStartIndex != -1) {
+        wallsCopy.get(i).setWallAtStart(wallsCopy.get(wallAtStartIndex));
+      }
+      int wallAtEndIndex = walls.indexOf(wall.getWallAtEnd());
+      if (wallAtEndIndex != -1) {
+        wallsCopy.get(i).setWallAtEnd(wallsCopy.get(wallAtEndIndex));
+      }
+    }
+    return wallsCopy;
   }
 }

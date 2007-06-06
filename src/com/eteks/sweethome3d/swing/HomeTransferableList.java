@@ -25,6 +25,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Wall;
@@ -67,13 +68,13 @@ public class HomeTransferableList implements Transferable {
     for (Object obj : objects) {
       if (obj instanceof PieceOfFurniture) {
         list.add(new HomePieceOfFurniture((PieceOfFurniture)obj));
-      } else if (obj instanceof Wall) {
-        list.add(new Wall((Wall)obj));
-      } else {
+      } else if (!(obj instanceof Wall)) {
         throw new RuntimeException(
             "HomeTransferableList can't contain " + obj.getClass().getName());
       }
     }
+    // Add to list a deep copy of walls with their walls at start and end point set
+    list.addAll(Wall.deepCopy(Home.getWallsSubList(objects)));
     return list;
   }
 
