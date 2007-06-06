@@ -108,22 +108,22 @@ public class HomeFurniturePanel extends JPanel {
     this.nameTextField = new JTextField(10);
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
     this.xSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.ySpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
     this.angleSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
     this.widthLabel = new JLabel(this.resource.getString("widthLabel.text"));
     this.widthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
     this.depthLabel = new JLabel(this.resource.getString("depthLabel.text"));
     this.depthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
     this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
     this.heightSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));

@@ -243,7 +243,8 @@ public class UserPreferencesPanel extends JPanel {
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
                               final AbstractButton centimeterButton) {
-      super(1, 0, 100000, centimeterStepSize);
+      // Invoke constructor that take objects in parameter to avoid any ambiguity
+      super(new Float(1f), new Float(0f), new Float(100000f), new Float(centimeterStepSize));
       // Add a listener to convert value and step 
       // to cemtimeter when button model is selected 
       centimeterButton.addChangeListener(

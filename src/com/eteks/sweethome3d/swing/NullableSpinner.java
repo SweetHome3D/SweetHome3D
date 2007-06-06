@@ -85,8 +85,9 @@ public class NullableSpinner extends JSpinner {
       super(value, minimum, maximum, stepSize);
     }
 
-    public NullableSpinnerNumberModel(double value, double minimum, double maximum, double stepSize) {
-      super(value, minimum, maximum, stepSize);
+    public NullableSpinnerNumberModel(float value, float minimum, float maximum, float stepSize) {
+      // Invoke constructor that take objects in parameter to avoid any ambiguity
+      super(new Float(value), new Float(minimum), new Float(maximum), new Float(stepSize));
     }
 
     @Override
@@ -160,7 +161,7 @@ public class NullableSpinner extends JSpinner {
   public static class NullableSpinnerLengthModel extends NullableSpinnerNumberModel {
     private final UserPreferences preferences;
 
-    public NullableSpinnerLengthModel(UserPreferences preferences, double minimum, double maximum) {
+    public NullableSpinnerLengthModel(UserPreferences preferences, float minimum, float maximum) {
       super(minimum, minimum, maximum, 
             preferences.getUnit() == UserPreferences.Unit.INCH
               ? 0.125f : 0.5f);

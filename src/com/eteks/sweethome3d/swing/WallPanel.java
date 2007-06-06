@@ -87,19 +87,19 @@ public class WallPanel extends JPanel {
   private void createComponents(UserPreferences preferences) {
     this.xStartLabel = new JLabel(this.resource.getString("xLabel.text"));
     this.xStartSpinner = new JSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.yStartLabel = new JLabel(this.resource.getString("yLabel.text"));
     this.yStartSpinner = new JSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.xEndLabel = new JLabel(this.resource.getString("xLabel.text"));
     this.xEndSpinner = new JSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.yEndLabel = new JLabel(this.resource.getString("yLabel.text"));
     this.yEndSpinner = new JSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000, 100000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.thicknessLabel = new JLabel(this.resource.getString("thicknessLabel.text"));
     this.thicknessSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
     this.leftSideColorLabel = new JLabel(this.resource.getString("leftSideColorLabel.text"));
     this.leftSideColorButton = new ColorButton();
     this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
