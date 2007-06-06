@@ -80,7 +80,8 @@ public class FurnitureController {
               Home.getFurnitureSubList(ev.getSelectedItems());
           if (selectedFurniture.isEmpty()) {
             leadSelectedPieceOfFurniture = null;
-          } else if (leadSelectedPieceOfFurniture == null) {
+          } else if (leadSelectedPieceOfFurniture == null ||
+                     selectedFurniture.size() == 1) {
             leadSelectedPieceOfFurniture = selectedFurniture.get(0);
           }
         }
