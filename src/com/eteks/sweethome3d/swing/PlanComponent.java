@@ -535,8 +535,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         new float [] {20 / this.scale, 5 / this.scale, 5 / this.scale, 5 / this.scale}, 4 / this.scale);
     
     paintWalls(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
-    paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke);
-    paintResizeIndicator(g2D, selectedItems, opaqueSelectionColor);
+    paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
     paintWallAlignmentFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
     paintRectangleFeedback(g2D, opaqueSelectionColor);
   }
@@ -602,6 +601,41 @@ public class PlanComponent extends JComponent implements Scrollable {
     g2D.setPaint(getForeground());
     g2D.setStroke(new BasicStroke(1.5f / this.scale));
     g2D.draw(wallsArea);
+    
+    // Paint resize indicator of selected wall
+    if (selectedItems.size() == 1 
+        && selectedItems.get(0) instanceof Wall) {
+      paintWallResizeIndicator(g2D, (Wall)selectedItems.get(0), indicatorPaint);
+    }
+  }
+
+  /**
+   * Paints resize indicator on <code>wall</code>.
+   */
+  public void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
+                                       Paint indicatorPaint) {
+    if (this.resizeIndicatorVisible) {
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(new BasicStroke(1.5f));
+
+      double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+          wall.getXEnd() - wall.getXStart());
+      
+      AffineTransform previousTransform = g2D.getTransform();
+      // Draw resize indicator at wall start point
+      g2D.translate(wall.getXStart(), wall.getYStart());
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(wallAngle + Math.PI);
+      g2D.draw(WALL_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+      
+      // Draw resize indicator at wall end point
+      g2D.translate(wall.getXEnd(), wall.getYEnd());
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(wallAngle);
+      g2D.draw(WALL_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+    }
   }
   
   /**
@@ -635,7 +669,8 @@ public class PlanComponent extends JComponent implements Scrollable {
    * Paints home furniture.
    */
   public void paintFurniture(Graphics2D g2D, List<Object> selectedItems, 
-                             Paint selectionPaint, Stroke selectionStroke) {
+                             Paint selectionPaint, Stroke selectionStroke, 
+                             Paint indicatorPaint) {
     Color pieceAreaColor = UIManager.getColor("window");
     BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
     // Draw furniture
@@ -658,6 +693,12 @@ public class PlanComponent extends JComponent implements Scrollable {
         g2D.setPaint(getForeground());
         g2D.setStroke(pieceBorderStroke);
         g2D.draw(pieceShape);
+        
+        if (selectedItems.size() == 1 
+            && selectedItems.get(0) == piece) {
+          paintPieceOFFurnitureResizeIndicator(g2D, 
+              (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint);
+        }
       }
     }
   }
@@ -682,54 +723,30 @@ public class PlanComponent extends JComponent implements Scrollable {
   }
 
   /**
-   * Paints resize indicator on selected item.
+   * Paints resize and rotation indicators on <code>piece</code>.
    */
-  public void paintResizeIndicator(Graphics2D g2D, List<Object> selectedItems,
-                                   Paint indicatorPaint) {
-    if (this.resizeIndicatorVisible && selectedItems.size() == 1) {
-      Object selectedItem = selectedItems.get(0);
+  public void paintPieceOFFurnitureResizeIndicator(Graphics2D g2D, 
+                                                   HomePieceOfFurniture piece,
+                                                   Paint indicatorPaint) {
+    if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
       
-      if (selectedItem instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItem;
-        
-        AffineTransform previousTransform = g2D.getTransform();
-        // Draw rotation indicator at top left vertex of the piece
-        float [][] piecePoints = piece.getPoints();
-        g2D.translate(piecePoints [0][0], piecePoints [0][1]);
-        g2D.scale(1 / this.scale, 1 / this.scale);
-        g2D.rotate(piece.getAngle());
-        g2D.draw(FURNITURE_ROTATION_INDICATOR);
-        g2D.setTransform(previousTransform);
-  
-        // Draw resize indicator at top left vertex of the piece
-        g2D.translate(piecePoints [2][0], piecePoints [2][1]);
-        g2D.scale(1 / this.scale, 1 / this.scale);
-        g2D.rotate(piece.getAngle());
-        g2D.draw(FURNITURE_RESIZE_INDICATOR);
-        g2D.setTransform(previousTransform);
-      } else if (selectedItem instanceof Wall) {
-        Wall wall = (Wall)selectedItem;
-        double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
-            wall.getXEnd() - wall.getXStart());
-        
-        AffineTransform previousTransform = g2D.getTransform();
-        // Draw resize indicator at wall start point
-        g2D.translate(wall.getXStart(), wall.getYStart());
-        g2D.scale(1 / this.scale, 1 / this.scale);
-        g2D.rotate(wallAngle + Math.PI);
-        g2D.draw(WALL_RESIZE_INDICATOR);
-        g2D.setTransform(previousTransform);
-        
-        // Draw resize indicator at wall end point
-        g2D.translate(wall.getXEnd(), wall.getYEnd());
-        g2D.scale(1 / this.scale, 1 / this.scale);
-        g2D.rotate(wallAngle);
-        g2D.draw(WALL_RESIZE_INDICATOR);
-        g2D.setTransform(previousTransform);
-      }  
+      AffineTransform previousTransform = g2D.getTransform();
+      // Draw rotation indicator at top left vertex of the piece
+      float [][] piecePoints = piece.getPoints();
+      g2D.translate(piecePoints [0][0], piecePoints [0][1]);
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(piece.getAngle());
+      g2D.draw(FURNITURE_ROTATION_INDICATOR);
+      g2D.setTransform(previousTransform);
 
+      // Draw resize indicator at top left vertex of the piece
+      g2D.translate(piecePoints [2][0], piecePoints [2][1]);
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(piece.getAngle());
+      g2D.draw(FURNITURE_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
     }
   }
   
