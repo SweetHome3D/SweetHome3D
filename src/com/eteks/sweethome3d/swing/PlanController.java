@@ -1262,6 +1262,11 @@ public class PlanController {
         setState(getRectangleSelectionState());
       }
     }
+    
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
+    }
   }
 
   /**
@@ -1273,7 +1278,7 @@ public class PlanController {
     private float   xLastMouseMove;
     private float   yLastMouseMove;
     private boolean mouseMoved;
-
+  
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
@@ -1292,7 +1297,6 @@ public class PlanController {
         // Select only the item under cursor position
         selectItem(itemUnderCursor);
       }
-      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
     
     @Override
@@ -1304,7 +1308,7 @@ public class PlanController {
       this.yLastMouseMove = y;
       this.mouseMoved = true;
     }
-
+  
     @Override
     public void releaseMouse(float x, float y) {
       if (this.mouseMoved) {
@@ -1323,7 +1327,7 @@ public class PlanController {
       // Change the state to SelectionState
       setState(getSelectionState());
     }
-
+  
     @Override
     public void escape() {
       if (this.mouseMoved) {
@@ -1363,7 +1367,6 @@ public class PlanController {
       this.selectedItemsMousePressed = 
         new ArrayList<Object>(home.getSelectedItems());
       this.mouseMoved = false;
-      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
 
     @Override
@@ -1456,7 +1459,6 @@ public class PlanController {
     @Override
     public void enter() {
       ((PlanComponent)getView()).setCursor(Mode.WALL_CREATION);
-      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
     }
 
     @Override
@@ -1682,8 +1684,9 @@ public class PlanController {
 
     @Override
     public void exit() {
-      ((PlanComponent)getView()).deleteToolTipFeedback();
-      ((PlanComponent)getView()).deleteWallAlignmentFeeback();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.deleteToolTipFeedback();
+      planView.deleteWallAlignmentFeeback();
       this.wallStartAtStart = null;
       this.wallEndAtStart = null;
       this.newWall = null;
@@ -1725,7 +1728,8 @@ public class PlanController {
       }
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
-      PlanComponent planView = ((PlanComponent)getView());
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), 
           getXLastMousePress(), getYLastMousePress());
       planView.setWallAlignmentFeeback(this.selectedWall, this.oldX, this.oldY);
@@ -1759,6 +1763,7 @@ public class PlanController {
     @Override
     public void exit() {
       PlanComponent planView = ((PlanComponent)getView());
+      planView.setResizeIndicatorVisible(false);
       planView.deleteToolTipFeedback();
       planView.deleteWallAlignmentFeeback();
       this.selectedWall = null;
@@ -1793,7 +1798,9 @@ public class PlanController {
       this.oldAngle = this.selectedPiece.getAngle();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
-      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
           this.xLastMouseMove, this.yLastMouseMove);
     }
     
@@ -1844,7 +1851,9 @@ public class PlanController {
     
     @Override
     public void exit() {
-      ((PlanComponent)getView()).deleteToolTipFeedback();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
       this.selectedPiece = null;
     }  
 
@@ -1883,7 +1892,9 @@ public class PlanController {
       this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
       this.oldDepth = this.selectedPiece.getDepth();
-      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
           getXLastMousePress(), getYLastMousePress());
     }
     
@@ -1934,7 +1945,9 @@ public class PlanController {
 
     @Override
     public void exit() {
-      ((PlanComponent)getView()).deleteToolTipFeedback();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
       this.selectedPiece = null;
     }  
     

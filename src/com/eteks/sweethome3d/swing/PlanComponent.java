@@ -102,7 +102,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   private JComponent         verticalRuler;
   
   private Rectangle2D        rectangleFeedback;
-  private Wall               wallFeedback;
+  private Wall               wallAlignmentFeedback;
   private Point2D            wallLocationFeeback;
   private Rectangle2D        planBoundsCache;
   private boolean            selectionScrollUpdated;
@@ -537,7 +537,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     paintWalls(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
     paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke);
     paintResizeIndicator(g2D, selectedItems, opaqueSelectionColor);
-    paintWallLocationFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
+    paintWallAlignmentFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
     paintRectangleFeedback(g2D, opaqueSelectionColor);
   }
 
@@ -736,7 +736,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints wall location feedback.
    */
-  public void paintWallLocationFeedback(Graphics2D g2D, 
+  public void paintWallAlignmentFeedback(Graphics2D g2D, 
                                         Paint feedbackPaint, Stroke feedbackStroke) {
     // Paint wall location feedback
     if (this.wallLocationFeeback != null) {
@@ -748,29 +748,29 @@ public class PlanComponent extends JComponent implements Scrollable {
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
       for (Wall alignedWall : this.home.getWalls()) {
-        if (alignedWall != this.wallFeedback) {
+        if (alignedWall != this.wallAlignmentFeedback) {
           if (Math.abs(x - alignedWall.getXStart()) < margin
-              && (this.wallFeedback == null
-                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallFeedback))) {
+              && (this.wallAlignmentFeedback == null
+                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallAlignmentFeedback))) {
             if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYStart())) {
               deltaYToClosestWall = y - alignedWall.getYStart();
             }
           } else if (Math.abs(x - alignedWall.getXEnd()) < margin
-                    && (this.wallFeedback == null
-                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallFeedback))) {
+                    && (this.wallAlignmentFeedback == null
+                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallAlignmentFeedback))) {
             if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYEnd())) {
               deltaYToClosestWall = y - alignedWall.getYEnd();
             }                
           }
           if (Math.abs(y - alignedWall.getYStart()) < margin
-              && (this.wallFeedback == null
-                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallFeedback))) {
+              && (this.wallAlignmentFeedback == null
+                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallAlignmentFeedback))) {
             if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXStart())) {
               deltaXToClosestWall = x - alignedWall.getXStart();
             }
           } else if (Math.abs(y - alignedWall.getYEnd()) < margin
-                    && (this.wallFeedback == null
-                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallFeedback))) {
+                    && (this.wallAlignmentFeedback == null
+                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallAlignmentFeedback))) {
             if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXEnd())) {
               deltaXToClosestWall = x - alignedWall.getXEnd();
             }                
@@ -778,6 +778,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         }
       }
       
+      // Draw alignment horizontal and vertical lines
       g2D.setPaint(feedbackPaint);         
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestWall != Float.POSITIVE_INFINITY) {
@@ -1077,19 +1078,19 @@ public class PlanComponent extends JComponent implements Scrollable {
   }
   
   /**
-   * Sets the location point of <code>wall</code> for alignment feedback. 
+   * Sets the location point for <code>wall</code> alignment feedback. 
    */
   public void setWallAlignmentFeeback(Wall wall, float x, float y) {
-    this.wallFeedback = wall;
+    this.wallAlignmentFeedback = wall;
     this.wallLocationFeeback = new Point2D.Float(x, y);
     repaint();
   }
   
   /**
-   * Deletes wall the alignment feedback. 
+   * Deletes the wall alignment feedback. 
    */
   public void deleteWallAlignmentFeeback() {
-    this.wallFeedback = null;
+    this.wallAlignmentFeedback = null;
     this.wallLocationFeeback = null;
     repaint();
   }
