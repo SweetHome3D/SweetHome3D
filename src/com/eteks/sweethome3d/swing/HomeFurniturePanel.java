@@ -282,7 +282,7 @@ public class HomeFurniturePanel extends JPanel {
       if (angle == null) {
         this.angleSpinner.setValue(null);
       } else {
-        this.angleSpinner.setValue((Math.round(Math.toDegrees(angle)) + 360) % 360);
+        this.angleSpinner.setValue((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
       }
 
       Float width = firstPiece.getWidth();
