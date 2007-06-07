@@ -497,7 +497,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     float xMax = convertXPixelToModel(getWidth());
     float yMax = convertYPixelToModel(getHeight());
 
-    g2D.setColor(Color.LIGHT_GRAY);
+    g2D.setColor(UIManager.getColor("controlShadow"));
     g2D.setStroke(new BasicStroke(0.5f / this.scale));
     // Draw vertical lines
     for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
@@ -527,26 +527,32 @@ public class PlanComponent extends JComponent implements Scrollable {
    */
   private void paintContent(Graphics2D g2D) {
     List<Object> selectedItems = this.home.getSelectedItems();
-    Color opaqueSelectionColor = UIManager.getColor("textHighlight");
-    Paint selectionPaint = new Color(opaqueSelectionColor.getRed(), opaqueSelectionColor.getGreen(), 
-        opaqueSelectionColor.getBlue(), 128);
-    Stroke selectionStroke = new BasicStroke(6 / this.scale, 
+    Color selectionColor = UIManager.getColor("textHighlight");
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      // On systems different from Mac OS X, take a darker color
+      // (Note : on Mac OS X, using SystemColor.textHighlight and 
+      // a color built from its RGB gives a different color !)
+      selectionColor = UIManager.getColor("textHighlight").darker();
+    } 
+    Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
+        selectionColor.getBlue(), 128);
+    Stroke selectionOutlineStroke = new BasicStroke(6 / this.scale, 
         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
     Stroke locationFeedbackStroke = new BasicStroke(
         1 / this.scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / this.scale, 5 / this.scale, 5 / this.scale, 5 / this.scale}, 4 / this.scale);
     
-    paintWalls(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
-    paintFurniture(g2D, selectedItems, selectionPaint, selectionStroke, opaqueSelectionColor);
-    paintWallAlignmentFeedback(g2D, opaqueSelectionColor, locationFeedbackStroke);
-    paintRectangleFeedback(g2D, opaqueSelectionColor);
+    paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor);
+    paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor);
+    paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke);
+    paintRectangleFeedback(g2D, selectionColor);
   }
 
   /**
    * Paints walls. 
    */
   private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
-                          Paint selectionPaint, Stroke selectionStroke, 
+                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint) {
     Shape wallsArea = getWallsArea(this.home.getWalls());
     // Fill walls area
@@ -558,8 +564,8 @@ public class PlanComponent extends JComponent implements Scrollable {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
         // Draw selection border
-        g2D.setPaint(selectionPaint);
-        g2D.setStroke(selectionStroke);
+        g2D.setPaint(selectionOutlinePaint);
+        g2D.setStroke(selectionOutlineStroke);
         g2D.draw(getShape(wall.getPoints()));
         
         AffineTransform previousTransform = g2D.getTransform();
@@ -671,7 +677,7 @@ public class PlanComponent extends JComponent implements Scrollable {
    * Paints home furniture.
    */
   public void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
-                             Paint selectionPaint, Stroke selectionStroke, 
+                             Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                              Paint indicatorPaint) {
     BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
     // Draw furniture
@@ -686,8 +692,8 @@ public class PlanComponent extends JComponent implements Scrollable {
         
         if (selectedItems.contains(piece)) {
           // Draw selection border
-          g2D.setPaint(selectionPaint);
-          g2D.setStroke(selectionStroke);
+          g2D.setPaint(selectionOutlinePaint);
+          g2D.setStroke(selectionOutlineStroke);
           g2D.draw(pieceShape);
         }        
         // Draw its border
@@ -1232,8 +1238,7 @@ public class PlanComponent extends JComponent implements Scrollable {
      */
     private void paintBackground(Graphics2D g2D) {
       if (isOpaque()) {
-        Color backgroundColor = PlanComponent.this.getBackground();
-        g2D.setColor(backgroundColor);
+        g2D.setColor(getBackground());
         g2D.fillRect(0, 0, getWidth(), getHeight());
       }
     }
@@ -1277,7 +1282,7 @@ public class PlanComponent extends JComponent implements Scrollable {
           ? mainGridSize 
           : (float)Math.ceil(maxTextWidth / (gridSize * getScale())) * gridSize;
       
-      g2D.setColor(PlanComponent.this.getForeground());
+      g2D.setColor(getForeground());
       float lineWidth = 0.5f / getScale();
       g2D.setStroke(new BasicStroke(lineWidth));
       if (this.orientation == SwingConstants.HORIZONTAL) {
