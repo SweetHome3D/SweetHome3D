@@ -89,7 +89,7 @@ public class HomePane extends JRootPane {
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
     ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, ZOOM_OUT, ZOOM_IN,  
+    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, MODIFY_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
     ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
@@ -209,6 +209,8 @@ public class HomePane extends JRootPane {
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
         controller.getPlanController(), "modifySelectedWalls");
+    createAction(ActionType.MODIFY_BACKGROUND_IMAGE, 
+        controller, "modifyBackgroundImage");
     createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
     createAction(ActionType.ZOOM_IN, controller, "zoomIn");
     createAction(ActionType.ABOUT, controller, "about");
@@ -348,6 +350,7 @@ public class HomePane extends JRootPane {
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
     planMenu.add(getWallCreationCheckBoxMenuItem(false));
     planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
+    planMenu.add(getMenuAction(ActionType.MODIFY_BACKGROUND_IMAGE));
     planMenu.addSeparator();
     planMenu.add(getMenuAction(ActionType.ZOOM_OUT));
     planMenu.add(getMenuAction(ActionType.ZOOM_IN));

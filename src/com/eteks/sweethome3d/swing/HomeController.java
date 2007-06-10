@@ -127,6 +127,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         this.home.getFurnitureSortedProperty() != null);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
+    homeView.setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
@@ -723,6 +724,13 @@ public class HomeController  {
     this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
   }
 
+  /**
+   * Displays the wizard that helps to change home background image. 
+   */
+  public void modifyBackgroundImage() {
+    new BackgroundImageWizardController(this.home, this.preferences, this.undoSupport);
+  }
+  
   /**
    * Zooms out in plan.
    */

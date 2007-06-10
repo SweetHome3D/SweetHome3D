@@ -19,7 +19,13 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.lang.reflect.Field;
+
+import abbot.finder.BasicFinder;
+import abbot.finder.ComponentSearchException;
+import abbot.finder.Matcher;
 
 /**
  * Gathers tools used by tests.
@@ -39,5 +45,18 @@ public final class TestUtilities {
     Field field = instance.getClass().getDeclaredField(fieldName);
     field.setAccessible(true);
     return field.get(instance);
+  }
+
+  /**
+   * Returns the component of a given class in <code>container</code> hierarchy.
+   */
+  public static Component findComponent(Container container, 
+                                        final Class componentClass) 
+      throws ComponentSearchException {
+    return new BasicFinder().find(container, new Matcher () {
+        public boolean matches(Component component) {
+          return componentClass.isInstance(component);
+        }
+      });
   }
 }

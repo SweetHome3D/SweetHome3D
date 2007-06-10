@@ -20,8 +20,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
@@ -31,9 +29,7 @@ import javax.swing.Action;
 import javax.swing.JFrame;
 
 import junit.extensions.abbot.ComponentTestFixture;
-import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
-import abbot.finder.Matcher;
 import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
@@ -56,11 +52,11 @@ public class TransferHandlerTest extends ComponentTestFixture {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
     HomeController controller = new HomeController(home, preferences);
-    CatalogTree catalogTree = (CatalogTree)findComponent(
+    CatalogTree catalogTree = (CatalogTree)TestUtilities.findComponent(
          controller.getView(), CatalogTree.class);
-    FurnitureTable furnitureTable = (FurnitureTable)findComponent(
+    FurnitureTable furnitureTable = (FurnitureTable)TestUtilities.findComponent(
         controller.getView(), FurnitureTable.class);
-    PlanComponent planComponent = (PlanComponent)findComponent(
+    PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
          controller.getView(), PlanComponent.class);
 
     // 1. Create a frame that displays a home view 
@@ -157,18 +153,6 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, true, true, true, true);
   }
   
-  /**
-   * Returns the component of a given class in <code>container</code> hierarchy.
-   */
-  private Component findComponent(Container container, final Class componentClass) 
-      throws ComponentSearchException {
-    return new BasicFinder().find(container, new Matcher () {
-        public boolean matches(Component component) {
-          return componentClass.isInstance(component);
-        }
-      });
-  }
-
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 

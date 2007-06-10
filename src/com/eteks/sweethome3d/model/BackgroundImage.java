@@ -1,0 +1,140 @@
+/*
+ * BackgroundImage.java 8 juin 07
+ *
+ * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+package com.eteks.sweethome3d.model;
+
+import java.awt.geom.Point2D;
+import java.io.Serializable;
+
+/**
+ * The image displayed in background of the plan.
+ * @author Emmanuel Puybaret
+ */
+public class BackgroundImage implements Serializable {
+  private static final long serialVersionUID = 1L;
+  
+  private final Content image;
+  private final float   scaleDistance;
+  private final float   scaleDistanceXStart;
+  private final float   scaleDistanceYStart;
+  private final float   scaleDistanceXEnd;
+  private final float   scaleDistanceYEnd;
+  private final float   xOrigin;
+  private final float   yOrigin;
+  
+  /**
+   * Creates a background image.
+   */
+  public BackgroundImage(Content image, float scaleDistance, 
+                         float scaleDistanceXStart, float scaleDistanceYStart, 
+                         float scaleDistanceXEnd, float scaleDistanceYEnd, 
+                         float xOrigin, float yOrigin) {
+    this.image = image;
+    this.scaleDistance = scaleDistance;
+    this.scaleDistanceXStart = scaleDistanceXStart;
+    this.scaleDistanceYStart = scaleDistanceYStart;
+    this.scaleDistanceXEnd = scaleDistanceXEnd;
+    this.scaleDistanceYEnd = scaleDistanceYEnd;
+    this.xOrigin = xOrigin;
+    this.yOrigin = yOrigin;
+  }
+
+  /**
+   * Returns the image content of this background image.
+   */
+  public Content getImage() {
+    return this.image;
+  }
+  
+  /**
+   * Returns the distance used to compute the scale of this image.
+   */
+  public float getScaleDistance() {
+    return this.scaleDistance;
+  }
+
+  /**
+   * Returns the abcissa of the start point used to compute 
+   * the scale of this image.
+   */
+  public float getScaleDistanceXStart() {
+    return this.scaleDistanceXStart;
+  }
+
+  /**
+   * Returns the ordinate of the start point used to compute 
+   * the scale of this image.
+   */
+  public float getScaleDistanceYStart() {
+    return this.scaleDistanceYStart;
+  }
+
+  /**
+   * Returns the abcissa of the end point used to compute 
+   * the scale of this image.
+   */
+  public float getScaleDistanceXEnd() {
+    return this.scaleDistanceXEnd;
+  }
+
+  /**
+   * Returns the ordinate of the end point used to compute 
+   * the scale of this image.
+   */
+  public float getScaleDistanceYEnd() {
+    return this.scaleDistanceYEnd;
+  }
+
+  /**
+   * Returns the scale of this image.
+   */
+  public float getScale() {
+    return getScale(this.scaleDistance,
+        this.scaleDistanceXStart, this.scaleDistanceYStart, 
+        this.scaleDistanceXEnd, this.scaleDistanceYEnd);
+  }
+  
+  /**
+   * Returns the scale equal to <code>scaleDistance</code> divided
+   * by the distance between the points 
+   * (<code>scaleDistanceXStart</code>, <code>scaleDistanceYStart</code>)
+   * and (<code>scaleDistanceXEnd</code>, <code>scaleDistanceYEnd</code>).
+   */
+  public static float getScale(float scaleDistance, 
+                               float scaleDistanceXStart, float scaleDistanceYStart,
+                               float scaleDistanceXEnd, float scaleDistanceYEnd) {
+    return (float)(scaleDistance 
+        / Point2D.distance(scaleDistanceXStart, scaleDistanceYStart, 
+                           scaleDistanceXEnd, scaleDistanceYEnd));
+  }
+  
+  /**
+   * Returns the origin abcissa of this image.
+   */
+  public float getXOrigin() {
+    return this.xOrigin;
+  }
+  
+  /**
+   * Returns the origin ordinate of this image.
+   */
+  public float getYOrigin() {
+    return this.yOrigin;
+  }
+}

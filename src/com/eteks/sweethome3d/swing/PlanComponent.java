@@ -51,6 +51,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
@@ -73,6 +74,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
+import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -105,6 +107,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   private Wall               wallAlignmentFeedback;
   private Point2D            wallLocationFeeback;
   private Rectangle2D        planBoundsCache;
+  private BufferedImage      backgroundImageCache;
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
   private Cursor             resizeCursor;
@@ -213,6 +216,13 @@ public class PlanComponent extends JComponent implements Scrollable {
         revalidate();
       }
     });
+    home.addPropertyChangeListener("backgroundImage", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          backgroundImageCache = null;
+          repaint();
+        }
+      });
     preferences.addPropertyChangeListener("unit", 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
@@ -455,6 +465,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
     // Paint component contents
+    paintBackgroundImage(g2D);
     paintGrid(g2D);
     paintContent(g2D);   
     g2D.dispose();
@@ -467,6 +478,33 @@ public class PlanComponent extends JComponent implements Scrollable {
     if (isOpaque()) {
       g2D.setColor(getBackground());
       g2D.fillRect(0, 0, getWidth(), getHeight());
+    }
+  }
+
+  /**
+   * Paints background image.
+   */
+  private void paintBackgroundImage(Graphics2D g2D) {
+    BackgroundImage backgroundImage = this.home.getBackgroundImage();
+    if (backgroundImage != null) {
+      if (this.backgroundImageCache == null) {
+        InputStream contentStream = null;
+        try {
+          contentStream = backgroundImage.getImage().openStream();
+          this.backgroundImageCache = ImageIO.read(contentStream);
+          contentStream.close();
+        } catch (IOException ex) {
+          this.backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+          // Ignore exceptions, the user may know its background image is incorrect 
+          // if he tries to modify the background image
+        } 
+      }
+      // Paint image at specified scale
+      AffineTransform previousTransform = g2D.getTransform();
+      g2D.translate(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
+      g2D.scale(backgroundImage.getScale(), backgroundImage.getScale());
+      g2D.drawImage(this.backgroundImageCache, 0, 0, this);
+      g2D.setTransform(previousTransform);
     }
   }
 

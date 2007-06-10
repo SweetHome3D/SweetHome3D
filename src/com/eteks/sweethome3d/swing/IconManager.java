@@ -54,9 +54,9 @@ public class IconManager {
 
   private IconManager() {
     this.errorIconContent = new URLContent (
-        getClass().getResource("resources/error.png"));
+        IconManager.class.getResource("resources/error.png"));
     this.waitIconContent = new URLContent (
-        getClass().getResource("resources/wait.png"));
+        IconManager.class.getResource("resources/wait.png"));
     this.iconsLoader = Executors.newFixedThreadPool(5);
     this.icons = new HashMap<ContentHeightKey,Icon>();
   }
@@ -77,7 +77,7 @@ public class IconManager {
    * @param height  the desired height of the returned icon
    * @param waitingComponent a waiting component
    */
-  public Icon getIcon (Content content, int height, Component waitingComponent) {
+  public Icon getIcon(Content content, int height, Component waitingComponent) {
     ContentHeightKey contentKey = new ContentHeightKey(content, height);
     Icon icon = this.icons.get(contentKey);
     if (icon == null) {

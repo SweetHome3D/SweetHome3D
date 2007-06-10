@@ -45,6 +45,7 @@ public class Home implements Serializable {
   private HomePieceOfFurniture.SortableProperty furnitureSortedProperty;
   private boolean                               furnitureDescendingSorted;
   private transient boolean                     modified;
+  private BackgroundImage                       backgroundImage;
   private transient PropertyChangeSupport       propertyChangeSupport;
 
   /**
@@ -644,6 +645,28 @@ public class Home implements Serializable {
       if (this.propertyChangeSupport != null) {
         this.propertyChangeSupport.firePropertyChange("furnitureDescendingSorted", 
             !furnitureDescendingSorted, furnitureDescendingSorted);
+      }
+    }
+  }
+
+  /**
+   * Returns the background image of this home.
+   */
+  public BackgroundImage getBackgroundImage() {
+    return this.backgroundImage;
+  }
+
+  /**
+   * Sets the background image of this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setBackgroundImage(BackgroundImage backgroundImage) {
+    if (backgroundImage != this.backgroundImage
+        || (backgroundImage != null && backgroundImage != this.backgroundImage)) {
+      BackgroundImage oldBackgroundImage = this.backgroundImage;
+      this.backgroundImage = backgroundImage;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("backgroundImage", 
+            oldBackgroundImage, backgroundImage);
       }
     }
   }
