@@ -660,8 +660,7 @@ public class Home implements Serializable {
    * Sets the background image of this home and fires a <code>PropertyChangeEvent</code>.
    */
   public void setBackgroundImage(BackgroundImage backgroundImage) {
-    if (backgroundImage != this.backgroundImage
-        || (backgroundImage != null && backgroundImage != this.backgroundImage)) {
+    if (backgroundImage != this.backgroundImage) {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
       if (this.propertyChangeSupport != null) {
