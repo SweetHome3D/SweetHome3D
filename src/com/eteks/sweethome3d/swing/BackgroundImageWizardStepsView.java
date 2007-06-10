@@ -339,13 +339,14 @@ public class BackgroundImageWizardStepsView extends JPanel {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   if (readImage != null) {
-                    imageScaleDistanceSpinner.setValue(backgroundImage.getScaleDistance());
+                    ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setLength(
+                        backgroundImage.getScaleDistance());
                     imageScalePreviewComponent.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
                         backgroundImage.getScaleDistanceYStart(), backgroundImage.getScaleDistanceXEnd(),
                         backgroundImage.getScaleDistanceYEnd());
-                    ((NullableSpinner.NullableSpinnerNumberModel)imageXOriginSpinner.getModel()).setValue(
+                    ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(
                         backgroundImage.getXOrigin());
-                    ((NullableSpinner.NullableSpinnerNumberModel)imageYOriginSpinner.getModel()).setValue(
+                    ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(
                         backgroundImage.getYOrigin());
                   } else {
                     setImageChoiceTexts();
@@ -858,8 +859,8 @@ public class BackgroundImageWizardStepsView extends JPanel {
               float scale = getPreviewScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
-              xOriginSpinnerModel.setValue(Math.round(ev.getX() / scale * 10) / 10.f);
-              yOriginSpinnerModel.setValue(Math.round(ev.getY() / scale * 10) / 10.f);
+              xOriginSpinnerModel.setLength(Math.round(ev.getX() / scale * 10) / 10.f);
+              yOriginSpinnerModel.setLength(Math.round(ev.getY() / scale * 10) / 10.f);
             }
           }
           
