@@ -381,15 +381,15 @@ public class BackgroundImageWizardStepsView extends JPanel {
                   setImageChangeTexts();
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize distance and origin with default values
-                  ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setNullable(true);
-                  ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setValue(null);
+                  ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setNullable(true);
+                  ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setLength(null);
                   float scaleDistanceXStart = readImage.getWidth() * 0.1f;
                   float scaleDistanceYStart = readImage.getHeight() / 2f;
                   float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
                   imageScalePreviewComponent.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
                       scaleDistanceXEnd, scaleDistanceYStart);
-                  ((NullableSpinner.NullableSpinnerNumberModel)imageXOriginSpinner.getModel()).setValue(0);
-                  ((NullableSpinner.NullableSpinnerNumberModel)imageYOriginSpinner.getModel()).setValue(0);
+                  ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(0f);
+                  ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(0f);
                 } else {
                   setImageChoiceTexts();
                   JOptionPane.showMessageDialog(BackgroundImageWizardStepsView.this, 
