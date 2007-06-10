@@ -936,15 +936,22 @@ public class PlanComponent extends JComponent implements Scrollable {
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             selectionScrollUpdated = false;
-            if (!home.getSelectedItems().isEmpty()) {
-              Area area = new Area();
-              for (Object item : home.getSelectedItems()) {
-                if (item instanceof Wall) {
-                  area.add(new Area(getShape(((Wall)item).getPoints())));
-                } else if (item instanceof HomePieceOfFurniture) {
-                  area.add(new Area(getShape(((HomePieceOfFurniture)item).getPoints())));        
+            Area area = new Area();
+            boolean selectionContainsVisibleObjects = false;
+            for (Object item : home.getSelectedItems()) {
+              if (item instanceof Wall) {
+                area.add(new Area(getShape(((Wall)item).getPoints())));
+                selectionContainsVisibleObjects = true;
+              } else if (item instanceof HomePieceOfFurniture) {
+                HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+                if (piece.isVisible()) {
+                  area.add(new Area(getShape((piece).getPoints())));
+                  selectionContainsVisibleObjects = true;
                 }
-              }      
+              }
+            }      
+            
+            if (selectionContainsVisibleObjects) {
               Rectangle pixelBounds = getShapePixelBounds(area);
               pixelBounds.grow(5, 5);
               scrollRectToVisible(pixelBounds);
