@@ -57,10 +57,11 @@ public class WizardPane extends JOptionPane {
     setOptionType(DEFAULT_OPTION);
     String cancelOption = resource.getString("cancelOption");
     // Make backOptionButton appear at left of nextFinishOptionButton
-    if (UIManager.getBoolean("OptionPane.isYesLast")) {
-      setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
-    } else {
+    if (UIManager.getBoolean("OptionPane.isYesLast")
+        || System.getProperty("os.name").startsWith("Mac OS X")) {
       setOptions(new Object [] {cancelOption, this.nextFinishOptionButton, this.backOptionButton});      
+    } else {
+      setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
     }
   }
 
