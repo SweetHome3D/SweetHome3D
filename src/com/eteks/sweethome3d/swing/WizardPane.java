@@ -32,6 +32,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 
 /**
  * Wizard pane. 
@@ -55,12 +56,11 @@ public class WizardPane extends JOptionPane {
     createOptionButtons();    
     setOptionType(DEFAULT_OPTION);
     String cancelOption = resource.getString("cancelOption");
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      // As Mac OS X uses an inverse order for option buttons, cite them a different order
-      // to make backOptionButton appear at left of nextFinishOptionButton
-      setOptions(new Object [] {cancelOption, this.nextFinishOptionButton, this.backOptionButton});      
-    } else {
+    // Make backOptionButton appear at left of nextFinishOptionButton
+    if (UIManager.getBoolean("OptionPane.isYesLast")) {
       setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
+    } else {
+      setOptions(new Object [] {cancelOption, this.nextFinishOptionButton, this.backOptionButton});      
     }
   }
 
