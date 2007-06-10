@@ -25,7 +25,7 @@ import javax.swing.JComponent;
 
 /**
  * An abstract MVC for a wizard view. Subclasses should create a set of wizard steps
- * with subclasses of {@link WizardControllerStepState WizardControllerStepState} and
+ * with subclasses of <code>WizardControllerStepState</code> and
  * and choose the first step with a call to <code>setStepState</code>.
  * The {@link #finish() finish} method will be called if user completes the wizard
  * steps correctly.
