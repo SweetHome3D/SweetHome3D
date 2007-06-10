@@ -55,6 +55,7 @@ import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -485,19 +486,25 @@ public class PlanComponent extends JComponent implements Scrollable {
    * Paints background image.
    */
   private void paintBackgroundImage(Graphics2D g2D) {
-    BackgroundImage backgroundImage = this.home.getBackgroundImage();
+    final BackgroundImage backgroundImage = this.home.getBackgroundImage();
     if (backgroundImage != null) {
       if (this.backgroundImageCache == null) {
-        InputStream contentStream = null;
-        try {
-          contentStream = backgroundImage.getImage().openStream();
-          this.backgroundImageCache = ImageIO.read(contentStream);
-          contentStream.close();
-        } catch (IOException ex) {
-          this.backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
-          // Ignore exceptions, the user may know its background image is incorrect 
-          // if he tries to modify the background image
-        } 
+        // Load background image in an executor
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
+            public void run() {
+              InputStream contentStream = null;
+              try {
+                contentStream = backgroundImage.getImage().openStream();
+                backgroundImageCache = ImageIO.read(contentStream);
+                contentStream.close();
+              } catch (IOException ex) {
+                backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+                // Ignore exceptions, the user may know its background image is incorrect 
+                // if he tries to modify the background image
+              } 
+              repaint();
+            } 
+          });
       }
       // Paint image at specified scale
       AffineTransform previousTransform = g2D.getTransform();

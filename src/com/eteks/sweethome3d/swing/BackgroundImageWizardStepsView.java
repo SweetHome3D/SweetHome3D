@@ -24,6 +24,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -34,8 +35,6 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
@@ -49,8 +48,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
@@ -71,7 +71,6 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.NullableSpinner.NullableSpinnerLengthModel;
 import com.eteks.sweethome3d.tools.URLContent;
-import com.sun.corba.se.spi.ior.IdentifiableBase;
 
 public class BackgroundImageWizardStepsView extends JPanel {
   private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};
@@ -148,6 +147,8 @@ public class BackgroundImageWizardStepsView extends JPanel {
   private JLabel                          imageYOriginLabel;
   private NullableSpinner                 imageYOriginSpinner;
   private ImagePreviewComponent           imageOriginPreviewComponent;
+  
+  private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
   private static BufferedImage            waitImage;
 
   /**
@@ -178,29 +179,15 @@ public class BackgroundImageWizardStepsView extends JPanel {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          try {
-            Content content = showImageChoiceDialog();
-            if (content != null) {
-              BufferedImage image = readImage(content);
-              imageChoiceErrorLabel.setText("");
-              // Initialize distance and origin with default values
-              ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setNullable(true);
-              ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setValue(null);
-              float scaleDistanceXStart = image.getWidth() * 0.1f;
-              float scaleDistanceYStart = image.getHeight() / 2f;
-              float scaleDistanceXEnd = image.getWidth() * 0.9f;
-              imageScalePreviewComponent.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
-                  scaleDistanceXEnd, scaleDistanceYStart);
-              ((NullableSpinner.NullableSpinnerNumberModel)imageXOriginSpinner.getModel()).setValue(0);
-              ((NullableSpinner.NullableSpinnerNumberModel)imageYOriginSpinner.getModel()).setValue(0);
-            }
-          } catch (IOException ex) {
-            JOptionPane.showMessageDialog(BackgroundImageWizardStepsView.this, 
-                resource.getString("imageChoiceFormatError"));
+          Content content = showImageChoiceDialog();
+          if (content != null) {
+            updateComponents(content);
           }
         }
       });
-    this.imageChoiceErrorLabel = new JLabel("");
+    this.imageChoiceErrorLabel = new JLabel(resource.getString("imageChoiceErrolLabel.text"));
+    // Make imageChoiceErrorLabel visible only if an error occured during image content loading
+    this.imageChoiceErrorLabel.setVisible(false);
     this.imageChoicePreviewComponent = new ImagePreviewComponent();
     
     // Image scale panel components
@@ -274,10 +261,10 @@ public class BackgroundImageWizardStepsView extends JPanel {
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     imageChoicePanel.add(this.imageChoiceErrorLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, 
+        0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     imageChoicePanel.add(this.imageChoicePreviewComponent, new GridBagConstraints(
-        0, 3, 1, 1, 1, 0, GridBagConstraints.CENTER, 
+        0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
     
     JPanel imageScalePanel = new JPanel(new GridBagLayout());
@@ -285,13 +272,13 @@ public class BackgroundImageWizardStepsView extends JPanel {
         0, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
     imageScalePanel.add(this.imageScaleDistanceLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, 
+        0, 1, 1, 1, 0, 1, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     imageScalePanel.add(this.imageScaleDistanceSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     imageScalePanel.add(this.imageScalePreviewComponent, new GridBagConstraints(
-        0, 2, 2, 1, 1, 0, GridBagConstraints.CENTER, 
+        0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
 
     JPanel imageOriginPanel = new JPanel(new GridBagLayout());
@@ -299,19 +286,19 @@ public class BackgroundImageWizardStepsView extends JPanel {
         0, 0, 4, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
     imageOriginPanel.add(this.imageXOriginLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 1, GridBagConstraints.NORTHWEST, 
+        0, 1, 1, 1, 0, 1, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     imageOriginPanel.add(this.imageXOriginSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 10), -10, 0));
     imageOriginPanel.add(this.imageYOriginLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     imageOriginPanel.add(this.imageYOriginSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, 
+        3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
     imageOriginPanel.add(this.imageOriginPreviewComponent, new GridBagConstraints(
-        0, 2, 4, 1, 1, 0, GridBagConstraints.CENTER, 
+        0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
 
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
@@ -329,25 +316,85 @@ public class BackgroundImageWizardStepsView extends JPanel {
   /**
    * Updates components initial values from <code>backgroundImage</code>. 
    */
-  private void updateComponents(BackgroundImage backgroundImage) {
+  private void updateComponents(final BackgroundImage backgroundImage) {
     if (backgroundImage == null) {
       setImageChoiceTexts();
       updatePreviewComponentsImage(null);
     } else {
-      try {
-        readImage(backgroundImage.getImage());
-        this.imageScaleDistanceSpinner.setValue(backgroundImage.getScaleDistance());
-        this.imageScalePreviewComponent.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
-            backgroundImage.getScaleDistanceYStart(), backgroundImage.getScaleDistanceXEnd(),
-            backgroundImage.getScaleDistanceYEnd());
-        ((NullableSpinner.NullableSpinnerNumberModel)this.imageXOriginSpinner.getModel()).setValue(
-            backgroundImage.getXOrigin());
-        ((NullableSpinner.NullableSpinnerNumberModel)this.imageYOriginSpinner.getModel()).setValue(
-            backgroundImage.getYOrigin());
-      } catch (IOException ex) {
-        this.imageChoiceErrorLabel.setText(resource.getString("imageChoiceErrolLabel.text"));
-      }
+      setImageChangeTexts();
+      // Read image in imageLoader executor
+      imageLoader.execute(new Runnable() {
+          public void run() {
+            BufferedImage image = null;
+            try {
+              image = readImage(backgroundImage.getImage());
+            } catch (IOException ex) {
+              // image is null
+            }
+            final BufferedImage readImage = image;
+            // Update components in dispatch thread
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  if (readImage != null) {
+                    imageScaleDistanceSpinner.setValue(backgroundImage.getScaleDistance());
+                    imageScalePreviewComponent.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
+                        backgroundImage.getScaleDistanceYStart(), backgroundImage.getScaleDistanceXEnd(),
+                        backgroundImage.getScaleDistanceYEnd());
+                    ((NullableSpinner.NullableSpinnerNumberModel)imageXOriginSpinner.getModel()).setValue(
+                        backgroundImage.getXOrigin());
+                    ((NullableSpinner.NullableSpinnerNumberModel)imageYOriginSpinner.getModel()).setValue(
+                        backgroundImage.getYOrigin());
+                  } else {
+                    setImageChoiceTexts();
+                    imageChoiceErrorLabel.setVisible(true);
+                  }
+                } 
+              });
+            
+          } 
+        });
     }
+  }
+
+  /**
+   * Updates components values from <code>imageContent</code>.
+   */
+  private void updateComponents(final Content imageContent) {
+    // Read image in imageLoader executor
+    imageLoader.execute(new Runnable() {
+        public void run() {
+          BufferedImage image = null;
+          try {
+            image = readImage(imageContent);
+          } catch (IOException ex) {
+            // image is null
+          }
+          final BufferedImage readImage = image;
+          // Update components in dispatch thread
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                if (readImage != null) {
+                  setImageChangeTexts();
+                  imageChoiceErrorLabel.setVisible(false);
+                  // Initialize distance and origin with default values
+                  ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setNullable(true);
+                  ((NullableSpinner.NullableSpinnerNumberModel)imageScaleDistanceSpinner.getModel()).setValue(null);
+                  float scaleDistanceXStart = readImage.getWidth() * 0.1f;
+                  float scaleDistanceYStart = readImage.getHeight() / 2f;
+                  float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
+                  imageScalePreviewComponent.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
+                      scaleDistanceXEnd, scaleDistanceYStart);
+                  ((NullableSpinner.NullableSpinnerNumberModel)imageXOriginSpinner.getModel()).setValue(0);
+                  ((NullableSpinner.NullableSpinnerNumberModel)imageYOriginSpinner.getModel()).setValue(0);
+                } else {
+                  setImageChoiceTexts();
+                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsView.this, 
+                      resource.getString("imageChoiceFormatError"));
+                }
+              }
+            });
+        }
+      });
   }
 
   /**
@@ -355,6 +402,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
    */
   private BufferedImage readImage(Content imageContent) throws IOException {
     try {
+      // Display a waiting image while loading
       if (waitImage == null) {
         waitImage = ImageIO.read(BackgroundImageWizardStepsView.class.
             getResource("resources/wait.png"));
@@ -365,7 +413,6 @@ public class BackgroundImageWizardStepsView extends JPanel {
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
-        setImageChangeTexts();
         updatePreviewComponentsImage(image);
         this.controller.setImageContent(imageContent);
         return image;
@@ -373,7 +420,6 @@ public class BackgroundImageWizardStepsView extends JPanel {
         throw new IOException();
       }
     } catch (IOException ex) {
-      setImageChoiceTexts();
       updatePreviewComponentsImage(null);
       this.controller.setImageContent(null);
       throw ex;
@@ -543,7 +589,9 @@ public class BackgroundImageWizardStepsView extends JPanel {
       if (image == null) { 
         return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
       } else {
-        if (image.getWidth() * DEFAULT_HEIGHT / DEFAULT_WIDTH > image.getHeight()) {
+        if (image.getWidth() < DEFAULT_WIDTH && image.getHeight() < DEFAULT_HEIGHT) {
+          return new Dimension(image.getWidth(), image.getHeight());
+        } else if (image.getWidth() * DEFAULT_HEIGHT / DEFAULT_WIDTH > image.getHeight()) {
           return new Dimension(DEFAULT_WIDTH, image.getHeight() * DEFAULT_WIDTH / image.getWidth());
         } else {
           return new Dimension(image.getWidth() * DEFAULT_HEIGHT / image.getHeight(), DEFAULT_HEIGHT);
@@ -557,10 +605,6 @@ public class BackgroundImageWizardStepsView extends JPanel {
         Graphics2D g2D = (Graphics2D)g;
         g2D.setRenderingHint(RenderingHints.KEY_RENDERING, 
             RenderingHints.VALUE_RENDER_QUALITY);
-
-        // Fill background
-        g2D.setColor(UIManager.getColor("window"));
-        g2D.fillRect(0, 0, getWidth(), getHeight());
         // Draw image
         float scale = getPreviewScale();
         g2D.scale(scale, scale);
