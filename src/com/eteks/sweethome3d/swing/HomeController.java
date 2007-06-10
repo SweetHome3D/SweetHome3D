@@ -30,9 +30,12 @@ import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
@@ -127,7 +130,11 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         this.home.getFurnitureSortedProperty() != null);
     homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
-    homeView.setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, true);
+    homeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, true);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
+        this.home.getBackgroundImage() != null);
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
+        this.home.getBackgroundImage() != null);
     homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
@@ -167,6 +174,7 @@ public class HomeController  {
    */
   private void addListeners() {
     addCatalogSelectionListener();
+    addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
     addUndoSupportListener();
@@ -208,6 +216,21 @@ public class HomeController  {
               ev.getNewValue() != null);
         }
       });
+  }
+
+  /**
+   *  Adds a property change listener to home that enables / disables background image actions.
+   */
+  private void addHomeBackgroundImageListener() {
+    this.home.addPropertyChangeListener("backgroundImage", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
+                ev.getNewValue() != null);
+            ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
+                ev.getNewValue() != null);
+          }
+        });
   }
 
   /**
@@ -725,10 +748,44 @@ public class HomeController  {
   }
 
   /**
+   * Displays the wizard that helps to import home background image. 
+   */
+  public void importBackgroundImage() {
+    new BackgroundImageWizardController(this.home, this.preferences, this.undoSupport);
+  }
+  
+  /**
    * Displays the wizard that helps to change home background image. 
    */
   public void modifyBackgroundImage() {
-    new BackgroundImageWizardController(this.home, this.preferences, this.undoSupport);
+    importBackgroundImage();
+  }
+  
+  /**
+   * Deletes home background image and posts and posts an undoable operation. 
+   */
+  public void deleteBackgroundImage() {
+    final BackgroundImage oldImage = this.home.getBackgroundImage();
+    this.home.setBackgroundImage(null);
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        home.setBackgroundImage(oldImage); 
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        home.setBackgroundImage(null);
+      }
+      
+      @Override
+      public String getPresentationName() {
+        return resource.getString("undoDeleteBackgroundImageName");
+      }
+    };
+    this.undoSupport.postEdit(undoableEdit);
   }
   
   /**

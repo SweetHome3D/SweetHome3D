@@ -19,8 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -487,7 +489,9 @@ public class PlanComponent extends JComponent implements Scrollable {
    */
   private void paintBackgroundImage(Graphics2D g2D) {
     final BackgroundImage backgroundImage = this.home.getBackgroundImage();
-    if (backgroundImage != null) {
+    if (backgroundImage == null) {
+      this.backgroundImageCache = null;
+    } else {
       if (this.backgroundImageCache == null) {
         // Load background image in an executor
         Executors.newSingleThreadExecutor().execute(new Runnable() {
@@ -505,12 +509,15 @@ public class PlanComponent extends JComponent implements Scrollable {
               repaint();
             } 
           });
-      }
-      // Paint image at specified scale
+      } 
+      // Paint image at specified scale with 0.7 alpha
       AffineTransform previousTransform = g2D.getTransform();
       g2D.translate(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
       g2D.scale(backgroundImage.getScale(), backgroundImage.getScale());
+      Composite oldComposite = g2D.getComposite();
+      g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
       g2D.drawImage(this.backgroundImageCache, 0, 0, this);
+      g2D.setComposite(oldComposite);
       g2D.setTransform(previousTransform);
     }
   }

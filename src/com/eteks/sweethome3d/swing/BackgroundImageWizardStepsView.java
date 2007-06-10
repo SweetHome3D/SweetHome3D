@@ -19,9 +19,11 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -48,6 +50,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.ParseException;
+import java.util.EventObject;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -56,15 +60,22 @@ import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
@@ -73,7 +84,7 @@ import com.eteks.sweethome3d.swing.NullableSpinner.NullableSpinnerLengthModel;
 import com.eteks.sweethome3d.tools.URLContent;
 
 public class BackgroundImageWizardStepsView extends JPanel {
-  private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};
+  private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};  
   private static final FileFilter [] IMAGE_FILTERS = {
     new FileFilter() {
       @Override
@@ -601,27 +612,52 @@ public class BackgroundImageWizardStepsView extends JPanel {
     
     @Override
     protected void paintComponent(Graphics g) {
+      paintImage(g, null);
+    }
+
+    /**
+     * Paints the image with a given <code>composite</code>. 
+     * Image is scaled to fill width of the component. 
+     */
+    protected void paintImage(Graphics g, AlphaComposite composite) {
       if (image != null) {
         Graphics2D g2D = (Graphics2D)g;
         g2D.setRenderingHint(RenderingHints.KEY_RENDERING, 
             RenderingHints.VALUE_RENDER_QUALITY);
-        // Draw image
+        AffineTransform oldTransform = g2D.getTransform();
+        Composite oldComposite = g2D.getComposite();
         float scale = getPreviewScale();
-        g2D.scale(scale, scale);
+        g2D.scale(scale, scale);    
+        
+        if (composite != null) {
+          g2D.setComposite(composite);
+        }
+        // Draw image with composite
         g2D.drawImage(this.image, 0, 0, this);
+        g2D.setComposite(oldComposite);
+        g2D.setTransform(oldTransform);
       }
     }
     
+    /**
+     * Sets the image drawn by this component.
+     */
     public void setImage(BufferedImage image) {
       this.image = image;
       this.revalidate();
       this.repaint();
     }
 
+    /**
+     * Returns the image drawn by this component.
+     */
     public BufferedImage getImage() {
       return this.image;
     }
     
+    /**
+     * Returns the scale used to draw the image of this component.
+     */
     public float getPreviewScale() {
       if (image != null) {
         return (float)getWidth() / image.getWidth();
@@ -639,17 +675,24 @@ public class BackgroundImageWizardStepsView extends JPanel {
 
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
       this.controller = controller;
-      addMouseListeners(controller);
+      addMouseListeners();
       setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     }
     
+    /**
+     * Sets the scale distance start and end points. 
+     */
     public void setScaleDistancePoints(float scaleDistanceXStart, float scaleDistanceYStart, 
                                        float scaleDistanceXEnd, float scaleDistanceYEnd) {
       this.controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
           scaleDistanceXEnd, scaleDistanceYEnd);
     }
 
-    public void addMouseListeners(final BackgroundImageWizardController controller) {
+    /**
+     * Adds to this component a mouse listeners that allows the user to move the start point 
+     * or the end point of the scale distance line.
+     */
+    public void addMouseListeners() {
       MouseInputAdapter mouseListener = new MouseInputAdapter() {
         private int     lastX;
         private int     lastY;
@@ -700,7 +743,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
                     scaleDistancePoints [0][1] * getPreviewScale(),
                     scaleDistancePoints [1][0] * getPreviewScale(), 
                     scaleDistancePoints [1][1] * getPreviewScale()) >= 4) {
-              controller.setScaleDistancePoints(
+              setScaleDistancePoints(
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1],
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
               repaint();
@@ -727,33 +770,42 @@ public class BackgroundImageWizardStepsView extends JPanel {
     
     @Override
     protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
       if (getImage() != null) {
         Graphics2D g2D = (Graphics2D)g;
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
             RenderingHints.VALUE_ANTIALIAS_ON);
         
+        // Fill background
+        g2D.setColor(UIManager.getColor("window"));
+        g2D.fillRect(0, 0, getWidth(), getHeight());
+        
+        // Paint image with a 0.5 alpha
+        paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
+
+        // Use same scale as for image
+        float scale = getPreviewScale();
+        g2D.scale(scale, scale);
+        
         Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
         g2D.setPaint(scaleDistanceLineColor);
         
         // Draw a scale distance line        
-        AffineTransform previousTransform = g2D.getTransform();
-        g2D.setStroke(new BasicStroke(5 / (float)previousTransform.getScaleX(), 
+        g2D.setStroke(new BasicStroke(5 / scale, 
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
         float [][] scaleDistancePoints = this.controller.getScaleDistancePoints();
         g2D.draw(new Line2D.Float(scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
                                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]));
         // Draw start point line
-        g2D.setStroke(new BasicStroke(1 / (float)previousTransform.getScaleX(), 
+        g2D.setStroke(new BasicStroke(1 / scale, 
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
         double angle = Math.atan2(scaleDistancePoints [1][1] - scaleDistancePoints [0][1], 
                     scaleDistancePoints [1][0] - scaleDistancePoints [0][0]);
+        AffineTransform oldTransform = g2D.getTransform();
         g2D.translate(scaleDistancePoints [0][0], scaleDistancePoints [0][1]);
         g2D.rotate(angle);
-        Shape endLine = new Line2D.Double(0, 5 / previousTransform.getScaleX(), 
-                                          0, -5 / previousTransform.getScaleX());
+        Shape endLine = new Line2D.Double(0, 5 / scale, 0, -5 / scale);
         g2D.draw(endLine);
-        g2D.setTransform(previousTransform);
+        g2D.setTransform(oldTransform);
         
         // Draw end point line
         g2D.translate(scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
@@ -780,6 +832,10 @@ public class BackgroundImageWizardStepsView extends JPanel {
       setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     }
 
+    /**
+     * Adds listeners to <code>xOriginSpinnerModel</code> and <code>yOriginSpinnerModel</code>
+     * to update the location of the origin drawn by this component.
+     */
     private void addChangeListeners(final NullableSpinnerLengthModel xOriginSpinnerModel, 
                                     final NullableSpinnerLengthModel yOriginSpinnerModel) {
       ChangeListener originSpinnerListener = new ChangeListener () {
@@ -794,6 +850,11 @@ public class BackgroundImageWizardStepsView extends JPanel {
       yOriginSpinnerModel.addChangeListener(originSpinnerListener);
     }
     
+    /**
+     * Adds a mouse listener to this component to update the values stored 
+     * by <code>xOriginSpinnerModel</code> and <code>yOriginSpinnerModel</code>
+     * when the user clicks in component.
+     */
     public void addMouseListener(final NullableSpinnerLengthModel xOriginSpinnerModel, 
                                  final NullableSpinnerLengthModel yOriginSpinnerModel) {
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
@@ -820,17 +881,23 @@ public class BackgroundImageWizardStepsView extends JPanel {
     
     @Override
     protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
       if (getImage() != null) {
         Graphics2D g2D = (Graphics2D)g;
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
             RenderingHints.VALUE_ANTIALIAS_ON);
         
+        // Fill background
+        g2D.setColor(UIManager.getColor("window"));
+        g2D.fillRect(0, 0, getWidth(), getHeight());
+        
+        // Paint image with a 0.5 alpha 
+        paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
+        
         Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
         g2D.setPaint(scaleDistanceLineColor);
         // Rescale according to scale distance
         float [][] scaleDistancePoints = this.controller.getScaleDistancePoints();
-        float scale = 1 / BackgroundImage.getScale(this.controller.getScaleDistance(), 
+        float scale = getPreviewScale() / BackgroundImage.getScale(this.controller.getScaleDistance(), 
             scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
             scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
         g2D.scale(scale, scale);
@@ -838,17 +905,15 @@ public class BackgroundImageWizardStepsView extends JPanel {
         // Draw a dot at origin
         g2D.translate(this.xOrigin, this.yOrigin);
         
-        AffineTransform transform = g2D.getTransform();
-        float originRadius = 4 / (float)transform.getScaleX();
+        float originRadius = 4 / scale;
         g2D.fill(new Ellipse2D.Float(-originRadius, -originRadius,
             originRadius * 2, originRadius * 2));
         
-        g2D.setStroke(new BasicStroke(1 / (float)transform.getScaleX(), 
+        // Draw a cross
+        g2D.setStroke(new BasicStroke(1 / scale, 
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));        
-        g2D.draw(new Line2D.Double(8 / transform.getScaleX(), 0, 
-            -8 / transform.getScaleX(), 0));
-        g2D.draw(new Line2D.Double(0, 8 / transform.getScaleX(), 
-            0, -8 / transform.getScaleX()));
+        g2D.draw(new Line2D.Double(8 / scale, 0, -8 / scale, 0));
+        g2D.draw(new Line2D.Double(0, 8 / scale, 0, -8 / scale));
       }
     }
   }

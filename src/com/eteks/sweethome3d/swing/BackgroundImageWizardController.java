@@ -99,7 +99,9 @@ public class BackgroundImageWizardController extends WizardController {
       
       @Override
       public String getPresentationName() {
-        return resource.getString("undoModifyBackgroundImageName");
+        return resource.getString(oldImage == null 
+            ? "undoImportBackgroundImageName"
+            : "undoModifyBackgroundImageName");
       }
     };
     this.undoSupport.postEdit(undoableEdit);
