@@ -455,7 +455,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
     this.imageChoiceOrChangeButton.setText(this.resource.getString("imageChangeButton.text"));
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       this.imageChoiceOrChangeButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("changeImageButton.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(this.resource.getString("imageChangeButton.mnemonic")).getKeyCode());
     }
   }
 
