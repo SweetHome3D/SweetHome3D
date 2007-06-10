@@ -50,8 +50,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.ParseException;
-import java.util.EventObject;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -60,22 +58,15 @@ import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
-import javax.swing.JSpinner.DefaultEditor;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.filechooser.FileFilter;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
@@ -86,6 +77,33 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class BackgroundImageWizardStepsView extends JPanel {
   private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};  
   private static final FileFilter [] IMAGE_FILTERS = {
+    new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        // Accept directories and .sh3d files
+        return file.isDirectory()
+               || file.getName().toLowerCase().endsWith(".bmp")
+               || file.getName().toLowerCase().endsWith(".wbmp");
+      }
+  
+      @Override
+      public String getDescription() {
+        return "BMP";
+      }
+    },
+    new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        // Accept directories and .sh3d files
+        return file.isDirectory()
+               || file.getName().toLowerCase().endsWith(".gif");
+      }
+  
+      @Override
+      public String getDescription() {
+        return "GIF";
+      }
+    },
     new FileFilter() {
       @Override
       public boolean accept(File file) {
@@ -111,32 +129,6 @@ public class BackgroundImageWizardStepsView extends JPanel {
       @Override
       public String getDescription() {
         return "PNG";
-      }
-    },
-    new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".gif");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "GIF";
-      }
-    },new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".bmp")
-               || file.getName().toLowerCase().endsWith(".wbmp");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "BMP";
       }
     }};
   private static File currentDirectory;
@@ -533,6 +525,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
     for (FileFilter filter : IMAGE_FILTERS) {
       fileChooser.addChoosableFileFilter(filter);
     }
+    fileChooser.setFileFilter(fileChooser.getAcceptAllFileFilter());
     // Update current directory
     if (currentDirectory != null) {
       fileChooser.setCurrentDirectory(currentDirectory);
