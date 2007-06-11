@@ -479,7 +479,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
     }
     
     try {
-      // Copy home stream in a temporary file to ensure the image will 
+      // Copy chosen file in a temporary file to ensure the image will 
       // still be available at saving time even if user moved it meanwhile   
       return copyToTempFile(file);
     } catch (IOException ex) {
@@ -490,7 +490,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
   }
 
   /**
-   * Returns a {@link URLContent URL content} object that references a temporrary copy of 
+   * Returns a {@link URLContent URL content} object that references a temporary copy of 
    * the given <code>file</code>.
    */
   private Content copyToTempFile(String file) throws IOException {
