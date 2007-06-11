@@ -315,6 +315,19 @@ public class PlanController {
   }
   
   /**
+   * Selects all visible objects in home.
+   */
+  public void selectAll() {
+    List<Object> all = new ArrayList<Object>(this.home.getWalls());
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        all.add(piece);
+      }
+    }
+    this.home.setSelectedItems(all);
+  }
+  
+  /**
    * Returns the horizontal ruler of the plan view. 
    */
   public JComponent getHorizontalRulerView() {

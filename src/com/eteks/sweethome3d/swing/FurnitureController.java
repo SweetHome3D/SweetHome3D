@@ -209,6 +209,13 @@ public class FurnitureController {
   }
 
   /**
+   * Selects all furniture in home.
+   */
+  public void selectAll() {
+    setSelectedFurniture(this.home.getFurniture());
+  }
+  
+  /**
    * Controls the sort of the furniture in home. If home furniture isn't sorted
    * or is sorted on an other property, it will be sorted on the given
    * <code>furnitureProperty</code> in ascending order. If home furniture is already

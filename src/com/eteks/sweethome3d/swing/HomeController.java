@@ -534,11 +534,9 @@ public class HomeController  {
    */
   public void selectAll() {
     if (this.focusedView == getFurnitureController().getView()) {
-      this.home.setSelectedItems(this.home.getFurniture());
+      getFurnitureController().selectAll();
     } else if (this.focusedView == getPlanController().getView()) {
-      List<Object> all = new ArrayList<Object>(this.home.getFurniture());
-      all.addAll(this.home.getWalls());
-      this.home.setSelectedItems(all);
+      getPlanController().selectAll();
     }
   }
   
