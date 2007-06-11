@@ -776,7 +776,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
         // Paint image with a 0.5 alpha
         paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
 
-        // Use same scale as for image
+        // Use same scale as image drawing in super class
         float scale = getPreviewScale();
         g2D.scale(scale, scale);
         
