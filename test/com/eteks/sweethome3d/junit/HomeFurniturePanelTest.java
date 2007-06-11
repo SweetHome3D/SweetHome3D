@@ -22,16 +22,14 @@ package com.eteks.sweethome3d.junit;
 import java.util.Arrays;
 import java.util.Locale;
 
+import junit.framework.TestCase;
+
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomeFurniturePanel;
-import com.eteks.sweethome3d.swing.WallPanel;
-
-import junit.framework.TestCase;
 
 /**
  * Tests {@link com.eteks.sweethome3d.swing.HomeFurniturePanel home piece of furniture panel}.
