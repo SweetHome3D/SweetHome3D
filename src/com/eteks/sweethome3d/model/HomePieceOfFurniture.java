@@ -76,11 +76,6 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
           return HomePieceOfFurniture.compare(piece1.doorOrWindow, piece2.doorOrWindow);
         }
       });
-    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.DOOR_OR_WINDOW, new Comparator<HomePieceOfFurniture>() {
-        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          return HomePieceOfFurniture.compare(piece1.doorOrWindow, piece2.doorOrWindow);
-        }
-      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.COLOR, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           if (piece1.color == null) {
