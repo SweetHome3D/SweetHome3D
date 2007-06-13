@@ -93,7 +93,7 @@ public class NullableSpinner extends JSpinner {
     @Override
     public Object getNextValue() {
       if (this.isNull) {
-        setValue(getMinimum());
+        return super.getValue();
       } 
       return super.getNextValue();
     }
@@ -101,7 +101,7 @@ public class NullableSpinner extends JSpinner {
     @Override
     public Object getPreviousValue() {
       if (this.isNull) {
-        setValue(getMinimum());
+        return super.getValue();
       } 
       return super.getPreviousValue();
     }
