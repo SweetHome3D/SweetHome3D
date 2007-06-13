@@ -56,8 +56,8 @@ public class BackgroundImageWizardController extends WizardController {
   private float                          scaleDistanceYStart;
   private float                          scaleDistanceXEnd;
   private float                          scaleDistanceYEnd;
-  private Float                          xOrigin;
-  private Float                          yOrigin;
+  private float                          xOrigin;
+  private float                          yOrigin;
   
   public BackgroundImageWizardController(Home home, UserPreferences preferences, 
                                          UndoableEditSupport undoSupport) {
@@ -209,7 +209,7 @@ public class BackgroundImageWizardController extends WizardController {
   /**
    * Sets the origin of the background image.
    */
-  public void setOrigin(Float xOrigin, Float yOrigin) {
+  public void setOrigin(float xOrigin, float yOrigin) {
     this.xOrigin = xOrigin;
     this.yOrigin = yOrigin;
     if (getStepState() != null) {
@@ -220,14 +220,14 @@ public class BackgroundImageWizardController extends WizardController {
   /**
    * Returns the abcissa of the origin of the background image.
    */
-  public Float getXOrigin() {
+  public float getXOrigin() {
     return this.xOrigin;
   }
 
   /**
    * Returns the ordinate of the origin of the background image.
    */
-  public Float getYOrigin() {
+  public float getYOrigin() {
     return this.yOrigin;
   }
   
@@ -256,7 +256,8 @@ public class BackgroundImageWizardController extends WizardController {
       return this.icon;
     }
 
-    public abstract void updateStep();
+    public void updateStep() {      
+    }
   }
     
   /**
@@ -314,6 +315,13 @@ public class BackgroundImageWizardController extends WizardController {
    */
   private class ImageOriginStepState extends BackgroundImageWizardStepState {
     @Override
+    public void enter() {
+      super.enter();
+      // Last step is always valid by default
+      setNextStepEnabled(true);
+    }
+    
+    @Override
     public Step getStep() {
       return Step.ORIGIN;
     }
@@ -326,11 +334,6 @@ public class BackgroundImageWizardController extends WizardController {
     @Override
     public void goBackToPreviousStep() {
       setStepState(getImageScaleStepState());
-    }
-
-    @Override
-    public void updateStep() {
-      setNextStepEnabled(getXOrigin() != null && getYOrigin() != null);
     }
   }
 }
