@@ -66,6 +66,8 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // Show home plan frame
     showWindow(frame);
+    JComponentTester tester = new JComponentTester();
+    tester.waitForIdle();
     // Check catalog tree has default focus
     assertTrue("Tree doesn't have the focus", catalogTree.isFocusOwner());
     // Check Cut, Copy, Paste and Delete actions are disable
@@ -78,12 +80,12 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, false, true, false, false);
     
     // 3. Drag and drop selected piece in tree to point (120, 120) in plan component
-    JComponentTester tester = new JComponentTester();
     Rectangle selectedRowBounds = catalogTree.getRowBounds(1);
     tester.actionDrag(catalogTree, new ComponentLocation( 
         new Point(selectedRowBounds.x, selectedRowBounds.y)));
     tester.actionDrop(planComponent, new ComponentLocation( 
         new Point(120, 120))); 
+    tester.waitForIdle();
     // Check a piece was added to home
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     // Check top left corner of the piece is at (200, 200) 
@@ -128,6 +130,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // 8. Paste selected items in plan component
     runAction(controller, HomePane.ActionType.PASTE);
+    tester.waitForIdle();
     // Check home contains one wall and one piece
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
