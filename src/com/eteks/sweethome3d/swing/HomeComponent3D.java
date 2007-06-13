@@ -663,7 +663,7 @@ public class HomeComponent3D extends JComponent {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   // Update piece color and visibility in dispatch thread as
-                  // these attributes may be changed that thread
+                  // these attributes may be changed in that thread
                   updatePieceOfFurnitureColor();      
                   updatePieceOfFurnitureVisibility();
                 }
