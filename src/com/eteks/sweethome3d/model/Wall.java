@@ -213,7 +213,7 @@ public class Wall implements Serializable  {
   }
 
   /**
-   * Returns the points of a each corner of a wall.
+   * Returns the points of each corner of a wall.
    * @return an array of the 4 (x,y) coordinates of the wall corners.
    */
   public float [][] getPoints() {

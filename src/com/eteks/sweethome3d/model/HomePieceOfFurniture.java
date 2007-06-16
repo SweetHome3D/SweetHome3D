@@ -345,7 +345,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
 
   /**
-   * Returns the points of a each corner of a piece.
+   * Returns the points of each corner of a piece.
    * @return an array of the 4 (x,y) coordinates of the piece corners.
    */
   public float [][] getPoints() {
