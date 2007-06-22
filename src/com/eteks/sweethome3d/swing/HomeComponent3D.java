@@ -20,13 +20,20 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -61,14 +68,22 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
+import javax.media.j3d.View;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
-import javax.swing.SwingUtilities;
+import javax.swing.KeyStroke;
+import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
+import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CameraEvent;
+import com.eteks.sweethome3d.model.CameraListener;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -81,7 +96,6 @@ import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
-import com.sun.j3d.utils.behaviors.mouse.MouseRotate;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -92,14 +106,26 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
  * @author Emmanuel Puybaret
  */
 public class HomeComponent3D extends JComponent {
+  private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
+      ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
+      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
+  
   private Map<Object, ObjectBranch> homeObjects = 
       new HashMap<Object, ObjectBranch>();
   private Collection<Object> homeObjectsToUpdate;
 
   /**
-   * Creates a 3D component that displays <code>home</code> walls and furniture.
+   * Creates a 3D component that displays <code>home</code> walls and furniture, 
+   * with no controller.
    */
   public HomeComponent3D(Home home) {
+    this(home, null);  
+  }
+  
+  /**
+   * Creates a 3D component that displays <code>home</code> walls and furniture.
+   */
+  public HomeComponent3D(Home home, HomeController3D controller) {
     // Try to get antialiasing
     GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
     gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -108,16 +134,215 @@ public class HomeComponent3D extends JComponent {
         getDefaultScreenDevice().getBestConfiguration(gc));
     // Link it to a default univers
     SimpleUniverse universe = new SimpleUniverse(canvas3D);
-    universe.getViewingPlatform().setNominalViewingTransform();
+    // Change min and max distance of user field of view 
+    View view = universe.getViewer().getView();
+    view.setFrontClipDistance(1);
+    view.setBackClipDistance(10000);
+    // Use a 63° field of view (equivalent to a 35mm lens for 24x36 film)
+    view.setFieldOfView(Math.PI * 63 / 180);
+        
+    TransformGroup viewPlatformTransform = universe.getViewingPlatform().getViewPlatformTransform();
+    // Update point of view from current camera
+    updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+    // Add camera listeners to update later point of view from camera
+    addCameraListeners(home, viewPlatformTransform);
+    
     // Link scene matching home to universe
     universe.addBranchGraph(getSceneTree(home));
     
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
-    // This component doesn't manage keyboard at this time, 
-    // so it's useless to let its canvas be focusable  
+
     canvas3D.setFocusable(false);
+    if (controller != null) {
+      addMouseListeners(controller, canvas3D);
+      createActions(controller);
+      installKeyboardActions();
+      // Let this component manage focus
+      setFocusable(true);
+    }
+  }
+
+  /**
+   * Adds listeners to home to update point of view from current camera.
+   */
+  private void addCameraListeners(final Home home, final TransformGroup viewPlatformTransform) {
+    home.addCameraListener(new CameraListener() {
+        public void cameraChanged(CameraEvent ev) {
+          // Update view transform later to avoid flickering in case of mulitple camera changes 
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+              }
+            });
+        }
+      });
+    home.addPropertyChangeListener("camera", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+          }
+        });
+  }
+
+  /**
+   * Updates <code>viewPlatformTransform</code> transform from <code>camera</code> angles and location.
+   */
+  private void updateViewPlatformTransform(TransformGroup viewPlatformTransform, Camera camera) {
+    Transform3D yawRotation = new Transform3D();
+    yawRotation.rotY(-camera.getYaw() + Math.PI);
+    Transform3D pitchRotation = new Transform3D();
+    pitchRotation.rotX(-camera.getPitch());
+    Transform3D transform = new Transform3D();
+    transform.setTranslation(new Vector3f(camera.getX() , camera.getZ() , camera.getY()));
+    yawRotation.mul(pitchRotation);
+    transform.mul(yawRotation);
+    viewPlatformTransform.setTransform(transform);
+  }
+  
+  /**
+   * Adds AWT mouse listeners to <code>canvas3D</code> that calls back <code>controller</code> methods.  
+   */
+  private void addMouseListeners(final HomeController3D controller, Component canvas3D) {
+    MouseInputAdapter mouseListener = new MouseInputAdapter() {
+        private int xLastMouseMove;
+        private int yLastMouseMove;
+        
+        @Override
+        public void mousePressed(MouseEvent ev) {
+          if (isEnabled() && !ev.isPopupTrigger()) {
+            requestFocusInWindow();
+            this.xLastMouseMove = ev.getX();
+            this.yLastMouseMove = ev.getY();
+          }
+        }
+  
+        @Override
+        public void mouseDragged(MouseEvent ev) {
+          if (isEnabled()) {
+            if (ev.isAltDown()) {
+              // Mouse move along Y axis while alt is down changes camera location
+              float delta = 0.5f * (this.yLastMouseMove - ev.getY());
+              // Multiply delta by 10 if shift isn't down
+              if (!ev.isShiftDown()) {
+                delta *= 10;
+              } 
+              controller.moveCamera(delta);
+            } else {
+              final float ANGLE_FACTOR = 0.007f;
+              // Mouse move along X axis changes camera yaw 
+              float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
+              // Multiply yaw delta by 10 if shift isn't down
+              if (!ev.isShiftDown()) {
+                yawDelta *= 10;
+              } 
+              controller.rotateCameraYaw(yawDelta);
+              
+              // Mouse move along Y axis changes camera pitch 
+              float pitchDelta = ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
+              controller.rotateCameraPitch(pitchDelta);
+            }
+            
+            this.xLastMouseMove = ev.getX();
+            this.yLastMouseMove = ev.getY();
+          }
+        }
+      };
+    MouseWheelListener mouseWheelListener = new MouseWheelListener() {
+        public void mouseWheelMoved(MouseWheelEvent ev) {
+          if (isEnabled()) {
+            // Mouse wheel changes camera location 
+            float delta = -ev.getWheelRotation();
+            // Multiply delta by 10 if shift isn't down
+            if (!ev.isShiftDown()) {
+              delta *= 10;
+            } 
+            controller.moveCamera(delta);
+          }
+        }
+      };
+    
+    canvas3D.addMouseListener(mouseListener);
+    canvas3D.addMouseMotionListener(mouseListener);
+    canvas3D.addMouseWheelListener(mouseWheelListener);
+    // Add a mouse listener to this component to request focus in case user clicks in component border
+    this.addMouseListener(new MouseInputAdapter() {
+        @Override
+        public void mousePressed(MouseEvent e) {
+          requestFocusInWindow();
+        }
+      });
+  }
+
+  /**
+   * Installs keys bound to actions. 
+   */
+  private void installKeyboardActions() {
+    InputMap inputMap = getInputMap(WHEN_FOCUSED);
+    inputMap.put(KeyStroke.getKeyStroke("shift UP"), ActionType.MOVE_CAMERA_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_CAMERA_FAST_FORWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift DOWN"), ActionType.MOVE_CAMERA_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_CAMERA_FAST_BACKWARD);
+    inputMap.put(KeyStroke.getKeyStroke("shift LEFT"), ActionType.ROTATE_CAMERA_YAW_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.ROTATE_CAMERA_YAW_FAST_LEFT);
+    inputMap.put(KeyStroke.getKeyStroke("shift RIGHT"), ActionType.ROTATE_CAMERA_YAW_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
+    inputMap.put(KeyStroke.getKeyStroke("PAGE_UP"), ActionType.ROTATE_CAMERA_PITCH_UP);
+    inputMap.put(KeyStroke.getKeyStroke("PAGE_DOWN"), ActionType.ROTATE_CAMERA_PITCH_DOWN);
+  }
+ 
+  /**
+   * Creates actions that calls back <code>controller</code> methods.  
+   */
+  private void createActions(final HomeController3D controller) {
+    // Move camera action mapped to arrow keys 
+    class MoveCameraAction extends AbstractAction {
+      private final int delta;
+      
+      public MoveCameraAction(int delta) {
+        this.delta = delta;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.moveCamera(this.delta);
+      }
+    }
+    // Rotate camera yaw action mapped to arrow keys 
+    class RotateCameraYawAction extends AbstractAction {
+      private final float delta;
+      
+      public RotateCameraYawAction(float delta) {
+        this.delta = delta;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.rotateCameraYaw(this.delta);
+      }
+    }
+    // Rotate camera pitch action mapped to arrow keys 
+    class RotateCameraPitchAction extends AbstractAction {
+      private final float delta;
+      
+      public RotateCameraPitchAction(float delta) {
+        this.delta = delta;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.rotateCameraPitch(this.delta);
+      }
+    }
+    ActionMap actionMap = getActionMap();
+    actionMap.put(ActionType.MOVE_CAMERA_FORWARD, new MoveCameraAction(1));
+    actionMap.put(ActionType.MOVE_CAMERA_FAST_FORWARD, new MoveCameraAction(10));
+    actionMap.put(ActionType.MOVE_CAMERA_BACKWARD, new MoveCameraAction(-1));
+    actionMap.put(ActionType.MOVE_CAMERA_FAST_BACKWARD, new MoveCameraAction(-10));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_LEFT, new RotateCameraYawAction(-(float)Math.PI / 180));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_LEFT, new RotateCameraYawAction(-(float)Math.PI / 18));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_RIGHT, new RotateCameraYawAction((float)Math.PI / 180));
+    actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT, new RotateCameraYawAction((float)Math.PI / 18));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_UP, new RotateCameraPitchAction(-(float)Math.PI / 180));
+    actionMap.put(ActionType.ROTATE_CAMERA_PITCH_DOWN, new RotateCameraPitchAction((float)Math.PI / 180));
   }
 
   /**
@@ -125,13 +350,9 @@ public class HomeComponent3D extends JComponent {
    */
   private BranchGroup getSceneTree(Home home) {
     BranchGroup root = new BranchGroup();
-    Group mainGroup = getMainGroup();
-    Group behaviorGroup = getBehaviorGroup();
 
     // Build scene tree
-    behaviorGroup.addChild(getHomeTree(home)); 
-    mainGroup.addChild(behaviorGroup); 
-    root.addChild(mainGroup);
+    root.addChild(getHomeTree(home));
     root.addChild(getBackgroundNode());
     for (Light light : getLights()) {
       root.addChild(light);
@@ -140,37 +361,13 @@ public class HomeComponent3D extends JComponent {
   }
 
   /**
-   * Returns the group initialized to view a home 
-   * with a angle of view of 45?.
-   */
-  private Group getMainGroup() {
-    Transform3D rotationX = new Transform3D();
-    rotationX.rotX(Math.PI / 4);
-    return new TransformGroup(rotationX); 
-  }
-
-  /**
-   * Returns the group which behavior controls the orientation of the scene. 
-   */
-  private Group getBehaviorGroup() {
-    TransformGroup transformGroup = new TransformGroup();
-    transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-    transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-    MouseRotate mouseBehavior = new MouseRotate(transformGroup);
-    mouseBehavior.setFactor(mouseBehavior.getXFactor(), 0);
-    Bounds schedulingBounds = new BoundingBox();
-    mouseBehavior.setSchedulingBounds(schedulingBounds);
-    // Add behavior to transform group to activate it
-    transformGroup.addChild(mouseBehavior);    
-    return transformGroup;
-  }
-
-  /**
    * Returns the background node.  
    */
   private Node getBackgroundNode() {
-    Background background = new Background(0.9f, 0.9f, 0.9f);
-    background.setApplicationBounds(new BoundingBox());
+    Background background = new Background(0.85f, 0.85f, 0.85f);
+    background.setApplicationBounds(new BoundingBox(
+        new Point3d(-100000, -100000, -100000), 
+        new Point3d(100000, 100000, 100000)));
     return background;
   }
   
@@ -179,18 +376,17 @@ public class HomeComponent3D extends JComponent {
    */
   private Light [] getLights() {
     Light [] lights = {
-      new DirectionalLight(new Color3f(1, 1, 1), 
-                           new Vector3f(1, -1, -1)), 
-      new DirectionalLight(new Color3f(1, 1, 1), 
-                           new Vector3f(-1, -1, -1)), 
+      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(1.732f, -1, -1)), 
+      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(-1.732f, -1, -1)), 
+      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(0, -1, 1)), 
       new AmbientLight(new Color3f(0.6f, 0.6f, 0.6f))}; 
 
     for (Light light : lights) {
-      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 1000000));
+      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 10000));
     }
     return lights;
   }
-  
+
   /**
    * Returns <code>home</code> tree node, with branches for each wall 
    * and piece of furniture of <code>home</code>. 
@@ -211,20 +407,11 @@ public class HomeComponent3D extends JComponent {
    * Returns the group at home subtree root.
    */
   private Group getHomeRoot() {
-    // Create a transform group initialized to view 
-    // a home of 1000 centimeters wide in a box of 1 unit centered at origin
-    Transform3D translation = new Transform3D();
-    translation.setTranslation(new Vector3f(-500, 0, -500));
-    Transform3D homeTransform = new Transform3D();
-    homeTransform.setScale(0.001);
-    homeTransform.mul(translation);
-    TransformGroup homeTransformGroup = 
-        new TransformGroup(homeTransform);
-    
-    //  Allow transform group to have new children
-    homeTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
-    homeTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-    return homeTransformGroup;
+    Group homeGroup = new Group();    
+    //  Allow group to have new children
+    homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
+    homeGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+    return homeGroup;
   }
 
   /**
@@ -328,7 +515,7 @@ public class HomeComponent3D extends JComponent {
     } else {
       this.homeObjectsToUpdate = new HashSet<Object>(objects);
       // Invoke later the update of objects of homeObjectsToUpdate
-      SwingUtilities.invokeLater(new Runnable () {
+      EventQueue.invokeLater(new Runnable () {
         public void run() {
           for (Object object : homeObjectsToUpdate) {
             ObjectBranch objectBranch = homeObjects.get(object);

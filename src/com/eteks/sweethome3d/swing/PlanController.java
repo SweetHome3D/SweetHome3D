@@ -20,9 +20,12 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -35,8 +38,12 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CameraEvent;
+import com.eteks.sweethome3d.model.CameraListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -49,29 +56,32 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController {
   public enum Mode {WALL_CREATION, SELECTION}
   
-  private JComponent          planView;
-  private Home                home;
-  private UserPreferences     preferences;
-  private UndoableEditSupport undoSupport;
-  private ResourceBundle      resource;
-  private SelectionListener   selectionListener;
+  private JComponent            planView;
+  private Home                  home;
+  private UserPreferences       preferences;
+  private UndoableEditSupport   undoSupport;
+  private ResourceBundle        resource;
+  private SelectionListener     selectionListener;
+  private PropertyChangeSupport propertyChangeSupport;
   // Current state
-  private ControllerState     state;
+  private ControllerState       state;
   // Possibles states
-  private ControllerState     selectionState;
-  private ControllerState     rectangleSelectionState;
-  private ControllerState     selectionMoveState;
-  private ControllerState     wallCreationState;
-  private ControllerState     newWallState;
-  private ControllerState     wallResizeState;
-  private ControllerState     pieceOfFurnitureRotationState;
-  private ControllerState     pieceOfFurnitureResizeState;
+  private ControllerState       selectionState;
+  private ControllerState       rectangleSelectionState;
+  private ControllerState       selectionMoveState;
+  private ControllerState       wallCreationState;
+  private ControllerState       newWallState;
+  private ControllerState       wallResizeState;
+  private ControllerState       pieceOfFurnitureRotationState;
+  private ControllerState       pieceOfFurnitureResizeState;
+  private ControllerState       cameraYawRotationState;
+  private ControllerState       cameraPitchRotationState;
   // Mouse cursor position at last mouse press
-  private float               xLastMousePress;
-  private float               yLastMousePress;
-  private boolean             shiftDownLastMousePress;
-  private float               xLastMouseMove;
-  private float               yLastMouseMove;
+  private float                 xLastMousePress;
+  private float                 yLastMousePress;
+  private boolean               shiftDownLastMousePress;
+  private float                 xLastMouseMove;
+  private float                 yLastMouseMove;
 
   /**
    * Creates the controller of plan view. 
@@ -85,6 +95,7 @@ public class PlanController {
     this.preferences = preferences;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
     // Create view
     this.planView = new PlanComponent(home, preferences, this);
     // Initialize states
@@ -95,11 +106,13 @@ public class PlanController {
     this.newWallState = new NewWallState();
     this.wallResizeState = new WallResizeState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
-    this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();    
+    this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
+    this.cameraYawRotationState = new CameraYawRotationState();
+    this.cameraPitchRotationState = new CameraPitchRotationState();
     // Set defaut state to selectionState
     setState(this.selectionState);
     
-    addHomeSelectionListener();
+    addHomeListeners();
   }
 
   /**
@@ -121,6 +134,20 @@ public class PlanController {
   }
   
   /**
+   * Adds the property change <code>listener</code> in parameter to this home.
+   */
+  public void addPropertyChangeListener(String property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property, listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this home.
+   */
+  public void removeProrertyChangeistener(String property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property, listener);
+  }
+
+  /**
    * Returns the active mode of this controller.
    */
   public Mode getMode() {
@@ -128,10 +155,14 @@ public class PlanController {
   }
 
   /**
-   * Sets the active mode of this controller. 
+   * Sets the active mode of this controller and fires a <code>PropertyChangeEvent</code>. 
    */
   public void setMode(Mode mode) {
-    this.state.setMode(mode);
+    Mode oldMode = this.state.getMode();
+    if (mode != oldMode) {
+      this.state.setMode(mode);
+      this.propertyChangeSupport.firePropertyChange("mode", oldMode, mode);
+    }
   }
 
   /**
@@ -248,6 +279,20 @@ public class PlanController {
   }
 
   /**
+   * Returns the camera yaw rotation state.
+   */
+  public ControllerState getCameraYawRotationState() {
+    return this.cameraYawRotationState;
+  }
+
+  /**
+   * Returns the camera pitch rotation state.
+   */
+  public ControllerState getCameraPitchRotationState() {
+    return this.cameraPitchRotationState;
+  }
+
+  /**
    * Returns the abscissa of mouse position at last mouse press.
    */
   protected float getXLastMousePress() {
@@ -341,13 +386,22 @@ public class PlanController {
     return ((PlanComponent)getView()).getVerticalRuler();
   }
   
-  private void addHomeSelectionListener() {
+  private void addHomeListeners() {
     this.selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent selectionEvent) {
           ((PlanComponent)getView()).makeSelectionVisible();
         }
       };
     this.home.addSelectionListener(this.selectionListener);
+    // Ensure observer camera is visible when its location or angles change
+    this.home.addCameraListener(new CameraListener() {
+        public void cameraChanged(CameraEvent ev) {
+          if (ev.getCamera() == home.getObserverCamera()
+              && home.getSelectedItems().contains(ev.getCamera())) {
+            ((PlanComponent)getView()).makeSelectionVisible();
+          }
+        }
+      });
   }
 
   /**
@@ -464,6 +518,12 @@ public class PlanController {
    */
   private Object getItemAt(float x, float y) {
     float margin = 3 / ((PlanComponent)getView()).getScale();
+    ObserverCamera camera = this.home.getObserverCamera();
+    if (camera != null
+        && camera == this.home.getCamera()
+        && camera.containsPoint(x, y, margin)) {
+      return camera;
+    }
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
     // Loop on home furniture in reverse order to give pripority to last drawn piece
     // in case it covers an other piece
@@ -475,7 +535,7 @@ public class PlanController {
     for (Wall wall : this.home.getWalls()) {
       if (wall.containsPoint(x, y, margin)) 
         return wall;
-    }
+    }    
     return null;
   }
 
@@ -486,6 +546,10 @@ public class PlanController {
    */
   private List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
     List<Object> items = new ArrayList<Object>();
+    ObserverCamera camera = this.home.getObserverCamera();
+    if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
+      items.add(camera);
+    }
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible() && piece.intersectsRectangle(x0, y0, x1, y1)) {
         items.add(piece);
@@ -509,8 +573,7 @@ public class PlanController {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = 3 / ((PlanComponent)getView()).getScale();
-      if (piece.containsPoint(x, y, margin)
-          && piece.isTopLeftVertexAt(x, y, margin)) {
+      if (piece.isTopLeftVertexAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -527,14 +590,60 @@ public class PlanController {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = 3 / ((PlanComponent)getView()).getScale();
-      if (piece.containsPoint(x, y, margin)
-          && piece.isBottomRightVertexAt(x, y, margin)) {
+      if (piece.isBottomRightVertexAt(x, y, margin)) {
         return piece;
       }
     } 
     return null;
   }
   
+  
+  /**
+   * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
+   * that can be used to change the camera yaw angle.
+   */
+  private Camera getYawRotatedCameraAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Camera) {
+      ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      float [][] cameraPoints = camera.getPoints();
+      // Check if (x,y) matches the point between the first and the last point 
+      // of the rectangle surrounding camera
+      float xMiddleFirstAndLastPoint = (cameraPoints [0][0] + cameraPoints [3][0]) / 2; 
+      float yMiddleFirstAndLastPoint = (cameraPoints [0][1] + cameraPoints [3][1]) / 2;      
+      if (Math.abs(x - xMiddleFirstAndLastPoint) <= margin 
+          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin) {
+        return camera;
+      }
+    } 
+    return null;
+  }
+
+  /**
+   * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
+   * that can be used to change the camera pitch angle.
+   */
+  private Camera getPitchRotatedCameraAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Camera) {
+      ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      float [][] cameraPoints = camera.getPoints();
+      // Check if (x,y) matches the point between the second and the third point 
+      // of the rectangle surrounding camera
+      float xMiddleFirstAndLastPoint = (cameraPoints [1][0] + cameraPoints [2][0]) / 2; 
+      float yMiddleFirstAndLastPoint = (cameraPoints [1][1] + cameraPoints [2][1]) / 2;      
+      if (Math.abs(x - xMiddleFirstAndLastPoint) <= margin 
+          && Math.abs(y - yMiddleFirstAndLastPoint) <= margin) {
+        return camera;
+      }
+    } 
+    return null;
+  }
+
   /**
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
@@ -585,6 +694,10 @@ public class PlanController {
         HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
         this.home.setPieceOfFurnitureLocation(
             piece, piece.getX() + dx, piece.getY() + dy);
+      } else if (item instanceof Camera) {
+        Camera camera = (Camera)item;
+        this.home.setCameraLocation(camera, camera.getX() + dx, 
+            camera.getY() + dy, camera.getZ());
       }
     }
   }
@@ -1233,7 +1346,10 @@ public class PlanController {
 
     @Override
     public void moveMouse(float x, float y) {
-      if (getResizedPieceOfFurnitureAt(x, y) != null
+      if (getYawRotatedCameraAt(x, y) != null
+          || getPitchRotatedCameraAt(x, y) != null) {
+        ((PlanComponent)getView()).setRotationCursor();
+      } else if (getResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
           || getResizedWallEndAt(x, y) != null) {
         ((PlanComponent)getView()).setResizeCursor();
@@ -1251,7 +1367,11 @@ public class PlanController {
       // If shift isn't pressed, and an item is under cursor position
       if (!shiftDown && item != null) {
         if (clickCount == 1) {
-          if (getResizedPieceOfFurnitureAt(x, y) != null) {
+          if (getYawRotatedCameraAt(x, y) != null) {
+            setState(getCameraYawRotationState());
+          } else if (getPitchRotatedCameraAt(x, y) != null) {
+            setState(getCameraPitchRotationState());
+          } else if (getResizedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureResizeState());
           } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureRotationState());
@@ -1325,10 +1445,12 @@ public class PlanController {
     @Override
     public void releaseMouse(float x, float y) {
       if (this.mouseMoved) {
-        // Post in undo support a move operation
-        postItemsMove(home.getSelectedItems(),
-            this.xLastMouseMove - getXLastMousePress(), 
-            this.yLastMouseMove - getYLastMousePress());
+        // Post in undo support a move operation if selection isn't a camera 
+        if (!(home.getSelectedItems().get(0) instanceof Camera)) {
+          postItemsMove(home.getSelectedItems(),
+              this.xLastMouseMove - getXLastMousePress(), 
+              this.yLastMouseMove - getYLastMousePress());
+        }
       } else {
         // If mouse didn't move, select only the item at (x,y)
         Object itemUnderCursor = getItemAt(x, y);
@@ -1403,7 +1525,17 @@ public class PlanController {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
             this.selectedItemsMousePressed.remove(itemUnderCursor);
           } else {
-            this.selectedItemsMousePressed.add(itemUnderCursor);
+            // Remove any camera from current selection 
+            for (Iterator<Object> iter = this.selectedItemsMousePressed.iterator(); iter.hasNext();) {
+              if (iter.next() instanceof Camera) {
+                iter.remove();
+              }
+            }
+            // Let the camera belong to selection only if no item are selected
+            if (!(itemUnderCursor instanceof Camera)
+                || this.selectedItemsMousePressed.size() == 0) {
+              this.selectedItemsMousePressed.add(itemUnderCursor);
+            }
           }
           selectItems(this.selectedItemsMousePressed);
         }
@@ -1441,17 +1573,20 @@ public class PlanController {
       
       // For all the items that intersects with rectangle
       for (Object item : getRectangleItems(x0, y0, x1, y1)) {
-        // If shift was down at mouse press
-        if (shiftDown) {
-          // Toogle selection of item
-          if (selectedItemsMousePressed.contains(item)) {
-            selectedItems.remove(item);
-          } else {
+        // Don't let the camera be able to be selected with a rectangle
+        if (!(item instanceof Camera)) {
+          // If shift was down at mouse press
+          if (shiftDown) {
+            // Toogle selection of item
+            if (selectedItemsMousePressed.contains(item)) {
+              selectedItems.remove(item);
+            } else {
+              selectedItems.add(item);
+            }
+          } else if (!selectedItemsMousePressed.contains(item)) {
+            // Else select the wall
             selectedItems.add(item);
           }
-        } else if (!selectedItemsMousePressed.contains(item)) {
-          // Else select the wall
-          selectedItems.add(item);
         }
       }    
       // Update selection
@@ -1580,7 +1715,8 @@ public class PlanController {
       this.newWalls = new ArrayList<Wall>();
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
-      ((PlanComponent)getView()).setWallAlignmentFeeback(null, 
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setWallAlignmentFeeback(null, 
           getXLastMousePress(), getYLastMousePress());
     }
 
@@ -1822,7 +1958,7 @@ public class PlanController {
       // Compute the new angle of the piece
       float angleMouseMove = (float)Math.atan2(this.selectedPiece.getY() - y, 
           x - this.selectedPiece.getX()); 
-      float newAngle = oldAngle - angleMouseMove + angleMousePress;
+      float newAngle = this.oldAngle - angleMouseMove + this.angleMousePress;
       
       if (this.magnetismEnabled) {
         float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
@@ -1834,7 +1970,7 @@ public class PlanController {
       home.setPieceOfFurnitureAngle(this.selectedPiece, newAngle); 
 
       // Ensure point at (x,y) is visible
-      PlanComponent planView = ((PlanComponent)getView());
+      PlanComponent planView = (PlanComponent)getView();
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newAngle), x, y);
       this.xLastMouseMove = x;
@@ -1935,7 +2071,7 @@ public class PlanController {
       home.setPieceOfFurnitureDimension(this.selectedPiece, newWidth, newDepth, 
           this.selectedPiece.getHeight());
 
-      PlanComponent planView = ((PlanComponent)getView());
+      PlanComponent planView = (PlanComponent)getView();
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newWidth, newDepth), x, y);
@@ -1972,6 +2108,137 @@ public class PlanController {
             UserPreferences.Unit.centimerToInch(width), 
             UserPreferences.Unit.centimerToInch(depth));
       }
+    }
+  }
+
+  /**
+   * Camera yaw change state. This states manages the change of the observer camera yaw angle.
+   */
+  private class CameraYawRotationState extends ControllerState {
+    private ObserverCamera selectedCamera;
+    private float          angleMousePress;
+    private float          oldYaw;
+    private String         rotationToolTipFeedback = resource.getString("cameraYawRotationToolTipFeedback");
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedCamera.getX()); 
+      this.oldYaw = this.selectedCamera.getYaw();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldYaw), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {      
+      // Compute the new angle of the camera
+      float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
+          x - this.selectedCamera.getX()); 
+      float newYaw = this.oldYaw - angleMouseMove + this.angleMousePress;
+      
+      // Update camera new yaw angle
+      home.setCameraAngles(this.selectedCamera, newYaw, this.selectedCamera.getPitch()); 
+
+      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(newYaw), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      home.setCameraAngles(this.selectedCamera, this.oldYaw, this.selectedCamera.getPitch());
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
+      this.selectedCamera = null;
+    }  
+
+    private String getToolTipFeedbackText(float angle) {
+      return String.format(this.rotationToolTipFeedback, 
+          (Math.round(Math.toDegrees(angle)) + 360) % 360);
+    }
+  }
+
+  /**
+   * Camera pitch rotation state. This states manages the change of the observer camera pitch angle.
+   */
+  private class CameraPitchRotationState extends ControllerState {
+    private ObserverCamera selectedCamera;
+    private float          angleMousePress;
+    private float          oldPitch;
+    private String         rotationToolTipFeedback = resource.getString("cameraPitchRotationToolTipFeedback");
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
+      this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
+          getXLastMousePress() - this.selectedCamera.getX()); 
+      this.oldPitch = this.selectedCamera.getPitch();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldPitch), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {      
+      // Compute the new angle of the camera
+      float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
+          x - this.selectedCamera.getX()); 
+      float newPitch = this.oldPitch - angleMouseMove + this.angleMousePress;
+      // Check new angle is between -60° and 75°  
+      newPitch = Math.max(newPitch, -(float)Math.PI / 3);
+      newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
+      
+      // Update camera pitch angle
+      home.setCameraAngles(this.selectedCamera, this.selectedCamera.getYaw(), newPitch);
+      
+      ((PlanComponent)getView()).setToolTipFeedback(getToolTipFeedbackText(newPitch), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      home.setCameraAngles(this.selectedCamera, this.selectedCamera.getYaw(), this.oldPitch);
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
+      this.selectedCamera = null;
+    }  
+
+    private String getToolTipFeedbackText(float angle) {
+      return String.format(this.rotationToolTipFeedback, 
+          Math.round(Math.toDegrees(angle)) % 360);
     }
   }
 }

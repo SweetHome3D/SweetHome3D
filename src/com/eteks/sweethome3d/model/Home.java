@@ -46,7 +46,12 @@ public class Home implements Serializable {
   private boolean                               furnitureDescendingSorted;
   private transient boolean                     modified;
   private BackgroundImage                       backgroundImage;
+  private ObserverCamera                        observerCamera;
+  private Camera                                topCamera;
+  private Camera                                camera;
+  private transient List<CameraListener>        cameraListeners;
   private transient PropertyChangeSupport       propertyChangeSupport;
+
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -539,7 +544,7 @@ public class Home implements Serializable {
   }
 
   /**
-   * Adds the home <code>listener</code> in parameter to this home.
+   * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(String property, PropertyChangeListener listener) {
     if (this.propertyChangeSupport == null) {
@@ -549,7 +554,7 @@ public class Home implements Serializable {
   }
 
   /**
-   * Removes the home <code>listener</code> in parameter from this home.
+   * Removes the property change <code>listener</code> in parameter from this home.
    */
   public void removeProrertyChangeistener(String property, PropertyChangeListener listener) {
     if (this.propertyChangeSupport != null) {
@@ -666,6 +671,118 @@ public class Home implements Serializable {
       if (this.propertyChangeSupport != null) {
         this.propertyChangeSupport.firePropertyChange("backgroundImage", 
             oldBackgroundImage, backgroundImage);
+      }
+    }
+  }
+
+  /**
+   * Adds the camera <code>listener</code> in parameter to this home.
+   */
+  public void addCameraListener(CameraListener listener) {
+    if (this.cameraListeners == null) {
+      this.cameraListeners = new ArrayList<CameraListener>();
+    }
+    this.cameraListeners.add(listener);
+  }
+  
+  /**
+   * Removes the camera <code>listener</code> in parameter from this home.
+   */
+  public void removeCameraListener(CameraListener listener) {
+    if (this.cameraListeners != null) {
+      this.cameraListeners.remove(listener);
+    }
+  } 
+
+  /**
+   * Returns the camera used to display this home from a top point of view.
+   */
+  public Camera getTopCamera() {
+    if (this.topCamera == null) {
+      // Create on the fly a default camera that match default point of view in previous versions 
+      this.topCamera = new Camera(500, 1500, 1000, (float)Math.PI, (float)Math.PI / 4);
+    }
+    return this.topCamera;
+  }
+  
+  /**
+   * Returns the camera used to display this home from an observer point of view.
+   */
+  public ObserverCamera getObserverCamera() {
+    if (this.observerCamera == null) {
+      // Create a default camera on the fly
+      this.observerCamera = new ObserverCamera(100, 100, 170, 3 * (float)Math.PI / 4, (float)Math.PI / 16);
+    }
+    return this.observerCamera;
+  }
+  
+  /**
+   * Sets the camera used to display this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setCamera(Camera camera) {
+    if (camera != this.camera) {
+      Camera oldCamera = this.camera;
+      this.camera = camera;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("camera", oldCamera, camera);
+      }
+    }
+  }
+
+  /**
+   * Returns the camera used to display this home.
+   */
+  public Camera getCamera() {
+    if (this.camera == null) {
+      // Use by default top camera
+      this.camera = getTopCamera();
+    }
+    return this.camera;
+  }
+
+  /**
+   * Updates the location of <code>camera</code>. 
+   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
+   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
+   * notification.
+   */
+  public void setCameraLocation(Camera camera, 
+                                float x, float y, float z) {
+    if (camera.getX() != x
+        || camera.getY() != y
+        || camera.getZ() != z) {
+      camera.setX(x);
+      camera.setY(y);
+      camera.setZ(z);
+      fireCameraChanged(camera);
+    }
+  }
+  
+  /**
+   * Updates the yaw and pitch angles of <code>camera</code>. 
+   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
+   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
+   * notification.
+   */
+  public void setCameraAngles(Camera camera, float yaw, float pitch) {
+    if (camera.getYaw() != yaw
+        || camera.getPitch() != pitch) {
+      camera.setYaw(yaw);
+      camera.setPitch(pitch);
+      fireCameraChanged(camera);
+    }
+  }
+
+  private void fireCameraChanged(Camera piece) {
+    if (this.cameraListeners != null
+        && !this.cameraListeners.isEmpty()) {
+      CameraEvent cameraEvent = new CameraEvent(this, piece);
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      CameraListener [] listeners = this.cameraListeners.
+        toArray(new CameraListener [this.cameraListeners.size()]);
+      for (CameraListener listener : listeners) {
+        listener.cameraChanged(cameraEvent);
       }
     }
   }

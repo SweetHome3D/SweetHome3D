@@ -41,7 +41,6 @@ import java.util.ResourceBundle;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
-import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -89,8 +88,9 @@ public class HomePane extends JRootPane {
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
     ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-    WALL_CREATION, DELETE_SELECTION, MODIFY_WALL, 
+    SELECT, CREATE_WALLS, DELETE_SELECTION, MODIFY_WALL, 
     IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
+    VIEW_FROM_TOP, VIEW_FROM_OBSERVER,
     ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
@@ -112,8 +112,12 @@ public class HomePane extends JRootPane {
   private static File currentDirectory;
 
   private ResourceBundle                  resource;
-  // Button model shared by Wall creation menu item and the matching tool bar button
-  private JToggleButton.ToggleButtonModel wallCreationToggleModel;
+  // Button models shared by Select and Create wall menu items and the matching tool bar buttons
+  private JToggleButton.ToggleButtonModel selectToggleModel;
+  private JToggleButton.ToggleButtonModel createWallsToggleModel;
+  // Button models shared by View from top and View from observer menu items and the matching tool bar buttons
+  private JToggleButton.ToggleButtonModel viewFromTopToggleModel;
+  private JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
   private JComponent                      focusedComponent;
   private JComponent                      catalogView;
   private JComponent                      furnitureView;
@@ -127,15 +131,30 @@ public class HomePane extends JRootPane {
    */
   public HomePane(Home home, UserPreferences preferences, HomeController controller) {
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
-    // Create a unique toggle button model for Wall creation / Selection states
-    // so Wall creation menu item and tool bar button 
+    // Create unique toggle button models for Selection / Wall creation states
+    // so Select and Create walls creation menu items and tool bar buttons 
     // always reflect the same toggle state at screen
-    this.wallCreationToggleModel = new JToggleButton.ToggleButtonModel();
+    this.selectToggleModel = new JToggleButton.ToggleButtonModel();
+    this.selectToggleModel.setSelected(controller.getPlanController().getMode() 
+        == PlanController.Mode.SELECTION);
+    this.createWallsToggleModel = new JToggleButton.ToggleButtonModel();
+    this.createWallsToggleModel.setSelected(controller.getPlanController().getMode() 
+        == PlanController.Mode.WALL_CREATION);
+    // Create unique toggle button models for top and observer cameras
+    // so View from top and View from observer creation menu items and tool bar buttons 
+    // always reflect the same toggle state at screen
+    this.viewFromTopToggleModel = new JToggleButton.ToggleButtonModel();
+    this.viewFromTopToggleModel.setSelected(home.getCamera() == home.getTopCamera());
+    this.viewFromObserverToggleModel = new JToggleButton.ToggleButtonModel();
+    this.viewFromObserverToggleModel.setSelected(home.getCamera() == home.getObserverCamera());
+    
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
     
     createActions(controller);
     createTransferHandlers(home, preferences, controller);
+    addHomeListener(home);
+    addPlanControllerListener(controller.getPlanController());
     JMenuBar homeMenuBar = getHomeMenuBar(home);
     setJMenuBar(homeMenuBar);
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
@@ -195,17 +214,10 @@ public class HomePane extends JRootPane {
         HomePieceOfFurniture.SortableProperty.VISIBLE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, controller, "toggleFurnitureSortOrder");
     
-    getActionMap().put(ActionType.WALL_CREATION,
-        new ResourceAction (this.resource, ActionType.WALL_CREATION.toString()) {
-          public void actionPerformed(ActionEvent ev) {
-            boolean selected = ((AbstractButton)ev.getSource()).isSelected();
-            if (selected) {
-              controller.setWallCreationMode();
-            } else {
-              controller.setSelectionMode();
-            }
-          }
-        });
+    createAction(ActionType.SELECT, controller.getPlanController(), "setMode", 
+        PlanController.Mode.SELECTION);
+    createAction(ActionType.CREATE_WALLS, controller.getPlanController(), "setMode",
+        PlanController.Mode.WALL_CREATION);
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
@@ -218,6 +230,12 @@ public class HomePane extends JRootPane {
         controller, "deleteBackgroundImage");
     createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
     createAction(ActionType.ZOOM_IN, controller, "zoomIn");
+    
+    createAction(ActionType.VIEW_FROM_TOP, 
+        controller.getHomeController3D(), "viewFromTop");
+    createAction(ActionType.VIEW_FROM_OBSERVER, 
+        controller.getHomeController3D(), "viewFromObserver");
+    
     createAction(ActionType.ABOUT, controller, "about");
   }
 
@@ -261,6 +279,38 @@ public class HomePane extends JRootPane {
         new FurnitureTransferHandler(home, controller);
     this.planTransferHandler = 
         new PlanTransferHandler(home, controller);
+  }
+
+  /**
+   * Adds a property change listener to <code>home</code> to update
+   * View from top and View from observer toggle models according to used camera.
+   */
+  private void addHomeListener(final Home home) {
+    home.addPropertyChangeListener("camera", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            viewFromTopToggleModel.setSelected(
+                home.getCamera() == home.getTopCamera());
+            viewFromObserverToggleModel.setSelected(
+                home.getCamera() == home.getObserverCamera());
+          }
+        });
+  }
+
+  /**
+   * Adds a property change listener to <code>planController</code> to update
+   * Select and Create walls toggle models according to current mode.
+   */
+  private void addPlanControllerListener(final PlanController planController) {
+    planController.addPropertyChangeListener("mode", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            selectToggleModel.setSelected(planController.getMode() 
+                == PlanController.Mode.SELECTION);
+            createWallsToggleModel.setSelected(planController.getMode() 
+                == PlanController.Mode.WALL_CREATION);
+          }
+        });
   }
 
   /**
@@ -353,7 +403,15 @@ public class HomePane extends JRootPane {
     
     // Create Plan menu
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
-    planMenu.add(getWallCreationCheckBoxMenuItem(false));
+    JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(false);
+    planMenu.add(selectRadioButtonMenuItem);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(false);
+    planMenu.add(createWallsRadioButtonMenuItem);
+    // Add Select and Create Walls menu items to radio group 
+    ButtonGroup group = new ButtonGroup();
+    group.add(selectRadioButtonMenuItem);
+    group.add(createWallsRadioButtonMenuItem);
+    
     planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
     planMenu.addSeparator();
     final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
@@ -377,6 +435,17 @@ public class HomePane extends JRootPane {
     planMenu.add(getMenuAction(ActionType.ZOOM_OUT));
     planMenu.add(getMenuAction(ActionType.ZOOM_IN));
 
+    // Create 3D Preview menu
+    JMenu preview3DMenu = new JMenu(new ResourceAction(this.resource, "VIEW_3D_MENU", true));
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(false);
+    preview3DMenu.add(viewFromTopRadioButtonMenuItem);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = getViewFromObserverRadioButtonMenuItem(false);
+    preview3DMenu.add(viewFromObserverRadioButtonMenuItem);
+    // Add View from top and View from observer menu items to radio group 
+    group = new ButtonGroup();
+    group.add(viewFromTopRadioButtonMenuItem);
+    group.add(viewFromObserverRadioButtonMenuItem);
+    
     // Create Help menu
     JMenu helpMenu = null;
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
@@ -391,6 +460,7 @@ public class HomePane extends JRootPane {
     menuBar.add(editMenu);
     menuBar.add(furnitureMenu);
     menuBar.add(planMenu);
+    menuBar.add(preview3DMenu);
     if (helpMenu != null) {
       menuBar.add(helpMenu);
     }
@@ -413,17 +483,49 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Returns a check box menu item for wall creation action. 
+   * Returns a radio button menu item for Select action. 
    */
-  private JCheckBoxMenuItem getWallCreationCheckBoxMenuItem(boolean popup) {
-    JCheckBoxMenuItem wallCreationCheckBoxMenuItem = new JCheckBoxMenuItem();
-    // Use the same model as Wall creation tool bar button
-    wallCreationCheckBoxMenuItem.setModel(this.wallCreationToggleModel);
+  private JRadioButtonMenuItem getSelectRadioButtonMenuItem(boolean popup) {
+    return getRadioButtonMenuItemFromModel(this.selectToggleModel, 
+        ActionType.SELECT, popup);
+  }
+  
+  /**
+   * Returns a radio button menu item for Create walls action. 
+   */
+  private JRadioButtonMenuItem getCreateWallsRadioButtonMenuItem(boolean popup) {
+    return getRadioButtonMenuItemFromModel(this.createWallsToggleModel, 
+        ActionType.CREATE_WALLS, popup);
+  }
+  
+  /**
+   * Returns a radio button menu item for View from top action. 
+   */
+  private JRadioButtonMenuItem getViewFromTopRadioButtonMenuItem(boolean popup) {
+    return getRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, 
+        ActionType.VIEW_FROM_TOP, popup);
+  }
+  
+  /**
+   * Returns a radio button menu item for View from observer action. 
+   */
+  private JRadioButtonMenuItem getViewFromObserverRadioButtonMenuItem(boolean popup) {
+    return getRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, 
+        ActionType.VIEW_FROM_OBSERVER, popup);
+  }
+  
+  private JRadioButtonMenuItem getRadioButtonMenuItemFromModel(
+                                   JToggleButton.ToggleButtonModel model,
+                                   ActionType action,
+                                   boolean popup) {
+    JRadioButtonMenuItem radioButtonMenuItem = new JRadioButtonMenuItem();
+    // Configure shared model
+    radioButtonMenuItem.setModel(model);
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    wallCreationCheckBoxMenuItem.setAction(
-        popup ? getPopupAction(ActionType.WALL_CREATION)
-              : getMenuAction(ActionType.WALL_CREATION));
-    return wallCreationCheckBoxMenuItem;
+    radioButtonMenuItem.setAction(
+        popup ? getPopupAction(action)
+              : getMenuAction(action));
+    return radioButtonMenuItem;
   }
   
   /**
@@ -450,21 +552,32 @@ public class HomePane extends JRootPane {
     toolBar.addSeparator();
 
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
-    JToggleButton wallCreationToggleButton = 
-      new JToggleButton(actions.get(ActionType.WALL_CREATION));
-    // Use the same model as Wall creation menu item
-    wallCreationToggleButton.setModel(this.wallCreationToggleModel);
-    // Don't display text with icon
-    wallCreationToggleButton.setText("");
-    toolBar.add(wallCreationToggleButton);
-    toolBar.addSeparator();
-    
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_TOP));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_LEFT));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     toolBar.addSeparator();
    
+    JToggleButton selectToggleButton = 
+        new JToggleButton(actions.get(ActionType.SELECT));
+    // Use the same model as Select menu item
+    selectToggleButton.setModel(this.selectToggleModel);
+    // Don't display text with icon
+    selectToggleButton.setText("");
+    toolBar.add(selectToggleButton);
+    JToggleButton createWallsToggleButton = 
+        new JToggleButton(actions.get(ActionType.CREATE_WALLS));
+    // Use the same model as Create walls menu item
+    createWallsToggleButton.setModel(this.createWallsToggleModel);
+    // Don't display text with icon
+    createWallsToggleButton.setText("");
+    toolBar.add(createWallsToggleButton);
+    // Add Select and Create Walls buttons to radio group 
+    ButtonGroup group = new ButtonGroup();
+    group.add(selectToggleButton);
+    group.add(createWallsToggleButton);
+    toolBar.addSeparator();
+    
     toolBar.add(actions.get(ActionType.ZOOM_OUT));
     toolBar.add(actions.get(ActionType.ZOOM_IN));
     
@@ -638,7 +751,14 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.DELETE));
     planViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     planViewPopup.addSeparator();
-    planViewPopup.add(getWallCreationCheckBoxMenuItem(true));
+    JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(true);
+    planViewPopup.add(selectRadioButtonMenuItem);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(true);
+    planViewPopup.add(createWallsRadioButtonMenuItem);
+    // Add Select and Create Walls menu items to radio group 
+    ButtonGroup group = new ButtonGroup();
+    group.add(selectRadioButtonMenuItem);
+    group.add(createWallsRadioButtonMenuItem);
     planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.addSeparator();
@@ -647,9 +767,11 @@ public class HomePane extends JRootPane {
     this.planView.setComponentPopupMenu(planViewPopup);
     
     // Configure 3D view
-    JComponent view3D = new HomeComponent3D(home);
+    JComponent view3D = controller.getHomeController3D().getView();
     view3D.setPreferredSize(this.planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
+    view3D.addFocusListener(new FocusableViewListener(
+        controller, view3D));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 

@@ -78,10 +78,13 @@ import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.CameraEvent;
+import com.eteks.sweethome3d.model.CameraListener;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -96,9 +99,9 @@ import com.eteks.sweethome3d.model.WallListener;
 public class PlanComponent extends JComponent implements Scrollable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
     MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
-    TOGGLE_MAGNTISM_ON, TOGGLE_MAGNTISM_OFF}
+    TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF}
   
-  private static final float MARGIN = 40;  
+  private static final float MARGIN = 40;
   private Home               home;
   private UserPreferences    preferences;
   private float              scale  = 0.5f;
@@ -109,7 +112,8 @@ public class PlanComponent extends JComponent implements Scrollable {
   private Rectangle2D        rectangleFeedback;
   private Wall               wallAlignmentFeedback;
   private Point2D            wallLocationFeeback;
-  private Rectangle2D        planBoundsCache;
+  private Rectangle2D        planBoundsCache;  
+  private boolean            planBoundsCacheValid;  
   private BufferedImage      backgroundImageCache;
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
@@ -123,6 +127,11 @@ public class PlanComponent extends JComponent implements Scrollable {
   private static final GeneralPath WALL_ORIENTATION_INDICATOR;
   private static final Shape       WALL_POINT;
   private static final GeneralPath WALL_RESIZE_INDICATOR;
+  private static final Shape       CAMERA_YAW_ROTATION_INDICATOR;
+  private static final GeneralPath CAMERA_PITCH_ROTATION_INDICATOR;
+  private static final Shape       CAMERA_BODY;
+  private static final Shape       CAMERA_HEAD;  
+  private static final GeneralPath CAMERA_ANGLE;
   
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
@@ -168,6 +177,45 @@ public class PlanComponent extends JComponent implements Scrollable {
     WALL_RESIZE_INDICATOR.moveTo(8.7f, -1.8f);
     WALL_RESIZE_INDICATOR.lineTo(12, 0);
     WALL_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
+    
+    // Create a path used as yaw rotation indicator for the camera
+    AffineTransform transform = new AffineTransform();
+    transform.rotate(-Math.PI / 4);
+    CAMERA_YAW_ROTATION_INDICATOR = FURNITURE_ROTATION_INDICATOR.createTransformedShape(transform);
+    
+    // Create a path used as pitch rotation indicator for the camera
+    CAMERA_PITCH_ROTATION_INDICATOR = new GeneralPath();
+    CAMERA_PITCH_ROTATION_INDICATOR.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
+    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(4.5f, 0);
+    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(5.2f, 0);
+    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(9f, 0);
+    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(10, 0);
+    CAMERA_PITCH_ROTATION_INDICATOR.append(new Arc2D.Float(7, -8, 5, 16, 20, 320, Arc2D.OPEN), false);
+    CAMERA_PITCH_ROTATION_INDICATOR.moveTo(10f, 4.5f);
+    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.3f, 2f);
+    CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.8f, 5.8f);
+    
+    // Create a path used to draw the camera 
+    // This path looks like a human being seen from top that fits in one cm wide square 
+    GeneralPath cameraBodyAreaPath = new GeneralPath();
+    cameraBodyAreaPath.append(new Ellipse2D.Float(-0.5f, -0.425f, 1f, 0.85f), false); // Body
+    cameraBodyAreaPath.append(new Ellipse2D.Float(-0.5f, -0.3f, 0.24f, 0.6f), false); // Shoulder
+    cameraBodyAreaPath.append(new Ellipse2D.Float(0.26f, -0.3f, 0.24f, 0.6f), false); // Shoulder
+    CAMERA_BODY = new Area(cameraBodyAreaPath);
+    
+    GeneralPath cameraHeadAreaPath = new GeneralPath();
+    cameraHeadAreaPath.append(new Ellipse2D.Float(-0.18f, -0.45f, 0.36f, 1f), false); // Head
+    cameraHeadAreaPath.moveTo(-0.04f, 0.55f); // Noise
+    cameraHeadAreaPath.lineTo(0, 0.65f);
+    cameraHeadAreaPath.lineTo(0.04f, 0.55f);
+    cameraHeadAreaPath.closePath();
+    CAMERA_HEAD = new Area(cameraHeadAreaPath);
+
+    CAMERA_ANGLE = new GeneralPath();
+    CAMERA_ANGLE.moveTo(0.14f, 0.7f); // Angle of sight
+    CAMERA_ANGLE.lineTo(0.4f, 2f);
+    CAMERA_ANGLE.moveTo(-0.14f, 0.7f);
+    CAMERA_ANGLE.lineTo(-0.4f, 2f);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -202,7 +250,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   private void addModelListeners(Home home, UserPreferences preferences) {
     home.addWallListener(new WallListener () {
       public void wallChanged(WallEvent ev) {
-        planBoundsCache = null;
+        planBoundsCacheValid = false;
         // Revalidate and repaint
         revalidate();
       }
@@ -214,7 +262,14 @@ public class PlanComponent extends JComponent implements Scrollable {
     });
     home.addFurnitureListener(new FurnitureListener() {
       public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-        planBoundsCache = null;
+        planBoundsCacheValid = false;
+        // Revalidate and repaint
+        revalidate();
+      }
+    });
+    home.addCameraListener(new CameraListener() {
+      public void cameraChanged(CameraEvent ev) {
+        planBoundsCacheValid = false;
         // Revalidate and repaint
         revalidate();
       }
@@ -319,8 +374,8 @@ public class PlanComponent extends JComponent implements Scrollable {
     inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
     inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
-    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNTISM_ON);
-    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNTISM_OFF);
+    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
+    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
   }
  
   /**
@@ -372,8 +427,8 @@ public class PlanComponent extends JComponent implements Scrollable {
     actionMap.put(ActionType.MOVE_SELECTION_UP, new MoveSelectionAction(0, -1));
     actionMap.put(ActionType.MOVE_SELECTION_DOWN, new MoveSelectionAction(0, 1));
     actionMap.put(ActionType.MOVE_SELECTION_RIGHT, new MoveSelectionAction(1, 0));
-    actionMap.put(ActionType.TOGGLE_MAGNTISM_ON, new ToggleMagnetismAction(true));
-    actionMap.put(ActionType.TOGGLE_MAGNTISM_OFF, new ToggleMagnetismAction(false));
+    actionMap.put(ActionType.TOGGLE_MAGNETISM_ON, new ToggleMagnetismAction(true));
+    actionMap.put(ActionType.TOGGLE_MAGNETISM_OFF, new ToggleMagnetismAction(false));
   }
 
   /**
@@ -431,8 +486,11 @@ public class PlanComponent extends JComponent implements Scrollable {
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
-    if (this.planBoundsCache == null) {
+    if (this.planBoundsCache == null) {      
       this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
+    }
+    if (!this.planBoundsCacheValid) {
+      // Enlarge plan bounds to include walls, furniture and observer camera
       for (Wall wall : home.getWalls()) {
         this.planBoundsCache.add(wall.getXStart(), wall.getYStart());
         this.planBoundsCache.add(wall.getXEnd(), wall.getYEnd());
@@ -443,7 +501,11 @@ public class PlanComponent extends JComponent implements Scrollable {
             this.planBoundsCache.add(point [0], point [1]);
           }
         }
+      }      
+      for (float [] point : this.home.getObserverCamera().getPoints()) {
+        this.planBoundsCache.add(point [0], point [1]);
       }
+      this.planBoundsCacheValid = true;
     }
     return this.planBoundsCache;
   }
@@ -597,6 +659,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor);
     paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor);
     paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke);
+    paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor);
     paintRectangleFeedback(g2D, selectionColor);
   }
 
@@ -887,7 +950,91 @@ public class PlanComponent extends JComponent implements Scrollable {
     return x == wall.getXStart() && y == wall.getYStart()
            || x == wall.getXEnd() && y == wall.getYEnd();
   }
+
+  /**
+   * Paints the observer camera at its current location, if home camera is the observer camera.
+   */
+  private void paintCamera(Graphics2D g2D, List<Object> selectedItems,
+                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                           Paint indicatorPaint) {
+    ObserverCamera camera = this.home.getObserverCamera();
+    if (camera == this.home.getCamera()) {
+      AffineTransform oldTransform = g2D.getTransform();
+      g2D.translate(camera.getX(), camera.getY());
+      g2D.rotate(camera.getYaw());
   
+      // Compute camera drawing at scale
+      AffineTransform cameraTransform = new AffineTransform();
+      float [][] points = camera.getPoints();
+      cameraTransform.scale(Point2D.distance(points [0][0], points [0][1], points [1][0], points [1][1]), 
+          Point2D.distance(points [0][0], points [0][1], points [3][0], points [3][1]));    
+      Shape scaledCameraBody = 
+          new Area(CAMERA_BODY).createTransformedArea(cameraTransform);
+      Shape scaledCameraHead = 
+          new Area(CAMERA_HEAD).createTransformedArea(cameraTransform);
+      Shape scaledCameraAngle = 
+          CAMERA_ANGLE.createTransformedShape(cameraTransform);
+      
+      // Paint body
+      g2D.setPaint(getBackground());
+      g2D.fill(scaledCameraBody);
+      g2D.setPaint(getForeground());
+      BasicStroke stroke = new BasicStroke(1 / this.scale);
+      g2D.setStroke(stroke);
+      g2D.draw(scaledCameraBody);
+  
+      if (selectedItems.contains(camera)) {
+        g2D.setPaint(selectionOutlinePaint);
+        g2D.setStroke(selectionOutlineStroke);
+        Area cameraOutline = new Area(scaledCameraBody);
+        cameraOutline.add(new Area(scaledCameraHead));
+        g2D.draw(cameraOutline);      
+      }
+      
+      // Paint head
+      g2D.setPaint(getBackground());
+      g2D.fill(scaledCameraHead);
+      g2D.setPaint(getForeground());
+      g2D.setStroke(stroke);
+      g2D.draw(scaledCameraHead);
+      // Paint angle
+      g2D.draw(scaledCameraAngle);
+      g2D.setTransform(oldTransform);
+  
+      // Paint resize indicator of selected camera
+      if (selectedItems.size() == 1 
+          && selectedItems.get(0) == camera) {
+        paintCameraRotationIndicators(g2D, camera, indicatorPaint);
+      }
+    }
+  }
+
+  private void paintCameraRotationIndicators(Graphics2D g2D, 
+                                             ObserverCamera camera, Paint indicatorPaint) {
+    if (this.resizeIndicatorVisible) {
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(new BasicStroke(1.5f));
+      
+      AffineTransform previousTransform = g2D.getTransform();
+      // Draw yaw rotation indicator at middle of first and last point of camera 
+      float [][] cameraPoints = camera.getPoints();
+      g2D.translate((cameraPoints [0][0] + cameraPoints [3][0]) / 2, 
+          (cameraPoints [0][1] + cameraPoints [3][1]) / 2);
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(camera.getYaw());
+      g2D.draw(CAMERA_YAW_ROTATION_INDICATOR);
+      g2D.setTransform(previousTransform);
+
+      // Draw pitch rotation indicator at middle of second and third point of camera 
+      g2D.translate((cameraPoints [1][0] + cameraPoints [2][0]) / 2, 
+          (cameraPoints [1][1] + cameraPoints [2][1]) / 2);
+      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.rotate(camera.getYaw());
+      g2D.draw(CAMERA_PITCH_ROTATION_INDICATOR);
+      g2D.setTransform(previousTransform);
+    }
+  }
+
   /**
    * Paints rectangle feedback.
    */
@@ -955,6 +1102,10 @@ public class PlanComponent extends JComponent implements Scrollable {
                   area.add(new Area(getShape((piece).getPoints())));
                   selectionContainsVisibleObjects = true;
                 }
+              } else if (item instanceof ObserverCamera) {
+                ObserverCamera camera = (ObserverCamera)item;
+                area.add(new Area(getShape((camera).getPoints())));
+                selectionContainsVisibleObjects = true;
               }
             }      
             
@@ -1177,7 +1328,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     this.wallLocationFeeback = null;
     repaint();
   }
-  
+
   // Scrollable implementation
   public Dimension getPreferredScrollableViewportSize() {
     return getPreferredSize();

@@ -61,6 +61,7 @@ public class HomeController  {
   private CatalogController   catalogController;
   private FurnitureController furnitureController;
   private PlanController      planController;
+  private HomeController3D    homeController3D;
   private UndoableEditSupport undoSupport;
   private UndoManager         undoManager;
   private ResourceBundle      resource;
@@ -102,6 +103,7 @@ public class HomeController  {
         home, preferences, this.undoSupport);
     this.planController = new PlanController(
         home, preferences, undoSupport);
+    this.homeController3D = new HomeController3D(home);
     
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
@@ -129,7 +131,8 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         this.home.getFurnitureSortedProperty() != null);
-    homeView.setEnabled(HomePane.ActionType.WALL_CREATION, true);
+    homeView.setEnabled(HomePane.ActionType.SELECT, true);
+    homeView.setEnabled(HomePane.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, true);
     ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
         this.home.getBackgroundImage() != null);
@@ -137,6 +140,8 @@ public class HomeController  {
         this.home.getBackgroundImage() != null);
     homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
+    homeView.setEnabled(HomePane.ActionType.VIEW_FROM_TOP, true);
+    homeView.setEnabled(HomePane.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
   }
@@ -170,6 +175,13 @@ public class HomeController  {
   }
 
   /**
+   * Returns the controller of home 3D view.
+   */
+  public HomeController3D getHomeController3D() {
+    return this.homeController3D;
+  }
+
+  /**
    * Adds listeners that updates the enabled / disabled state of actions.
    */
   private void addListeners() {
@@ -180,6 +192,7 @@ public class HomeController  {
     addUndoSupportListener();
     addHomeFurnitureListener();
     addHomeWallListener();
+    addPlanControllerListener();
   }
 
   /**
@@ -243,6 +256,7 @@ public class HomeController  {
     // Search if selection contains at least one piece or one wall
     List<Object> selectedItems = this.home.getSelectedItems();
     boolean selectionContainsFurniture = false;
+    boolean selectionContainsOneCopiableObjectOrMore = false;
     boolean selectionContainsTwoPiecesOfFurnitureOrMore = false;
     boolean selectionContainsWalls = false;
     if (!wallCreationMode) {
@@ -250,6 +264,7 @@ public class HomeController  {
       selectionContainsTwoPiecesOfFurnitureOrMore = 
           Home.getFurnitureSubList(selectedItems).size() >= 2;
       selectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
+      selectionContainsOneCopiableObjectOrMore = selectionContainsFurniture || selectionContainsWalls; 
     }
 
     List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
@@ -264,23 +279,22 @@ public class HomeController  {
       view.setEnabled(HomePane.ActionType.CUT, selectionContainsFurniture);
       view.setEnabled(HomePane.ActionType.DELETE, selectionContainsFurniture);
     } else if (this.focusedView == getPlanController().getView()) {
-      boolean copyEnabled = !wallCreationMode && !selectedItems.isEmpty();
-      view.setEnabled(HomePane.ActionType.COPY, copyEnabled);
-      view.setEnabled(HomePane.ActionType.CUT, copyEnabled);
-      view.setEnabled(HomePane.ActionType.DELETE, copyEnabled);
+      view.setEnabled(HomePane.ActionType.COPY, selectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomePane.ActionType.CUT, selectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomePane.ActionType.DELETE, selectionContainsOneCopiableObjectOrMore);
     } else {
       view.setEnabled(HomePane.ActionType.COPY, false);
       view.setEnabled(HomePane.ActionType.CUT, false);
       view.setEnabled(HomePane.ActionType.DELETE, false);
     }
 
-    // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
-        !wallCreationMode && !catalogSelectedItems.isEmpty());
+        !catalogSelectedItems.isEmpty());
+    // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
         selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
-        !wallCreationMode && !selectedItems.isEmpty());
+        selectionContainsOneCopiableObjectOrMore);
     view.setEnabled(HomePane.ActionType.MODIFY_HOME_FURNITURE,
         selectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.MODIFY_WALL,
@@ -301,9 +315,10 @@ public class HomeController  {
   public void enablePasteAction() {
     HomePane view = ((HomePane)getView());
     if (this.focusedView == getFurnitureController().getView()
-        || this.focusedView == getPlanController().getView()) {
+        || this.focusedView == getPlanController().getView()
+        || this.focusedView == getHomeController3D().getView()) {
       boolean wallCreationMode =  
-        getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+          getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
       view.setEnabled(HomePane.ActionType.PASTE,
           !wallCreationMode && !view.isClipboardEmpty());
     } else {
@@ -322,7 +337,8 @@ public class HomeController  {
       view.setEnabled(HomePane.ActionType.SELECT_ALL,
           !wallCreationMode 
           && this.home.getFurniture().size() > 0);
-    } else if (this.focusedView == getPlanController().getView()) {
+    } else if (this.focusedView == getPlanController().getView()
+               || this.focusedView == getHomeController3D().getView()) {
       view.setEnabled(HomePane.ActionType.SELECT_ALL,
           !wallCreationMode 
           && (this.home.getFurniture().size() > 0 
@@ -389,9 +405,35 @@ public class HomeController  {
   }
 
   /**
+   * Adds a property change listener to plan controller to 
+   * enable/disable authorized actions according to current mode.
+   */
+  private void addPlanControllerListener() {
+    getPlanController().addPropertyChangeListener("mode", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            enableActionsOnSelection();
+            enableSelectAllAction();
+            HomePane view = ((HomePane)getView());
+            if (getPlanController().getMode() == PlanController.Mode.SELECTION) {
+              enablePasteAction();
+              view.setEnabled(HomePane.ActionType.UNDO, undoManager.canUndo());
+              view.setEnabled(HomePane.ActionType.REDO, undoManager.canRedo());
+            } else {
+              view.setEnabled(HomePane.ActionType.PASTE, false);
+              view.setEnabled(HomePane.ActionType.UNDO, false);
+              view.setEnabled(HomePane.ActionType.REDO, false);
+            }
+          }
+        });
+  }
+
+  /**
    * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
+    // Use automatically selection mode  
+    getPlanController().setMode(PlanController.Mode.SELECTION);
     List<CatalogPieceOfFurniture> selectedFurniture = 
       this.preferences.getCatalog().getSelectedFurniture();
     if (!selectedFurniture.isEmpty()) {
@@ -473,6 +515,8 @@ public class HomeController  {
    * and post a drop operation to undo support.
    */
   public void drop(final List<? extends Object> items, float dx, float dy) {
+    // Always use selection mode after a drop operation
+    getPlanController().setMode(PlanController.Mode.SELECTION);
     addItems(items, dx, dy, resource.getString("undoDropName"));
   }
 
@@ -539,36 +583,6 @@ public class HomeController  {
       getPlanController().selectAll();
     }
   }
-  
-  /**
-   * Sets wall creation mode in plan controller, 
-   * and disables forbidden actions in this mode.  
-   */
-  public void setWallCreationMode() {
-    getPlanController().setMode(PlanController.Mode.WALL_CREATION);
-    enableActionsOnSelection();
-    HomePane view = ((HomePane)getView());
-    view.setTransferEnabled(false);
-    view.setEnabled(HomePane.ActionType.PASTE, false);
-    view.setEnabled(HomePane.ActionType.UNDO, false);
-    view.setEnabled(HomePane.ActionType.REDO, false);
-  }
-
-  /**
-   * Sets wall creation mode in plan controller, 
-   * and enables authorized actions in this mode.  
-   */
-  public void setSelectionMode() {
-    getPlanController().setMode(PlanController.Mode.SELECTION);
-    enableActionsOnSelection();
-    enablePasteAction();
-    enableSelectAllAction();
-    HomePane view = ((HomePane)getView());
-    view.setTransferEnabled(true);
-    view.setEnabled(HomePane.ActionType.UNDO, this.undoManager.canUndo());
-    view.setEnabled(HomePane.ActionType.REDO, this.undoManager.canRedo());
-  }
-
 
   /**
    * Creates a new home and adds it to application home list.

@@ -175,7 +175,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the name of this piece of furniture.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setName(String name) {
     this.name = name;
@@ -191,7 +191,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the depth of this piece of furniture.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setDepth(float depth) {
     this.depth = depth;
@@ -208,7 +208,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the height of this piece of furniture.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setHeight(float height) {
     this.height = height;
@@ -225,7 +225,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the width of this piece of furniture.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setWidth(float width) {
     this.width = width;
@@ -271,7 +271,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setColor(Integer color) {
     this.color = color;
@@ -287,7 +287,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets whether this piece of furniture is visible or not.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setVisible(boolean visible) {
     this.visible = visible;
@@ -303,7 +303,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the abscissa of this piece.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setX(float x) {
     this.x = x;
@@ -320,7 +320,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the ordinate of this piece.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setY(float y) {
     this.y = y;
@@ -337,7 +337,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /**
    * Sets the angle of this piece.
    * This method should be called only from {@link Home}, which
-   * controls notifications when a wall changed.
+   * controls notifications when a piece changed.
    */
   void setAngle(float angle) {
     this.angle = angle;
@@ -400,7 +400,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   public boolean isTopLeftVertexAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return (Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin);
+    return Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin;
   }
 
   /**
@@ -410,7 +410,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   public boolean isBottomRightVertexAt(float x, float y, float margin) {
     float [][] points = getPoints();
-    return (Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin);
+    return Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin;
   }
 
   /**
