@@ -42,6 +42,7 @@ import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.swing.PlanController;
 
 /**
  * Tests drag and drop, and cut / copy / paste.
@@ -104,7 +105,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertActionsEnabled(controller, true, true, false, true);
 
     // 5. Use Wall creation mode
-    controller.setWallCreationMode();
+    controller.getPlanController().setMode(PlanController.Mode.WALL_CREATION);
     // Check Cut, Copy, Paste actions are disabled
     assertActionsEnabled(controller, false, false, false, false);
     
@@ -112,7 +113,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 20, 20);
     tester.actionClick(planComponent, 100, 20, InputEvent.BUTTON1_MASK, 2);
     // Use Selection mode 
-    controller.setSelectionMode();
+    controller.getPlanController().setMode(PlanController.Mode.SELECTION);
     // Check Cut, Copy and Delete actions are enabled
     assertActionsEnabled(controller, true, true, false, true);
     

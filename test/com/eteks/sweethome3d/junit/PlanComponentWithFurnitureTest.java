@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ActionMap;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JToggleButton;
@@ -62,7 +63,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     showWindow(frame);
     
     // 2. Use WALL_CREATION mode
-    frame.modeButton.doClick();
+    frame.createWallsButton.doClick();
     PlanComponent planComponent = (PlanComponent)
       frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
@@ -79,7 +80,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         frame.home.getWalls().size());
 
     // 3. Use SELECTION mode
-    frame.modeButton.doClick();
+    frame.selectButton.doClick();
     // Select the first piece in catalog tree
     JTree catalogTree = (JTree)
         frame.homeController.getCatalogController().getView();
@@ -267,7 +268,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
   private static class TestFrame extends JFrame {
     private final Home           home;
     private final HomeController homeController; 
-    private final JToggleButton  modeButton;
+    private final JToggleButton  selectButton;
+    private final JToggleButton  createWallsButton;
     private final JButton        addButton;
     private final JButton        undoButton;
     private final JButton        redoButton;
@@ -279,13 +281,18 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
       this.homeController = new HomeController(home, preferences);
       ActionMap actions = this.homeController.getView().getActionMap();
       // Create buttons from HomePane actions map
-      this.modeButton = new JToggleButton(actions.get(HomePane.ActionType.WALL_CREATION));
+      this.selectButton = new JToggleButton(actions.get(HomePane.ActionType.SELECT));
+      this.createWallsButton = new JToggleButton(actions.get(HomePane.ActionType.CREATE_WALLS));
+      ButtonGroup group = new ButtonGroup();
+      group.add(this.selectButton);
+      group.add(this.createWallsButton);
       this.addButton = new JButton(actions.get(HomePane.ActionType.ADD_HOME_FURNITURE));
       this.undoButton = new JButton(actions.get(HomePane.ActionType.UNDO));
       this.redoButton = new JButton(actions.get(HomePane.ActionType.REDO));
       // Put them it a tool bar
       JToolBar toolBar = new JToolBar();
-      toolBar.add(this.modeButton);
+      toolBar.add(this.selectButton);
+      toolBar.add(this.createWallsButton);
       toolBar.add(this.addButton);
       toolBar.add(this.undoButton);
       toolBar.add(this.redoButton);
