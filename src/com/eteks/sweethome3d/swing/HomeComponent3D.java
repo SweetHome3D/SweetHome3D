@@ -74,6 +74,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.PopupFactory;
 import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -211,11 +212,20 @@ public class HomeComponent3D extends JComponent {
         
         @Override
         public void mousePressed(MouseEvent ev) {
-          if (isEnabled() && !ev.isPopupTrigger()) {
+          if (ev.isPopupTrigger()) {
+            mouseReleased(ev);
+          } else if (isEnabled()) {
             requestFocusInWindow();
             this.xLastMouseMove = ev.getX();
             this.yLastMouseMove = ev.getY();
           }
+        }
+  
+        @Override
+        public void mouseReleased(MouseEvent ev) {
+          if (ev.isPopupTrigger()) {
+            getComponentPopupMenu().show(HomeComponent3D.this, ev.getX(), ev.getY());
+          } 
         }
   
         @Override
@@ -376,10 +386,10 @@ public class HomeComponent3D extends JComponent {
    */
   private Light [] getLights() {
     Light [] lights = {
-      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(1.732f, -1, -1)), 
-      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(-1.732f, -1, -1)), 
-      new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(0, -1, 1)), 
-      new AmbientLight(new Color3f(0.6f, 0.6f, 0.6f))}; 
+      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(1.732f, -1, -1)), 
+      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(-1.732f, -1, -1)), 
+      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(0, -1, 1)), 
+      new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
 
     for (Light light : lights) {
       light.setInfluencingBounds(new BoundingSphere(new Point3d(), 10000));

@@ -410,8 +410,8 @@ public class HomePane extends JRootPane {
     // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
-    group.add(createWallsRadioButtonMenuItem);
-    
+    group.add(createWallsRadioButtonMenuItem);  
+    planMenu.addSeparator();
     planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
     planMenu.addSeparator();
     final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
@@ -759,6 +759,7 @@ public class HomePane extends JRootPane {
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);
+    planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.addSeparator();
@@ -772,6 +773,17 @@ public class HomePane extends JRootPane {
     view3D.setMinimumSize(new Dimension(0, 0));
     view3D.addFocusListener(new FocusableViewListener(
         controller, view3D));
+    // Create 3D view popup menu
+    JPopupMenu view3DPopup = new JPopupMenu();
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(true);
+    view3DPopup.add(viewFromTopRadioButtonMenuItem);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = getViewFromObserverRadioButtonMenuItem(true);
+    view3DPopup.add(viewFromObserverRadioButtonMenuItem);
+    // Add View from top and View from observer menu items to radio group 
+    group = new ButtonGroup();
+    group.add(viewFromTopRadioButtonMenuItem);
+    group.add(viewFromObserverRadioButtonMenuItem);
+    view3D.setComponentPopupMenu(view3DPopup);
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
