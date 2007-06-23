@@ -195,7 +195,7 @@ public class HomeComponent3D extends JComponent {
     Transform3D pitchRotation = new Transform3D();
     pitchRotation.rotX(-camera.getPitch());
     Transform3D transform = new Transform3D();
-    transform.setTranslation(new Vector3f(camera.getX() , camera.getZ() , camera.getY()));
+    transform.setTranslation(new Vector3f(camera.getX(), camera.getZ(), camera.getY()));
     yawRotation.mul(pitchRotation);
     transform.mul(yawRotation);
     viewPlatformTransform.setTransform(transform);
