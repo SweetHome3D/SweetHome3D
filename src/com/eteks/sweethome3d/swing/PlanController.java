@@ -1337,15 +1337,21 @@ public class PlanController {
     @Override
     public void deleteSelection() {
       deleteItems(home.getSelectedItems());
+      updateCursor(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
     public void moveSelection(float dx, float dy) {
       moveAndShowSelectedItems(dx, dy);
+      updateCursor(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
     public void moveMouse(float x, float y) {
+      updateCursor(x, y);
+    }
+
+    private void updateCursor(float x, float y) {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
