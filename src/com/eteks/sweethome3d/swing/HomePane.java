@@ -90,7 +90,7 @@ public class HomePane extends JRootPane {
     ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
     SELECT, CREATE_WALLS, DELETE_SELECTION, MODIFY_WALL, 
     IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
-    VIEW_FROM_TOP, VIEW_FROM_OBSERVER,
+    VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
     ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
 
@@ -235,6 +235,8 @@ public class HomePane extends JRootPane {
         controller.getHomeController3D(), "viewFromTop");
     createAction(ActionType.VIEW_FROM_OBSERVER, 
         controller.getHomeController3D(), "viewFromObserver");
+    createAction(ActionType.MODIFY_3D_ATTRIBUTES, 
+        controller.getHomeController3D(), "modifyAttributes");
     
     createAction(ActionType.ABOUT, controller, "about");
   }
@@ -445,6 +447,8 @@ public class HomePane extends JRootPane {
     group = new ButtonGroup();
     group.add(viewFromTopRadioButtonMenuItem);
     group.add(viewFromObserverRadioButtonMenuItem);
+    preview3DMenu.addSeparator();
+    preview3DMenu.add(getMenuAction(ActionType.MODIFY_3D_ATTRIBUTES));
     
     // Create Help menu
     JMenu helpMenu = null;
@@ -784,6 +788,8 @@ public class HomePane extends JRootPane {
     group.add(viewFromTopRadioButtonMenuItem);
     group.add(viewFromObserverRadioButtonMenuItem);
     view3D.setComponentPopupMenu(view3DPopup);
+    view3DPopup.addSeparator();
+    view3DPopup.add(getMenuAction(ActionType.MODIFY_3D_ATTRIBUTES));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
@@ -1055,9 +1061,10 @@ public class HomePane extends JRootPane {
    * Displays an about dialog.
    */
   public void showAboutDialog() {
+    String messageFormat = this.resource.getString("about.message");
+    String message = String.format(messageFormat, System.getProperty("java.version"));
     // Use an uneditable editor pane to let user select text in dialog
-    JEditorPane messagePane = new JEditorPane("text/html", 
-        this.resource.getString("about.message"));
+    JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
     messagePane.setEditable(false);
     messagePane.addHyperlinkListener(new HyperlinkListener() {

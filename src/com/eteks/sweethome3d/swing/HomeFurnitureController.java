@@ -82,6 +82,7 @@ public class HomeFurnitureController {
       final Float height = furniturePanel.getFurnitureHeight();
       final Integer color = furniturePanel.getFurnitureColor();
       final Boolean visible = furniturePanel.isFurnitureVisible();
+      final Boolean modelMirrored = furniturePanel.isFurnitureModelMirrored();
       
       // Create an array of modified furniture with their current properties values
       final ModifiedPieceOfFurniture [] modifiedFurniture = 
@@ -91,7 +92,7 @@ public class HomeFurnitureController {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
-          name, width, depth, height, x, y, angle, color, visible); 
+          name, width, depth, height, x, y, angle, color, visible, modelMirrored); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
@@ -105,7 +106,7 @@ public class HomeFurnitureController {
           public void redo() throws CannotRedoException {
             super.redo();
             doModifyFurniture(modifiedFurniture, 
-                name, width, depth, height, x, y, angle, color, visible); 
+                name, width, depth, height, x, y, angle, color, visible, modelMirrored); 
             home.setSelectedItems(oldSelection); 
           }
           
@@ -124,7 +125,8 @@ public class HomeFurnitureController {
    */
   private void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
                                  String name, Float width, Float depth, Float height, 
-                                 Float x, Float y, Float angle, Integer color, Boolean visible) {
+                                 Float x, Float y, Float angle, Integer color, 
+                                 Boolean visible, Boolean modelMirrored) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       this.home.setPieceOfFurnitureName(piece, 
@@ -142,6 +144,8 @@ public class HomeFurnitureController {
           color != null ? color : piece.getColor());
       this.home.setPieceOfFurnitureVisible(piece, 
           visible != null ? visible.booleanValue() : piece.isVisible());
+      this.home.setPieceOfFurnitureModelMirrored(piece, 
+          modelMirrored != null ? modelMirrored.booleanValue() : piece.isModelMirrored());
     }
   }
 
@@ -158,6 +162,7 @@ public class HomeFurnitureController {
           modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
       this.home.setPieceOfFurnitureColor(piece, modifiedPiece.getColor());
       this.home.setPieceOfFurnitureVisible(piece, modifiedPiece.isVisible());
+      this.home.setPieceOfFurnitureModelMirrored(piece, modifiedPiece.isModelMirrored());
     }
   }
 
@@ -175,6 +180,7 @@ public class HomeFurnitureController {
     private final float   height;
     private final Integer color;
     private final boolean visible;
+    private final boolean modelMirrored;
 
     public ModifiedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
@@ -187,6 +193,7 @@ public class HomeFurnitureController {
       this.height = piece.getHeight();
       this.color = piece.getColor();
       this.visible = piece.isVisible();
+      this.modelMirrored = piece.isModelMirrored();
     }
 
     public HomePieceOfFurniture getPieceOfFurniture() {
@@ -227,6 +234,10 @@ public class HomeFurnitureController {
 
     public float getAngle() {
       return this.angle;
+    }
+
+    public boolean isModelMirrored() {
+      return this.modelMirrored;
     }
   }
 }

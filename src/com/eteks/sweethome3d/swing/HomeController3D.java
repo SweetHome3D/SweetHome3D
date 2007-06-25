@@ -25,12 +25,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
@@ -40,8 +42,10 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class HomeController3D {
-  private Home       home;
-  private JComponent home3DView;
+  private Home                  home;
+  private UndoableEditSupport   undoSupport;
+  private UserPreferences       preferences;
+  private JComponent            home3DView;
   // Current state
   private CameraControllerState cameraState;
   // Possibles states
@@ -52,8 +56,12 @@ public class HomeController3D {
    * Creates the controller of home 3D view.
    * @param home the home edited by this controller and its view
    */
-  public HomeController3D(Home home) {
+  public HomeController3D(Home home, 
+                          UserPreferences preferences, 
+                          UndoableEditSupport undoSupport) {
     this.home = home;
+    this.undoSupport = undoSupport;
+    this.preferences = preferences;
     // Create view
     this.home3DView = new HomeComponent3D(home, this);
     // Initialize states
@@ -86,6 +94,13 @@ public class HomeController3D {
   public void viewFromObserver() {
     this.home.setCamera(this.home.getObserverCamera());
     setCameraState(getObserverCameraState());
+  }
+  
+  /**
+   * Controls the edition of 3D attributes. 
+   */
+  public void modifyAttributes() {
+    new Home3DAttributesController(this.home, this.preferences, this.undoSupport);    
   }
 
   /**
@@ -231,11 +246,13 @@ public class HomeController3D {
     
     @Override
     public void moveCamera(float delta) {
+      // Use a 5 times bigger delta for top camera move
+      delta *= 5;
       float newZ = this.topCamera.getZ() - (float)Math.sin(this.topCamera.getPitch()) * delta;
       // Check new evelvation is between home wall height and a half, and 3 times its largest dimension  
       newZ = Math.max(newZ, home.getWallHeight() * 1.5f);
-      newZ = Math.min(newZ, (float)Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3);
-      double distanceToCenterAtGroundLevel = newZ / (float)Math.tan(this.topCamera.getPitch());
+      newZ = Math.min(newZ, (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3 * Math.sin(this.topCamera.getPitch())));
+      double distanceToCenterAtGroundLevel = newZ / Math.tan(this.topCamera.getPitch());
       home.setCameraLocation(this.topCamera, 
           (float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel), 
           (float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel),
@@ -245,7 +262,7 @@ public class HomeController3D {
     @Override
     public void rotateCameraYaw(float delta) {
       float  newYaw = this.topCamera.getYaw() + delta;
-      double distanceToCenterAtGroundLevel = this.topCamera.getZ() / (float)Math.tan(this.topCamera.getPitch());
+      double distanceToCenterAtGroundLevel = this.topCamera.getZ() / Math.tan(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
       home.setCameraAngles(this.topCamera, newYaw, this.topCamera.getPitch()); 
       home.setCameraLocation(this.topCamera, 
@@ -265,7 +282,7 @@ public class HomeController3D {
           + Math.pow(this.topCamera.getY() - this.homeBounds.getCenterY(), 2)
           + Math.pow(this.topCamera.getZ(), 2));
       float newZ = (float)(cameraToBoundsCenterDistance * Math.sin(newPitch));
-      double distanceToCenterAtGroundLevel = newZ / (float)Math.tan(newPitch);
+      double distanceToCenterAtGroundLevel = newZ / Math.tan(newPitch);
       // Change camera pitch 
       home.setCameraAngles(this.topCamera, this.topCamera.getYaw(), newPitch); 
       home.setCameraLocation(this.topCamera, 

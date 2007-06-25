@@ -69,6 +69,7 @@ public class HomeFurniturePanel extends JPanel {
   private JLabel                  colorLabel;
   private ColorButton             colorButton;
   private NullableCheckBox        visibleCheckBox;
+  private NullableCheckBox        mirroredModelCheckBox;
 
   /**
    * Creates a panel that displays home furniture data according to the units 
@@ -76,11 +77,6 @@ public class HomeFurniturePanel extends JPanel {
    * @param home home from which selected furniture is edited by this panel
    * @param preferences user preferences
    * @param controller the controller of this panel
-   */
-  /**
-   * Creates a panel that will displayed piece dimensions according to the units
-   * set in <code>preferences</code>.
-   * @param preferences user preferences
    */
   public HomeFurniturePanel(Home home,
                             UserPreferences preferences,
@@ -127,7 +123,8 @@ public class HomeFurniturePanel extends JPanel {
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
-    this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleLabel.text"));
+    this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleCheckBox.text"));
+    this.mirroredModelCheckBox = new NullableCheckBox(this.resource.getString("mirroredModelCheckBox.text"));
   }
   
   /**
@@ -160,7 +157,9 @@ public class HomeFurniturePanel extends JPanel {
           KeyStroke.getKeyStroke(this.resource.getString("colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
       this.visibleCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("visibleLabel.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(this.resource.getString("visibleCheckBox.mnemonic")).getKeyCode());
+      this.mirroredModelCheckBox.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("mirroredModelCheckBox.mnemonic")).getKeyCode());
     }
   }
   
@@ -223,10 +222,13 @@ public class HomeFurniturePanel extends JPanel {
         GridBagConstraints.NONE, lastRowInsets, 0, 0));
     add(this.colorButton, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+    add(this.mirroredModelCheckBox, new GridBagConstraints(
+        2, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, lastRowInsets, 0, 0));
     add(this.visibleCheckBox, new GridBagConstraints(
-        3, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, lastRowInsets, 0, 0));
+        4, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**
@@ -335,6 +337,16 @@ public class HomeFurniturePanel extends JPanel {
       }
       this.visibleCheckBox.setNullable(visible == null);
       this.visibleCheckBox.setValue(visible);           
+
+      Boolean modelMirrored = firstPiece.isModelMirrored();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (modelMirrored != selectedFurniture.get(i).isModelMirrored()) {
+          modelMirrored = null;
+          break;
+        }
+      }
+      this.mirroredModelCheckBox.setNullable(modelMirrored == null);
+      this.mirroredModelCheckBox.setValue(modelMirrored);           
     }
   }
 
@@ -383,6 +395,13 @@ public class HomeFurniturePanel extends JPanel {
    */
   public Boolean isFurnitureVisible() {
     return this.visibleCheckBox.getValue();
+  }
+
+  /**
+   * Returns whether the furniture model is mirrored or not.
+   */
+  public Boolean isFurnitureModelMirrored() {
+    return this.mirroredModelCheckBox.getValue();
   }
 
   /**

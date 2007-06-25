@@ -131,7 +131,6 @@ public class PlanComponent extends JComponent implements Scrollable {
   private static final GeneralPath CAMERA_PITCH_ROTATION_INDICATOR;
   private static final Shape       CAMERA_BODY;
   private static final Shape       CAMERA_HEAD;  
-  private static final GeneralPath CAMERA_ANGLE;
   
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
@@ -210,12 +209,6 @@ public class PlanComponent extends JComponent implements Scrollable {
     cameraHeadAreaPath.lineTo(0.04f, 0.55f);
     cameraHeadAreaPath.closePath();
     CAMERA_HEAD = new Area(cameraHeadAreaPath);
-
-    CAMERA_ANGLE = new GeneralPath();
-    CAMERA_ANGLE.moveTo(0.14f, 0.7f); // Angle of sight
-    CAMERA_ANGLE.lineTo(0.4f, 2f);
-    CAMERA_ANGLE.moveTo(-0.14f, 0.7f);
-    CAMERA_ANGLE.lineTo(-0.4f, 2f);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -837,7 +830,12 @@ public class PlanComponent extends JComponent implements Scrollable {
     // Scale icon to fit in its area
     float minDimension = Math.min(piece.getWidth(), piece.getDepth());
     float scale = Math.min(1 / this.scale, minDimension / icon.getIconHeight());
-    g2D.scale(scale, scale);
+    // If piece model is mirrored, inverse x scale
+    if (piece.isModelMirrored()) {
+      g2D.scale(-scale, scale);
+    } else {
+      g2D.scale(scale, scale);
+    }
     // Paint piece icon
     icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
     // Revert g2D transformation to previous value
@@ -966,14 +964,13 @@ public class PlanComponent extends JComponent implements Scrollable {
       // Compute camera drawing at scale
       AffineTransform cameraTransform = new AffineTransform();
       float [][] points = camera.getPoints();
-      cameraTransform.scale(Point2D.distance(points [0][0], points [0][1], points [1][0], points [1][1]), 
-          Point2D.distance(points [0][0], points [0][1], points [3][0], points [3][1]));    
+      double yScale = Point2D.distance(points [0][0], points [0][1], points [3][0], points [3][1]);
+      double xScale = Point2D.distance(points [0][0], points [0][1], points [1][0], points [1][1]);
+      cameraTransform.scale(xScale, yScale);    
       Shape scaledCameraBody = 
           new Area(CAMERA_BODY).createTransformedArea(cameraTransform);
       Shape scaledCameraHead = 
           new Area(CAMERA_HEAD).createTransformedArea(cameraTransform);
-      Shape scaledCameraAngle = 
-          CAMERA_ANGLE.createTransformedShape(cameraTransform);
       
       // Paint body
       g2D.setPaint(getBackground());
@@ -997,8 +994,19 @@ public class PlanComponent extends JComponent implements Scrollable {
       g2D.setPaint(getForeground());
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraHead);
-      // Paint angle
-      g2D.draw(scaledCameraAngle);
+      // Paint field of sight angle
+      double sin = (float)Math.sin(camera.getFieldOfView() / 2);
+      double cos = (float)Math.cos(camera.getFieldOfView() / 2);
+      float xStartAngle = (float)(0.9f * yScale * sin);
+      float yStartAngle = (float)(0.9f * yScale * cos);
+      float xEndAngle = (float)(2.2f * yScale * sin);
+      float yEndAngle = (float)(2.2f * yScale * cos);
+      GeneralPath cameraFieldOfViewAngle = new GeneralPath();
+      cameraFieldOfViewAngle.moveTo(xStartAngle, yStartAngle);
+      cameraFieldOfViewAngle.lineTo(xEndAngle, yEndAngle);
+      cameraFieldOfViewAngle.moveTo(-xStartAngle, yStartAngle);
+      cameraFieldOfViewAngle.lineTo(-xEndAngle, yEndAngle);
+      g2D.draw(cameraFieldOfViewAngle);
       g2D.setTransform(oldTransform);
   
       // Paint resize indicator of selected camera

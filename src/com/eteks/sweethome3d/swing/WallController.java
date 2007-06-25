@@ -79,6 +79,7 @@ public class WallController {
       final Integer leftSideColor = wallPanel.getWallLeftSideColor();
       final Integer rightSideColor = wallPanel.getWallRightSideColor();
       final Float thickness = wallPanel.getWallThickness();
+      final Float height = wallPanel.getWallHeight();
       
       // Create an array of modified walls with their current properties values
       final ModifiedWall [] modifiedWalls = 
@@ -88,7 +89,8 @@ public class WallController {
       }
       // Apply modification
       doModifyWalls(modifiedWalls, 
-          xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, thickness); 
+          xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, 
+          thickness, height); 
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
@@ -101,7 +103,8 @@ public class WallController {
         public void redo() throws CannotRedoException {
           super.redo();
           doModifyWalls(modifiedWalls, 
-              xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, thickness); 
+              xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, 
+              thickness, height); 
           home.setSelectedItems(oldSelection); 
         }
         
@@ -120,7 +123,7 @@ public class WallController {
   private void doModifyWalls(ModifiedWall [] modifiedWalls, 
                              Float xStart, Float yStart, Float xEnd, Float yEnd,
                              Integer leftSideColor, Integer rightSideColor,
-                             Float thickness) {
+                             Float thickness, Float height) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       // Modify wall coordinates if modifiedWalls contains only one wall
@@ -133,6 +136,8 @@ public class WallController {
           rightSideColor != null ? rightSideColor : wall.getRightSideColor());
       this.home.setWallThickness(wall, 
           thickness != null ? thickness.floatValue() : wall.getThickness());
+      this.home.setWallHeight(wall, 
+          height != null ? height : wall.getHeight());
     }
   }
 
@@ -150,6 +155,7 @@ public class WallController {
       this.home.setWallLeftSideColor(wall, modifiedWall.getLeftSideColor());
       this.home.setWallRightSideColor(wall, modifiedWall.getRightSideColor());
       this.home.setWallThickness(wall, modifiedWall.getThickness());
+      this.home.setWallHeight(wall, modifiedWall.getHeight());
     }
   }
   
@@ -187,9 +193,10 @@ public class WallController {
     private final float   yStart;
     private final float   xEnd;
     private final float   yEnd;
-    private final float   thickness;
     private final Integer leftSideColor;
     private final Integer rightSideColor;
+    private final float   thickness;
+    private final Float   height;
 
     public ModifiedWall(Wall wall) {
       this.wall = wall;
@@ -200,6 +207,7 @@ public class WallController {
       this.leftSideColor = wall.getLeftSideColor();
       this.rightSideColor = wall.getRightSideColor();
       this.thickness = wall.getThickness();
+      this.height = wall.getHeight();
     }
 
     public Wall getWall() {
@@ -233,5 +241,9 @@ public class WallController {
     public float getYStart() {
       return this.yStart;
     }    
+
+    public Float getHeight() {
+      return this.height;
+    }
   }
 }

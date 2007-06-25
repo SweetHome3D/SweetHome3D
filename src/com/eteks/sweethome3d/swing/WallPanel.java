@@ -55,12 +55,14 @@ public class WallPanel extends JPanel {
   private JSpinner       xEndSpinner;
   private JLabel         yEndLabel;
   private JSpinner       yEndSpinner;
-  private JLabel         thicknessLabel;
-  private JSpinner       thicknessSpinner;
   private JLabel         leftSideColorLabel;
   private ColorButton    leftSideColorButton;
   private JLabel         rightSideColorLabel;
   private ColorButton    rightSideColorButton;
+  private JLabel         thicknessLabel;
+  private JSpinner       thicknessSpinner;
+  private JLabel         heightLabel;
+  private JSpinner       heightSpinner;
   private JLabel         wallOrientationLabel;
 
   /**
@@ -97,15 +99,18 @@ public class WallPanel extends JPanel {
     this.yEndLabel = new JLabel(this.resource.getString("yLabel.text"));
     this.yEndSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.thicknessLabel = new JLabel(this.resource.getString("thicknessLabel.text"));
-    this.thicknessSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
     this.leftSideColorLabel = new JLabel(this.resource.getString("leftSideColorLabel.text"));
     this.leftSideColorButton = new ColorButton();
     this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
     this.rightSideColorLabel = new JLabel(this.resource.getString("rightSideColorLabel.text"));
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
+    this.thicknessLabel = new JLabel(this.resource.getString("thicknessLabel.text"));
+    this.thicknessSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
+    this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
+    this.heightSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
@@ -131,15 +136,18 @@ public class WallPanel extends JPanel {
       this.yEndLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
-      this.thicknessLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("thicknessLabel.mnemonic")).getKeyCode());
-      this.thicknessLabel.setLabelFor(this.thicknessSpinner);
       this.leftSideColorLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("leftSideColorLabel.mnemonic")).getKeyCode());
       this.leftSideColorLabel.setLabelFor(this.leftSideColorButton);
       this.rightSideColorLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("rightSideColorLabel.mnemonic")).getKeyCode());
       this.rightSideColorLabel.setLabelFor(this.rightSideColorButton);
+      this.thicknessLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("thicknessLabel.mnemonic")).getKeyCode());
+      this.thicknessLabel.setLabelFor(this.thicknessSpinner);
+      this.heightLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("heightLabel.mnemonic")).getKeyCode());
+      this.heightLabel.setLabelFor(this.heightSpinner);
     }
   }
   
@@ -159,7 +167,7 @@ public class WallPanel extends JPanel {
                            this.yStartLabel, this.yStartSpinner});
     Insets rowInsets = new Insets(0, 0, 5, 0);
     add(startPointPanel, new GridBagConstraints(
-        0, 0, 2, 1, 0, 0, GridBagConstraints.WEST,
+        0, 0, 4, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     JPanel endPointPanel = createTitledPanel(
@@ -167,7 +175,7 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner});
     add(endPointPanel, new GridBagConstraints(
-        0, 1, 2, 1, 0, 0, GridBagConstraints.WEST,
+        0, 1, 4, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Third row
     JPanel colorsPanel = createTitledPanel(
@@ -175,18 +183,26 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.leftSideColorLabel, this.leftSideColorButton, 
                            this.rightSideColorLabel, this.rightSideColorButton});
     add(colorsPanel, new GridBagConstraints(
-        0, 2, 2, 1, 0, 0, GridBagConstraints.WEST,
+        0, 2, 4, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
     add(this.thicknessLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 5), 0, 0));
+        GridBagConstraints.NONE, 
+        new Insets(0, 6, 10, colorsPanel.getBorder().getBorderInsets(colorsPanel).left), 0, 0));
     add(this.thicknessSpinner, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
+    add(this.heightLabel, new GridBagConstraints(
+        2, 3, 1, 1, 1, 0, GridBagConstraints.EAST, 
+        GridBagConstraints.NONE, new Insets(0, 5, 10, 5), 0, 0));
+    add(this.heightSpinner, new GridBagConstraints(
+        3, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, 
+        new Insets(0, 0, 10, colorsPanel.getBorder().getBorderInsets(colorsPanel).right), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
-        0, 4, 2, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 4, 4, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
@@ -195,11 +211,13 @@ public class WallPanel extends JPanel {
     titledPanel.setBorder(BorderFactory.createCompoundBorder(
         BorderFactory.createTitledBorder(title),
         BorderFactory.createEmptyBorder(0, 2, 2, 2)));    
+    Insets labelInsets = new Insets(0, 0, 0, 5);
     Insets insets = new Insets(0, 0, 0, 5);
     for (int i = 0; i < components.length - 1; i++) {
       titledPanel.add(components [i], new GridBagConstraints(
           i, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
-          GridBagConstraints.HORIZONTAL, insets, 0, 0));
+          GridBagConstraints.HORIZONTAL, 
+          i % 2 == 0 ? labelInsets : insets, 0, 0));
     }
     titledPanel.add(components [components.length - 1], new GridBagConstraints(
         components.length - 1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
@@ -273,6 +291,26 @@ public class WallPanel extends JPanel {
           .setNullable(thickness == null);
       ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
           .setLength(thickness);
+
+      Float height = firstWall.getHeight();
+      // If wall height was never set, use home wall height
+      if (height == null && firstWall.getHeight() == null) {
+        height = home.getWallHeight(); 
+      }
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        Wall wall = selectedWalls.get(i);
+        float wallHeight = wall.getHeight() == null 
+            ? home.getWallHeight()
+            : wall.getHeight();  
+        if (height != wallHeight) {
+          height = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel())
+          .setNullable(height == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel())
+          .setLength(height);
     }
   }
 
@@ -305,13 +343,6 @@ public class WallPanel extends JPanel {
   }
 
   /**
-   * Returns the edited thickness of the wall(s) or <code>null</code>.
-   */
-  public Float getWallThickness() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel()).getLength();
-  }
-
-  /**
    * Returns the edited color of the wall(s) left part or <code>null</code>.
    */
   public Integer getWallLeftSideColor() {
@@ -325,6 +356,20 @@ public class WallPanel extends JPanel {
     return this.rightSideColorButton.getColor();
   }
   
+  /**
+   * Returns the edited thickness of the wall(s) or <code>null</code>.
+   */
+  public Float getWallThickness() {
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel()).getLength();
+  }
+
+  /**
+   * Returns the edited height of the wall(s) or <code>null</code>.
+   */
+  public Float getWallHeight() {
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).getLength();
+  }
+
   /**
    * Displays this panel in a modal dialog box. 
    */

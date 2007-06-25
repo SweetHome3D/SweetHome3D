@@ -21,6 +21,8 @@ package com.eteks.sweethome3d.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,6 +42,8 @@ public class Home implements Serializable {
   private transient List<SelectionListener>     selectionListeners;
   private Collection<Wall>                      walls;
   private transient List<WallListener>          wallListeners;
+  private Camera                                camera;
+  private transient List<CameraListener>        cameraListeners;
   private float                                 wallHeight;
   private String                                name;
   private HomePieceOfFurniture.SortableProperty furnitureSortedProperty;
@@ -48,8 +52,10 @@ public class Home implements Serializable {
   private BackgroundImage                       backgroundImage;
   private ObserverCamera                        observerCamera;
   private Camera                                topCamera;
-  private Camera                                camera;
-  private transient List<CameraListener>        cameraListeners;
+  private int                                   skyColor;
+  private int                                   groundColor;
+  private int                                   lightColor;
+  private float                                 wallsAlpha;
   private transient PropertyChangeSupport       propertyChangeSupport;
 
 
@@ -80,16 +86,43 @@ public class Home implements Serializable {
     this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
     this.walls = new ArrayList<Wall>();
     this.wallHeight = wallHeight;
-    // Init transient lists on the fly
+    // Init transient lists and other fields
+    init();
+  }
+
+  /**
+   * Initializes new and transient home fields to their default values 
+   * and reads home from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    init();
+    in.defaultReadObject();
+  }
+
+  private void init() {
+    // Init transient lists
+    this.selectedItems = new ArrayList<Object>();
+    this.furnitureListeners = new ArrayList<FurnitureListener>();
+    this.selectionListeners = new ArrayList<SelectionListener>();
+    this.wallListeners = new ArrayList<WallListener>();
+    this.cameraListeners = new ArrayList<CameraListener>();
+    
+    // Create a default top camera that matches default point of view in previous versions 
+    this.topCamera = new Camera(500, 1500, 1000, 
+        (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
+    // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
+    this.observerCamera = new ObserverCamera(100, 100, 170, 
+        3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
+    // Initialize new fields 
+    this.skyColor = (51 << 16) + (153 << 8) + 255;
+    this.groundColor = 0x909090;
+    this.lightColor = 0xF0F0F0;
   }
 
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
   public void addFurnitureListener(FurnitureListener listener) {
-    if (this.furnitureListeners == null) {
-      this.furnitureListeners = new ArrayList<FurnitureListener>();
-    }
     this.furnitureListeners.add(listener);
   }
 
@@ -97,9 +130,7 @@ public class Home implements Serializable {
    * Removes the furniture <code>listener</code> in parameter from this home.
    */
   public void removeFurnitureListener(FurnitureListener listener) {
-    if (this.furnitureListeners != null) {
-      this.furnitureListeners.remove(listener);
-    }
+    this.furnitureListeners.remove(listener);
   }
 
   /**
@@ -238,14 +269,29 @@ public class Home implements Serializable {
    */
   public void setPieceOfFurnitureVisible(HomePieceOfFurniture piece, 
                                          boolean visible) {
-    piece.setVisible(visible);
-    firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    if (piece.isVisible() != visible) {
+      piece.setVisible(visible);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Updates the mirrored model state of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureModelMirrored(HomePieceOfFurniture piece, 
+                                               boolean modelMirrored) {
+    if (piece.isModelMirrored() != modelMirrored) {
+      piece.setModelMirrored(modelMirrored);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
   }
 
   private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
                                            FurnitureEvent.Type eventType) {
-    if (this.furnitureListeners != null
-        && !this.furnitureListeners.isEmpty()) {
+    if (!this.furnitureListeners.isEmpty()) {
       FurnitureEvent furnitureEvent = 
           new FurnitureEvent(this, piece, index, eventType);
       // Work on a copy of furnitureListeners to ensure a listener 
@@ -262,9 +308,6 @@ public class Home implements Serializable {
    * Adds the selection <code>listener</code> in parameter to this home.
    */
   public void addSelectionListener(SelectionListener listener) {
-    if (this.selectionListeners == null) {
-      this.selectionListeners = new ArrayList<SelectionListener>();
-    }
     this.selectionListeners.add(listener);
   }
 
@@ -272,18 +315,13 @@ public class Home implements Serializable {
    * Removes the selection <code>listener</code> in parameter from this home.
    */
   public void removeSelectionListener(SelectionListener listener) {
-    if (this.selectionListeners != null) {
-      this.selectionListeners.remove(listener);
-    }
+    this.selectionListeners.remove(listener);
   }
 
   /**
    * Returns an unmodifiable list of the selected items in home.
    */
   public List<Object> getSelectedItems() {
-    if (this.selectedItems == null) {
-      this.selectedItems = new ArrayList<Object>();
-    }
     return Collections.unmodifiableList(this.selectedItems);
   }
   
@@ -293,8 +331,7 @@ public class Home implements Serializable {
   public void setSelectedItems(List<? extends Object> selectedItems) {
     // Make a copy of the list to avoid conflicts in the list returned by getSelectedItems
     this.selectedItems = new ArrayList<Object>(selectedItems);
-    if (this.selectionListeners != null 
-        && !this.selectionListeners.isEmpty()) {
+    if (!this.selectionListeners.isEmpty()) {
       SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedItems());
       // Work on a copy of selectionListeners to ensure a listener 
       // can modify safely listeners list
@@ -310,13 +347,11 @@ public class Home implements Serializable {
    * Deselects <code>item</code> if it's selected.
    */
   private void deselectItem(Object item) {
-    if (this.selectedItems != null) {
-      int pieceSelectionIndex = this.selectedItems.indexOf(item);
-      if (pieceSelectionIndex != -1) {
-        List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
-        selectedItems.remove(pieceSelectionIndex);
-        setSelectedItems(selectedItems);
-      }
+    int pieceSelectionIndex = this.selectedItems.indexOf(item);
+    if (pieceSelectionIndex != -1) {
+      List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
+      selectedItems.remove(pieceSelectionIndex);
+      setSelectedItems(selectedItems);
     }
   }
 
@@ -324,9 +359,6 @@ public class Home implements Serializable {
    * Adds the wall <code>listener</code> in parameter to this home.
    */
   public void addWallListener(WallListener listener) {
-    if (this.wallListeners == null) {
-      this.wallListeners = new ArrayList<WallListener>();
-    }
     this.wallListeners.add(listener);
   }
   
@@ -334,9 +366,7 @@ public class Home implements Serializable {
    * Removes the wall <code>listener</code> in parameter from this home.
    */
   public void removeWallListener(WallListener listener) {
-    if (this.wallListeners != null) {
-      this.wallListeners.remove(listener);
-    }
+    this.wallListeners.remove(listener);
   } 
 
   /**
@@ -526,12 +556,28 @@ public class Home implements Serializable {
   }
 
   /**
+   * Sets the <code>height</code> of the given <code>wall</code>. If <code>height</code> is
+   * <code>null</code>, {@link #getWallHeight() home wall height} should be used.  
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
+   * an {@link WallEvent#getType() event type} equal to
+   * {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallHeight(Wall wall, Float height) {
+    Float wallHeight = wall.getHeight(); 
+    if ((wallHeight == null && height != null)
+        || (wallHeight != null && !wallHeight.equals(height))) {
+      wall.setHeight(height);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Notifies all wall listeners added to this home an event of 
    * a given type.
    */
   private void fireWallEvent(Wall wall, WallEvent.Type eventType) {
-    if (this.wallListeners != null 
-        && !this.wallListeners.isEmpty()) {
+    if (!this.wallListeners.isEmpty()) {
       WallEvent wallEvent = new WallEvent(this, wall, eventType);
       // Work on a copy of wallListeners to ensure a listener 
       // can modify safely listeners list
@@ -679,9 +725,6 @@ public class Home implements Serializable {
    * Adds the camera <code>listener</code> in parameter to this home.
    */
   public void addCameraListener(CameraListener listener) {
-    if (this.cameraListeners == null) {
-      this.cameraListeners = new ArrayList<CameraListener>();
-    }
     this.cameraListeners.add(listener);
   }
   
@@ -689,19 +732,13 @@ public class Home implements Serializable {
    * Removes the camera <code>listener</code> in parameter from this home.
    */
   public void removeCameraListener(CameraListener listener) {
-    if (this.cameraListeners != null) {
-      this.cameraListeners.remove(listener);
-    }
+    this.cameraListeners.remove(listener);
   } 
 
   /**
    * Returns the camera used to display this home from a top point of view.
    */
   public Camera getTopCamera() {
-    if (this.topCamera == null) {
-      // Create on the fly a default camera that match default point of view in previous versions 
-      this.topCamera = new Camera(500, 1500, 1000, (float)Math.PI, (float)Math.PI / 4);
-    }
     return this.topCamera;
   }
   
@@ -709,10 +746,6 @@ public class Home implements Serializable {
    * Returns the camera used to display this home from an observer point of view.
    */
   public ObserverCamera getObserverCamera() {
-    if (this.observerCamera == null) {
-      // Create a default camera on the fly
-      this.observerCamera = new ObserverCamera(100, 100, 170, 3 * (float)Math.PI / 4, (float)Math.PI / 16);
-    }
     return this.observerCamera;
   }
   
@@ -773,9 +806,21 @@ public class Home implements Serializable {
     }
   }
 
+  /**
+   * Updates the field of view angle of <code>camera</code>. 
+   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
+   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
+   * notification.
+   */
+  public void setCameraFieldOfView(Camera camera, float fieldOfView) {
+    if (camera.getFieldOfView() != fieldOfView) {
+      camera.setFieldOfView(fieldOfView);
+      fireCameraChanged(camera);
+    }
+  }
+
   private void fireCameraChanged(Camera piece) {
-    if (this.cameraListeners != null
-        && !this.cameraListeners.isEmpty()) {
+    if (!this.cameraListeners.isEmpty()) {
       CameraEvent cameraEvent = new CameraEvent(this, piece);
       // Work on a copy of furnitureListeners to ensure a listener 
       // can modify safely listeners list
@@ -783,6 +828,87 @@ public class Home implements Serializable {
         toArray(new CameraListener [this.cameraListeners.size()]);
       for (CameraListener listener : listeners) {
         listener.cameraChanged(cameraEvent);
+      }
+    }
+  }
+
+  /**
+   * Returns the ground color of this home.
+   */
+  public int getGroundColor() {
+    return this.groundColor;
+  }
+
+  /**
+   * Sets the ground color of this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setGroundColor(int groundColor) {
+    if (groundColor != this.groundColor) {
+      int oldGroundColor = this.groundColor;
+      this.groundColor = groundColor;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("groundColor", oldGroundColor, groundColor);
+      }
+    }
+  }
+
+  /**
+   * Returns the sky color of this home.
+   */
+  public int getSkyColor() {
+    return this.skyColor;
+  }
+  
+  /**
+   * Sets the sky color of this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setSkyColor(int skyColor) {
+    if (skyColor != this.skyColor) {
+      int oldSkyColor = this.skyColor;
+      this.skyColor = skyColor;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("skyColor", oldSkyColor, skyColor);
+      }
+    }
+  }
+  
+  /**
+   * Returns the light color of this home.
+   */
+  public int getLightColor() {
+    return this.lightColor;
+  }
+
+  /**
+   * Sets the color that lights this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setLightColor(int lightColor) {
+    if (lightColor != this.lightColor) {
+      int oldLightColor = this.lightColor;
+      this.lightColor = lightColor;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("lightColor", oldLightColor, lightColor);
+      }
+    }
+  }
+
+  /**
+   * Returns the walls transparency alpha factor of this home.
+   */
+  public float getWallsAlpha() {
+    return this.wallsAlpha;
+  }
+
+  /**
+   * Sets the walls transparency alpha of this home and fires a <code>PropertyChangeEvent</code>.
+   * @param wallsAlpha a value between 0 and 1, 0 meaning opaque and 1 invisible.
+   */
+  public void setWallsAlpha(float wallsAlpha) {
+    if (wallsAlpha != this.wallsAlpha) {
+      float oldWallsAlpha = this.wallsAlpha;
+      this.wallsAlpha = wallsAlpha;
+      if (this.propertyChangeSupport != null) {
+        this.propertyChangeSupport.firePropertyChange("wallsAlpha", oldWallsAlpha, wallsAlpha);
       }
     }
   }

@@ -39,8 +39,8 @@ public class ObserverCamera extends Camera {
   /**
    * Creates a camera at given location and angle.
    */
-  public ObserverCamera(float x, float y, float z, float yaw, float pitch) {
-    super(x, y, z, yaw, pitch);
+  public ObserverCamera(float x, float y, float z, float yaw, float pitch, float fieldOfView) {
+    super(x, y, z, yaw, pitch, fieldOfView);
   }
 
   /**
@@ -93,7 +93,8 @@ public class ObserverCamera extends Camera {
    */
   public float getWidth() {
     // Adult width is 4 times the distance between head and eyes location
-    return getZ() * 4 / 14;
+    float width = getZ() * 4 / 14;
+    return Math.max(width, 20);
   }
   
   /**
@@ -102,7 +103,8 @@ public class ObserverCamera extends Camera {
    */
   public float getDepth() {
     // Adult depth is equal to the 2 / 5 of its width 
-    return getZ() * 8 / 70;
+    float depth = getZ() * 8 / 70;
+    return Math.max(depth, 8);
   }
   
   /**

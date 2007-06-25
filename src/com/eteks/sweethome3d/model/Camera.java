@@ -33,16 +33,18 @@ public class Camera implements Serializable {
   private float       z;
   private float       yaw;
   private float       pitch;
+  private float       fieldOfView;
   
   /**
    * Creates a camera at given location and angles.
    */
-  public Camera(float x, float y, float z, float yaw, float pitch) {
+  public Camera(float x, float y, float z, float yaw, float pitch, float fieldOfView) {
     this.x = x;
     this.y = y;
     this.z = z;
     this.yaw = yaw;
     this.pitch = pitch;
+    this.fieldOfView = fieldOfView;
   }
 
   /**
@@ -75,6 +77,22 @@ public class Camera implements Serializable {
    */
   void setPitch(float pitch) {
     this.pitch = pitch;
+  }
+
+  /**
+   * Returns the field of view. in radians of this camera.
+   */
+  public float getFieldOfView() {
+    return this.fieldOfView;
+  }
+
+  /**
+   * Sets the field of view in radians of this camera.
+   * This method should be called only from {@link Home}, which
+   * controls notifications when a camera changed.
+   */
+  void setFieldOfView(float fieldOfView) {
+    this.fieldOfView = fieldOfView;
   }
 
   /**

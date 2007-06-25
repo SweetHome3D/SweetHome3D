@@ -118,12 +118,12 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionKeyStroke(KeyEvent.VK_UP);
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(246.9051f, 996.2808f, 1016.5808f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(246.4704f, 993.5365f, 1013.7034f, 
         (float)Math.PI - 9 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
     // Move camera 10 backward 
     tester.actionKeyStroke(KeyEvent.VK_DOWN);
     // Check camera location and angles
-    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(247.992f, 1003.142f, 1023.774f, 
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(251.9039f, 1027.8417f, 1049.6704f, 
         (float)Math.PI - 9 * (float)Math.PI / 180, (float)Math.PI / 4 + (float)Math.PI / 180, home.getCamera());
     
     // 6. View from observer

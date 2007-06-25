@@ -42,6 +42,7 @@ public class Wall implements Serializable  {
   private Wall  wallAtStart;
   private Wall  wallAtEnd;
   private float thickness;
+  private Float height;
   private Integer leftSideColor;
   private Integer rightSideColor;
 
@@ -78,7 +79,7 @@ public class Wall implements Serializable  {
 
   /**
    * Sets the start point abscissa of this wall.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setXStart(float xStart) {
@@ -94,7 +95,7 @@ public class Wall implements Serializable  {
 
   /**
    * Sets the start point ordinate of this wall.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setYStart(float yStart) {
@@ -110,7 +111,7 @@ public class Wall implements Serializable  {
 
   /**
    * Sets the end point abscissa of this wall.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setXEnd(float xEnd) {
@@ -126,7 +127,7 @@ public class Wall implements Serializable  {
 
   /**
    * Sets the end point ordinate of this wall.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setYEnd(float yEnd) {
@@ -142,7 +143,7 @@ public class Wall implements Serializable  {
 
   /**
    * Sets the wall joined to this wall at start point.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setWallAtStart(Wall wallAtStart) {
@@ -159,7 +160,7 @@ public class Wall implements Serializable  {
  
   /**
    * Sets the wall joined to this wall at end point.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setWallAtEnd(Wall wallAtEnd) {
@@ -174,12 +175,28 @@ public class Wall implements Serializable  {
   }
 
   /**
-   * Set wall thickness.
-   * This method should be called only from {@link Home}, which
+   * Sets wall thickness.
+   * This method should be called from {@link Home}, which
    * controls notifications when a wall changed.
    */
   void setThickness(float thickness) {
     this.thickness = thickness;
+  }
+
+  /**
+   * Returns the height of this wall.
+   */
+  public Float getHeight() {
+    return this.height;
+  }
+
+  /**
+   * Sets the height of this wall.
+   * This method should be called from {@link Home}, which
+   * controls notifications when a wall changed.
+   */
+  void setHeight(Float height) {
+    this.height = height;
   }
 
   /**
@@ -192,6 +209,8 @@ public class Wall implements Serializable  {
 
   /**
    * Sets left side color of this wall. 
+   * This method should be called from {@link Home}, which
+   * controls notifications when a wall changed.
    */
   void setLeftSideColor(Integer leftColor) {
     this.leftSideColor = leftColor;

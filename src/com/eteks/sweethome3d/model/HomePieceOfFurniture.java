@@ -134,6 +134,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private float   x;
   private float   y;
   private float   angle;
+  private boolean modelMirrored;
 
   private transient Shape shape;
 
@@ -158,6 +159,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       this.angle = homePiece.getAngle();
       this.x = homePiece.getX();
       this.y = homePiece.getY();
+      this.modelMirrored = homePiece.isModelMirrored();
     } else {
       this.visible = true;
       this.x = this.width / 2;
@@ -174,7 +176,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the name of this piece of furniture.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setName(String name) {
@@ -190,7 +192,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the depth of this piece of furniture.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setDepth(float depth) {
@@ -207,7 +209,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the height of this piece of furniture.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setHeight(float height) {
@@ -224,7 +226,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the width of this piece of furniture.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setWidth(float width) {
@@ -270,7 +272,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   
   /**
    * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setColor(Integer color) {
@@ -286,7 +288,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   
   /**
    * Sets whether this piece of furniture is visible or not.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setVisible(boolean visible) {
@@ -302,7 +304,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the abscissa of this piece.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setX(float x) {
@@ -319,7 +321,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the ordinate of this piece.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setY(float y) {
@@ -336,12 +338,28 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
 
   /**
    * Sets the angle of this piece.
-   * This method should be called only from {@link Home}, which
+   * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
   void setAngle(float angle) {
     this.angle = angle;
     this.shape = null;
+  }
+
+  /**
+   * Returns <code>true</code> if the model of this piece should be mirrored.
+   */
+  public boolean isModelMirrored() {
+    return this.modelMirrored;
+  }
+
+  /**
+   * Sets whether the model of this piece of furniture is mirrored or not.
+   * This method should be called from {@link Home}, which
+   * controls notifications when a piece changed.
+   */
+  void setModelMirrored(boolean modelMirrored) {
+    this.modelMirrored = modelMirrored;
   }
 
   /**

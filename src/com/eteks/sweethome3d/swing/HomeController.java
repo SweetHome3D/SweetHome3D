@@ -103,7 +103,8 @@ public class HomeController  {
         home, preferences, this.undoSupport);
     this.planController = new PlanController(
         home, preferences, undoSupport);
-    this.homeController3D = new HomeController3D(home);
+    this.homeController3D = new HomeController3D(
+        home, preferences, this.undoSupport);
     
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
@@ -142,6 +143,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomePane.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomePane.ActionType.VIEW_FROM_OBSERVER, true);
+    homeView.setEnabled(HomePane.ActionType.MODIFY_3D_ATTRIBUTES, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
   }

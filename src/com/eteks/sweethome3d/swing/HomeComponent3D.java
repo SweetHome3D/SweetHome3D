@@ -64,17 +64,18 @@ import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
+import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import javax.swing.PopupFactory;
 import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -135,18 +136,20 @@ public class HomeComponent3D extends JComponent {
         getDefaultScreenDevice().getBestConfiguration(gc));
     // Link it to a default univers
     SimpleUniverse universe = new SimpleUniverse(canvas3D);
-    // Change min and max distance of user field of view 
+    
     View view = universe.getViewer().getView();
+    // Update front and back clip distance to ensure their ratio is less than 3000
     view.setFrontClipDistance(1);
-    view.setBackClipDistance(10000);
-    // Use a 63° field of view (equivalent to a 35mm lens for 24x36 film)
-    view.setFieldOfView(Math.PI * 63 / 180);
-        
+    view.setBackClipDistance(3000);
+    // Update field of view from current camera
+    updateFieldOfView(view, home.getCamera());
+    
     TransformGroup viewPlatformTransform = universe.getViewingPlatform().getViewPlatformTransform();
     // Update point of view from current camera
     updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+    
     // Add camera listeners to update later point of view from camera
-    addCameraListeners(home, viewPlatformTransform);
+    addCameraListeners(home, view, viewPlatformTransform);
     
     // Link scene matching home to universe
     universe.addBranchGraph(getSceneTree(home));
@@ -168,12 +171,14 @@ public class HomeComponent3D extends JComponent {
   /**
    * Adds listeners to home to update point of view from current camera.
    */
-  private void addCameraListeners(final Home home, final TransformGroup viewPlatformTransform) {
+  private void addCameraListeners(final Home home, final View view, 
+                                  final TransformGroup viewPlatformTransform) {
     home.addCameraListener(new CameraListener() {
         public void cameraChanged(CameraEvent ev) {
           // Update view transform later to avoid flickering in case of mulitple camera changes 
           EventQueue.invokeLater(new Runnable() {
               public void run() {
+                updateFieldOfView(view, home.getCamera());
                 updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
               }
             });
@@ -182,11 +187,23 @@ public class HomeComponent3D extends JComponent {
     home.addPropertyChangeListener("camera", 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
+            updateFieldOfView(view, home.getCamera());
             updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
           }
         });
   }
 
+  /**
+   * Updates <code>view</code> from <code>camera</code> field of view.
+   */
+  private void updateFieldOfView(View view, Camera camera) {
+    float fieldOfView = camera.getFieldOfView();
+    if (fieldOfView == 0) {
+      fieldOfView = (float)(Math.PI * 63 / 180);
+    }
+    view.setFieldOfView(fieldOfView);
+  }
+  
   /**
    * Updates <code>viewPlatformTransform</code> transform from <code>camera</code> angles and location.
    */
@@ -363,40 +380,117 @@ public class HomeComponent3D extends JComponent {
 
     // Build scene tree
     root.addChild(getHomeTree(home));
-    root.addChild(getBackgroundNode());
-    for (Light light : getLights()) {
+    root.addChild(getBackgroundNode(home));
+    root.addChild(getGroundNode(home));
+    for (Light light : getLights(home)) {
       root.addChild(light);
     }
+
     return root;
   }
 
   /**
    * Returns the background node.  
    */
-  private Node getBackgroundNode() {
-    Background background = new Background(0.85f, 0.85f, 0.85f);
+  private Node getBackgroundNode(final Home home) {
+    final Background background = new Background();
+    updateBackgroundColor(background, home);
+    // Allow background color to change
+    background.setCapability(Background.ALLOW_COLOR_WRITE);
     background.setApplicationBounds(new BoundingBox(
         new Point3d(-100000, -100000, -100000), 
         new Point3d(100000, 100000, 100000)));
+    
+    // Add a listener on sky color property change to home
+    home.addPropertyChangeListener("skyColor", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateBackgroundColor(background, home);
+        }
+      });
+    
     return background;
+  }
+
+  /**
+   * Updates<code>background</code> color from <code>home</code> sky color.
+   */
+  private void updateBackgroundColor(Background background, Home home) {
+    background.setColor(new Color3f(new Color(home.getSkyColor())));
+  }
+  
+  /**
+   * Returns the ground node.  
+   */
+  private Node getGroundNode(final Home home) {
+    final Appearance groundAppearance = new Appearance();
+    updateGroundMaterial(groundAppearance, home);
+    // Allow ground material to change
+    groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+    Box groundBox = new Box(1E5f, 0, 1E5f, groundAppearance); 
+    Shape3D topShape = groundBox.getShape(Box.TOP);
+    groundBox.removeChild(topShape);
+    
+    // Add a listener on ground color property change to home
+    home.addPropertyChangeListener("groundColor", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateGroundMaterial(groundAppearance, home);
+        }
+      });
+    
+    return topShape;
+  }
+  
+  /**
+   * Updates<code>groundAppearance</code> material from <code>home</code> ground color.
+   */
+  private void updateGroundMaterial(Appearance groundAppearance, Home home) {
+    Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
+    groundAppearance.setMaterial(new Material(
+        groundColor, groundColor, groundColor, groundColor, 1));
   }
   
   /**
    * Returns the lights of the scene.
    */
-  private Light [] getLights() {
-    Light [] lights = {
-      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(1.732f, -1, -1)), 
-      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(-1.732f, -1, -1)), 
-      new DirectionalLight(new Color3f(0.95f, 0.95f, 0.95f), new Vector3f(0, -1, 1)), 
-      new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
+  private Light [] getLights(final Home home) {
+    final Light [] lights = {
+        new DirectionalLight(new Color3f(), new Vector3f(1.732f, -1, -1)), 
+        new DirectionalLight(new Color3f(), new Vector3f(-1.732f, -1, -1)), 
+        new DirectionalLight(new Color3f(), new Vector3f(0, -1, 1)), 
+        new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
 
+    for (int i = 0; i < lights.length - 1; i++) {
+      updateLightColor(lights [i], home);
+      // Allow directional lights color to change
+      lights [i].setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+    }
+    
     for (Light light : lights) {
       light.setInfluencingBounds(new BoundingSphere(new Point3d(), 10000));
     }
+    
+    // Add a listener on light color property change to home
+    home.addPropertyChangeListener("lightColor", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          for (int i = 0; i < lights.length - 1; i++) {
+            updateLightColor(lights [i], home);
+          }
+        }
+      });
+    
     return lights;
   }
 
+  /**
+   * Updates<code>light</code> color from <code>home</code> light color.
+   */
+  private void updateLightColor(Light light, Home home) {
+    light.setColor(new Color3f(new Color(home.getLightColor())));
+  }
+  
   /**
    * Returns <code>home</code> tree node, with branches for each wall 
    * and piece of furniture of <code>home</code>. 
@@ -409,7 +503,8 @@ public class HomeComponent3D extends JComponent {
     for (HomePieceOfFurniture piece : home.getFurniture())
       addPieceOfFurniture(homeRoot, piece);
     // Add wall and furniture listeners to home for further update
-    addHomeListeners(home, homeRoot);
+    addWallListener(home, homeRoot);
+    addFurnitureListener(home, homeRoot);
     return homeRoot;
   }
 
@@ -425,46 +520,59 @@ public class HomeComponent3D extends JComponent {
   }
 
   /**
-   * Adds listeners to <code>home</code> that updates the scene <code>homeRoot</code>, 
-   * each time a piece of furniture or a wall is added, updated or deleted. 
+   * Adds a wall listener and walls alpha change listener to <code>home</code> 
+   * that updates the scene <code>homeRoot</code>, each time a wall is added, updated or deleted. 
    */
-  private void addHomeListeners(final Home home, final Group homeRoot) {
+  private void addWallListener(final Home home, final Group homeRoot) {
     home.addWallListener(new WallListener() {
-      public void wallChanged(WallEvent ev) {
-        Wall wall = ev.getWall();
-        switch (ev.getType()) {
-          case ADD :
-            addWall(homeRoot, wall, home);
-            break;
-          case UPDATE :
-            updateWall(wall);
-            break;
-          case DELETE :
-            deleteObject(wall);
-            break;
+        public void wallChanged(WallEvent ev) {
+          Wall wall = ev.getWall();
+          switch (ev.getType()) {
+            case ADD :
+              addWall(homeRoot, wall, home);
+              break;
+            case UPDATE :
+              updateWall(wall);
+              break;
+            case DELETE :
+              deleteObject(wall);
+              break;
+          }
         }
-      }
-    });      
-    home.addFurnitureListener(new FurnitureListener() {
-      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
-        switch (ev.getType()) {
-          case ADD :
-            addPieceOfFurniture(homeRoot, piece);
-            break;
-          case UPDATE :
-            updatePieceOfFurniture(piece);
-            break;
-          case DELETE :
-            deleteObject(piece);
-            break;
-        }
-        // If added piece is a door or a window, update all walls
-        if (piece.isDoorOrWindow()) {
+      });
+    home.addPropertyChangeListener("wallsAlpha", 
+      new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent evt) {
           updateObjects(home.getWalls());
         }
-      }
-    });
+      });
+  }
+
+  /**
+   * Adds a furniture listener to <code>home</code> that updates the scene <code>homeRoot</code>, 
+   * each time a piece of furniture is added, updated or deleted. 
+   */
+  private void addFurnitureListener(final Home home, final Group homeRoot) {
+    home.addFurnitureListener(new FurnitureListener() {
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
+          switch (ev.getType()) {
+            case ADD :
+              addPieceOfFurniture(homeRoot, piece);
+              break;
+            case UPDATE :
+              updatePieceOfFurniture(piece);
+              break;
+            case DELETE :
+              deleteObject(piece);
+              break;
+          }
+          // If added piece is a door or a window, update all walls
+          if (piece.isDoorOrWindow()) {
+            updateObjects(home.getWalls());
+          }
+        }
+      });
   }
 
   /**
@@ -552,6 +660,7 @@ public class HomeComponent3D extends JComponent {
    */
   private static class Wall3D extends ObjectBranch {
     private static final Material DEFAULT_MATERIAL = new Material();
+    
     private static final int LEFT_WALL_SIDE  = 0;
     private static final int RIGHT_WALL_SIDE = 1;
     
@@ -587,7 +696,12 @@ public class HomeComponent3D extends JComponent {
 
       Appearance wallAppearance = new Appearance();
       wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
       wallAppearance.setMaterial(DEFAULT_MATERIAL);
+      TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
+      transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+      transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
+      wallAppearance.setTransparencyAttributes(transparencyAttributes);
       wallShape.setAppearance(wallAppearance);
       
       return wallShape;
@@ -649,11 +763,11 @@ public class HomeComponent3D extends JComponent {
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
           float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
           // Compute geometry for vertical part
-          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, this.home.getWallHeight()));
+          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, getWallHeight()));
           // Compute geometry for bottom part
           wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
           // Compute geometry for top part
-          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, this.home.getWallHeight()));
+          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, getWallHeight()));
           wallPoints.clear();
         } else {
           wallPoints.add(wallPoint);
@@ -667,9 +781,10 @@ public class HomeComponent3D extends JComponent {
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
             wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 
-                windowIntersection.getKey().getHeight(), this.home.getWallHeight()));
-            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, windowIntersection.getKey().getHeight()));
-            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, this.home.getWallHeight()));
+                windowIntersection.getKey().getHeight(), getWallHeight()));
+            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 
+                windowIntersection.getKey().getHeight()));
+            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, getWallHeight()));
             wallPoints.clear();
           } else {
             wallPoints.add(wallPoint);
@@ -767,6 +882,19 @@ public class HomeComponent3D extends JComponent {
     }
     
     /**
+     * Returns the height of tha wall managed by this 3D object.
+     */
+    private float getWallHeight() {
+      Float wallHeight = ((Wall)getUserData()).getHeight();      
+      if (wallHeight != null) {
+        return wallHeight;
+      } else {
+        // If wall height isn't set, use home wall height
+        return this.home.getWallHeight();
+      }
+    }
+    
+    /**
      * Sets wall appearance with its color.
      */
     private void updateWallAppearance() {
@@ -780,6 +908,15 @@ public class HomeComponent3D extends JComponent {
         wallAppearance.setUserData(leftSideColor);
         wallAppearance.setMaterial(getMaterial(leftSideColor));
       }
+      // Update wall transparency
+      float wallsAlpha = this.home.getWallsAlpha();
+      TransparencyAttributes transparencyAttributes = wallAppearance.getTransparencyAttributes();
+      transparencyAttributes.setTransparency(wallsAlpha);
+      // If walls alpha is equal to zero, turn off transparency to get better results 
+      transparencyAttributes.setTransparencyMode(wallsAlpha == 0 
+          ? TransparencyAttributes.NONE 
+          : TransparencyAttributes.NICEST);
+
       // Update material of wall right part
       Integer rightSideColor = wall.getRightSideColor();
       wallAppearance = ((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance();
@@ -789,6 +926,11 @@ public class HomeComponent3D extends JComponent {
         wallAppearance.setUserData(rightSideColor);
         wallAppearance.setMaterial(getMaterial(rightSideColor));
       }
+      // Update wall transparency
+      transparencyAttributes = wallAppearance.getTransparencyAttributes();
+      transparencyAttributes.setTransparency(this.home.getWallsAlpha());
+      transparencyAttributes.setTransparencyMode(
+          wallsAlpha == 0 ? TransparencyAttributes.NONE : TransparencyAttributes.NICEST);
     }
     
     private Material getMaterial(Integer color) {
@@ -859,10 +1001,11 @@ public class HomeComponent3D extends JComponent {
             waitBranch.detach();
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                  // Update piece color and visibility in dispatch thread as
+                  // Update piece color, visibility and model mirror in dispatch thread as
                   // these attributes may be changed in that thread
                   updatePieceOfFurnitureColor();      
                   updatePieceOfFurnitureVisibility();
+                  updatePieceOfFurnitureModelMirrored();
                 }
               });
           }
@@ -874,6 +1017,7 @@ public class HomeComponent3D extends JComponent {
       updatePieceOfFurnitureTransform();
       updatePieceOfFurnitureColor();      
       updatePieceOfFurnitureVisibility();      
+      updatePieceOfFurnitureModelMirrored();
     }
 
     /**
@@ -884,7 +1028,12 @@ public class HomeComponent3D extends JComponent {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
       // Set piece size
       Transform3D scale = new Transform3D();
-      scale.setScale(new Vector3d(piece.getWidth(), piece.getHeight(), piece.getDepth()));
+      float pieceWidth = piece.getWidth();
+      // If piece model is mirrored, inverse its width
+      if (piece.isModelMirrored()) {
+        pieceWidth *= -1;
+      }
+      scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
       // Change its angle around y axis
       Transform3D orientation = new Transform3D();
       orientation.rotY(-piece.getAngle());
@@ -922,6 +1071,18 @@ public class HomeComponent3D extends JComponent {
     private void updatePieceOfFurnitureVisibility() {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
       setVisible(getChild(0), piece.isVisible());
+    }
+
+    /**
+     * Sets whether this piece model is mirrored or not.
+     */
+    private void updatePieceOfFurnitureModelMirrored() {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+      // Cull front or back model faces whether its model is mirrored or not
+      setCullFace(getChild(0), 
+          piece.isModelMirrored() 
+              ? PolygonAttributes.CULL_FRONT 
+              : PolygonAttributes.CULL_BACK);
     }
 
     /**
@@ -1035,11 +1196,7 @@ public class HomeComponent3D extends JComponent {
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance != null) {
-          // Allow future material and rendering attributes changes
-          appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
-          appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-          appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-          appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
+          setAppearanceCapabilities(appearance);
         }
         node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
         node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
@@ -1061,7 +1218,7 @@ public class HomeComponent3D extends JComponent {
         Shape3D shape = (Shape3D)node;
         Appearance appearance = shape.getAppearance();
         if (appearance == null) {
-          shape.setAppearance(createAppearanceWithChangeCapability());
+          shape.setAppearance(createAppearanceWithChangeCapabilities());
         }
         // Use shape user data to store shape default material
         Material defaultMaterial = (Material)shape.getUserData();
@@ -1092,7 +1249,7 @@ public class HomeComponent3D extends JComponent {
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance == null) {
-          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapability());
+          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
         }
         RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
         if (renderingAttributes == null) {
@@ -1106,14 +1263,48 @@ public class HomeComponent3D extends JComponent {
       }
     }
 
-    private Appearance createAppearanceWithChangeCapability() {
+    /**
+     * Sets the cull face of all <code>Shape3D</code> children nodes of <code>node</code>.
+     * @param cullFace <code>PolygonAttributes.CULL_FRONT</code> or <code>PolygonAttributes.CULL_BACK</code>
+     */
+    private void setCullFace(Node node, int cullFace) {
+      if (node instanceof Group) {
+        // Set visibility of all children
+        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          setCullFace((Node)enumeration.nextElement(), cullFace);
+        }
+      } else if (node instanceof Shape3D) {
+        Appearance appearance = ((Shape3D)node).getAppearance();
+        if (appearance == null) {
+          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
+        }
+        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+        if (polygonAttributes == null) {
+          polygonAttributes = new PolygonAttributes();
+          polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+          appearance.setPolygonAttributes(polygonAttributes);
+        }
+        
+        // Change cull face
+        polygonAttributes.setCullFace(cullFace);
+      }
+    }
+
+    private Appearance createAppearanceWithChangeCapabilities() {
       Appearance appearance = new Appearance();
+      setAppearanceCapabilities(appearance);
+      return appearance;
+    }
+
+    private void setAppearanceCapabilities(Appearance appearance) {
       // Allow future material and rendering attributes changes
       appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
       appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
-      return appearance;
+      appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
+      appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
     }
   }
 }
