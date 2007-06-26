@@ -74,7 +74,11 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.NullableSpinner.NullableSpinnerLengthModel;
 import com.eteks.sweethome3d.tools.URLContent;
 
-public class BackgroundImageWizardStepsView extends JPanel {
+/**
+ * Wizard panel for background image choice. 
+ * @author Emmanuel Puybaret
+ */
+public class BackgroundImageWizardStepsPanel extends JPanel {
   private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};  
   private static final FileFilter [] IMAGE_FILTERS = {
     new FileFilter() {
@@ -157,10 +161,10 @@ public class BackgroundImageWizardStepsView extends JPanel {
   /**
    * Creates a view for background image choice, scale and origin. 
    */
-  public BackgroundImageWizardStepsView(BackgroundImage backgroundImage, UserPreferences preferences, 
+  public BackgroundImageWizardStepsPanel(BackgroundImage backgroundImage, UserPreferences preferences, 
                                         BackgroundImageWizardController controller) {
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsView.class.getName());
+    this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
     createComponents(preferences);
     setMnemonics();
     layoutComponents();
@@ -392,7 +396,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
                   ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(0f);
                 } else {
                   setImageChoiceTexts();
-                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsView.this, 
+                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
                       resource.getString("imageChoiceFormatError"));
                 }
               }
@@ -408,7 +412,7 @@ public class BackgroundImageWizardStepsView extends JPanel {
     try {
       // Display a waiting image while loading
       if (waitImage == null) {
-        waitImage = ImageIO.read(BackgroundImageWizardStepsView.class.
+        waitImage = ImageIO.read(BackgroundImageWizardStepsPanel.class.
             getResource("resources/wait.png"));
       }
       updatePreviewComponentsImage(waitImage);

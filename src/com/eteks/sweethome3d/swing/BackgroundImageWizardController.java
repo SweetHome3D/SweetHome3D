@@ -67,7 +67,7 @@ public class BackgroundImageWizardController extends WizardController {
     this.imageChoiceStepState = new ImageChoiceStepState();
     this.imageScaleStepState = new ImageScaleStepState();
     this.imageOriginStepState = new ImageOriginStepState();
-    this.stepsView = new BackgroundImageWizardStepsView(home.getBackgroundImage(), preferences, this);
+    this.stepsView = new BackgroundImageWizardStepsPanel(home.getBackgroundImage(), preferences, this);
     setTitle(this.resource.getString("wizard.title"));    
     setStepState(this.imageChoiceStepState);
     displayView();
@@ -147,7 +147,7 @@ public class BackgroundImageWizardController extends WizardController {
    * Switch in the wizard view to the given <code>step</code>.
    */
   protected void setStepView(Step step) {
-    ((BackgroundImageWizardStepsView)getStepsView()).setStep(step);
+    ((BackgroundImageWizardStepsPanel)getStepsView()).setStep(step);
   }
 
   /**
