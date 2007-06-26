@@ -269,7 +269,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     int oldSkyColor = home.getSkyColor();
     int oldLightColor = home.getLightColor();
     float oldWallsAlpha = home.getWallsAlpha();
-    assertEquals("Wrong field of view", Math.round(Math.toDegrees(oldCameraFieldOfView)), 
+    assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(oldCameraFieldOfView)), 
         observerFieldOfViewSpinner.getValue());
     assertEquals("Wrong height", (float)Math.round(oldCameraHeight * 100) / 100, 
         observerHeightSpinner.getValue());
