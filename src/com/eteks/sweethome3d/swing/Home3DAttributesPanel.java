@@ -206,7 +206,7 @@ public class Home3DAttributesPanel extends JPanel {
    */
   private void updateComponents(Home home) {
     ObserverCamera observerCamera = home.getObserverCamera();
-    this.observerFieldOfViewSpinner.setValue(Math.round(Math.toDegrees(observerCamera.getFieldOfView())));
+    this.observerFieldOfViewSpinner.setValue((int)Math.round(Math.toDegrees(observerCamera.getFieldOfView())));
     ((NullableSpinner.NullableSpinnerLengthModel)this.observerHeightSpinner.getModel()).
         setLength((float)Math.round(observerCamera.getHeight() * 100) / 100);
     this.groundColorButton.setColor(home.getGroundColor());
