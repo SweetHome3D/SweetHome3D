@@ -37,7 +37,6 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 
-import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -207,7 +206,7 @@ public class Home3DAttributesPanel extends JPanel {
    */
   private void updateComponents(Home home) {
     ObserverCamera observerCamera = home.getObserverCamera();
-    this.observerFieldOfViewSpinner.setValue((int)Math.toDegrees(observerCamera.getFieldOfView()));
+    this.observerFieldOfViewSpinner.setValue(Math.round(Math.toDegrees(observerCamera.getFieldOfView())));
     ((NullableSpinner.NullableSpinnerLengthModel)this.observerHeightSpinner.getModel()).
         setLength((float)Math.round(observerCamera.getHeight() * 100) / 100);
     this.groundColorButton.setColor(home.getGroundColor());
@@ -217,7 +216,7 @@ public class Home3DAttributesPanel extends JPanel {
   }
 
   /**
-   * Returns the edited field of view of the observer camera.
+   * Returns the edited field of view of the observer camera in radians.
    */
   public float getObserverCameraFieldOfView() {
     return (float)Math.toRadians(((Number)this.observerFieldOfViewSpinner.getValue()).doubleValue());
@@ -277,9 +276,5 @@ public class Home3DAttributesPanel extends JPanel {
         && this.controller != null) {
       this.controller.modifyHome();
     }
-  }
-  
-  public static void main(String [] args) {
-    new Home3DAttributesPanel(new Home(), new DefaultUserPreferences(), null).displayView();
   }
 }
