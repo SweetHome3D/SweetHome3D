@@ -738,10 +738,12 @@ public class HomeComponent3D extends JComponent {
      */
     private Geometry[] getWallGeometries(int wallSide) {
       Shape wallShape = getShape(getWallSidePoints(wallSide));
+      float wallHeight = getWallHeight();
       // Search which doors or windows intersect with this wall side
       Map<HomePieceOfFurniture, Area> intersections = new HashMap<HomePieceOfFurniture, Area>();
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-        if (piece.isDoorOrWindow()) {
+        if (piece.isDoorOrWindow() 
+            && piece.getElevation() < wallHeight) {
           Shape pieceShape = getShape(piece.getPoints());
           Area wallArea = new Area(wallShape);
           wallArea.intersect(new Area(pieceShape));
@@ -757,34 +759,48 @@ public class HomeComponent3D extends JComponent {
       for (Area intersection : intersections.values()) {
         wallArea.exclusiveOr(intersection);
       }
+      
       // Generate geometry for each wall part that doesn't contain a window
       for (PathIterator it = wallArea.getPathIterator(null); !it.isDone(); ) {
         float [] wallPoint = new float[2];
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
           float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
           // Compute geometry for vertical part
-          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, getWallHeight()));
+          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, wallHeight));
           // Compute geometry for bottom part
           wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
           // Compute geometry for top part
-          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, getWallHeight()));
+          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
           wallPoints.clear();
         } else {
           wallPoints.add(wallPoint);
         }
         it.next();
       }
-      // Generate geometry for each wall part above a window
+      
+      // Generate geometry for each wall part above and bellow a window
       for (Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
         for (PathIterator it = windowIntersection.getValue().getPathIterator(null); !it.isDone(); ) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
-            wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 
-                windowIntersection.getKey().getHeight(), getWallHeight()));
-            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 
-                windowIntersection.getKey().getHeight()));
-            wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, getWallHeight()));
+            HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
+            float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
+            // Generate geometry for wall part above window
+            if (doorOrWindowTop < wallHeight) {
+              wallGeometries.add(getWallVerticalPartGeometry(
+                  wallPartPoints, doorOrWindowTop, wallHeight));
+              wallGeometries.add(getWallHorizontalPartGeometry(
+                  wallPartPoints, doorOrWindowTop));
+              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
+            }
+            // Generate geometry for wall part bellow window
+            if (doorOrWindow.getElevation() > 0) {
+              wallGeometries.add(getWallVerticalPartGeometry(
+                  wallPartPoints, 0, doorOrWindow.getElevation()));
+              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
+              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
+            }
             wallPoints.clear();
           } else {
             wallPoints.add(wallPoint);
@@ -949,6 +965,10 @@ public class HomeComponent3D extends JComponent {
    * Root of piece of furniture branch.
    */
   private static class HomePieceOfFurniture3D extends ObjectBranch {
+    private static final String WINDOW_PANE_SHAPE = "sweethome3d_window_pane";
+    private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
+        new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
+    
     private static Executor modelLoader = Executors.newSingleThreadExecutor();
 
     public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
@@ -1039,7 +1059,8 @@ public class HomeComponent3D extends JComponent {
       orientation.rotY(-piece.getAngle());
       // Translate it to its location
       Transform3D pieceTransform = new Transform3D();
-      pieceTransform.setTranslation(new Vector3f(piece.getX(), piece.getHeight() / 2, piece.getY()));      
+      pieceTransform.setTranslation(new Vector3f(
+          piece.getX(), piece.getElevation() + piece.getHeight() / 2, piece.getY()));      
 
       pieceTransform.mul(orientation);
       pieceTransform.mul(scale);
@@ -1098,6 +1119,9 @@ public class HomeComponent3D extends JComponent {
         ObjectFile loader = new ObjectFile();
         Scene scene = loader.load(modelReader);
         
+        // Update transparency of scene window panes shapes
+        updateWindowPanesTransparency(scene);
+        
         // Get model bounding box size
         BranchGroup modelScene = scene.getSceneGroup();
         BoundingBox modelBounds = getBounds(modelScene);
@@ -1138,6 +1162,24 @@ public class HomeComponent3D extends JComponent {
           }
         } catch (IOException ex) {
           throw new RuntimeException(ex);
+        }
+      }
+    }
+
+    /**
+     * Updates transparency of scene window panes shapes.
+     */
+    private void updateWindowPanesTransparency(Scene scene) {
+      Map<String, Object> namedObjects = scene.getNamedObjects();
+      for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
+        if (entry.getKey().startsWith(WINDOW_PANE_SHAPE)
+            && entry.getValue() instanceof Shape3D) {
+          Shape3D shape = (Shape3D)entry.getValue();
+          Appearance appearance = shape.getAppearance();
+          if (appearance == null) {
+            shape.setAppearance(createAppearanceWithChangeCapabilities());
+          }
+          appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
         }
       }
     }

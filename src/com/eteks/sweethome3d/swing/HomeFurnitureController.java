@@ -76,6 +76,7 @@ public class HomeFurnitureController {
       final String name = furniturePanel.getFurnitureName();
       final Float x = furniturePanel.getFurnitureX();
       final Float y = furniturePanel.getFurnitureY();
+      final Float elevation = furniturePanel.getFurnitureElevation();
       final Float angle = furniturePanel.getFurnitureAngle();
       final Float width = furniturePanel.getFurnitureWidth();
       final Float depth = furniturePanel.getFurnitureDepth();
@@ -92,7 +93,7 @@ public class HomeFurnitureController {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
-          name, width, depth, height, x, y, angle, color, visible, modelMirrored); 
+          name, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
@@ -106,7 +107,7 @@ public class HomeFurnitureController {
           public void redo() throws CannotRedoException {
             super.redo();
             doModifyFurniture(modifiedFurniture, 
-                name, width, depth, height, x, y, angle, color, visible, modelMirrored); 
+                name, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
             home.setSelectedItems(oldSelection); 
           }
           
@@ -125,7 +126,8 @@ public class HomeFurnitureController {
    */
   private void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
                                  String name, Float width, Float depth, Float height, 
-                                 Float x, Float y, Float angle, Integer color, 
+                                 Float x, Float y, Float elevation, 
+                                 Float angle, Integer color, 
                                  Boolean visible, Boolean modelMirrored) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
@@ -140,6 +142,8 @@ public class HomeFurnitureController {
           width != null ? width.floatValue() : piece.getWidth(), 
           depth != null ? depth.floatValue() : piece.getDepth(), 
           height != null ? height.floatValue() : piece.getHeight());
+      this.home.setPieceOfFurnitureElevation(piece, 
+          elevation != null ? elevation.floatValue() : piece.getElevation());
       this.home.setPieceOfFurnitureColor(piece, 
           color != null ? color : piece.getColor());
       this.home.setPieceOfFurnitureVisible(piece, 
@@ -157,6 +161,7 @@ public class HomeFurnitureController {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       this.home.setPieceOfFurnitureName(piece, modifiedPiece.getName());
       this.home.setPieceOfFurnitureLocation(piece, modifiedPiece.getX(), modifiedPiece.getY());
+      this.home.setPieceOfFurnitureElevation(piece, modifiedPiece.getElevation());
       this.home.setPieceOfFurnitureAngle(piece, modifiedPiece.getAngle());
       this.home.setPieceOfFurnitureDimension(piece, 
           modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
@@ -169,11 +174,12 @@ public class HomeFurnitureController {
   /**
    * Stores the current properties values of a modified piece of furniture.
    */
-  private static class ModifiedPieceOfFurniture {
+  private static final class ModifiedPieceOfFurniture {
     private final HomePieceOfFurniture piece;
     private final String  name;
     private final float   x;
     private final float   y;
+    private final float   elevation;
     private final float   angle;
     private final float   width;
     private final float   depth;
@@ -187,6 +193,7 @@ public class HomeFurnitureController {
       this.name = piece.getName();
       this.x = piece.getX();
       this.y = piece.getY();
+      this.elevation = piece.getElevation();
       this.angle = piece.getAngle();
       this.width = piece.getWidth();
       this.depth = piece.getDepth();
@@ -230,6 +237,10 @@ public class HomeFurnitureController {
 
     public float getY() {
       return this.y;
+    }
+
+    public float getElevation() {
+      return this.elevation;
     }
 
     public float getAngle() {

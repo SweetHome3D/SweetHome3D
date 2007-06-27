@@ -62,10 +62,17 @@ public class DefaultCatalog extends Catalog {
           resource.getString("movable#" + i));
       boolean doorOrWindow = Boolean.parseBoolean(
           resource.getString("doorOrWindow#" + i));
+      float elevation = 0;
+      try {
+        elevation = Float.parseFloat(
+            resource.getString("elevation#" + i));
+      } catch (MissingResourceException ex) {
+        // By default elevation is null
+      }
 
       add(new Category(category),
           new CatalogPieceOfFurniture(name, icon, model,
-              width, depth, height, movable, doorOrWindow));
+              width, depth, height, elevation, movable, doorOrWindow));
     }
   }
   

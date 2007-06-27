@@ -35,8 +35,10 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private float   width;
   private float   depth;
   private float   height;
+  private float   elevation;
   private boolean movable;
   private boolean doorOrWindow;
+
   private static final Collator COMPARATOR = Collator.getInstance();
 
   /**
@@ -44,20 +46,39 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param name  the name of the new piece
    * @param icon an URL to the icon file of the new piece
    * @param model an URL to the 3D model file of the new piece
-   * @param width  the width in meters of the new piece
-   * @param depth  the depth in meters of the new piece
-   * @param height  the height in meters of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
    * @param movable if true, the new piece is movable
    * @param doorOrWindow if true, the new piece is a door or a window
    */
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                           float width, float depth, float height, boolean movable, boolean doorOrWindow) {
+    this(name, icon, model, width, depth, height, 0, movable, doorOrWindow);
+  }
+
+  /**
+   * Creates a catalog piece of furniture with all its values.
+   * @param name  the name of the new piece
+   * @param icon an URL to the icon file of the new piece
+   * @param model an URL to the 3D model file of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if true, the new piece is movable
+   * @param doorOrWindow if true, the new piece is a door or a window
+   */
+  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
+                          float width, float depth, float height, float elevation, 
+                          boolean movable, boolean doorOrWindow) {
     this.name = name;
     this.icon = icon;
     this.model = model;
     this.width = width;
     this.depth = depth;
     this.height = height;
+    this.elevation = elevation;
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
   }
@@ -88,6 +109,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    */
   public float getWidth() {
     return this.width;
+  }
+
+  /**
+   * Returns the elevation of this piece of furniture.
+   */
+  public float getElevation() {
+    return this.elevation;
   }
 
   /**

@@ -87,16 +87,22 @@ public class WallPanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences) {
-    this.xStartLabel = new JLabel(this.resource.getString("xLabel.text"));
+    // Get unit text matching current unit 
+    String unitText = this.resource.getString(
+        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
+            ? "centimeterUnit"
+            : "inchUnit");
+    
+    this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
     this.xStartSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yStartLabel = new JLabel(this.resource.getString("yLabel.text"));
+    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.yStartSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.xEndLabel = new JLabel(this.resource.getString("xLabel.text"));
+    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
     this.xEndSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yEndLabel = new JLabel(this.resource.getString("yLabel.text"));
+    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.yEndSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     this.leftSideColorLabel = new JLabel(this.resource.getString("leftSideColorLabel.text"));
@@ -105,10 +111,10 @@ public class WallPanel extends JPanel {
     this.rightSideColorLabel = new JLabel(this.resource.getString("rightSideColorLabel.text"));
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
-    this.thicknessLabel = new JLabel(this.resource.getString("thicknessLabel.text"));
+    this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitText));
     this.thicknessSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
-    this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
+    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitText));
     this.heightSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
@@ -155,14 +161,9 @@ public class WallPanel extends JPanel {
    * Layouts panel composants in panel with their labels. 
    */
   private void layoutComponents(UserPreferences preferences) {
-    // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
     // First row
     JPanel startPointPanel = createTitledPanel(
-        String.format(this.resource.getString("startPointPanel.title"), unitText),
+        this.resource.getString("startPointPanel.title"),
         new JComponent [] {this.xStartLabel, this.xStartSpinner, 
                            this.yStartLabel, this.yStartSpinner});
     Insets rowInsets = new Insets(0, 0, 5, 0);
@@ -171,7 +172,7 @@ public class WallPanel extends JPanel {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     JPanel endPointPanel = createTitledPanel(
-        String.format(this.resource.getString("endPointPanel.title"), unitText),
+        this.resource.getString("endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner});
     add(endPointPanel, new GridBagConstraints(

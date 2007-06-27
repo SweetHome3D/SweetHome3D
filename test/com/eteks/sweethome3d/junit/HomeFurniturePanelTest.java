@@ -51,15 +51,16 @@ public class HomeFurniturePanelTest extends TestCase {
     // 2. Create a home piece of furniture panel to edit piece
     HomeFurniturePanel panel = new HomeFurniturePanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, piece1.getName(),
-        piece1.getX(), piece1.getY(), piece1.getAngle(),
-        piece1.getWidth(), piece1.getDepth(), piece1.getHeight(),
-        piece1.getColor(), piece1.isVisible(), piece1.isModelMirrored());
+    assertFurniturePanelEquals(piece1.getName(), piece1.getX(),
+        piece1.getY(), piece1.getElevation(), piece1.getAngle(), piece1.getWidth(),
+        piece1.getDepth(), piece1.getHeight(), piece1.getColor(),
+        piece1.isVisible(), piece1.isModelMirrored(), panel);
 
     // 3. Add a second selected piece to home
     HomePieceOfFurniture piece2 = new HomePieceOfFurniture(firstPiece); 
     home.addPieceOfFurniture(piece2);
     home.setPieceOfFurnitureLocation(piece2, piece1.getX(), piece1.getY() + 10);
+    home.setPieceOfFurnitureElevation(piece2, piece1.getElevation() + 10);
     home.setPieceOfFurnitureDimension(piece2, 
         piece1.getWidth(), piece1.getDepth() + 10, piece1.getHeight() + 10);
     home.setPieceOfFurnitureColor(piece2, 0xFF00FF);
@@ -70,28 +71,29 @@ public class HomeFurniturePanelTest extends TestCase {
     // if some furniture properties are the same
     panel = new HomeFurniturePanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, piece1.getName(), piece1.getX(), null, 
-        piece1.getAngle(), piece1.getWidth(), null, null, null, null, null);
+    assertFurniturePanelEquals(piece1.getName(), piece1.getX(), null, null, piece1.getAngle(), 
+        piece1.getWidth(), null, null, null, null, null, panel);
   }
   
   /**
    * Assert values in parameter are the same as the ones 
    * stored in <code>panel</code> components.
    */
-  private void assertFurniturePanelEquals(HomeFurniturePanel panel, 
-                                          String name, Float x, Float y, Float angle, 
-                                          Float width, Float depth, Float height, 
-                                          Integer color, Boolean visible, Boolean modelMirrored) {
-    assertEquals("Wrong name", panel.getFurnitureName(), name);
-    assertEquals("Wrong X", panel.getFurnitureX(), x);
-    assertEquals("Wrong Y", panel.getFurnitureY(), y);
-    assertEquals("Wrong angle", panel.getFurnitureAngle(), angle);
-    assertEquals("Wrong width", panel.getFurnitureWidth(), width);
-    assertEquals("Wrong depth", panel.getFurnitureDepth(), depth);
-    assertEquals("Wrong height", panel.getFurnitureHeight(), height);
-    assertEquals("Wrong color", panel.getFurnitureColor(), color);
-    assertEquals("Wrong visibility", panel.isFurnitureVisible(), visible);
-    assertEquals("Wrong model mirrored", panel.isFurnitureModelMirrored(), modelMirrored);
+  private void assertFurniturePanelEquals(String name, Float x, Float y, Float elevation, Float angle, 
+                                          Float width, Float depth, Float height, Integer color, 
+                                          Boolean visible, Boolean modelMirrored, 
+                                          HomeFurniturePanel panel) {
+    assertEquals("Wrong name", name, panel.getFurnitureName());
+    assertEquals("Wrong X", x, panel.getFurnitureX());
+    assertEquals("Wrong Y", y, panel.getFurnitureY());
+    assertEquals("Wrong elevation", elevation, panel.getFurnitureElevation());
+    assertEquals("Wrong angle", angle, panel.getFurnitureAngle());
+    assertEquals("Wrong width", width, panel.getFurnitureWidth());
+    assertEquals("Wrong depth", depth, panel.getFurnitureDepth());
+    assertEquals("Wrong height", height, panel.getFurnitureHeight());
+    assertEquals("Wrong color", color, panel.getFurnitureColor());
+    assertEquals("Wrong visibility", visible, panel.isFurnitureVisible());
+    assertEquals("Wrong model mirrored", modelMirrored, panel.isFurnitureModelMirrored());
   }
 
   public static void main(String [] args) {

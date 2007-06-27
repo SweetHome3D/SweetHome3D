@@ -26,7 +26,6 @@ import java.io.Serializable;
  * @author Emmanuel Puybaret
  */
 public interface PieceOfFurniture extends Serializable {
-
   /**
    * Returns the name of this piece of furniture.
    */
@@ -46,6 +45,11 @@ public interface PieceOfFurniture extends Serializable {
    * Returns the width of this piece of furniture.
    */
   public abstract float getWidth();
+
+  /**
+   * Returns the elevation of this piece of furniture.
+   */
+  public abstract float getElevation();
 
   /**
    * Returns <code>true</code> if this piece of furniture is movable.

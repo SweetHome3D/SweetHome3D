@@ -73,6 +73,8 @@ public class PlanController {
   private ControllerState       newWallState;
   private ControllerState       wallResizeState;
   private ControllerState       pieceOfFurnitureRotationState;
+  private ControllerState       pieceOfFurnitureElevationState;
+  private ControllerState       pieceOfFurnitureHeightState;
   private ControllerState       pieceOfFurnitureResizeState;
   private ControllerState       cameraYawRotationState;
   private ControllerState       cameraPitchRotationState;
@@ -106,6 +108,8 @@ public class PlanController {
     this.newWallState = new NewWallState();
     this.wallResizeState = new WallResizeState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
+    this.pieceOfFurnitureElevationState = new PieceOfFurnitureElevationState();
+    this.pieceOfFurnitureHeightState = new PieceOfFurnitureHeightState();
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
@@ -269,6 +273,20 @@ public class PlanController {
    */
   protected ControllerState getPieceOfFurnitureRotationState() {
     return this.pieceOfFurnitureRotationState;
+  }
+
+  /**
+   * Returns the piece elevation state.
+   */
+  protected ControllerState getPieceOfFurnitureElevationState() {
+    return this.pieceOfFurnitureElevationState;
+  }
+
+  /**
+   * Returns the piece height state.
+   */
+  protected ControllerState getPieceOfFurnitureHeightState() {
+    return this.pieceOfFurnitureHeightState;
   }
 
   /**
@@ -525,18 +543,28 @@ public class PlanController {
       return camera;
     }
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
-    // Loop on home furniture in reverse order to give pripority to last drawn piece
-    // in case it covers an other piece
+    // Search in home furniture in reverse order to give pripority to last drawn piece
+    // at highest elevation in case it covers an other piece
+    HomePieceOfFurniture foundPiece = null;
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
-      if (piece.isVisible() && piece.containsPoint(x, y, margin)) 
-        return piece;
+      if (piece.isVisible() 
+          && piece.containsPoint(x, y, margin)
+          && (foundPiece == null
+              || piece.getElevation() > foundPiece.getElevation())) {
+        foundPiece = piece;
+      }
     }
-    for (Wall wall : this.home.getWalls()) {
-      if (wall.containsPoint(x, y, margin)) 
-        return wall;
-    }    
-    return null;
+    if (foundPiece != null) {
+      return foundPiece;
+    } else {
+      for (Wall wall : this.home.getWalls()) {
+        if (wall.containsPoint(x, y, margin)) {
+          return wall;
+        }
+      }    
+      return null;
+    }
   }
 
   /**
@@ -582,9 +610,45 @@ public class PlanController {
   
   /**
    * Returns the selected piece of furniture with a vertex 
-   * at (<code>x</code>, <code>y</code>) that can be used to resize the piece.
+   * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
-  private HomePieceOfFurniture getResizedPieceOfFurnitureAt(float x, float y) {
+  private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (piece.isTopRightVertexAt(x, y, margin)) {
+        return piece;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected piece of furniture with a vertex 
+   * at (<code>x</code>, <code>y</code>) that can be used to resize the height 
+   * of the piece.
+   */
+  private HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (piece.isBottomLeftVertexAt(x, y, margin)) {
+        return piece;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected piece of furniture with a vertex 
+   * at (<code>x</code>, <code>y</code>) that can be used to resize 
+   * the width and the depth of the piece.
+   */
+  private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
     List<Object> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
@@ -596,7 +660,6 @@ public class PlanController {
     } 
     return null;
   }
-  
   
   /**
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
@@ -1069,9 +1132,71 @@ public class PlanController {
   }
 
   /**
+   * Post to undo support an elevation change on <code>piece</code>. 
+   */
+  private void postPieceOfFurnitureElevation(final HomePieceOfFurniture piece, final float oldElevation) {
+    final float newElevation = piece.getElevation();
+    if (newElevation != oldElevation) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setPieceOfFurnitureElevation(piece, oldElevation);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setPieceOfFurnitureElevation(piece, newElevation);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }      
+  
+        @Override
+        public String getPresentationName() {          
+          return resource.getString(oldElevation < newElevation 
+              ? "undoPieceOfFurnitureRaiseName"
+              : "undoPieceOfFurnitureLowerName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Post to undo support a height change on <code>piece</code>. 
+   */
+  private void postPieceOfFurnitureHeightResize(final HomePieceOfFurniture piece, final float oldHeight) {
+    final float newHeight = piece.getHeight();
+    if (newHeight != oldHeight) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setPieceOfFurnitureDimension(piece, piece.getWidth(), piece.getDepth(), oldHeight);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setPieceOfFurnitureDimension(piece, piece.getWidth(), piece.getDepth(), newHeight);
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoPieceOfFurnitureHeightResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Post to undo support a width and depth change on <code>piece</code>. 
    */
-  private void postPieceOfFurnitureResize(final HomePieceOfFurniture piece, 
+  private void postPieceOfFurnitureWidthAndDepthResize(final HomePieceOfFurniture piece, 
                                           final float oldX, final float oldY,
                                           final float oldWidth, final float oldDepth) {
     final float newX = piece.getX();
@@ -1099,7 +1224,7 @@ public class PlanController {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureResizeName");
+          return resource.getString("undoPieceOfFurnitureWidthAndDepthResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -1355,12 +1480,16 @@ public class PlanController {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
-      } else if (getResizedPieceOfFurnitureAt(x, y) != null
+      } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
           || getResizedWallEndAt(x, y) != null) {
         ((PlanComponent)getView()).setResizeCursor();
+      } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+        ((PlanComponent)getView()).setHeightCursor();
       } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
+      } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
+        ((PlanComponent)getView()).setElevationCursor();
       } else {
         ((PlanComponent)getView()).setCursor(Mode.SELECTION);
       }
@@ -1377,10 +1506,14 @@ public class PlanController {
             setState(getCameraYawRotationState());
           } else if (getPitchRotatedCameraAt(x, y) != null) {
             setState(getCameraPitchRotationState());
-          } else if (getResizedPieceOfFurnitureAt(x, y) != null) {
+          } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureResizeState());
+          } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+            setState(getPieceOfFurnitureHeightState());
           } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureRotationState());
+          } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
+            setState(getPieceOfFurnitureElevationState());
           } else if (getResizedWallStartAt(x, y) != null
                      || getResizedWallEndAt(x, y) != null) {
             setState(getWallResizeState());
@@ -1499,7 +1632,7 @@ public class PlanController {
     @Override
     public void enter() {
       Object itemUnderCursor = 
-        getItemAt(getXLastMousePress(), getYLastMousePress());
+          getItemAt(getXLastMousePress(), getYLastMousePress());
       // If no item under cursor and shift wasn't down, deselect all
       if (itemUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
@@ -2019,6 +2152,158 @@ public class PlanController {
   }
 
   /**
+   * Furniture elevation state. This states manages the elevation change of a piece of furniture.
+   */
+  private class PieceOfFurnitureElevationState extends ControllerState {
+    private float                deltaYToElevationVertex;
+    private HomePieceOfFurniture selectedPiece;
+    private float                oldElevation;
+    private String               centimerElevationToolTipFeedback = resource.getString("centimerElevationToolTipFeedback");
+    private String               inchElevationToolTipFeedback = resource.getString("inchElevationToolTipFeedback");
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      float [] elevationPoint = this.selectedPiece.getPoints() [1];
+      this.deltaYToElevationVertex = getYLastMousePress() - elevationPoint [1];
+      this.oldElevation = this.selectedPiece.getElevation();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldElevation), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new height of the piece 
+      float [] topRightPoint = this.selectedPiece.getPoints() [1];
+      float deltaY = y - this.deltaYToElevationVertex - topRightPoint[1];
+      float newElevation = this.oldElevation - deltaY;
+      newElevation = Math.max(Math.round(newElevation * 10f) / 10f, 0f);
+
+      // Update piece new dimension
+      home.setPieceOfFurnitureElevation(this.selectedPiece, newElevation);
+
+      PlanComponent planView = (PlanComponent)getView();
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newElevation), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPieceOfFurnitureElevation(this.selectedPiece, this.oldElevation);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      home.setPieceOfFurnitureElevation(this.selectedPiece, this.oldElevation);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
+      this.selectedPiece = null;
+    }  
+    
+    private String getToolTipFeedbackText(float height) {
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        return String.format(this.centimerElevationToolTipFeedback, height);
+      } else {
+        return String.format(this.inchElevationToolTipFeedback, 
+            UserPreferences.Unit.centimerToInch(height));
+      }
+    }
+  }
+
+  /**
+   * Furniture height state. This states manages the height resizing of a piece of furniture.
+   */
+  private class PieceOfFurnitureHeightState extends ControllerState {
+    private float                deltaYToResizeVertex;
+    private HomePieceOfFurniture selectedPiece;
+    private float                oldHeight;
+    private String               centimerResizeToolTipFeedback = resource.getString("centimerHeightResizeToolTipFeedback");
+    private String               inchResizeToolTipFeedback = resource.getString("inchHeightResizeToolTipFeedback");
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      float [] resizePoint = this.selectedPiece.getPoints() [3];
+      this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
+      this.oldHeight = this.selectedPiece.getHeight();
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldHeight), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      // Compute the new height of the piece 
+      float [] bottomLeftPoint = this.selectedPiece.getPoints() [3];
+      float deltaY = y - this.deltaYToResizeVertex - bottomLeftPoint[1];
+      float newHeight = this.oldHeight - deltaY;
+      newHeight = Math.max(Math.round(newHeight * 10f) / 10f, 0.1f);
+
+      // Update piece new dimension
+      home.setPieceOfFurnitureDimension(this.selectedPiece, 
+          this.selectedPiece.getWidth(), this.selectedPiece.getDepth(), 
+          newHeight);
+
+      PlanComponent planView = (PlanComponent)getView();
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+      planView.setToolTipFeedback(getToolTipFeedbackText(newHeight), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postPieceOfFurnitureHeightResize(this.selectedPiece, this.oldHeight);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      home.setPieceOfFurnitureDimension(this.selectedPiece, 
+          this.selectedPiece.getWidth(), this.selectedPiece.getDepth(), 
+          this.oldHeight);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteToolTipFeedback();
+      this.selectedPiece = null;
+    }  
+    
+    private String getToolTipFeedbackText(float height) {
+      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+        return String.format(this.centimerResizeToolTipFeedback, height);
+      } else {
+        return String.format(this.inchResizeToolTipFeedback, 
+            UserPreferences.Unit.centimerToInch(height));
+      }
+    }
+  }
+
+  /**
    * Furniture resize state. This states manages the resizing of a piece of furniture.
    */
   private class PieceOfFurnitureResizeState extends ControllerState {
@@ -2029,8 +2314,8 @@ public class PlanController {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
-    private String               centimerResizeToolTipFeedback = resource.getString("centimerResizeToolTipFeedback");
-    private String               inchResizeToolTipFeedback = resource.getString("inchResizeToolTipFeedback");
+    private String               centimerResizeToolTipFeedback = resource.getString("centimerWidthAndDepthResizeToolTipFeedback");
+    private String               inchResizeToolTipFeedback = resource.getString("inchWidthAndDepthResizeToolTipFeedback");
 
     @Override
     public Mode getMode() {
@@ -2085,7 +2370,7 @@ public class PlanController {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureResize(this.selectedPiece, this.oldX, this.oldY, 
+      postPieceOfFurnitureWidthAndDepthResize(this.selectedPiece, this.oldX, this.oldY, 
           this.oldWidth, this.oldDepth);
       setState(getSelectionState());
     }

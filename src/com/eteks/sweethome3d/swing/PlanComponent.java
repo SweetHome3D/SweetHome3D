@@ -55,7 +55,10 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -117,13 +120,20 @@ public class PlanComponent extends JComponent implements Scrollable {
   private BufferedImage      backgroundImageCache;
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
+  private Cursor             elevationCursor;
+  private Cursor             heightCursor;
   private Cursor             resizeCursor;
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
+  private List<HomePieceOfFurniture> sortedHomeFurniture;
   
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
+  private static final GeneralPath FURNITURE_ELEVATION_INDICATOR;
+  private static final Shape       FURNITURE_ELEVATION_POINT_INDICATOR;
+  private static final GeneralPath FURNITURE_HEIGHT_INDICATOR;
+  private static final Shape       FURNITURE_HEIGHT_POINT_INDICATOR;
   private static final GeneralPath WALL_ORIENTATION_INDICATOR;
   private static final Shape       WALL_POINT;
   private static final GeneralPath WALL_RESIZE_INDICATOR;
@@ -142,20 +152,51 @@ public class PlanComponent extends JComponent implements Scrollable {
     FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(4f, -8.3f);
     
+    FURNITURE_ELEVATION_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
+    
+    // Create a path that draws a line with one arrow as an elevation indicator
+    // at top right of a piece of furniture
+    FURNITURE_ELEVATION_INDICATOR = new GeneralPath();
+    FURNITURE_ELEVATION_INDICATOR.moveTo(0, -5); // Vertical line
+    FURNITURE_ELEVATION_INDICATOR.lineTo(0, 5);
+    FURNITURE_ELEVATION_INDICATOR.moveTo(-2.5f, 5);    // Bottom line
+    FURNITURE_ELEVATION_INDICATOR.lineTo(2.5f, 5);
+    FURNITURE_ELEVATION_INDICATOR.moveTo(-1.2f, 1.5f); // Bottom arrow
+    FURNITURE_ELEVATION_INDICATOR.lineTo(0, 4.5f);
+    FURNITURE_ELEVATION_INDICATOR.lineTo(1.2f, 1.5f);
+    
+    FURNITURE_HEIGHT_POINT_INDICATOR = new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f);
+    
+    // Create a path that draws a line with two arrows as a height indicator
+    // at bottom left of a piece of furniture
+    FURNITURE_HEIGHT_INDICATOR = new GeneralPath();
+    FURNITURE_HEIGHT_INDICATOR.moveTo(0, -6); // Vertical line
+    FURNITURE_HEIGHT_INDICATOR.lineTo(0, 6);
+    FURNITURE_HEIGHT_INDICATOR.moveTo(-2.5f, -6);    // Top line
+    FURNITURE_HEIGHT_INDICATOR.lineTo(2.5f, -6);
+    FURNITURE_HEIGHT_INDICATOR.moveTo(-2.5f, 6);     // Bottom line
+    FURNITURE_HEIGHT_INDICATOR.lineTo(2.5f, 6);
+    FURNITURE_HEIGHT_INDICATOR.moveTo(-1.2f, -2.5f); // Top arrow
+    FURNITURE_HEIGHT_INDICATOR.lineTo(0f, -5.5f);
+    FURNITURE_HEIGHT_INDICATOR.lineTo(1.2f, -2.5f);
+    FURNITURE_HEIGHT_INDICATOR.moveTo(-1.2f, 2.5f);  // Bottom arrow
+    FURNITURE_HEIGHT_INDICATOR.lineTo(0f, 5.5f);
+    FURNITURE_HEIGHT_INDICATOR.lineTo(1.2f, 2.5f);
+    
     // Create a path used as a size indicator 
     // at bottom right vertex of a piece of furniture
     FURNITURE_RESIZE_INDICATOR = new GeneralPath();
     FURNITURE_RESIZE_INDICATOR.append(new Rectangle2D.Float(-1.5f, -1.5f, 3f, 3f), false);
-    FURNITURE_RESIZE_INDICATOR.moveTo(5, -3);
-    FURNITURE_RESIZE_INDICATOR.lineTo(6, -3);
-    FURNITURE_RESIZE_INDICATOR.lineTo(6, 6);
-    FURNITURE_RESIZE_INDICATOR.lineTo(-3, 6);
-    FURNITURE_RESIZE_INDICATOR.lineTo(-3, 5);
+    FURNITURE_RESIZE_INDICATOR.moveTo(5, -4);
+    FURNITURE_RESIZE_INDICATOR.lineTo(7, -4);
+    FURNITURE_RESIZE_INDICATOR.lineTo(7, 7);
+    FURNITURE_RESIZE_INDICATOR.lineTo(-4, 7);
+    FURNITURE_RESIZE_INDICATOR.lineTo(-4, 5);
     FURNITURE_RESIZE_INDICATOR.moveTo(3.5f, 3.5f);
-    FURNITURE_RESIZE_INDICATOR.lineTo(8, 8);
-    FURNITURE_RESIZE_INDICATOR.moveTo(6, 8.5f);
     FURNITURE_RESIZE_INDICATOR.lineTo(9, 9);
-    FURNITURE_RESIZE_INDICATOR.lineTo(8.5f, 6);
+    FURNITURE_RESIZE_INDICATOR.moveTo(7, 9.5f);
+    FURNITURE_RESIZE_INDICATOR.lineTo(10, 10);
+    FURNITURE_RESIZE_INDICATOR.lineTo(9.5f, 7);
     
     // Create a path used an orientation indicator
     // at start and end points of a selected wall
@@ -229,6 +270,10 @@ public class PlanComponent extends JComponent implements Scrollable {
     }
     this.rotationCursor = createCustomCursor("resources/rotationCursor16x16.png",
         "resources/rotationCursor32x32.png", "Rotation cursor");
+    this.elevationCursor = createCustomCursor("resources/elevationCursor16x16.png",
+        "resources/elevationCursor32x32.png", "Elevation cursor");
+    this.heightCursor = createCustomCursor("resources/heightCursor16x16.png",
+        "resources/heightCursor32x32.png", "Height cursor");
     this.resizeCursor = createCustomCursor("resources/resizeCursor16x16.png",
         "resources/resizeCursor32x32.png", "Resize cursor");
     // Install default colors
@@ -255,6 +300,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     });
     home.addFurnitureListener(new FurnitureListener() {
       public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+        sortedHomeFurniture = null;
         planBoundsCacheValid = false;
         // Revalidate and repaint
         revalidate();
@@ -662,6 +708,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint) {
+    float scaleInverse = 1 / this.scale;
     Shape wallsArea = getWallsArea(this.home.getWalls());
     // Fill walls area
     g2D.setPaint(getWallPaint());
@@ -679,7 +726,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         AffineTransform previousTransform = g2D.getTransform();
         // Draw start point of the wall
         g2D.translate(wall.getXStart(), wall.getYStart());
-        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.scale(scaleInverse, scaleInverse);
         g2D.setPaint(indicatorPaint);         
         g2D.setStroke(indicatorStroke);
         g2D.fill(WALL_POINT);
@@ -702,7 +749,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         
         // Draw end point of the wall
         g2D.translate(wall.getXEnd(), wall.getYEnd());
-        g2D.scale(1 / this.scale, 1 / this.scale);
+        g2D.scale(scaleInverse, scaleInverse);
         g2D.fill(WALL_POINT);
         if (distanceAtScale >= 30) { 
           // Draw orientation indicator at end of the wall
@@ -728,8 +775,8 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints resize indicator on <code>wall</code>.
    */
-  public void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
-                                       Paint indicatorPaint) {
+  private void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
+                                        Paint indicatorPaint) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -738,16 +785,17 @@ public class PlanComponent extends JComponent implements Scrollable {
           wall.getXEnd() - wall.getXStart());
       
       AffineTransform previousTransform = g2D.getTransform();
+      float scaleInverse = 1 / this.scale;
       // Draw resize indicator at wall start point
       g2D.translate(wall.getXStart(), wall.getYStart());
-      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(wallAngle + Math.PI);
       g2D.draw(WALL_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
       
       // Draw resize indicator at wall end point
       g2D.translate(wall.getXEnd(), wall.getYEnd());
-      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(wallAngle);
       g2D.draw(WALL_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
@@ -784,12 +832,30 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints home furniture.
    */
-  public void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
-                             Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                             Paint indicatorPaint) {
+  private void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
+                              Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                              Paint indicatorPaint) {
     BasicStroke pieceBorderStroke = new BasicStroke(1f / this.scale);
+    if (this.sortedHomeFurniture == null) {
+      // Sort home furniture in elevation order
+      this.sortedHomeFurniture = 
+          new ArrayList<HomePieceOfFurniture>(this.home.getFurniture());
+      Collections.sort(this.sortedHomeFurniture,
+          new Comparator<HomePieceOfFurniture>() {
+            public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+              float elevationDelta = piece1.getElevation() - piece2.getElevation();
+              if (elevationDelta < 0) {
+                return -1;
+              } else if (elevationDelta > 0) {
+                return 1;
+              } else {
+                return 0;
+              }
+            }
+          });
+    }
     // Draw furniture
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+    for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
       if (piece.isVisible()) {
         Shape pieceShape = getShape(piece.getPoints());
         // Fill piece area
@@ -811,7 +877,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         
         if (selectedItems.size() == 1 
             && selectedItems.get(0) == piece) {
-          paintPieceOFFurnitureResizeIndicator(g2D, 
+          paintPieceOFFurnitureIndicators(g2D, 
               (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint);
         }
       }
@@ -843,11 +909,11 @@ public class PlanComponent extends JComponent implements Scrollable {
   }
 
   /**
-   * Paints resize and rotation indicators on <code>piece</code>.
+   * Paints rotation, elevation, height and resize indicators on <code>piece</code>.
    */
-  public void paintPieceOFFurnitureResizeIndicator(Graphics2D g2D, 
-                                                   HomePieceOfFurniture piece,
-                                                   Paint indicatorPaint) {
+  private void paintPieceOFFurnitureIndicators(Graphics2D g2D, 
+                                               HomePieceOfFurniture piece,
+                                               Paint indicatorPaint) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -855,16 +921,40 @@ public class PlanComponent extends JComponent implements Scrollable {
       AffineTransform previousTransform = g2D.getTransform();
       // Draw rotation indicator at top left vertex of the piece
       float [][] piecePoints = piece.getPoints();
+      float scaleInverse = 1 / this.scale;
+      float pieceAngle = piece.getAngle();
       g2D.translate(piecePoints [0][0], piecePoints [0][1]);
-      g2D.scale(1 / this.scale, 1 / this.scale);
-      g2D.rotate(piece.getAngle());
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(pieceAngle);
       g2D.draw(FURNITURE_ROTATION_INDICATOR);
       g2D.setTransform(previousTransform);
 
+      // Draw elevation indicator at top right vertex of the piece
+      g2D.translate(piecePoints [1][0], piecePoints [1][1]);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(pieceAngle);
+      g2D.draw(FURNITURE_ELEVATION_POINT_INDICATOR);
+      // Place elevation indicator farther but don't rotate it
+      g2D.translate(6.5f, -6.5f);
+      g2D.rotate(-pieceAngle); 
+      g2D.draw(FURNITURE_ELEVATION_INDICATOR);
+      g2D.setTransform(previousTransform);
+      
+      // Draw height indicator at bottom left vertex of the piece
+      g2D.translate(piecePoints [3][0], piecePoints [3][1]);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(pieceAngle);
+      g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
+      // Place height indicator farther but don't rotate it
+      g2D.translate(-7.5f, 7.5f);
+      g2D.rotate(-pieceAngle);
+      g2D.draw(FURNITURE_HEIGHT_INDICATOR);
+      g2D.setTransform(previousTransform);
+      
       // Draw resize indicator at top left vertex of the piece
       g2D.translate(piecePoints [2][0], piecePoints [2][1]);
-      g2D.scale(1 / this.scale, 1 / this.scale);
-      g2D.rotate(piece.getAngle());
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.rotate(pieceAngle);
       g2D.draw(FURNITURE_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
     }
@@ -873,8 +963,8 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints wall location feedback.
    */
-  public void paintWallAlignmentFeedback(Graphics2D g2D, 
-                                        Paint feedbackPaint, Stroke feedbackStroke) {
+  private void paintWallAlignmentFeedback(Graphics2D g2D, 
+                                          Paint feedbackPaint, Stroke feedbackStroke) {
     // Paint wall location feedback
     if (this.wallLocationFeeback != null) {
       float margin = 1f / this.scale;
@@ -1026,9 +1116,10 @@ public class PlanComponent extends JComponent implements Scrollable {
       AffineTransform previousTransform = g2D.getTransform();
       // Draw yaw rotation indicator at middle of first and last point of camera 
       float [][] cameraPoints = camera.getPoints();
+      float scaleInverse = 1 / this.scale;
       g2D.translate((cameraPoints [0][0] + cameraPoints [3][0]) / 2, 
           (cameraPoints [0][1] + cameraPoints [3][1]) / 2);
-      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
       g2D.draw(CAMERA_YAW_ROTATION_INDICATOR);
       g2D.setTransform(previousTransform);
@@ -1036,7 +1127,7 @@ public class PlanComponent extends JComponent implements Scrollable {
       // Draw pitch rotation indicator at middle of second and third point of camera 
       g2D.translate((cameraPoints [1][0] + cameraPoints [2][0]) / 2, 
           (cameraPoints [1][1] + cameraPoints [2][1]) / 2);
-      g2D.scale(1 / this.scale, 1 / this.scale);
+      g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
       g2D.draw(CAMERA_PITCH_ROTATION_INDICATOR);
       g2D.setTransform(previousTransform);
@@ -1216,6 +1307,20 @@ public class PlanComponent extends JComponent implements Scrollable {
    */
   public void setRotationCursor() {
     setCursor(this.rotationCursor);
+  }
+
+  /**
+   * Sets the cursor of this component as height cursor. 
+   */
+  public void setHeightCursor() {
+    setCursor(this.heightCursor);
+  }
+
+  /**
+   * Sets the cursor of this component as elevation cursor. 
+   */
+  public void setElevationCursor() {
+    setCursor(this.elevationCursor);
   }
 
   /**

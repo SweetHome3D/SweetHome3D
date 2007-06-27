@@ -58,6 +58,8 @@ public class HomeFurniturePanel extends JPanel {
   private JSpinner                xSpinner;
   private JLabel                  yLabel;
   private JSpinner                ySpinner;
+  private JLabel                  elevationLabel;
+  private JSpinner                elevationSpinner;
   private JLabel                  angleLabel;
   private JSpinner                angleSpinner;
   private JLabel                  widthLabel;
@@ -108,16 +110,19 @@ public class HomeFurniturePanel extends JPanel {
     this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.ySpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
+    this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitText));
+    this.elevationSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0, 1000f));
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
     this.angleSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
-    this.widthLabel = new JLabel(this.resource.getString("widthLabel.text"));
+    this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitText));
     this.widthSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
-    this.depthLabel = new JLabel(this.resource.getString("depthLabel.text"));
+    this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitText));
     this.depthSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
-    this.heightLabel = new JLabel(this.resource.getString("heightLabel.text"));
+    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitText));
     this.heightSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
@@ -141,6 +146,9 @@ public class HomeFurniturePanel extends JPanel {
       this.yLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
       this.yLabel.setLabelFor(this.ySpinner);
+      this.elevationLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("elevationLabel.mnemonic")).getKeyCode());
+      this.elevationLabel.setLabelFor(this.elevationSpinner);
       this.angleLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("angleLabel.mnemonic")).getKeyCode());
       this.angleLabel.setLabelFor(this.angleSpinner);
@@ -172,43 +180,49 @@ public class HomeFurniturePanel extends JPanel {
     add(this.nameLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets rightComponentInsets = new Insets(0, 0, 10, 0);
+    Insets componentInsets = new Insets(0, 0, 10, 10);
     add(this.nameTextField, new GridBagConstraints(
-        1, 0, 5, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+        1, 0, 3, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
+    add(this.angleLabel, new GridBagConstraints(
+        4, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    Insets rightComponentInsets = new Insets(0, 0, 10, 0);
+    add(this.angleSpinner, new GridBagConstraints(
+        5, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
     // Second row
-    Insets spinnerInsets = new Insets(0, 0, 10, 10);
     add(this.xLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.xSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, spinnerInsets, -15, 0));
+        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
     add(this.yLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.ySpinner, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, spinnerInsets, -15, 0));
-    add(this.angleLabel, new GridBagConstraints(
+        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
+    add(this.elevationLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.angleSpinner, new GridBagConstraints(
+    add(this.elevationSpinner, new GridBagConstraints(
         5, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -10, 0));
     // Third row
     add(this.widthLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.widthSpinner, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, spinnerInsets, -15, 0));
+        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
     add(this.depthLabel, new GridBagConstraints(
         2, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.depthSpinner, new GridBagConstraints(
         3, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, spinnerInsets, -15, 0));
+        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
     add(this.heightLabel, new GridBagConstraints(
         4, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
@@ -253,6 +267,20 @@ public class HomeFurniturePanel extends JPanel {
       }
       this.nameTextField.setText(name);
       
+      Float angle = firstPiece.getAngle();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (angle.floatValue() != selectedFurniture.get(i).getAngle()) {
+          angle = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
+      if (angle == null) {
+        this.angleSpinner.setValue(null);
+      } else {
+        this.angleSpinner.setValue((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
+      }
+
       Float x = firstPiece.getX();
       for (int i = 1; i < selectedFurniture.size(); i++) {
         if (x.floatValue() != selectedFurniture.get(i).getX()) {
@@ -273,19 +301,15 @@ public class HomeFurniturePanel extends JPanel {
       ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
       ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
 
-      Float angle = firstPiece.getAngle();
+      Float elevation = firstPiece.getElevation();
       for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (angle.floatValue() != selectedFurniture.get(i).getAngle()) {
-          angle = null;
+        if (elevation.floatValue() != selectedFurniture.get(i).getElevation()) {
+          elevation = null;
           break;
         }
       }
-      ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
-      if (angle == null) {
-        this.angleSpinner.setValue(null);
-      } else {
-        this.angleSpinner.setValue((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
-      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).setNullable(elevation == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).setLength(elevation);
 
       Float width = firstPiece.getWidth();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -416,6 +440,13 @@ public class HomeFurniturePanel extends JPanel {
    */
   public Float getFurnitureY() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).getLength();
+  }
+
+  /**
+   * Returns the edited elevation of the furniture or <code>null</code>.
+   */
+  public Float getFurnitureElevation() {
+    return ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).getLength();
   }
 
   /**

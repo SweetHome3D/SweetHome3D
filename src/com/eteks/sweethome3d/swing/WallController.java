@@ -187,7 +187,7 @@ public class WallController {
   /**
    * Stores the current properties values of a modified wall.
    */
-  private static class ModifiedWall {
+  private static final class ModifiedWall {
     private final Wall    wall;
     private final float   xStart;
     private final float   yStart;

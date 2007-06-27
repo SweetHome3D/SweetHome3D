@@ -97,6 +97,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     HomePieceOfFurniture piece = frame.home.getFurniture().get(0);
     float pieceWidth = piece.getWidth();
     float pieceDepth = piece.getDepth();
+    float pieceHeight = piece.getHeight();
     float pieceX = pieceWidth / 2;
     float pieceY = pieceDepth / 2;
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
@@ -203,28 +204,64 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertTrue("Fifth wall not selected", 
         selectedItems.contains(fifthWall));
     
-    // 11. Click at point (156 + depthPixel / 2, 135 - widthPixel / 2) 
-    //     at resize vertex of the piece
-    tester.actionClick(planComponent, 156 + depthPixel / 2, 135 - widthPixel / 2);
+    // 11. Click at point (pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2) 
+    //     at width and depth resize vertex of the piece
+    int pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
+    int pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
+    tester.actionClick(planComponent, pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2);
     // Check selected items contains only the piece of furniture 
     selectedItems = frame.home.getSelectedItems();
     assertEquals("Wrong selected items count", 1, selectedItems.size());
     assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
     // Drag mouse (4,4) pixels out of piece box
     Thread.sleep(1000); // Wait 1s to avoid double click
-    tester.actionMousePress(planComponent, 
-        new ComponentLocation(new Point(156 + depthPixel / 2, 135 - widthPixel / 2)));
-    tester.actionMouseMove(planComponent,  
-        new ComponentLocation(new Point(156 + depthPixel / 2 + 4, 135 - widthPixel / 2 + 4))); 
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(
+        pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2)));
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
+        pieceXPixel + depthPixel / 2 + 4, pieceYPixel - widthPixel / 2 + 4))); 
     tester.actionMouseRelease();
-    // Check piece was resized (caution : piece angle is oriented at 90°)
+    // Check piece width and depth were resized (caution : piece angle is oriented at 90°)
     assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
-        pieceDepth + 4 / planComponent.getScale(), piece);
+        pieceDepth + 4 / planComponent.getScale(), pieceHeight, piece);
 
-    // 12. Click once on undo button
+    // 12. Click at point (pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2) 
+    //     at height resize vertex of the piece
+    pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
+    pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
+        pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2)));
+    Thread.sleep(1000);
+    
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(
+        pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2)));
+    // Drag mouse (2,4) pixels 
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
+        pieceXPixel + depthPixel / 2 + 2, pieceYPixel + widthPixel / 2 + 4))); 
+    tester.actionMouseRelease();
+    // Check piece height was resized 
+    assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
+        pieceDepth + 4 / planComponent.getScale(), 
+        pieceHeight - 4 / planComponent.getScale(), piece);
+
+    // 13. Click at point (pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2) 
+    //     at elevation vertex of the piece
+    float pieceElevation = piece.getElevation();
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(
+        pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2)));
+    // Drag mouse (2,-4) pixels 
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
+        pieceXPixel - depthPixel / 2 + 2, pieceYPixel - widthPixel / 2 - 4))); 
+    tester.actionMouseRelease();
+    // Check piece elevation was updated
+    assertElevationEqualPiece(pieceElevation + 4 / planComponent.getScale(), piece);
+
+    // 14. Click three times on undo button
     frame.undoButton.doClick();
-    // Check piece dimension is canceled
-    assertDimensionEqualPiece(pieceWidth, pieceDepth, piece);
+    frame.undoButton.doClick();
+    frame.undoButton.doClick();
+    // Check piece dimension and elevation are canceled
+    assertDimensionEqualPiece(pieceWidth, pieceDepth, pieceHeight, piece);
+    assertElevationEqualPiece(pieceElevation, piece);
   }
 
   /**
@@ -256,13 +293,22 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
   }
   
   /**
+   * Asserts <code>piece</code> elevation is equal to the given  
+   * <code>elevation</code>. 
+   */
+  private void assertElevationEqualPiece(float elevation, HomePieceOfFurniture piece) {
+    assertTrue("Incorrect elevation", Math.abs(elevation - piece.getElevation()) < 1E-10);
+  }
+  
+  /**
    * Asserts width and depth of <code>piece</code>  
    * are at <code>width</code> and <code>depth</code>). 
    */
-  private void assertDimensionEqualPiece(float width, float depth, 
+  private void assertDimensionEqualPiece(float width, float depth, float height,
                               HomePieceOfFurniture piece) {
     assertTrue("Incorrect width", Math.abs(width - piece.getWidth()) < 1E-10);
     assertTrue("Incorrect depth", Math.abs(depth - piece.getDepth()) < 1E-10);
+    assertTrue("Incorrect height", Math.abs(height - piece.getHeight()) < 1E-10);
   }
   
   private static class TestFrame extends JFrame {

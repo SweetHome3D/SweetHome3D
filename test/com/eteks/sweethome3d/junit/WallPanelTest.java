@@ -50,10 +50,10 @@ public class WallPanelTest extends TestCase {
     // 2. Create a wall panel to edit the selected wall
     WallPanel panel = new WallPanel(home, preferences, null);
     // Check values stored by wall panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, wall1.getXStart(), wall1.getYStart(),
+    assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
         wall1.getThickness(), home.getWallHeight(),
-        wall1.getLeftSideColor(), wall1.getRightSideColor());
+        wall1.getLeftSideColor(), wall1.getRightSideColor(), panel);
 
     // 3. Add a second selected wall to home
     Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
@@ -65,26 +65,26 @@ public class WallPanelTest extends TestCase {
     // Check if wall panel edits null values if walls thickness or colors are the same
     panel = new WallPanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(panel, null, null,
-        null, null, null, null, 10, null);
+    assertWallPanelEquals(null, null,
+        null, null, null, null, 10, null, panel);
   }
   
   /**
    * Assert values in parameter are the same as the ones 
    * stored in <code>panel</code> components.
    */
-  private void assertFurniturePanelEquals(WallPanel panel, 
-                                          Float xStart, Float yStart, Float xEnd, Float yEnd, 
-                                          Float thickness, Float height,
-                                          Integer leftColor, Integer rightColor) {
-    assertEquals("Wrong X start", panel.getWallXStart(), xStart);
-    assertEquals("Wrong Y start", panel.getWallYStart(), yStart);
-    assertEquals("Wrong X end", panel.getWallXEnd(), xEnd);
-    assertEquals("Wrong Y end", panel.getWallYEnd(), yEnd);
-    assertEquals("Wrong thickness", panel.getWallThickness(), thickness);
-    assertEquals("Wrong height", panel.getWallHeight(), height);
-    assertEquals("Wrong left side color", panel.getWallLeftSideColor(), leftColor);
-    assertEquals("Wrong right side color", panel.getWallRightSideColor(), rightColor);
+  private void assertWallPanelEquals(Float xStart, Float yStart, Float xEnd, Float yEnd, 
+                                     Float thickness, Float height,
+                                     Integer leftColor, Integer rightColor,
+                                     WallPanel panel) {
+    assertEquals("Wrong X start", xStart, panel.getWallXStart());
+    assertEquals("Wrong Y start", yStart, panel.getWallYStart());
+    assertEquals("Wrong X end", xEnd, panel.getWallXEnd());
+    assertEquals("Wrong Y end", yEnd, panel.getWallYEnd());
+    assertEquals("Wrong thickness", thickness, panel.getWallThickness());
+    assertEquals("Wrong height", height, panel.getWallHeight());
+    assertEquals("Wrong left side color", leftColor, panel.getWallLeftSideColor());
+    assertEquals("Wrong right side color", rightColor, panel.getWallRightSideColor());
   }
 
   public static void main(String [] args) {

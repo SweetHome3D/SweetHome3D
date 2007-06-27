@@ -214,6 +214,20 @@ public class Home implements Serializable {
   }
   
   /**
+   * Updates the elevation of <code>piece</code>. 
+   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   */
+  public void setPieceOfFurnitureElevation(HomePieceOfFurniture piece, 
+                                           float elevation) {
+    if (piece.getElevation() != elevation) {
+      piece.setElevation(elevation);
+      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Updates the angle of <code>piece</code>. 
    * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}

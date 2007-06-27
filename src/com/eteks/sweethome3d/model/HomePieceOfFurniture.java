@@ -39,7 +39,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Properties on which home furniture may be sorted.  
    */
   public enum SortableProperty {NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
-                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ANGLE};
+                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   
   static {
@@ -102,6 +102,11 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
           return HomePieceOfFurniture.compare(piece1.y, piece2.y);
         }
       });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.ELEVATION, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.elevation, piece2.elevation);
+        }
+      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.ANGLE, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           return HomePieceOfFurniture.compare(piece1.angle, piece2.angle);
@@ -127,6 +132,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private float   width;
   private float   depth;
   private float   height;
+  private float   elevation;
   private boolean movable;
   private boolean doorOrWindow;
   private Integer color;
@@ -149,6 +155,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.width = piece.getWidth();
     this.depth = piece.getDepth();
     this.height = piece.getHeight();
+    this.elevation = piece.getElevation();
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
     if (piece instanceof HomePieceOfFurniture) {
@@ -235,6 +242,22 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
 
   /**
+   * Returns the elevation of the bottom of this piece of furniture. 
+   */
+  public float getElevation() {
+    return this.elevation;
+  }
+
+  /**
+   * Sets the elevation of this piece of furniture.
+   * This method should be called from {@link Home}, which
+   * controls notifications when a piece changed.
+   */
+  void setElevation(float elevation) {
+    this.elevation = elevation;
+  }
+
+  /**
    * Returns <code>true</code> if this piece of furniture is movable.
    */
   public boolean isMovable() {
@@ -296,14 +319,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
 
   /**
-   * Returns the abscissa of this piece of furniture.
+   * Returns the abscissa of the center of this piece of furniture.
    */
   public float getX() {
     return this.x;
   }
 
   /**
-   * Sets the abscissa of this piece.
+   * Sets the abscissa of the center of this piece.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
@@ -313,14 +336,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
   
   /**
-   * Returns the ordinate of this piece of furniture.
+   * Returns the ordinate of the center of this piece of furniture.
    */
   public float getY() {
     return this.y;
   }
 
   /**
-   * Sets the ordinate of this piece.
+   * Sets the ordinate of the center of this piece.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
    */
@@ -419,6 +442,26 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   public boolean isTopLeftVertexAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin;
+  }
+
+  /**
+   * Returns <code>true</code> if the top right vertex of this piece is 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isTopRightVertexAt(float x, float y, float margin) {
+    float [][] points = getPoints();
+    return Math.abs(x - points[1][0]) <= margin && Math.abs(y - points[1][1]) <= margin;
+  }
+
+  /**
+   * Returns <code>true</code> if the bottom left vertex of this piece is 
+   * the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isBottomLeftVertexAt(float x, float y, float margin) {
+    float [][] points = getPoints();
+    return Math.abs(x - points[3][0]) <= margin && Math.abs(y - points[3][1]) <= margin;
   }
 
   /**
