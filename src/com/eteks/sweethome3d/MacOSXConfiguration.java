@@ -87,6 +87,13 @@ class MacOSXConfiguration {
     });
     application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
+
+    // Create a default undecorated frame out of sight 
+    // to attach the default application menu bar to it
+    defaultFrame = new JFrame();
+    defaultFrame.setLocation(-10, 0);
+    defaultFrame.setUndecorated(true);
+    defaultFrame.setVisible(true);
   }
 
   /**
@@ -103,8 +110,8 @@ class MacOSXConfiguration {
         
         @Override
         public void windowClosed(WindowEvent ev) {
-          if (defaultFrame == null) {
-            // Create the default frame menu bar available when no home frame are visible
+          if (defaultFrame.getJMenuBar() == null) {
+            // Create the default application menu bar 
             JMenuBar menuBar = new JMenuBar();
             JMenu fileMenu = new JMenu(new ResourceAction(
                 ResourceBundle.getBundle(HomePane.class.getName()), "FILE_MENU", true));
@@ -113,11 +120,7 @@ class MacOSXConfiguration {
             fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.NEW_HOME)));
             fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.OPEN)));
             
-            defaultFrame = new JFrame();
             defaultFrame.setJMenuBar(menuBar);
-            defaultFrame.setLocation(-10, 0);
-            defaultFrame.setUndecorated(true);
-            defaultFrame.setVisible(true);
           }
         }
       });
