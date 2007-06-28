@@ -134,9 +134,43 @@ public class HomeFramePane extends JRootPane {
         }
       });
     
+    addFirstNewHomeListener(home, application, controller);
+    
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
       // Bind controller to frame application menu  
       MacOSXConfiguration.bindControllerToApplicationMenu(frame, controller);
+    }
+  }
+
+  /**
+   * Adds a listener to first new home to close it if an other one is opened.
+   */ 
+  private void addFirstNewHomeListener(final Home home, 
+                                       final HomeApplication application, 
+                                       final HomeFrameController controller) {
+    if (newHomeNumber == 1 && home.getName() == null) {
+      final HomeListener firstHomeListener = new HomeListener() {
+          public void homeChanged(HomeEvent ev) {
+            if (ev.getType() == HomeEvent.Type.ADD) { 
+              if (ev.getHome().getName() != null
+                  && home.getName() == null) {
+                controller.close();
+              }
+              application.removeHomeListener(this);
+            } else if (ev.getHome() == home
+                       && ev.getType() == HomeEvent.Type.DELETE) {
+              application.removeHomeListener(this);
+            }
+          }
+        };
+      application.addHomeListener(firstHomeListener);
+      // Disable this listener at first home change
+      home.addPropertyChangeListener("modified", new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            application.removeHomeListener(firstHomeListener);
+            home.removePropertyChangeListener("modified", this);
+          }
+        });
     }
   }
   

@@ -159,13 +159,14 @@ public class SweetHome3D extends HomeApplication {
               new HomeFrameController(home, application);
               break;
             case DELETE :
-              // If application has no more home
-              if (application.getHomes().isEmpty()) {
+              // If application has no more home 
+              if (application.getHomes().isEmpty()
+                  && !System.getProperty("os.name").startsWith("Mac OS X")) {
                 // If SingleInstanceService is available, remove the listener that was added on it
                 if (singleInstanceService != null) {
                   singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
                 }
-                // Exit
+                // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
                 System.exit(0);
               }
               break;

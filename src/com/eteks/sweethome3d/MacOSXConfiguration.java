@@ -19,15 +19,22 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ResourceBundle;
 
+import javax.swing.ActionMap;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 
 import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
 import com.eteks.sweethome3d.swing.HomeController;
+import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.ResourceAction;
 
 /**
  * Configuration class that accesses to Mac OS X specifics.
@@ -39,6 +46,7 @@ import com.eteks.sweethome3d.swing.HomeController;
  */
 class MacOSXConfiguration {
   private static Application    application = new Application();
+  private static JFrame         defaultFrame;
   private static HomeController currentController;
 
   static {
@@ -48,6 +56,14 @@ class MacOSXConfiguration {
       @Override
       public void handleQuit(ApplicationEvent ev) {
         currentController.exit();
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // If default frame is active, it means there's no more open window
+              if (defaultFrame != null && defaultFrame.isActive()) {
+                System.exit(0);
+              }
+            }
+          });
       }
       
       @Override
@@ -83,6 +99,26 @@ class MacOSXConfiguration {
         @Override
         public void windowActivated(WindowEvent ev) {
           currentController = controller;
+        }
+        
+        @Override
+        public void windowClosed(WindowEvent ev) {
+          if (defaultFrame == null) {
+            // Create the default frame menu bar available when no home frame are visible
+            JMenuBar menuBar = new JMenuBar();
+            JMenu fileMenu = new JMenu(new ResourceAction(
+                ResourceBundle.getBundle(HomePane.class.getName()), "FILE_MENU", true));
+            menuBar.add(fileMenu);
+            ActionMap homePaneActionMap = controller.getView().getActionMap();
+            fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.NEW_HOME)));
+            fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.OPEN)));
+            
+            defaultFrame = new JFrame();
+            defaultFrame.setJMenuBar(menuBar);
+            defaultFrame.setLocation(-10, 0);
+            defaultFrame.setUndecorated(true);
+            defaultFrame.setVisible(true);
+          }
         }
       });
   }  
