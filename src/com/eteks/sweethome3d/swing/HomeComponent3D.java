@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -86,6 +87,7 @@ import javax.vecmath.Vector3f;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CameraEvent;
 import com.eteks.sweethome3d.model.CameraListener;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -498,10 +500,12 @@ public class HomeComponent3D extends JComponent {
   private Node getHomeTree(Home home) {
     Group homeRoot = getHomeRoot();
     // Add walls and pieces already available 
-    for (Wall wall : home.getWalls())
+    for (Wall wall : home.getWalls()) {
       addWall(homeRoot, wall, home);
-    for (HomePieceOfFurniture piece : home.getFurniture())
+    }
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
       addPieceOfFurniture(homeRoot, piece);
+    }
     // Add wall and furniture listeners to home for further update
     addWallListener(home, homeRoot);
     addFurnitureListener(home, homeRoot);
@@ -559,17 +563,18 @@ public class HomeComponent3D extends JComponent {
           switch (ev.getType()) {
             case ADD :
               addPieceOfFurniture(homeRoot, piece);
+              updateWallsDoorOrWindowIntersections(home, piece);
               break;
             case UPDATE :
               updatePieceOfFurniture(piece);
+              updateWallsDoorOrWindowIntersections(home, piece);
               break;
             case DELETE :
               deleteObject(piece);
+              if (piece.isDoorOrWindow()) {
+                updateObjects(home.getWalls());
+              }
               break;
-          }
-          // If added piece is a door or a window, update all walls
-          if (piece.isDoorOrWindow()) {
-            updateObjects(home.getWalls());
           }
         }
       });
@@ -622,6 +627,20 @@ public class HomeComponent3D extends JComponent {
    */
   private void updatePieceOfFurniture(HomePieceOfFurniture piece) {
     updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+  }
+
+  private void updateWallsDoorOrWindowIntersections(Home home, 
+                                                    HomePieceOfFurniture piece) {
+    // If piece is a door or a window, update walls that intersect with piece
+    if (piece.isDoorOrWindow()) {
+      List<Wall> intersectedWalls = new ArrayList<Wall>(3);
+      for (Wall wall : home.getWalls()) {
+        if (((Wall3D)homeObjects.get(wall)).intersectsDoorOrWindow(piece)) {              
+          intersectedWalls.add(wall);
+        }
+      }
+      updateObjects(intersectedWalls);
+    }
   }
 
   /**
@@ -747,7 +766,8 @@ public class HomeComponent3D extends JComponent {
           Shape pieceShape = getShape(piece.getPoints());
           Area wallArea = new Area(wallShape);
           wallArea.intersect(new Area(pieceShape));
-          if (!wallArea.isEmpty()) {
+          boolean wallPieceIntersectionEmpty = wallArea.isEmpty();
+          if (!wallPieceIntersectionEmpty) {
             intersections.put(piece, wallArea);
           }
         }
@@ -809,6 +829,22 @@ public class HomeComponent3D extends JComponent {
         }
       }
       return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
+    }
+    
+    /**
+     * Returns <code>true</code> if <code>piece</code> intersection with this wall
+     * isn't empty.
+     */
+    public boolean intersectsDoorOrWindow(HomePieceOfFurniture piece) {
+      if (piece.getElevation() < getWallHeight()) {
+        Shape pieceShape = getShape(piece.getPoints());
+        Shape wallShape = getShape(((Wall)getUserData()).getPoints());
+        Area wallArea = new Area(wallShape);
+        wallArea.intersect(new Area(pieceShape));
+        return !wallArea.isEmpty();
+      } else {
+        return false;
+      }
     }
     
     /**
@@ -877,8 +913,8 @@ public class HomeComponent3D extends JComponent {
       GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
       geometryInfo.setCoordinates (coords);
       // Generate normals
-      new NormalGenerator(0).generateNormals (geometryInfo);
-      return geometryInfo.getIndexedGeometryArray ();
+      new NormalGenerator(0).generateNormals(geometryInfo);
+      return geometryInfo.getIndexedGeometryArray();
     }
 
     /**
@@ -970,6 +1006,7 @@ public class HomeComponent3D extends JComponent {
         new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
     
     private static Executor modelLoader = Executors.newSingleThreadExecutor();
+    private static Map<Content, Node> modelNodesCache = new WeakHashMap<Content, Node>();
 
     public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
       setUserData(piece);      
@@ -1112,10 +1149,17 @@ public class HomeComponent3D extends JComponent {
      */
     private Node getModelNode() {
       PieceOfFurniture piece = (PieceOfFurniture)getUserData();
+      // If same model was already loaded return a clone from its cache 
+      Content model = piece.getModel();
+      Node modelNode = modelNodesCache.get(model);
+      if (modelNode != null) {
+        return modelNode.cloneTree(true);
+      }
+      
       Reader modelReader = null;
       try {
         // Read piece model from a object file 
-        modelReader = new InputStreamReader(piece.getModel().openStream());
+        modelReader = new InputStreamReader(model.openStream());
         ObjectFile loader = new ObjectFile();
         Scene scene = loader.load(modelReader);
         
@@ -1147,6 +1191,8 @@ public class HomeComponent3D extends JComponent {
         TransformGroup modelTransformGroup = 
           new TransformGroup(modelTransform);
         modelTransformGroup.addChild(modelScene);
+        // Store in cache a clone of the node for future copies 
+        modelNodesCache.put(model, modelTransformGroup.cloneTree(true));
         return modelTransformGroup;
       } catch (IOException ex) {
         // In case of problem return a default box

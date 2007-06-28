@@ -616,7 +616,7 @@ public class Home implements Serializable {
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
-  public void removeProrertyChangeistener(String property, PropertyChangeListener listener) {
+  public void removePropertyChangeListener(String property, PropertyChangeListener listener) {
     if (this.propertyChangeSupport != null) {
       this.propertyChangeSupport.removePropertyChangeListener(property, listener);
     }

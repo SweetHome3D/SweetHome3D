@@ -77,7 +77,7 @@ public abstract class UserPreferences {
   /**
    * Removes the <code>listener</code> in parameter from these preferences.
    */
-  public void removeProrertyChangeistener(String property, 
+  public void removePropertyChangeListener(String property, 
                                           PropertyChangeListener listener) {
     this.propertyChangeSupport.removePropertyChangeListener(
         property, listener);
