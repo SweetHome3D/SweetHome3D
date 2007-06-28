@@ -1172,14 +1172,17 @@ public class HomeComponent3D extends JComponent {
     private void updateWindowPanesTransparency(Scene scene) {
       Map<String, Object> namedObjects = scene.getNamedObjects();
       for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
-        if (entry.getKey().startsWith(WINDOW_PANE_SHAPE)
-            && entry.getValue() instanceof Shape3D) {
+        if (entry.getValue() instanceof Shape3D) {
+          // Assign shape name to its user data
           Shape3D shape = (Shape3D)entry.getValue();
-          Appearance appearance = shape.getAppearance();
-          if (appearance == null) {
-            shape.setAppearance(createAppearanceWithChangeCapabilities());
+          shape.setUserData(entry.getKey());
+          if (entry.getKey().startsWith(WINDOW_PANE_SHAPE)) {
+            Appearance appearance = shape.getAppearance();
+            if (appearance == null) {
+              shape.setAppearance(createAppearanceWithChangeCapabilities());
+            }
+            appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
           }
-          appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
         }
       }
     }
@@ -1258,22 +1261,27 @@ public class HomeComponent3D extends JComponent {
         }
       } else if (node instanceof Shape3D) {
         Shape3D shape = (Shape3D)node;
-        Appearance appearance = shape.getAppearance();
-        if (appearance == null) {
-          shape.setAppearance(createAppearanceWithChangeCapabilities());
-        }
-        // Use shape user data to store shape default material
-        Material defaultMaterial = (Material)shape.getUserData();
-        if (defaultMaterial == null) {
-          defaultMaterial = appearance.getMaterial();
-          shape.setUserData(defaultMaterial);
-        }
-        // Change material
-        if (material != null) {
-          appearance.setMaterial(material);
-        } else {
-          // Restore default material
-          appearance.setMaterial(defaultMaterial);
+        String shapeName = (String)shape.getUserData();
+        // Change material of all shape that are not window panes
+        if (shapeName == null
+            || !shapeName.startsWith(WINDOW_PANE_SHAPE)) {
+          Appearance appearance = shape.getAppearance();
+          if (appearance == null) {
+            shape.setAppearance(createAppearanceWithChangeCapabilities());
+          }
+          // Use appearance user data to store shape default material
+          Material defaultMaterial = (Material)appearance.getUserData();
+          if (defaultMaterial == null) {
+            defaultMaterial = appearance.getMaterial();
+            appearance.setUserData(defaultMaterial);
+          }
+          // Change material
+          if (material != null) {
+            appearance.setMaterial(material);
+          } else {
+            // Restore default material
+            appearance.setMaterial(defaultMaterial);
+          }
         }
       }
     }
