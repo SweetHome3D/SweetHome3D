@@ -126,6 +126,7 @@ public class PlanComponent extends JComponent implements Scrollable {
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
+  private PropertyChangeListener     unitPreferencesListener;
   private List<HomePieceOfFurniture> sortedHomeFurniture;
   
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
@@ -313,15 +314,16 @@ public class PlanComponent extends JComponent implements Scrollable {
         revalidate();
       }
     });
-    home.addPropertyChangeListener("backgroundImage", 
+    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           backgroundImageCache = null;
           repaint();
         }
       });
-    preferences.addPropertyChangeListener("unit", 
-      new PropertyChangeListener() {
+    // Store unit preferences listener in a field to avoid loosing the 
+    // weak reference to this listener once added
+    this.unitPreferencesListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
           repaint();
           if (horizontalRuler != null) {
@@ -331,7 +333,9 @@ public class PlanComponent extends JComponent implements Scrollable {
             verticalRuler.repaint();
           }
         }
-      });
+      };
+    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
+        this.unitPreferencesListener);
   }
 
   /**

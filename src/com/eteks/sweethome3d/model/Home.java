@@ -36,6 +36,10 @@ import java.util.List;
 public class Home implements Serializable {
   private static final long serialVersionUID = 1L;
   
+  public enum Property {NAME, MODIFIED,
+    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED,
+    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, LIGHT_COLOR, WALLS_ALPHA};
+  
   private List<HomePieceOfFurniture>            furniture;
   private transient List<Object>                selectedItems;
   private transient List<FurnitureListener>     furnitureListeners;
@@ -606,19 +610,19 @@ public class Home implements Serializable {
   /**
    * Adds the property change <code>listener</code> in parameter to this home.
    */
-  public void addPropertyChangeListener(String property, PropertyChangeListener listener) {
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
     if (this.propertyChangeSupport == null) {
       this.propertyChangeSupport = new PropertyChangeSupport(this);
     }
-    this.propertyChangeSupport.addPropertyChangeListener(property, listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
-  public void removePropertyChangeListener(String property, PropertyChangeListener listener) {
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
     if (this.propertyChangeSupport != null) {
-      this.propertyChangeSupport.removePropertyChangeListener(property, listener);
+      this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
     }
   }
 
@@ -645,7 +649,7 @@ public class Home implements Serializable {
       String oldName = this.name;
       this.name = name;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("name", oldName, name);
+        this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
       }
     }
   }
@@ -664,7 +668,8 @@ public class Home implements Serializable {
     if (modified != this.modified) {
       this.modified = modified;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("modified", !modified, modified);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.MODIFIED.toString(), !modified, modified);
       }
     }
   }
@@ -687,7 +692,8 @@ public class Home implements Serializable {
       HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("furnitureSortedProperty", 
+        this.propertyChangeSupport.firePropertyChange(
+            Property.FURNITURE_SORTED_PROPERTY.toString(), 
             oldFurnitureSortedProperty, furnitureSortedProperty);
       }
     }
@@ -708,7 +714,8 @@ public class Home implements Serializable {
     if (furnitureDescendingSorted != this.furnitureDescendingSorted) {
       this.furnitureDescendingSorted = furnitureDescendingSorted;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("furnitureDescendingSorted", 
+        this.propertyChangeSupport.firePropertyChange(
+            Property.FURNITURE_DESCENDING_SORTED.toString(), 
             !furnitureDescendingSorted, furnitureDescendingSorted);
       }
     }
@@ -729,8 +736,8 @@ public class Home implements Serializable {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("backgroundImage", 
-            oldBackgroundImage, backgroundImage);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.BACKGROUND_IMAGE.toString(), oldBackgroundImage, backgroundImage);
       }
     }
   }
@@ -771,7 +778,8 @@ public class Home implements Serializable {
       Camera oldCamera = this.camera;
       this.camera = camera;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("camera", oldCamera, camera);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.CAMERA.toString(), oldCamera, camera);
       }
     }
   }
@@ -861,7 +869,8 @@ public class Home implements Serializable {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("groundColor", oldGroundColor, groundColor);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
       }
     }
   }
@@ -881,7 +890,8 @@ public class Home implements Serializable {
       int oldSkyColor = this.skyColor;
       this.skyColor = skyColor;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("skyColor", oldSkyColor, skyColor);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
       }
     }
   }
@@ -901,7 +911,8 @@ public class Home implements Serializable {
       int oldLightColor = this.lightColor;
       this.lightColor = lightColor;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("lightColor", oldLightColor, lightColor);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
       }
     }
   }
@@ -922,7 +933,8 @@ public class Home implements Serializable {
       float oldWallsAlpha = this.wallsAlpha;
       this.wallsAlpha = wallsAlpha;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange("wallsAlpha", oldWallsAlpha, wallsAlpha);
+        this.propertyChangeSupport.firePropertyChange(
+            Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
       }
     }
   }

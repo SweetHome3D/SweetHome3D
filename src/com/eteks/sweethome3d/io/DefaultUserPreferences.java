@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.RecorderException;
@@ -42,6 +43,7 @@ public class DefaultUserPreferences extends UserPreferences {
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewHomeWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
+    setRecentHomes(new ArrayList<String>());
   }
 
   /**

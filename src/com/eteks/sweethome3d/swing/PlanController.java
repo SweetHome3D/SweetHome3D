@@ -54,6 +54,8 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class PlanController {
+  public enum Property {MODE}
+  
   public enum Mode {WALL_CREATION, SELECTION}
   
   private JComponent            planView;
@@ -140,15 +142,15 @@ public class PlanController {
   /**
    * Adds the property change <code>listener</code> in parameter to this home.
    */
-  public void addPropertyChangeListener(String property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property, listener);
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
-  public void removeProrertyChangeistener(String property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property, listener);
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
   }
 
   /**
@@ -165,7 +167,7 @@ public class PlanController {
     Mode oldMode = this.state.getMode();
     if (mode != oldMode) {
       this.state.setMode(mode);
-      this.propertyChangeSupport.firePropertyChange("mode", oldMode, mode);
+      this.propertyChangeSupport.firePropertyChange(Property.MODE.toString(), oldMode, mode);
     }
   }
 

@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -32,26 +34,42 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
+  private static final String UNIT                 = "unit";
+  private static final String MAGNETISM_ENABLED    = "magnetismEnabled";
+  private static final String RULERS_VISIBLE       = "rulersVisible";
+  private static final String NEW_HOME_WALL_HEIGHT = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS   = "newWallThickness";
+  private static final String RECENT_HOMES         = "recentHomes#";
+
   /**
    * Creates user preferences read either from user preferences in file system, 
    * or from resource files.
    */
   public FileUserPreferences() {
     DefaultUserPreferences defaultPreferences = 
-      new DefaultUserPreferences();
+        new DefaultUserPreferences();
     // Use default catalog at this time as user has no way to modified it
     setCatalog(defaultPreferences.getCatalog());   
     // Read other preferences from current user preferences in system
     Preferences preferences = getPreferences();
-    Unit unit = Unit.valueOf(preferences.get("unit", 
+    Unit unit = Unit.valueOf(preferences.get(UNIT, 
         defaultPreferences.getUnit().toString()));
     setUnit(unit);
-    setMagnetismEnabled(preferences.getBoolean("magnetismEnabled", true));
-    setRulersVisible(preferences.getBoolean("rulersVisible", true));
-    setNewWallThickness(preferences.getFloat("newWallThickness", 
+    setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
+    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, true));
+    setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
             defaultPreferences.getNewWallThickness()));
-    setNewHomeWallHeight(preferences.getFloat("newHomeWallHeight",
+    setNewHomeWallHeight(preferences.getFloat(NEW_HOME_WALL_HEIGHT,
             defaultPreferences.getNewHomeWallHeight()));    
+    // Read recent homes list
+    List<String> recentHomes = new ArrayList<String>();
+    for (int i = 0; i < 4; i++) {
+      String recentHome = preferences.get(RECENT_HOMES + i, null);
+      if (recentHome != null) {
+        recentHomes.add(recentHome);
+      }
+    }
+    setRecentHomes(recentHomes);
   }
 
   /**
@@ -60,11 +78,19 @@ public class FileUserPreferences extends UserPreferences {
   @Override
   public void write() throws RecorderException {
     Preferences preferences = getPreferences();
-    preferences.put("unit", getUnit().toString());   
-    preferences.putBoolean("magnetismEnabled", isMagnetismEnabled());
-    preferences.putBoolean("rulersVisible", isRulersVisible());
-    preferences.putFloat("newWallThickness", getNewWallThickness());   
-    preferences.putFloat("newHomeWallHeight", getNewHomeWallHeight());
+    preferences.put(UNIT, getUnit().toString());   
+    preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
+    preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
+    preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
+    preferences.putFloat(NEW_HOME_WALL_HEIGHT, getNewHomeWallHeight());
+    // Write recent homes list
+    List<String> recentHomes = getRecentHomes();
+    for (int i = 0; i < recentHomes.size(); i++) {
+      preferences.put(RECENT_HOMES + i, recentHomes.get(i));
+    }
+    for (int i = recentHomes.size(); i < 4; i++) {
+      preferences.remove(RECENT_HOMES + i);
+    }
     try {
       // Write preferences 
       preferences.sync();

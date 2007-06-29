@@ -41,6 +41,7 @@ import java.util.ResourceBundle;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -69,6 +70,8 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Home;
@@ -81,7 +84,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    NEW_HOME, CLOSE, OPEN, SAVE, SAVE_AS, PREFERENCES, EXIT, 
+    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_HOME_FURNITURE,
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
@@ -125,6 +128,7 @@ public class HomePane extends JRootPane {
   private TransferHandler                 catalogTransferHandler;
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
+  private PropertyChangeListener          rulersPreferencesListener;
   
   /**
    * Creates this view associated with its controller.
@@ -155,7 +159,7 @@ public class HomePane extends JRootPane {
     createTransferHandlers(home, preferences, controller);
     addHomeListener(home);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = getHomeMenuBar(home);
+    JMenuBar homeMenuBar = getHomeMenuBar(home, controller);
     setJMenuBar(homeMenuBar);
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
     getContentPane().add(getMainPane(home, preferences, controller));
@@ -169,6 +173,7 @@ public class HomePane extends JRootPane {
   private void createActions(final HomeController controller) {
     createAction(ActionType.NEW_HOME, controller, "newHome");
     createAction(ActionType.OPEN, controller, "open");
+    createAction(ActionType.DELETE_RECENT_HOMES, controller, "deleteRecentHomes");
     createAction(ActionType.CLOSE, controller, "close");
     createAction(ActionType.SAVE, controller, "save");
     createAction(ActionType.SAVE_AS, controller, "saveAs");
@@ -288,7 +293,7 @@ public class HomePane extends JRootPane {
    * View from top and View from observer toggle models according to used camera.
    */
   private void addHomeListener(final Home home) {
-    home.addPropertyChangeListener("camera", 
+    home.addPropertyChangeListener(Home.Property.CAMERA, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             viewFromTopToggleModel.setSelected(
@@ -304,7 +309,7 @@ public class HomePane extends JRootPane {
    * Select and Create walls toggle models according to current mode.
    */
   private void addPlanControllerListener(final PlanController planController) {
-    planController.addPropertyChangeListener("mode", 
+    planController.addPropertyChangeListener(PlanController.Property.MODE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             selectToggleModel.setSelected(planController.getMode() 
@@ -314,15 +319,31 @@ public class HomePane extends JRootPane {
           }
         });
   }
-
+  
   /**
    * Returns the menu bar displayed in this pane.
    */
-  private JMenuBar getHomeMenuBar(final Home home) {
+  private JMenuBar getHomeMenuBar(final Home home, final HomeController controller) {
     // Create File menu
     JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU", true));
     fileMenu.add(getMenuAction(ActionType.NEW_HOME));
     fileMenu.add(getMenuAction(ActionType.OPEN));
+    
+    final JMenu openRecentHomeMenu = 
+        new JMenu(new ResourceAction(this.resource, "OPEN_RECENT_HOME_MENU", true));
+    openRecentHomeMenu.addMenuListener(new MenuListener() {
+        public void menuSelected(MenuEvent ev) {
+          updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
+        }
+      
+        public void menuCanceled(MenuEvent ev) {
+        }
+  
+        public void menuDeselected(MenuEvent ev) {
+        }
+      });
+    
+    fileMenu.add(openRecentHomeMenu);
     fileMenu.addSeparator();
     fileMenu.add(getMenuAction(ActionType.CLOSE));
     fileMenu.add(getMenuAction(ActionType.SAVE));
@@ -422,7 +443,7 @@ public class HomePane extends JRootPane {
             : ActionType.MODIFY_BACKGROUND_IMAGE));
     // Add a listener to home on backgroundImage property change to 
     // switch action according to backgroundImage change
-    home.addPropertyChangeListener("backgroundImage", 
+    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             importModifyBackgroundImageMenuItem.setAction(
@@ -470,6 +491,25 @@ public class HomePane extends JRootPane {
     }
 
     return menuBar;
+  }
+
+  /**
+   * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
+   */
+  protected void updateOpenRecentHomeMenu(JMenu openRecentHomeMenu, 
+                                          final HomeController controller) {
+    openRecentHomeMenu.removeAll();
+    for (final String homeName : controller.getRecentHomes()) {
+      openRecentHomeMenu.add(new AbstractAction(new File(homeName).getName()) {
+          public void actionPerformed(ActionEvent e) {
+            controller.open(homeName);
+          }
+        });
+    }
+    if (openRecentHomeMenu.getMenuComponentCount() > 0) {
+      openRecentHomeMenu.addSeparator();
+    }
+    openRecentHomeMenu.add(getMenuAction(ActionType.DELETE_RECENT_HOMES));
   }
 
   /**
@@ -733,13 +773,16 @@ public class HomePane extends JRootPane {
     this.planView = controller.getPlanController().getView();
     final JScrollPane planScrollPane = new HomeScrollPane(this.planView);
     setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
+    // Store rulers preferences listener in a field to avoid loosing the 
+    // weak reference to this listener once added
+    this.rulersPreferencesListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          setPlanRulersVisible(planScrollPane, controller, (Boolean)ev.getNewValue());
+        }
+      };
     // Add a listener to update rulers visibility in preferences
-    preferences.addPropertyChangeListener("rulersVisible", 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            setPlanRulersVisible(planScrollPane, controller, (Boolean)ev.getNewValue());
-          }
-        });
+    preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
+        this.rulersPreferencesListener);
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
 
@@ -987,6 +1030,15 @@ public class HomePane extends JRootPane {
     String title = this.resource.getString("error.title");
     JOptionPane.showMessageDialog(this, message, title, 
         JOptionPane.ERROR_MESSAGE);
+  }
+
+  /**
+   * Displays <code>message</code> in a message box.
+   */
+  public void showMessage(String message) {
+    String title = this.resource.getString("message.title");
+    JOptionPane.showMessageDialog(this, message, title, 
+        JOptionPane.INFORMATION_MESSAGE);
   }
 
   /**

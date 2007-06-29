@@ -63,7 +63,8 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable {
-  private ListSelectionListener tableSelectionListener;
+  private ListSelectionListener  tableSelectionListener;
+  private PropertyChangeListener unitPreferencesListener;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -175,12 +176,15 @@ public class FurnitureTable extends JTable {
    * when unit changes.  
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
-    preferences.addPropertyChangeListener("unit", 
-      new PropertyChangeListener() {
+    // Store unit preferences listener in a field to avoid loosing the 
+    // weak reference to this listener once added
+    this.unitPreferencesListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           repaint();
         }
-      });
+      };
+    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
+        this.unitPreferencesListener);
   }
 
   /**
@@ -198,8 +202,8 @@ public class FurnitureTable extends JTable {
           getTableHeader().repaint();
         }
       };
-    home.addPropertyChangeListener("furnitureSortedProperty", sortListener);
-    home.addPropertyChangeListener("furnitureDescendingSorted", sortListener);
+    home.addPropertyChangeListener(Home.Property.FURNITURE_SORTED_PROPERTY, sortListener);
+    home.addPropertyChangeListener(Home.Property.FURNITURE_DESCENDING_SORTED, sortListener);
     
     home.addFurnitureListener(new FurnitureListener() {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {

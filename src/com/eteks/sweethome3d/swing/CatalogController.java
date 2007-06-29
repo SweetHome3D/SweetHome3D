@@ -56,4 +56,14 @@ public class CatalogController {
   public void setSelectedFurniture(List<CatalogPieceOfFurniture> selectedFurniture) {
     this.catalog.setSelectedFurniture(selectedFurniture);
   }
+  
+  /**
+   * If <code>furnitureSelectionSynchronized</code> is <code>true</code>, the selected 
+   * furniture in the catalog model will be synchronized with be the selection displayed 
+   * by the catalog view managed by this controller.
+   * By default, selection is synchronized. 
+   */
+  public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
+    ((CatalogTree)getView()).setFurnitureSelectionSynchronized(furnitureSelectionSynchronized);
+  }
 }

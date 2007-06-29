@@ -186,7 +186,7 @@ public class HomeComponent3D extends JComponent {
             });
         }
       });
-    home.addPropertyChangeListener("camera", 
+    home.addPropertyChangeListener(Home.Property.CAMERA, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             updateFieldOfView(view, home.getCamera());
@@ -404,7 +404,7 @@ public class HomeComponent3D extends JComponent {
         new Point3d(100000, 100000, 100000)));
     
     // Add a listener on sky color property change to home
-    home.addPropertyChangeListener("skyColor", 
+    home.addPropertyChangeListener(Home.Property.SKY_COLOR, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateBackgroundColor(background, home);
@@ -434,7 +434,7 @@ public class HomeComponent3D extends JComponent {
     groundBox.removeChild(topShape);
     
     // Add a listener on ground color property change to home
-    home.addPropertyChangeListener("groundColor", 
+    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateGroundMaterial(groundAppearance, home);
@@ -474,7 +474,7 @@ public class HomeComponent3D extends JComponent {
     }
     
     // Add a listener on light color property change to home
-    home.addPropertyChangeListener("lightColor", 
+    home.addPropertyChangeListener(Home.Property.LIGHT_COLOR, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           for (int i = 0; i < lights.length - 1; i++) {
@@ -544,9 +544,9 @@ public class HomeComponent3D extends JComponent {
           }
         }
       });
-    home.addPropertyChangeListener("wallsAlpha", 
+    home.addPropertyChangeListener(Home.Property.WALLS_ALPHA, 
       new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
+        public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
         }
       });

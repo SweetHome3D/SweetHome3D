@@ -46,7 +46,10 @@ import com.eteks.sweethome3d.model.SelectionListener;
  * @author Emmanuel Puybaret
  */
 public class CatalogTree extends JTree {
+  private Catalog               catalog;
   private TreeSelectionListener treeSelectionListener;
+  private SelectionListener     modelSelectionListener;
+  private boolean               furnitureSelectionSynchronized;
 
   /**
    * Creates a tree that displays <code>catalog</code> content.
@@ -60,31 +63,24 @@ public class CatalogTree extends JTree {
    * that displays <code>catalog</code> content.
    */
   public CatalogTree(Catalog catalog, CatalogController controller) {
+    this.catalog = catalog;
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
     updateTreeSelectedFurniture(catalog); 
     if (controller != null) {
-      addSelectionListeners(catalog, controller);
+      createSelectionListeners(catalog, controller);
+      setFurnitureSelectionSynchronized(true);
     }
     setDragEnabled(true);
   }
   
-  /**
-   * Adds selection listeners to this tree.
+  /** 
+   * Creates the listeners that manage selection synchronization in this tree. 
    */
-  private void addSelectionListeners(final Catalog catalog, 
-                                     final CatalogController controller) {    
-    final SelectionListener modelSelectionListener = 
-      new SelectionListener() {
-        public void selectionChanged(SelectionEvent ev) {
-          getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
-          clearSelection();
-          updateTreeSelectedFurniture(catalog);        
-          getSelectionModel().addTreeSelectionListener(treeSelectionListener);
-        }
-      };
+  private void createSelectionListeners(final Catalog catalog, 
+                                        final CatalogController controller) {
     this.treeSelectionListener = 
       new TreeSelectionListener () {
         public void valueChanged(TreeSelectionEvent ev) {
@@ -94,10 +90,36 @@ public class CatalogTree extends JTree {
           catalog.addSelectionListener(modelSelectionListener);
         }
       };
-    getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
-    catalog.addSelectionListener(modelSelectionListener);
+    this.modelSelectionListener = 
+      new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
+          clearSelection();
+          updateTreeSelectedFurniture(catalog);        
+          getSelectionModel().addTreeSelectionListener(treeSelectionListener);
+        }
+      };
   }
 
+  /**
+   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
+   * furniture in the catalog model will be synchronized with be the selection displayed 
+   * by this view. By default, selection is synchronized. 
+   */
+  public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
+    if (this.furnitureSelectionSynchronized ^ furnitureSelectionSynchronized) {
+      if (furnitureSelectionSynchronized) {
+        this.catalog.addSelectionListener(this.modelSelectionListener);
+        getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
+        updateTreeSelectedFurniture(this.catalog); 
+      } else {
+        this.catalog.removeSelectionListener(this.modelSelectionListener);
+        getSelectionModel().removeTreeSelectionListener(this.treeSelectionListener);
+      }
+      this.furnitureSelectionSynchronized = furnitureSelectionSynchronized;
+    }
+  }
+  
   /**
    * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
    */

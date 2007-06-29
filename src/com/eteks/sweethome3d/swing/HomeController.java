@@ -22,6 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -54,19 +56,21 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class HomeController  {
-  private Home                home;
-  private UserPreferences     preferences;
-  private HomeApplication     application;
-  private JComponent          homeView;
-  private CatalogController   catalogController;
-  private FurnitureController furnitureController;
-  private PlanController      planController;
-  private HomeController3D    homeController3D;
-  private UndoableEditSupport undoSupport;
-  private UndoManager         undoManager;
-  private ResourceBundle      resource;
-  private int                 saveUndoLevel;
-  private JComponent          focusedView;
+  private Home                   home;
+  private UserPreferences        preferences;
+  private HomeApplication        application;
+  private JComponent             homeView;
+  private CatalogController      catalogController;
+  private FurnitureController    furnitureController;
+  private PlanController         planController;
+  private HomeController3D       homeController3D;
+  private UndoableEditSupport    undoSupport;
+  private UndoManager            undoManager;
+  private ResourceBundle         resource;
+  private int                    saveUndoLevel;
+  private JComponent             focusedView;
+  private SelectionListener      catalogSelectionListener;
+  private boolean                catalogFurnitureSelectionSynchronized;
 
   /**
    * Creates the controller of home view.
@@ -109,19 +113,31 @@ public class HomeController  {
     this.homeView = new HomePane(home, preferences, this);
     addListeners();
     enableDefaultActions((HomePane)this.homeView);
+    
+    // Update recent homes list
+    if (home.getName() != null) {
+      List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
+      recentHomes.remove(home.getName());
+      recentHomes.add(0, home.getName());
+      updateUserPreferencesRecentHomes(recentHomes);
+    }
   }
 
   /**
    * Enables actions at controller instantiation. 
    */
   private void enableDefaultActions(HomePane homeView) {
-    homeView.setEnabled(HomePane.ActionType.NEW_HOME, true);
-    homeView.setEnabled(HomePane.ActionType.OPEN, true);
-    homeView.setEnabled(HomePane.ActionType.CLOSE, true);
-    homeView.setEnabled(HomePane.ActionType.SAVE, true);
-    homeView.setEnabled(HomePane.ActionType.SAVE_AS, true);
+    boolean applicationExists = this.application != null;
+    
+    homeView.setEnabled(HomePane.ActionType.NEW_HOME, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.OPEN, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.DELETE_RECENT_HOMES, 
+        applicationExists && !this.preferences.getRecentHomes().isEmpty());
+    homeView.setEnabled(HomePane.ActionType.CLOSE, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.SAVE, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.SAVE_AS, applicationExists);
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
-    homeView.setEnabled(HomePane.ActionType.EXIT, true);
+    homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
@@ -187,7 +203,8 @@ public class HomeController  {
    * Adds listeners that updates the enabled / disabled state of actions.
    */
   private void addListeners() {
-    addCatalogSelectionListener();
+    createCatalogSelectionListener();
+    setCatalogFurnitureSelectionSynchronized(true);
     addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
@@ -200,52 +217,57 @@ public class HomeController  {
   /**
    * Adds a selection listener to catalog that enables / disables Add Furniture action.
    */
-  private void addCatalogSelectionListener() {
-    this.preferences.getCatalog().addSelectionListener(
-      new SelectionListener() {
+  private void createCatalogSelectionListener() {
+    this.catalogSelectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
           enableActionsOnSelection();
         }
-      });
+      };
   }
 
   /**
    *  Adds a selection listener to home that enables / disables actions on selection.
    */
   private void addHomeSelectionListener() {
-    this.home.addSelectionListener(new SelectionListener() {
-      public void selectionChanged(SelectionEvent ev) {
-        enableActionsOnSelection();
-      }
-    });
+    if (this.home != null) {
+      this.home.addSelectionListener(new SelectionListener() {
+        public void selectionChanged(SelectionEvent ev) {
+          enableActionsOnSelection();
+        }
+      });
+    }
   }
 
   /**
    *  Adds a property change listener to home that enables / disables sort order action.
    */
   private void addFurnitureSortListener() {
-    this.home.addPropertyChangeListener("furnitureSortedProperty", 
-      new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          ((HomePane)getView()).setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
-              ev.getNewValue() != null);
-        }
-      });
+    if (this.home != null) {
+      this.home.addPropertyChangeListener(Home.Property.FURNITURE_SORTED_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            ((HomePane)getView()).setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
+                ev.getNewValue() != null);
+          }
+        });
+    }
   }
 
   /**
    *  Adds a property change listener to home that enables / disables background image actions.
    */
   private void addHomeBackgroundImageListener() {
-    this.home.addPropertyChangeListener("backgroundImage", 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
-                ev.getNewValue() != null);
-            ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
-                ev.getNewValue() != null);
-          }
-        });
+    if (this.home != null) {
+      this.home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
+                  ev.getNewValue() != null);
+              ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
+                  ev.getNewValue() != null);
+            }
+          });
+    }
   }
 
   /**
@@ -411,7 +433,7 @@ public class HomeController  {
    * enable/disable authorized actions according to current mode.
    */
   private void addPlanControllerListener() {
-    getPlanController().addPropertyChangeListener("mode", 
+    getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             enableActionsOnSelection();
@@ -429,7 +451,25 @@ public class HomeController  {
           }
         });
   }
-
+  
+  /**
+   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
+   * furniture in the catalog model will be synchronized with be the selection displayed 
+   * by the catalog view managed by the catalog controller.
+   * By default, selection is synchronized. 
+   */
+  public void setCatalogFurnitureSelectionSynchronized(boolean catalogFurnitureSelectionSynchronized) {
+    if (this.catalogFurnitureSelectionSynchronized ^ catalogFurnitureSelectionSynchronized) {
+      if (catalogFurnitureSelectionSynchronized) {
+        this.preferences.getCatalog().addSelectionListener(catalogSelectionListener);
+      } else {
+        this.preferences.getCatalog().removeSelectionListener(catalogSelectionListener);
+      }
+      this.catalogFurnitureSelectionSynchronized = catalogFurnitureSelectionSynchronized;
+    }
+    getCatalogController().setFurnitureSelectionSynchronized(catalogFurnitureSelectionSynchronized);
+  }
+  
   /**
    * Adds the selected furniture in catalog to home and selects it.  
    */
@@ -601,17 +641,91 @@ public class HomeController  {
   public void open() {
     final String homeName = ((HomePane)getView()).showOpenDialog();
     if (homeName != null) {
+      open(homeName);
+    }
+  }
+
+  /**
+   * Opens a given <code>homeName</code>home.
+   */
+  public void open(String homeName) {
+    // Check if requested home isn't already opened
+    for (Home home : this.application.getHomes()) {
+      if (homeName.equals(home.getName())) {
+        String message = String.format(this.resource.getString("alreadyOpen"), homeName);
+        ((HomePane)getView()).showMessage(message);
+        return;
+      }
+    }
+    try {
+      Home openedHome = this.application.getHomeRecorder().readHome(homeName);
+      openedHome.setName(homeName); 
+      this.application.addHome(openedHome);
+    } catch (RecorderException ex) {
+      String message = String.format(this.resource.getString("openError"), homeName);
+      ((HomePane)getView()).showError(message);
+    }
+  }
+  
+  /**
+   * Updates user preferences <code>recentHomes</code> and write preferences. 
+   */
+  private void updateUserPreferencesRecentHomes(List<String> recentHomes) {
+    if (this.application != null) {
       try {
-        Home openedHome = this.application.getHomeRecorder().readHome(homeName);
-        openedHome.setName(homeName); 
-        this.application.addHome(openedHome);
+        // Check every recent home exists
+        for (Iterator<String> it = recentHomes.iterator(); it.hasNext(); ) {
+          try {
+            if (!this.application.getHomeRecorder().exists(it.next())) {
+              it.remove();
+            }
+          } catch (RecorderException ex) {
+            // If homeName can't be checked ignore it
+          }
+        }
+        this.preferences.setRecentHomes(recentHomes);
+        this.preferences.write();
       } catch (RecorderException ex) {
-        String message = String.format(this.resource.getString("openError"), homeName);
-        ((HomePane)getView()).showError(message);
+        HomePane homeView = (HomePane)getView();
+        // As this method may called from constructor, check if homeView isn't null 
+        if (homeView != null) {
+          homeView.showError(this.resource.getString("savePreferencesError"));
+        }
       }
     }
   }
 
+  /**
+   * Returns a list of displayable recent homes. 
+   */
+  public List<String> getRecentHomes() {
+    if (this.application != null) {
+      List<String> recentHomes = new ArrayList<String>();
+      for (String homeName : this.preferences.getRecentHomes()) {
+        try {
+          if (this.application.getHomeRecorder().exists(homeName)) {
+            recentHomes.add(homeName);
+          }
+        } catch (RecorderException ex) {
+          // If homeName can't be checked ignore it
+        }
+      }
+      ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_RECENT_HOMES, 
+          !recentHomes.isEmpty());
+      return Collections.unmodifiableList(recentHomes);
+    } else {
+      return new ArrayList<String>();
+    }
+  }
+  
+  /**
+   * Deletes the list of recent homes in user preferences. 
+   */
+  public void deleteRecentHomes() {
+    updateUserPreferencesRecentHomes(new ArrayList<String>());
+    ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_RECENT_HOMES, false);
+  }
+  
   /**
    * Manages home close operation. If the home managed by this controller is modified,
    * this method will {@link HomePane#confirmSave(String) confirm} 
@@ -680,9 +794,15 @@ public class HomeController  {
   private boolean save(String homeName) {
     try {
       this.application.getHomeRecorder().writeHome(this.home, homeName);
+      String oldHomeName = this.home.getName();
       this.home.setName(homeName);
       this.saveUndoLevel = 0;
       this.home.setModified(false);
+      // Update recent homes list
+      List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
+      recentHomes.remove(oldHomeName);
+      recentHomes.add(0, homeName);
+      updateUserPreferencesRecentHomes(recentHomes);
       return true;
     } catch (RecorderException ex) {
       String message = String.format(this.resource.getString("saveError"), homeName);
