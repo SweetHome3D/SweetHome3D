@@ -19,22 +19,15 @@
  */
 package com.eteks.sweethome3d;
 
-import java.awt.EventQueue;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ResourceBundle;
-
-import javax.swing.ActionMap;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 
 import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
-import com.eteks.sweethome3d.swing.ResourceAction;
 
 /**
  * Configuration class that accesses to Mac OS X specifics.
@@ -45,36 +38,62 @@ import com.eteks.sweethome3d.swing.ResourceAction;
  * @author Emmanuel Puybaret
  */
 class MacOSXConfiguration {
-  private static Application    application = new Application();
-  private static JFrame         defaultFrame;
-  private static HomeController currentController;
+  /**
+   * Binds <code>homeApplication</code> to Mac OS X application menu.
+   */
+  public static void bindToApplicationMenu(final HomeApplication homeApplication) {
+    // Create a default controller for an empty home and disable unrelated actions
+    final HomeController defaultController = new HomeController(new Home(), homeApplication);
+    HomePane defaultHomeView = (HomePane)defaultController.getView();
+    defaultHomeView.setEnabled(HomePane.ActionType.CLOSE, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SAVE, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SAVE_AS, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DEPTH, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_COLOR, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.SELECT, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.CREATE_WALLS, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.ZOOM_IN, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.ZOOM_OUT, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.VIEW_FROM_TOP, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.VIEW_FROM_OBSERVER, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.MODIFY_3D_ATTRIBUTES, false);
+    
+    // Create a default undecorated frame out of sight 
+    // and attach the application menu bar of empty view to it
+    final JFrame defaultFrame = new JFrame();
+    defaultFrame.setLocation(-10, 0);
+    defaultFrame.setUndecorated(true);
+    defaultFrame.setVisible(true);
+    defaultFrame.setJMenuBar(defaultHomeView.getJMenuBar());
 
-  static {
+    Application application = new Application();
     // Add a listener on Mac OS X application that will call
     // controller methods of the active frame
     application.addApplicationListener(new ApplicationAdapter() {
       @Override
       public void handleQuit(ApplicationEvent ev) {
-        currentController.exit();
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              // If default frame is active, it means there's no more open window
-              if (defaultFrame != null && defaultFrame.isActive()) {
-                System.exit(0);
-              }
-            }
-          });
+        defaultController.exit();
+        if (homeApplication.getHomes().isEmpty()) {
+          System.exit(0);
+        }
       }
       
       @Override
       public void handleAbout(ApplicationEvent ev) {
-        currentController.about();
+        defaultController.about();
         ev.setHandled(true);
       }
 
       @Override
       public void handlePreferences(ApplicationEvent ev) {
-        currentController.editPreferences();
+        defaultController.editPreferences();
       }
 
       @Override
@@ -87,42 +106,5 @@ class MacOSXConfiguration {
     });
     application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
-
-    // Create a default undecorated frame out of sight 
-    // to attach the default application menu bar to it
-    defaultFrame = new JFrame();
-    defaultFrame.setLocation(-10, 0);
-    defaultFrame.setUndecorated(true);
-    defaultFrame.setVisible(true);
-  }
-
-  /**
-   * Binds the home <code>controller</code> methods of a <code>frame</code>
-   * to Mac OS X application menu.
-   */
-  public static void bindControllerToApplicationMenu(final JFrame frame, 
-                                                     final HomeController controller) {
-    frame.addWindowListener(new WindowAdapter () {
-        @Override
-        public void windowActivated(WindowEvent ev) {
-          currentController = controller;
-        }
-        
-        @Override
-        public void windowClosed(WindowEvent ev) {
-          if (defaultFrame.getJMenuBar() == null) {
-            // Create the default application menu bar 
-            JMenuBar menuBar = new JMenuBar();
-            JMenu fileMenu = new JMenu(new ResourceAction(
-                ResourceBundle.getBundle(HomePane.class.getName()), "FILE_MENU", true));
-            menuBar.add(fileMenu);
-            ActionMap homePaneActionMap = controller.getView().getActionMap();
-            fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.NEW_HOME)));
-            fileMenu.add(new ResourceAction.MenuAction(homePaneActionMap.get(HomePane.ActionType.OPEN)));
-            
-            defaultFrame.setJMenuBar(menuBar);
-          }
-        }
-      });
   }  
 }

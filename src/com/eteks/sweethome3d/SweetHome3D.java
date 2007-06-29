@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.Frame;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ResourceBundle;
 
 import javax.jnlp.ServiceManager;
@@ -96,10 +99,27 @@ public class SweetHome3D extends HomeApplication {
         JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
             JOptionPane.ERROR_MESSAGE);
       }
-    } else  {
+    } else if (application.getHomes().isEmpty()) {
       // Create a default home 
       Home home = new Home(application.getUserPreferences().getNewHomeWallHeight());
       application.addHome(home);
+    } else {
+      // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 
+      Frame [] frames = Frame.getFrames();
+      Frame shownFrame = null;
+      for (int i = frames.length - 1; i >= 0; i--) {
+        if (frames [i].isActive()
+            || frames [i].getState() != Frame.ICONIFIED) {
+          shownFrame = frames [i];
+          break;
+        }
+      }
+      if (shownFrame == null) {
+        shownFrame = frames [frames.length - 1];
+        shownFrame.setState(Frame.NORMAL);
+      }
+      shownFrame.toFront();
+      shownFrame.requestFocusInWindow();
     }
   }
 
@@ -149,14 +169,20 @@ public class SweetHome3D extends HomeApplication {
     final SingleInstanceService singleInstanceService = service;
           
     // Create the application that manages homes 
-    final HomeApplication application = new SweetHome3D();
+    final SweetHome3D application = new SweetHome3D();
     // Add a listener that opens a frame when a home is added to application
     application.addHomeListener(new HomeListener() {
+        private boolean firstApplicationHomeAdded;
+        
         public void homeChanged(HomeEvent ev) {
           switch (ev.getType()) {
             case ADD :
               Home home = ev.getHome();
-              new HomeFrameController(home, application);
+              HomeController controller = new HomeFrameController(home, application);
+              if (!this.firstApplicationHomeAdded) {
+                application.addNewHomeCloseListener(home, controller);
+                this.firstApplicationHomeAdded = true;
+              }
               break;
             case DELETE :
               // If application has no more home 
@@ -173,6 +199,44 @@ public class SweetHome3D extends HomeApplication {
           }
         };
       });
+    
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      // Bind to application menu  
+      MacOSXConfiguration.bindToApplicationMenu(application);
+    }
+
     return application;
+  }
+  
+  /**
+   * Adds a listener to new home to close it if an other one is opened.
+   */ 
+  private void addNewHomeCloseListener(final Home home, 
+                                       final HomeController controller) {
+    if (home.getName() == null) {
+      final HomeListener newHomeListener = new HomeListener() {
+          public void homeChanged(HomeEvent ev) {
+            // Close new home for any named home added to application
+            if (ev.getType() == HomeEvent.Type.ADD) { 
+              if (ev.getHome().getName() != null
+                  && home.getName() == null) {
+                controller.close();
+              }
+              removeHomeListener(this);
+            } else if (ev.getHome() == home
+                       && ev.getType() == HomeEvent.Type.DELETE) {
+              removeHomeListener(this);
+            }
+          }
+        };
+      addHomeListener(newHomeListener);
+      // Disable this listener at first home change
+      home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            removeHomeListener(newHomeListener);
+            home.removePropertyChangeListener(Home.Property.MODIFIED, this);
+          }
+        });
+    }
   }
 }

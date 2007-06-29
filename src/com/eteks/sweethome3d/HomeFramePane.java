@@ -26,12 +26,15 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -44,12 +47,13 @@ import com.eteks.sweethome3d.swing.HomePane;
  * @author Emmanuel Puybaret
  */
 public class HomeFramePane extends JRootPane {
-  private static int          newHomeCount;
-  private int                 newHomeNumber;
-  private Home                home;
-  private HomeApplication     application;
-  private HomeFrameController controller;
-  private ResourceBundle      resource;
+  private static int                    newHomeCount;
+  private int                           newHomeNumber;
+  private Home                          home;
+  private HomeApplication               application;
+  private HomeFrameController           controller;
+  private ResourceBundle                resource;
+  private List<CatalogPieceOfFurniture> catalogSelectedFurniture;
   
   public HomeFramePane(Home home,
                        HomeApplication application,
@@ -58,6 +62,8 @@ public class HomeFramePane extends JRootPane {
     this.controller = controller;
     this.application = application;
     this.resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
+    // The catalog selected furniture on a new home pane is always empty
+    this.catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
     // If home is unnamed, give it a number
     if (home.getName() == null) {
       newHomeNumber = ++newHomeCount;
@@ -104,13 +110,28 @@ public class HomeFramePane extends JRootPane {
                             final HomeApplication application,
                             final HomeFrameController controller,
                             final JFrame frame) {
-    // Control window closing 
+    // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(new WindowAdapter () {
         @Override
         public void windowClosing(WindowEvent ev) {
           controller.close();
         }
+        
+        @Override
+        public void windowDeactivated(WindowEvent ev) {
+          controller.setCatalogFurnitureSelectionSynchronized(false);
+          // Store current selected furniture in catalog for future activation
+          catalogSelectedFurniture = 
+              application.getUserPreferences().getCatalog().getSelectedFurniture();
+        }
+        
+        @Override
+        public void windowActivated(WindowEvent ev) {          
+          // Let the catalog view of each frame manage its own selection
+          application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
+          controller.setCatalogFurnitureSelectionSynchronized(true);
+        }        
       });
     // Dispose window when a home is deleted 
     application.addHomeListener(new HomeListener() {
@@ -123,57 +144,18 @@ public class HomeFramePane extends JRootPane {
         };
       });
     // Update title when the name or the modified state of home changes
-    home.addPropertyChangeListener("name", new PropertyChangeListener () {
+    home.addPropertyChangeListener(Home.Property.NAME, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
           updateFrameTitle(frame, home);
         }
       });
-    home.addPropertyChangeListener("modified", new PropertyChangeListener () {
+    home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
           updateFrameTitle(frame, home);
         }
       });
-    
-    addFirstNewHomeListener(home, application, controller);
-    
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      // Bind controller to frame application menu  
-      MacOSXConfiguration.bindControllerToApplicationMenu(frame, controller);
-    }
   }
 
-  /**
-   * Adds a listener to first new home to close it if an other one is opened.
-   */ 
-  private void addFirstNewHomeListener(final Home home, 
-                                       final HomeApplication application, 
-                                       final HomeFrameController controller) {
-    if (newHomeNumber == 1 && home.getName() == null) {
-      final HomeListener firstHomeListener = new HomeListener() {
-          public void homeChanged(HomeEvent ev) {
-            if (ev.getType() == HomeEvent.Type.ADD) { 
-              if (ev.getHome().getName() != null
-                  && home.getName() == null) {
-                controller.close();
-              }
-              application.removeHomeListener(this);
-            } else if (ev.getHome() == home
-                       && ev.getType() == HomeEvent.Type.DELETE) {
-              application.removeHomeListener(this);
-            }
-          }
-        };
-      application.addHomeListener(firstHomeListener);
-      // Disable this listener at first home change
-      home.addPropertyChangeListener("modified", new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent ev) {
-            application.removeHomeListener(firstHomeListener);
-            home.removePropertyChangeListener("modified", this);
-          }
-        });
-    }
-  }
-  
   /**
    * Computes <code>frame</code> size and location to fit into screen.
    */
