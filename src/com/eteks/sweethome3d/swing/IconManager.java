@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -42,15 +43,15 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class IconManager {
-  private static IconManager          instance;
+  private static IconManager               instance;
   // Icon used if an image content couldn't be loaded
-  private Content                     errorIconContent;
+  private Content                          errorIconContent;
   // Icon used while an image content is loaded
-  private Content                     waitIconContent;
+  private Content                          waitIconContent;
   // Executor used by IconProxy to load images
-  private Executor                    iconsLoader;
+  private Executor                         iconsLoader;
   // Map storing loaded icons
-  private Map<ContentHeightKey, Icon> icons;
+  private Map<Content, Map<Integer, Icon>> icons;
 
   private IconManager() {
     this.errorIconContent = new URLContent (
@@ -58,7 +59,7 @@ public class IconManager {
     this.waitIconContent = new URLContent (
         IconManager.class.getResource("resources/wait.png"));
     this.iconsLoader = Executors.newFixedThreadPool(5);
-    this.icons = new HashMap<ContentHeightKey,Icon>();
+    this.icons = new WeakHashMap<Content, Map<Integer, Icon>>();
   }
   
   /**
@@ -78,8 +79,12 @@ public class IconManager {
    * @param waitingComponent a waiting component
    */
   public Icon getIcon(Content content, int height, Component waitingComponent) {
-    ContentHeightKey contentKey = new ContentHeightKey(content, height);
-    Icon icon = this.icons.get(contentKey);
+    Map<Integer, Icon> contentIcons = this.icons.get(content);
+    if (contentIcons == null) {
+      contentIcons = new HashMap<Integer, Icon>();
+      this.icons.put(content, contentIcons);
+    }
+    Icon icon = contentIcons.get(height);
     if (icon == null) {
       if (content == this.errorIconContent ||
           content == this.waitIconContent) {
@@ -93,7 +98,7 @@ public class IconManager {
                  getIcon(this.waitIconContent, height, null));
       }
       // Store the icon in icons map
-      this.icons.put(contentKey, icon);
+      contentIcons.put(height, icon);
     }
     return icon;    
   }
@@ -156,30 +161,5 @@ public class IconManager {
     public void paintIcon(Component c, Graphics g, int x, int y) {
       this.icon.paintIcon(c, g, x, y);
     }
-  }
-
-  /** 
-   * Key used to access to icons.
-   */
-  private static final class ContentHeightKey {
-    private final Content content;
-    private final int     height;
- 
-    public ContentHeightKey(Content content, int height) {
-      this.content = content;
-      this.height = height;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      ContentHeightKey key = (ContentHeightKey)obj;
-      return this.content == key.content 
-             && this.height == key.height;
-    }
-
-    @Override
-    public int hashCode() {
-      return this.content.hashCode() + this.height;
-    }  
   }
 }
