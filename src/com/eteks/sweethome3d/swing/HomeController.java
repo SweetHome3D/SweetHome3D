@@ -800,7 +800,9 @@ public class HomeController  {
       this.home.setModified(false);
       // Update recent homes list
       List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
-      recentHomes.remove(oldHomeName);
+      if (homeName.equals(oldHomeName)) {
+        recentHomes.remove(oldHomeName);
+      }
       recentHomes.add(0, homeName);
       updateUserPreferencesRecentHomes(recentHomes);
       return true;
