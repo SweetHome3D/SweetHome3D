@@ -77,6 +77,8 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -136,25 +138,6 @@ public class HomeComponent3D extends JComponent {
     // Create the Java 3D canvas that will display home 
     Canvas3D canvas3D = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
         getDefaultScreenDevice().getBestConfiguration(gc));
-    // Link it to a default univers
-    SimpleUniverse universe = new SimpleUniverse(canvas3D);
-    
-    View view = universe.getViewer().getView();
-    // Update front and back clip distance to ensure their ratio is less than 3000
-    view.setFrontClipDistance(1);
-    view.setBackClipDistance(3000);
-    // Update field of view from current camera
-    updateFieldOfView(view, home.getCamera());
-    
-    TransformGroup viewPlatformTransform = universe.getViewingPlatform().getViewPlatformTransform();
-    // Update point of view from current camera
-    updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
-    
-    // Add camera listeners to update later point of view from camera
-    addCameraListeners(home, view, viewPlatformTransform);
-    
-    // Link scene matching home to universe
-    universe.addBranchGraph(getSceneTree(home));
     
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
@@ -168,8 +151,63 @@ public class HomeComponent3D extends JComponent {
       // Let this component manage focus
       setFocusable(true);
     }
+
+    // Add a hierarchy listener to create canvas universe once this component is made visible 
+    // and clean up universe once its parent frame is disposed
+    addHierarchyListener(canvas3D, home);
   }
 
+  /**
+   * Adds a hierarchy listener to this component to manage canvas universe 
+   * creation and clean up.  
+   */
+  private void addHierarchyListener(final Canvas3D canvas3D, 
+                                    final Home home) {
+    addAncestorListener(new AncestorListener() {
+        private SimpleUniverse universe;
+        
+        public void ancestorAdded(AncestorEvent event) {
+          this.universe = getUniverse(canvas3D, home);
+        }
+        
+        public void ancestorRemoved(AncestorEvent event) {
+          this.universe.cleanup();
+        }
+        
+        public void ancestorMoved(AncestorEvent event) {
+        }        
+      });
+  }
+
+  /**
+   * Returns a 3D universe bound to <code>canvas3D</code> 
+   * that displays <code>home</code> objects.
+   */
+  private SimpleUniverse getUniverse(final Canvas3D canvas3D, final Home home) {
+    // Link canvas 3D to a default universe
+    SimpleUniverse universe = new SimpleUniverse(canvas3D);
+    
+    View view = universe.getViewer().getView();
+    // Update front and back clip distance to ensure their ratio is less than 3000
+    view.setFrontClipDistance(1);
+    view.setBackClipDistance(3000);
+    // Update field of view from current camera
+    updateFieldOfView(view, home.getCamera());
+    
+    TransformGroup viewPlatformTransform = 
+        universe.getViewingPlatform().getViewPlatformTransform();
+    // Update point of view from current camera
+    updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+    
+    // Add camera listeners to update later point of view from camera
+    addCameraListeners(home, view, viewPlatformTransform);
+    
+    // Link scene matching home to universe
+    universe.addBranchGraph(getSceneTree(home));
+    
+    return universe;
+  }
+  
   /**
    * Adds listeners to home to update point of view from current camera.
    */
