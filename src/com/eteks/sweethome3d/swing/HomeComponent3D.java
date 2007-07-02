@@ -601,18 +601,17 @@ public class HomeComponent3D extends JComponent {
           switch (ev.getType()) {
             case ADD :
               addPieceOfFurniture(homeRoot, piece);
-              updateWallsDoorOrWindowIntersections(home, piece);
               break;
             case UPDATE :
               updatePieceOfFurniture(piece);
-              updateWallsDoorOrWindowIntersections(home, piece);
               break;
             case DELETE :
               deleteObject(piece);
-              if (piece.isDoorOrWindow()) {
-                updateObjects(home.getWalls());
-              }
               break;
+          }
+          // If piece is a door or a window, update walls that intersect with piece
+          if (piece.isDoorOrWindow()) {
+            updateObjects(home.getWalls());
           }
         }
       });
@@ -665,20 +664,6 @@ public class HomeComponent3D extends JComponent {
    */
   private void updatePieceOfFurniture(HomePieceOfFurniture piece) {
     updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-  }
-
-  private void updateWallsDoorOrWindowIntersections(Home home, 
-                                                    HomePieceOfFurniture piece) {
-    // If piece is a door or a window, update walls that intersect with piece
-    if (piece.isDoorOrWindow()) {
-      List<Wall> intersectedWalls = new ArrayList<Wall>(3);
-      for (Wall wall : home.getWalls()) {
-        if (((Wall3D)homeObjects.get(wall)).intersectsDoorOrWindow(piece)) {              
-          intersectedWalls.add(wall);
-        }
-      }
-      updateObjects(intersectedWalls);
-    }
   }
 
   /**
@@ -867,22 +852,6 @@ public class HomeComponent3D extends JComponent {
         }
       }
       return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
-    }
-    
-    /**
-     * Returns <code>true</code> if <code>piece</code> intersection with this wall
-     * isn't empty.
-     */
-    public boolean intersectsDoorOrWindow(HomePieceOfFurniture piece) {
-      if (piece.getElevation() < getWallHeight()) {
-        Shape pieceShape = getShape(piece.getPoints());
-        Shape wallShape = getShape(((Wall)getUserData()).getPoints());
-        Area wallArea = new Area(wallShape);
-        wallArea.intersect(new Area(pieceShape));
-        return !wallArea.isEmpty();
-      } else {
-        return false;
-      }
     }
     
     /**
