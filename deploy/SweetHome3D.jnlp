@@ -54,9 +54,6 @@
   <resources os="SunOS" arch="sparc">
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
-  <resources os="Mac OS X">
-    <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
-  </resources>
   
   <application-desc 
       main-class="com.eteks.sweethome3d.SweetHome3D"/>
