@@ -1353,6 +1353,7 @@ public class PlanComponent extends JComponent implements Scrollable {
       // we require the tool tip window to move along with mouse pointer 
       // and a Swing popup can't move without hiding then showing it again)
       this.toolTipWindow = new JWindow(JOptionPane.getFrameForComponent(this));
+      this.toolTipWindow.setFocusableWindowState(false);
       this.toolTipWindow.add(this.toolTip);
       // Add to window a mouse listener that redispatch mouse events to
       // plan component (if the user moves fastly enough the mouse pointer in a way 
