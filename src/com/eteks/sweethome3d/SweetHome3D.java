@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -71,6 +72,19 @@ public class SweetHome3D extends HomeApplication {
     return this.userPreferences;
   }
   
+  /**
+   * Adds a given <code>home</code> to this application, 
+   * in the Event Dispatch Thread.
+   */
+  @Override
+  public void addHome(final Home home) {
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          SweetHome3D.super.addHome(home);
+        }
+      });
+  }
+  
   // Only one application may be created with main method or SingleInstanceService
   private static HomeApplication application;
 
@@ -105,21 +119,29 @@ public class SweetHome3D extends HomeApplication {
       application.addHome(home);
     } else {
       // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 
-      Frame [] frames = Frame.getFrames();
-      Frame shownFrame = null;
+      final Frame [] frames = Frame.getFrames();
+      Frame frame = null;
       for (int i = frames.length - 1; i >= 0; i--) {
         if (frames [i].isActive()
+            || frames [i].isVisible()
             || frames [i].getState() != Frame.ICONIFIED) {
-          shownFrame = frames [i];
+          frame = frames [i];
           break;
         }
       }
-      if (shownFrame == null) {
-        shownFrame = frames [frames.length - 1];
-        shownFrame.setState(Frame.NORMAL);
-      }
-      shownFrame.toFront();
-      shownFrame.requestFocusInWindow();
+      final Frame shownFrame = frame;
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            if (shownFrame != null) {
+              shownFrame.toFront();
+            } else {
+              frames [frames.length - 1].setVisible(true);
+              frames [frames.length - 1].setState(Frame.NORMAL);
+              frames [frames.length - 1].toFront();
+            }
+          }
+        });
+      
     }
   }
 
