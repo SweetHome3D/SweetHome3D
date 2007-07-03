@@ -481,16 +481,18 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     } else {
       file = showFileChooser(null);
     }
-    
-    try {
-      // Copy chosen file in a temporary file to ensure the image will 
-      // still be available at saving time even if user moved it meanwhile   
-      return copyToTempFile(file);
-    } catch (IOException ex) {
-      JOptionPane.showMessageDialog(this, 
-          String.format(this.resource.getString("imageChoiceError"), file));
-      return null;
+
+    if (file != null) {
+      try {
+        // Copy chosen file in a temporary file to ensure the image will 
+        // still be available at saving time even if user moved it meanwhile   
+        return copyToTempFile(file);
+      } catch (IOException ex) {
+        JOptionPane.showMessageDialog(this, 
+            String.format(this.resource.getString("imageChoiceError"), file));
+      }
     }
+    return null;
   }
 
   /**
