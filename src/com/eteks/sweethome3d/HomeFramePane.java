@@ -162,11 +162,6 @@ public class HomeFramePane extends JRootPane {
           updateFrameTitle(frame, home);
         }
       });
-    
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      // Add Mac OS X Window menu
-      MacOSXConfiguration.addWindowMenuToFrame(frame);
-    }
   }
 
   /**

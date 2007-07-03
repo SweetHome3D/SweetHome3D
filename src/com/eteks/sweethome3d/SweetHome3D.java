@@ -20,16 +20,20 @@
 package com.eteks.sweethome3d;
 
 import java.awt.EventQueue;
-import java.awt.Frame;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
@@ -48,12 +52,14 @@ import com.eteks.sweethome3d.swing.HomeController;
  * @author Emmanuel Puybaret
  */
 public class SweetHome3D extends HomeApplication {
-  private HomeRecorder    homeRecorder;
-  private UserPreferences userPreferences;
+  private HomeRecorder      homeRecorder;
+  private UserPreferences   userPreferences;
+  private Map<Home, JFrame> homeFrames;
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
     this.userPreferences = new FileUserPreferences();
+    this.homeFrames = new HashMap<Home, JFrame>();
   }
 
   /**
@@ -85,8 +91,15 @@ public class SweetHome3D extends HomeApplication {
       });
   }
   
+  /**
+   * Returns the frame that displays a given <code>home</code>.
+   */
+  public JFrame getHomeFrame(Home home) {
+    return this.homeFrames.get(home);
+  }
+  
   // Only one application may be created with main method or SingleInstanceService
-  private static HomeApplication application;
+  private static SweetHome3D application;
 
   /**
    * Sweet Home 3D entry point.
@@ -119,34 +132,35 @@ public class SweetHome3D extends HomeApplication {
       application.addHome(home);
     } else {
       // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 
-      final Frame [] frames = Frame.getFrames();
-      Frame frame = null;
-      for (int i = frames.length - 1; i >= 0; i--) {
-        if (frames [i].isActive()
-            || frames [i].getState() != Frame.ICONIFIED) {
-          frame = frames [i];
+      final List<Home> homes = application.getHomes();
+      JFrame frame = null;
+      for (int i = homes.size() - 1; i >= 0; i--) {
+        JFrame homeFrame = application.getHomeFrame(homes.get(i));
+        if (homeFrame.isActive()
+            || homeFrame.getState() != JFrame.ICONIFIED) {
+          frame = homeFrame;
           break;
         }
       }
       // If no frame is visible and not iconified, take any displayable frame
       if (frame == null) {
-        for (int i = frames.length - 1; i >= 0; i--) {
-          if (frames [i].isDisplayable()) {
-            frame = frames [i];
+        for (int i = homes.size() - 1; i >= 0; i--) {
+          JFrame homeFrame = application.getHomeFrame(homes.get(i));
+          if (homeFrame.isDisplayable()) {
+            frame = homeFrame;
             break;
           }
         }
       }
       
-      final Frame shownFrame = frame;
+      final JFrame shownFrame = frame;
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             shownFrame.setVisible(true);
-            shownFrame.setState(Frame.NORMAL);
+            shownFrame.setState(JFrame.NORMAL);
             shownFrame.toFront();
           }
-        });
-      
+        });      
     }
   }
 
@@ -173,7 +187,7 @@ public class SweetHome3D extends HomeApplication {
   /**
    * Returns main application object. 
    */
-  private static HomeApplication createApplication() {
+  private static SweetHome3D createApplication() {
     SingleInstanceService service = null;
     final SingleInstanceListener singleInstanceListener = 
       new SingleInstanceListener() {
@@ -209,9 +223,14 @@ public class SweetHome3D extends HomeApplication {
               if (!this.firstApplicationHomeAdded) {
                 application.addNewHomeCloseListener(home, controller);
                 this.firstApplicationHomeAdded = true;
-              }
+              }          
+              
+              JFrame homeFrame = (JFrame)SwingUtilities.getRoot(controller.getView());
+              application.homeFrames.put(home, homeFrame);
               break;
             case DELETE :
+              application.homeFrames.remove(ev.getHome());
+              
               // If application has no more home 
               if (application.getHomes().isEmpty()
                   && !System.getProperty("os.name").startsWith("Mac OS X")) {

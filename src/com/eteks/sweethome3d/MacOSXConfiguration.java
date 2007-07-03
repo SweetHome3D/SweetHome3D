@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d;
 
-import java.awt.EventQueue;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ResourceBundle;
 
@@ -36,7 +34,8 @@ import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.HomeEvent;
+import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
@@ -52,16 +51,11 @@ import com.eteks.sweethome3d.swing.ResourceAction;
 class MacOSXConfiguration {
   private static final ResourceBundle RESOURCE = 
       ResourceBundle.getBundle(MacOSXConfiguration.class.getName());
-  private static JFrame defaultFrame;
   
   /**
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
-  public static void bindToApplicationMenu(final HomeApplication homeApplication) {
-    if (defaultFrame != null) {
-      throw new IllegalStateException("Mac OS X application already bound to home application");  
-    }
-    
+  public static void bindToApplicationMenu(final SweetHome3D homeApplication) {
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = new HomeController(new Home(), homeApplication);
     HomePane defaultHomeView = (HomePane)defaultController.getView();
@@ -87,12 +81,12 @@ class MacOSXConfiguration {
     
     // Create a default undecorated frame out of sight 
     // and attach the application menu bar of empty view to it
-    defaultFrame = new JFrame();
+    JFrame defaultFrame = new JFrame();
     defaultFrame.setLocation(-10, 0);
     defaultFrame.setUndecorated(true);
     defaultFrame.setVisible(true);
     defaultFrame.setJMenuBar(defaultHomeView.getJMenuBar());
-    addWindowMenuToFrame(defaultFrame);
+    addWindowMenuToFrame(defaultFrame, homeApplication, true);
 
     Application application = new Application();
     // Add a listener on Mac OS X application that will call
@@ -130,54 +124,37 @@ class MacOSXConfiguration {
         // handleReOpenApplication is called when user launches 
         // the application when it's already open
         SweetHome3D.main(new String [0]);
-        
-        EventQueue.invokeLater(new Runnable () {
-          public void run() {
-            checkActiveFrame();
-          }
-        });
       }
     });
     application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
-  }
-  
-  /**
-   * Checks if an other frame can be brought to front when default frame is active.
-   */
-  private static void checkActiveFrame() {
-    if (defaultFrame.isActive()) {
-      final Frame [] frames = Frame.getFrames();
-      for (int i = frames.length - 1; i >= 0; i--) {
-        if (frames [i].getState() != Frame.ICONIFIED
-            && frames [i] != defaultFrame) {
-          frames [i].toFront();
-          return;
+    
+    homeApplication.addHomeListener(new HomeListener() {
+      public void homeChanged(HomeEvent ev) {
+        if (ev.getType() == HomeEvent.Type.ADD) {
+          // Add Mac OS X Window menu on new homes
+          MacOSXConfiguration.addWindowMenuToFrame(
+              homeApplication.getHomeFrame(ev.getHome()), homeApplication, false);
         }
-      } 
-      for (int i = frames.length - 1; i >= 0; i--) {
-        if (frames [i].isDisplayable()
-            && frames [i] != defaultFrame) {
-          frames [i].toFront();
-          return;
-        }
-      }
-    }
+      };
+    });
   }
   
   /**
    * Adds Mac OS X standard Window menu to frame. 
+   * @param application 
    */
-  public static void addWindowMenuToFrame(final JFrame frame) {
-    boolean enabled = frame != defaultFrame;
+  private static void addWindowMenuToFrame(final JFrame frame, 
+                                           final SweetHome3D application,
+                                           boolean defaultFrame) {
     final JMenu windowMenu = new JMenu(new ResourceAction(RESOURCE, "WINDOW", true));
     frame.getJMenuBar().add(windowMenu);
-    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "MINIMIZE", enabled) {
+    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "MINIMIZE", !defaultFrame) {
         public void actionPerformed(ActionEvent ev) {
           frame.setState(JFrame.ICONIFIED);
         }
       }));
-    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "ZOOM", enabled) {
+    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "ZOOM", !defaultFrame) {
         public void actionPerformed(ActionEvent ev) {
           if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0) {
             frame.setExtendedState(frame.getExtendedState() & ~JFrame.MAXIMIZED_BOTH);
@@ -187,14 +164,13 @@ class MacOSXConfiguration {
         }
       }));
     windowMenu.addSeparator();
-    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "BRING_ALL_TO_FRONT", enabled) {
+    windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "BRING_ALL_TO_FRONT", !defaultFrame) {
         public void actionPerformed(ActionEvent ev) {
           // Avoid blincking while bringing other windows to front
-          frame.setAlwaysOnTop(true); 
-          for (Frame applicationFrame : Frame.getFrames()) {
+          frame.setAlwaysOnTop(true);
+          for (Home home : application.getHomes()) {
+            JFrame applicationFrame = application.getHomeFrame(home);
             if (applicationFrame != frame
-                && applicationFrame.isDisplayable()
-                && applicationFrame != defaultFrame
                 && applicationFrame.getState() != JFrame.ICONIFIED) {
               applicationFrame.setFocusableWindowState(false);
               applicationFrame.toFront();
@@ -209,26 +185,23 @@ class MacOSXConfiguration {
         public void menuSelected(MenuEvent ev) {
           boolean firstMenuItem = true;
           // Fill menu dynamically with a menu item for the frame of each application home
-          for (final Frame applicationFrame : Frame.getFrames()) {
-            /// Avoid disposed and default frame
-            if (applicationFrame.isDisplayable()
-                && applicationFrame != defaultFrame) {
-              JCheckBoxMenuItem windowMenuItem = new JCheckBoxMenuItem(
+          for (Home home : application.getHomes()) {
+            final JFrame applicationFrame = application.getHomeFrame(home);
+            JCheckBoxMenuItem windowMenuItem = new JCheckBoxMenuItem(
                 new AbstractAction(applicationFrame.getTitle()) {
                     public void actionPerformed(ActionEvent ev) {
                       applicationFrame.toFront();
                     }
                   });
               
-              if (frame == applicationFrame) {
-                windowMenuItem.setSelected(true);
-              }
-              if (firstMenuItem) {
-                windowMenu.addSeparator();
-                firstMenuItem = false;
-              }
-              windowMenu.add(windowMenuItem);
+            if (frame == applicationFrame) {
+              windowMenuItem.setSelected(true);
             }
+            if (firstMenuItem) {
+              windowMenu.addSeparator();
+              firstMenuItem = false;
+            }
+            windowMenu.add(windowMenuItem);
           }
         }
 
