@@ -20,7 +20,9 @@
 package com.eteks.sweethome3d;
 
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -30,9 +32,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JRootPane;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
@@ -90,14 +98,14 @@ public class HomeFramePane extends JRootPane {
     computeFrameBounds(homeFrame);
     // Enable windows to update their content while window resizing
     getToolkit().setDynamicLayout(true); 
-    // Add listeners to model and frame    
-    addListeners(this.home, this.application, this.controller, homeFrame);
     // The best solution should be to avoid the 3 following statements 
     // but Mac OS X accepts to display the menu bar of a frame in the screen 
     // menu bar only if this menu bar depends directly on its root pane  
     HomePane homeView = (HomePane)controller.getView();
     setJMenuBar(homeView.getJMenuBar());
     homeView.setJMenuBar(null);
+    // Add listeners to model and frame    
+    addListeners(this.home, this.application, this.controller, homeFrame);
     
     // Show frame
     homeFrame.setVisible(true);
@@ -154,6 +162,11 @@ public class HomeFramePane extends JRootPane {
           updateFrameTitle(frame, home);
         }
       });
+    
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      // Add Mac OS X Window menu
+      MacOSXConfiguration.addWindowMenuToFrame(frame);
+    }
   }
 
   /**

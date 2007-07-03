@@ -123,22 +123,27 @@ public class SweetHome3D extends HomeApplication {
       Frame frame = null;
       for (int i = frames.length - 1; i >= 0; i--) {
         if (frames [i].isActive()
-            || frames [i].isVisible()
             || frames [i].getState() != Frame.ICONIFIED) {
           frame = frames [i];
           break;
         }
       }
+      // If no frame is visible and not iconified, take any displayable frame
+      if (frame == null) {
+        for (int i = frames.length - 1; i >= 0; i--) {
+          if (frames [i].isDisplayable()) {
+            frame = frames [i];
+            break;
+          }
+        }
+      }
+      
       final Frame shownFrame = frame;
       EventQueue.invokeLater(new Runnable() {
           public void run() {
-            if (shownFrame != null) {
-              shownFrame.toFront();
-            } else {
-              frames [frames.length - 1].setVisible(true);
-              frames [frames.length - 1].setState(Frame.NORMAL);
-              frames [frames.length - 1].toFront();
-            }
+            shownFrame.setVisible(true);
+            shownFrame.setState(Frame.NORMAL);
+            shownFrame.toFront();
           }
         });
       
