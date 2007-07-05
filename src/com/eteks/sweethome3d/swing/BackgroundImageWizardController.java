@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -33,6 +36,8 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.PlanController.Mode;
+import com.eteks.sweethome3d.swing.PlanController.Property;
 
 
 /**
@@ -40,17 +45,21 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class BackgroundImageWizardController extends WizardController {
+  public enum Property {IMAGE, SCALE_DISTANCE, SCALE_DISTANCE_POINTS, X_ORIGIN, Y_ORIGIN}
+
   public enum Step {CHOICE, SCALE, ORIGIN};
   
   private Home                           home;
   private UndoableEditSupport            undoSupport;
   private ResourceBundle                 resource;
+  private PropertyChangeSupport          propertyChangeSupport;
+
   private BackgroundImageWizardStepState imageChoiceStepState;
   private BackgroundImageWizardStepState imageScaleStepState;
   private BackgroundImageWizardStepState imageOriginStepState;
   private JComponent                     stepsView;
   
-  private Content                        imageContent;
+  private Content                        image;
   private Float                          scaleDistance;
   private float                          scaleDistanceXStart;
   private float                          scaleDistanceYStart;
@@ -64,12 +73,16 @@ public class BackgroundImageWizardController extends WizardController {
     this.home = home;
     this.undoSupport = undoSupport;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardController.class.getName());
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    // Create view
+    this.stepsView = new BackgroundImageWizardStepsPanel(home.getBackgroundImage(), preferences, this);
+    setTitle(this.resource.getString("wizard.title"));    
+    // Initialize states
     this.imageChoiceStepState = new ImageChoiceStepState();
     this.imageScaleStepState = new ImageScaleStepState();
     this.imageOriginStepState = new ImageOriginStepState();
-    this.stepsView = new BackgroundImageWizardStepsPanel(home.getBackgroundImage(), preferences, this);
-    setTitle(this.resource.getString("wizard.title"));    
     setStepState(this.imageChoiceStepState);
+    
     displayView();
   }
 
@@ -79,7 +92,7 @@ public class BackgroundImageWizardController extends WizardController {
   @Override
   public void finish() {
     final BackgroundImage oldImage = this.home.getBackgroundImage();
-    final BackgroundImage image = new BackgroundImage(this.imageContent,
+    final BackgroundImage image = new BackgroundImage(this.image,
         this.scaleDistance, this.scaleDistanceXStart, this.scaleDistanceYStart,
         this.scaleDistanceXEnd, this.scaleDistanceYEnd, 
         this.xOrigin, this.yOrigin);
@@ -151,29 +164,46 @@ public class BackgroundImageWizardController extends WizardController {
   }
 
   /**
+   * Adds the property change <code>listener</code> in parameter to this home.
+   */
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this home.
+   */
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
    * Sets the image content of the background image.
    */
-  public void setImageContent(Content imageContent) {
-    this.imageContent = imageContent;
-    if (getStepState() != null) {
-      getStepState().updateStep();
+  public void setImage(Content image) {
+    if (image != this.image) {
+      Content oldImage = this.image;
+      this.image = image;
+      this.propertyChangeSupport.firePropertyChange(Property.IMAGE.toString(), oldImage, image);
     }
   }
   
   /**
    * Returns the image content of the background image.
    */
-  public Content getImageContent() {
-    return this.imageContent;
+  public Content getImage() {
+    return this.image;
   }
 
   /**
    * Sets the scale distance of the background image.
    */
   public void setScaleDistance(Float scaleDistance) {
-    this.scaleDistance = scaleDistance;
-    if (getStepState() != null) {
-      getStepState().updateStep();
+    if (scaleDistance != this.scaleDistance) {
+      Float oldScaleDistance = this.scaleDistance;
+      this.scaleDistance = scaleDistance;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.SCALE_DISTANCE.toString(), oldScaleDistance, scaleDistance);
     }
   }
   
@@ -189,12 +219,20 @@ public class BackgroundImageWizardController extends WizardController {
    */
   public void setScaleDistancePoints(float scaleDistanceXStart, float scaleDistanceYStart, 
                                      float scaleDistanceXEnd, float scaleDistanceYEnd) {
-    this.scaleDistanceXStart = scaleDistanceXStart;
-    this.scaleDistanceYStart = scaleDistanceYStart;
-    this.scaleDistanceXEnd = scaleDistanceXEnd;
-    this.scaleDistanceYEnd = scaleDistanceYEnd;
-    if (getStepState() != null) {
-      getStepState().updateStep();
+    if (scaleDistanceXStart != this.scaleDistanceXStart
+        || scaleDistanceYStart != this.scaleDistanceYStart
+        || scaleDistanceXEnd != this.scaleDistanceXEnd
+        || scaleDistanceYEnd != this.scaleDistanceYEnd) {
+      float [][] oldDistancePoints = new float [][] {{this.scaleDistanceXStart, this.scaleDistanceYStart},
+                                                     {this.scaleDistanceXEnd, this.scaleDistanceYEnd}};
+      this.scaleDistanceXStart = scaleDistanceXStart;
+      this.scaleDistanceYStart = scaleDistanceYStart;
+      this.scaleDistanceXEnd = scaleDistanceXEnd;
+      this.scaleDistanceYEnd = scaleDistanceYEnd;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.SCALE_DISTANCE.toString(), oldDistancePoints, 
+          new float [][] {{scaleDistanceXStart, scaleDistanceYStart},
+                          {scaleDistanceXEnd, scaleDistanceYEnd}});
     }
   }
   
@@ -210,10 +248,17 @@ public class BackgroundImageWizardController extends WizardController {
    * Sets the origin of the background image.
    */
   public void setOrigin(float xOrigin, float yOrigin) {
-    this.xOrigin = xOrigin;
-    this.yOrigin = yOrigin;
-    if (getStepState() != null) {
-      getStepState().updateStep();
+    if (xOrigin != this.xOrigin) {
+      Float oldXOrigin = this.xOrigin;
+      this.xOrigin = xOrigin;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.X_ORIGIN.toString(), oldXOrigin, xOrigin);
+    }
+    if (yOrigin != this.yOrigin) {
+      Float oldYOrigin = this.yOrigin;
+      this.yOrigin = yOrigin;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.Y_ORIGIN.toString(), oldYOrigin, yOrigin);
     }
   }
 
@@ -243,7 +288,6 @@ public class BackgroundImageWizardController extends WizardController {
     @Override
     public void enter() {
       setStepView(getStep());
-      updateStep();
     }
     
     @Override
@@ -255,33 +299,36 @@ public class BackgroundImageWizardController extends WizardController {
     public URL getIcon() {
       return this.icon;
     }
-
-    public void updateStep() {      
-    }
   }
     
   /**
    * Image choice step state (first step).
    */
   private class ImageChoiceStepState extends BackgroundImageWizardStepState {
+    public ImageChoiceStepState() {
+      BackgroundImageWizardController.this.addPropertyChangeListener(Property.IMAGE, 
+          new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent evt) {
+                setNextStepEnabled(getImage() != null);
+              }
+            });
+    }
+    
+    @Override
+    public void enter() {
+      super.enter();
+      setFirstStep(true);
+      setNextStepEnabled(getImage() != null);
+    }
+    
     @Override
     public Step getStep() {
       return Step.CHOICE;
     }
     
     @Override
-    public boolean isFirstStep() {
-      return true;
-    }
-    
-    @Override
     public void goToNextStep() {
       setStepState(getImageScaleStepState());
-    }
-    
-    @Override
-    public void updateStep() {
-      setNextStepEnabled(getImageContent() != null);
     }
   }
 
@@ -289,6 +336,21 @@ public class BackgroundImageWizardController extends WizardController {
    * Image scale step state (second step).
    */
   private class ImageScaleStepState extends BackgroundImageWizardStepState {
+    public ImageScaleStepState() {
+      BackgroundImageWizardController.this.addPropertyChangeListener(Property.SCALE_DISTANCE, 
+          new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent evt) {
+                setNextStepEnabled(getScaleDistance() != null);
+              }
+            });
+    }
+    
+    @Override
+    public void enter() {
+      super.enter();
+      setNextStepEnabled(getScaleDistance() != null);
+    }
+    
     @Override
     public Step getStep() {
       return Step.SCALE;
@@ -303,11 +365,6 @@ public class BackgroundImageWizardController extends WizardController {
     public void goToNextStep() {
       setStepState(getImageOriginStepState());
     }
-    
-    @Override
-    public void updateStep() {
-      setNextStepEnabled(getScaleDistance() != null);
-    }
   }
 
   /**
@@ -317,6 +374,7 @@ public class BackgroundImageWizardController extends WizardController {
     @Override
     public void enter() {
       super.enter();
+      setLastStep(true);
       // Last step is always valid by default
       setNextStepEnabled(true);
     }
@@ -324,11 +382,6 @@ public class BackgroundImageWizardController extends WizardController {
     @Override
     public Step getStep() {
       return Step.ORIGIN;
-    }
-    
-    @Override
-    public boolean isLastStep() {
-      return true;
     }
     
     @Override

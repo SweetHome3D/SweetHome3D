@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.net.URL;
 
 import javax.swing.JComponent;
@@ -32,12 +35,30 @@ import javax.swing.JComponent;
  * @author Emmanuel Puybaret
  */
 public abstract class WizardController {
-  private JComponent  wizardView;
+  private JComponent                wizardView;
   // Current step state
   private WizardControllerStepState stepState;
+  private PropertyChangeListener    stepStatePropertyChangeListener;
 
   public WizardController() {
     this.wizardView = new WizardPane(this);
+    // Create a listener used to track changes in current step state
+    this.stepStatePropertyChangeListener = new PropertyChangeListener () {
+        public void propertyChange(PropertyChangeEvent ev) {
+          WizardPane wizardView = (WizardPane)getView();
+          switch (WizardControllerStepState.Property.valueOf(ev.getPropertyName())) {
+            case FIRST_STEP :
+              wizardView.setBackStepEnabled(!stepState.isFirstStep());
+              break;
+            case LAST_STEP :
+              wizardView.setLastStep(stepState.isLastStep());
+              break;
+            case NEXT_STEP_ENABLED :
+              wizardView.setNextStepEnabled(stepState.isNextStepEnabled());
+              break;
+          }
+        }
+      };
   }
   
   /**
@@ -60,16 +81,18 @@ public abstract class WizardController {
   protected void setStepState(WizardControllerStepState stepState) {
     if (this.stepState != null) {
       this.stepState.exit();
+      this.stepState.removePropertyChangeListener(this.stepStatePropertyChangeListener);
     } 
     this.stepState = stepState;
     
     WizardPane wizardView = (WizardPane)getView();
     wizardView.setBackStepEnabled(!stepState.isFirstStep());
-    wizardView.setNextStepEnabled(false);
+    wizardView.setNextStepEnabled(stepState.isNextStepEnabled());
     wizardView.setStepMessage(stepState.getView());
     wizardView.setStepIcon(stepState.getIcon());
     wizardView.setLastStep(stepState.isLastStep());
-
+    
+    this.stepState.addPropertyChangeListener(this.stepStatePropertyChangeListener);
     this.stepState.enter();
   }
   
@@ -97,13 +120,6 @@ public abstract class WizardController {
   public abstract void finish();
   
   /**
-   * Enables the next step button in view. 
-   */
-  protected void setNextStepEnabled(boolean enabled) {
-    ((WizardPane)getView()).setNextStepEnabled(enabled);
-  }  
-  
-  /**
    * Set the title of the view. 
    */
   protected void setTitle(String title) {
@@ -114,6 +130,31 @@ public abstract class WizardController {
    * State of a step in wizard. 
    */
   protected static abstract class WizardControllerStepState {
+    private enum Property {NEXT_STEP_ENABLED, FIRST_STEP, LAST_STEP}
+    
+    private PropertyChangeSupport propertyChangeSupport;
+    private boolean               firstStep;
+    private boolean               lastStep;
+    private boolean               nextStepEnabled;
+
+    public WizardControllerStepState() {
+      this.propertyChangeSupport = new PropertyChangeSupport(this);
+    }
+    
+    /**
+     * Adds the property change <code>listener</code> in parameter to this home.
+     */
+    private void addPropertyChangeListener(PropertyChangeListener listener) {
+      this.propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Removes the property change <code>listener</code> in parameter from this home.
+     */
+    private void removePropertyChangeListener(PropertyChangeListener listener) {
+      this.propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
     public void enter() {
     }
 
@@ -133,11 +174,39 @@ public abstract class WizardController {
     }
     
     public boolean isFirstStep() {
-      return false;
+      return this.firstStep;
     }
     
+    public void setFirstStep(boolean firstStep) {
+      if (firstStep != this.firstStep) {
+        this.firstStep = firstStep;
+        this.propertyChangeSupport.firePropertyChange(
+            Property.FIRST_STEP.toString(), !firstStep, firstStep);
+      }
+    }  
+    
     public boolean isLastStep() {
-      return false;
-    }    
+      return this.lastStep;
+    }   
+    
+    public void setLastStep(boolean lastStep) {
+      if (lastStep != this.lastStep) {
+        this.lastStep = lastStep;
+        this.propertyChangeSupport.firePropertyChange(
+            Property.LAST_STEP.toString(), !lastStep, lastStep);
+      }
+    }  
+    
+    public boolean isNextStepEnabled() {
+      return this.nextStepEnabled;
+    }
+    
+    public void setNextStepEnabled(boolean nextStepEnabled) {
+      if (nextStepEnabled != this.nextStepEnabled) {
+        this.nextStepEnabled = nextStepEnabled;
+        this.propertyChangeSupport.firePropertyChange(
+            Property.NEXT_STEP_ENABLED.toString(), !nextStepEnabled, nextStepEnabled);
+      }
+    }  
   }
 }

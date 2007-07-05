@@ -1,5 +1,5 @@
 /*
- * BackgroundImageWizardStepsView.java 8 juin 07
+ * BackgroundImageWizardStepsPanel.java 8 juin 07
  *
  * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -27,7 +27,6 @@ import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -43,13 +42,11 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -57,7 +54,6 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -72,14 +68,12 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.NullableSpinner.NullableSpinnerLengthModel;
-import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
 public class BackgroundImageWizardStepsPanel extends JPanel {
-  private static final String [] IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".wbmp"};  
   private static final FileFilter [] IMAGE_FILTERS = {
     new FileFilter() {
       @Override
@@ -135,8 +129,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         return "PNG";
       }
     }};
-  private static File currentDirectory;
-    
+
   private BackgroundImageWizardController controller;
   private ResourceBundle                  resource;
   private CardLayout                      cardLayout;
@@ -232,8 +225,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       };
     xOriginSpinnerModel.addChangeListener(originSpinnerListener);
     yOriginSpinnerModel.addChangeListener(originSpinnerListener);
-    this.imageOriginPreviewComponent = new OriginImagePreviewComponent(this.controller, 
-        xOriginSpinnerModel, yOriginSpinnerModel);
+    PropertyChangeListener originChangeListener = new PropertyChangeListener () {
+        public void propertyChange(PropertyChangeEvent evt) {
+          // If origin values changes update origin spinners
+          ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(
+              controller.getXOrigin());
+          ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(
+              controller.getYOrigin());
+        }
+      };
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, originChangeListener);
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, originChangeListener);
+    
+    this.imageOriginPreviewComponent = new OriginImagePreviewComponent(this.controller);
   }
 
   /**
@@ -343,6 +347,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   if (readImage != null) {
+                    controller.setImage(backgroundImage.getImage());
                     ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setLength(
                         backgroundImage.getScaleDistance());
                     imageScalePreviewComponent.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
@@ -353,6 +358,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                     ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(
                         backgroundImage.getYOrigin());
                   } else {
+                    controller.setImage(null);
                     setImageChoiceTexts();
                     imageChoiceErrorLabel.setVisible(true);
                   }
@@ -382,6 +388,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 if (readImage != null) {
+                  controller.setImage(imageContent);
                   setImageChangeTexts();
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize distance and origin with default values
@@ -395,6 +402,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                   ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(0f);
                   ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(0f);
                 } else {
+                  controller.setImage(null);
                   setImageChoiceTexts();
                   JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
                       resource.getString("imageChoiceFormatError"));
@@ -406,7 +414,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Reads image from <code>imageContent</code>.
+   * Reads image from <code>imageContent</code>. 
+   * Caution : this method must be thread safe because it's called from image loader executor. 
    */
   private BufferedImage readImage(Content imageContent) throws IOException {
     try {
@@ -416,20 +425,20 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             getResource("resources/wait.png"));
       }
       updatePreviewComponentsImage(waitImage);
+      
       // Read the image content
       InputStream contentStream = imageContent.openStream();
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
+
       if (image != null) {
         updatePreviewComponentsImage(image);
-        this.controller.setImageContent(imageContent);
         return image;
       } else {
         throw new IOException();
       }
     } catch (IOException ex) {
       updatePreviewComponentsImage(null);
-      this.controller.setImageContent(null);
       throw ex;
     } 
   }
@@ -474,117 +483,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * override this method to use a different source of image.
    */
   protected Content showImageChoiceDialog() {
-    String file;
-    // Use native file dialog under Mac OS X
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      file = showFileDialog(null);
-    } else {
-      file = showFileChooser(null);
-    }
-
+    String file = FileUtilities.showOpenFileDialog(this, 
+        this.resource.getString("imageChoiceDialog.title"), IMAGE_FILTERS);
     if (file != null) {
       try {
         // Copy chosen file in a temporary file to ensure the image will 
         // still be available at saving time even if user moved it meanwhile   
-        return copyToTempFile(file);
+        return FileUtilities.copyToTempFile(file);
       } catch (IOException ex) {
         JOptionPane.showMessageDialog(this, 
             String.format(this.resource.getString("imageChoiceError"), file));
       }
     }
     return null;
-  }
-
-  /**
-   * Returns a {@link URLContent URL content} object that references a temporary copy of 
-   * the given <code>file</code>.
-   */
-  private Content copyToTempFile(String file) throws IOException {
-    File tempFile = File.createTempFile("image", "tmp");
-    tempFile.deleteOnExit();
-    InputStream tempIn = null;
-    OutputStream tempOut = null;
-    try {
-      tempIn = new FileInputStream(file);
-      tempOut = new FileOutputStream(tempFile);
-      byte [] buffer = new byte [8096];
-      int size; 
-      while ((size = tempIn.read(buffer)) != -1) {
-        tempOut.write(buffer, 0, size);
-      }
-    } finally {
-      if (tempIn != null) {
-        tempIn.close();
-      }
-      if (tempOut != null) {
-        tempOut.close();
-      }
-    }
-    return new URLContent(tempFile.toURL());
-  }
-
-  /**
-   * Displays a Swing open file chooser.
-   */
-  private String showFileChooser(String name) {
-    JFileChooser fileChooser = new JFileChooser();
-    // Set supported image  files filter 
-    for (FileFilter filter : IMAGE_FILTERS) {
-      fileChooser.addChoosableFileFilter(filter);
-    }
-    fileChooser.setFileFilter(fileChooser.getAcceptAllFileFilter());
-    // Update current directory
-    if (currentDirectory != null) {
-      fileChooser.setCurrentDirectory(currentDirectory);
-    }
-    fileChooser.setDialogTitle(this.resource.getString("imageChoiceDialog.title"));
-    int option = fileChooser.showOpenDialog(this);
-    if (option == JFileChooser.APPROVE_OPTION) {
-      // Retrieve current directory for future calls
-      currentDirectory = fileChooser.getCurrentDirectory();
-      // Return selected file
-      return fileChooser.getSelectedFile().toString();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Displays an AWT open file dialog.
-   */
-  private String showFileDialog(String name) {
-    FileDialog fileDialog = 
-      new FileDialog(JOptionPane.getFrameForComponent(this));
-
-    // Set supported image files filter 
-    fileDialog.setFilenameFilter(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          name = name.toLowerCase();
-          for (String extension : IMAGE_EXTENSIONS) {
-            if (name.endsWith(extension)) {
-              return true;
-            }
-          }
-          return false;
-        }
-      });
-    // Update current directory
-    if (currentDirectory != null) {
-      fileDialog.setDirectory(currentDirectory.toString());
-    }
-    fileDialog.setMode(FileDialog.LOAD);
-    fileDialog.setTitle(this.resource.getString("imageChoiceDialog.title"));
-    fileDialog.setVisible(true);
-    String selectedFile = fileDialog.getFile();
-    // If user choosed a file
-    if (selectedFile != null) {
-      // Retrieve current directory for future calls
-      currentDirectory = new File(fileDialog.getDirectory());
-      // Return selected file
-      return currentDirectory + File.separator + selectedFile;
-    } else {
-      return null;
-    }
   }
 
   /**
@@ -820,43 +731,34 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    */
   private static class OriginImagePreviewComponent extends ImagePreviewComponent {
     private BackgroundImageWizardController controller;
-    private float                           xOrigin;
-    private float                           yOrigin;
 
-    public OriginImagePreviewComponent(BackgroundImageWizardController controller, 
-                                       NullableSpinnerLengthModel xOriginSpinnerModel, 
-                                       NullableSpinnerLengthModel yOriginSpinnerModel) {
+    public OriginImagePreviewComponent(BackgroundImageWizardController controller) {
       this.controller = controller;
-      addChangeListeners(xOriginSpinnerModel, yOriginSpinnerModel);
-      addMouseListener(xOriginSpinnerModel, yOriginSpinnerModel);
+      addChangeListeners(controller);
+      addMouseListener(controller);
       setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     }
 
     /**
-     * Adds listeners to <code>xOriginSpinnerModel</code> and <code>yOriginSpinnerModel</code>
+     * Adds listeners to <code>controller</code> 
      * to update the location of the origin drawn by this component.
      */
-    private void addChangeListeners(final NullableSpinnerLengthModel xOriginSpinnerModel, 
-                                    final NullableSpinnerLengthModel yOriginSpinnerModel) {
-      ChangeListener originSpinnerListener = new ChangeListener () {
-          public void stateChanged(ChangeEvent ev) {
-            // If origin spinners value changes update displayed origin
-            xOrigin = xOriginSpinnerModel.getLength();
-            yOrigin = yOriginSpinnerModel.getLength();
+    private void addChangeListeners(final BackgroundImageWizardController controller) {
+      PropertyChangeListener originChangeListener = new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent evt) {
+            // If origin values changes update displayed origin
             repaint();
           }
         };
-      xOriginSpinnerModel.addChangeListener(originSpinnerListener);
-      yOriginSpinnerModel.addChangeListener(originSpinnerListener);
+      controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, originChangeListener);
+      controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, originChangeListener);
     }
     
     /**
-     * Adds a mouse listener to this component to update the values stored 
-     * by <code>xOriginSpinnerModel</code> and <code>yOriginSpinnerModel</code>
-     * when the user clicks in component.
+     * Adds a mouse listener to this component to update the origin stored 
+     * by <code>controller</code> when the user clicks in component.
      */
-    public void addMouseListener(final NullableSpinnerLengthModel xOriginSpinnerModel, 
-                                 final NullableSpinnerLengthModel yOriginSpinnerModel) {
+    public void addMouseListener(final BackgroundImageWizardController controller) {
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
@@ -865,8 +767,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
               float scale = getPreviewScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
-              xOriginSpinnerModel.setLength(Math.round(ev.getX() / scale * 10) / 10.f);
-              yOriginSpinnerModel.setLength(Math.round(ev.getY() / scale * 10) / 10.f);
+              controller.setOrigin(Math.round(ev.getX() / scale * 10) / 10.f, 
+                  Math.round(ev.getY() / scale * 10) / 10.f);
             }
           }
           
@@ -903,7 +805,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         g2D.scale(scale, scale);
         
         // Draw a dot at origin
-        g2D.translate(this.xOrigin, this.yOrigin);
+        g2D.translate(this.controller.getXOrigin(), this.controller.getYOrigin());
         
         float originRadius = 4 / scale;
         g2D.fill(new Ellipse2D.Float(-originRadius, -originRadius,
