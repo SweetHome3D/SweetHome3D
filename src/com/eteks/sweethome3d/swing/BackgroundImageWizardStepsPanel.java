@@ -162,7 +162,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     createComponents(preferences);
     setMnemonics();
     layoutComponents();
-    updateComponents(backgroundImage);
+    updateController(backgroundImage);
   }
 
   /**
@@ -182,7 +182,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         public void actionPerformed(ActionEvent ev) {
           Content content = showImageChoiceDialog();
           if (content != null) {
-            updateComponents(content);
+            updateController(content);
           }
         }
       });
@@ -227,23 +227,28 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     final NullableSpinner.NullableSpinnerLengthModel yOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
     this.yOriginSpinner = new NullableSpinner(yOriginSpinnerModel);
-    ChangeListener originSpinnerListener = new ChangeListener () {
+    ChangeListener originSpinnersListener = new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
           // If origin spinners value changes update controller
           controller.setOrigin(xOriginSpinnerModel.getLength(), yOriginSpinnerModel.getLength());
         }
       };
-    xOriginSpinnerModel.addChangeListener(originSpinnerListener);
-    yOriginSpinnerModel.addChangeListener(originSpinnerListener);
-    PropertyChangeListener originChangeListener = new PropertyChangeListener () {
-        public void propertyChange(PropertyChangeEvent ev) {
-          // If origin values changes update origin spinners
-          xOriginSpinnerModel.setLength(controller.getXOrigin());
-          yOriginSpinnerModel.setLength(controller.getYOrigin());
-        }
-      };
-    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, originChangeListener);
-    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, originChangeListener);
+    xOriginSpinnerModel.addChangeListener(originSpinnersListener);
+    yOriginSpinnerModel.addChangeListener(originSpinnersListener);
+    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, 
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If origin values changes update x origin spinner
+            xOriginSpinnerModel.setLength(controller.getXOrigin());
+          }
+        });
+    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, 
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If origin values changes update y origin spinner
+            yOriginSpinnerModel.setLength(controller.getYOrigin());
+          }
+        });
     
     this.originPreviewComponent = new OriginImagePreviewComponent(this.controller);
   }
@@ -333,9 +338,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Updates components initial values from <code>backgroundImage</code>. 
+   * Updates controller initial values from <code>backgroundImage</code>. 
    */
-  private void updateComponents(final BackgroundImage backgroundImage) {
+  private void updateController(final BackgroundImage backgroundImage) {
     if (backgroundImage == null) {
       setImageChoiceTexts();
       updatePreviewComponentsImage(null);
@@ -375,9 +380,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Updates components values from <code>imageContent</code>.
+   * Updates controller values from <code>imageContent</code>.
    */
-  private void updateComponents(final Content imageContent) {
+  private void updateController(final Content imageContent) {
     // Read image in imageLoader executor
     imageLoader.execute(new Runnable() {
         public void run() {
