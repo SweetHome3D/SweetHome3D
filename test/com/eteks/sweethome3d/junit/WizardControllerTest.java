@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.net.URL;
 
@@ -59,7 +60,8 @@ public class WizardControllerTest extends TestCase {
     String nextFinishOptionButtonText = nextFinishOptionButton.getText();
     // Check view displays first step view
     assertEquals("First step view class isn't correct", 
-        ControllerTest.FirstStepView.class, view.getMessage().getClass());
+        ControllerTest.FirstStepView.class, 
+        ((BorderLayout)((JPanel)view.getMessage()).getLayout()).getLayoutComponent(BorderLayout.CENTER).getClass());
     // Check back button is disabled and next button is enabled
     assertFalse("Back button isn't disabled", backOptionButton.isEnabled());
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
@@ -68,7 +70,8 @@ public class WizardControllerTest extends TestCase {
     nextFinishOptionButton.doClick();
     // Check view displays second step view
     assertEquals("Second step view class isn't correct", 
-        ControllerTest.SecondStepView.class, view.getMessage().getClass());
+        ControllerTest.SecondStepView.class, 
+        ((BorderLayout)((JPanel)view.getMessage()).getLayout()).getLayoutComponent(BorderLayout.CENTER).getClass());
     // Check back button is enabled and next button is disabled
     assertTrue("Back button isn't enabled", backOptionButton.isEnabled());
     assertFalse("Next button isn't disabled", nextFinishOptionButton.isEnabled());
@@ -80,7 +83,8 @@ public class WizardControllerTest extends TestCase {
     backOptionButton.doClick();
     // Check view displays first step view
     assertEquals("First step view class isn't correct", 
-        ControllerTest.FirstStepView.class, view.getMessage().getClass());
+        ControllerTest.FirstStepView.class, 
+        ((BorderLayout)((JPanel)view.getMessage()).getLayout()).getLayoutComponent(BorderLayout.CENTER).getClass());
     // Check back button is disabled and next button is enabled
     assertFalse("Back button isn't disabled", backOptionButton.isEnabled());
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
@@ -93,7 +97,8 @@ public class WizardControllerTest extends TestCase {
     nextFinishOptionButton.doClick();
     // Check view displays second step view
     assertEquals("Second step view class isn't correct", 
-        ControllerTest.SecondStepView.class, view.getMessage().getClass());
+        ControllerTest.SecondStepView.class, 
+        ((BorderLayout)((JPanel)view.getMessage()).getLayout()).getLayoutComponent(BorderLayout.CENTER).getClass());
     // Check the check box in second step view isn't selected
     JCheckBox yesCheckBox = (JCheckBox)TestUtilities.findComponent(view, JCheckBox.class);
     assertFalse("Check box is selected", yesCheckBox.isSelected());
