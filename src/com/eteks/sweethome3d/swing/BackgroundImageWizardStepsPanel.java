@@ -58,6 +58,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -137,16 +138,16 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private JButton                         imageChoiceOrChangeButton;
   private JLabel                          imageChoiceErrorLabel;
   private ImagePreviewComponent           imageChoicePreviewComponent;
-  private JLabel                          imageScaleLabel;
-  private JLabel                          imageScaleDistanceLabel;
-  private NullableSpinner                 imageScaleDistanceSpinner;
-  private ScaleImagePreviewComponent      imageScalePreviewComponent;
-  private JLabel                          imageOriginLabel;
-  private JLabel                          imageXOriginLabel;
-  private NullableSpinner                 imageXOriginSpinner;
-  private JLabel                          imageYOriginLabel;
-  private NullableSpinner                 imageYOriginSpinner;
-  private ImagePreviewComponent           imageOriginPreviewComponent;
+  private JLabel                          scaleLabel;
+  private JLabel                          scaleDistanceLabel;
+  private JSpinner                        scaleDistanceSpinner;
+  private ScaleImagePreviewComponent      scalePreviewComponent;
+  private JLabel                          originLabel;
+  private JLabel                          xOriginLabel;
+  private JSpinner                        xOriginSpinner;
+  private JLabel                          yOriginLabel;
+  private JSpinner                        yOriginSpinner;
+  private ImagePreviewComponent           originPreviewComponent;
   
   private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
   private static BufferedImage            waitImage;
@@ -191,32 +192,41 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     this.imageChoicePreviewComponent = new ImagePreviewComponent();
     
     // Image scale panel components
-    this.imageScaleLabel = new JLabel(this.resource.getString("imageScaleLabel.text"));
-    this.imageScaleDistanceLabel = new JLabel(
-        String.format(this.resource.getString("imageScaleDistanceLabel.text"), unitText));
-    this.imageScaleDistanceSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 1f, 1000000f));
-    this.imageScaleDistanceSpinner.getModel().addChangeListener(new ChangeListener () {
+    this.scaleLabel = new JLabel(this.resource.getString("scaleLabel.text"));
+    this.scaleDistanceLabel = new JLabel(
+        String.format(this.resource.getString("scaleDistanceLabel.text"), unitText));
+    final NullableSpinner.NullableSpinnerLengthModel scaleDistanceSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 1f, 1000000f);
+    this.scaleDistanceSpinner = new NullableSpinner(scaleDistanceSpinnerModel);
+    this.scaleDistanceSpinner.getModel().addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
           // If spinner value changes update controller
           controller.setScaleDistance(
-              ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).getLength());
+              ((NullableSpinner.NullableSpinnerLengthModel)scaleDistanceSpinner.getModel()).getLength());
         }
       });
-    this.imageScalePreviewComponent = new ScaleImagePreviewComponent(this.controller);
+    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            // If scale distance changes updates scale spinner
+            scaleDistanceSpinnerModel.setNullable(controller.getScaleDistance() == null);
+            scaleDistanceSpinnerModel.setLength(controller.getScaleDistance());
+          }
+        });
+    this.scalePreviewComponent = new ScaleImagePreviewComponent(this.controller);
     
     // Image origin panel components
-    this.imageOriginLabel = new JLabel(this.resource.getString("imageOriginLabel.text"));
-    this.imageXOriginLabel = new JLabel(
-        String.format(this.resource.getString("imageXOriginLabel.text"), unitText)); 
-    this.imageYOriginLabel = new JLabel(
-        String.format(this.resource.getString("imageYOriginLabel.text"), unitText)); 
+    this.originLabel = new JLabel(this.resource.getString("originLabel.text"));
+    this.xOriginLabel = new JLabel(
+        String.format(this.resource.getString("xOriginLabel.text"), unitText)); 
+    this.yOriginLabel = new JLabel(
+        String.format(this.resource.getString("yOriginLabel.text"), unitText)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
-    this.imageXOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
+    this.xOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
     final NullableSpinner.NullableSpinnerLengthModel yOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
-    this.imageYOriginSpinner = new NullableSpinner(yOriginSpinnerModel);
+    this.yOriginSpinner = new NullableSpinner(yOriginSpinnerModel);
     ChangeListener originSpinnerListener = new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
           // If origin spinners value changes update controller
@@ -226,18 +236,16 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     xOriginSpinnerModel.addChangeListener(originSpinnerListener);
     yOriginSpinnerModel.addChangeListener(originSpinnerListener);
     PropertyChangeListener originChangeListener = new PropertyChangeListener () {
-        public void propertyChange(PropertyChangeEvent evt) {
+        public void propertyChange(PropertyChangeEvent ev) {
           // If origin values changes update origin spinners
-          ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(
-              controller.getXOrigin());
-          ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(
-              controller.getYOrigin());
+          xOriginSpinnerModel.setLength(controller.getXOrigin());
+          yOriginSpinnerModel.setLength(controller.getYOrigin());
         }
       };
-    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, originChangeListener);
-    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, originChangeListener);
+    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, originChangeListener);
+    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, originChangeListener);
     
-    this.imageOriginPreviewComponent = new OriginImagePreviewComponent(this.controller);
+    this.originPreviewComponent = new OriginImagePreviewComponent(this.controller);
   }
 
   /**
@@ -245,15 +253,15 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    */
   private void setMnemonics() {
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
-      this.imageScaleDistanceLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("imageScaleDistanceLabel.mnemonic")).getKeyCode());
-      this.imageScaleDistanceLabel.setLabelFor(this.imageScaleDistanceSpinner);
-      this.imageXOriginLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("imageXOriginLabel.mnemonic")).getKeyCode());
-      this.imageXOriginLabel.setLabelFor(this.imageXOriginSpinner);
-      this.imageYOriginLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("imageYOriginLabel.mnemonic")).getKeyCode());
-      this.imageYOriginLabel.setLabelFor(this.imageYOriginSpinner);
+      this.scaleDistanceLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("scaleDistanceLabel.mnemonic")).getKeyCode());
+      this.scaleDistanceLabel.setLabelFor(this.scaleDistanceSpinner);
+      this.xOriginLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("xOriginLabel.mnemonic")).getKeyCode());
+      this.xOriginLabel.setLabelFor(this.xOriginSpinner);
+      this.yOriginLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("yOriginLabel.mnemonic")).getKeyCode());
+      this.yOriginLabel.setLabelFor(this.yOriginSpinner);
     }
   }
   
@@ -278,43 +286,43 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
     
-    JPanel imageScalePanel = new JPanel(new GridBagLayout());
-    imageScalePanel.add(this.imageScaleLabel, new GridBagConstraints(
+    JPanel scalePanel = new JPanel(new GridBagLayout());
+    scalePanel.add(this.scaleLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    imageScalePanel.add(this.imageScaleDistanceLabel, new GridBagConstraints(
+    scalePanel.add(this.scaleDistanceLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    imageScalePanel.add(this.imageScaleDistanceSpinner, new GridBagConstraints(
+    scalePanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    imageScalePanel.add(this.imageScalePreviewComponent, new GridBagConstraints(
+    scalePanel.add(this.scalePreviewComponent, new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
 
-    JPanel imageOriginPanel = new JPanel(new GridBagLayout());
-    imageOriginPanel.add(this.imageOriginLabel, new GridBagConstraints(
+    JPanel originPanel = new JPanel(new GridBagLayout());
+    originPanel.add(this.originLabel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    imageOriginPanel.add(this.imageXOriginLabel, new GridBagConstraints(
+    originPanel.add(this.xOriginLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    imageOriginPanel.add(this.imageXOriginSpinner, new GridBagConstraints(
+    originPanel.add(this.xOriginSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 10), -10, 0));
-    imageOriginPanel.add(this.imageYOriginLabel, new GridBagConstraints(
+    originPanel.add(this.yOriginLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    imageOriginPanel.add(this.imageYOriginSpinner, new GridBagConstraints(
+    originPanel.add(this.yOriginSpinner, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
-    imageOriginPanel.add(this.imageOriginPreviewComponent, new GridBagConstraints(
+    originPanel.add(this.originPreviewComponent, new GridBagConstraints(
         0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
 
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
-    add(imageScalePanel, BackgroundImageWizardController.Step.SCALE.name());
-    add(imageOriginPanel, BackgroundImageWizardController.Step.ORIGIN.name());
+    add(scalePanel, BackgroundImageWizardController.Step.SCALE.name());
+    add(originPanel, BackgroundImageWizardController.Step.ORIGIN.name());
   }
   
   /**
@@ -348,15 +356,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                 public void run() {
                   if (readImage != null) {
                     controller.setImage(backgroundImage.getImage());
-                    ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setLength(
-                        backgroundImage.getScaleDistance());
-                    imageScalePreviewComponent.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
+                    controller.setScaleDistance(backgroundImage.getScaleDistance());
+                    controller.setScaleDistancePoints(backgroundImage.getScaleDistanceXStart(),
                         backgroundImage.getScaleDistanceYStart(), backgroundImage.getScaleDistanceXEnd(),
                         backgroundImage.getScaleDistanceYEnd());
-                    ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(
-                        backgroundImage.getXOrigin());
-                    ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(
-                        backgroundImage.getYOrigin());
+                    controller.setOrigin(backgroundImage.getXOrigin(), backgroundImage.getYOrigin());
                   } else {
                     controller.setImage(null);
                     setImageChoiceTexts();
@@ -392,15 +396,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                   setImageChangeTexts();
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize distance and origin with default values
-                  ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setNullable(true);
-                  ((NullableSpinner.NullableSpinnerLengthModel)imageScaleDistanceSpinner.getModel()).setLength(null);
+                  controller.setScaleDistance(null);
                   float scaleDistanceXStart = readImage.getWidth() * 0.1f;
                   float scaleDistanceYStart = readImage.getHeight() / 2f;
                   float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
-                  imageScalePreviewComponent.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
+                  controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
                       scaleDistanceXEnd, scaleDistanceYStart);
-                  ((NullableSpinner.NullableSpinnerLengthModel)imageXOriginSpinner.getModel()).setLength(0f);
-                  ((NullableSpinner.NullableSpinnerLengthModel)imageYOriginSpinner.getModel()).setLength(0f);
+                  controller.setOrigin(0, 0);
                 } else {
                   controller.setImage(null);
                   setImageChoiceTexts();
@@ -448,8 +450,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    */
   private void updatePreviewComponentsImage(BufferedImage image) {
     this.imageChoicePreviewComponent.setImage(image);
-    this.imageScalePreviewComponent.setImage(image);
-    this.imageOriginPreviewComponent.setImage(image);
+    this.scalePreviewComponent.setImage(image);
+    this.originPreviewComponent.setImage(image);
   }
 
   /**
@@ -506,7 +508,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(300, 200);
+      return new Dimension(400, 300);
     }
     
     @Override
@@ -596,24 +598,29 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
 
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
       this.controller = controller;
-      addMouseListeners();
-      setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+      addChangeListeners(controller);
+      addMouseListeners(controller);
     }
     
     /**
-     * Sets the scale distance start and end points. 
+     * Adds listeners to <code>controller</code> 
+     * to update the scale distance points of the origin drawn by this component.
      */
-    public void setScaleDistancePoints(float scaleDistanceXStart, float scaleDistanceYStart, 
-                                       float scaleDistanceXEnd, float scaleDistanceYEnd) {
-      this.controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
-          scaleDistanceXEnd, scaleDistanceYEnd);
+    private void addChangeListeners(final BackgroundImageWizardController controller) {
+      controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE_POINTS, 
+          new PropertyChangeListener () {
+            public void propertyChange(PropertyChangeEvent evt) {
+              // If origin values changes update displayed origin
+              repaint();
+            }
+          });
     }
-
+    
     /**
      * Adds to this component a mouse listeners that allows the user to move the start point 
      * or the end point of the scale distance line.
      */
-    public void addMouseListeners() {
+    public void addMouseListeners(final BackgroundImageWizardController controller) {
       MouseInputAdapter mouseListener = new MouseInputAdapter() {
         private int     lastX;
         private int     lastY;
@@ -654,7 +661,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                     scaleDistancePoints [0][1] * scale,
                     scaleDistancePoints [1][0] * scale, 
                     scaleDistancePoints [1][1] * scale) >= 4) {
-              setScaleDistancePoints(
+              controller.setScaleDistancePoints(
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1],
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
               repaint();
@@ -753,7 +760,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       this.controller = controller;
       addChangeListeners(controller);
       addMouseListener(controller);
-      setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
     }
 
     /**
