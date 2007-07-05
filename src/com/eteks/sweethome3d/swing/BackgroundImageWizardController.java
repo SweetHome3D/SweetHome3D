@@ -36,8 +36,6 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.PlanController.Mode;
-import com.eteks.sweethome3d.swing.PlanController.Property;
 
 
 /**
