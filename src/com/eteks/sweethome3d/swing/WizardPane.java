@@ -19,8 +19,14 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Frame;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
@@ -30,9 +36,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.border.BevelBorder;
 
 /**
  * Wizard pane. 
@@ -46,12 +55,18 @@ public class WizardPane extends JOptionPane {
   private boolean          lastStep;
   private String           title;
   private JDialog          dialog;
+  private boolean          resizable;
 
+  /**
+   * Creates a wizard view controlled by <code>controller</code>.
+   */
   public WizardPane(WizardController controller) {
     super();
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(WizardPane.class.getName());
     this.title = resource.getString("wizard.title");
+    
+    setMessage(new JPanel(new BorderLayout(10, 0)));
     
     createOptionButtons();    
     setOptionType(DEFAULT_OPTION);
@@ -99,14 +114,23 @@ public class WizardPane extends JOptionPane {
       });
   }
 
+  /**
+   * Sets whether the back step button is <code>enabled</code> or not.
+   */
   public void setBackStepEnabled(boolean enabled) {
     this.backOptionButton.setEnabled(enabled);
   }
 
+  /**
+   * Sets whether the next step button is <code>enabled</code> or not.
+   */
   public void setNextStepEnabled(boolean enabled) {
     this.nextFinishOptionButton.setEnabled(enabled);
   }
 
+  /**
+   * Sets whether this wizard view is displaying the last step or not.
+   */
   public void setLastStep(boolean lastStep) {
     this.lastStep = lastStep;
     this.nextFinishOptionButton.setText(resource.getString(lastStep 
@@ -120,23 +144,98 @@ public class WizardPane extends JOptionPane {
     }
   }
   
+  /**
+   * Sets the step view displayed by this wizard view.
+   */
   public void setStepMessage(JComponent stepView) {
-    setMessage(stepView);
-    if (this.dialog != null) {
+    JPanel messagePanel = (JPanel)getMessage();
+    // Clean previous step message
+    Component previousStepView = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
+    if (previousStepView != null) {
+      messagePanel.remove(previousStepView);
+    }
+    // Add new message
+    if (stepView != null) {
+      messagePanel.add(stepView, BorderLayout.CENTER);
+    } 
+    if (this.dialog != null && !this.resizable) {
       this.dialog.pack();
     }
   }
 
+  /**
+   * Sets the step icon displayed by this wizard view.
+   */
   public void setStepIcon(URL stepIcon) {
-    setIcon(stepIcon == null 
-              ? null 
-              : new ImageIcon(stepIcon));
+    JPanel messagePanel = (JPanel)getMessage();
+    // Clean previous icon
+    Component previousStepIcon = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.WEST);
+    if (previousStepIcon != null) {
+      messagePanel.remove(previousStepIcon);
+    }
+    // Add new icon
+    if (stepIcon != null) {
+      JLabel iconLabel = new JLabel(new ImageIcon(stepIcon)) {
+          @Override
+          protected void paintComponent(Graphics g) {
+            Graphics2D g2D = (Graphics2D)g;
+             // Paint a blue gradient behind icon
+            g2D.setPaint(new GradientPaint(0, 0, new Color(163, 168, 226), 
+                                           0, getHeight(), new Color(80, 86, 158)));
+            g.fillRect(0, 0, getWidth(), getHeight());
+            super.paintComponent(g);
+          }
+        };
+      // Use a bevel border 1 pixel wide
+      iconLabel.setBorder(new BevelBorder(BevelBorder.LOWERED) {
+          @Override
+          public Insets getBorderInsets(Component c) {
+            return new Insets(1, 1, 1, 1);
+          }
+          
+          @Override
+          protected void paintLoweredBevel(Component c, Graphics g, int x, int y,
+                                           int width, int height)  {
+            Color oldColor = g.getColor();
+            g.translate(x, y);
+
+            g.setColor(getShadowInnerColor(c));
+            g.drawLine(0, 0, 0, height - 1);
+            g.drawLine(0, 0, width - 1, 0);
+
+            g.setColor(getHighlightInnerColor(c));
+            g.drawLine(0, height - 1, width - 1, height - 1);
+            g.drawLine(width - 1, 1, width - 1, height - 2);
+
+            g.translate(-x, -y);
+            g.setColor(oldColor);
+          }
+        });
+      // We don't use JOptionPane icon to let icon background spread in all height 
+      messagePanel.add(iconLabel, BorderLayout.WEST);
+    } 
   }
 
+  /**
+   * Sets the title of this wizard view.
+   */
   public void setTitle(String title) {
     this.title = title;
   }
 
+  /**
+   * Sets whether this wizard view is <code>resizable</code> or not.
+   */
+  public void setResizable(boolean resizable) {
+    this.resizable = resizable;
+    if (this.dialog != null) {
+      this.dialog.setResizable(resizable);
+    }
+  }
+  
+  /**
+   * Displays this wizard view in a modal dialog.
+   */
   public void displayView() {
     Component parent = null;
     for (Frame frame : Frame.getFrames()) {
@@ -147,6 +246,8 @@ public class WizardPane extends JOptionPane {
     }
     
     this.dialog = createDialog(parent, this.title);
+    this.dialog.setMinimumSize(getSize());
+    this.dialog.setResizable(this.resizable);
     this.dialog.setVisible(true);
     this.dialog.dispose();
   }

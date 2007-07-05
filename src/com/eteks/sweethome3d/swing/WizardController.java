@@ -127,6 +127,13 @@ public abstract class WizardController {
   }  
   
   /**
+   * Sets whether the view is resizable.
+   */
+  protected void setResizable(boolean resizable) {
+    ((WizardPane)getView()).setResizable(resizable);
+  }
+  
+  /**
    * State of a step in wizard. 
    */
   protected static abstract class WizardControllerStepState {

@@ -75,6 +75,7 @@ public class BackgroundImageWizardController extends WizardController {
     // Create view
     this.stepsView = new BackgroundImageWizardStepsPanel(home.getBackgroundImage(), preferences, this);
     setTitle(this.resource.getString("wizard.title"));    
+    setResizable(true);
     // Initialize states
     this.imageChoiceStepState = new ImageChoiceStepState();
     this.imageScaleStepState = new ImageScaleStepState();

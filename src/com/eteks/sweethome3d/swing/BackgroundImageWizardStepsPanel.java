@@ -32,6 +32,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
@@ -266,7 +267,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     JPanel imageChoicePanel = new JPanel(new GridBagLayout());
     imageChoicePanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     imageChoicePanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -275,28 +276,28 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     imageChoicePanel.add(this.imageChoicePreviewComponent, new GridBagConstraints(
         0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
     
     JPanel imageScalePanel = new JPanel(new GridBagLayout());
     imageScalePanel.add(this.imageScaleLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     imageScalePanel.add(this.imageScaleDistanceLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 1, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     imageScalePanel.add(this.imageScaleDistanceSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     imageScalePanel.add(this.imageScalePreviewComponent, new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
 
     JPanel imageOriginPanel = new JPanel(new GridBagLayout());
     imageOriginPanel.add(this.imageOriginLabel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     imageOriginPanel.add(this.imageXOriginLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 1, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     imageOriginPanel.add(this.imageXOriginSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
@@ -309,7 +310,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
     imageOriginPanel.add(this.imageOriginPreviewComponent, new GridBagConstraints(
         0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
 
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
     add(imageScalePanel, BackgroundImageWizardController.Step.SCALE.name());
@@ -501,23 +502,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Preview component for image choice. 
    */
   private static class ImagePreviewComponent extends JComponent {
-    private static final int DEFAULT_WIDTH = 300;
-    private static final int DEFAULT_HEIGHT = 200;
     private BufferedImage image;
 
     @Override
     public Dimension getPreferredSize() {
-      if (image == null) { 
-        return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-      } else {
-        if (image.getWidth() < DEFAULT_WIDTH && image.getHeight() < DEFAULT_HEIGHT) {
-          return new Dimension(image.getWidth(), image.getHeight());
-        } else if (image.getWidth() * DEFAULT_HEIGHT / DEFAULT_WIDTH > image.getHeight()) {
-          return new Dimension(DEFAULT_WIDTH, image.getHeight() * DEFAULT_WIDTH / image.getWidth());
-        } else {
-          return new Dimension(image.getWidth() * DEFAULT_HEIGHT / image.getHeight(), DEFAULT_HEIGHT);
-        }
-      }
+      return new Dimension(300, 200);
     }
     
     @Override
@@ -536,7 +525,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             RenderingHints.VALUE_RENDER_QUALITY);
         AffineTransform oldTransform = g2D.getTransform();
         Composite oldComposite = g2D.getComposite();
-        float scale = getPreviewScale();
+        Point translation = getImageTranslation();
+        g2D.translate(translation.x, translation.y);
+        float scale = getImageScale();
         g2D.scale(scale, scale);    
         
         if (composite != null) {
@@ -554,7 +545,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      */
     public void setImage(BufferedImage image) {
       this.image = image;
-      this.revalidate();
       this.repaint();
     }
 
@@ -568,12 +558,33 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     /**
      * Returns the scale used to draw the image of this component.
      */
-    public float getPreviewScale() {
+    protected float getImageScale() {
       if (image != null) {
-        return (float)getWidth() / image.getWidth();
+        return Math.min(1, Math.min((float)getWidth() / image.getWidth(), 
+            (float)getHeight() / image.getHeight()));
       } else {
-        return 0;
+        return 1;
       }
+    }
+    
+    /**
+     * Returns the origin point where the image of this component is drawn.
+     */
+    protected Point getImageTranslation() {
+      float scale = getImageScale();
+      return new Point(Math.round((getWidth() - image.getWidth() * scale) / 2),
+          Math.round((getHeight() - image.getHeight() * scale) / 2));
+    }
+
+    /**
+     * Returns <code>true</code> if point at (<code>x</code>, <code>y</code>)
+     * is in the image displayed by this component.
+     */
+    protected boolean isPointInImage(int x, int y) {
+      Point translation = getImageTranslation();
+      float scale = getImageScale();
+      return x > translation.x && x < translation.x + Math.round(getImage().getWidth() * scale)
+          && y > translation.y && y < translation.y + Math.round(getImage().getHeight() * scale);
     }
   }
   
@@ -606,53 +617,43 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       MouseInputAdapter mouseListener = new MouseInputAdapter() {
         private int     lastX;
         private int     lastY;
-        private boolean inComponent;
         private boolean distanceStartPoint;
         private boolean distanceEndPoint;
         
         @Override
         public void mousePressed(MouseEvent ev) {
           if (!ev.isPopupTrigger()) {
-            this.inComponent = true;
-            this.distanceStartPoint = 
-            this.distanceEndPoint = false;
-            float [][] scaleDistancePoints = controller.getScaleDistancePoints();
-            // Check if user clicked on start or end point of distance line
-            if (Math.abs(scaleDistancePoints [0][0] * getPreviewScale() - ev.getX()) < 2
-                && Math.abs(scaleDistancePoints [0][1] * getPreviewScale() - ev.getY()) < 2) {
+            mouseMoved(ev);
+            if (this.distanceStartPoint
+                || this.distanceEndPoint) {
               this.lastX = ev.getX();
               this.lastY = ev.getY();
-              this.distanceStartPoint = true;
-            } else if (Math.abs(scaleDistancePoints [1][0] * getPreviewScale() - ev.getX()) < 2
-                       && Math.abs(scaleDistancePoints [1][1] * getPreviewScale() - ev.getY()) < 2) {
-              this.lastX = ev.getX();
-              this.lastY = ev.getY();
-              this.distanceEndPoint = true;
             } 
           }
         }
 
         @Override
         public void mouseDragged(MouseEvent ev) {
-          if (this.inComponent) {
+          if (isPointInImage(ev.getX(), ev.getY())) {
             float [][] scaleDistancePoints = controller.getScaleDistancePoints();
+            float scale = getImageScale();
             if (this.distanceStartPoint) {
               // Compute start point of distance line
-              scaleDistancePoints [0][0] += (ev.getX() - this.lastX) / getPreviewScale(); 
-              scaleDistancePoints [0][1] += (ev.getY() - this.lastY) / getPreviewScale();
+              scaleDistancePoints [0][0] += (ev.getX() - this.lastX) / scale; 
+              scaleDistancePoints [0][1] += (ev.getY() - this.lastY) / scale;
             } else if (this.distanceEndPoint) {
               // Compute end point of distance line
-              scaleDistancePoints [1][0] += (ev.getX() - this.lastX) / getPreviewScale(); 
-              scaleDistancePoints [1][1] += (ev.getY() - this.lastY) / getPreviewScale();
+              scaleDistancePoints [1][0] += (ev.getX() - this.lastX) / scale; 
+              scaleDistancePoints [1][1] += (ev.getY() - this.lastY) / scale;
             }
             
             // Accept new points only if distance is greater that 2 pixels
             if ((this.distanceStartPoint
                  || this.distanceEndPoint)
-                && Point2D.distanceSq(scaleDistancePoints [0][0] * getPreviewScale(), 
-                    scaleDistancePoints [0][1] * getPreviewScale(),
-                    scaleDistancePoints [1][0] * getPreviewScale(), 
-                    scaleDistancePoints [1][1] * getPreviewScale()) >= 4) {
+                && Point2D.distanceSq(scaleDistancePoints [0][0] * scale, 
+                    scaleDistancePoints [0][1] * scale,
+                    scaleDistancePoints [1][0] * scale, 
+                    scaleDistancePoints [1][1] * scale) >= 4) {
               setScaleDistancePoints(
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1],
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
@@ -665,13 +666,28 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         }
         
         @Override
-        public void mouseExited(MouseEvent ev) {
-          this.inComponent = false;
-        }
-        
-        @Override
-        public void mouseEntered(MouseEvent ev) {
-          this.inComponent = true;
+        public void mouseMoved(MouseEvent ev) {
+          this.distanceStartPoint = 
+          this.distanceEndPoint = false;
+          if (isPointInImage(ev.getX(), ev.getY())) {
+            float [][] scaleDistancePoints = controller.getScaleDistancePoints();
+            Point translation = getImageTranslation();
+            float scale = getImageScale();
+            // Check if user clicked on start or end point of distance line
+            if (Math.abs(scaleDistancePoints [0][0] * scale - ev.getX() + translation.x) < 2
+                && Math.abs(scaleDistancePoints [0][1] * scale - ev.getY() + translation.y) < 2) {
+              this.distanceStartPoint = true;
+            } else if (Math.abs(scaleDistancePoints [1][0] * scale - ev.getX() + translation.x) < 2
+                       && Math.abs(scaleDistancePoints [1][1] * scale - ev.getY() + translation.y) < 2) {
+              this.distanceEndPoint = true;
+            }
+          }
+          
+          if (this.distanceStartPoint || this.distanceEndPoint) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+          } else {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
         }
       };
       addMouseListener(mouseListener);
@@ -685,20 +701,22 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
             RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Fill background
+        Point translation = getImageTranslation();
+        float scale = getImageScale();
+        // Fill image background
         g2D.setColor(UIManager.getColor("window"));
-        g2D.fillRect(0, 0, getWidth(), getHeight());
+        g2D.fillRect(translation.x, translation.y, (int)(getImage().getWidth() * scale), 
+            (int)(getImage().getHeight() * scale));
         
         // Paint image with a 0.5 alpha
-        paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
+        paintImage(g2D, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
 
-        // Use same scale as image drawing in super class
-        float scale = getPreviewScale();
-        g2D.scale(scale, scale);
-        
         Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
         g2D.setPaint(scaleDistanceLineColor);
         
+        // Use same origin and scale as image drawing in super class
+        g2D.translate(translation.x, translation.y);
+        g2D.scale(scale, scale);       
         // Draw a scale distance line        
         g2D.setStroke(new BasicStroke(5 / scale, 
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -761,19 +779,32 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
           @Override
           public void mousePressed(MouseEvent ev) {
-            if (!ev.isPopupTrigger()) {
+            if (!ev.isPopupTrigger()
+                && isPointInImage(ev.getX(), ev.getY())) {
+              Point translation = getImageTranslation();
               float [][] scaleDistancePoints = controller.getScaleDistancePoints();
-              float scale = getPreviewScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
+              float rescale = getImageScale() / BackgroundImage.getScale(controller.getScaleDistance(), 
                   scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
                   scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
-              controller.setOrigin(Math.round(ev.getX() / scale * 10) / 10.f, 
-                  Math.round(ev.getY() / scale * 10) / 10.f);
+              float xOrigin = Math.round((ev.getX() - translation.x) / rescale * 10) / 10.f;
+              float yOrigin = Math.round((ev.getY() - translation.y) / rescale * 10) / 10.f;
+              controller.setOrigin(xOrigin, yOrigin);
             }
           }
           
           @Override
           public void mouseDragged(MouseEvent ev) {
+            mouseMoved(ev);
             mousePressed(ev);
+          }
+          
+          @Override
+          public void mouseMoved(MouseEvent ev) {
+            if (isPointInImage(ev.getX(), ev.getY())) {
+              setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+            } else {
+              setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            }
           }
         };
       addMouseListener(mouseAdapter);
@@ -787,18 +818,22 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
             RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Fill background
+        Point translation = getImageTranslation();
+        // Fill image background
         g2D.setColor(UIManager.getColor("window"));
-        g2D.fillRect(0, 0, getWidth(), getHeight());
+        g2D.fillRect(translation.x, translation.y, (int)(getImage().getWidth() * getImageScale()), 
+            (int)(getImage().getHeight() * getImageScale()));
         
         // Paint image with a 0.5 alpha 
         paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
         
         Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
         g2D.setPaint(scaleDistanceLineColor);
+        
+        g2D.translate(translation.x, translation.y);
         // Rescale according to scale distance
         float [][] scaleDistancePoints = this.controller.getScaleDistancePoints();
-        float scale = getPreviewScale() / BackgroundImage.getScale(this.controller.getScaleDistance(), 
+        float scale = getImageScale() / BackgroundImage.getScale(this.controller.getScaleDistance(), 
             scaleDistancePoints [0][0], scaleDistancePoints [0][1], 
             scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
         g2D.scale(scale, scale);
