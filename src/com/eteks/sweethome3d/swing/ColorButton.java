@@ -104,8 +104,13 @@ public class ColorButton extends JButton {
    * @param color RGB code of the color or <code>null</code>.
    */
   public void setColor(Integer color) {
-    this.color = color;
-    repaint();
+    if (color != this.color
+        || (color != null && !color.equals(this.color))) {
+      Integer oldColor = this.color;
+      this.color = color;
+      firePropertyChange("color", oldColor, color);
+      repaint();
+    }
   }
 
   /**
@@ -119,6 +124,12 @@ public class ColorButton extends JButton {
    * Sets the title of color dialog displayed when this button is pressed.  
    */
   public void setColorDialogTitle(String colorDialogTitle) {
-    this.colorDialogTitle = colorDialogTitle;
+    if (colorDialogTitle != this.colorDialogTitle
+        || (colorDialogTitle != null && !colorDialogTitle.equals(this.colorDialogTitle))) {
+      String oldColorDialogTitle = this.colorDialogTitle;
+      this.colorDialogTitle = colorDialogTitle;
+      firePropertyChange("colorDialogTitle", oldColorDialogTitle, colorDialogTitle);
+      repaint();
+    }
   }
 }
