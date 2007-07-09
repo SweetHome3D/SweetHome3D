@@ -545,7 +545,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private void setMnemonics() {
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       this.findModelsButton.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("findModels.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(resource.getString("findModelsButton.mnemonic")).getKeyCode());
       this.backFaceShownCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(resource.getString("backFaceShownCheckBox.mnemonic")).getKeyCode());
       this.nameLabel.setDisplayedMnemonic(
