@@ -26,6 +26,7 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -34,7 +35,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.FurnitureEvent;
+import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -122,17 +126,20 @@ public class HomeFramePane extends JRootPane {
         public void windowDeactivated(WindowEvent ev) {
           controller.setCatalogFurnitureSelectionSynchronized(false);
           // Store current selected furniture in catalog for future activation
-          catalogSelectedFurniture = 
-              application.getUserPreferences().getCatalog().getSelectedFurniture();
+          catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>(
+              application.getUserPreferences().getCatalog().getSelectedFurniture());
         }
         
         @Override
-        public void windowActivated(WindowEvent ev) {          
-          // Let the catalog view of each frame manage its own selection
+        public void windowActivated(WindowEvent ev) {                    
+          // Let the catalog view of each frame manage its own selection          
           application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
           controller.setCatalogFurnitureSelectionSynchronized(true);
         }        
       });
+    // Add a listener to catalog to update the catalog selection furniture
+    application.getUserPreferences().getCatalog().addFurnitureListener(
+        new CatalogChangeFurnitureListener(this));
     // Dispose window when a home is deleted 
     application.addHomeListener(new HomeListener() {
         public void homeChanged(HomeEvent ev) {
@@ -154,6 +161,29 @@ public class HomeFramePane extends JRootPane {
           updateFrameTitle(frame, home);
         }
       });
+  }
+  
+  /**
+   * Catalog listener that updates catalog selection furniture each time a piece of furniture 
+   * is deleted from catalog. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between catalog and this controller.  
+   */
+  private static class CatalogChangeFurnitureListener implements FurnitureListener {
+    private WeakReference<HomeFramePane> homeFramePane;
+    
+    public CatalogChangeFurnitureListener(HomeFramePane homeFramePane) {
+      this.homeFramePane = new WeakReference<HomeFramePane>(homeFramePane);
+    }
+    
+    public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+      // If controller was garbage collected, remove this listener from catalog
+      final HomeFramePane homeFramePane = this.homeFramePane.get();
+      if (homeFramePane == null) {
+        ((Catalog)ev.getSource()).removeFurnitureListener(this);
+      } else if (ev.getType() == FurnitureEvent.Type.DELETE) {
+        homeFramePane.catalogSelectedFurniture.remove(ev.getPieceOfFurniture());
+      }
+    }
   }
 
   /**

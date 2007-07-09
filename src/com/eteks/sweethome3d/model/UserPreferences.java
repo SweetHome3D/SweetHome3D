@@ -19,15 +19,11 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User preferences.
@@ -37,7 +33,7 @@ public abstract class UserPreferences {
   public enum Property {UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE,  
                         NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
   
-  private Map<Property, List<WeakReference<PropertyChangeListener>>> propertiesListeners;
+  private PropertyChangeSupport propertyChangeSupport;
 
   /**
    * Unit used for dimensions.
@@ -67,10 +63,7 @@ public abstract class UserPreferences {
   private List<String> recentHomes;
 
   public UserPreferences() {
-    // PropertyChangeListener instances are stored in a map of WeakReference to each listener, 
-    // because user preferences are in fact referenced by a static variable during all application life
-    this.propertiesListeners = 
-        new HashMap<Property, List<WeakReference<PropertyChangeListener>>>();
+    this.propertyChangeSupport = new PropertyChangeSupport(this); 
   }
   
   /**
@@ -81,17 +74,10 @@ public abstract class UserPreferences {
   
   /**
    * Adds the <code>listener</code> in parameter to these preferences. 
-   * Caution : listener is stored with a weak reference. 
    */
   public void addPropertyChangeListener(Property property, 
                                         PropertyChangeListener listener) {
-    List<WeakReference<PropertyChangeListener>> propertyListeners =
-        this.propertiesListeners.get(property);
-    if (propertyListeners == null) {
-      propertyListeners = new ArrayList<WeakReference<PropertyChangeListener>>();
-      this.propertiesListeners.put(property, propertyListeners);
-    }
-    propertyListeners.add(new WeakReference<PropertyChangeListener>(listener));
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
   }
 
   /**
@@ -99,14 +85,7 @@ public abstract class UserPreferences {
    */
   public void removePropertyChangeListener(Property property, 
                                            PropertyChangeListener listener) {
-    List<WeakReference<PropertyChangeListener>> propertyListeners =
-        this.propertiesListeners.get(property);
-    for (Iterator<WeakReference<PropertyChangeListener>> it = propertyListeners.iterator(); 
-         it.hasNext(); ) {
-      if (it.next().get() == listener) {
-        it.remove();
-      }
-     }
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
   }
 
   /**
@@ -128,15 +107,14 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Changes the unit currently in use, and notifies
-   * listeners of this change. 
+   * Changes the unit currently in use, and notifies listeners of this change. 
    * @param unit one of the values of Unit.
    */
   public void setUnit(Unit unit) {
     if (this.unit != unit) {
       Unit oldUnit = this.unit;
       this.unit = unit;
-      firePropertyChange(Property.UNIT, oldUnit, unit);
+      this.propertyChangeSupport.firePropertyChange(Property.UNIT.toString(), oldUnit, unit);
     }
   }
 
@@ -157,7 +135,7 @@ public abstract class UserPreferences {
   public void setMagnetismEnabled(boolean magnetismEnabled) {
     if (this.magnetismEnabled != magnetismEnabled) {
       this.magnetismEnabled = magnetismEnabled;
-      firePropertyChange(Property.MAGNETISM_ENABLED, 
+      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.toString(), 
           !magnetismEnabled, magnetismEnabled);
     }
   }
@@ -179,7 +157,7 @@ public abstract class UserPreferences {
   public void setRulersVisible(boolean rulersVisible) {
     if (this.rulersVisible != rulersVisible) {
       this.rulersVisible = rulersVisible;
-      firePropertyChange(Property.RULERS_VISIBLE, 
+      this.propertyChangeSupport.firePropertyChange(Property.RULERS_VISIBLE.toString(), 
           !rulersVisible, rulersVisible);
     }
   }
@@ -199,7 +177,7 @@ public abstract class UserPreferences {
     if (this.newWallThickness != newWallThickness) {
       float oldDefaultThickness = this.newWallThickness;
       this.newWallThickness = newWallThickness;
-      firePropertyChange(Property.NEW_WALL_THICKNESS, 
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_THICKNESS.toString(), 
           oldDefaultThickness, newWallThickness);
     }
   }
@@ -219,7 +197,7 @@ public abstract class UserPreferences {
     if (this.newHomeWallHeight != newHomeWallHeight) {
       float oldHomeWallHeight = this.newHomeWallHeight;
       this.newHomeWallHeight = newHomeWallHeight;
-      firePropertyChange(Property.NEW_HOME_WALL_HEIGHT, 
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_HOME_WALL_HEIGHT.toString(), 
           oldHomeWallHeight, newHomeWallHeight);
     }
   }
@@ -240,30 +218,8 @@ public abstract class UserPreferences {
     if (!recentHomes.equals(this.recentHomes)) {
       List<String> oldRecentHomes = this.recentHomes;
       this.recentHomes = new ArrayList<String>(recentHomes);
-      firePropertyChange(Property.RECENT_HOMES, 
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.toString(), 
           oldRecentHomes, getRecentHomes());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void firePropertyChange(Property property, Object oldValue, Object newValue) {
-    List<WeakReference<PropertyChangeListener>> propertyListeners =
-        this.propertiesListeners.get(property);
-    if (propertyListeners != null && !propertyListeners.isEmpty()) {
-      PropertyChangeEvent propertyChangeEvent = 
-          new PropertyChangeEvent(this, property.toString(), oldValue, newValue);
-      // Work on a copy of propertiesListeners to ensure a listener 
-      // can modify safely listeners list
-      WeakReference<PropertyChangeListener> [] listeners = propertyListeners.
-          toArray(new WeakReference [propertyListeners.size()]);
-      for (WeakReference<PropertyChangeListener> listenerReference : listeners) {
-        PropertyChangeListener listener = listenerReference.get();
-        if (listener != null) {
-          listener.propertyChange(propertyChangeEvent);
-        } else {
-          removePropertyChangeListener(property, listener);
-        }
-      }
     }
   }
 }

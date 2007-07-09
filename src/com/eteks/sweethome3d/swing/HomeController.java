@@ -21,11 +21,16 @@ package com.eteks.sweethome3d.swing;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
+import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.swing.JComponent;
 import javax.swing.event.UndoableEditEvent;
@@ -33,11 +38,13 @@ import javax.swing.event.UndoableEditListener;
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
@@ -50,6 +57,7 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A MVC controller for the home view.
@@ -95,14 +103,23 @@ public class HomeController  {
     this.home = home;
     this.preferences = preferences;
     this.application = application;
-    this.undoSupport = new UndoableEditSupport();
+    this.undoSupport = new UndoableEditSupport() {
+        @Override
+        protected void _postEdit(UndoableEdit edit) {
+          // Ignore not significant compound edit
+          if (!(edit instanceof CompoundEdit)
+              || edit.isSignificant()) {
+            super._postEdit(edit);
+          }
+        }
+      };
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
     
     this.catalogController   = new CatalogController(
-        preferences.getCatalog());
+        preferences.getCatalog(), preferences);
     this.furnitureController = new FurnitureController(
         home, preferences, this.undoSupport);
     this.planController = new PlanController(
@@ -138,6 +155,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SAVE_AS, applicationExists);
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
@@ -205,6 +223,7 @@ public class HomeController  {
   private void addListeners() {
     createCatalogSelectionListener();
     setCatalogFurnitureSelectionSynchronized(true);
+    addCatalogFurnitureListener();
     addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
@@ -223,6 +242,72 @@ public class HomeController  {
           enableActionsOnSelection();
         }
       };
+  }
+
+  /**
+   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
+   * furniture in the catalog model will be synchronized with be the selection displayed 
+   * by the catalog view managed by the catalog controller.
+   * By default, selection is synchronized. 
+   */
+  public void setCatalogFurnitureSelectionSynchronized(boolean catalogFurnitureSelectionSynchronized) {
+    if (this.catalogFurnitureSelectionSynchronized ^ catalogFurnitureSelectionSynchronized) {
+      if (catalogFurnitureSelectionSynchronized) {
+        this.preferences.getCatalog().addSelectionListener(catalogSelectionListener);
+      } else {
+        this.preferences.getCatalog().removeSelectionListener(catalogSelectionListener);
+      }
+      this.catalogFurnitureSelectionSynchronized = catalogFurnitureSelectionSynchronized;
+    }
+    getCatalogController().setFurnitureSelectionSynchronized(catalogFurnitureSelectionSynchronized);
+  }
+  
+  /**
+   * Adds a furniture listener to preferences catalog to write preferences 
+   * when catalog is modified.
+   */
+  private void addCatalogFurnitureListener() {
+    this.preferences.getCatalog().addFurnitureListener(
+        new CatalogWriterFurnitureListener(this));
+  }
+
+  /**
+   * Catalog listener that writes preferences each time a piece of furniture 
+   * is deleted or added in catalog. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between catalog and this controller.  
+   */
+  private static class CatalogWriterFurnitureListener implements FurnitureListener {
+    // Stores the currently writing preferences 
+    private static Set<UserPreferences> writingPreferences = new HashSet<UserPreferences>();
+    private WeakReference<HomeController> homeController;
+    
+    public CatalogWriterFurnitureListener(HomeController homeController) {
+      this.homeController = new WeakReference<HomeController>(homeController);
+    }
+    
+    public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+      // If controller was garbage collected, remove this listener from catalog
+      final HomeController controller = this.homeController.get();
+      if (controller == null) {
+        ((Catalog)ev.getSource()).removeFurnitureListener(this);
+      } else {
+        if (!writingPreferences.contains(controller.preferences)) {
+          writingPreferences.add(controller.preferences);
+          // Write preferences later once all catalog modifications are notified 
+          ((HomePane)controller.getView()).invokeLater(new Runnable() {
+              public void run() {
+                try {
+                  controller.preferences.write();
+                  writingPreferences.remove(controller.preferences);
+                } catch (RecorderException ex) {
+                  ((HomePane)controller.getView()).showError(
+                        controller.resource.getString("savePreferencesError"));
+                }
+              }
+            });
+        }
+      }
+    }
   }
 
   /**
@@ -277,35 +362,48 @@ public class HomeController  {
     boolean wallCreationMode =  
         getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
     
-    // Search if selection contains at least one piece or one wall
+    // Search if catalog selection contains at least one piece
+    List<CatalogPieceOfFurniture> catalogSelectedItems = 
+        this.preferences.getCatalog().getSelectedFurniture();    
+    boolean catalogSelectionContainsFurniture = !catalogSelectedItems.isEmpty();
+    boolean catalogSelectionContainsOneModifiablePiece = catalogSelectedItems.size() == 1
+        && catalogSelectedItems.get(0).isModifiable();
+    
+    // Search if home selection contains at least one piece or one wall
     List<Object> selectedItems = this.home.getSelectedItems();
-    boolean selectionContainsFurniture = false;
-    boolean selectionContainsOneCopiableObjectOrMore = false;
-    boolean selectionContainsTwoPiecesOfFurnitureOrMore = false;
-    boolean selectionContainsWalls = false;
+    boolean homeSelectionContainsFurniture = false;
+    boolean homeSelectionContainsOneCopiableObjectOrMore = false;
+    boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsWalls = false;
     if (!wallCreationMode) {
-      selectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
-      selectionContainsTwoPiecesOfFurnitureOrMore = 
+      homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
+      homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
           Home.getFurnitureSubList(selectedItems).size() >= 2;
-      selectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
-      selectionContainsOneCopiableObjectOrMore = selectionContainsFurniture || selectionContainsWalls; 
+      homeSelectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
+      homeSelectionContainsOneCopiableObjectOrMore = homeSelectionContainsFurniture || homeSelectionContainsWalls; 
     }
 
-    List catalogSelectedItems = this.preferences.getCatalog().getSelectedFurniture();    
     HomePane view = ((HomePane)getView());
     if (this.focusedView == getCatalogController().getView()) {
       view.setEnabled(HomePane.ActionType.COPY,
-          !wallCreationMode && !catalogSelectedItems.isEmpty());
+          !wallCreationMode && catalogSelectionContainsFurniture);
       view.setEnabled(HomePane.ActionType.CUT, false);
       view.setEnabled(HomePane.ActionType.DELETE, false);
+      for (CatalogPieceOfFurniture piece : catalogSelectedItems) {
+        if (piece.isModifiable()) {
+          // Only modifiable catalog furniture may be deleted
+          view.setEnabled(HomePane.ActionType.DELETE, true);
+          break;
+        }
+      }
     } else if (this.focusedView == getFurnitureController().getView()) {
-      view.setEnabled(HomePane.ActionType.COPY, selectionContainsFurniture);
-      view.setEnabled(HomePane.ActionType.CUT, selectionContainsFurniture);
-      view.setEnabled(HomePane.ActionType.DELETE, selectionContainsFurniture);
+      view.setEnabled(HomePane.ActionType.COPY, homeSelectionContainsFurniture);
+      view.setEnabled(HomePane.ActionType.CUT, homeSelectionContainsFurniture);
+      view.setEnabled(HomePane.ActionType.DELETE, homeSelectionContainsFurniture);
     } else if (this.focusedView == getPlanController().getView()) {
-      view.setEnabled(HomePane.ActionType.COPY, selectionContainsOneCopiableObjectOrMore);
-      view.setEnabled(HomePane.ActionType.CUT, selectionContainsOneCopiableObjectOrMore);
-      view.setEnabled(HomePane.ActionType.DELETE, selectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomePane.ActionType.COPY, homeSelectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomePane.ActionType.CUT, homeSelectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomePane.ActionType.DELETE, homeSelectionContainsOneCopiableObjectOrMore);
     } else {
       view.setEnabled(HomePane.ActionType.COPY, false);
       view.setEnabled(HomePane.ActionType.CUT, false);
@@ -313,24 +411,34 @@ public class HomeController  {
     }
 
     view.setEnabled(HomePane.ActionType.ADD_HOME_FURNITURE,
-        !catalogSelectedItems.isEmpty());
+        catalogSelectionContainsFurniture);
     // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomePane.ActionType.DELETE_HOME_FURNITURE,
-        selectionContainsFurniture);
+        homeSelectionContainsFurniture);
     view.setEnabled(HomePane.ActionType.DELETE_SELECTION,
-        selectionContainsOneCopiableObjectOrMore);
-    view.setEnabled(HomePane.ActionType.MODIFY_HOME_FURNITURE,
-        selectionContainsFurniture);
+        (catalogSelectionContainsFurniture
+            && this.focusedView == getCatalogController().getView())
+        || (homeSelectionContainsOneCopiableObjectOrMore 
+            && (this.focusedView == getFurnitureController().getView()
+                || this.focusedView == getPlanController().getView()
+                || this.focusedView == getHomeController3D().getView())));
+    view.setEnabled(HomePane.ActionType.MODIFY_FURNITURE,
+        (catalogSelectionContainsOneModifiablePiece
+             && this.focusedView == getCatalogController().getView())
+        || (homeSelectionContainsFurniture 
+             && (this.focusedView == getFurnitureController().getView()
+                 || this.focusedView == getPlanController().getView()
+                 || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomePane.ActionType.MODIFY_WALL,
-        selectionContainsWalls);
+        homeSelectionContainsWalls);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP,
-        selectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM,
-        selectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT,
-        selectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT,
-        selectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
   }
 
   /**
@@ -453,24 +561,6 @@ public class HomeController  {
   }
   
   /**
-   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
-   * furniture in the catalog model will be synchronized with be the selection displayed 
-   * by the catalog view managed by the catalog controller.
-   * By default, selection is synchronized. 
-   */
-  public void setCatalogFurnitureSelectionSynchronized(boolean catalogFurnitureSelectionSynchronized) {
-    if (this.catalogFurnitureSelectionSynchronized ^ catalogFurnitureSelectionSynchronized) {
-      if (catalogFurnitureSelectionSynchronized) {
-        this.preferences.getCatalog().addSelectionListener(catalogSelectionListener);
-      } else {
-        this.preferences.getCatalog().removeSelectionListener(catalogSelectionListener);
-      }
-      this.catalogFurnitureSelectionSynchronized = catalogFurnitureSelectionSynchronized;
-    }
-    getCatalogController().setFurnitureSelectionSynchronized(catalogFurnitureSelectionSynchronized);
-  }
-  
-  /**
    * Adds the selected furniture in catalog to home and selects it.  
    */
   public void addHomeFurniture() {
@@ -487,6 +577,31 @@ public class HomeController  {
       // Add newFurniture to home with furnitureController
       getFurnitureController().addFurniture(newFurniture);
     }
+  }
+  
+  /**
+   * Modifies the selected furniture of the focused view.  
+   */
+  public void modifySelectedFurniture() {
+    if (this.focusedView == getCatalogController().getView()) {
+      getCatalogController().modifySelectedFurniture();
+    } else if (this.focusedView == getFurnitureController().getView()
+               || this.focusedView == getPlanController().getView()) {
+      getFurnitureController().modifySelectedFurniture();
+    }    
+  }
+
+  /**
+   * Imports furniture to the catalog or home depending on the focused view.  
+   */
+  public void importFurniture() {
+    if (this.focusedView == getCatalogController().getView()) {
+      getCatalogController().importFurniture();
+    } else if (this.focusedView == getFurnitureController().getView()
+        || this.focusedView == getPlanController().getView()
+        || this.focusedView == getHomeController3D().getView()) {
+      getFurnitureController().importFurniture();
+    }    
   }
 
   /**
@@ -595,10 +710,81 @@ public class HomeController  {
   }
 
   /**
+   * Adds imported files to home, moves them of (dx, dy) 
+   * and post a drop operation to undo support.
+   */
+  public boolean dropFiles(final List<File> files, float dx, float dy) {
+    // Always use selection mode after a drop operation
+    getPlanController().setMode(PlanController.Mode.SELECTION);
+    // Search importables files
+    List<URLContent> importableModels = new ArrayList<URLContent>();        
+    for (File file : files) {
+      if (file.getName().toLowerCase().endsWith(".obj")
+          || file.getName().toLowerCase().endsWith(".lws")
+          || file.getName().toLowerCase().endsWith(".3ds")) {
+        try {
+          importableModels.add(new URLContent(file.toURL()));
+        } catch (MalformedURLException ex) {
+          // Ignore files that can be transformed as a URL
+        }
+      }        
+    }
+    if (importableModels.size() == 0) {
+      return false;
+    } else {
+      // Add to home a listener to track imported furniture 
+      final List<HomePieceOfFurniture> importedFurniture = 
+          new ArrayList<HomePieceOfFurniture>(importableModels.size());
+      FurnitureListener addedFurnitureListener = new FurnitureListener () {
+          public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+            importedFurniture.add((HomePieceOfFurniture)ev.getPieceOfFurniture());
+          }
+        };
+      this.home.addFurnitureListener(addedFurnitureListener);
+      
+      // Start a compound edit that adds furniture to home
+      this.undoSupport.beginUpdate();
+      // Import furniture
+      for (URLContent model : importableModels) {
+        getFurnitureController().importFurniture(model);
+      }
+      this.home.removeFurnitureListener(addedFurnitureListener);
+      
+      if (importedFurniture.size() > 0) {
+        getPlanController().moveItems(importedFurniture, dx, dy);
+        this.home.setSelectedItems(importedFurniture);
+        
+        // Add a undoable edit that will select the imported furniture at redo
+        this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+            @Override
+            public void redo() throws CannotRedoException {
+              super.redo();
+              home.setSelectedItems(importedFurniture);
+            }
+    
+            @Override
+            public String getPresentationName() {
+              return resource.getString("undoDropName");
+            }      
+          });
+      }
+     
+      // End compound edit
+      this.undoSupport.endUpdate();
+
+      return true;
+    }
+  }
+
+  /**
    * Deletes the selection in the focused component.
    */
   public void delete() {
-    if (this.focusedView == getFurnitureController().getView()) {
+    if (this.focusedView == getCatalogController().getView()) {
+      if (((HomePane)getView()).confirmDeleteCatalogSelection()) {
+        getCatalogController().deleteSelection();
+      }
+    } else if (this.focusedView == getFurnitureController().getView()) {
       getFurnitureController().deleteSelection();
     } else if (this.focusedView == getPlanController().getView()) {
       getPlanController().deleteSelection();
@@ -613,6 +799,7 @@ public class HomeController  {
     enableActionsOnSelection();
     enablePasteAction();
     enableSelectAllAction();
+    
   }
   
   /**
@@ -639,10 +826,14 @@ public class HomeController  {
    * in view, reads the home from the choosen name and adds it to application home list.
    */
   public void open() {
-    final String homeName = ((HomePane)getView()).showOpenDialog();
-    if (homeName != null) {
-      open(homeName);
-    }
+    ((HomePane)getView()).invokeLater(new Runnable() {
+      public void run() {
+        final String homeName = ((HomePane)getView()).showOpenDialog();
+        if (homeName != null) {
+          open(homeName);
+        }
+      }
+    });
   }
 
   /**

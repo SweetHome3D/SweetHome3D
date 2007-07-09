@@ -76,60 +76,60 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class BackgroundImageWizardStepsPanel extends JPanel {
   private static final FileFilter [] IMAGE_FILTERS = {
-    new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".bmp")
-               || file.getName().toLowerCase().endsWith(".wbmp");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "BMP";
-      }
-    },
-    new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".gif");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "GIF";
-      }
-    },
-    new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".jpg")
-               || file.getName().toLowerCase().endsWith(".jpeg");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "JPEG";
-      }
-    }, 
-    new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().endsWith(".png");
-      }
-  
-      @Override
-      public String getDescription() {
-        return "PNG";
-      }
-    }};
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and .sh3d files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".bmp")
+                || file.getName().toLowerCase().endsWith(".wbmp");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "BMP";
+       }
+     },
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and .sh3d files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".gif");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "GIF";
+       }
+     },
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and .sh3d files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".jpg")
+                || file.getName().toLowerCase().endsWith(".jpeg");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "JPEG";
+       }
+     }, 
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and .sh3d files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".png");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "PNG";
+       }
+     }};
 
   private BackgroundImageWizardController controller;
   private ResourceBundle                  resource;
@@ -496,7 +496,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       try {
         // Copy chosen file in a temporary file to ensure the image will 
         // still be available at saving time even if user moved it meanwhile   
-        return FileUtilities.copyToTempFile(file);
+        return FileUtilities.copyToTemporaryURLContent(file);
       } catch (IOException ex) {
         JOptionPane.showMessageDialog(this, 
             String.format(this.resource.getString("imageChoiceError"), file));
@@ -614,7 +614,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     private void addChangeListeners(final BackgroundImageWizardController controller) {
       controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE_POINTS, 
           new PropertyChangeListener () {
-            public void propertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent ev) {
               // If origin values changes update displayed origin
               repaint();
             }
@@ -773,7 +773,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      */
     private void addChangeListeners(final BackgroundImageWizardController controller) {
       PropertyChangeListener originChangeListener = new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent evt) {
+          public void propertyChange(PropertyChangeEvent ev) {
             // If origin values changes update displayed origin
             repaint();
           }

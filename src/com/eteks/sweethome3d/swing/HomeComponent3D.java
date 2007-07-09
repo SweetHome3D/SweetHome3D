@@ -35,8 +35,6 @@ import java.awt.geom.PathIterator;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +43,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -55,9 +52,9 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BoundingSphere;
-import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
+import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GraphicsConfigTemplate3D;
@@ -98,10 +95,6 @@ import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
-import com.sun.j3d.loaders.IncorrectFormatException;
-import com.sun.j3d.loaders.ParsingErrorException;
-import com.sun.j3d.loaders.Scene;
-import com.sun.j3d.loaders.objectfile.ObjectFile;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -250,12 +243,15 @@ public class HomeComponent3D extends JComponent {
   private void updateViewPlatformTransform(TransformGroup viewPlatformTransform, Camera camera) {
     Transform3D yawRotation = new Transform3D();
     yawRotation.rotY(-camera.getYaw() + Math.PI);
+    
     Transform3D pitchRotation = new Transform3D();
     pitchRotation.rotX(-camera.getPitch());
+    yawRotation.mul(pitchRotation);
+    
     Transform3D transform = new Transform3D();
     transform.setTranslation(new Vector3f(camera.getX(), camera.getZ(), camera.getY()));
-    yawRotation.mul(pitchRotation);
     transform.mul(yawRotation);
+    
     viewPlatformTransform.setTransform(transform);
   }
   
@@ -463,10 +459,15 @@ public class HomeComponent3D extends JComponent {
    * Returns the ground node.  
    */
   private Node getGroundNode(final Home home) {
-    final Appearance groundAppearance = new Appearance();
-    updateGroundMaterial(groundAppearance, home);
+    // Use coloring attributes for ground to avoid ground lighting
+    final ColoringAttributes groundColoringAttributes = new ColoringAttributes();
+    groundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+    updateGroundColor(groundColoringAttributes, home);
+    
+    Appearance groundAppearance = new Appearance();
+    groundAppearance.setColoringAttributes(groundColoringAttributes);
+    
     // Allow ground material to change
-    groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     Box groundBox = new Box(1E5f, 0, 1E5f, groundAppearance); 
     Shape3D topShape = groundBox.getShape(Box.TOP);
     groundBox.removeChild(topShape);
@@ -475,7 +476,7 @@ public class HomeComponent3D extends JComponent {
     home.addPropertyChangeListener(Home.Property.GROUND_COLOR, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateGroundMaterial(groundAppearance, home);
+          updateGroundColor(groundColoringAttributes, home);
         }
       });
     
@@ -483,12 +484,12 @@ public class HomeComponent3D extends JComponent {
   }
   
   /**
-   * Updates<code>groundAppearance</code> material from <code>home</code> ground color.
+   * Updates ground coloring attributes from <code>home</code> ground color.
    */
-  private void updateGroundMaterial(Appearance groundAppearance, Home home) {
+  private void updateGroundColor(ColoringAttributes groundColoringAttributes, 
+                                 Home home) {
     Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
-    groundAppearance.setMaterial(new Material(
-        groundColor, groundColor, groundColor, groundColor, 1));
+    groundColoringAttributes.setColor(groundColor);
   }
   
   /**
@@ -496,11 +497,11 @@ public class HomeComponent3D extends JComponent {
    */
   private Light [] getLights(final Home home) {
     final Light [] lights = {
-        new DirectionalLight(new Color3f(), new Vector3f(1.732f, -1, -1)), 
-        new DirectionalLight(new Color3f(), new Vector3f(-1.732f, -1, -1)), 
-        new DirectionalLight(new Color3f(), new Vector3f(0, -1, 1)), 
+        new DirectionalLight(new Color3f(), new Vector3f(1.732f, -0.8f, -1)), 
+        
+        new DirectionalLight(new Color3f(), new Vector3f(-1.732f, -0.8f, -1)), 
+        new DirectionalLight(new Color3f(), new Vector3f(0, -0.8f, 1)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
-
     for (int i = 0; i < lights.length - 1; i++) {
       updateLightColor(lights [i], home);
       // Allow directional lights color to change
@@ -821,7 +822,7 @@ public class HomeComponent3D extends JComponent {
         it.next();
       }
       
-      // Generate geometry for each wall part above and bellow a window
+      // Generate geometry for each wall part above and below a window
       for (Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
         for (PathIterator it = windowIntersection.getValue().getPathIterator(null); !it.isDone(); ) {
           float [] wallPoint = new float[2];
@@ -837,7 +838,7 @@ public class HomeComponent3D extends JComponent {
                   wallPartPoints, doorOrWindowTop));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
             }
-            // Generate geometry for wall part bellow window
+            // Generate geometry for wall part below window
             if (doorOrWindow.getElevation() > 0) {
               wallGeometries.add(getWallVerticalPartGeometry(
                   wallPartPoints, 0, doorOrWindow.getElevation()));
@@ -1008,12 +1009,7 @@ public class HomeComponent3D extends JComponent {
    * Root of piece of furniture branch.
    */
   private static class HomePieceOfFurniture3D extends ObjectBranch {
-    private static final String WINDOW_PANE_SHAPE = "sweethome3d_window_pane";
-    private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
-        new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
-    
     private static Executor modelLoader = Executors.newSingleThreadExecutor();
-    private static Map<Content, Node> modelNodesCache = new WeakHashMap<Content, Node>();
 
     public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
       setUserData(piece);      
@@ -1101,13 +1097,13 @@ public class HomeComponent3D extends JComponent {
       // Change its angle around y axis
       Transform3D orientation = new Transform3D();
       orientation.rotY(-piece.getAngle());
+      orientation.mul(scale);
       // Translate it to its location
       Transform3D pieceTransform = new Transform3D();
       pieceTransform.setTranslation(new Vector3f(
           piece.getX(), piece.getElevation() + piece.getHeight() / 2, piece.getY()));      
-
       pieceTransform.mul(orientation);
-      pieceTransform.mul(scale);
+      
       // Change model transformation      
       ((TransformGroup)getChild(0)).setTransform(pieceTransform);
     }
@@ -1145,7 +1141,7 @@ public class HomeComponent3D extends JComponent {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
       // Cull front or back model faces whether its model is mirrored or not
       setCullFace(getChild(0), 
-          piece.isModelMirrored() 
+          piece.isModelMirrored() ^ piece.isBackFaceShown() 
               ? PolygonAttributes.CULL_FRONT 
               : PolygonAttributes.CULL_BACK);
     }
@@ -1158,24 +1154,11 @@ public class HomeComponent3D extends JComponent {
       PieceOfFurniture piece = (PieceOfFurniture)getUserData();
       // If same model was already loaded return a clone from its cache 
       Content model = piece.getModel();
-      Node modelNode = modelNodesCache.get(model);
-      if (modelNode != null) {
-        return modelNode.cloneTree(true);
-      }
       
-      Reader modelReader = null;
       try {
-        // Read piece model from a object file 
-        modelReader = new InputStreamReader(model.openStream());
-        ObjectFile loader = new ObjectFile();
-        Scene scene = loader.load(modelReader);
-        
-        // Update transparency of scene window panes shapes
-        updateWindowPanesTransparency(scene);
-        
+        BranchGroup modelNode = ModelManager.getInstance().getModel(model);
         // Get model bounding box size
-        BranchGroup modelScene = scene.getSceneGroup();
-        BoundingBox modelBounds = getBounds(modelScene);
+        BoundingBox modelBounds = ModelManager.getInstance().getBounds(modelNode);
         Point3d lower = new Point3d();
         modelBounds.getLower(lower);
         Point3d upper = new Point3d();
@@ -1187,57 +1170,30 @@ public class HomeComponent3D extends JComponent {
             new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
                 -lower.y - (upper.y - lower.y) / 2, 
                 -lower.z - (upper.z - lower.z) / 2));      
-        // Scale model to make it fit in a 1 unit wide box
+        // Apply model pitch rotation
+        Transform3D pitchRotation = new Transform3D();
+        pitchRotation.rotX(piece.getModelPitch());
+        pitchRotation.mul(translation);
+        // Apply model yaw rotation
+        Transform3D yawRotation = new Transform3D();
+        yawRotation.rotY(piece.getModelYaw());
+        yawRotation.mul(pitchRotation);
+        // Scale model to make it fill a 1 unit wide box
         Transform3D modelTransform = new Transform3D();
         modelTransform.setScale (
             new Vector3d(1 / (upper.x -lower.x), 
                 1 / (upper.y - lower.y), 
                 1 / (upper.z - lower.z)));
-        modelTransform.mul(translation);
+        modelTransform.mul(yawRotation);
+        
         // Add model scene to transform group
-        TransformGroup modelTransformGroup = 
-          new TransformGroup(modelTransform);
-        modelTransformGroup.addChild(modelScene);
-        // Store in cache a clone of the node for future copies 
-        modelNodesCache.put(model, modelTransformGroup.cloneTree(true));
+        TransformGroup modelTransformGroup = new TransformGroup(modelTransform);
+        modelTransformGroup.addChild(modelNode);
         return modelTransformGroup;
       } catch (IOException ex) {
         // In case of problem return a default box
         return getModelBox(Color.RED);
-      } catch (IncorrectFormatException ex) {
-        return getModelBox(Color.RED);
-      } catch (ParsingErrorException ex) {
-        return getModelBox(Color.RED);
-      } finally {
-        try {
-          if (modelReader != null) {
-            modelReader.close();
-          }
-        } catch (IOException ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    }
-
-    /**
-     * Updates transparency of scene window panes shapes.
-     */
-    private void updateWindowPanesTransparency(Scene scene) {
-      Map<String, Object> namedObjects = scene.getNamedObjects();
-      for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
-        if (entry.getValue() instanceof Shape3D) {
-          // Assign shape name to its user data
-          Shape3D shape = (Shape3D)entry.getValue();
-          shape.setUserData(entry.getKey());
-          if (entry.getKey().startsWith(WINDOW_PANE_SHAPE)) {
-            Appearance appearance = shape.getAppearance();
-            if (appearance == null) {
-              shape.setAppearance(createAppearanceWithChangeCapabilities());
-            }
-            appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
-          }
-        }
-      }
+      } 
     }
 
     /**
@@ -1251,33 +1207,6 @@ public class HomeComponent3D extends JComponent {
       Appearance boxAppearance = new Appearance();
       boxAppearance.setMaterial(material);
       return new Box(0.5f, 0.5f, 0.5f, boxAppearance);
-    }
-
-    /**
-     * Returns the bounds of 3D shapes under <code>node</code>.
-     * This method computes the exact box that contains all the shapes,
-     * contrary to <code>node.getBounds()</code> that returns a bounding 
-     * sphere for a scene.
-     */
-    private BoundingBox getBounds(Node node) {
-      BoundingBox objectBounds = new BoundingBox(
-          new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
-          new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-      computeBounds(node, objectBounds);
-      return objectBounds;
-    }
-    
-    private void computeBounds(Node node, BoundingBox bounds) {
-      if (node instanceof Group) {
-        // Compute the bounds of all the node children
-        Enumeration enumeration = ((Group)node).getAllChildren();
-        while (enumeration.hasMoreElements ()) {
-          computeBounds((Node)enumeration.nextElement (), bounds);
-        }
-      } else if (node instanceof Shape3D) {
-        Bounds shapeBounds = ((Shape3D)node).getBounds();
-        bounds.combine(shapeBounds);
-      }
     }
 
     /**
@@ -1303,7 +1232,7 @@ public class HomeComponent3D extends JComponent {
 
     /**
      * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
-     * with a given <code>color</code>. 
+     * with a given <code>material</code>. 
      */
     private void setMaterial(Node node, Material material) {
       if (node instanceof Group) {
@@ -1317,7 +1246,7 @@ public class HomeComponent3D extends JComponent {
         String shapeName = (String)shape.getUserData();
         // Change material of all shape that are not window panes
         if (shapeName == null
-            || !shapeName.startsWith(WINDOW_PANE_SHAPE)) {
+            || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
           Appearance appearance = shape.getAppearance();
           if (appearance == null) {
             shape.setAppearance(createAppearanceWithChangeCapabilities());
@@ -1372,7 +1301,7 @@ public class HomeComponent3D extends JComponent {
      */
     private void setCullFace(Node node, int cullFace) {
       if (node instanceof Group) {
-        // Set visibility of all children
+        // Set cull face of all children
         Enumeration enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
           setCullFace((Node)enumeration.nextElement(), cullFace);

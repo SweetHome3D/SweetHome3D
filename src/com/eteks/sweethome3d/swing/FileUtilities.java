@@ -33,6 +33,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -50,15 +51,15 @@ public class FileUtilities {
    * Returns a {@link URLContent URL content} object that references a temporary copy of 
    * a given <code>file</code>.
    */
-  public static URLContent copyToTempFile(String file) throws IOException {
-    return copyToTempFile(new URLContent(new File(file).toURL()));
+  public static URLContent copyToTemporaryURLContent(String file) throws IOException {
+    return copyToTemporaryURLContent(new URLContent(new File(file).toURL()));
   }
   
   /**
    * Returns a {@link URLContent URL content} object that references a temporary copy of 
    * a given <code>content</code>.
    */
-  public static URLContent copyToTempFile(Content content) throws IOException {
+  public static URLContent copyToTemporaryURLContent(Content content) throws IOException {
     File tempFile = File.createTempFile("urlContent", "tmp");
     tempFile.deleteOnExit();
     InputStream tempIn = null;
@@ -79,34 +80,57 @@ public class FileUtilities {
         tempOut.close();
       }
     }
-    return new URLContent(tempFile.toURL());
+    return new TemporaryURLContent(tempFile.toURL());
   }
   
   /**
    * Returns a file chosen by user with an open file dialog.
    * @return the chosen file or <code>null</code> if user cancelled its choice.
    */
-  public static String showOpenFileDialog(Component parent,
-                                          String    dialogTitle,
+  public static String showOpenFileDialog(Component     parent,
+                                          String        dialogTitle,
                                           FileFilter [] fileFilters) {
     // Use native file dialog under Mac OS X
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      return showFileDialog(parent, dialogTitle, fileFilters);
+      return showFileDialog(parent, dialogTitle, fileFilters, null, false);
     } else {
-      return showFileChooser(parent, dialogTitle, fileFilters);
+      return showFileChooser(parent, dialogTitle, fileFilters, null, false);
+    }
+  }
+  
+  /**
+   * Returns a file chosen by user with an save file dialog.
+   * @return the chosen file or <code>null</code> if user cancelled its choice.
+   */
+  public static String showSaveFileDialog(Component     parent,
+                                          String        dialogTitle,
+                                          FileFilter [] fileFilters,
+                                          String        name) {
+    // Use native file dialog under Mac OS X
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      return showFileDialog(parent, dialogTitle, fileFilters, null, true);
+    } else {
+      return showFileChooser(parent, dialogTitle, fileFilters, null, true);
     }
   }
   
   /**
    * Displays an AWT open file dialog.
    */
-  private static String showFileDialog(Component  parent,
-                                       String     dialogTitle,
-                                       final FileFilter [] fileFilters) {
+  private static String showFileDialog(Component           parent,
+                                       String              dialogTitle,
+                                       final FileFilter [] fileFilters,
+                                       String              name, 
+                                       boolean             save) {
     FileDialog fileDialog = 
-      new FileDialog(JOptionPane.getFrameForComponent(parent));
+        new FileDialog(JOptionPane.getFrameForComponent(parent));
 
-    // Set supported image files filter 
+    // Set selected file
+    if (save && name != null) {
+      fileDialog.setFile(new File(name).getName());
+    }
+    
+    // Set supported files filter 
     fileDialog.setFilenameFilter(new FilenameFilter() {
         public boolean accept(File dir, String name) {
           for (FileFilter filter : fileFilters) {
@@ -121,7 +145,11 @@ public class FileUtilities {
     if (currentDirectory != null) {
       fileDialog.setDirectory(currentDirectory.toString());
     }
-    fileDialog.setMode(FileDialog.LOAD);
+    if (save) {
+      fileDialog.setMode(FileDialog.SAVE);
+    } else {
+      fileDialog.setMode(FileDialog.LOAD);
+    }
     fileDialog.setTitle(dialogTitle);
     fileDialog.setVisible(true);
     String selectedFile = fileDialog.getFile();
@@ -141,8 +169,14 @@ public class FileUtilities {
    */
   private static String showFileChooser(Component     parent,
                                         String        dialogTitle,
-                                        FileFilter [] fileFilters) {
+                                        FileFilter [] fileFilters,
+                                        String        name,
+                                        boolean       save) {
     JFileChooser fileChooser = new JFileChooser();
+    // Set selected file
+    if (save && name != null) {
+      fileChooser.setSelectedFile(new File(name));
+    }    
     // Set supported image  files filter 
     for (FileFilter filter : fileFilters) {
       fileChooser.addChoosableFileFilter(filter);
@@ -153,7 +187,13 @@ public class FileUtilities {
       fileChooser.setCurrentDirectory(currentDirectory);
     }
     fileChooser.setDialogTitle(dialogTitle);
-    int option = fileChooser.showOpenDialog(parent);
+    
+    int option;
+    if (save) {
+      option = fileChooser.showSaveDialog(parent);
+    } else {
+      option = fileChooser.showOpenDialog(parent);
+    }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve current directory for future calls
       currentDirectory = fileChooser.getCurrentDirectory();

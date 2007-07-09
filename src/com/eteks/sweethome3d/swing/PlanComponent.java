@@ -54,6 +54,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,7 +127,6 @@ public class PlanComponent extends JComponent implements Scrollable {
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
-  private PropertyChangeListener     unitPreferencesListener;
   private List<HomePieceOfFurniture> sortedHomeFurniture;
   
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
@@ -321,21 +321,37 @@ public class PlanComponent extends JComponent implements Scrollable {
           repaint();
         }
       });
-    // Store unit preferences listener in a field to avoid loosing the 
-    // weak reference to this listener once added
-    this.unitPreferencesListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent evt) {
-          repaint();
-          if (horizontalRuler != null) {
-            horizontalRuler.repaint();
-          }
-          if (verticalRuler != null) {
-            verticalRuler.repaint();
-          }
-        }
-      };
     preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
-        this.unitPreferencesListener);
+        new UnitChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class UnitChangeListener implements PropertyChangeListener {
+    private WeakReference<PlanComponent>  planComponent;
+
+    public UnitChangeListener(PlanComponent planComponent) {
+      this.planComponent = new WeakReference<PlanComponent>(planComponent);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If plan component was garbage collected, remove this listener from preferences
+      PlanComponent planComponent = this.planComponent.get();
+      if (planComponent == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.UNIT, this);
+      } else {
+        planComponent.repaint();
+        if (planComponent.horizontalRuler != null) {
+          planComponent.horizontalRuler.repaint();
+        }
+        if (planComponent.verticalRuler != null) {
+          planComponent.verticalRuler.repaint();
+        }
+      }
+    }
   }
 
   /**

@@ -37,6 +37,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A MVC controller for the furniture table.
@@ -249,6 +250,21 @@ public class FurnitureController {
     if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
       new HomeFurnitureController(this.home, this.preferences, this.undoSupport);
     }
+  }
+  
+  /**
+   * Displays the wizard that helps to import furniture to home. 
+   */
+  public void importFurniture() {
+    new ImportedFurnitureWizardController(this.home, this.preferences, this.undoSupport);
+  }
+  
+  /**
+   * Displays the wizard that helps to import furniture to home with a
+   * given <code>model</code>. 
+   */
+  public void importFurniture(URLContent model) {
+    new ImportedFurnitureWizardController(this.home, model, this.preferences, this.undoSupport);
   }
   
   /**

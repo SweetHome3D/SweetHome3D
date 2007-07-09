@@ -62,6 +62,7 @@ class MacOSXConfiguration {
     defaultHomeView.setEnabled(HomePane.ActionType.CLOSE, false);
     defaultHomeView.setEnabled(HomePane.ActionType.SAVE, false);
     defaultHomeView.setEnabled(HomePane.ActionType.SAVE_AS, false);
+    defaultHomeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, false);
     defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, false);
     defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, false);
     defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, false);

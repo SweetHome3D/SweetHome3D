@@ -168,10 +168,10 @@ public class WizardPane extends JOptionPane {
    */
   public void setStepIcon(URL stepIcon) {
     JPanel messagePanel = (JPanel)getMessage();
-    // Clean previous icon
-    Component previousStepIcon = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.WEST);
-    if (previousStepIcon != null) {
-      messagePanel.remove(previousStepIcon);
+    Component previousStepIconLabel = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.WEST);
+    if (previousStepIconLabel != null) {
+      // Clean previous icon label
+      messagePanel.remove(previousStepIconLabel);
     }
     // Add new icon
     if (stepIcon != null) {

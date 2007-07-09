@@ -36,7 +36,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Singleton managing icons cache.
@@ -54,10 +54,8 @@ public class IconManager {
   private Map<Content, Map<Integer, Icon>> icons;
 
   private IconManager() {
-    this.errorIconContent = new URLContent (
-        IconManager.class.getResource("resources/error.png"));
-    this.waitIconContent = new URLContent (
-        IconManager.class.getResource("resources/wait.png"));
+    this.errorIconContent = new ResourceURLContent(IconManager.class, "resources/error.png");
+    this.waitIconContent = new ResourceURLContent(IconManager.class, "resources/wait.png");
     this.iconsLoader = Executors.newFixedThreadPool(5);
     this.icons = new WeakHashMap<Content, Map<Integer, Icon>>();
   }

@@ -33,17 +33,54 @@ public abstract class Catalog {
   private boolean                       sorted;
   private List<CatalogPieceOfFurniture> selectedFurniture = Collections.emptyList();
   private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
+  private List<FurnitureListener>       furnitureListeners = new ArrayList<FurnitureListener>();
 
   /**
    * Returns the catagories list sorted by name.
    * @return an unmodifiable list of catagories.
    */
   public List<Category> getCategories() {
+    checkCategoriesSorted();
+    return Collections.unmodifiableList(this.categories);
+  }
+
+  /**
+   * Checks categories are sorted.
+   */
+  private void checkCategoriesSorted() {
     if (!this.sorted) {
       Collections.sort(this.categories);
       this.sorted = true;
     }
-    return Collections.unmodifiableList(this.categories);
+  }
+
+  /**
+   * Returns the count of catagories in this catalog.
+   */
+  public int getCategoriesCount() {
+    return this.categories.size();
+  }
+
+  /**
+   * Returns the category at a given <code>index</code>.
+   */
+  public Category getCategory(int index) {
+    checkCategoriesSorted();
+    return this.categories.get(index);
+  }
+
+  /**
+   * Adds the furniture <code>listener</code> in parameter to this home.
+   */
+  public void addFurnitureListener(FurnitureListener listener) {
+    this.furnitureListeners.add(listener);
+  }
+
+  /**
+   * Removes the furniture <code>listener</code> in parameter from this home.
+   */
+  public void removeFurnitureListener(FurnitureListener listener) {
+    this.furnitureListeners.remove(listener);
   }
 
   /**
@@ -63,10 +100,13 @@ public abstract class Catalog {
 
   /**
    * Adds <code>piece</code> of a given <code>category</code> to this catalog.
+   * Once the <code>piece</code> is added, furniture listeners added to this catalog will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
    */
-  protected void add(Category category, CatalogPieceOfFurniture piece) {
+  public void add(Category category, CatalogPieceOfFurniture piece) {
     int index = this.categories.indexOf(category);
     // If category doesn't exist yet, add it to catagories
     if (index == -1) {
@@ -76,6 +116,55 @@ public abstract class Catalog {
     }    
     // Add current piece of furniture to category list
     category.add(piece);
+    
+    firePieceOfFurnitureChanged(piece, 
+        Collections.binarySearch(category.getFurniture(), piece), FurnitureEvent.Type.ADD);
+  }
+
+  /**
+   * Deletes the <code>piece</code> from this catalog.
+   * If then piece category is empty, it will be removed from the categories of this catalog. 
+   * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
+   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * notification.
+   * @param piece a piece of furniture in that category.
+   */
+  public void delete(CatalogPieceOfFurniture piece) {
+    // Remove piece from its category
+    for (Category category : this.categories) {
+      int pieceIndex = Collections.binarySearch(category.getFurniture(), piece);
+      if (pieceIndex >= 0) {
+        // Ensure selectedFurniture don't keep a reference to piece
+        deselectPieceOfFurniture(piece);
+        category.delete(piece);
+        
+        if (category.getFurniture().size() == 0) {
+          this.categories.remove(category);
+          this.sorted = false;
+        }
+        
+        firePieceOfFurnitureChanged(piece, pieceIndex, FurnitureEvent.Type.DELETE);
+        return;
+      }
+    }  
+
+    throw new IllegalArgumentException(
+        "catalog doesn't contain piece " + piece.getName());
+  }
+
+  private void firePieceOfFurnitureChanged(CatalogPieceOfFurniture piece, int index,
+                                           FurnitureEvent.Type eventType) {
+    if (!this.furnitureListeners.isEmpty()) {
+      FurnitureEvent furnitureEvent = 
+          new FurnitureEvent(this, piece, index, eventType);
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      FurnitureListener [] listeners = this.furnitureListeners.
+        toArray(new FurnitureListener [this.furnitureListeners.size()]);
+      for (FurnitureListener listener : listeners) {
+        listener.pieceOfFurnitureChanged(furnitureEvent);
+      }
+    }
   }
 
   /**
@@ -113,6 +202,19 @@ public abstract class Catalog {
       for (SelectionListener listener : listeners) {
         listener.selectionChanged(selectionEvent);
       }
+    }
+  }
+
+  /**
+   * Removes <code>piece</code> from selected furniture.
+   */
+  private void deselectPieceOfFurniture(CatalogPieceOfFurniture piece) {
+    int pieceSelectionIndex = this.selectedFurniture.indexOf(piece);
+    if (pieceSelectionIndex != -1) {
+      List<CatalogPieceOfFurniture> selectedItems = 
+          new ArrayList<CatalogPieceOfFurniture>(getSelectedFurniture());
+      selectedItems.remove(pieceSelectionIndex);
+      setSelectedFurniture(selectedItems);
     }
   }
 }

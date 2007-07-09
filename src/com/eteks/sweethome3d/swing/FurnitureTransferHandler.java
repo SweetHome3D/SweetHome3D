@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -84,7 +85,9 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
    */
   @Override
   public boolean canImport(JComponent destination, DataFlavor [] flavors) {
-    return Arrays.asList(flavors).contains(HomeTransferableList.HOME_FLAVOR);
+    List<DataFlavor> flavorList = Arrays.asList(flavors);
+    return flavorList.contains(HomeTransferableList.HOME_FLAVOR)
+        || flavorList.contains(DataFlavor.javaFileListFlavor);
   }
 
   /**
@@ -94,15 +97,22 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
   public boolean importData(JComponent destination, Transferable transferable) {
     if (canImport(destination, transferable.getTransferDataFlavors())) {
       try {
-        List<Object> items = (List<Object>)transferable.
-            getTransferData(HomeTransferableList.HOME_FLAVOR);
-        List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
-        if (isDrop()) {
-          homeController.drop(furniture, 0, 0);
+        List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
+        if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {
+          List<Object> items = (List<Object>)transferable.
+              getTransferData(HomeTransferableList.HOME_FLAVOR);
+          List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
+          if (isDrop()) {
+            this.homeController.drop(furniture, 0, 0);
+          } else {
+            this.homeController.paste(furniture);          
+          }
+          return true;
         } else {
-          homeController.paste(furniture);          
+          List<File> files = (List<File>)transferable.
+              getTransferData(DataFlavor.javaFileListFlavor);
+          return this.homeController.dropFiles(files, 0, 0);          
         }
-        return true; 
       } catch (UnsupportedFlavorException ex) {
         throw new RuntimeException("Can't import", ex);
       } catch (IOException ex) {

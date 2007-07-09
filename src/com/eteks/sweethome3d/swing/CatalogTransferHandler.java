@@ -19,10 +19,15 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JComponent;
-import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.model.Catalog;
 
@@ -30,14 +35,23 @@ import com.eteks.sweethome3d.model.Catalog;
  * Catalog transfer handler.
  * @author Emmanuel Puybaret
  */
-public class CatalogTransferHandler extends TransferHandler {
-  private Catalog catalog;
+public class CatalogTransferHandler extends LocatedTransferHandler {
+  private Catalog           catalog;
+  private CatalogController catalogController;
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
   public CatalogTransferHandler(Catalog catalog) {
+    this(catalog, null);
+  }
+
+  /**
+   * Creates a handler able to transfer catalog selected furniture.
+   */
+  public CatalogTransferHandler(Catalog catalog, CatalogController catalogController) {
     this.catalog = catalog;
+    this.catalogController = catalogController;
   }
 
   /**
@@ -55,5 +69,35 @@ public class CatalogTransferHandler extends TransferHandler {
   @Override
   protected Transferable createTransferable(JComponent source) {
     return new HomeTransferableList(catalog.getSelectedFurniture());
+  }
+
+  /**
+   * Returns <code>true</code> if flavors contains 
+   * <code>DataFlavor.javaFileListFlavor</code> flavor.
+   */
+  @Override
+  public boolean canImport(JComponent destination, DataFlavor [] flavors) {
+    return this.catalogController != null
+        && Arrays.asList(flavors).contains(DataFlavor.javaFileListFlavor);
+  }
+
+  /**
+   * Add to catalog the furniture contained in <code>transferable</code>.
+   */
+  @Override
+  public boolean importData(JComponent destination, Transferable transferable) {
+    if (canImport(destination, transferable.getTransferDataFlavors())) {
+      try {
+        List<File> files = (List<File>)transferable.
+              getTransferData(DataFlavor.javaFileListFlavor);
+        return this.catalogController.dropFiles(files);
+      } catch (UnsupportedFlavorException ex) {
+        throw new RuntimeException("Can't import", ex);
+      } catch (IOException ex) {
+        throw new RuntimeException("Can't access to data", ex);
+      }
+    } else {
+      return false;
+    }
   }
 }

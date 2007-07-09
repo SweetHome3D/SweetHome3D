@@ -20,21 +20,31 @@
  */
 package com.eteks.sweethome3d.io;
 
-import java.net.URL;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Furniture default catalog read from localized resources.
  * @author Emmanuel Puybaret
  */
 public class DefaultCatalog extends Catalog {
+  private static final String NAME           = "name#";
+  private static final String CATEGORY       = "category#";
+  private static final String ICON           = "icon#";
+  private static final String MODEL          = "model#";
+  private static final String WIDTH          = "width#";
+  private static final String DEPTH          = "depth#";
+  private static final String HEIGHT         = "height#";
+  private static final String MOVABLE        = "movable#";
+  private static final String DOOR_OR_WINDOW = "doorOrWindow#";
+  private static final String ELEVATION      = "elevation#";
+
   /**
    * Creates a default catalog read from resources.
    */
@@ -44,28 +54,23 @@ public class DefaultCatalog extends Catalog {
     for (int i = 1;; i++) {
       String name = null;
       try {
-        name = resource.getString("name#" + i);
+        name = resource.getString(NAME + i);
       } catch (MissingResourceException ex) {
         // Stop the loop when a key name# doesn't exist
         break;
       }
-      String category = resource.getString("category#" + i);
-      Content icon  = getContent(resource, "icon#" + i);
-      Content model = getContent(resource, "model#" + i);
-      float width = Float.parseFloat(
-          resource.getString("width#" + i));
-      float depth = Float.parseFloat(
-          resource.getString("depth#" + i));
-      float height = Float.parseFloat(
-          resource.getString("height#" + i));
-      boolean movable = Boolean.parseBoolean(
-          resource.getString("movable#" + i));
+      String category = resource.getString(CATEGORY + i);
+      Content icon  = getContent(resource, ICON + i);
+      Content model = getContent(resource, MODEL + i);
+      float width = Float.parseFloat(resource.getString(WIDTH + i));
+      float depth = Float.parseFloat(resource.getString(DEPTH + i));
+      float height = Float.parseFloat(resource.getString(HEIGHT + i));
+      boolean movable = Boolean.parseBoolean(resource.getString(MOVABLE + i));
       boolean doorOrWindow = Boolean.parseBoolean(
-          resource.getString("doorOrWindow#" + i));
+          resource.getString(DOOR_OR_WINDOW + i));
       float elevation = 0;
       try {
-        elevation = Float.parseFloat(
-            resource.getString("elevation#" + i));
+        elevation = Float.parseFloat(resource.getString(ELEVATION + i));
       } catch (MissingResourceException ex) {
         // By default elevation is null
       }
@@ -77,18 +82,13 @@ public class DefaultCatalog extends Catalog {
   }
   
   /**
-   * Returns a valid URLContent instance from the resource file value of key.
+   * Returns a valid content instance from the resource file value of key.
    * @param resource a resource bundle
    * @param key      the key of a resource file
    * @throws IllegalArgumentException if the file value doesn't match a valid resource.
    */
   private Content getContent(ResourceBundle resource, String key) {
     String file = resource.getString(key);
-    URL url = getClass().getResource(file);
-    if (url == null) {
-      throw new IllegalArgumentException("Unknown resource " + file);
-    } else {
-      return new URLContent(url); 
-    }
+    return new ResourceURLContent(DefaultCatalog.class, file);
   }
 }

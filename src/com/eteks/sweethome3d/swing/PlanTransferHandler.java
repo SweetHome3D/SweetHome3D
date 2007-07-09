@@ -23,6 +23,8 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.geom.Point2D;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -81,11 +83,14 @@ public class PlanTransferHandler extends LocatedTransferHandler {
 
   /**
    * Returns <code>true</code> if flavors contains 
-   * {@link HomeTransferableList#HOME_FLAVOR LIST_FLAVOR} flavor.
+   * {@link HomeTransferableList#HOME_FLAVOR LIST_FLAVOR} flavor
+   * or <code>DataFlavor.javaFileListFlavor</code> flavor.
    */
   @Override
   public boolean canImport(JComponent destination, DataFlavor [] flavors) {
-    return Arrays.asList(flavors).contains(HomeTransferableList.HOME_FLAVOR);
+    List<DataFlavor> flavorList = Arrays.asList(flavors);
+    return flavorList.contains(HomeTransferableList.HOME_FLAVOR)
+        || flavorList.contains(DataFlavor.javaFileListFlavor);
   }
 
   /**
@@ -95,23 +100,14 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   public boolean importData(JComponent destination, Transferable transferable) {
     if (canImport(destination, transferable.getTransferDataFlavors())) {
       try {
-        List<Object> items = (List<Object>)transferable.
-            getTransferData(HomeTransferableList.HOME_FLAVOR);
-        if (isDrop()) {
-          float x = 0;
-          float y = 0;
-          if (destination instanceof PlanComponent) {
-            PlanComponent planView = (PlanComponent)destination;
-            Point dropLocation = getDropLocation();
-            SwingUtilities.convertPointFromScreen(dropLocation, planView);
-            x = planView.convertXPixelToModel(dropLocation.x);
-            y = planView.convertYPixelToModel(dropLocation.y);
-          }
-          homeController.drop(items, x, y);
+        List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
+        if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {
+          return importHomeTransferableList(destination, 
+              (List<Object>)transferable.getTransferData(HomeTransferableList.HOME_FLAVOR));
         } else {
-          homeController.paste(items);
+          return importFileList(destination, 
+              (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor));
         }
-        return true; 
       } catch (UnsupportedFlavorException ex) {
         throw new RuntimeException("Can't import", ex);
       } catch (IOException ex) {
@@ -120,5 +116,43 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     } else {
       return false;
     }
+  }
+
+  private boolean importHomeTransferableList(JComponent destination, 
+                                             List<Object> transferedItems) {
+    if (isDrop()) {
+      Point2D dropLocation = getDropModelLocation(destination);
+      this.homeController.drop(transferedItems, 
+          (float)dropLocation.getX(), (float)dropLocation.getY());
+    } else {
+      this.homeController.paste(transferedItems);
+    }
+    return true;
+  }
+  
+  private boolean importFileList(JComponent destination, List<File> files) {
+    // isDrop current implementation doesn't work under Java 5 
+    // for a drag operation coming from outside JVM
+    Point2D dropLocation = isDrop() 
+      ? getDropModelLocation(destination)
+      : new Point2D.Float();
+    return this.homeController.dropFiles(files, 
+        (float)dropLocation.getX(), (float)dropLocation.getY());
+  }
+  
+  /**
+   * Returns the drop location converted in model coordinates space.
+   */
+  private Point2D getDropModelLocation(JComponent destination) {
+    float x = 0;
+    float y = 0;
+    if (destination instanceof PlanComponent) {
+      PlanComponent planView = (PlanComponent)destination;
+      Point dropLocation = getDropLocation();
+      SwingUtilities.convertPointFromScreen(dropLocation, planView);
+      x = planView.convertXPixelToModel(dropLocation.x);
+      y = planView.convertYPixelToModel(dropLocation.y);
+    }
+    return new Point2D.Float(x, y);
   }
 }

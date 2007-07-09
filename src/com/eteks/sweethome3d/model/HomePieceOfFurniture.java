@@ -136,6 +136,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private boolean movable;
   private boolean doorOrWindow;
   private Integer color;
+  private float   modelYaw;
+  private float   modelPitch;
+  private boolean backFaceShown;
   private boolean visible;
   private float   x;
   private float   y;
@@ -158,10 +161,13 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.elevation = piece.getElevation();
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
+    this.color = piece.getColor();
+    this.modelYaw = piece.getModelYaw();
+    this.modelPitch = piece.getModelPitch();
+    this.backFaceShown = piece.isBackFaceShown();
     if (piece instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture homePiece = 
           (HomePieceOfFurniture)piece;
-      this.color = homePiece.getColor();
       this.visible = homePiece.isVisible();
       this.angle = homePiece.getAngle();
       this.x = homePiece.getX();
@@ -385,6 +391,30 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.modelMirrored = modelMirrored;
   }
 
+  /**
+   * Returns the yaw angle of this piece of furniture that ensures 
+   * its model is correctly oriented.
+   */
+  public float getModelYaw() {
+    return this.modelYaw;
+  }
+
+  /**
+   * Returns the pitch angle of this piece of furniture that ensures 
+   * its model is correctly oriented.
+   */
+  public float getModelPitch() {
+    return this.modelPitch;
+  }
+  
+  /**
+   * Returns <code>true</code> if the back face of the piece of furniture
+   * model should be displayed.
+   */
+  public boolean isBackFaceShown() {
+    return this.backFaceShown;
+  }
+  
   /**
    * Returns the points of each corner of a piece.
    * @return an array of the 4 (x,y) coordinates of the piece corners.

@@ -30,6 +30,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,7 +65,6 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
  */
 public class FurnitureTable extends JTable {
   private ListSelectionListener  tableSelectionListener;
-  private PropertyChangeListener unitPreferencesListener;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -176,15 +176,31 @@ public class FurnitureTable extends JTable {
    * when unit changes.  
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
-    // Store unit preferences listener in a field to avoid loosing the 
-    // weak reference to this listener once added
-    this.unitPreferencesListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          repaint();
-        }
-      };
-    preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
-        this.unitPreferencesListener);
+    preferences.addPropertyChangeListener(
+        UserPreferences.Property.UNIT, new UnitChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this table with a weak reference to avoid
+   * strong link between preferences and this table.  
+   */
+  private static class UnitChangeListener implements PropertyChangeListener {
+    private WeakReference<FurnitureTable>  furnitureTable;
+
+    public UnitChangeListener(FurnitureTable furnitureTable) {
+      this.furnitureTable = new WeakReference<FurnitureTable>(furnitureTable);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If furniture table was garbage collected, remove this listener from preferences
+      FurnitureTable furnitureTable = this.furnitureTable.get();
+      if (furnitureTable == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.UNIT, this);
+      } else {
+        furnitureTable.repaint();
+      }
+    }
   }
 
   /**

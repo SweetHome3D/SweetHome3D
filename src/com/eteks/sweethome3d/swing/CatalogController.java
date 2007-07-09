@@ -19,27 +19,43 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A MVC controller for the furniture catalog.
  * @author Emmanuel Puybaret
  */
 public class CatalogController {
-  private Catalog    catalog;
-  private JComponent catalogView;
+  private Catalog         catalog;
+  private UserPreferences preferences;
+  private JComponent      catalogView;
 
   /**
    * Creates a controller of the furniture catalog view.
    * @param catalog the furniture catalog of the application
    */
   public CatalogController(Catalog catalog) {
+    this(catalog, null);
+  }
+
+  /**
+   * Creates a controller of the furniture catalog view.
+   * @param catalog the furniture catalog of the application
+   * @param preferences application user preferences
+   */
+  public CatalogController(Catalog catalog, UserPreferences preferences) {
     this.catalog = catalog;
+    this.preferences = preferences;
     this.catalogView = new CatalogTree(catalog, this);
   }
 
@@ -65,5 +81,74 @@ public class CatalogController {
    */
   public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
     ((CatalogTree)getView()).setFurnitureSelectionSynchronized(furnitureSelectionSynchronized);
+  }
+
+  /**
+   * Displays the wizard that helps to change the selected piece of furniture. 
+   */
+  public void modifySelectedFurniture() {
+    if (this.preferences != null) {
+      CatalogPieceOfFurniture piece = this.catalog.getSelectedFurniture().get(0);
+      if (piece.isModifiable()) {
+        new ImportedFurnitureWizardController(piece, this.preferences);
+      }
+    }
+  }
+
+  /**
+   * Displays the wizard that helps to import furniture to catalog. 
+   */
+  public void importFurniture() {
+    if (this.preferences != null) {
+      new ImportedFurnitureWizardController(this.preferences);
+    }
+  }
+
+  /**
+   * Displays the wizard that helps to import furniture to catalog. 
+   */
+  private void importFurniture(URLContent model) {
+    if (this.preferences != null) {
+      new ImportedFurnitureWizardController(model, this.preferences);
+    }
+  }
+
+  /**
+   * Deletes selected catalog furniture. 
+   */
+  public void deleteSelection() {
+    for (CatalogPieceOfFurniture piece : this.catalog.getSelectedFurniture()) {
+      if (piece.isModifiable()) {
+        this.catalog.delete(piece);
+      }
+    }
+  }
+
+  /**
+   * Adds dropped files to catalog.
+   */
+  public boolean dropFiles(List<File> files) {
+    // Search importables files
+    List<URLContent> importableModels = new ArrayList<URLContent>();        
+    for (File file : files) {
+      if (file.getName().toLowerCase().endsWith(".obj")
+          || file.getName().toLowerCase().endsWith(".lws")
+          || file.getName().toLowerCase().endsWith(".3ds")) {
+        try {
+          importableModels.add(new URLContent(file.toURL()));
+        } catch (MalformedURLException ex) {
+          // Ignore files that can be transformed as a URL
+        }
+      }        
+    }
+    if (importableModels.size() == 0) {
+      return false;
+    } else {
+      // Import furniture
+      for (URLContent model : importableModels) {
+        importFurniture(model);
+      }
+      return true;
+    }
   }
 }

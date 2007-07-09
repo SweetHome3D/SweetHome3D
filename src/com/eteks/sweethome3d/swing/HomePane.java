@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.FileDialog;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -32,7 +31,7 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FilenameFilter;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,7 +50,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
-import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -86,7 +84,7 @@ public class HomePane extends JRootPane {
   public enum ActionType {
     NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_HOME_FURNITURE,
+    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
     SORT_HOME_FURNITURE_BY_COLOR, SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
     SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
@@ -96,23 +94,23 @@ public class HomePane extends JRootPane {
     VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
     ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
-
-  private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
-  private static final FileFilter SWEET_HOME_3D_FILTER = new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        // Accept directories and .sh3d files
-        return file.isDirectory()
-               || file.getName().toLowerCase().
-                      endsWith(SWEET_HOME_3D_EXTENSION);
-      }
   
-      @Override
-      public String getDescription() {
-        return "Sweet Home 3D";
-      }
-    }; 
-  private static File currentDirectory;
+  private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
+  private static final FileFilter [] SWEET_HOME_3D_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .sh3d files
+          return file.isDirectory()
+          || file.getName().toLowerCase().
+          endsWith(SWEET_HOME_3D_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "Sweet Home 3D";
+        }
+      }};
 
   private ResourceBundle                  resource;
   // Button models shared by Select and Create wall menu items and the matching tool bar buttons
@@ -191,8 +189,8 @@ public class HomePane extends JRootPane {
     createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     createAction(ActionType.DELETE_HOME_FURNITURE,
         controller.getFurnitureController(), "deleteSelection");
-    createAction(ActionType.MODIFY_HOME_FURNITURE,
-        controller.getFurnitureController(), "modifySelectedFurniture");
+    createAction(ActionType.MODIFY_FURNITURE, controller, "modifySelectedFurniture");
+    createAction(ActionType.IMPORT_FURNITURE, controller, "importFurniture");
     createAction(ActionType.ALIGN_FURNITURE_ON_TOP, 
         controller.getFurnitureController(), "alignSelectedFurnitureOnTop");
     createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, 
@@ -281,7 +279,7 @@ public class HomePane extends JRootPane {
   private void createTransferHandlers(Home home, UserPreferences preferences, 
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new CatalogTransferHandler(preferences.getCatalog());
+        new CatalogTransferHandler(preferences.getCatalog(), controller.getCatalogController());
     this.furnitureTransferHandler = 
         new FurnitureTransferHandler(home, controller);
     this.planTransferHandler = 
@@ -371,7 +369,9 @@ public class HomePane extends JRootPane {
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
     furnitureMenu.add(getMenuAction(ActionType.ADD_HOME_FURNITURE));
-    furnitureMenu.add(getMenuAction(ActionType.MODIFY_HOME_FURNITURE));
+    furnitureMenu.add(getMenuAction(ActionType.MODIFY_FURNITURE));
+    furnitureMenu.addSeparator();
+    furnitureMenu.add(getMenuAction(ActionType.IMPORT_FURNITURE));
     furnitureMenu.addSeparator();
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_TOP));
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
@@ -709,7 +709,11 @@ public class HomePane extends JRootPane {
     // Create catalog view popup menu
     JPopupMenu catalogViewPopup = new JPopupMenu();
     catalogViewPopup.add(getPopupAction(ActionType.COPY));
+    catalogViewPopup.addSeparator();
+    catalogViewPopup.add(getPopupAction(ActionType.DELETE));
+    catalogViewPopup.addSeparator();
     catalogViewPopup.add(getPopupAction(ActionType.ADD_HOME_FURNITURE));
+    catalogViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     this.catalogView.setComponentPopupMenu(catalogViewPopup);
 
     // Configure furniture view
@@ -752,7 +756,7 @@ public class HomePane extends JRootPane {
     furnitureViewPopup.add(getPopupAction(ActionType.DELETE));
     furnitureViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     furnitureViewPopup.addSeparator();
-    furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
+    furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     this.furnitureView.setComponentPopupMenu(furnitureViewPopup);
     ((JViewport)this.furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
     
@@ -769,20 +773,13 @@ public class HomePane extends JRootPane {
    * Returns the plan view and 3D view pane. 
    */
   private JComponent getPlanView3DPane(Home home, UserPreferences preferences, 
-                                       final HomeController controller) {
+                                       HomeController controller) {
     this.planView = controller.getPlanController().getView();
-    final JScrollPane planScrollPane = new HomeScrollPane(this.planView);
+    JScrollPane planScrollPane = new HomeScrollPane(this.planView);
     setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
-    // Store rulers preferences listener in a field to avoid loosing the 
-    // weak reference to this listener once added
-    this.rulersPreferencesListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          setPlanRulersVisible(planScrollPane, controller, (Boolean)ev.getNewValue());
-        }
-      };
     // Add a listener to update rulers visibility in preferences
     preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
-        this.rulersPreferencesListener);
+        new RulersVisibilityChangeListener(this, planScrollPane, controller));
     this.planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
 
@@ -807,7 +804,7 @@ public class HomePane extends JRootPane {
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);
     planViewPopup.addSeparator();
-    planViewPopup.add(getPopupAction(ActionType.MODIFY_HOME_FURNITURE));
+    planViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.ZOOM_OUT));
@@ -843,6 +840,39 @@ public class HomePane extends JRootPane {
     return planView3DPane;
   }
   
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class RulersVisibilityChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane>       homePane;
+    private WeakReference<JScrollPane>    planScrollPane;
+    private WeakReference<HomeController> controller;
+
+    public RulersVisibilityChangeListener(HomePane homePane,
+                                          JScrollPane planScrollPane, 
+                                          HomeController controller) {
+      this.homePane = new WeakReference<HomePane>(homePane);
+      this.planScrollPane = new WeakReference<JScrollPane>(planScrollPane);
+      this.controller = new WeakReference<HomeController>(controller);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomePane homePane = this.homePane.get();
+      JScrollPane planScrollPane = this.planScrollPane.get();
+      HomeController controller = this.controller.get();
+      if (homePane == null
+          || planScrollPane == null
+          || controller == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.RULERS_VISIBLE, this);
+      } else {
+        homePane.setPlanRulersVisible(planScrollPane, controller, (Boolean)ev.getNewValue());
+      }
+    }
+  }
+
   /**
    * Sets the rulers visible in plan view.
    */
@@ -926,103 +956,22 @@ public class HomePane extends JRootPane {
    * Displays a file chooser dialog to open a .sh3d file.
    */
   public String showOpenDialog() {
-    // Use native file dialog under Mac OS X
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      return showFileDialog(false, null);
-    } else {
-      return showFileChooser(false, null);
-    }
+    return FileUtilities.showOpenFileDialog(this, 
+        this.resource.getString("fileDialog.openTitle"), SWEET_HOME_3D_FILTER);
   }
 
   /**
    * Displays a file chooser dialog to save a home in a .sh3d file.
    */
   public String showSaveDialog(String name) {
-    String file;
-    // Use native file dialog under Mac OS X
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      file = showFileDialog(true, name);
-    } else {
-      file = showFileChooser(true, name);
-    }
+    String file = FileUtilities.showSaveFileDialog(this, 
+        this.resource.getString("fileDialog.saveTitle"), SWEET_HOME_3D_FILTER, name);
     if (file != null && !file.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
       file += SWEET_HOME_3D_EXTENSION;
     }
     return file;
   }
   
-  /**
-   * Displays a Swing file chooser.
-   */
-  private String showFileChooser(boolean save, String name) {
-    JFileChooser fileChooser = new JFileChooser();
-    // Choose file chooser type
-    if (save && name != null) {
-      fileChooser.setSelectedFile(new File(name));
-    }
-    // Set .sh3d files filter 
-    fileChooser.setFileFilter(SWEET_HOME_3D_FILTER);
-    // Update current directory
-    if (currentDirectory != null) {
-      fileChooser.setCurrentDirectory(currentDirectory);
-    }
-    int option;
-    if (save) {
-      option = fileChooser.showSaveDialog(this);
-    } else {
-      option = fileChooser.showOpenDialog(this);
-    }
-    if (option == JFileChooser.APPROVE_OPTION) {
-      // Retrieve current directory for future calls
-      currentDirectory = fileChooser.getCurrentDirectory();
-      // Return selected file
-      return fileChooser.getSelectedFile().toString();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Displays an AWT file dialog.
-   */
-  private String showFileDialog(boolean save, String name) {
-    FileDialog fileDialog = 
-      new FileDialog(JOptionPane.getFrameForComponent(this));
-
-    // Choose file chooser type
-    if (save && name != null) {
-      fileDialog.setFile(new File(name).getName());
-    }
-    // Set .sh3d files filter 
-    fileDialog.setFilenameFilter(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          return name.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION);
-        }
-      });
-    // Update current directory
-    if (currentDirectory != null) {
-      fileDialog.setDirectory(currentDirectory.toString());
-    }
-    if (save) {
-      fileDialog.setMode(FileDialog.SAVE);
-      fileDialog.setTitle(this.resource.getString("fileDialog.saveTitle"));
-    } else {
-      fileDialog.setMode(FileDialog.LOAD);
-      fileDialog.setTitle(this.resource.getString("fileDialog.openTitle"));
-    }
-    fileDialog.setVisible(true);
-    String selectedFile = fileDialog.getFile();
-    // If user choosed a file
-    if (selectedFile != null) {
-      // Retrieve current directory for future calls
-      currentDirectory = new File(fileDialog.getDirectory());
-      // Return selected file
-      return currentDirectory + File.separator + selectedFile;
-    } else {
-      return null;
-    }
-  }
-
   /**
    * Displays <code>message</code> in an error message box.
    */
@@ -1135,6 +1084,23 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Displays a dialog that let user choose whether he wants to delete 
+   * the selected furniture from catalog or not.
+   * @return <code>true</code> if user confirmed to delete.
+   */
+  public boolean confirmDeleteCatalogSelection() {
+    // Retrieve displayed text in buttons and message
+    String message = this.resource.getString("confirmDeleteCatalogSelection.message");
+    String title = this.resource.getString("confirmDeleteCatalogSelection.title");
+    String delete = this.resource.getString("confirmDeleteCatalogSelection.delete");
+    String cancel = this.resource.getString("confirmDeleteCatalogSelection.cancel");
+    
+    return JOptionPane.showOptionDialog(this, message, title, 
+        JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
    * Launches browser with <code>url</code>.
    */
   private void viewURL(URL url) {
@@ -1155,6 +1121,13 @@ public class HomePane extends JRootPane {
   public boolean isClipboardEmpty() {
     return !getToolkit().getSystemClipboard().
         isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR);
+  }
+
+  /**
+   * Execute <code>runnable</code> asynchronously in the Event Dispatch Thread.  
+   */
+  public void invokeLater(Runnable runnable) {
+    EventQueue.invokeLater(runnable);
   }
 
   /**

@@ -119,7 +119,7 @@ public class Home implements Serializable {
         3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     // Initialize new fields 
     this.skyColor = (51 << 16) + (153 << 8) + 255;
-    this.groundColor = 0x909090;
+    this.groundColor = 0xE0E0E0;
     this.lightColor = 0xF0F0F0;
   }
 
