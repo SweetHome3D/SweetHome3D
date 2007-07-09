@@ -5,6 +5,7 @@
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes">
        <classpath>
+       	 <pathelement location="lib/Loader3DS1_2.jar"/>
          <pathelement location="lib/windows/vecmath.jar"/>
          <pathelement location="lib/windows/j3dutils.jar"/>
          <pathelement location="lib/windows/j3dcore.jar"/>

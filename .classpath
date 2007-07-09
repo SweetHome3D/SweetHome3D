@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="lib/windows/j3dcore.jar"/>
 	<classpathentry kind="lib" path="libtest/AppleJavaExtensions.jar"/>
 	<classpathentry kind="lib" path="libtest/jnlp.jar"/>
+	<classpathentry kind="lib" path="lib/Loader3DS1_2.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
