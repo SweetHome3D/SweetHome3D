@@ -1,5 +1,5 @@
 /*
- * Java3DUtilities.java 4 juil. 07
+ * ModelManager.java 4 juil. 07
  *
  * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
