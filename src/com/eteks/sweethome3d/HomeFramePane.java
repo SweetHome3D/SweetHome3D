@@ -19,11 +19,8 @@
  */
 package com.eteks.sweethome3d;
 
-import java.awt.Component;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -37,7 +34,6 @@ import java.util.ResourceBundle;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
-import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
