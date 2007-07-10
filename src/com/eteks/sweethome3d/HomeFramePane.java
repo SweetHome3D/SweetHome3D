@@ -19,8 +19,11 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.Component;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -34,6 +37,7 @@ import java.util.ResourceBundle;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -132,8 +136,12 @@ public class HomeFramePane extends JRootPane {
         
         @Override
         public void windowActivated(WindowEvent ev) {                    
-          // Let the catalog view of each frame manage its own selection          
-          application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
+          // Let the catalog view of each frame manage its own selection :
+          // Restore stored selected furniture except if the widow was activated 
+          // because one of its child windows lost focus
+          if (ev.getOppositeWindow().getParent() != frame) {
+            application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
+          } 
           controller.setCatalogFurnitureSelectionSynchronized(true);
         }        
       });
@@ -180,8 +188,12 @@ public class HomeFramePane extends JRootPane {
       final HomeFramePane homeFramePane = this.homeFramePane.get();
       if (homeFramePane == null) {
         ((Catalog)ev.getSource()).removeFurnitureListener(this);
-      } else if (ev.getType() == FurnitureEvent.Type.DELETE) {
-        homeFramePane.catalogSelectedFurniture.remove(ev.getPieceOfFurniture());
+      } else {
+        switch (ev.getType()) {
+          case DELETE :
+            homeFramePane.catalogSelectedFurniture.remove(ev.getPieceOfFurniture());
+            break;
+        }
       }
     }
   }
