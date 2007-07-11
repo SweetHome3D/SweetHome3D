@@ -72,16 +72,10 @@ public interface PieceOfFurniture extends Serializable {
   public abstract Content getModel();
   
   /**
-   * Returns the yaw angle of this piece of furniture that ensures 
+   * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures 
    * its model is correctly oriented.
    */
-  public abstract float getModelYaw();
-
-  /**
-   * Returns the pitch angle of this piece of furniture that ensures 
-   * its model is correctly oriented.
-   */
-  public abstract float getModelPitch();
+  public float [][] getModelRotation();
   
   /**
    * Returns <code>true</code> if the back face of the piece of furniture

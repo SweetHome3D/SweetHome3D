@@ -45,7 +45,6 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ResourceBundle;
@@ -64,10 +63,11 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -75,62 +75,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class BackgroundImageWizardStepsPanel extends JPanel {
-  private static final FileFilter [] IMAGE_FILTERS = {
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".bmp")
-                || file.getName().toLowerCase().endsWith(".wbmp");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "BMP";
-       }
-     },
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".gif");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "GIF";
-       }
-     },
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".jpg")
-                || file.getName().toLowerCase().endsWith(".jpeg");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "JPEG";
-       }
-     }, 
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".png");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "PNG";
-       }
-     }};
-
   private BackgroundImageWizardController controller;
   private ResourceBundle                  resource;
   private CardLayout                      cardLayout;
@@ -155,11 +99,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   /**
    * Creates a view for background image choice, scale and origin. 
    */
-  public BackgroundImageWizardStepsPanel(BackgroundImage backgroundImage, UserPreferences preferences, 
-                                        BackgroundImageWizardController controller) {
+  public BackgroundImageWizardStepsPanel(BackgroundImage backgroundImage, 
+                                         UserPreferences preferences, 
+                                         ContentManager contentManager,
+                                         BackgroundImageWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
-    createComponents(preferences);
+    createComponents(preferences, contentManager);
     setMnemonics();
     layoutComponents();
     updateController(backgroundImage);
@@ -168,7 +114,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   /**
    * Creates components displayed by this panel.
    */
-  private void createComponents(UserPreferences preferences) {
+  private void createComponents(UserPreferences preferences, 
+                                final ContentManager contentManager) {
     // Get unit text matching current unit 
     String unitText = this.resource.getString(
         preferences.getUnit() == UserPreferences.Unit.CENTIMETER
@@ -180,7 +127,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Content content = showImageChoiceDialog();
+          Content content = showImageChoiceDialog(contentManager);
           if (content != null) {
             updateController(content);
           }
@@ -486,20 +433,17 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns a content choosen for a file chooser dialog. You may 
-   * override this method to use a different source of image.
+   * Returns an image content choosen for a content chooser dialog.
    */
-  protected Content showImageChoiceDialog() {
-    String file = FileUtilities.showOpenFileDialog(this, 
-        this.resource.getString("imageChoiceDialog.title"), IMAGE_FILTERS);
-    if (file != null) {
+  private Content showImageChoiceDialog(ContentManager contentManager) {
+    String imageName = contentManager.showOpenDialog( 
+        this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
+    if (imageName != null) {
       try {
-        // Copy chosen file in a temporary file to ensure the image will 
-        // still be available at saving time even if user moved it meanwhile   
-        return FileUtilities.copyToTemporaryURLContent(file);
-      } catch (IOException ex) {
+        return contentManager.getContent(imageName);
+      } catch (RecorderException ex) {
         JOptionPane.showMessageDialog(this, 
-            String.format(this.resource.getString("imageChoiceError"), file));
+            String.format(this.resource.getString("imageChoiceError"), imageName));
       }
     }
     return null;

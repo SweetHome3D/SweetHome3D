@@ -24,8 +24,13 @@ import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceAdapter;
 import java.awt.dnd.DragSourceDragEvent;
 import java.awt.dnd.DragSourceDropEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.TransferHandler;
+
+import com.eteks.sweethome3d.model.ContentManager;
 
 /**
  * Transfer handler that stores the dropped location of mouse pointer.
@@ -76,5 +81,20 @@ public abstract class LocatedTransferHandler extends TransferHandler {
    */
   protected boolean isDrop() {
     return dropLocation != null;
+  }
+
+  /**
+   * Returns the model contents among files.
+   */
+  protected List<String> getModelContents(List<File> files, 
+                                          ContentManager contentManager) {
+    final List<String> importableModels = new ArrayList<String>();        
+    for (File file : files) {
+      final String absolutePath = file.getAbsolutePath();
+      if (contentManager.isAcceptable(absolutePath, ContentManager.ContentType.MODEL)) {
+        importableModels.add(absolutePath);
+      }        
+    }
+    return importableModels;
   }
 }

@@ -30,7 +30,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -70,8 +69,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.filechooser.FileFilter;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -95,23 +94,7 @@ public class HomePane extends JRootPane {
     ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
   
-  private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
-  private static final FileFilter [] SWEET_HOME_3D_FILTER = {
-      new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          // Accept directories and .sh3d files
-          return file.isDirectory()
-          || file.getName().toLowerCase().
-          endsWith(SWEET_HOME_3D_EXTENSION);
-        }
-        
-        @Override
-        public String getDescription() {
-          return "Sweet Home 3D";
-        }
-      }};
-
+  private ContentManager                  contentManager;
   private ResourceBundle                  resource;
   // Button models shared by Select and Create wall menu items and the matching tool bar buttons
   private JToggleButton.ToggleButtonModel selectToggleModel;
@@ -126,12 +109,13 @@ public class HomePane extends JRootPane {
   private TransferHandler                 catalogTransferHandler;
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
-  private PropertyChangeListener          rulersPreferencesListener;
   
   /**
    * Creates this view associated with its controller.
    */
-  public HomePane(Home home, UserPreferences preferences, HomeController controller) {
+  public HomePane(Home home, UserPreferences preferences, 
+                  ContentManager contentManager, HomeController controller) {
+    this.contentManager = contentManager;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     // Create unique toggle button models for Selection / Wall creation states
     // so Select and Create walls creation menu items and tool bar buttons 
@@ -154,10 +138,10 @@ public class HomePane extends JRootPane {
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
     
     createActions(controller);
-    createTransferHandlers(home, preferences, controller);
+    createTransferHandlers(home, preferences, contentManager, controller);
     addHomeListener(home);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = getHomeMenuBar(home, controller);
+    JMenuBar homeMenuBar = getHomeMenuBar(home, controller, contentManager);
     setJMenuBar(homeMenuBar);
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
     getContentPane().add(getMainPane(home, preferences, controller));
@@ -276,14 +260,15 @@ public class HomePane extends JRootPane {
   /**
    * Creates components transfer handlers.
    */
-  private void createTransferHandlers(Home home, UserPreferences preferences, 
+  private void createTransferHandlers(Home home, UserPreferences preferences,
+                                      ContentManager contentManager,
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new CatalogTransferHandler(preferences.getCatalog(), controller.getCatalogController());
+        new CatalogTransferHandler(preferences.getCatalog(), contentManager, controller.getCatalogController());
     this.furnitureTransferHandler = 
-        new FurnitureTransferHandler(home, controller);
+        new FurnitureTransferHandler(home, contentManager, controller);
     this.planTransferHandler = 
-        new PlanTransferHandler(home, controller);
+        new PlanTransferHandler(home, contentManager, controller);
   }
 
   /**
@@ -321,7 +306,9 @@ public class HomePane extends JRootPane {
   /**
    * Returns the menu bar displayed in this pane.
    */
-  private JMenuBar getHomeMenuBar(final Home home, final HomeController controller) {
+  private JMenuBar getHomeMenuBar(final Home home, 
+                                  final HomeController controller,
+                                  final ContentManager contentManager) {
     // Create File menu
     JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU", true));
     fileMenu.add(getMenuAction(ActionType.NEW_HOME));
@@ -331,7 +318,7 @@ public class HomePane extends JRootPane {
         new JMenu(new ResourceAction(this.resource, "OPEN_RECENT_HOME_MENU", true));
     openRecentHomeMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
-          updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
+          updateOpenRecentHomeMenu(openRecentHomeMenu, controller, contentManager);
         }
       
         public void menuCanceled(MenuEvent ev) {
@@ -495,16 +482,20 @@ public class HomePane extends JRootPane {
 
   /**
    * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
+   * @param contentManager 
    */
   protected void updateOpenRecentHomeMenu(JMenu openRecentHomeMenu, 
-                                          final HomeController controller) {
+                                          final HomeController controller, 
+                                          ContentManager contentManager) {
     openRecentHomeMenu.removeAll();
     for (final String homeName : controller.getRecentHomes()) {
-      openRecentHomeMenu.add(new AbstractAction(new File(homeName).getName()) {
-          public void actionPerformed(ActionEvent e) {
-            controller.open(homeName);
-          }
-        });
+      openRecentHomeMenu.add(
+          new AbstractAction(contentManager.getPresentationName(
+                  homeName, ContentManager.ContentType.SWEET_HOME_3D)) {
+            public void actionPerformed(ActionEvent e) {
+              controller.open(homeName);
+            }
+          });
     }
     if (openRecentHomeMenu.getMenuComponentCount() > 0) {
       openRecentHomeMenu.addSeparator();
@@ -953,23 +944,21 @@ public class HomePane extends JRootPane {
   }
   
   /**
-   * Displays a file chooser dialog to open a .sh3d file.
+   * Displays a content chooser open dialog to open a .sh3d file.
    */
   public String showOpenDialog() {
-    return FileUtilities.showOpenFileDialog(this, 
-        this.resource.getString("fileDialog.openTitle"), SWEET_HOME_3D_FILTER);
+    return this.contentManager.showOpenDialog( 
+        this.resource.getString("openHomeDialog.title"), 
+        ContentManager.ContentType.SWEET_HOME_3D);
   }
 
   /**
-   * Displays a file chooser dialog to save a home in a .sh3d file.
+   * Displays a content chooser save dialog to save a home in a .sh3d file.
    */
-  public String showSaveDialog(String name) {
-    String file = FileUtilities.showSaveFileDialog(this, 
-        this.resource.getString("fileDialog.saveTitle"), SWEET_HOME_3D_FILTER, name);
-    if (file != null && !file.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
-      file += SWEET_HOME_3D_EXTENSION;
-    }
-    return file;
+  public String showSaveDialog(String homeName) {
+    return this.contentManager.showSaveDialog(
+        this.resource.getString("saveHomeDialog.title"), 
+        ContentManager.ContentType.SWEET_HOME_3D, homeName);
   }
   
   /**
@@ -995,10 +984,12 @@ public class HomePane extends JRootPane {
    * file <code>name</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  public boolean confirmOverwrite(String name) {
+  public boolean confirmOverwrite(String homeName) {
     // Retrieve displayed text in buttons and message
     String messageFormat = this.resource.getString("confirmOverwrite.message");
-    String message = String.format(messageFormat, new File(name).getName());
+    String message = String.format(messageFormat, 
+        this.contentManager.getPresentationName(
+            homeName, ContentManager.ContentType.SWEET_HOME_3D));
     String title = this.resource.getString("confirmOverwrite.title");
     String replace = this.resource.getString("confirmOverwrite.overwrite");
     String cancel = this.resource.getString("confirmOverwrite.cancel");
@@ -1015,13 +1006,14 @@ public class HomePane extends JRootPane {
    * {@link SaveAnswer#DO_NOT_SAVE} if user don't want to save home,
    * or {@link SaveAnswer#CANCEL} if doesn't want to continue current operation.
    */
-  public SaveAnswer confirmSave(String name) {
+  public SaveAnswer confirmSave(String homeName) {
     // Retrieve displayed text in buttons and message
     String messageFormat = this.resource.getString("confirmSave.message");
     String message;
-    if (name != null) {
+    if (homeName != null) {
       message = String.format(messageFormat, 
-          "\"" + new File(name).getName() + "\"");
+          "\"" + this.contentManager.getPresentationName(
+              homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
     } else {
       message = String.format(messageFormat, "");
     }

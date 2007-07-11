@@ -21,9 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,6 +44,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -57,7 +56,6 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
-import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A MVC controller for the home view.
@@ -118,16 +116,20 @@ public class HomeController  {
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
     
+    ContentManager contentManager = null;
+    if (application != null) {
+      contentManager = application.getContentManager();
+    }
     this.catalogController   = new CatalogController(
-        preferences.getCatalog(), preferences);
+        preferences.getCatalog(), preferences, contentManager);
     this.furnitureController = new FurnitureController(
-        home, preferences, this.undoSupport);
+        home, preferences, contentManager, this.undoSupport);
     this.planController = new PlanController(
         home, preferences, undoSupport);
     this.homeController3D = new HomeController3D(
         home, preferences, this.undoSupport);
     
-    this.homeView = new HomePane(home, preferences, this);
+    this.homeView = new HomePane(home, preferences, contentManager, this);
     addListeners();
     enableDefaultActions((HomePane)this.homeView);
     
@@ -710,70 +712,51 @@ public class HomeController  {
   }
 
   /**
-   * Adds imported files to home, moves them of (dx, dy) 
+   * Adds imported models to home, moves them of (dx, dy) 
    * and post a drop operation to undo support.
    */
-  public boolean dropFiles(final List<File> files, float dx, float dy) {
+  public void dropFiles(final List<String> importableModels, float dx, float dy) {
     // Always use selection mode after a drop operation
     getPlanController().setMode(PlanController.Mode.SELECTION);
-    // Search importables files
-    List<URLContent> importableModels = new ArrayList<URLContent>();        
-    for (File file : files) {
-      if (file.getName().toLowerCase().endsWith(".obj")
-          || file.getName().toLowerCase().endsWith(".lws")
-          || file.getName().toLowerCase().endsWith(".3ds")) {
-        try {
-          importableModels.add(new URLContent(file.toURL()));
-        } catch (MalformedURLException ex) {
-          // Ignore files that can be transformed as a URL
+    // Add to home a listener to track imported furniture 
+    final List<HomePieceOfFurniture> importedFurniture = 
+        new ArrayList<HomePieceOfFurniture>(importableModels.size());
+    FurnitureListener addedFurnitureListener = new FurnitureListener () {
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          importedFurniture.add((HomePieceOfFurniture)ev.getPieceOfFurniture());
         }
-      }        
-    }
-    if (importableModels.size() == 0) {
-      return false;
-    } else {
-      // Add to home a listener to track imported furniture 
-      final List<HomePieceOfFurniture> importedFurniture = 
-          new ArrayList<HomePieceOfFurniture>(importableModels.size());
-      FurnitureListener addedFurnitureListener = new FurnitureListener () {
-          public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-            importedFurniture.add((HomePieceOfFurniture)ev.getPieceOfFurniture());
-          }
-        };
-      this.home.addFurnitureListener(addedFurnitureListener);
-      
-      // Start a compound edit that adds furniture to home
-      this.undoSupport.beginUpdate();
-      // Import furniture
-      for (URLContent model : importableModels) {
-        getFurnitureController().importFurniture(model);
-      }
-      this.home.removeFurnitureListener(addedFurnitureListener);
-      
-      if (importedFurniture.size() > 0) {
-        getPlanController().moveItems(importedFurniture, dx, dy);
-        this.home.setSelectedItems(importedFurniture);
-        
-        // Add a undoable edit that will select the imported furniture at redo
-        this.undoSupport.postEdit(new AbstractUndoableEdit() {      
-            @Override
-            public void redo() throws CannotRedoException {
-              super.redo();
-              home.setSelectedItems(importedFurniture);
-            }
+      };
+    this.home.addFurnitureListener(addedFurnitureListener);
     
-            @Override
-            public String getPresentationName() {
-              return resource.getString("undoDropName");
-            }      
-          });
-      }
-     
-      // End compound edit
-      this.undoSupport.endUpdate();
-
-      return true;
+    // Start a compound edit that adds furniture to home
+    this.undoSupport.beginUpdate();
+    // Import furniture
+    for (String model : importableModels) {
+      getFurnitureController().importFurniture(model);
     }
+    this.home.removeFurnitureListener(addedFurnitureListener);
+    
+    if (importedFurniture.size() > 0) {
+      getPlanController().moveItems(importedFurniture, dx, dy);
+      this.home.setSelectedItems(importedFurniture);
+      
+      // Add a undoable edit that will select the imported furniture at redo
+      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            home.setSelectedItems(importedFurniture);
+          }
+  
+          @Override
+          public String getPresentationName() {
+            return resource.getString("undoDropName");
+          }      
+        });
+    }
+   
+    // End compound edit
+    this.undoSupport.endUpdate();
   }
 
   /**
@@ -896,6 +879,9 @@ public class HomeController  {
         try {
           if (this.application.getHomeRecorder().exists(homeName)) {
             recentHomes.add(homeName);
+            if (recentHomes.size() == 4) {
+              break;
+            }
           }
         } catch (RecorderException ex) {
           // If homeName can't be checked ignore it
@@ -1078,7 +1064,8 @@ public class HomeController  {
    * Displays the wizard that helps to import home background image. 
    */
   public void importBackgroundImage() {
-    new BackgroundImageWizardController(this.home, this.preferences, this.undoSupport);
+    new BackgroundImageWizardController(this.home, this.preferences, 
+        this.application.getContentManager(), this.undoSupport);
   }
   
   /**

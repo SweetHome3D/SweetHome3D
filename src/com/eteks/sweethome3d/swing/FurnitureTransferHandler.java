@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.EventQueue;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -29,6 +30,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 
@@ -38,14 +40,18 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
  */
 public class FurnitureTransferHandler extends LocatedTransferHandler {
   private Home                       home;
+  private ContentManager             contentManager;
   private HomeController             homeController;
   private List<HomePieceOfFurniture> copiedFurniture;
 
   /**
    * Creates a handler able to transfer home furniture.
    */
-  public FurnitureTransferHandler(Home home, HomeController homeController) {
+  public FurnitureTransferHandler(Home home, 
+                                  ContentManager contentManager,
+                                  HomeController homeController) {
     this.home = home;  
+    this.contentManager = contentManager;
     this.homeController = homeController;
   }
   
@@ -109,9 +115,14 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
           }
           return true;
         } else {
-          List<File> files = (List<File>)transferable.
-              getTransferData(DataFlavor.javaFileListFlavor);
-          return this.homeController.dropFiles(files, 0, 0);          
+          List<File> files = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+          final List<String> importableModels = getModelContents(files, this.contentManager);
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                homeController.dropFiles(importableModels, 0, 0);          
+              }
+            });
+          return !importableModels.isEmpty();
         }
       } catch (UnsupportedFlavorException ex) {
         throw new RuntimeException("Can't import", ex);

@@ -22,8 +22,6 @@ package com.eteks.sweethome3d.model;
 
 import java.text.Collator;
 
-import com.eteks.sweethome3d.tools.ResourceURLContent;
-
 /**
  * A catalog piece of furniture.
  * @author Emmanuel Puybaret
@@ -31,23 +29,23 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
   private static final long serialVersionUID = 1L;
 
-  private String  name;
-  private Content icon;
-  private Content model;
-  private float   width;
-  private float   depth;
-  private float   height;
-  private boolean proportional;
-  private float   elevation;
-  private boolean movable;
-  private boolean doorOrWindow;
-  private float   modelYaw;
-  private float   modelPitch;
-  private boolean backFaceShown;
-  private Integer color;
-  private float   iconYaw;
+  private String     name;
+  private Content    icon;
+  private Content    model;
+  private float      width;
+  private float      depth;
+  private float      height;
+  private boolean    proportional;
+  private float      elevation;
+  private boolean    movable;
+  private boolean    doorOrWindow;
+  private float [][] modelRotation;
+  private boolean    backFaceShown;
+  private Integer    color;
+  private float      iconYaw;
+  private boolean    modifiable;
 
-  private Category category;
+  private Category  category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
 
@@ -63,12 +61,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
    */
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
-                                 float width, float depth, float height, boolean movable, boolean doorOrWindow) {
+                                 float width, float depth, float height, 
+                                 boolean movable, boolean doorOrWindow) {
     this(name, icon, model, width, depth, height, 0, movable, doorOrWindow);
   }
 
   /**
-   * Creates a catalog piece of furniture of the default catalog.
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
    * @param name  the name of the new piece
    * @param icon an URL to the icon file of the new piece
    * @param model an URL to the 3D model file of the new piece
@@ -83,12 +82,11 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow) {
     this(name, icon, model, width, depth, height, 0, movable, doorOrWindow, null, 
-        0, 0, false, (float)Math.PI / 8, true);
+        new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, false, (float)Math.PI / 8, true, false);
   }
          
-
   /**
-   * Creates a catalog piece of furniture with all its values.
+   * Creates a modifiable catalog piece of furniture with all its values.
    * @param name  the name of the new piece
    * @param icon an URL to the icon file of the new piece
    * @param model an URL to the 3D model file of the new piece
@@ -99,8 +97,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param movable if <code>true</code>, the new piece is movable
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
    * @param color the color of the piece as RGB code or <code>null</code> if piece color is unchanged
-   * @param modelYaw yaw applied to the piece model
-   * @param modelPitch pitch applied to the piece model
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
    * @param backFaceShown <code>true</code> if back face should be shown
    * @param iconYaw the yaw angle used to create the piece icon
    * @param proportional if <code>true</code>, size proportions will be kept 
@@ -108,8 +105,17 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow, Integer color,
-                                 float modelYaw, float modelPitch, boolean backFaceShown,
+                                 float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
+    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
+        color, modelRotation, backFaceShown, iconYaw, proportional, true);
+  }
+  
+  private CatalogPieceOfFurniture(String name, Content icon, Content model, 
+                                  float width, float depth, float height, float elevation, 
+                                  boolean movable, boolean doorOrWindow, Integer color,
+                                  float [][] modelRotation, boolean backFaceShown,
+                                  float iconYaw, boolean proportional, boolean modifiable) {
     this.name = name;
     this.icon = icon;
     this.model = model;
@@ -119,12 +125,12 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.elevation = elevation;
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
-    this.modelYaw = modelYaw;
-    this.modelPitch = modelPitch;
+    this.modelRotation = deepCopy(modelRotation);
     this.backFaceShown = backFaceShown;
     this.color = color;
     this.iconYaw = iconYaw;
     this.proportional = proportional;
+    this.modifiable = modifiable;
   }
 
   /**
@@ -191,21 +197,20 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   }
 
   /**
-   * Returns the yaw angle of this piece of furniture that ensures 
+   * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures 
    * its model is correctly oriented.
    */
-  public float getModelYaw() {
-    return this.modelYaw;
+  public float [][] getModelRotation() {
+    // Return a deep copy to avoid any misuse of piece data
+    return deepCopy(this.modelRotation);
   }
 
-  /**
-   * Returns the pitch angle of this piece of furniture that ensures 
-   * its model is correctly oriented.
-   */
-  public float getModelPitch() {
-    return this.modelPitch;
+  private float [][] deepCopy(float [][] modelRotation) {
+    return new float [][] {{modelRotation [0][0], modelRotation [0][1], modelRotation [0][2]},
+                           {modelRotation [1][0], modelRotation [1][1], modelRotation [1][2]},
+                           {modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]}};
   }
-  
+
   /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.
@@ -239,7 +244,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * Returns <code>true</code> if this piece is modifiable (not read from resources).
    */
   public boolean isModifiable() {
-    return !(this.model instanceof ResourceURLContent);
+    return this.modifiable;
   }
   
   /**

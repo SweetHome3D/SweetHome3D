@@ -24,6 +24,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.text.Collator;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,6 +43,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   public enum SortableProperty {NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
                                 DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
+  private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   
   static {
     final Collator collator = Collator.getInstance();
@@ -126,24 +129,23 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
                : (value1 ? -1 : 1);
   }
   
-  private String  name;
-  private Content icon;
-  private Content model;
-  private float   width;
-  private float   depth;
-  private float   height;
-  private float   elevation;
-  private boolean movable;
-  private boolean doorOrWindow;
-  private Integer color;
-  private float   modelYaw;
-  private float   modelPitch;
-  private boolean backFaceShown;
-  private boolean visible;
-  private float   x;
-  private float   y;
-  private float   angle;
-  private boolean modelMirrored;
+  private String     name;
+  private Content    icon;
+  private Content    model;
+  private float      width;
+  private float      depth;
+  private float      height;
+  private float      elevation;
+  private boolean    movable;
+  private boolean    doorOrWindow;
+  private Integer    color;
+  private float [][] modelRotation;
+  private boolean   backFaceShown;
+  private boolean    visible;
+  private float      x;
+  private float      y;
+  private float      angle;
+  private boolean    modelMirrored;
 
   private transient Shape shape;
 
@@ -162,8 +164,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.movable = piece.isMovable();
     this.doorOrWindow = piece.isDoorOrWindow();
     this.color = piece.getColor();
-    this.modelYaw = piece.getModelYaw();
-    this.modelPitch = piece.getModelPitch();
+    this.modelRotation = piece.getModelRotation();
     this.backFaceShown = piece.isBackFaceShown();
     if (piece instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture homePiece = 
@@ -178,6 +179,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       this.x = this.width / 2;
       this.y = this.depth / 2;
     }
+  }
+
+  /**
+   * Initializes new piece fields to their default values 
+   * and reads home from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.modelRotation = IDENTITY;
+    in.defaultReadObject();
   }
 
   /**
@@ -392,21 +402,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   }
 
   /**
-   * Returns the yaw angle of this piece of furniture that ensures 
+   * Returns the rotation 3 by 3 matrix of this piece of furniture that ensures 
    * its model is correctly oriented.
    */
-  public float getModelYaw() {
-    return this.modelYaw;
+  public float [][] getModelRotation() {
+    // Return a deep copy to avoid any misuse of piece data
+    return new float [][] {{this.modelRotation[0][0], this.modelRotation[0][1], this.modelRotation[0][2]},
+                           {this.modelRotation[1][0], this.modelRotation[1][1], this.modelRotation[1][2]},
+                           {this.modelRotation[2][0], this.modelRotation[2][1], this.modelRotation[2][2]}};
   }
 
-  /**
-   * Returns the pitch angle of this piece of furniture that ensures 
-   * its model is correctly oriented.
-   */
-  public float getModelPitch() {
-    return this.modelPitch;
-  }
-  
   /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.

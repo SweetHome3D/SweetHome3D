@@ -32,12 +32,12 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A MVC controller for the furniture table.
@@ -49,6 +49,7 @@ public class FurnitureController {
   private ResourceBundle       resource;
   private UndoableEditSupport  undoSupport;
   private UserPreferences      preferences;
+  private ContentManager       contentManager;
   private HomePieceOfFurniture leadSelectedPieceOfFurniture;
 
   /**
@@ -58,7 +59,7 @@ public class FurnitureController {
    */
   public FurnitureController(Home home, 
                              UserPreferences preferences) {
-    this(home, preferences, null); 
+    this(home, preferences, null, null); 
   }
 
   /**
@@ -66,10 +67,12 @@ public class FurnitureController {
    */
   public FurnitureController(Home home, 
                              UserPreferences preferences, 
+                             ContentManager contentManager,
                              UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
     this.preferences = preferences;
+    this.contentManager = contentManager;
     this.resource    = ResourceBundle.getBundle(
         FurnitureController.class.getName());
     this.furnitureView = new FurnitureTable(home, preferences, this);
@@ -256,15 +259,16 @@ public class FurnitureController {
    * Displays the wizard that helps to import furniture to home. 
    */
   public void importFurniture() {
-    new ImportedFurnitureWizardController(this.home, this.preferences, this.undoSupport);
+    new ImportedFurnitureWizardController(this.home, this.preferences, this.contentManager, this.undoSupport);
   }
   
   /**
    * Displays the wizard that helps to import furniture to home with a
-   * given <code>model</code>. 
+   * given model name. 
    */
-  public void importFurniture(URLContent model) {
-    new ImportedFurnitureWizardController(this.home, model, this.preferences, this.undoSupport);
+  public void importFurniture(String modelName) {
+    new ImportedFurnitureWizardController(
+        this.home, modelName, this.preferences, this.contentManager, this.undoSupport);
   }
   
   /**

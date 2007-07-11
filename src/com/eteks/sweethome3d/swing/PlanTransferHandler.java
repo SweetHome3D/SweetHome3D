@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.EventQueue;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -32,6 +33,7 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 
 /**
@@ -40,14 +42,17 @@ import com.eteks.sweethome3d.model.Home;
  */
 public class PlanTransferHandler extends LocatedTransferHandler {
   private Home             home;
+  private ContentManager   contentManager;
   private HomeController   homeController;
   private List<Object>     copiedItems;
 
   /**
    * Creates a handler able to transfer furniture and walls in plan.
    */
-  public PlanTransferHandler(Home home, HomeController homeController) {
+  public PlanTransferHandler(Home home, ContentManager contentManager, 
+                             HomeController homeController) {
     this.home = home;  
+    this.contentManager = contentManager;
     this.homeController = homeController;  
   }
   
@@ -133,11 +138,17 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private boolean importFileList(JComponent destination, List<File> files) {
     // isDrop current implementation doesn't work under Java 5 
     // for a drag operation coming from outside JVM
-    Point2D dropLocation = isDrop() 
-      ? getDropModelLocation(destination)
-      : new Point2D.Float();
-    return this.homeController.dropFiles(files, 
-        (float)dropLocation.getX(), (float)dropLocation.getY());
+    final Point2D dropLocation = isDrop() 
+        ? getDropModelLocation(destination)
+        : new Point2D.Float();
+    final List<String> importableModels = getModelContents(files, contentManager);
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          homeController.dropFiles(importableModels, 
+              (float)dropLocation.getX(), (float)dropLocation.getY());        
+        }
+      });
+    return !importableModels.isEmpty();
   }
   
   /**

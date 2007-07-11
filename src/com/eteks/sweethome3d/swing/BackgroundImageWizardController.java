@@ -34,9 +34,9 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-
 
 /**
  * Wizard controller for background image in plan.
@@ -66,14 +66,17 @@ public class BackgroundImageWizardController extends WizardController {
   private float                          xOrigin;
   private float                          yOrigin;
   
-  public BackgroundImageWizardController(Home home, UserPreferences preferences, 
+  public BackgroundImageWizardController(Home home, 
+                                         UserPreferences preferences,
+                                         ContentManager contentManager,
                                          UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     // Create view
-    this.stepsView = new BackgroundImageWizardStepsPanel(home.getBackgroundImage(), preferences, this);
+    this.stepsView = new BackgroundImageWizardStepsPanel(
+        home.getBackgroundImage(), preferences, contentManager, this);
     setTitle(this.resource.getString("wizard.title"));    
     setResizable(true);
     // Initialize states

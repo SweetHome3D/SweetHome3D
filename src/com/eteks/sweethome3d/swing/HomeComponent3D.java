@@ -78,6 +78,7 @@ import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
@@ -136,7 +137,6 @@ public class HomeComponent3D extends JComponent {
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
 
-    canvas3D.setFocusable(false);
     if (controller != null) {
       addMouseListeners(controller, canvas3D);
       createActions(controller);
@@ -161,6 +161,7 @@ public class HomeComponent3D extends JComponent {
         
         public void ancestorAdded(AncestorEvent event) {
           this.universe = getUniverse(canvas3D, home);
+          canvas3D.setFocusable(false);
         }
         
         public void ancestorRemoved(AncestorEvent event) {
@@ -497,9 +498,8 @@ public class HomeComponent3D extends JComponent {
    */
   private Light [] getLights(final Home home) {
     final Light [] lights = {
-        new DirectionalLight(new Color3f(), new Vector3f(1.732f, -0.8f, -1)), 
-        
-        new DirectionalLight(new Color3f(), new Vector3f(-1.732f, -0.8f, -1)), 
+        new DirectionalLight(new Color3f(), new Vector3f(1.5f, -0.8f, -1)),         
+        new DirectionalLight(new Color3f(), new Vector3f(-1.5f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(), new Vector3f(0, -0.8f, 1)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
     for (int i = 0; i < lights.length - 1; i++) {
@@ -1170,21 +1170,21 @@ public class HomeComponent3D extends JComponent {
             new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
                 -lower.y - (upper.y - lower.y) / 2, 
                 -lower.z - (upper.z - lower.z) / 2));      
-        // Apply model pitch rotation
-        Transform3D pitchRotation = new Transform3D();
-        pitchRotation.rotX(piece.getModelPitch());
-        pitchRotation.mul(translation);
-        // Apply model yaw rotation
-        Transform3D yawRotation = new Transform3D();
-        yawRotation.rotY(piece.getModelYaw());
-        yawRotation.mul(pitchRotation);
         // Scale model to make it fill a 1 unit wide box
-        Transform3D modelTransform = new Transform3D();
-        modelTransform.setScale (
+        Transform3D scaleOneTransform = new Transform3D();
+        scaleOneTransform.setScale (
             new Vector3d(1 / (upper.x -lower.x), 
                 1 / (upper.y - lower.y), 
                 1 / (upper.z - lower.z)));
-        modelTransform.mul(yawRotation);
+        scaleOneTransform.mul(translation);
+        // Apply model rotation
+        Transform3D modelTransform = new Transform3D();
+        float [][] modelRotation = piece.getModelRotation();
+        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+        modelTransform.setRotationScale(modelRotationMatrix);
+        modelTransform.mul(scaleOneTransform);
         
         // Add model scene to transform group
         TransformGroup modelTransformGroup = new TransformGroup(modelTransform);

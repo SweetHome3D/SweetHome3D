@@ -882,7 +882,7 @@ public class PlanComponent extends JComponent implements Scrollable {
         g2D.setPaint(getBackground());
         g2D.fill(pieceShape);
         // Draw its icon
-        paintPieceOfFurnitureIcon(g2D, piece);
+        paintPieceOfFurnitureIcon(g2D, piece, pieceShape);
         
         if (selectedItems.contains(piece)) {
           // Draw selection border
@@ -907,7 +907,11 @@ public class PlanComponent extends JComponent implements Scrollable {
   /**
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
-  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece) {
+  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, 
+                                         Shape pieceShape) {
+    Shape previousClip = g2D.getClip();
+    // Clip icon drawing into piece shape
+    g2D.clip(pieceShape);
     AffineTransform previousTransform = g2D.getTransform();
     // Get piece icon
     Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
@@ -926,6 +930,7 @@ public class PlanComponent extends JComponent implements Scrollable {
     icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
     // Revert g2D transformation to previous value
     g2D.setTransform(previousTransform);
+    g2D.setClip(previousClip);
   }
 
   /**

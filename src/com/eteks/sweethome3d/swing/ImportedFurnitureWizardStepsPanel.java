@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AWTException;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -30,10 +31,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -104,6 +109,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.vecmath.Color3f;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
@@ -111,6 +117,8 @@ import javax.vecmath.Vector3f;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -169,24 +177,28 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Creates a view for background image choice, scale and origin. 
    */
   public ImportedFurnitureWizardStepsPanel(CatalogPieceOfFurniture piece,
-                                           URLContent model,
+                                           String modelName,
                                            boolean importHomePiece,
                                            UserPreferences preferences, 
+                                           ContentManager contentManager,
                                            ImportedFurnitureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
     this.contentNames = new HashMap<Content, String>();
-    createComponents(importHomePiece, preferences);
+    createComponents(importHomePiece, preferences, contentManager);
     setMnemonics();
     layoutComponents();
     updateController(piece);
-    if (model != null) {
+    if (modelName != null) {
       try {
-        URLContent modelContent = FileUtilities.copyToTemporaryURLContent(model);
-        updateController(modelContent, preferences.getCatalog().getCategories().get(0));
+        Content modelContent = contentManager.getContent(modelName);
+        updateController(modelContent, 
+            importHomePiece 
+                ? null 
+                : preferences.getCatalog().getCategories().get(0));
         // Store the default name for the chosen content
-        setModelName(modelContent, model.getURL().getFile());
-      } catch (IOException ex) {
+        setModelName(contentManager, modelContent, modelName);
+      } catch (RecorderException ex) {
         // Ignore model in parameter
       }
     }
@@ -195,7 +207,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   /**
    * Creates components displayed by this panel.
    */
-  private void createComponents(boolean importHomePiece, final UserPreferences preferences) {
+  private void createComponents(final boolean importHomePiece, 
+                                final UserPreferences preferences,
+                                final ContentManager contentManager) {
     // Get unit text matching current unit 
     String unitText = this.resource.getString(
         preferences.getUnit() == UserPreferences.Unit.CENTIMETER
@@ -207,9 +221,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.modelChoiceOrChangeButton = new JButton();
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Content content = showModelChoiceDialog();
+          Content content = showModelChoiceDialog(contentManager);
           if (content != null) {
-            updateController(content, preferences.getCatalog().getCategories().get(0));
+            updateController(content, 
+                importHomePiece 
+                  ? null
+                  : preferences.getCatalog().getCategories().get(0));
           }
         }
       });
@@ -240,28 +257,44 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnLeft.gif")));
     this.turnLeftButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controller.setModelYaw(controller.getModelYaw() - (float)Math.PI / 2);
+          Transform3D oldTransform = getModelRotationTransform();
+          Transform3D leftRotation = new Transform3D();
+          leftRotation.rotY(-Math.PI / 2);
+          leftRotation.mul(oldTransform);
+          updateModelRotation(leftRotation);
         }
       });
     this.turnRightButton = new JButton(
         new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnRight.gif")));
     this.turnRightButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controller.setModelYaw(controller.getModelYaw() + (float)Math.PI / 2);
+          Transform3D oldTransform = getModelRotationTransform();
+          Transform3D rightRotation = new Transform3D();
+          rightRotation.rotY(Math.PI / 2);
+          rightRotation.mul(oldTransform);
+          updateModelRotation(rightRotation);
         }
       });
     this.turnUpButton = new JButton(
         new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnUp.gif")));
     this.turnUpButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controller.setModelPitch(controller.getModelPitch() - (float)Math.PI / 2);
+          Transform3D oldTransform = getModelRotationTransform();
+          Transform3D upRotation = new Transform3D();
+          upRotation.rotX(-Math.PI / 2);
+          upRotation.mul(oldTransform);
+          updateModelRotation(upRotation);
         }
       });
     this.turnDownButton = new JButton(
         new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnDown.gif")));
     this.turnDownButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          controller.setModelPitch(controller.getModelPitch() + (float)Math.PI / 2);
+          Transform3D oldTransform = getModelRotationTransform();
+          Transform3D downRotation = new Transform3D();
+          downRotation.rotX(Math.PI / 2);
+          downRotation.mul(oldTransform);
+          updateModelRotation(downRotation);
         }
       });
     this.backFaceShownLabel = new JLabel(this.resource.getString("backFaceShownLabel.text"));
@@ -330,7 +363,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.categoryComboBox = new JComboBox(preferences.getCatalog().getCategories().toArray());
     // The piece category isn't enabled by default for home furniture import
     this.categoryComboBox.setEnabled(!importHomePiece);
-    this.categoryComboBox.setEditable(true); // TODO Ugly on Mac OS X
+    this.categoryComboBox.setEditable(true); // FIXME Ugly on Mac OS X
     this.categoryComboBox.setEditor(new BasicComboBoxEditor() {
         @Override
         public Object getItem() {
@@ -380,6 +413,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
+    this.categoryComboBox.setSelectedIndex(0);
 
     this.widthLabel = new JLabel(
         String.format(this.resource.getString("widthLabel.text"), unitText)); 
@@ -736,6 +770,30 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
+   * Returns the transformation matching current model rotation.
+   */
+  private Transform3D getModelRotationTransform() {
+    float [][] modelRotation = controller.getModelRotation();
+    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+    Transform3D transform = new Transform3D();
+    transform.setRotation(modelRotationMatrix);
+    return transform;
+  }
+  
+  /**
+   * Updates model rotation from the values of <code>transform</code>.
+   */
+  private void updateModelRotation(Transform3D transform) {
+    Matrix3f modelRotationMatrix = new Matrix3f();
+    transform.getRotationScale(modelRotationMatrix);
+    controller.setModelRotation(new float [][] {{modelRotationMatrix.m00, modelRotationMatrix.m01, modelRotationMatrix.m02},
+                                                {modelRotationMatrix.m10, modelRotationMatrix.m11, modelRotationMatrix.m12},
+                                                {modelRotationMatrix.m20, modelRotationMatrix.m21, modelRotationMatrix.m22}});
+  }
+  
+  /**
    * Updates controller initial values from <code>piece</code>. 
    */
   private void updateController(final CatalogPieceOfFurniture piece) {
@@ -759,8 +817,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                 public void run() {
                   if (readModel != null) {
                     controller.setModel(piece.getModel());
-                    controller.setModelYaw(piece.getModelYaw());
-                    controller.setModelPitch(piece.getModelPitch());
+                    controller.setModelRotation(piece.getModelRotation());
                     controller.setBackFaceShown(piece.isBackFaceShown());
                     controller.setName(piece.getName());
                     controller.setCategory(piece.getCategory());
@@ -807,23 +864,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                   controller.setModel(modelContent);
                   setModelChangeTexts();
                   modelChoiceErrorLabel.setVisible(false);
-                  controller.setModelYaw(0);
-                  controller.setModelPitch(0);
+                  controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
                   controller.setBackFaceShown(false);
                   controller.setName(getModelName(modelContent));
                   controller.setCategory(defaultCategory);
-                  if (!categoryComboBox.isEnabled()) {
-                    controller.setCategory(null);
-                  }
                   // Initialize size with default values
-                  BoundingBox bounds = ModelManager.getInstance().getBounds(readModel);
-                  Point3d lower = new Point3d();
-                  bounds.getLower(lower);
-                  Point3d upper = new Point3d();
-                  bounds.getUpper(upper);
-                  controller.setWidth((float)(upper.x - lower.x));
-                  controller.setDepth((float)(upper.z - lower.z));
-                  controller.setHeight((float)(upper.y - lower.y));
+                  Vector3f size = ModelManager.getInstance().getSize(readModel);
+                  controller.setWidth(size.x);
+                  controller.setDepth(size.z);
+                  controller.setHeight(size.y);
                   controller.setMovable(true);
                   controller.setDoorOrWindow(false);
                   controller.setColor(null);                  
@@ -907,35 +956,31 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns a content choosen for a file chooser dialog. You may 
-   * override this method to use a different source of model.
+   * Returns a model content choosen for a file chooser dialog.
    */
-  protected Content showModelChoiceDialog() {
-    String modelFile = FileUtilities.showOpenFileDialog(this, 
+  private Content showModelChoiceDialog(ContentManager contentManager) {
+    String modelName = contentManager.showOpenDialog( 
         this.resource.getString("modelChoiceDialog.title"), 
-        ModelManager.getInstance().getModelFilters());
+        ContentManager.ContentType.MODEL);
 
-    if (modelFile != null) {
+    if (modelName != null) {
       try {
-        // Copy chosen file in a temporary file to ensure the image will 
-        // still be available at saving time even if user moved it meanwhile   
-        Content modelContent = FileUtilities.copyToTemporaryURLContent(modelFile);
+        Content modelContent = contentManager.getContent(modelName);
         // Store the default name for the chosen content
-        setModelName(modelContent, modelFile);
+        setModelName(contentManager, modelContent, modelName);
         return modelContent;
-      } catch (IOException ex) {
+      } catch (RecorderException ex) {
         JOptionPane.showMessageDialog(this, 
-            String.format(this.resource.getString("modelChoiceError"), modelFile));
+            String.format(this.resource.getString("modelChoiceError"), modelName));
       }
     }
     return null;
   }
   
   /**
-   * Returns the default name for model <code>content</code>. You may 
-   * override this method to return a different name.
+   * Returns the default name for model <code>content</code>.
    */
-  protected String getModelName(Content content) {
+  private String getModelName(Content content) {
     String name = this.contentNames.get(content);
     if (name != null) {
       return name;
@@ -945,25 +990,31 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Sets the default name for model read from <code>modelFile</code>. 
+   * Sets the name for model read from <code>modelName</code>. 
    */
-  private void setModelName(Content modelContent, String modelFile) {
-    String name = new File(modelFile).getName();
-    int pointIndex = name.lastIndexOf('.');
-    if (pointIndex != -1) {
-      name = name.substring(0, pointIndex);
-    }
-    this.contentNames.put(modelContent, name);
+  private void setModelName(ContentManager contentManager, 
+                            Content modelContent, 
+                            String modelName) {
+    this.contentNames.put(modelContent, contentManager.getPresentationName(
+        modelName, ContentManager.ContentType.MODEL));
   }
   
   /**
    * Returns the icon content of the piece.
    */
-  public Content getIcon() throws IOException {
-    File tempFile = File.createTempFile("urlContent", "tmp");
-    tempFile.deleteOnExit();
-    ImageIO.write(this.iconPreviewComponent.getIconImage(), "png", tempFile);
-    return new TemporaryURLContent(tempFile.toURL());
+  public Content getIcon() {
+    try {
+      File tempFile = File.createTempFile("urlContent", "tmp");
+      tempFile.deleteOnExit();
+      ImageIO.write(this.iconPreviewComponent.getIconImage(), "png", tempFile);
+      return new TemporaryURLContent(tempFile.toURL());
+    } catch (IOException ex) {
+      try {
+        return new URLContent(new URL("file:/dummySweetHome3DContent"));
+      } catch (MalformedURLException ex1) {
+        return null;
+      }
+    }
   }
 
   
@@ -1012,6 +1063,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     }
     
     /**
+     * Returns the canvas 3D displayed by this component.
+     */
+    protected Canvas3D getCanvas3D() {
+      return this.canvas3D;
+    }
+    
+    /**
      * Adds an AWT mouse listener to canvas that will udate view platform transform.  
      */
     private void addMouseListeners(Canvas3D canvas3D) {
@@ -1048,7 +1106,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             if (universe == null) {
               createUniverse();
             }
-            // TODO Find a way to force canvas display
           }
           
           public void ancestorRemoved(AncestorEvent event) {
@@ -1068,10 +1125,29 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private void createUniverse() {
       // Link canvas 3D to a default universe
       this.universe = new SimpleUniverse(this.canvas3D);
+      this.canvas3D.setFocusable(false);
       // Set viewer location 
-      updateViewPlatformTransform();
+      updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
+          getViewYaw(), getViewPitch());
       // Link scene to universe
       this.universe.addBranchGraph(this.sceneTree);
+      
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            // Force a real repaint of the component with a resize of its root, 
+            // otherwise some canvas 3D may not be displayed
+            Component root = SwingUtilities.getRoot(ModelPreviewComponent.this);
+            Dimension rootSize = root.getSize();
+            root.setSize(new Dimension(rootSize.width + 1, rootSize.height));
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException ex) {
+            }
+            root.setSize(new Dimension(rootSize.width, rootSize.height));
+          } 
+        });
+      }
     }
     
     /**
@@ -1112,19 +1188,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       view.attachViewPlatform(viewingPlatform.getViewPlatform());
 
       // Set user point of view depending on yaw and pitch angles
-      double nominalDistanceToCenter = 1.4 / Math.tan(Math.PI / 8);
-      Transform3D pitchRotation = new Transform3D();
-      pitchRotation.rotX(pitch);
-      Transform3D yawRotation = new Transform3D();
-      yawRotation.rotY(yaw);
-      Transform3D transform = new Transform3D();
-      transform.setTranslation(
-          new Vector3d(Math.sin(yaw) * nominalDistanceToCenter * Math.cos(pitch), 
-                       nominalDistanceToCenter * Math.sin(-pitch), 
-                       Math.cos(yaw) * nominalDistanceToCenter * Math.cos(pitch)));
-      yawRotation.mul(pitchRotation);
-      transform.mul(yawRotation);
-      viewingPlatform.getViewPlatformTransform().setTransform(transform);
+      updateViewPlatformTransform(viewingPlatform.getViewPlatformTransform(), yaw, pitch);
     }
     
     /**
@@ -1139,7 +1203,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     protected void setViewYaw(float viewYaw) {
       this.viewYaw = viewYaw;
-      updateViewPlatformTransform();
+      if (this.universe != null) {
+        updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
+            this.viewYaw, getViewPitch());
+      }
     }
 
     /**
@@ -1152,28 +1219,24 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     /**
      * Updates the view platform transformation from current yaw and pitch angles. 
      */
-    private void updateViewPlatformTransform() {
-      if (this.universe != null) {
-        TransformGroup viewPlatformTransform = 
-            this.universe.getViewingPlatform().getViewPlatformTransform();
-        // Default distance used to view a 2 unit wide scene
-        double nominalDistanceToCenter = 1.4 / Math.tan(Math.PI / 8);
-        // We don't use a TransformGroup in scene tree to be able to share the same scene 
-        // in the different views displayed by OrientationPreviewComponent class 
-        float viewPitch = getViewPitch();
-        Transform3D pitchRotation = new Transform3D();
-        pitchRotation.rotX(viewPitch);
-        Transform3D yawRotation = new Transform3D();
-        yawRotation.rotY(this.viewYaw);
-        Transform3D transform = new Transform3D();
-        transform.setTranslation(
-            new Vector3d(Math.sin(this.viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch), 
-                nominalDistanceToCenter * Math.sin(-viewPitch), 
-                Math.cos(this.viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch)));
-        yawRotation.mul(pitchRotation);
-        transform.mul(yawRotation);
-        viewPlatformTransform.setTransform(transform);
-      }
+    private void updateViewPlatformTransform(TransformGroup viewPlatformTransform,
+                                             float viewYaw, float viewPitch) {
+      // Default distance used to view a 2 unit wide scene
+      double nominalDistanceToCenter = 1.4 / Math.tan(Math.PI / 8);
+      // We don't use a TransformGroup in scene tree to be able to share the same scene 
+      // in the different views displayed by OrientationPreviewComponent class 
+      Transform3D pitchRotation = new Transform3D();
+      pitchRotation.rotX(viewPitch);
+      Transform3D yawRotation = new Transform3D();
+      yawRotation.rotY(viewYaw);
+      Transform3D transform = new Transform3D();
+      transform.setTranslation(
+          new Vector3d(Math.sin(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch), 
+              nominalDistanceToCenter * Math.sin(-viewPitch), 
+              Math.cos(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch)));
+      yawRotation.mul(pitchRotation);
+      transform.mul(yawRotation);
+      viewPlatformTransform.setTransform(transform);
     }
     
     /**
@@ -1242,9 +1305,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     /**
      * Returns the <code>model</code> displayed by this component. 
      */
-    private BranchGroup getModel() {
+    protected BranchGroup getModel() {
       TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      return (BranchGroup)modelTransformGroup.getChild(0);
+      Enumeration children = modelTransformGroup.getAllChildren();
+      if (children.hasMoreElements()) {
+        return (BranchGroup)children.nextElement();
+      } else {
+        return null;
+      }
     }
     
     /**
@@ -1342,11 +1410,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     }
 
     /**
-     * Updates the orientation of the model displayed by this component. 
+     * Updates the rotation of the model displayed by this component. 
      * The model is shown at its default size.
      */
-    protected void setModelOrientation(float modelYaw, float modelPitch) {
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
+    protected void setModelRotation(float [][] modelRotation) {
       BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
       Point3d lower = new Point3d();
       bounds.getLower(lower);
@@ -1359,28 +1426,27 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
                        -lower.y - (upper.y - lower.y) / 2, 
                        -lower.z - (upper.z - lower.z) / 2));
-      // Apply model pitch rotation
-      Transform3D pitchRotation = new Transform3D();
-      pitchRotation.rotX(modelPitch);
-      pitchRotation.mul(translation);
-      // Apply model yaw rotation
-      Transform3D yawRotation = new Transform3D();
-      yawRotation.rotY(modelYaw);
-      yawRotation.mul(pitchRotation);
-      // Scale model to make it fit in a 1.8 unit wide box
+      // Apply model rotation
+      Transform3D rotationTransform = new Transform3D();
+      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+      rotationTransform.setRotationScale(modelRotationMatrix);
+      rotationTransform.mul(translation);
+      // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), upper.z - lower.z));
-      modelTransform.mul(yawRotation);
+      modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
+      modelTransform.mul(rotationTransform);
       
+      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
       modelTransformGroup.setTransform(modelTransform);
     }
     
     /**
-     * Updates the orientation and the size of the model displayed by this component. 
+     * Updates the rotation and the size of the model displayed by this component. 
      */
-    protected void setModelOrientationAndSize(float modelYaw, float modelPitch, 
+    protected void setModelRotationAndSize(float [][] modelRotation,
                                               float width, float depth, float height) {
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
       BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
       Point3d lower = new Point3d();
       bounds.getLower(lower);
@@ -1393,35 +1459,30 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
                        -lower.y - (upper.y - lower.y) / 2, 
                        -lower.z - (upper.z - lower.z) / 2));
-      // Scale model to its size
+      // Scale model to make it fill a 1 unit wide box
       Transform3D scaleOneTransform = new Transform3D();
       scaleOneTransform.setScale (
-          new Vector3d(width / (upper.x -lower.x), 
-              height / (upper.y - lower.y), 
-              depth / (upper.z - lower.z)));
+          new Vector3d(1 / (upper.x -lower.x), 
+              1 / (upper.y - lower.y), 
+              1 / (upper.z - lower.z)));
       scaleOneTransform.mul(translation);
-      // Apply model pitch rotation
-      Transform3D pitchRotation = new Transform3D();
-      // TODO
-      if (Math.abs((modelYaw + 0.001) % (2 * Math.PI)) < 0.002) {
-        pitchRotation.rotX(modelPitch);
-      } else if ((Math.abs((modelYaw + 0.001) % (2 * Math.PI)) - Math.PI / 2) < 0.002) {
-        pitchRotation.rotZ(modelPitch);        
-      } else if ((Math.abs((modelYaw + 0.001) % (2 * Math.PI)) - Math.PI) < 0.002) {
-        pitchRotation.rotX(-modelPitch);        
-      } else {
-        pitchRotation.rotZ(-modelPitch);        
-      }
-      pitchRotation.mul(scaleOneTransform);
-      // Apply model yaw rotation
-      Transform3D yawRotation = new Transform3D();
-      yawRotation.rotY(modelYaw);
-      yawRotation.mul(pitchRotation);
-      // Scale model to make it fit in a 1.8 unit wide box
+      // Apply model rotation
+      Transform3D rotationTransform = new Transform3D();
+      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+      rotationTransform.setRotationScale(modelRotationMatrix);
+      rotationTransform.mul(scaleOneTransform);
+      // Scale model to its size
+      Transform3D scaleTransform = new Transform3D();
+      scaleTransform.setScale (new Vector3d(width, height, depth));
+      scaleTransform.mul(rotationTransform);
+      // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale (1.8 / Math.max (Math.max (width, height), depth));
-      modelTransform.mul(yawRotation);
+      modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
+      modelTransform.mul(scaleTransform);
       
+      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
       modelTransformGroup.setTransform(modelTransform);
     }
 
@@ -1483,41 +1544,78 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   private static abstract class AbstractModelPreviewComponent extends ModelPreviewComponent {
     /**
-     * Adds listeners to <code>controller</code> to update the orientation of the piece
+     * Adds listeners to <code>controller</code> to update the rotation of the piece model
      * displayed by this component.
      */
-    protected void addOrientationListeners(final ImportedFurnitureWizardController controller) {
+    protected void addRotationListener(final ImportedFurnitureWizardController controller) {
       controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               setBackFaceShown(controller.isBackFaceShown());
             }
           });
-      PropertyChangeListener orientationChangeListener = new PropertyChangeListener () {
+      PropertyChangeListener rotationChangeListener = new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
-            setModelOrientation(controller.getModelYaw(), controller.getModelPitch());
+            setModelRotation(controller.getModelRotation());
+            
+            // Update size when a new rotation is provided
+            if (ev.getOldValue() != null) {
+              float width = controller.getWidth();
+              float depth = controller.getDepth();
+              float height = controller.getHeight();
+              
+              // Compute size before old model rotation
+              float [][] oldModelRotation = (float [][])ev.getOldValue();
+              Matrix3f oldModelRotationMatrix = new Matrix3f(oldModelRotation [0][0], oldModelRotation [0][1], oldModelRotation [0][2],
+                  oldModelRotation [1][0], oldModelRotation [1][1], oldModelRotation [1][2],
+                  oldModelRotation [2][0], oldModelRotation [2][1], oldModelRotation [2][2]);
+              oldModelRotationMatrix.invert();
+              float oldWidth = oldModelRotationMatrix.m00 * width 
+                  + oldModelRotationMatrix.m01 * height 
+                  + oldModelRotationMatrix.m02 * depth;
+              float oldHeight = oldModelRotationMatrix.m10 * width 
+                  + oldModelRotationMatrix.m11 * height 
+                  + oldModelRotationMatrix.m12 * depth;
+              float oldDepth = oldModelRotationMatrix.m20 * width 
+                  + oldModelRotationMatrix.m21 * height 
+                  + oldModelRotationMatrix.m22 * depth;
+              
+              // Compute size after new model rotation
+              float [][] newModelRotation = (float [][])ev.getNewValue();
+              controller.setWidth(Math.abs(newModelRotation [0][0] * oldWidth 
+                  + newModelRotation [0][1] * oldHeight 
+                  + newModelRotation [0][2] * oldDepth));
+              controller.setHeight(Math.abs(newModelRotation [1][0] * oldWidth 
+                  + newModelRotation [1][1] * oldHeight 
+                  + newModelRotation [1][2] * oldDepth));
+              controller.setDepth(Math.abs(newModelRotation [2][0] * oldWidth 
+                  + newModelRotation [2][1] * oldHeight 
+                  + newModelRotation [2][2] * oldDepth));
+            }
           }
         };
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_YAW,
-          orientationChangeListener);
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_PITCH,
-          orientationChangeListener);
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_ROTATION,
+          rotationChangeListener);
     }
 
     /**
-     * Adds listeners to <code>controller</code> to update the size of the piece
+     * Adds listeners to <code>controller</code> to update the rotation and the size of the piece model
      * displayed by this component.
      */
     protected void addSizeListeners(final ImportedFurnitureWizardController controller) {
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setBackFaceShown(controller.isBackFaceShown());
+            }
+          });
       PropertyChangeListener sizeChangeListener = new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
-            setModelOrientationAndSize(controller.getModelYaw(), controller.getModelPitch(), 
+            setModelRotationAndSize(controller.getModelRotation(),
                 controller.getWidth(), controller.getDepth(), controller.getHeight());
           }
         };
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_YAW,
-          sizeChangeListener);
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_PITCH,
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MODEL_ROTATION,
           sizeChangeListener);
       controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.WIDTH,
           sizeChangeListener);
@@ -1570,7 +1668,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private JLabel   perspectiveViewLabel;
 
     public OrientationPreviewComponent(final ImportedFurnitureWizardController controller) {
-      addOrientationListeners(controller);
+      addRotationListener(controller);
       createComponents();
       layoutComponents();
     }
@@ -1645,7 +1743,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     private void layoutComponents() {
       // Remove default canvas 3D to put it in another place
-      Canvas3D defaultCanvas = (Canvas3D)getComponent(0); 
+      Canvas3D defaultCanvas = getCanvas3D(); 
       remove(defaultCanvas);
       setLayout(new GridBagLayout());
       
@@ -1718,7 +1816,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   private static class AttributesPreviewComponent extends AbstractModelPreviewComponent {
     public AttributesPreviewComponent(ImportedFurnitureWizardController controller) {
-      addOrientationListeners(controller);
       addSizeListeners(controller);
       addColorListener(controller);
     }
@@ -1730,15 +1827,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   private static class IconPreviewComponent extends AbstractModelPreviewComponent {
     private ImportedFurnitureWizardController controller;
+    private BufferedImage                     iconImage;
 
     public IconPreviewComponent(ImportedFurnitureWizardController controller) {
       this.controller = controller;
-      addOrientationListeners(controller);
       addSizeListeners(controller);
       addColorListener(controller);
       addIconYawListener(controller);
 
       setBackgroundColor(UIManager.getColor("window"));
+      
+      // Add a hierarchy listener to capture image icon once this component is made visible 
+      addHierarchyListener();
+      // Add a mouse listener to update image icon at each mouse release 
+      addMouseListener();
     }
 
     @Override
@@ -1746,6 +1848,33 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       return new Dimension(128, 128);
     }
 
+    private void addHierarchyListener() {
+      addAncestorListener(new AncestorListener() {
+          public void ancestorAdded(AncestorEvent event) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  iconImage = createIconImage();
+                }
+              });
+          }
+          
+          public void ancestorRemoved(AncestorEvent event) {
+          }
+          
+          public void ancestorMoved(AncestorEvent event) {
+          }        
+        });
+    }
+    
+    private void addMouseListener() {
+      getCanvas3D().addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseReleased(MouseEvent e) {
+            iconImage = createIconImage();
+          }
+        });
+    }
+    
     /**
      * Sets the <code>yaw</code> angle used by view platform transform.
      */
@@ -1754,20 +1883,40 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       this.controller.setIconYaw(viewYaw);
     }
     
+    public BufferedImage getIconImage() {
+      return this.iconImage;
+    }
+    
     /**
      * Returns the icon image matching the displayed view.  
      */
-    public BufferedImage getIconImage() {
-      Canvas3D offScreenCanvas = createOffScreenCanvas();
-      // Attach the off screen canvas to super class universe
-      createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-      offScreenCanvas.renderOffScreenBuffer();
-      offScreenCanvas.waitForOffScreenRendering();
-      BufferedImage iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
-      // Detach the off screen canvas from its view
-      offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);    
-      
-      return iconImage;
+    public BufferedImage createIconImage() {
+      Canvas3D offScreenCanvas = null;
+      try {
+        offScreenCanvas = createOffScreenCanvas();
+        // Attach the off screen canvas to super class universe
+        createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+        offScreenCanvas.renderOffScreenBuffer();
+        offScreenCanvas.waitForOffScreenRendering();
+        BufferedImage iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
+        return iconImage;
+      } catch (Exception ex) {
+        // If off screen canvas fails, capture current canvas with Robot
+        Component canvas3D = getCanvas3D();
+        Point canvas3DOrigin = new Point();
+        SwingUtilities.convertPointToScreen(canvas3DOrigin, canvas3D);
+        try {
+          return new Robot().createScreenCapture(
+              new Rectangle(canvas3DOrigin, canvas3D.getSize()));
+        } catch (AWTException ex2) {
+          throw new RuntimeException(ex);
+        }
+      } finally {
+        if (offScreenCanvas != null) {
+          // Detach the off screen canvas from its view
+          offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+        }
+      }
     }
     
     /**
@@ -1781,7 +1930,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       screen3D.setPhysicalScreenWidth(2f);
       screen3D.setPhysicalScreenHeight(2f);
       BufferedImage image = new BufferedImage(iconSize.width, iconSize.height, BufferedImage.TYPE_INT_RGB);
-      offScreenCanvas.setOffScreenBuffer(new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image));
+      ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
+      imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+      offScreenCanvas.setOffScreenBuffer(imageComponent2D);
       return offScreenCanvas;
     }
   }

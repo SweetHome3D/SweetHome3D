@@ -19,38 +19,46 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.EventQueue;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.ContentManager;
 
 /**
  * Catalog transfer handler.
  * @author Emmanuel Puybaret
  */
-public class CatalogTransferHandler extends LocatedTransferHandler {
+public class CatalogTransferHandler extends TransferHandler {
   private Catalog           catalog;
+  private ContentManager    contentManager;
   private CatalogController catalogController;
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
   public CatalogTransferHandler(Catalog catalog) {
-    this(catalog, null);
+    this(catalog, null, null);
   }
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
-  public CatalogTransferHandler(Catalog catalog, CatalogController catalogController) {
+  public CatalogTransferHandler(Catalog catalog,
+                                ContentManager contentManager,
+                                CatalogController catalogController) {
     this.catalog = catalog;
+    this.contentManager = contentManager;
     this.catalogController = catalogController;
   }
 
@@ -88,9 +96,20 @@ public class CatalogTransferHandler extends LocatedTransferHandler {
   public boolean importData(JComponent destination, Transferable transferable) {
     if (canImport(destination, transferable.getTransferDataFlavors())) {
       try {
-        List<File> files = (List<File>)transferable.
-              getTransferData(DataFlavor.javaFileListFlavor);
-        return this.catalogController.dropFiles(files);
+        List<File> files = (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor);
+        final List<String> importableModels = new ArrayList<String>();        
+        for (File file : files) {
+          final String absolutePath = file.getAbsolutePath();
+          if (this.contentManager.isAcceptable(absolutePath, ContentManager.ContentType.MODEL)) {
+            importableModels.add(absolutePath);
+          }        
+        }
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              catalogController.dropFiles(importableModels);
+            }
+          });
+        return !importableModels.isEmpty();
       } catch (UnsupportedFlavorException ex) {
         throw new RuntimeException("Can't import", ex);
       } catch (IOException ex) {

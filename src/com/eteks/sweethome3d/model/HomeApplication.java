@@ -101,6 +101,11 @@ public abstract class HomeApplication {
    * Returns a recorder able to write and read homes.
    */
   public abstract HomeRecorder getHomeRecorder();
+  
+  /**
+   * Returns a content manager able to create contents from their name. 
+   */
+  public abstract ContentManager getContentManager();
 
   /**
    * Returns user preferences.

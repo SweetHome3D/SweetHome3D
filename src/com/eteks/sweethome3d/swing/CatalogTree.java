@@ -102,7 +102,6 @@ public class CatalogTree extends JTree {
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
           getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
-          clearSelection();
           updateTreeSelectedFurniture(catalog);        
           getSelectionModel().addTreeSelectionListener(treeSelectionListener);
         }
@@ -117,9 +116,9 @@ public class CatalogTree extends JTree {
   public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
     if (this.furnitureSelectionSynchronized ^ furnitureSelectionSynchronized) {
       if (furnitureSelectionSynchronized) {
+        updateTreeSelectedFurniture(this.catalog); 
         this.catalog.addSelectionListener(this.modelSelectionListener);
         getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
-        updateTreeSelectedFurniture(this.catalog); 
       } else {
         this.catalog.removeSelectionListener(this.modelSelectionListener);
         getSelectionModel().removeTreeSelectionListener(this.treeSelectionListener);
@@ -132,6 +131,7 @@ public class CatalogTree extends JTree {
    * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
    */
   private void updateTreeSelectedFurniture(Catalog catalog) {
+    clearSelection();
     for (CatalogPieceOfFurniture piece : catalog.getSelectedFurniture()) {
       TreePath path = new TreePath(new Object [] {catalog, piece.getCategory(), piece});
       addSelectionPath(path);
@@ -152,8 +152,6 @@ public class CatalogTree extends JTree {
         // Add to selectedFurniture all the nodes that matches a piece of furniture
         if (path.getPathCount() == 3) {
           selectedFurniture.add((CatalogPieceOfFurniture)path.getLastPathComponent());
-        } else if (path.getPathCount() == 2) {
-          selectedFurniture.addAll(((Category)path.getLastPathComponent()).getFurniture());
         }
       }
     }   

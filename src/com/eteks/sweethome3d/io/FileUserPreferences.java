@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -65,8 +66,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_DOOR_OR_WINDOW  = "furnitureDoorOrWindow#";
   private static final String FURNITURE_ELEVATION       = "furnitureElevation#";
   private static final String FURNITURE_COLOR           = "furnitureColor#";
-  private static final String FURNITURE_MODEL_YAW       = "furnitureModelYaw#";
-  private static final String FURNITURE_MODEL_PITCH     = "furnitureModelPitch#";
+  private static final String FURNITURE_MODEL_ROTATION  = "furnitureModelRotation#";
   private static final String FURNITURE_BACK_FACE_SHOWN = "furnitureBackFaceShown#";
   private static final String FURNITURE_ICON_YAW        = "furnitureIconYaw#";
   private static final String FURNITURE_PROPORTIONAL    = "furnitureProportional#";
@@ -138,8 +138,7 @@ public class FileUserPreferences extends UserPreferences {
       String colorString = preferences.get(FURNITURE_COLOR + i, null);
       Integer color = colorString != null 
           ? Integer.valueOf(colorString) : null; 
-      float modelYaw = preferences.getFloat(FURNITURE_MODEL_YAW + i, 0);
-      float modelPitch = preferences.getFloat(FURNITURE_MODEL_PITCH + i, 0);
+      float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + i);
       boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + i, false);
       float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
@@ -147,7 +146,36 @@ public class FileUserPreferences extends UserPreferences {
       getCatalog().add(new Category(category),
           new CatalogPieceOfFurniture(name, icon, model,
               width, depth, height, elevation, movable, doorOrWindow,
-              color, modelYaw, modelPitch, backFaceShown, iconYaw, proportional));
+              color, modelRotation, backFaceShown, iconYaw, proportional));
+    }
+  }
+
+  /**
+   * Returns model rotation parsed from key value.
+   */
+  private float [][] getModelRotation(Preferences preferences, String key) {
+    String modelRotationString = preferences.get(key, null);
+    if (modelRotationString == null) {
+      return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+    } else {
+      String [] values = modelRotationString.split(" ", 9);
+      if (values.length != 9) {
+        return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+      } else {
+        try {
+          return new float [][] {{Float.parseFloat(values [0]), 
+                                  Float.parseFloat(values [1]), 
+                                  Float.parseFloat(values [2])}, 
+                                 {Float.parseFloat(values [3]), 
+                                  Float.parseFloat(values [4]), 
+                                  Float.parseFloat(values [5])}, 
+                                 {Float.parseFloat(values [6]), 
+                                  Float.parseFloat(values [7]), 
+                                  Float.parseFloat(values [8])}};
+        } catch (NumberFormatException ex) {
+          return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+        }
+      }
     }
   }
   
@@ -184,8 +212,8 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putFloat(NEW_HOME_WALL_HEIGHT, getNewHomeWallHeight());
     // Write recent homes list
     int i = 1;
-    for (String recentHome : getRecentHomes()) {
-      preferences.put(RECENT_HOMES + i++, recentHome);
+    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {
+      preferences.put(RECENT_HOMES + i, it.next());
     }
     // Remove obsolete keys
     for ( ; i <= 4; i++) {
@@ -223,8 +251,11 @@ public class FileUserPreferences extends UserPreferences {
           } else {
             preferences.put(FURNITURE_COLOR + i, String.valueOf(piece.getColor()));
           }
-          preferences.putFloat(FURNITURE_MODEL_YAW + i, piece.getModelYaw());
-          preferences.putFloat(FURNITURE_MODEL_PITCH + i, piece.getModelPitch());
+          float [][] modelRotation = piece.getModelRotation();
+          preferences.put(FURNITURE_MODEL_ROTATION + i, 
+              modelRotation[0][0] + " " + modelRotation[0][1] + " " + modelRotation[0][2] + " "
+              + modelRotation[1][0] + " " + modelRotation[1][1] + " " + modelRotation[1][2] + " "
+              + modelRotation[2][0] + " " + modelRotation[2][1] + " " + modelRotation[2][2]);
           preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown());
           preferences.putFloat(FURNITURE_ICON_YAW + i, piece.getIconYaw());
           preferences.putBoolean(FURNITURE_PROPORTIONAL + i, piece.isProportional());
@@ -245,8 +276,7 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_DOOR_OR_WINDOW + i);
       preferences.remove(FURNITURE_ELEVATION + i);
       preferences.remove(FURNITURE_COLOR + i);
-      preferences.remove(FURNITURE_MODEL_YAW + i);
-      preferences.remove(FURNITURE_MODEL_PITCH + i);
+      preferences.remove(FURNITURE_MODEL_ROTATION + i);
       preferences.remove(FURNITURE_BACK_FACE_SHOWN + i);
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);

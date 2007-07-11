@@ -19,7 +19,14 @@
  */
 package com.eteks.sweethome3d.tools;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+
+import com.eteks.sweethome3d.model.Content;
 
 /**
  * URL content for files, images...
@@ -28,7 +35,35 @@ import java.net.URL;
 public class TemporaryURLContent extends URLContent {
   private static final long serialVersionUID = 1L;
 
-  public TemporaryURLContent(URL url) {
-    super(url);
+  public TemporaryURLContent(URL temporaryUrl) {
+    super(temporaryUrl);
+  }
+
+  /**
+   * Returns a {@link URLContent URL content} object that references a temporary copy of 
+   * a given <code>content</code>.
+   */
+  public static TemporaryURLContent copyToTemporaryURLContent(Content content) throws IOException {
+    File tempFile = File.createTempFile("urlContent", "tmp");
+    tempFile.deleteOnExit();
+    InputStream tempIn = null;
+    OutputStream tempOut = null;
+    try {
+      tempIn = content.openStream();
+      tempOut = new FileOutputStream(tempFile);
+      byte [] buffer = new byte [8096];
+      int size; 
+      while ((size = tempIn.read(buffer)) != -1) {
+        tempOut.write(buffer, 0, size);
+      }
+    } finally {
+      if (tempIn != null) {
+        tempIn.close();
+      }
+      if (tempOut != null) {
+        tempOut.close();
+      }
+    }
+    return new TemporaryURLContent(tempFile.toURL());
   }
 }

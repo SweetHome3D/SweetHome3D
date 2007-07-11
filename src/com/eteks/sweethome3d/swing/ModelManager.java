@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Map;
@@ -34,10 +33,11 @@ import javax.media.j3d.Light;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TransparencyAttributes;
-import javax.swing.filechooser.FileFilter;
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.Loader;
@@ -49,50 +49,6 @@ import com.sun.j3d.loaders.Scene;
  * @author Emmanuel Puybaret
  */
 public class ModelManager {
-  /**
-   * Supported 3D model file filters.
-   */
-  private static final FileFilter [] MODEL_FILTERS = {
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".obj");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "OBJ";
-       }
-     },
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".lws");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "LWS";
-       }
-     },
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and .sh3d files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".3ds");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "3DS";
-       }
-     }};
-  
   /**
    * <code>Shape3D</code> user data prefix for window pane shapes. 
    */
@@ -106,7 +62,7 @@ public class ModelManager {
   private Map<Content, BranchGroup> modelNodes = new WeakHashMap<Content, BranchGroup>();
   
   private ModelManager() {    
-    // This class isn't instatiable and contains only static methods
+    // This class is a singleton
   }
   
   /**
@@ -119,6 +75,21 @@ public class ModelManager {
     return instance;
   }
 
+  /**
+   * Returns the size of 3D shapes under <code>node</code>.
+   * This method computes the exact box that contains all the shapes,
+   * contrary to <code>node.getBounds()</code> that returns a bounding 
+   * sphere for a scene.
+   */
+  public Vector3f getSize(Node node) {
+    BoundingBox bounds = ModelManager.getInstance().getBounds(node);
+    Point3d lower = new Point3d();
+    bounds.getLower(lower);
+    Point3d upper = new Point3d();
+    bounds.getUpper(upper);
+    return new Vector3f((float)(upper.x - lower.x), (float)(upper.y - lower.y), (float)(upper.z - lower.z));
+  }
+  
   /**
    * Returns the bounds of 3D shapes under <code>node</code>.
    * This method computes the exact box that contains all the shapes,
@@ -147,13 +118,6 @@ public class ModelManager {
   }
   
   /**
-   * Returns the filters of the files format supported by this model manager.
-   */
-  public FileFilter [] getModelFilters() {
-    return MODEL_FILTERS;
-  }
-  
-  /**
    * Returns the node loaded synchronously from <code>content</code> with supported loaders.
    */
   public BranchGroup getModel(Content content) throws IOException {
@@ -167,7 +131,7 @@ public class ModelManager {
     if (content instanceof URLContent) {
       contentURL = (URLContent)content;
     } else {
-      contentURL = FileUtilities.copyToTemporaryURLContent(content);
+      contentURL = TemporaryURLContent.copyToTemporaryURLContent(content);
     }
     
     Loader [] loaders = {new com.sun.j3d.loaders.objectfile.ObjectFile(),

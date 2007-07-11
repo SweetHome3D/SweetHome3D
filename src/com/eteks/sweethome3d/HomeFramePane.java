@@ -25,7 +25,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +36,7 @@ import javax.swing.JRootPane;
 
 import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -124,8 +124,8 @@ public class HomeFramePane extends JRootPane {
         
         @Override
         public void windowDeactivated(WindowEvent ev) {
-          controller.setCatalogFurnitureSelectionSynchronized(false);
           // Store current selected furniture in catalog for future activation
+          controller.setCatalogFurnitureSelectionSynchronized(false);
           catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>(
               application.getUserPreferences().getCatalog().getSelectedFurniture());
         }
@@ -135,7 +135,7 @@ public class HomeFramePane extends JRootPane {
           // Let the catalog view of each frame manage its own selection :
           // Restore stored selected furniture except if the widow was activated 
           // because one of its child windows lost focus
-          if (ev.getOppositeWindow().getParent() != frame) {
+          if (ev.getOppositeWindow() == null || ev.getOppositeWindow().getParent() != frame) {
             application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
           } 
           controller.setCatalogFurnitureSelectionSynchronized(true);
@@ -212,17 +212,18 @@ public class HomeFramePane extends JRootPane {
    * Updates <code>frame</code> title from <code>home</code> name.
    */
   private void updateFrameTitle(JFrame frame, Home home) {
-    String name = home.getName();
-    if (name == null) {
-      name = this.resource.getString("untitled"); 
+    String homeName = home.getName();
+    if (homeName == null) {
+      homeName = this.resource.getString("untitled"); 
       if (newHomeNumber > 1) {
-        name += " " + newHomeNumber;
+        homeName += " " + newHomeNumber;
       }
     } else {
-      name = new File(name).getName();
+      homeName = this.application.getContentManager().getPresentationName(
+          homeName, ContentManager.ContentType.SWEET_HOME_3D);
     }
     
-    String title = name;
+    String title = homeName;
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
       // Use black indicator in close icon to show home is modified
       putClientProperty("windowModified", 

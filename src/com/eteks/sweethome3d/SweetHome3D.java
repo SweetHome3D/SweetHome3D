@@ -38,6 +38,7 @@ import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -52,13 +53,15 @@ import com.eteks.sweethome3d.swing.HomeController;
  * @author Emmanuel Puybaret
  */
 public class SweetHome3D extends HomeApplication {
-  private HomeRecorder      homeRecorder;
-  private UserPreferences   userPreferences;
-  private Map<Home, JFrame> homeFrames;
+  private HomeRecorder       homeRecorder;
+  private UserPreferences    userPreferences;
+  private FileContentManager contentManager;
+  private Map<Home, JFrame>  homeFrames;
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
     this.userPreferences = new FileUserPreferences();
+    this.contentManager = new FileContentManager();
     this.homeFrames = new HashMap<Home, JFrame>();
   }
 
@@ -76,6 +79,14 @@ public class SweetHome3D extends HomeApplication {
   @Override
   public UserPreferences getUserPreferences() {
     return this.userPreferences;
+  }
+  
+  /**
+   * Returns a content manager able to manage content locale files. 
+   */
+  @Override
+  public ContentManager getContentManager() {
+    return this.contentManager;
   }
   
   /**
