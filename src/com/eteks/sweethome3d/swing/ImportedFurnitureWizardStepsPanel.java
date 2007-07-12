@@ -1174,7 +1174,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       PhysicalBody physicalBody = this.universe.getViewer().getPhysicalBody();
       PhysicalEnvironment physicalEnvironment = this.universe.getViewer().getPhysicalEnvironment();
       
-      // Create a parallel view associated with canvas3D
+      // Create a view associated with canvas3D
       View view = new View();
       view.addCanvas3D(canvas3D);
       view.setPhysicalBody(physicalBody);
@@ -1428,10 +1428,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                        -lower.z - (upper.z - lower.z) / 2));
       // Apply model rotation
       Transform3D rotationTransform = new Transform3D();
-      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-      rotationTransform.setRotationScale(modelRotationMatrix);
+      if (modelRotation != null) {
+        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+        rotationTransform.setRotation(modelRotationMatrix);
+      }
       rotationTransform.mul(translation);
       // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
@@ -1446,7 +1448,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      * Updates the rotation and the size of the model displayed by this component. 
      */
     protected void setModelRotationAndSize(float [][] modelRotation,
-                                              float width, float depth, float height) {
+                                           float width, float depth, float height) {
       BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
       Point3d lower = new Point3d();
       bounds.getLower(lower);
@@ -1468,18 +1470,26 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       scaleOneTransform.mul(translation);
       // Apply model rotation
       Transform3D rotationTransform = new Transform3D();
-      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-      rotationTransform.setRotationScale(modelRotationMatrix);
+      if (modelRotation != null) {
+        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+        rotationTransform.setRotation(modelRotationMatrix);
+      }
       rotationTransform.mul(scaleOneTransform);
       // Scale model to its size
       Transform3D scaleTransform = new Transform3D();
-      scaleTransform.setScale (new Vector3d(width, height, depth));
+      if (width != 0 && depth != 0 && height != 0) {
+        scaleTransform.setScale (new Vector3d(width, height, depth));
+      }
       scaleTransform.mul(rotationTransform);
       // Scale model to make it fit in a 1.8 unit wide box      
       Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
+      if (width != 0 && depth != 0 && height != 0) {
+        modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
+      } else {
+        modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
+      }
       modelTransform.mul(scaleTransform);
       
       TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
@@ -1891,31 +1901,27 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      * Returns the icon image matching the displayed view.  
      */
     public BufferedImage createIconImage() {
-      Canvas3D offScreenCanvas = null;
-      try {
-        offScreenCanvas = createOffScreenCanvas();
-        // Attach the off screen canvas to super class universe
-        createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-        offScreenCanvas.renderOffScreenBuffer();
-        offScreenCanvas.waitForOffScreenRendering();
-        BufferedImage iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
-        return iconImage;
-      } catch (Exception ex) {
-        // If off screen canvas fails, capture current canvas with Robot
+      if (System.getProperty("os.name").startsWith("Linux")) {
+        // As off screen canvas may fail on Linux, capture current canvas with Robot
         Component canvas3D = getCanvas3D();
         Point canvas3DOrigin = new Point();
         SwingUtilities.convertPointToScreen(canvas3DOrigin, canvas3D);
         try {
           return new Robot().createScreenCapture(
               new Rectangle(canvas3DOrigin, canvas3D.getSize()));
-        } catch (AWTException ex2) {
+        } catch (AWTException ex) {
           throw new RuntimeException(ex);
         }
-      } finally {
-        if (offScreenCanvas != null) {
-          // Detach the off screen canvas from its view
-          offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
-        }
+      } else {
+        Canvas3D offScreenCanvas = createOffScreenCanvas();
+        // Attach the off screen canvas to super class universe
+        createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+        offScreenCanvas.renderOffScreenBuffer();
+        offScreenCanvas.waitForOffScreenRendering();
+        BufferedImage iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
+        // Detach the off screen canvas from its view
+        offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+        return iconImage;
       }
     }
     
