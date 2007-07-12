@@ -199,7 +199,7 @@ public class ImportedFurnitureWizardController extends WizardController {
    * Controls new piece added to home. 
    * Once added the furniture will be selected in view 
    * and undo support will receive a new undoable edit.
-   * @param furniture the piece of furniture to add.
+   * @param piece the piece of furniture to add.
    */
   public void addPieceOfFurniture(final HomePieceOfFurniture piece) {
     final List<Object> oldSelection = this.home.getSelectedItems(); 
