@@ -587,6 +587,7 @@ public class HomePane extends JRootPane {
     toolBar.addSeparator();
 
     toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
+    toolBar.add(actions.get(ActionType.IMPORT_FURNITURE));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_TOP));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
     toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_LEFT));
