@@ -81,7 +81,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow) {
-    this(name, icon, model, width, depth, height, 0, movable, doorOrWindow, null, 
+    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
         new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, false, (float)Math.PI / 8, true, false);
   }
          
