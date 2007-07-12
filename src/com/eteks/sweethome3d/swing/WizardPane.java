@@ -102,8 +102,8 @@ public class WizardPane extends JOptionPane {
     this.nextFinishOptionButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           if (lastStep) {
-            setValue(nextFinishOptionButton);
             controller.finish();
+            setValue(nextFinishOptionButton);
             if (dialog != null) {
               dialog.setVisible(false);
             }
