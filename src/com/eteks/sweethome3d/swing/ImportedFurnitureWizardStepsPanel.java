@@ -38,7 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -1837,7 +1836,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   private static class IconPreviewComponent extends AbstractModelPreviewComponent {
     private ImportedFurnitureWizardController controller;
-    private BufferedImage                     iconImage;
 
     public IconPreviewComponent(ImportedFurnitureWizardController controller) {
       this.controller = controller;
@@ -1846,11 +1844,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       addIconYawListener(controller);
 
       setBackgroundColor(UIManager.getColor("window"));
-      
-      // Add a hierarchy listener to capture image icon once this component is made visible 
-      addHierarchyListener();
-      // Add a mouse listener to update image icon at each mouse release 
-      addMouseListener();
     }
 
     @Override
@@ -1858,33 +1851,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       return new Dimension(128, 128);
     }
 
-    private void addHierarchyListener() {
-      addAncestorListener(new AncestorListener() {
-          public void ancestorAdded(AncestorEvent event) {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  iconImage = createIconImage();
-                }
-              });
-          }
-          
-          public void ancestorRemoved(AncestorEvent event) {
-          }
-          
-          public void ancestorMoved(AncestorEvent event) {
-          }        
-        });
-    }
-    
-    private void addMouseListener() {
-      getCanvas3D().addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseReleased(MouseEvent e) {
-            iconImage = createIconImage();
-          }
-        });
-    }
-    
     /**
      * Sets the <code>yaw</code> angle used by view platform transform.
      */
@@ -1893,14 +1859,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       this.controller.setIconYaw(viewYaw);
     }
     
-    public BufferedImage getIconImage() {
-      return this.iconImage;
-    }
-    
     /**
      * Returns the icon image matching the displayed view.  
      */
-    public BufferedImage createIconImage() {
+    public BufferedImage getIconImage() {
       if (System.getProperty("os.name").startsWith("Linux")) {
         // As off screen canvas may fail on Linux, capture current canvas with Robot
         Component canvas3D = getCanvas3D();

@@ -1183,7 +1183,7 @@ public class HomeComponent3D extends JComponent {
         Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
             modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
             modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-        modelTransform.setRotationScale(modelRotationMatrix);
+        modelTransform.setRotation(modelRotationMatrix);
         modelTransform.mul(scaleOneTransform);
         
         // Add model scene to transform group
