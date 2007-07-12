@@ -21,6 +21,9 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
@@ -223,6 +226,14 @@ public class CatalogTree extends JTree {
                          ? tree.getRowHeight()
                          : DEFAULT_ICON_HEIGHT;
       return IconManager.getInstance().getIcon(content, rowHeight, tree);
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+      // Force text anti aliasing on texts
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
+          RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      super.paintComponent(g);
     }
   }
   
