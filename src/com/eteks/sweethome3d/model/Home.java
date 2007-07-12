@@ -118,7 +118,7 @@ public class Home implements Serializable {
     this.observerCamera = new ObserverCamera(100, 100, 170, 
         3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     // Initialize new fields 
-    this.skyColor = (51 << 16) + (153 << 8) + 255;
+    this.skyColor = (204 << 16) + (228 << 8) + 252;
     this.groundColor = 0xE0E0E0;
     this.lightColor = 0xF0F0F0;
   }
