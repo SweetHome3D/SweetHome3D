@@ -140,7 +140,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private boolean    doorOrWindow;
   private Integer    color;
   private float [][] modelRotation;
-  private boolean   backFaceShown;
+  private boolean    backFaceShown;
   private boolean    visible;
   private float      x;
   private float      y;
