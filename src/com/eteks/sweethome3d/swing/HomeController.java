@@ -84,7 +84,7 @@ public class HomeController  {
    * @param application the instance of current application.
    */
   public HomeController(Home home, HomeApplication application) {
-    this(home, application.getUserPreferences(), application);
+    this(home, application.getUserPreferences(), application.getContentManager(), application);
   }
 
   /**
@@ -93,10 +93,24 @@ public class HomeController  {
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
-    this(home, preferences, null);
+    this(home, preferences, null, null);
   }
 
-  private HomeController(Home home, UserPreferences preferences, 
+  /**
+   * Creates the controller of home view. 
+   * @param home        the home edited by this controller and its view.
+   * @param preferences the preferences of the application.
+   * @param contentManager the content manager of the application.
+   */
+  public HomeController(Home home, 
+                        UserPreferences preferences,
+                        ContentManager contentManager) {
+    this(home, preferences, contentManager, null);
+  }
+
+  private HomeController(Home home, 
+                         UserPreferences preferences,
+                         ContentManager contentManager,
                          HomeApplication application) {
     this.home = home;
     this.preferences = preferences;
@@ -116,10 +130,6 @@ public class HomeController  {
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
     
-    ContentManager contentManager = null;
-    if (application != null) {
-      contentManager = application.getContentManager();
-    }
     this.catalogController   = new CatalogController(
         preferences.getCatalog(), preferences, contentManager);
     this.furnitureController = new FurnitureController(
