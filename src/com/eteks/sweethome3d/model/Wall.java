@@ -66,6 +66,7 @@ public class Wall implements Serializable  {
   public Wall(Wall wall) {
     this(wall.getXStart(), wall.getYStart(), 
          wall.getXEnd(), wall.getYEnd(), wall.getThickness());
+    this.height = wall.getHeight();
     this.leftSideColor = wall.getLeftSideColor();
     this.rightSideColor = wall.getRightSideColor();
   }
