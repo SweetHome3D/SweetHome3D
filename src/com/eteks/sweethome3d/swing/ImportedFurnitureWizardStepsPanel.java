@@ -83,6 +83,7 @@ import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.swing.BorderFactory;
+import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -106,7 +107,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.plaf.basic.BasicComboBoxEditor;
 import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
@@ -143,7 +143,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private JButton                           turnRightButton;
   private JButton                           turnUpButton;
   private JButton                           turnDownButton;
-  private OrientationPreviewComponent       orientationPreviewComponent;
+  private RotationPreviewComponent          rotationPreviewComponent;
   private JLabel                            backFaceShownLabel;
   private JCheckBox                         backFaceShownCheckBox;
   private JLabel                            attributesLabel;
@@ -310,7 +310,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             backFaceShownCheckBox.setSelected(controller.isBackFaceShown());
           }
         });
-    this.orientationPreviewComponent = new OrientationPreviewComponent(this.controller);
+    this.rotationPreviewComponent = new RotationPreviewComponent(this.controller);
     
     // Attributes panel components
     this.attributesLabel = new JLabel(this.resource.getString("attributesLabel.text"));
@@ -362,11 +362,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.categoryComboBox = new JComboBox(preferences.getCatalog().getCategories().toArray());
     // The piece category isn't enabled by default for home furniture import
     this.categoryComboBox.setEnabled(!importHomePiece);
-    this.categoryComboBox.setEditable(true); // FIXME Ugly on Mac OS X
-    this.categoryComboBox.setEditor(new BasicComboBoxEditor() {
-        @Override
+    this.categoryComboBox.setEditable(true); 
+    final ComboBoxEditor defaultEditor = this.categoryComboBox.getEditor();
+    // Change editor to edit category name
+    this.categoryComboBox.setEditor(new ComboBoxEditor() {
         public Object getItem() {
-          String name = (String)super.getItem();
+          String name = (String)defaultEditor.getItem();
           name.trim();
           // If category is empty, replace it by the last selected item
           if (name.length() == 0) {
@@ -383,10 +384,25 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           return category;
         }
       
-        @Override
         public void setItem(Object value) {
           Category category = (Category)value;
-          super.setItem(category.getName());
+          defaultEditor.setItem(category.getName());
+        }
+
+        public void addActionListener(ActionListener l) {
+          defaultEditor.addActionListener(l);
+        }
+
+        public Component getEditorComponent() {
+          return defaultEditor.getEditorComponent();
+        }
+
+        public void removeActionListener(ActionListener l) {
+          defaultEditor.removeActionListener(l);
+        }
+
+        public void selectAll() {
+          defaultEditor.selectAll();
         }
       });
     this.categoryComboBox.setRenderer(new DefaultListCellRenderer() {
@@ -646,7 +662,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     orientationPanel.add(this.orientationLabel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
-    orientationPanel.add(this.orientationPreviewComponent, new GridBagConstraints(
+    orientationPanel.add(this.rotationPreviewComponent, new GridBagConstraints(
         0, 1, 1, 3, 1, 1, GridBagConstraints.EAST, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
     orientationPanel.add(this.turnUpButton, new GridBagConstraints(
@@ -746,7 +762,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
     
     add(modelPanel, ImportedFurnitureWizardController.Step.MODEL.name());
-    add(orientationPanel, ImportedFurnitureWizardController.Step.ORIENTATION.name());
+    add(orientationPanel, ImportedFurnitureWizardController.Step.ROTATION.name());
     add(attributesPanel, ImportedFurnitureWizardController.Step.ATTRIBUTES.name());
     add(iconPanel, ImportedFurnitureWizardController.Step.ICON.name());
   }
@@ -925,7 +941,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   private void updatePreviewComponentsModel(final BranchGroup model) {
     modelPreviewComponent.setModel(model);
-    orientationPreviewComponent.setModel(model);
+    rotationPreviewComponent.setModel(model);
     attributesPreviewComponent.setModel(model);
     iconPreviewComponent.setModel(model);
   }
@@ -1028,7 +1044,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
 
     public ModelPreviewComponent() {
       this.canvas3D = createCanvas3D(false);
-      
+
       // Layout canvas3D
       setLayout(new GridLayout(1, 1));
       add(this.canvas3D);
@@ -1667,7 +1683,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   /**
    * Preview component for model orientation. 
    */
-  private static class OrientationPreviewComponent extends AbstractModelPreviewComponent {
+  private static class RotationPreviewComponent extends AbstractModelPreviewComponent {
     private JLabel   frontViewLabel;
     private Canvas3D frontViewCanvas;
     private JLabel   sideViewLabel;
@@ -1676,7 +1692,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private Canvas3D topViewCanvas;
     private JLabel   perspectiveViewLabel;
 
-    public OrientationPreviewComponent(final ImportedFurnitureWizardController controller) {
+    public RotationPreviewComponent(final ImportedFurnitureWizardController controller) {
       addRotationListener(controller);
       createComponents();
       layoutComponents();

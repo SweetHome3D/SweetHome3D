@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,9 +54,7 @@ public class ImportedFurnitureWizardController extends WizardController {
       DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHWON, MODEL_ROTATION,  
       ICON_YAW, PROPORTIONAL}
 
-  public enum Step {MODEL, ORIENTATION, ATTRIBUTES, ICON};
-  
-  final static private float HALF_PI = (float)Math.PI / 2;
+  public enum Step {MODEL, ROTATION, ATTRIBUTES, ICON};
   
   private Home                             home;
   private CatalogPieceOfFurniture          piece;
@@ -155,8 +152,8 @@ public class ImportedFurnitureWizardController extends WizardController {
     this.stepsView = new ImportedFurnitureWizardStepsPanel(
         piece, modelName, home != null, preferences, contentManager, this);
     setTitle(this.resource.getString(piece == null 
-        ? "importWizard.title" 
-        : "modifyWizard.title"));    
+        ? "importFurnitureWizard.title" 
+        : "modifyFurnitureWizard.title"));    
     // Initialize states
     this.furnitureModelStepState = new FurnitureModelStepState();
     this.furnitureOrientationStepState = new FurnitureOrientationStepState();
@@ -640,7 +637,7 @@ public class ImportedFurnitureWizardController extends WizardController {
 
     @Override
     public Step getStep() {
-      return Step.ORIENTATION;
+      return Step.ROTATION;
     }
     
     @Override
