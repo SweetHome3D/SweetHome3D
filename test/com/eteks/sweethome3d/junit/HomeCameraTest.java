@@ -294,7 +294,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         attributesDialog, JOptionPane.class);
     tester.invokeAndWait(new Runnable() {
         public void run() {
-          // Select Ok option to hide disalog box in Event Dispatch Thread
+          // Select Ok option to hide dialog box in Event Dispatch Thread
           attributesOptionPane.setValue(JOptionPane.OK_OPTION); 
         }
       });
