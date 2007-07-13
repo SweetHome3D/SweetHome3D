@@ -72,6 +72,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     Locale.setDefault(Locale.FRANCE);
     final UserPreferences preferences = new FileUserPreferences();
+    // Ensure we use centimeter unit
+    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     final URL testedModelName = ImportedFurnitureWizardTest.class.getResource("resources/test.obj");
     // Create a dummy content manager
     final ContentManager contentManager = new ContentManager() {
