@@ -68,7 +68,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class ImportedFurnitureWizardTest extends ComponentTestFixture {
-  public void testHomeCamera() throws ComponentSearchException, InterruptedException, 
+  public void testImportFurnitureWizard() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     Locale.setDefault(Locale.FRANCE);
     final UserPreferences preferences = new FileUserPreferences();
@@ -350,8 +350,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         confirmDeleteCatalogSelectionDialog, JOptionPane.class);
     tester.invokeAndWait(new Runnable() {
         public void run() {
-          // Select Ok option to hide dialog box in Event Dispatch Thread
-          optionPane.setValue(JOptionPane.YES_OPTION); 
+          // Select delete option to hide dialog box in Event Dispatch Thread
+          optionPane.setValue(ResourceBundle.getBundle(
+              HomePane.class.getName()).getString("confirmDeleteCatalogSelection.delete")); 
         }
       });
     // Check selection is empty
