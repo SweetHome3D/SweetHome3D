@@ -195,15 +195,15 @@ public class CatalogTree extends JTree {
       JLabel label = (JLabel)super.getTreeCellRendererComponent( 
           tree, value, selected, expanded, leaf, row, hasFocus);
       // Initialize fonts if not done
-      if (defaultFont == null) {
+      if (this.defaultFont == null) {
         this.defaultFont = label.getFont();
-        this.modifiablePieceFont = new Font(defaultFont.getFamily(), Font.ITALIC, defaultFont.getSize());
+        this.modifiablePieceFont = new Font(this.defaultFont.getFamily(), Font.ITALIC, this.defaultFont.getSize());
         
       }
       // If node is a category, change label text
       if (value instanceof Category) {
         label.setText(((Category)value).getName());
-        label.setFont(defaultFont);
+        label.setFont(this.defaultFont);
       } 
       // Else if node is a piece of furntiure, change label text and icon
       else if (value instanceof CatalogPieceOfFurniture) {
