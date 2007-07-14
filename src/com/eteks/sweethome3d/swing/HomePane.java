@@ -706,6 +706,8 @@ public class HomePane extends JRootPane {
     catalogViewPopup.addSeparator();
     catalogViewPopup.add(getPopupAction(ActionType.ADD_HOME_FURNITURE));
     catalogViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
+    catalogViewPopup.addSeparator();
+    catalogViewPopup.add(getPopupAction(ActionType.IMPORT_FURNITURE));
     this.catalogView.setComponentPopupMenu(catalogViewPopup);
 
     // Configure furniture view
