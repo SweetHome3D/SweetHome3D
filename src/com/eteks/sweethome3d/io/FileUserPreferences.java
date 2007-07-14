@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.io;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,8 +28,10 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -71,6 +74,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_ICON_YAW        = "furnitureIconYaw#";
   private static final String FURNITURE_PROPORTIONAL    = "furnitureProportional#";
 
+  private static final String CONTENT_PREFIX = "Content";
+  
   private static final Content DUMMY_CONTENT;
   
   static {
@@ -232,14 +237,15 @@ public class FileUserPreferences extends UserPreferences {
    * Writes catalog furniture in <code>preferences</code>.
    */
   private void writeCatalog(Preferences preferences) throws RecorderException {
+    final Set<URL> furnitureContentURLs = new HashSet<URL>();
     int i = 1;
     for (Category category : getCatalog().getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         if (piece.isModifiable()) {
           preferences.put(FURNITURE_NAME + i, piece.getName());
           preferences.put(FURNITURE_CATEGORY + i, category.getName());
-          putContent(preferences, FURNITURE_ICON + i, piece.getIcon());
-          putContent(preferences, FURNITURE_MODEL + i, piece.getModel());
+          putContent(preferences, FURNITURE_ICON + i, piece.getIcon(), furnitureContentURLs);
+          putContent(preferences, FURNITURE_MODEL + i, piece.getModel(), furnitureContentURLs);
           preferences.putFloat(FURNITURE_WIDTH + i, piece.getWidth());
           preferences.putFloat(FURNITURE_DEPTH + i, piece.getDepth());
           preferences.putFloat(FURNITURE_HEIGHT + i, piece.getHeight());
@@ -281,18 +287,50 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
     }
+    
+    // Search obsolete contents
+    File applicationFolder;
+    try {
+      applicationFolder = getApplicationFolder();
+    } catch (IOException ex) {
+      throw new RecorderException("Can't access to application folder");
+    }
+    File [] obsoleteContentFiles = applicationFolder.listFiles(
+        new FileFilter() {
+          public boolean accept(File applicationFile) {
+            try {
+              return applicationFile.getName().startsWith(CONTENT_PREFIX)
+                 && !furnitureContentURLs.contains(applicationFile.toURL());
+            } catch (MalformedURLException ex) {
+              return false;
+            }
+          }
+        });
+    if (obsoleteContentFiles != null) {
+      // Remove obsolete contents
+      for (File file : obsoleteContentFiles) {
+        if (!file.delete()) {
+          throw new RecorderException("Couldn't delete file " + file);
+        }
+      }
+    }
   }
 
   /**
    * Writes <code>key</code> <code>content</code> in <code>preferences</code>.
+   * @param furnitureContents 
    */
-  private void putContent(Preferences preferences, String key, Content content) throws RecorderException {
+  private void putContent(Preferences preferences, String key, 
+                          Content content, 
+                          Set<URL> furnitureContentURLs) throws RecorderException {
     if (content instanceof TemporaryURLContent) {
-      putContent(preferences, key, copyToApplicationURLContent(content));
+      putContent(preferences, key, copyToApplicationURLContent(content), furnitureContentURLs);
     } else if (content instanceof URLContent) {
-      preferences.put(key, ((URLContent)content).getURL().toString());
+      URL contentURL = ((URLContent)content).getURL();
+      preferences.put(key, contentURL.toString());
+      furnitureContentURLs.add(contentURL);
     } else {
-      putContent(preferences, key, copyToApplicationURLContent(content));
+      putContent(preferences, key, copyToApplicationURLContent(content), furnitureContentURLs);
     }
   }
 
@@ -333,29 +371,35 @@ public class FileUserPreferences extends UserPreferences {
    * Returns a new file in user application folder.
    */
   private File createApplicationFile() throws IOException {
-    File applicationFolder;
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      applicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder(), 
-             "eTeks" + File.separator + "Sweet Home 3D");
-    } else if (System.getProperty("os.name").startsWith("Windows")) {
-      applicationFolder = new File(System.getProperty("user.home"), "Application Data");
-      // If user Application Data directory doesn't exist, use user home
-      if (!applicationFolder.exists()) {
-        applicationFolder = new File(System.getProperty("user.home"));
-      }
-      applicationFolder = new File(applicationFolder, 
-          "eTeks" + File.separator + "Sweet Home 3D");      
-    } else { 
-      // Unix
-      applicationFolder = new File(System.getProperty("user.home"), ".eteks/sweethome3d");
-    }
+    File applicationFolder = getApplicationFolder();
     // Create application folder if it doesn't exist
     if (!applicationFolder.exists()
         && !applicationFolder.mkdirs()) {
       throw new IOException("Couldn't create " + applicationFolder);
     }
     // Return a new file in application folder
-    return File.createTempFile("Content", ".pref", applicationFolder);
+    return File.createTempFile(CONTENT_PREFIX, ".pref", applicationFolder);
+  }
+
+  /**
+   * Returns Sweet Home 3D application folder. 
+   */
+  private File getApplicationFolder() throws IOException {
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      return new File(MacOSXFileManager.getApplicationSupportFolder(), 
+             "eTeks" + File.separator + "Sweet Home 3D");
+    } else if (System.getProperty("os.name").startsWith("Windows")) {
+      File applicationFolder = new File(System.getProperty("user.home"), "Application Data");
+      // If user Application Data directory doesn't exist, use user home
+      if (!applicationFolder.exists()) {
+        applicationFolder = new File(System.getProperty("user.home"));
+      }
+      return new File(applicationFolder, 
+          "eTeks" + File.separator + "Sweet Home 3D");      
+    } else { 
+      // Unix
+      return new File(System.getProperty("user.home"), ".eteks/sweethome3d");
+    }
   }
 
   /**
