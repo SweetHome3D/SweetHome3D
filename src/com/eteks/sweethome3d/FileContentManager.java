@@ -182,7 +182,7 @@ public class FileContentManager implements ContentManager {
   public Content getContent(String contentName) throws RecorderException {
     try {
       return TemporaryURLContent.copyToTemporaryURLContent(
-          new URLContent(new File(contentName).toURL()));
+          new URLContent(new File(contentName).toURI().toURL()));
     } catch (IOException ex) {
       throw new RecorderException("Couldn't access to content " + contentName);
     }

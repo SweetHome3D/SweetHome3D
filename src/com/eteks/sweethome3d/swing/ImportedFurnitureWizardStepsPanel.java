@@ -1022,7 +1022,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       File tempFile = File.createTempFile("urlContent", "tmp");
       tempFile.deleteOnExit();
       ImageIO.write(this.iconPreviewComponent.getIconImage(), "png", tempFile);
-      return new TemporaryURLContent(tempFile.toURL());
+      return new TemporaryURLContent(tempFile.toURI().toURL());
     } catch (IOException ex) {
       try {
         return new URLContent(new URL("file:/dummySweetHome3DContent"));

@@ -64,6 +64,6 @@ public class TemporaryURLContent extends URLContent {
         tempOut.close();
       }
     }
-    return new TemporaryURLContent(tempFile.toURL());
+    return new TemporaryURLContent(tempFile.toURI().toURL());
   }
 }

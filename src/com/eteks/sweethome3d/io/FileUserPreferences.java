@@ -299,8 +299,9 @@ public class FileUserPreferences extends UserPreferences {
         new FileFilter() {
           public boolean accept(File applicationFile) {
             try {
+              URL toURL = applicationFile.toURI().toURL();
               return applicationFile.getName().startsWith(CONTENT_PREFIX)
-                 && !furnitureContentURLs.contains(applicationFile.toURL());
+                 && !furnitureContentURLs.contains(toURL);
             } catch (MalformedURLException ex) {
               return false;
             }
@@ -350,7 +351,7 @@ public class FileUserPreferences extends UserPreferences {
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
       }
-      return new URLContent(applicationFile.toURL());
+      return new URLContent(applicationFile.toURI().toURL());
     } catch (IOException ex) {
       throw new RecorderException("Can't save content", ex);
     } finally {
