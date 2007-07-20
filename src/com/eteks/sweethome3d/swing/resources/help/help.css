@@ -1,0 +1,91 @@
+p  {
+	font-size: 12px;
+	font-family: "Lucida Grande";
+	text-decoration: none;
+	margin-bottom: 5px;
+}
+	
+a  {
+	color: #0000ff;
+	font-size: 12px;
+	font-family: "Lucida Grande";
+	text-decoration: none;
+}
+	
+a:hover  {
+	color: #0000ff;
+	font-size: 12px;
+	font-family: "Lucida Grande";
+	text-decoration: underline;
+}
+	
+h1   {
+	font-size: 28px;
+	font-family: "Lucida Grande";
+	margin-bottom: -10px
+}
+
+h3  {
+	font-size: 16px;
+	font-family: "Lucida Grande";
+	margin-bottom: 24px
+}
+
+.bread  {
+	color: #0000ff;
+	font-size: 10px;
+	font-family: "Lucida Grande";
+	text-decoration: none
+}
+	
+.bread:hover {
+	color: #0000ff;
+	font-size: 10px;
+	font-family: "Lucida Grande";
+	text-decoration: underline
+}
+
+#mainbox  {
+	background-color: #ffffff;
+	margin-top: 25px;
+	margin-right: 26px;
+	margin-left: 15px;
+	position: absolute;
+}
+	
+#taskbox {
+	background-color: #eeeeee;
+	list-style-type: decimal;
+	list-style-position: outside;
+	margin-top: 12px;
+	margin-bottom: 12px;
+	border: solid 1px #444444
+	}
+	
+#banner {
+	background-color: #f2f2f2;
+	background-repeat: no-repeat;
+	padding: -2px 6px 0;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 15px;
+	float: left;
+	border-bottom: 1px solid #bfbfbf;
+	background-attachment: fixed;
+}
+
+#helpheader   { 
+	position: absolute; 
+	font-size: 10px;
+	font-family: "Lucida Grande";
+	margin-top: 2px; 
+	margin-left: 5px 
+}
+
+#topic {
+	font-size: 16px;
+	font-family: "Lucida Grande";
+	font-weight: bold;
+}

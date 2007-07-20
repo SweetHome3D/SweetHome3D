@@ -26,6 +26,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -149,7 +150,9 @@ class MacOSXConfiguration {
                                            final SweetHome3D application,
                                            boolean defaultFrame) {
     final JMenu windowMenu = new JMenu(new ResourceAction(RESOURCE, "WINDOW", true));
-    frame.getJMenuBar().add(windowMenu);
+    // Add Window menu before Help menu
+    JMenuBar menuBar = frame.getJMenuBar();
+    menuBar.add(windowMenu, menuBar.getComponentCount() - 1);
     windowMenu.add(new JMenuItem(new ResourceAction(RESOURCE, "MINIMIZE", !defaultFrame) {
         public void actionPerformed(ActionEvent ev) {
           frame.setState(JFrame.ICONIFIED);
