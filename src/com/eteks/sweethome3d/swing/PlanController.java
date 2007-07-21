@@ -2473,7 +2473,6 @@ public class PlanController {
    */
   private class CameraPitchRotationState extends ControllerState {
     private ObserverCamera selectedCamera;
-    private float          angleMousePress;
     private float          oldPitch;
     private String         rotationToolTipFeedback = resource.getString("cameraPitchRotationToolTipFeedback");
 
@@ -2485,8 +2484,6 @@ public class PlanController {
     @Override
     public void enter() {
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
-      this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
-          getXLastMousePress() - this.selectedCamera.getX()); 
       this.oldPitch = this.selectedCamera.getPitch();
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
@@ -2497,9 +2494,9 @@ public class PlanController {
     @Override
     public void moveMouse(float x, float y) {      
       // Compute the new angle of the camera
-      float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
-          x - this.selectedCamera.getX()); 
-      float newPitch = this.oldPitch - angleMouseMove + this.angleMousePress;
+      float newPitch = (float)(this.oldPitch 
+          + (y - getYLastMousePress()) * Math.cos(this.selectedCamera.getYaw()) * Math.PI / 360
+          - (x - getXLastMousePress()) * Math.sin(this.selectedCamera.getYaw()) * Math.PI / 360);
       // Check new angle is between -60° and 75°  
       newPitch = Math.max(newPitch, -(float)Math.PI / 3);
       newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
