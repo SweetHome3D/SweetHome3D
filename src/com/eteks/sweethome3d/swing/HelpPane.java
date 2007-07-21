@@ -48,7 +48,7 @@ import javax.swing.event.HyperlinkListener;
  * @author Emmanuel Puybaret
  */
 public class HelpPane extends JRootPane {
-  public enum ActionType {SHOW_PREVIOUS, SHOW_NEXT}
+  private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, CLOSE}
 
   private ResourceBundle resource;
   private JFrame         frame;
@@ -58,8 +58,12 @@ public class HelpPane extends JRootPane {
   public HelpPane(HelpController controller) {
     this.resource = ResourceBundle.getBundle(HelpPane.class.getName());
     createActions(controller);
-    createComponents(controller);
+    createComponents();
     layoutComponents();
+    if (controller != null) {
+      addHyperlinkListener(controller);
+      installKeyboardActions();
+    }
   }
 
   /** 
@@ -67,18 +71,19 @@ public class HelpPane extends JRootPane {
    */
   private void createActions(final HelpController controller) {
     ActionMap actions = getActionMap();    
-    actions.put(ActionType.SHOW_PREVIOUS, new ResourceAction(
-            this.resource, ActionType.SHOW_PREVIOUS.toString()) {
+    try {
+      actions.put(ActionType.SHOW_PREVIOUS, new ControllerAction(
+          this.resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious"));
+      actions.put(ActionType.SHOW_NEXT, new ControllerAction(
+          this.resource, ActionType.SHOW_NEXT.toString(), controller, "showNext"));
+    } catch (NoSuchMethodException ex) {
+      throw new RuntimeException(ex);
+    }
+    actions.put(ActionType.CLOSE, new ResourceAction(
+            this.resource, ActionType.CLOSE.toString(), true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          controller.showPrevious();
-        }
-      });
-    actions.put(ActionType.SHOW_NEXT, new ResourceAction(
-            this.resource, ActionType.SHOW_NEXT.toString()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          controller.showNext();
+          frame.setVisible(false);
         }
       });
   }
@@ -86,7 +91,7 @@ public class HelpPane extends JRootPane {
   /**
    * Creates the components diaplayed by this view.
    */
-  private void createComponents(final HelpController controller) {
+  private void createComponents() {
     this.toolBar = new JToolBar();
     this.toolBar.setFloatable(false);
     ActionMap actions = getActionMap();    
@@ -103,20 +108,6 @@ public class HelpPane extends JRootPane {
     this.helpEditorPane.setEditable(false);
     this.helpEditorPane.setContentType("text/html");
     this.helpEditorPane.putClientProperty(JEditorPane.W3C_LENGTH_UNITS, Boolean.TRUE);
-    this.helpEditorPane.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent ev) {
-          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            controller.showPage(ev.getURL());
-          }
-        }
-      });
-    
-    // As no menu is created for this pane, change its input map to ensure accelerators work
-    InputMap inputMap = getInputMap(WHEN_IN_FOCUSED_WINDOW);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_PREVIOUS).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.SHOW_PREVIOUS);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_NEXT).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.SHOW_NEXT);
   }
 
   /**
@@ -125,6 +116,34 @@ public class HelpPane extends JRootPane {
   private void layoutComponents() {
     getContentPane().add(this.toolBar, BorderLayout.NORTH);
     getContentPane().add(new JScrollPane(this.helpEditorPane), BorderLayout.CENTER);
+  }
+
+  /**
+   * Adds an hyperlikn listener on the editor pane displayed by this pane.
+   */
+  private void addHyperlinkListener(final HelpController controller) {
+    this.helpEditorPane.addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent ev) {
+          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            controller.showPage(ev.getURL());
+          }
+        }
+      });
+  }
+
+  /**
+   * Installs keys bound to actions. 
+   */
+  private void installKeyboardActions() {
+    ActionMap actions = getActionMap();      
+    // As no menu is created for this pane, change its input map to ensure accelerators work
+    InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_PREVIOUS).getValue(Action.ACCELERATOR_KEY), 
+        ActionType.SHOW_PREVIOUS);
+    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_NEXT).getValue(Action.ACCELERATOR_KEY), 
+        ActionType.SHOW_NEXT);
+    inputMap.put((KeyStroke)actions.get(ActionType.CLOSE).getValue(Action.ACCELERATOR_KEY), 
+        ActionType.CLOSE);
   }
 
   /**
