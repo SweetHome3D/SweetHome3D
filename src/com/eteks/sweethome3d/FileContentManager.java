@@ -312,11 +312,20 @@ public class FileContentManager implements ContentManager {
     if (save && name != null) {
       fileChooser.setSelectedFile(new File(name));
     }    
-    // Set supported image  files filter 
-    for (FileFilter filter : fileFilters.get(contentType)) {
+    // Set supported files filter 
+    FileFilter acceptAllFileFilter = fileChooser.getAcceptAllFileFilter();
+    fileChooser.addChoosableFileFilter(acceptAllFileFilter);
+    FileFilter [] contentFileFilters = fileFilters.get(contentType);
+    for (FileFilter filter : contentFileFilters) {
       fileChooser.addChoosableFileFilter(filter);
     }
-    fileChooser.setFileFilter(fileChooser.getAcceptAllFileFilter());
+    // If there's only one file filter, select it 
+    if (contentFileFilters.length == 1) {
+      fileChooser.setFileFilter(contentFileFilters [0]);
+    } else {
+      fileChooser.setFileFilter(acceptAllFileFilter);
+    }
+    
     // Update current directory
     if (this.currentDirectory != null) {
       fileChooser.setCurrentDirectory(this.currentDirectory);
