@@ -100,7 +100,7 @@ public class HomeTransferableList implements Transferable {
 
   /**
    * Returns <code>true</code> if <code>flavor</code> is 
-   * {@link #HOME_FLAVOR LIST_FLAVOR}.
+   * {@link #HOME_FLAVOR HOME_FLAVOR}.
    */
   public boolean isDataFlavorSupported(DataFlavor flavor) {
     return HOME_FLAVOR.equals(flavor);
