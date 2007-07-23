@@ -40,7 +40,7 @@ public class HomeTransferableList implements Transferable {
   
   static {
     try {
-      // Create java.util.ist data flavor
+      // Create HomeTransferableList data flavor
       String homeFlavorMimeType = 
         DataFlavor.javaJVMLocalObjectMimeType
         + ";class=" + HomeTransferableList.class.getName();
