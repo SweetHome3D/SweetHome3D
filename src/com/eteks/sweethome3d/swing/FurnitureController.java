@@ -40,7 +40,6 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
-import com.eteks.sweethome3d.swing.HomePane.ActionType;
 
 /**
  * A MVC controller for the furniture table.
@@ -243,6 +242,40 @@ public class FurnitureController {
   }
 
   /**
+   * Controls the sort of the furniture in home. If home furniture isn't sorted
+   * or is sorted on an other property, it will be sorted on the given
+   * <code>furnitureProperty</code> in ascending order. If home furniture is already
+   * sorted on the given <code>furnitureProperty<code>, it will be sorted in descending 
+   * order, if the sort is in ascending order, otherwise it won't be sorted at all 
+   * and home furniture will be listed in insertion order. 
+    * @param furnitureProperty  the furniture property on which the view wants
+   *          to sort the furniture it displays.
+   */
+  public void sortFurniture(HomePieceOfFurniture.SortableProperty furnitureProperty) {
+    // Compute sort algorithm described in javadoc
+    final HomePieceOfFurniture.SortableProperty  oldProperty = 
+        this.home.getFurnitureSortedProperty();
+    final boolean oldDescending = this.home.isFurnitureDescendingSorted(); 
+    boolean descending = false;
+    if (furnitureProperty.equals(oldProperty)) {
+      if (oldDescending) {
+        furnitureProperty = null;
+      } else {
+        descending = true;
+      }
+    }
+    this.home.setFurnitureSortedProperty(furnitureProperty);
+    this.home.setFurnitureDescendingSorted(descending);
+  }
+
+  /**
+   * Updates the furniture visible properties in home.  
+   */
+  public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
+    this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
+  }
+  
+  /**
    * Toggles furniture property visibility in home. 
    */
   public void toggleFurnitureVisibleProperty(HomePieceOfFurniture.SortableProperty furnitureProperty) {
@@ -288,40 +321,6 @@ public class FurnitureController {
       }
       furnitureVisibleProperties.add(propertyIndex, furnitureProperty);
     }
-    this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
-  }
-  
-  /**
-   * Controls the sort of the furniture in home. If home furniture isn't sorted
-   * or is sorted on an other property, it will be sorted on the given
-   * <code>furnitureProperty</code> in ascending order. If home furniture is already
-   * sorted on the given <code>furnitureProperty<code>, it will be sorted in descending 
-   * order, if the sort is in ascending order, otherwise it won't be sorted at all 
-   * and home furniture will be listed in insertion order. 
-    * @param furnitureProperty  the furniture property on which the view wants
-   *          to sort the furniture it displays.
-   */
-  public void sortFurniture(HomePieceOfFurniture.SortableProperty furnitureProperty) {
-    // Compute sort algorithm described in javadoc
-    final HomePieceOfFurniture.SortableProperty  oldProperty = 
-        this.home.getFurnitureSortedProperty();
-    final boolean oldDescending = this.home.isFurnitureDescendingSorted(); 
-    boolean descending = false;
-    if (furnitureProperty.equals(oldProperty)) {
-      if (oldDescending) {
-        furnitureProperty = null;
-      } else {
-        descending = true;
-      }
-    }
-    this.home.setFurnitureSortedProperty(furnitureProperty);
-    this.home.setFurnitureDescendingSorted(descending);
-  }
-
-  /**
-   * Updates the furniture visible properties in home.  
-   */
-  public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
     this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
   }
   

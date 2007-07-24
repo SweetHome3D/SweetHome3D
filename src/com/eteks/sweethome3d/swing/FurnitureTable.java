@@ -356,8 +356,8 @@ public class FurnitureTable extends JTable {
      */
     private void updateModelColumns(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
       // Remove columns not in furnitureVisibleProperties
-      for (Enumeration<TableColumn> it = getColumns(); it.hasMoreElements(); ) {
-        TableColumn tableColumn = it.nextElement();
+      for (int i = tableColumns.size() - 1; i >= 0; i--) {
+        TableColumn tableColumn = tableColumns.get(i);
         if (!furnitureVisibleProperties.contains(tableColumn.getIdentifier())) {
           removeColumn(tableColumn);
         } 

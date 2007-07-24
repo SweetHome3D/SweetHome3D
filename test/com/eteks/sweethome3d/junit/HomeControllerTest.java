@@ -20,13 +20,18 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.Component;
+import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.Action;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JRootPane;
+import javax.swing.JTable;
 
 import junit.framework.TestCase;
 
@@ -212,25 +217,25 @@ public class HomeControllerTest extends TestCase {
     // Align on bottom
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM);
     // Check bottom of second piece equals bottom of first piece
-    assertFloatEquals("Second piece isn't aligned on bottom of first piece",
+    assertEpsilonEquals("Second piece isn't aligned on bottom of first piece",
         getMaxY(firstPiece), getMaxY(secondPiece));
 
     // 6. Align on top
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP);
     // Check bottom of second piece equals bottom of first piece
-    assertFloatEquals("Second piece isn't aligned on top of first piece",
+    assertEpsilonEquals("Second piece isn't aligned on top of first piece",
         getMinY(firstPiece), getMinY(secondPiece));
     
     // 7. Align on left
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT);
     // Check bottom of second piece equals bottom of first piece
-    assertFloatEquals("Second piece isn't aligned on left of first piece",
+    assertEpsilonEquals("Second piece isn't aligned on left of first piece",
         getMinX(firstPiece), getMinX(secondPiece));
     
     // 8. Align on right
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT);
     // Check bottom of second piece equals bottom of first piece
-    assertFloatEquals("Second piece isn't aligned on right of first piece",
+    assertEpsilonEquals("Second piece isn't aligned on right of first piece",
         getMaxX(firstPiece), getMaxX(secondPiece));
     float alignedPieceX = secondPiece.getX();
     float alignedPieceY = secondPiece.getY();
@@ -241,9 +246,9 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.UNDO);
     runAction(HomePane.ActionType.UNDO);
     // Check second piece is back to its place
-    assertFloatEquals("Second piece abcissa is incorrect",
+    assertEpsilonEquals("Second piece abcissa is incorrect",
         secondPieceX, secondPiece.getX());
-    assertFloatEquals("Second piece ordinate is incorrect",
+    assertEpsilonEquals("Second piece ordinate is incorrect",
         secondPieceY, secondPiece.getY());
 
     // 10. Redo alignments
@@ -252,10 +257,57 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.REDO);
     runAction(HomePane.ActionType.REDO);
     // Check second piece is back to its place
-    assertFloatEquals("Second piece abcissa is incorrect",
+    assertEpsilonEquals("Second piece abcissa is incorrect",
         alignedPieceX, secondPiece.getX());
-    assertFloatEquals("Second piece ordinate is incorrect",
+    assertEpsilonEquals("Second piece ordinate is incorrect",
         alignedPieceY, secondPiece.getY());
+  }
+  
+  /**
+   * Tests furniture visible properties changes.
+   */
+  public void testFurnitureVisibleProperties() {
+    // 1. Add the first piece of catalog first category to home
+    Category firstCategory = this.preferences.getCatalog().getCategories().get(0);
+    HomePieceOfFurniture piece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
+    this.home.addPieceOfFurniture(piece);
+    // Use centimeter as unit
+    this.preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    // Check displayed values in table
+    assertFurnitureFirstRowEquals(this.furnitureTable, piece.getName(),
+        piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.isVisible());
+    
+    // 2. Make name property invisible
+    runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME);
+    // Check displayed values in table doesn't contain piece name
+    assertFurnitureFirstRowEquals(this.furnitureTable, 
+        piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.isVisible());
+
+    // 3. Make y property visible
+    runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_Y);
+    // Check displayed values in table contains piece ordinate after piece depth
+    assertFurnitureFirstRowEquals(this.furnitureTable, 
+        piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getY(), piece.isVisible());
+
+    // 4. Make name property visible again
+    runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME);
+    // Check displayed values in table contains piece name in first position
+    assertFurnitureFirstRowEquals(this.furnitureTable, piece.getName(),
+        piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getY(), piece.isVisible());
+    
+    // 5. Change visible properties order and list
+    this.furnitureController.setFurnitureVisibleProperties(
+        Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
+            HomePieceOfFurniture.SortableProperty.MOVABLE,
+            HomePieceOfFurniture.SortableProperty.NAME}));
+    // Check displayed values in table contains piece name and visible properties
+    assertFurnitureFirstRowEquals(this.furnitureTable, piece.isVisible(), piece.getName());
+
+    // 6. Make visible property visible
+    runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE);
+    // Check displayed values in table contains piece visible property after movable property
+    assertFurnitureFirstRowEquals(this.furnitureTable, 
+        piece.isMovable(), piece.isVisible(), piece.getName());
   }
   
   /**
@@ -296,7 +348,7 @@ public class HomeControllerTest extends TestCase {
   /**
    * Asserts <code>value1</code> equals <code>value2</code> at epsilon.
    */
-  private void assertFloatEquals(String message, float value1, float value2) {
+  private void assertEpsilonEquals(String message, float value1, float value2) {
     assertTrue(message, Math.abs(value1 - value2) < 1E-5);
   }
 
@@ -346,6 +398,29 @@ public class HomeControllerTest extends TestCase {
       maxY = Math.max(maxY, point [1]);
     } 
     return maxY;
+  }
+
+  /**
+   * Asserts that <code>table</code> first row values are correct.
+   */
+  private void assertFurnitureFirstRowEquals(JTable table, Object ... values) {
+    assertEquals("Wrong column count", values.length, table.getColumnCount());
+
+    NumberFormat numberFormat = NumberFormat.getNumberInstance();
+    for (int column = 0, n = table.getColumnCount(); column < n; column++) {
+      Component cellRendererComponent = table.getCellRenderer(0, column).
+          getTableCellRendererComponent(table, table.getValueAt(0, column), false, false, 0, column);
+      if (values [column] instanceof Number) {
+        assertEquals("Wrong value at column " + column,  numberFormat.format(values [column]), 
+            ((JLabel)cellRendererComponent).getText());
+      } else if (values [column] instanceof Boolean) {
+        assertEquals("Wrong value at column " + column, values [column], 
+            ((JCheckBox)cellRendererComponent).isSelected());
+      } else {
+        assertEquals("Wrong value at column " + column, values [column], 
+            ((JLabel)cellRendererComponent).getText());
+      }
+    }    
   }
 
   public static void main(String [] args) {
