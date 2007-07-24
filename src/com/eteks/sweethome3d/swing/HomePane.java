@@ -405,91 +405,8 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     furnitureMenu.addSeparator();
-    // Create Furniture Sort submenu
-    JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
-    // Map sort furniture properties to sort actions
-    Map<HomePieceOfFurniture.SortableProperty, Action> sortActions = 
-        new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
-    sortActions.put(HomePieceOfFurniture.SortableProperty.NAME, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
-    sortActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.DEPTH, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.HEIGHT, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.X, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_X));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.Y, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_Y));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.ELEVATION, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_ELEVATION));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.ANGLE, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_ANGLE));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.COLOR, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.MOVABLE, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
-    sortActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
-    // Add radio button menu items to sub menu and make them share the same radio button group
-    ButtonGroup sortButtonGroup = new ButtonGroup();
-    for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : sortActions.entrySet()) {
-      final HomePieceOfFurniture.SortableProperty furnitureProperty = entry.getKey();
-      Action sortAction = entry.getValue();
-      JRadioButtonMenuItem sortMenuItem = new JRadioButtonMenuItem();
-      // Use a special model for sort radio button menu item that is selected if
-      // home is sorted on furnitureProperty criterion
-      sortMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
-          @Override
-          public boolean isSelected() {
-            return furnitureProperty == home.getFurnitureSortedProperty();
-          }
-        }); 
-      // Configure check box menu item action after setting its model to avoid losing its mnemonic
-      sortMenuItem.setAction(sortAction);
-      sortMenu.add(sortMenuItem);
-      sortButtonGroup.add(sortMenuItem);
-    }
-    sortMenu.addSeparator();
-    JCheckBoxMenuItem sortOrderCheckBoxMenuItem = new JCheckBoxMenuItem();
-    // Use a special model for sort order check box menu item that is selected depending on
-    // home sort order property
-    sortOrderCheckBoxMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
-        @Override
-        public boolean isSelected() {
-          return home.isFurnitureDescendingSorted();
-        }
-      });
-    sortOrderCheckBoxMenuItem.setAction(
-        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
-    sortMenu.add(sortOrderCheckBoxMenuItem);
-    furnitureMenu.add(sortMenu);
-    // Create Furniture Display property submenu
-    JMenu displayPropertyMenu = new JMenu(new ResourceAction(this.resource, "DISPLAY_HOME_FURNITURE_PROPERTY_MENU", true));
-    // Map displayProperty furniture properties to displayProperty actions
-    Map<HomePieceOfFurniture.SortableProperty, Action> displayPropertyActions = 
-        new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.NAME, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_NAME)); 
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_WIDTH));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.DEPTH, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_DEPTH));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.HEIGHT, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_HEIGHT));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.X, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_X));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.Y, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_Y));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.ELEVATION, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_ELEVATION));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.ANGLE, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_ANGLE));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.COLOR, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.MOVABLE, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_MOVABLE));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW));
-    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_VISIBLE));
-    // Add radio button menu items to sub menu 
-    for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : displayPropertyActions.entrySet()) {
-      final HomePieceOfFurniture.SortableProperty furnitureProperty = entry.getKey();
-      Action displayPropertyAction = entry.getValue();
-      JCheckBoxMenuItem displayPropertyMenuItem = new JCheckBoxMenuItem();
-      // Use a special model for displayProperty check box menu item that is selected if
-      // home furniture visible properties contains furnitureProperty
-      displayPropertyMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
-          @Override
-          public boolean isSelected() {
-            return home.getFurnitureVisibleProperties().contains(furnitureProperty);
-          }
-        }); 
-      // Configure check box menu item action after setting its model to avoid losing its mnemonic
-      displayPropertyMenuItem.setAction(displayPropertyAction);
-      displayPropertyMenu.add(displayPropertyMenuItem);
-    }
-    furnitureMenu.add(displayPropertyMenu);
+    furnitureMenu.add(getFurnitureSortMenu(home));
+    furnitureMenu.add(getFurnitureDisplayPropertyMenu(home));
     
     // Create Plan menu
     JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
@@ -557,6 +474,128 @@ public class HomePane extends JRootPane {
     return menuBar;
   }
 
+  /**
+   * Returns furniture sort menu.
+   */
+  private JMenu getFurnitureSortMenu(final Home home) {
+    // Create Furniture Sort submenu
+    JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
+    // Map sort furniture properties to sort actions
+    Map<HomePieceOfFurniture.SortableProperty, Action> sortActions = 
+        new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
+    sortActions.put(HomePieceOfFurniture.SortableProperty.NAME, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
+    sortActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.DEPTH, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.HEIGHT, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.X, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_X));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.Y, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_Y));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.ELEVATION, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_ELEVATION));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.ANGLE, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_ANGLE));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.COLOR, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.MOVABLE, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
+    sortActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, 
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
+    // Add radio button menu items to sub menu and make them share the same radio button group
+    ButtonGroup sortButtonGroup = new ButtonGroup();
+    for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : sortActions.entrySet()) {
+      final HomePieceOfFurniture.SortableProperty furnitureProperty = entry.getKey();
+      Action sortAction = entry.getValue();
+      JRadioButtonMenuItem sortMenuItem = new JRadioButtonMenuItem();
+      // Use a special model for sort radio button menu item that is selected if
+      // home is sorted on furnitureProperty criterion
+      sortMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+          @Override
+          public boolean isSelected() {
+            return furnitureProperty == home.getFurnitureSortedProperty();
+          }
+        }); 
+      // Configure check box menu item action after setting its model to avoid losing its mnemonic
+      sortMenuItem.setAction(sortAction);
+      sortMenu.add(sortMenuItem);
+      sortButtonGroup.add(sortMenuItem);
+    }
+    sortMenu.addSeparator();
+    JCheckBoxMenuItem sortOrderCheckBoxMenuItem = new JCheckBoxMenuItem();
+    // Use a special model for sort order check box menu item that is selected depending on
+    // home sort order property
+    sortOrderCheckBoxMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+        @Override
+        public boolean isSelected() {
+          return home.isFurnitureDescendingSorted();
+        }
+      });
+    sortOrderCheckBoxMenuItem.setAction(
+        getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER));
+    sortMenu.add(sortOrderCheckBoxMenuItem);
+    return sortMenu;
+  }
+  
+  /**
+   * Returns furniture display property menu.
+   */
+  private JMenu getFurnitureDisplayPropertyMenu(final Home home) {
+    // Create Furniture Display property submenu
+    JMenu displayPropertyMenu = new JMenu(new ResourceAction(
+        this.resource, "DISPLAY_HOME_FURNITURE_PROPERTY_MENU", true));
+    // Map displayProperty furniture properties to displayProperty actions
+    Map<HomePieceOfFurniture.SortableProperty, Action> displayPropertyActions = 
+        new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.NAME, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_NAME)); 
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_WIDTH));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.DEPTH, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_DEPTH));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.HEIGHT, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_HEIGHT));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.X, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_X));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.Y, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_Y));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.ELEVATION, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_ELEVATION));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.ANGLE, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_ANGLE));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.COLOR, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.MOVABLE, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_MOVABLE));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW));
+    displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, 
+        getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_VISIBLE));
+    // Add radio button menu items to sub menu 
+    for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : displayPropertyActions.entrySet()) {
+      final HomePieceOfFurniture.SortableProperty furnitureProperty = entry.getKey();
+      Action displayPropertyAction = entry.getValue();
+      JCheckBoxMenuItem displayPropertyMenuItem = new JCheckBoxMenuItem();
+      // Use a special model for displayProperty check box menu item that is selected if
+      // home furniture visible properties contains furnitureProperty
+      displayPropertyMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+          @Override
+          public boolean isSelected() {
+            return home.getFurnitureVisibleProperties().contains(furnitureProperty);
+          }
+        }); 
+      // Configure check box menu item action after setting its model to avoid losing its mnemonic
+      displayPropertyMenuItem.setAction(displayPropertyAction);
+      displayPropertyMenu.add(displayPropertyMenuItem);
+    }
+    return displayPropertyMenu;
+  }
+  
   /**
    * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
    * @param contentManager 
