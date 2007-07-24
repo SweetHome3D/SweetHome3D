@@ -174,12 +174,28 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DEPTH, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_X, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_Y, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_ELEVATION, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_ANGLE, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_COLOR, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         this.home.getFurnitureSortedProperty() != null);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_WIDTH, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DEPTH, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_HEIGHT, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_X, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_Y, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_ELEVATION, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_ANGLE, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_COLOR, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, true); 
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, true);
     homeView.setEnabled(HomePane.ActionType.SELECT, true);
     homeView.setEnabled(HomePane.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, true);
@@ -985,14 +1001,14 @@ public class HomeController  {
   private boolean save(String homeName) {
     try {
       this.application.getHomeRecorder().writeHome(this.home, homeName);
-      String oldHomeName = this.home.getName();
       this.home.setName(homeName);
       this.saveUndoLevel = 0;
       this.home.setModified(false);
       // Update recent homes list
       List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
-      if (homeName.equals(oldHomeName)) {
-        recentHomes.remove(oldHomeName);
+      int homeNameIndex = recentHomes.indexOf(homeName);
+      if (homeNameIndex >= 0) {
+        recentHomes.remove(homeNameIndex);
       }
       recentHomes.add(0, homeName);
       updateUserPreferencesRecentHomes(recentHomes);
@@ -1059,26 +1075,6 @@ public class HomeController  {
    */
   public void about() {
     ((HomePane)getView()).showAboutDialog();
-  }
-
-  /**
-   * Uses <code>furnitureProperty</code> to sort home furniture 
-   * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>
-   * @param furnitureProperty a property of {@link HomePieceOfFurniture HomePieceOfFurniture} class.
-   */
-  public void toggleFurnitureSort(HomePieceOfFurniture.SortableProperty furnitureProperty) {
-    if (furnitureProperty.equals(this.home.getFurnitureSortedProperty())) {
-      this.home.setFurnitureSortedProperty(null);
-    } else {
-      this.home.setFurnitureSortedProperty(furnitureProperty);      
-    }
-  }
-
-  /**
-   * Toggles home furniture sort order.
-   */
-  public void toggleFurnitureSortOrder() {
-    this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
   }
 
   /**

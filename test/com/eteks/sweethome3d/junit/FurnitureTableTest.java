@@ -33,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import junit.framework.TestCase;
@@ -80,11 +81,14 @@ public class FurnitureTableTest extends TestCase {
         home.getFurniture().size(), table.getRowCount());
     
     // 4. Check the displayed depth in table are different in French and US version
-    String widthInInch = getRenderedDepth(table, 0);
-    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
-    String widthInMeter = getRenderedDepth(table, 0);
-    assertFalse("Same depth in different units", 
-        widthInInch.equals(widthInMeter));
+    for (int row = 0, n = table.getRowCount(); row < n; row++) {
+      preferences.setUnit(UserPreferences.Unit.INCH);
+      String widthInInch = getRenderedDepth(table, row);
+      preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+      String widthInMeter = getRenderedDepth(table, row);
+      assertFalse("Same depth in different units", 
+          widthInInch.equals(widthInMeter));
+    }
   }
   
   private static List<HomePieceOfFurniture> createHomeFurnitureFromCatalog(
@@ -100,15 +104,15 @@ public class FurnitureTableTest extends TestCase {
   
   private String getRenderedDepth(JTable table, int row) {
     // Get index of detph column in model
-    int modelColumnIndex = table.getColumn(HomePieceOfFurniture.SortableProperty.DEPTH).getModelIndex();
+    TableColumn depthColumn = table.getColumn(HomePieceOfFurniture.SortableProperty.DEPTH);
 
     // Get depth value at row
     TableModel model = table.getModel();
-    Object cellValue = model.getValueAt(row, modelColumnIndex);
+    Object cellValue = model.getValueAt(row, depthColumn.getModelIndex());
     
     // Get component used to render the depth cell at row
-    TableCellRenderer renderer = table.getCellRenderer(row, modelColumnIndex);
-    int tableColumnIndex = table.convertColumnIndexToView(modelColumnIndex);
+    int tableColumnIndex = table.getColumnModel().getColumnIndex(HomePieceOfFurniture.SortableProperty.DEPTH);
+    TableCellRenderer renderer = table.getCellRenderer(row, tableColumnIndex);
     Component cellLabel = renderer.getTableCellRendererComponent(
         table, cellValue, false, false, row, tableColumnIndex);
     

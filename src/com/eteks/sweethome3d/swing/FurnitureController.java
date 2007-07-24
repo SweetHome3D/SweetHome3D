@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,8 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
+import com.eteks.sweethome3d.swing.HomePane.ActionType;
 
 /**
  * A MVC controller for the furniture table.
@@ -220,6 +223,75 @@ public class FurnitureController {
   }
   
   /**
+   * Uses <code>furnitureProperty</code> to sort home furniture 
+   * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>
+   * @param furnitureProperty a property of {@link HomePieceOfFurniture HomePieceOfFurniture} class.
+   */
+  public void toggleFurnitureSort(HomePieceOfFurniture.SortableProperty furnitureProperty) {
+    if (furnitureProperty.equals(this.home.getFurnitureSortedProperty())) {
+      this.home.setFurnitureSortedProperty(null);
+    } else {
+      this.home.setFurnitureSortedProperty(furnitureProperty);      
+    }
+  }
+
+  /**
+   * Toggles home furniture sort order.
+   */
+  public void toggleFurnitureSortOrder() {
+    this.home.setFurnitureDescendingSorted(!this.home.isFurnitureDescendingSorted());
+  }
+
+  /**
+   * Toggles furniture property visibility in home. 
+   */
+  public void toggleFurnitureVisibleProperty(HomePieceOfFurniture.SortableProperty furnitureProperty) {
+    List<SortableProperty> furnitureVisibleProperties = 
+        new ArrayList<SortableProperty>(this.home.getFurnitureVisibleProperties());
+    if (furnitureVisibleProperties.contains(furnitureProperty)) {
+      furnitureVisibleProperties.remove(furnitureProperty);
+      // Ensure at least one column is visible
+      if (furnitureVisibleProperties.isEmpty()) {
+        furnitureVisibleProperties.add(HomePieceOfFurniture.SortableProperty.NAME);
+      }
+    } else {
+      // Add furniture property after the visible property that has the previous index in 
+      // the following list
+      List<HomePieceOfFurniture.SortableProperty> propertiesOrder = 
+          Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
+              HomePieceOfFurniture.SortableProperty.NAME, 
+              HomePieceOfFurniture.SortableProperty.WIDTH,
+              HomePieceOfFurniture.SortableProperty.DEPTH,
+              HomePieceOfFurniture.SortableProperty.HEIGHT,
+              HomePieceOfFurniture.SortableProperty.X,
+              HomePieceOfFurniture.SortableProperty.Y,
+              HomePieceOfFurniture.SortableProperty.ELEVATION,
+              HomePieceOfFurniture.SortableProperty.ANGLE,
+              HomePieceOfFurniture.SortableProperty.COLOR,
+              HomePieceOfFurniture.SortableProperty.MOVABLE,
+              HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW,
+              HomePieceOfFurniture.SortableProperty.VISIBLE}); 
+      int propertyIndex = propertiesOrder.indexOf(furnitureProperty) - 1;
+      if (propertyIndex > 0) {      
+        while (propertyIndex > 0) {
+          int visiblePropertyIndex = furnitureVisibleProperties.indexOf(propertiesOrder.get(propertyIndex));
+          if (visiblePropertyIndex >= 0) {
+            propertyIndex = visiblePropertyIndex + 1;
+            break;
+          } else {
+            propertyIndex--;
+          }
+        }
+      }
+      if (propertyIndex < 0) {
+        propertyIndex = 0;
+      }
+      furnitureVisibleProperties.add(propertyIndex, furnitureProperty);
+    }
+    this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
+  }
+  
+  /**
    * Controls the sort of the furniture in home. If home furniture isn't sorted
    * or is sorted on an other property, it will be sorted on the given
    * <code>furnitureProperty</code> in ascending order. If home furniture is already
@@ -246,6 +318,13 @@ public class FurnitureController {
     this.home.setFurnitureDescendingSorted(descending);
   }
 
+  /**
+   * Updates the furniture visible properties in home.  
+   */
+  public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
+    this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
+  }
+  
   /**
    * Controls the modification of selected furniture.
    */

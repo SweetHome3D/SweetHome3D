@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -37,30 +38,31 @@ public class Home implements Serializable {
   private static final long serialVersionUID = 1L;
   
   public enum Property {NAME, MODIFIED,
-    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED,
+    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
     BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, LIGHT_COLOR, WALLS_ALPHA};
   
-  private List<HomePieceOfFurniture>            furniture;
-  private transient List<Object>                selectedItems;
-  private transient List<FurnitureListener>     furnitureListeners;
-  private transient List<SelectionListener>     selectionListeners;
-  private Collection<Wall>                      walls;
-  private transient List<WallListener>          wallListeners;
-  private Camera                                camera;
-  private transient List<CameraListener>        cameraListeners;
-  private float                                 wallHeight;
-  private String                                name;
-  private HomePieceOfFurniture.SortableProperty furnitureSortedProperty;
-  private boolean                               furnitureDescendingSorted;
-  private transient boolean                     modified;
-  private BackgroundImage                       backgroundImage;
-  private ObserverCamera                        observerCamera;
-  private Camera                                topCamera;
-  private int                                   skyColor;
-  private int                                   groundColor;
-  private int                                   lightColor;
-  private float                                 wallsAlpha;
-  private transient PropertyChangeSupport       propertyChangeSupport;
+  private List<HomePieceOfFurniture>                  furniture;
+  private transient List<Object>                      selectedItems;
+  private transient List<FurnitureListener>           furnitureListeners;
+  private transient List<SelectionListener>           selectionListeners;
+  private Collection<Wall>                            walls;
+  private transient List<WallListener>                wallListeners;
+  private Camera                                      camera;
+  private transient List<CameraListener>              cameraListeners;
+  private float                                       wallHeight;
+  private String                                      name;
+  private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
+  private boolean                                     furnitureDescendingSorted;
+  private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
+  private transient boolean                           modified;
+  private BackgroundImage                             backgroundImage;
+  private ObserverCamera                              observerCamera;
+  private Camera                                      topCamera;
+  private int                                         skyColor;
+  private int                                         groundColor;
+  private int                                         lightColor;
+  private float                                       wallsAlpha;
+  private transient PropertyChangeSupport             propertyChangeSupport;
 
 
   /**
@@ -90,6 +92,12 @@ public class Home implements Serializable {
     this.furniture = new ArrayList<HomePieceOfFurniture>(furniture);
     this.walls = new ArrayList<Wall>();
     this.wallHeight = wallHeight;
+    this.furnitureVisibleProperties = Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
+        HomePieceOfFurniture.SortableProperty.NAME,
+        HomePieceOfFurniture.SortableProperty.WIDTH,
+        HomePieceOfFurniture.SortableProperty.DEPTH,
+        HomePieceOfFurniture.SortableProperty.HEIGHT,
+        HomePieceOfFurniture.SortableProperty.VISIBLE});
     // Init transient lists and other fields
     init();
   }
@@ -110,7 +118,20 @@ public class Home implements Serializable {
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.wallListeners = new ArrayList<WallListener>();
     this.cameraListeners = new ArrayList<CameraListener>();
-    
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+
+    if (this.furnitureVisibleProperties == null) {
+      // Set the furniture properties that were visible before version 0.19 
+      this.furnitureVisibleProperties = Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
+          HomePieceOfFurniture.SortableProperty.NAME,
+          HomePieceOfFurniture.SortableProperty.WIDTH,
+          HomePieceOfFurniture.SortableProperty.DEPTH,
+          HomePieceOfFurniture.SortableProperty.HEIGHT,
+          HomePieceOfFurniture.SortableProperty.COLOR,
+          HomePieceOfFurniture.SortableProperty.MOVABLE,
+          HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW,
+          HomePieceOfFurniture.SortableProperty.VISIBLE});
+    }
     // Create a default top camera that matches default point of view in previous versions 
     this.topCamera = new Camera(500, 1500, 1000, 
         (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
@@ -611,9 +632,6 @@ public class Home implements Serializable {
    * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    if (this.propertyChangeSupport == null) {
-      this.propertyChangeSupport = new PropertyChangeSupport(this);
-    }
     this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
   }
 
@@ -621,9 +639,7 @@ public class Home implements Serializable {
    * Removes the property change <code>listener</code> in parameter from this home.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    if (this.propertyChangeSupport != null) {
-      this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
-    }
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
   }
 
   /**
@@ -648,9 +664,7 @@ public class Home implements Serializable {
         || (name != null && !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
-      }
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
     }
   }
 
@@ -667,10 +681,8 @@ public class Home implements Serializable {
   public void setModified(boolean modified) {
     if (modified != this.modified) {
       this.modified = modified;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.MODIFIED.toString(), !modified, modified);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.MODIFIED.toString(), !modified, modified);
     }
   }
   
@@ -691,11 +703,9 @@ public class Home implements Serializable {
         || (furnitureSortedProperty != null && !furnitureSortedProperty.equals(this.furnitureSortedProperty))) {
       HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.FURNITURE_SORTED_PROPERTY.toString(), 
-            oldFurnitureSortedProperty, furnitureSortedProperty);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.FURNITURE_SORTED_PROPERTY.toString(), 
+          oldFurnitureSortedProperty, furnitureSortedProperty);
     }
   }
 
@@ -713,11 +723,32 @@ public class Home implements Serializable {
   public void setFurnitureDescendingSorted(boolean furnitureDescendingSorted) {
     if (furnitureDescendingSorted != this.furnitureDescendingSorted) {
       this.furnitureDescendingSorted = furnitureDescendingSorted;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.FURNITURE_DESCENDING_SORTED.toString(), 
-            !furnitureDescendingSorted, furnitureDescendingSorted);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.FURNITURE_DESCENDING_SORTED.toString(), 
+          !furnitureDescendingSorted, furnitureDescendingSorted);
+    }
+  }
+
+  /**
+   * Returns an unmodifiable list of the furniture properties that are visible.
+   */
+  public List<HomePieceOfFurniture.SortableProperty> getFurnitureVisibleProperties() {
+    return Collections.unmodifiableList(this.furnitureVisibleProperties);
+  }
+  
+  /**
+   * Sets the furniture properties that are visible and the order in which they are visible,
+   * then fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
+    if (furnitureVisibleProperties != this.furnitureVisibleProperties
+        || (furnitureVisibleProperties != null && !furnitureVisibleProperties.equals(this.furnitureVisibleProperties))) {
+      List<HomePieceOfFurniture.SortableProperty> oldFurnitureVisibleProperties = this.furnitureVisibleProperties;
+      this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(furnitureVisibleProperties);
+      this.propertyChangeSupport.firePropertyChange(
+          Property.FURNITURE_VISIBLE_PROPERTIES.toString(), 
+          Collections.unmodifiableList(oldFurnitureVisibleProperties), 
+          Collections.unmodifiableList(furnitureVisibleProperties));
     }
   }
 
@@ -735,10 +766,8 @@ public class Home implements Serializable {
     if (backgroundImage != this.backgroundImage) {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.BACKGROUND_IMAGE.toString(), oldBackgroundImage, backgroundImage);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.BACKGROUND_IMAGE.toString(), oldBackgroundImage, backgroundImage);
     }
   }
 
@@ -777,10 +806,8 @@ public class Home implements Serializable {
     if (camera != this.camera) {
       Camera oldCamera = this.camera;
       this.camera = camera;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.CAMERA.toString(), oldCamera, camera);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.CAMERA.toString(), oldCamera, camera);
     }
   }
 
@@ -868,10 +895,8 @@ public class Home implements Serializable {
     if (groundColor != this.groundColor) {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
     }
   }
 
@@ -889,10 +914,8 @@ public class Home implements Serializable {
     if (skyColor != this.skyColor) {
       int oldSkyColor = this.skyColor;
       this.skyColor = skyColor;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
     }
   }
   
@@ -910,10 +933,8 @@ public class Home implements Serializable {
     if (lightColor != this.lightColor) {
       int oldLightColor = this.lightColor;
       this.lightColor = lightColor;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
     }
   }
 
@@ -932,10 +953,8 @@ public class Home implements Serializable {
     if (wallsAlpha != this.wallsAlpha) {
       float oldWallsAlpha = this.wallsAlpha;
       this.wallsAlpha = wallsAlpha;
-      if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(
-            Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
-      }
+      this.propertyChangeSupport.firePropertyChange(
+          Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
     }
   }
 
