@@ -60,42 +60,18 @@ class MacOSXConfiguration {
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = new HomeController(new Home(), homeApplication);
     HomePane defaultHomeView = (HomePane)defaultController.getView();
-    defaultHomeView.setEnabled(HomePane.ActionType.CLOSE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SAVE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SAVE_AS, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DEPTH, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_X, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_Y, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_ELEVATION, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_ANGLE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_COLOR, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_WIDTH, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DEPTH, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_HEIGHT, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_X, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_Y, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_ELEVATION, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_ANGLE, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_COLOR, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, false); 
-    defaultHomeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.SELECT, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.CREATE_WALLS, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.ZOOM_IN, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.ZOOM_OUT, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.VIEW_FROM_TOP, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.VIEW_FROM_OBSERVER, false);
-    defaultHomeView.setEnabled(HomePane.ActionType.MODIFY_3D_ATTRIBUTES, false);
+    for (HomePane.ActionType action : HomePane.ActionType.values()) {
+      switch (action) {
+        case ABOUT :
+        case NEW_HOME :
+        case OPEN :
+        case DELETE_RECENT_HOMES :
+        case HELP :
+          break;
+        default :
+          defaultHomeView.setEnabled(action, false);
+      }
+    }
     
     // Create a default undecorated frame out of sight 
     // and attach the application menu bar of empty view to it
