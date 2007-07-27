@@ -39,7 +39,7 @@ public class Home implements Serializable {
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
-    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, LIGHT_COLOR, WALLS_ALPHA};
+    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, LIGHT_COLOR, WALLS_ALPHA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient List<Object>                      selectedItems;
@@ -62,6 +62,7 @@ public class Home implements Serializable {
   private int                                         groundColor;
   private int                                         lightColor;
   private float                                       wallsAlpha;
+  private HomePrint                                   print;
   private transient PropertyChangeSupport             propertyChangeSupport;
 
 
@@ -956,6 +957,26 @@ public class Home implements Serializable {
       this.propertyChangeSupport.firePropertyChange(
           Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
     }
+  }
+
+  /**
+   * Returns the print attributes of this home.
+   */
+  public HomePrint getPrint() {
+    return this.print;
+  }
+
+  /**
+   * Sets the print attributes of this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setPrint(HomePrint print) {
+    if (print != this.print) {
+      HomePrint oldPrint = this.print;
+      this.print = print;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.PRINT.toString(), oldPrint, print);
+    }
+    this.print = print;
   }
 
   /**

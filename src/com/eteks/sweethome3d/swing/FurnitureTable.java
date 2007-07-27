@@ -28,6 +28,9 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -68,7 +71,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A table displaying furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable {
+public class FurnitureTable extends JTable implements Printable {
   private ListSelectionListener  tableSelectionListener;
 
   /**
@@ -308,6 +311,17 @@ public class FurnitureTable extends JTable {
       });
   }
 
+  /**
+   * Prints this component to make it fill <code>pageFormat</code> imageable size.
+   */
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    JTable printableTable = new JTable();
+    printableTable.setModel(getModel());
+    printableTable.setColumnModel(getColumnModel());   
+    printableTable.setGridColor(Color.BLACK);
+    Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
+    return printable.print(g, pageFormat, pageIndex);
+  }
   
   /**
    * Column table model used by this table.
@@ -473,7 +487,7 @@ public class FurnitureTable extends JTable {
      * Returns a renderer that converts the displayed <code>property</code> of a piece of furniture 
      * to inch in case preferences unit us equal to INCH. 
      */
-    private static TableCellRenderer getSizeRenderer(HomePieceOfFurniture.SortableProperty property,
+    private TableCellRenderer getSizeRenderer(HomePieceOfFurniture.SortableProperty property,
                                               final UserPreferences preferences) {
       // Renderer super class used to display sizes
       class SizeRenderer implements TableCellRenderer {

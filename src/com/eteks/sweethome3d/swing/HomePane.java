@@ -20,14 +20,23 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Paper;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -73,6 +82,7 @@ import javax.swing.event.MenuListener;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -81,7 +91,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PREFERENCES, EXIT, 
+    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
@@ -165,6 +175,9 @@ public class HomePane extends JRootPane {
     createAction(ActionType.CLOSE, controller, "close");
     createAction(ActionType.SAVE, controller, "save");
     createAction(ActionType.SAVE_AS, controller, "saveAs");
+    createAction(ActionType.PAGE_SETUP, controller, "setupPage");
+    createAction(ActionType.PRINT_PREVIEW, controller, "previewPrint");
+    createAction(ActionType.PRINT, controller, "print");
     createAction(ActionType.PREFERENCES, controller, "editPreferences");
     createAction(ActionType.EXIT, controller, "exit");
     
@@ -373,6 +386,10 @@ public class HomePane extends JRootPane {
     fileMenu.add(getMenuAction(ActionType.CLOSE));
     fileMenu.add(getMenuAction(ActionType.SAVE));
     fileMenu.add(getMenuAction(ActionType.SAVE_AS));
+    fileMenu.addSeparator();
+    fileMenu.add(getMenuAction(ActionType.PAGE_SETUP));
+    fileMenu.add(getMenuAction(ActionType.PRINT_PREVIEW));
+    fileMenu.add(getMenuAction(ActionType.PRINT));
     // Don't add EXIT menu under Mac OS X, it's displayed in application menu  
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       fileMenu.addSeparator();
@@ -1198,6 +1215,112 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Launches browser with <code>url</code>.
+   */
+  private void viewURL(URL url) {
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      BasicService service = 
+          (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      service.showDocument(url); 
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable 
+    } 
+  }
+
+  /**
+   * Shows the page setup dialog matching <code>homePrint</code> 
+   * and returns the print attributes chosen by user.
+   * If user cancelled his choice, <code>homePrint</code> parameter is returned unchanged.
+   */
+  public HomePrint setupPage(HomePrint homePrint) {
+    PrinterJob printerJob = PrinterJob.getPrinterJob();
+    
+    PageFormat pageFormat;
+    if (homePrint == null) {
+      pageFormat = printerJob.defaultPage();
+    } else {
+      pageFormat = printerJob.validatePage(getPageFormat(homePrint));
+    }
+    PageFormat returnedPageFormat = printerJob.pageDialog(pageFormat);
+    if (returnedPageFormat == pageFormat) {
+      // User clicked on Cancel
+      return homePrint;
+    } else {
+      // Return an HomePrint instance matching returnedPageFormat
+      HomePrint.PaperOrientation paperOrientation; 
+      switch (returnedPageFormat.getOrientation()) {
+        case PageFormat.LANDSCAPE :
+          paperOrientation = HomePrint.PaperOrientation.LANDSCAPE;
+          break;
+        case PageFormat.REVERSE_LANDSCAPE :
+          paperOrientation = HomePrint.PaperOrientation.REVERSE_LANDSCAPE;
+          break;
+        default :
+          paperOrientation = HomePrint.PaperOrientation.PORTRAIT;
+          break;
+      }
+      Paper paper = returnedPageFormat.getPaper();
+      return new HomePrint(paperOrientation, (float)paper.getWidth(), (float)paper.getHeight(),
+          (float)paper.getImageableY(), (float)paper.getImageableX(),
+          (float)(paper.getHeight() - paper.getImageableHeight() - paper.getImageableY()),
+          (float)(paper.getWidth() - paper.getImageableWidth() - paper.getImageableX()),
+          homePrint == null ? true : homePrint.isFurniturePrinted(),
+          homePrint == null ? true : homePrint.isPlanPrinted(),
+          homePrint == null ? true : homePrint.isView3DPrinted());
+    }
+  }
+  
+  /**
+   * Returns a <code>PageFormat</code> object created from <code>homePrint</code>.
+   */
+  private PageFormat getPageFormat(HomePrint homePrint) {
+    PageFormat pageFormat = new PageFormat();
+    switch (homePrint.getPaperOrientation()) {
+      case PORTRAIT :
+        pageFormat.setOrientation(PageFormat.PORTRAIT);
+        break;
+      case LANDSCAPE :
+        pageFormat.setOrientation(PageFormat.LANDSCAPE);
+        break;
+      case REVERSE_LANDSCAPE :
+        pageFormat.setOrientation(PageFormat.REVERSE_LANDSCAPE);
+        break;
+    }
+    Paper paper = new Paper();
+    paper.setSize(homePrint.getPaperWidth(), homePrint.getPaperHeight());
+    paper.setImageableArea(homePrint.getPaperLeftMargin(), homePrint.getPaperTopMargin(), 
+        homePrint.getPaperWidth() - homePrint.getPaperLeftMargin() - homePrint.getPaperRightMargin(), 
+        homePrint.getPaperHeight() - homePrint.getPaperTopMargin() - homePrint.getPaperBottomMargin());
+    pageFormat.setPaper(paper);
+    return pageFormat;
+  }
+  
+  /**
+   * Prints the views managed by the controllers in parameter.
+   */
+  public boolean print(HomePrint homePrint,
+                       HomeController controller) {
+    PrinterJob printerJob = PrinterJob.getPrinterJob();
+    PageFormat pageFormat;
+    if (homePrint == null) {
+      pageFormat = printerJob.defaultPage();
+    } else {
+      pageFormat = printerJob.validatePage(getPageFormat(homePrint));
+    }
+    printerJob.setPrintable(new PrintableComponent(controller), pageFormat);
+    if (printerJob.printDialog()) {
+      try {
+        // TODO Show wait cursor for this long task ?
+        printerJob.print();
+      } catch (PrinterException ex) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  /**
    * Displays a dialog that let user choose whether he wants to delete 
    * the selected furniture from catalog or not.
    * @return <code>true</code> if user confirmed to delete.
@@ -1214,20 +1337,6 @@ public class HomePane extends JRootPane {
         null, new Object [] {delete, cancel}, cancel) == JOptionPane.OK_OPTION;
   }
   
-  /**
-   * Launches browser with <code>url</code>.
-   */
-  private void viewURL(URL url) {
-    try { 
-      // Lookup the javax.jnlp.BasicService object 
-      BasicService service = 
-          (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      service.showDocument(url); 
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable 
-    } 
-  }
-
   /**
    * Returns <code>true</code> if clipboard contains data that
    * components are able to handle.
@@ -1288,6 +1397,40 @@ public class HomePane extends JRootPane {
     
     public void focusLost(FocusEvent ev) {
       this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
+    }
+  }
+  
+  /**
+   * A printable component used to print furniture view, plan view 
+   * and 3D view.
+   */
+  private static class PrintableComponent extends JComponent implements Printable {
+    private HomeController controller;
+    private int            planViewIndex = 0;
+    
+    public PrintableComponent(HomeController controller) {
+      this.controller = controller;
+    }
+    
+    public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+      Graphics2D g2D = (Graphics2D)g;
+      g2D.setColor(Color.WHITE);
+      g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
+                                      pageFormat.getHeight()));
+      if (pageIndex <= this.planViewIndex) {
+        // Try to print next furniture view page
+        if (((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, pageIndex) == PAGE_EXISTS) {
+          this.planViewIndex = pageIndex + 1;
+        }
+      } 
+      if (pageIndex == this.planViewIndex) {
+        ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
+      } else if (pageIndex == this.planViewIndex + 1) {
+        ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
+      }
+      
+      return pageIndex <= this.planViewIndex + 1 
+          ? PAGE_EXISTS : NO_SUCH_PAGE;
     }
   }
 }

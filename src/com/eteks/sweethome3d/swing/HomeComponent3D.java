@@ -22,6 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Shape;
@@ -32,6 +34,9 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
+import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -59,11 +64,13 @@ import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
+import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
+import javax.media.j3d.Screen3D;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -100,19 +107,31 @@ import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * A component that displays home walls and furniture with Java 3D. 
  * @author Emmanuel Puybaret
  */
-public class HomeComponent3D extends JComponent {
+public class HomeComponent3D extends JComponent implements Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
   
-  private Map<Object, ObjectBranch> homeObjects = 
-      new HashMap<Object, ObjectBranch>();
-  private Collection<Object> homeObjectsToUpdate;
+  private Home                      home;
+  private SimpleUniverse            universe;
+  private Map<Object, ObjectBranch> homeObjects = new HashMap<Object, ObjectBranch>();
+  private Collection<Object>        homeObjectsToUpdate;
+  // Listeners bound to home that updates 3D scene objects
+  private CameraListener            cameraListener;
+  private PropertyChangeListener    homeCameraListener;
+  private PropertyChangeListener    skyColorListener;
+  private PropertyChangeListener    groundColorListener;
+  private PropertyChangeListener    lightColorListener;
+  private WallListener              wallListener;
+  private PropertyChangeListener    wallsAlphaListener;
+  private FurnitureListener         furnitureListener;
 
   /**
    * Creates a 3D component that displays <code>home</code> walls and furniture, 
@@ -126,6 +145,7 @@ public class HomeComponent3D extends JComponent {
    * Creates a 3D component that displays <code>home</code> walls and furniture.
    */
   public HomeComponent3D(Home home, HomeController3D controller) {
+    this.home = home;
     // Try to get antialiasing
     GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
     gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -156,16 +176,15 @@ public class HomeComponent3D extends JComponent {
    */
   private void addHierarchyListener(final Canvas3D canvas3D, 
                                     final Home home) {
-    addAncestorListener(new AncestorListener() {
-        private SimpleUniverse universe;
-        
+    addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
-          this.universe = getUniverse(canvas3D, home);
+          universe = getUniverse(canvas3D, home);
           canvas3D.setFocusable(false);
         }
         
         public void ancestorRemoved(AncestorEvent event) {
-          this.universe.cleanup();
+          universe.cleanup();
+          removeHomeListeners(home);
         }
         
         public void ancestorMoved(AncestorEvent event) {
@@ -177,16 +196,13 @@ public class HomeComponent3D extends JComponent {
    * Returns a 3D universe bound to <code>canvas3D</code> 
    * that displays <code>home</code> objects.
    */
-  private SimpleUniverse getUniverse(final Canvas3D canvas3D, final Home home) {
+  private SimpleUniverse getUniverse(final Canvas3D canvas3D, Home home) {
     // Link canvas 3D to a default universe
     SimpleUniverse universe = new SimpleUniverse(canvas3D);
     
     View view = universe.getViewer().getView();
-    // Update front and back clip distance to ensure their ratio is less than 3000
-    view.setFrontClipDistance(1);
-    view.setBackClipDistance(3000);
     // Update field of view from current camera
-    updateFieldOfView(view, home.getCamera());
+    updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
     
     TransformGroup viewPlatformTransform = 
         universe.getViewingPlatform().getViewPlatformTransform();
@@ -203,39 +219,141 @@ public class HomeComponent3D extends JComponent {
   }
   
   /**
+   * Remove all listeners bound to home that updates 3D scene objects.
+   */
+  private void removeHomeListeners(Home home) {
+    home.removeCameraListener(this.cameraListener);
+    home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
+    home.removePropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
+    home.removePropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorListener);
+    home.removePropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener);
+    home.removeWallListener(this.wallListener);
+    home.removePropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener);
+    home.removeFurnitureListener(this.furnitureListener);
+  }
+
+  /**
+   * Prints this component to make it fill <code>pageFormat</code> imageable size.
+   */
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
+    if (pageIndex == 0) {
+      int printSize = (int)Math.min(pageFormat.getImageableWidth(), 
+          pageFormat.getImageableHeight());
+      Canvas3D offScreenCanvas = createOffScreenCanvas(printSize);
+  
+      SimpleUniverse printUniverse = null;
+      if (this.universe == null) {
+        printUniverse = getUniverse(offScreenCanvas, this.home);
+      } else {
+        // Create a view associated with canvas3D
+        View view = new View();
+        view.addCanvas3D(offScreenCanvas);
+        // Reuse universe physical body, environment, projection policy, field of view and clip distances
+        Viewer universeViewer = this.universe.getViewer();
+        view.setPhysicalBody(universeViewer.getPhysicalBody());
+        view.setPhysicalEnvironment(universeViewer.getPhysicalEnvironment());
+        view.setProjectionPolicy(universeViewer.getView().getProjectionPolicy());
+        view.setFieldOfView(universeViewer.getView().getFieldOfView());
+        view.setFrontClipDistance(universeViewer.getView().getFrontClipDistance());
+        view.setBackClipDistance(universeViewer.getView().getBackClipDistance());
+        
+        // Create a viewing platform and attach it to view and universe locale
+        ViewingPlatform viewingPlatform = new ViewingPlatform();
+        viewingPlatform.setUniverse(this.universe);
+        this.universe.getLocale().addBranchGraph(
+            (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
+        view.attachViewPlatform(viewingPlatform.getViewPlatform());
+        // Reuse universe view platform transform
+        Transform3D universeViewPlatformTransform = new Transform3D();
+        this.universe.getViewingPlatform().getViewPlatformTransform().getTransform(universeViewPlatformTransform);
+        viewingPlatform.getViewPlatformTransform().setTransform(universeViewPlatformTransform);
+      }
+  
+      offScreenCanvas.renderOffScreenBuffer();
+      offScreenCanvas.waitForOffScreenRendering();
+      BufferedImage image = offScreenCanvas.getOffScreenBuffer().getImage();
+  
+      Graphics2D g2D = (Graphics2D)g.create();
+      // Center the 3D view in component
+      g2D.translate(pageFormat.getImageableX() + (pageFormat.getImageableWidth() - printSize) / 2, 
+          pageFormat.getImageableY() + (pageFormat.getImageableHeight() - printSize) / 2);
+      g2D.drawImage(image, 0, 0, printSize, printSize, this);
+      g2D.dispose();
+      
+      if (printUniverse != null) {
+        printUniverse.cleanup();
+        removeHomeListeners(this.home);
+      } else {
+        offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+      }
+      return PAGE_EXISTS;
+    } else {
+      return NO_SUCH_PAGE;
+    }
+  }
+
+  /**
+   * Returns an off screen canvas.
+   */
+  private Canvas3D createOffScreenCanvas(int printSize) {
+    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+    // Create the Java 3D canvas that will display home 
+    Canvas3D offScreenCanvas = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
+        getDefaultScreenDevice().getBestConfiguration(gc), true);
+    Screen3D screen3D = offScreenCanvas.getScreen3D();
+    int canvas3DImageSize = printSize * 2;  
+    screen3D.setSize(canvas3DImageSize, canvas3DImageSize);
+    screen3D.setPhysicalScreenWidth(2f);
+    screen3D.setPhysicalScreenHeight(2f);
+    BufferedImage image = new BufferedImage(canvas3DImageSize, canvas3DImageSize, BufferedImage.TYPE_INT_RGB);
+    ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
+    imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+    offScreenCanvas.setOffScreenBuffer(imageComponent2D);
+    return offScreenCanvas;
+  }
+
+  /**
    * Adds listeners to home to update point of view from current camera.
    */
   private void addCameraListeners(final Home home, final View view, 
                                   final TransformGroup viewPlatformTransform) {
-    home.addCameraListener(new CameraListener() {
+    this.cameraListener = new CameraListener() {
         public void cameraChanged(CameraEvent ev) {
           // Update view transform later to avoid flickering in case of mulitple camera changes 
           EventQueue.invokeLater(new Runnable() {
               public void run() {
-                updateFieldOfView(view, home.getCamera());
+                updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
                 updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
               }
             });
         }
-      });
-    home.addPropertyChangeListener(Home.Property.CAMERA, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateFieldOfView(view, home.getCamera());
-            updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
-          }
-        });
+      };
+    home.addCameraListener(this.cameraListener);
+    this.homeCameraListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
+          updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+        }
+      };
+    home.addPropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
   }
 
   /**
    * Updates <code>view</code> from <code>camera</code> field of view.
    */
-  private void updateFieldOfView(View view, Camera camera) {
+  private void updateView(View view, Camera camera, boolean observerCamera) {
     float fieldOfView = camera.getFieldOfView();
     if (fieldOfView == 0) {
       fieldOfView = (float)(Math.PI * 63 / 180);
     }
     view.setFieldOfView(fieldOfView);
+    // Use a different front clip distance when don't use observer camera 
+    // to obtain better results
+    double frontClipDistance = observerCamera ? 2 : 20;
+    // Update front and back clip distance to ensure their ratio is less than 3000
+    view.setFrontClipDistance(frontClipDistance);
+    view.setBackClipDistance(frontClipDistance * 3000);
   }
   
   /**
@@ -439,13 +557,12 @@ public class HomeComponent3D extends JComponent {
         new Point3d(100000, 100000, 100000)));
     
     // Add a listener on sky color property change to home
-    home.addPropertyChangeListener(Home.Property.SKY_COLOR, 
-      new PropertyChangeListener() {
+    this.skyColorListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateBackgroundColor(background, home);
         }
-      });
-    
+      };
+    home.addPropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
     return background;
   }
 
@@ -474,12 +591,12 @@ public class HomeComponent3D extends JComponent {
     groundBox.removeChild(topShape);
     
     // Add a listener on ground color property change to home
-    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, 
-      new PropertyChangeListener() {
+    this.groundColorListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateGroundColor(groundColoringAttributes, home);
         }
-      });
+      };
+    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorListener); 
     
     return topShape;
   }
@@ -513,14 +630,14 @@ public class HomeComponent3D extends JComponent {
     }
     
     // Add a listener on light color property change to home
-    home.addPropertyChangeListener(Home.Property.LIGHT_COLOR, 
-      new PropertyChangeListener() {
+    this.lightColorListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           for (int i = 0; i < lights.length - 1; i++) {
             updateLightColor(lights [i], home);
           }
         }
-      });
+      };
+    home.addPropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener); 
     
     return lights;
   }
@@ -567,7 +684,7 @@ public class HomeComponent3D extends JComponent {
    * that updates the scene <code>homeRoot</code>, each time a wall is added, updated or deleted. 
    */
   private void addWallListener(final Home home, final Group homeRoot) {
-    home.addWallListener(new WallListener() {
+    this.wallListener = new WallListener() {
         public void wallChanged(WallEvent ev) {
           Wall wall = ev.getWall();
           switch (ev.getType()) {
@@ -582,13 +699,14 @@ public class HomeComponent3D extends JComponent {
               break;
           }
         }
-      });
-    home.addPropertyChangeListener(Home.Property.WALLS_ALPHA, 
-      new PropertyChangeListener() {
+      };
+    home.addWallListener(this.wallListener);
+    this.wallsAlphaListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
         }
-      });
+      };
+    home.addPropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener); 
   }
 
   /**
@@ -596,7 +714,7 @@ public class HomeComponent3D extends JComponent {
    * each time a piece of furniture is added, updated or deleted. 
    */
   private void addFurnitureListener(final Home home, final Group homeRoot) {
-    home.addFurnitureListener(new FurnitureListener() {
+    this.furnitureListener = new FurnitureListener() {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
           switch (ev.getType()) {
@@ -615,7 +733,8 @@ public class HomeComponent3D extends JComponent {
             updateObjects(home.getWalls());
           }
         }
-      });
+      };
+    home.addFurnitureListener(this.furnitureListener);
   }
 
   /**
@@ -1031,8 +1150,7 @@ public class HomeComponent3D extends JComponent {
     private void createPieceOfFurnitureNode() {
       final TransformGroup pieceTransformGroup = new TransformGroup();
       // Allow the change of the transformation that sets piece size and position
-      pieceTransformGroup.setCapability(
-          TransformGroup.ALLOW_TRANSFORM_WRITE);
+      pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
 
       pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
       pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
@@ -1220,7 +1338,7 @@ public class HomeComponent3D extends JComponent {
         while (enumeration.hasMoreElements()) {
           setAppearanceChangeCapability((Node)enumeration.nextElement());
         }
-      } else if (node instanceof Shape3D) {
+      } else if (node instanceof Shape3D) {        
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance != null) {
           setAppearanceCapabilities(appearance);

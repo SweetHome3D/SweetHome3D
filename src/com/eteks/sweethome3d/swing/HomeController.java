@@ -50,6 +50,7 @@ import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -167,6 +168,9 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.CLOSE, applicationExists);
     homeView.setEnabled(HomePane.ActionType.SAVE, applicationExists);
     homeView.setEnabled(HomePane.ActionType.SAVE_AS, applicationExists);
+    homeView.setEnabled(HomePane.ActionType.PAGE_SETUP, true);
+    homeView.setEnabled(HomePane.ActionType.PRINT_PREVIEW, true);
+    homeView.setEnabled(HomePane.ActionType.PRINT, true);
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, true);
@@ -1021,9 +1025,34 @@ public class HomeController  {
   }
 
   /**
-   * Manages application exit. If any home in application homes list is modified,
-   * the user will {@link HomePane#confirmExit() prompted} in view whether he wants
-   * to discard his modifications.  
+   * Controls page setup.
+   */
+  public void setupPage() {
+    HomePrint homePrint = ((HomePane)getView()).setupPage(this.home.getPrint());
+    this.home.setPrint(homePrint);
+  }
+
+  /**
+   * Controls the print preview.
+   */
+  public void previewPrint() {
+    // TODO Implement preview
+  }
+
+  /**
+   * Controls the print of this home.
+   */
+  public void print() {
+    if (!((HomePane)getView()).print(this.home.getPrint(), this)) {
+      String message = String.format(this.resource.getString("printError"), this.home.getName());
+      ((HomePane)getView()).showError(message);
+    }
+  }
+
+  /**
+   * Controls application exit. If any home in application homes list is modified,
+   * the user will be {@link HomePane#confirmExit() prompted} in view whether he wants
+   * to discard his modifications ot not.  
    */
   public void exit() {
     for (Home home : this.application.getHomes()) {
