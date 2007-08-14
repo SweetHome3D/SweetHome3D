@@ -348,7 +348,7 @@ public class HomeComponent3D extends JComponent implements Printable {
       fieldOfView = (float)(Math.PI * 63 / 180);
     }
     view.setFieldOfView(fieldOfView);
-    // Use a different front clip distance when don't use observer camera 
+    // Use a different front clip distance for observer camera 
     // to obtain better results
     double frontClipDistance = observerCamera ? 2 : 20;
     // Update front and back clip distance to ensure their ratio is less than 3000
