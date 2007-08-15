@@ -43,8 +43,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.event.ChangeEvent;
@@ -57,6 +59,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureEvent;
@@ -91,6 +95,7 @@ public class FurnitureTable extends JTable implements Printable {
                        FurnitureController controller) {
     setModel(new FurnitureTableModel(home));
     setColumnModel(new FurnitureTableColumnModel(home, preferences));
+    updateTableColumnsWidth();
     updateTableSelectedFurniture(home.getSelectedItems());
     // Add listeners to model
     if (controller != null) {
@@ -163,6 +168,25 @@ public class FurnitureTable extends JTable implements Printable {
     getSelectionModel().addListSelectionListener(tableSelectionListener);
   }
 
+  /**
+   * Updates table columns width from the content of its cells.
+   */
+  private void updateTableColumnsWidth() {
+    TableColumnModel columnModel = getColumnModel();
+    TableModel tableModel = getModel();
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      TableColumn column = columnModel.getColumn(columnIndex);
+      int preferredWidth = column.getHeaderRenderer().getTableCellRendererComponent(
+          this, column.getHeaderValue(), false, false, -1, columnIndex).getPreferredSize().width;
+      for (int rowIndex = 0, m = tableModel.getRowCount(); rowIndex < m; rowIndex++) {
+        preferredWidth = Math.max(preferredWidth, column.getCellRenderer().getTableCellRendererComponent(
+            this, tableModel.getValueAt(rowIndex, columnIndex), false, false, -1, columnIndex).getPreferredSize().width);
+      }
+      column.setPreferredWidth(preferredWidth);
+      column.setWidth(preferredWidth);
+    }
+  }
+  
   /**
    * Adds a double click mouse listener to modify selected furniture.
    */
@@ -315,12 +339,67 @@ public class FurnitureTable extends JTable implements Printable {
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
-    JTable printableTable = new JTable();
-    printableTable.setModel(getModel());
-    printableTable.setColumnModel(getColumnModel());   
-    printableTable.setGridColor(Color.BLACK);
+    // Create a printable column model from the column model of this table 
+    // with printable renderers for each column
+    DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
+    TableColumnModel columnModel = getColumnModel();
+    final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
+    defaultRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
+    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+      // Create a printable column from existing table column
+      TableColumn printableColumn = new TableColumn();
+      printableColumn.setIdentifier(tableColumn.getIdentifier());
+      printableColumn.setHeaderValue(tableColumn.getHeaderValue());
+      // Change printable column cell renderer 
+      printableColumn.setCellRenderer(new TableCellRenderer() {
+          public Component getTableCellRendererComponent(JTable table, Object value, 
+                                 boolean isSelected, boolean hasFocus, int row, int column) {
+            // Delegate rendering to existing cell renderer and don't show if cell is selected
+            TableCellRenderer cellRenderer = tableColumn.getCellRenderer();
+            Component rendererComponent = cellRenderer.getTableCellRendererComponent(table, value, 
+                false, false, row, column);
+            if (rendererComponent instanceof JCheckBox) {
+              // Prefer a x sign for boolean values instead of check boxes
+              rendererComponent = defaultRenderer.getTableCellRendererComponent(table, 
+                  ((JCheckBox)rendererComponent).isSelected() ? "x" : "", false, false, row, column);
+            }
+            rendererComponent.setBackground(Color.WHITE);
+            rendererComponent.setForeground(Color.BLACK);
+            return rendererComponent;
+          }
+        });
+      // Change printable column header renderer
+      printableColumn.setHeaderRenderer(new TableCellRenderer() {
+        public Component getTableCellRendererComponent(JTable table, Object value, 
+                                 boolean isSelected, boolean hasFocus, int row, int column) {
+            // Delegate rendering to default cell renderer
+            JLabel headerRendererLabel = (JLabel)defaultRenderer.getTableCellRendererComponent(table, value, 
+                false, false, row, column);
+            // Don't display sort icon
+            headerRendererLabel.setIcon(null);
+            // Change header background and foreground
+            headerRendererLabel.setBackground(Color.LIGHT_GRAY);
+            headerRendererLabel.setForeground(Color.BLACK);
+            headerRendererLabel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                headerRendererLabel.getBorder()));
+            return headerRendererLabel;
+          }
+        });
+      printableColumnModel.addColumn(printableColumn);
+    }
+    setColumnModel(printableColumnModel);   
+    updateTableColumnsWidth();
+    Color gridColor = getGridColor();
+    // Force grid color to black
+    setGridColor(Color.BLACK);
     Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
-    return printable.print(g, pageFormat, pageIndex);
+    int pageExists = printable.print(g, pageFormat, pageIndex);
+    // Restore column model and grid color to their previous values
+    setColumnModel(columnModel);
+    setGridColor(gridColor);
+    return pageExists;
   }
   
   /**
