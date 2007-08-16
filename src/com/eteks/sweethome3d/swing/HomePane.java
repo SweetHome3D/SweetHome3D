@@ -21,6 +21,8 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
@@ -58,6 +60,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -1308,13 +1311,22 @@ public class HomePane extends JRootPane {
     } else {
       pageFormat = printerJob.validatePage(getPageFormat(homePrint));
     }
-    printerJob.setPrintable(new PrintableComponent(controller), pageFormat);
+    printerJob.setPrintable(new PrintableComponent(homePrint, controller), pageFormat);
     if (printerJob.printDialog()) {
+      // Create a waiting glass pane for this lengthy operation
+      Component previousGlassPane = getGlassPane(); 
+      JLabel waitGlassPane = new JLabel();
+      waitGlassPane.setOpaque(false);
+      waitGlassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      setGlassPane(waitGlassPane);
+      waitGlassPane.setVisible(true);
+      
       try {
-        // TODO Show wait cursor for this long task ?
         printerJob.print();
       } catch (PrinterException ex) {
         return false;
+      } finally {
+        setGlassPane(previousGlassPane);
       }
     }
     return true;
@@ -1405,10 +1417,12 @@ public class HomePane extends JRootPane {
    * and 3D view.
    */
   private static class PrintableComponent extends JComponent implements Printable {
+    private HomePrint      homePrint;
     private HomeController controller;
     private int            planViewIndex = 0;
     
-    public PrintableComponent(HomeController controller) {
+    public PrintableComponent(HomePrint homePrint, HomeController controller) {
+      this.homePrint = homePrint;
       this.controller = controller;
     }
     
@@ -1417,20 +1431,32 @@ public class HomePane extends JRootPane {
       g2D.setColor(Color.WHITE);
       g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
                                       pageFormat.getHeight()));
-      if (pageIndex <= this.planViewIndex) {
+      
+      int pageExists = NO_SUCH_PAGE;
+      if ((this.homePrint == null || this.homePrint.isFurniturePrinted())
+          && pageIndex <= this.planViewIndex) {
         // Try to print next furniture view page
-        if (((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, pageIndex) == PAGE_EXISTS) {
+        pageExists = ((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, pageIndex);
+        if (pageExists == PAGE_EXISTS) {
           this.planViewIndex = pageIndex + 1;
         }
       } 
-      if (pageIndex == this.planViewIndex) {
+      if ((this.homePrint == null || this.homePrint.isPlanPrinted())
+          && pageIndex == this.planViewIndex) {
         ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
-      } else if (pageIndex == this.planViewIndex + 1) {
+        pageExists = PAGE_EXISTS;
+      } else if ((this.homePrint == null && pageIndex == this.planViewIndex + 1)
+                 || (this.homePrint != null
+                     && this.homePrint.isView3DPrinted()
+                     && ((this.homePrint.isPlanPrinted()
+                           && pageIndex == this.planViewIndex + 1)
+                         || (!this.homePrint.isPlanPrinted()
+                             && pageIndex == this.planViewIndex)))) {
         ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
+        pageExists = PAGE_EXISTS;
       }
       
-      return pageIndex <= this.planViewIndex + 1 
-          ? PAGE_EXISTS : NO_SUCH_PAGE;
+      return pageExists;
     }
   }
 }
