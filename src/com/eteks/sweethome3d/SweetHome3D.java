@@ -342,7 +342,7 @@ public class SweetHome3D extends HomeApplication {
       super(new Frame());
       try {
         this.image = ImageIO.read(SplashScreenWindow.class.getResource(
-            "resources/SweetHome3DSplashScreen.jpg"));
+            "resources/splashScreen.jpg"));
         setSize(this.image.getWidth(), this.image.getHeight());
         setLocationRelativeTo(null);
         setVisible(true);
