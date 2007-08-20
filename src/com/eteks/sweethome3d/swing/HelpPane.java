@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.ImageIcon;
@@ -197,7 +200,13 @@ public class HelpPane extends JRootPane {
    * Displays <code>url</code> in standard browser.
    */
   public void setBrowserPage(URL url) {
-    BrowserManager.getInstance().viewURL(url);
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      service.showDocument(url); 
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable 
+    }
   }
 
   /**

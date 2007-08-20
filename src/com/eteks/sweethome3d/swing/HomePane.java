@@ -46,6 +46,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -1198,15 +1201,23 @@ public class HomePane extends JRootPane {
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
     messagePane.setEditable(false);
-    if (BrowserManager.getInstance().isOnlineBrowserAvailable()) {
-      messagePane.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent ev) {
-          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            BrowserManager.getInstance().viewURL(ev.getURL());
+    try { 
+      // Lookup the javax.jnlp.BasicService object 
+      final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
+      // If basic service supports online web browser
+      if (service.isWebBrowserSupported() && !service.isOffline()) {
+        // Add a listener that displays hyperlinks content in browser
+        messagePane.addHyperlinkListener(new HyperlinkListener() {
+          public void hyperlinkUpdate(HyperlinkEvent ev) {
+            if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              service.showDocument(ev.getURL()); 
+            }
           }
-        }
-      });
-    }
+        });
+      }
+    } catch (UnavailableServiceException ex) {
+      // Too bad : service is unavailable             
+    } 
     
     String title = this.resource.getString("about.title");
     Icon   icon  = new ImageIcon(HomePane.class.getResource(
