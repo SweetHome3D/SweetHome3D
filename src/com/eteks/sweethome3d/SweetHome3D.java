@@ -22,12 +22,17 @@ package com.eteks.sweethome3d;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
+import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
@@ -119,6 +124,7 @@ public class SweetHome3D extends HomeApplication {
   public static void main(String [] args) {
     // At first main call
     if (application == null) {
+      checkServiceManagerAvailabilty();
       initLookAndFeel();
       application = createApplication();
     }
@@ -172,6 +178,34 @@ public class SweetHome3D extends HomeApplication {
             shownFrame.toFront();
           }
         });      
+    }
+  }
+
+  /**
+   * Checks if JNLP <code>ServiceManager</code> services required by
+   * Sweet Home 3D are available. If Sweet Home 3D is launched as a standalone application
+   * from outside of Java Web Start, this method init the <code>javax.jnlp.SingleInstanceService</code>
+   * and <code>javax.jnlp.BasicService</code> services.
+   */
+  private static void checkServiceManagerAvailabilty() {
+    if (ServiceManager.getServiceNames() == null) {
+      ServiceManager.setServiceManagerStub(new ServiceManagerStub() {
+        public Object lookup(final String name) throws UnavailableServiceException {
+          if (name.equals("javax.jnlp.BasicService")) {
+            return StandaloneBasicService.getInstance();
+//          } else if (name.equals("javax.jnlp.SingleInstanceService")) {
+//            return SingleInstanceServiceImpl.getInstance();
+          } else {
+            throw new UnavailableServiceException(name);
+          }
+        }
+        
+        public String[] getServiceNames() {
+          return new String[]  {
+              "javax.jnlp.BasicService",
+              "javax.jnlp.SingleInstanceService"};
+        }
+      });
     }
   }
 
@@ -294,6 +328,107 @@ public class SweetHome3D extends HomeApplication {
             home.removePropertyChangeListener(Home.Property.MODIFIED, this);
           }
         });
+    }
+  }
+  
+  
+  /**
+   * JNLP <code>BasicService</code> implementation for applications run out of Java Web Start.
+   * Brower will be launched either by Java SE 6 <code>Desktop</code> class, 
+   * or by the <code>open</code> command under Mac OS X. 
+   */
+  private static class StandaloneBasicService implements BasicService {
+    private static StandaloneBasicService instance;
+    
+    private StandaloneBasicService() {    
+      // This class is a singleton
+    }
+    
+    /**
+     * Returns an instance of this singleton. 
+     */
+    public static StandaloneBasicService getInstance() {
+      if (instance == null) {
+        instance = new StandaloneBasicService();
+      }
+      return instance;
+    }
+
+    /**
+     * Shows the given <code>url</code> in default browser. 
+     */
+    public boolean showDocument(URL url) {
+      if (isJava6()) {
+        try {
+          // Call Java SE 6 java.awt.Desktop browse method by reflection to 
+          // ensure Java SE 5 compatibility
+          Class desktopClass = Class.forName("java.awt.Desktop");
+          Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+          return (Boolean)desktopClass.getMethod("browse", URI.class).invoke(desktopInstance, url.toURI());
+        } catch (Exception ex) {
+          // For any exception, let's consider simply the showDocument method failed
+        }
+      } else if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        try {
+          Runtime.getRuntime().exec(new String [] {"open", url.toString()});
+          return true;
+        } catch (IOException ex) {
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Returns a default URL matching the <code>resources</code> sub directory.
+     */
+    public URL getCodeBase() {
+      return StandaloneBasicService.class.getResource("resources");
+    }
+
+    /**
+     * Returns <code>false</code>.
+     */
+    public boolean isOffline() {
+      return false;
+    }
+
+    /**
+     * Returns <code>true</code> if a browser is available.
+     */
+    public boolean isWebBrowserSupported() {
+      if (isJava6()) {
+        try {
+          // Call Java SE 6 java.awt.Desktop isSupported(Desktop.Action.BROWSE) method by reflection to 
+          // ensure Java SE 5 compatibility
+          Class desktopClass = Class.forName("java.awt.Desktop");
+          Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
+          Class desktopActionClass = Class.forName("java.awt.Desktop.Action");
+          Object desktopBrowseAction = desktopActionClass.getMethod("valueOf", String.class).invoke("BROWSE");
+          return (Boolean)desktopClass.getMethod("isSupported", desktopActionClass).invoke(desktopInstance, desktopBrowseAction);
+        } catch (Exception ex) {
+          // For any exception, let's consider simply the isSupported method failed
+        }
+      }
+      // For other Java versions, let's support only Mac OS X
+      return System.getProperty("os.name").startsWith("Mac OS X");
+    }
+    
+    /**
+     * Returns <code>true</code> if Java version is 6 or superior.
+     */
+    private boolean isJava6() {
+      String javaVersion = System.getProperty("java.version");
+      String [] javaVersionParts = javaVersion.split("\\.|_");
+      if (javaVersionParts.length >= 1) {
+        try {
+          // Return true for Java SE 6 and superior
+          if (Integer.parseInt(javaVersionParts [1]) >= 6) {
+            return true;
+          }
+        } catch (NumberFormatException ex) {
+        }
+      }
+      return false;
     }
   }
 }
