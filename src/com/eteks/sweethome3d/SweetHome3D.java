@@ -31,6 +31,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -500,7 +501,7 @@ public class SweetHome3D extends HomeApplication {
       final ServerSocket serverSocket;
       try {
         // Launch a server that waits for other Sweet Home 3D launches 
-        serverSocket = new ServerSocket(0);
+        serverSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
         // Share server port in preferences
         Preferences preferences = Preferences.userNodeForPackage(SweetHome3D.class);
         preferences.putInt(SINGLE_INSTANCE_PORT, serverSocket.getLocalPort());
