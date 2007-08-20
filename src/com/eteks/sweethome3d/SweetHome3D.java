@@ -20,6 +20,10 @@
 package com.eteks.sweethome3d;
 
 import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Window;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -36,9 +40,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executors;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import javax.imageio.ImageIO;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.ServiceManagerStub;
@@ -140,10 +146,13 @@ public class SweetHome3D extends HomeApplication {
           // If single instance server was successfully called, exit application 
           System.exit(0);
         } else {
+          // Display splash screen
+          new SplashScreenWindow();
           // Create JNLP services required by Sweet Home 3D 
           ServiceManager.setServiceManagerStub(new StandaloneServiceManager());
         }
       }      
+      
       initLookAndFeel();
       application = createApplication();
     }
@@ -323,6 +332,56 @@ public class SweetHome3D extends HomeApplication {
   }
   
   /**
+   * An AWT window displaying a splash screen image.
+   * The window is disposed when an other AWT frame is created.
+   */
+  private static class SplashScreenWindow extends Window {
+    private BufferedImage image;
+    
+    public SplashScreenWindow() {
+      super(new Frame());
+      try {
+        this.image = ImageIO.read(SplashScreenWindow.class.getResource(
+            "resources/SweetHome3DSplashScreen.jpg"));
+        setSize(this.image.getWidth(), this.image.getHeight());
+        setLocationRelativeTo(null);
+        setVisible(true);
+        
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
+            public void run() {
+              try {
+                while (isVisible()) {
+                  Thread.sleep(500);
+                  // If an other frame is created, dispose splash window
+                  EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      if (Frame.getFrames().length > 1) {
+                        dispose();
+                      }
+                    }
+                  });
+                }
+              } catch (InterruptedException ex) {
+                EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    dispose();
+                  }
+                });
+              };
+            }
+          });
+      } catch (IOException ex) {
+        // Ignore splash screen
+      }
+    }
+    
+    @Override
+    public void paint(Graphics g) {
+      g.drawImage(this.image, 0, 0, this);
+    }
+  }
+  
+  /**
    * JNLP <code>ServiceManagerStub</code> implementation for standalone applications 
    * run out of Java Web Start. This service manager supports <code>BasicService</code> 
    * and <code>javax.jnlp.SingleInstanceService</code>.
@@ -351,7 +410,7 @@ public class SweetHome3D extends HomeApplication {
    * <code>BasicService</code> that launches web browser either with Java SE 6
    * <code>java.awt.Desktop</code> class, or with the <code>open</code> command under Mac OS X.
    */
-  private static final class StandaloneBasicService implements BasicService {
+  private static class StandaloneBasicService implements BasicService {
     public boolean showDocument(URL url) {
       if (isJava6()) {
         try {
@@ -420,59 +479,68 @@ public class SweetHome3D extends HomeApplication {
   }
   
   /**
-   * A single instance service run with a server that waits for further Sweet Home 3D launches.
+   * A single instance service server that waits for further Sweet Home 3D launches.
    */
-  private static final class StandaloneSingleInstanceService implements SingleInstanceService {
+  private static class StandaloneSingleInstanceService implements SingleInstanceService {
     private static final String SINGLE_INSTANCE_PORT = "singleInstancePort";
     
     private List<SingleInstanceListener> singleInstanceListeners = new ArrayList<SingleInstanceListener>();
     
     public void addSingleInstanceListener(SingleInstanceListener l) {
       if (this.singleInstanceListeners.isEmpty()) {
-        try {
-          // Launch a server that waits for other Sweet Home 3D launches 
-          final ServerSocket serverSocket = new ServerSocket(0);
-          // Share server port in preferences
-          Preferences preferences = Preferences.userNodeForPackage(SweetHome3D.class);
-          preferences.putInt(SINGLE_INSTANCE_PORT, serverSocket.getLocalPort());
-          preferences.sync();
-          
-          new Thread() {
-            @Override
-            public void run() {
+        launchSingleInstanceServer();     
+      }      
+      this.singleInstanceListeners.add(l);
+    }
+
+    /**
+     * Launches single instance server.
+     */
+    private void launchSingleInstanceServer() {
+      final ServerSocket serverSocket;
+      try {
+        // Launch a server that waits for other Sweet Home 3D launches 
+        serverSocket = new ServerSocket(0);
+        // Share server port in preferences
+        Preferences preferences = Preferences.userNodeForPackage(SweetHome3D.class);
+        preferences.putInt(SINGLE_INSTANCE_PORT, serverSocket.getLocalPort());
+        preferences.sync();
+      } catch (IOException ex) {
+        // Ignore exception, Sweet Home 3D will work with multiple instances
+        return;
+      } catch (BackingStoreException ex) {
+        // Ignore exception, Sweet Home 3D will work with multiple instances
+        return;
+      }
+        
+      Executors.newSingleThreadExecutor().execute(new Runnable() {
+          public void run() {
+            try {
               while (true) {
-                try {
-                  // Wait client calls
-                  Socket socket = serverSocket.accept();
-                  // Read client params
-                  BufferedReader reader = new BufferedReader(
-                      new InputStreamReader(socket.getInputStream(), "UTF-8"));
-                  String [] params = reader.readLine().split("\t");
-                  reader.close();
-                  socket.close();
-                  
-                  // Work on a copy of singleInstanceListeners to ensure a listener 
-                  // can modify safely listeners list
-                  SingleInstanceListener [] listeners = singleInstanceListeners.
-                      toArray(new SingleInstanceListener [singleInstanceListeners.size()]);
-                  // Call listeners with received params
-                  for (SingleInstanceListener listener : listeners) {
-                    listener.newActivation(params);
-                  }
-                } catch (IOException ex) {
-                  ex.printStackTrace();
+                // Wait client calls
+                Socket socket = serverSocket.accept();
+                // Read client params
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream(), "UTF-8"));
+                String [] params = reader.readLine().split("\t");
+                reader.close();
+                socket.close();
+                
+                // Work on a copy of singleInstanceListeners to ensure a listener 
+                // can modify safely listeners list
+                SingleInstanceListener [] listeners = singleInstanceListeners.
+                    toArray(new SingleInstanceListener [singleInstanceListeners.size()]);
+                // Call listeners with received params
+                for (SingleInstanceListener listener : listeners) {
+                  listener.newActivation(params);
                 }
               }
+            } catch (IOException ex) {
+              // In case of problem, relaunch server
+              launchSingleInstanceServer();
             }
-          }.start();
-        } catch (IOException ex) {
-          ex.printStackTrace();
-        } catch (BackingStoreException ex) {
-          ex.printStackTrace();
-        }     
-      }
-      
-      this.singleInstanceListeners.add(l);
+          }
+        });
     }
 
     public void removeSingleInstanceListener(SingleInstanceListener l) {
