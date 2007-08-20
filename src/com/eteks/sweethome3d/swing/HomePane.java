@@ -42,14 +42,10 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -1202,33 +1198,21 @@ public class HomePane extends JRootPane {
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
     messagePane.setEditable(false);
-    messagePane.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(HyperlinkEvent ev) {
-        if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          viewURL(ev.getURL());
+    if (BrowserManager.getInstance().isOnlineBrowserAvailable()) {
+      messagePane.addHyperlinkListener(new HyperlinkListener() {
+        public void hyperlinkUpdate(HyperlinkEvent ev) {
+          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            BrowserManager.getInstance().viewURL(ev.getURL());
+          }
         }
-      }
-    });
+      });
+    }
     
     String title = this.resource.getString("about.title");
     Icon   icon  = new ImageIcon(HomePane.class.getResource(
         this.resource.getString("about.icon")));
     JOptionPane.showMessageDialog(this, messagePane, title,  
         JOptionPane.INFORMATION_MESSAGE, icon);
-  }
-
-  /**
-   * Launches browser with <code>url</code>.
-   */
-  private void viewURL(URL url) {
-    try { 
-      // Lookup the javax.jnlp.BasicService object 
-      BasicService service = 
-          (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      service.showDocument(url); 
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable 
-    } 
   }
 
   /**

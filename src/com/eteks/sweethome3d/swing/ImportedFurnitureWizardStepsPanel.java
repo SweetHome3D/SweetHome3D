@@ -57,9 +57,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
@@ -232,19 +229,19 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.findModelsButton = new JButton(resource.getString("findModelsButton.text"));
     try { 
       final URL findModelsUrl = new URL(resource.getString("findModelsButton.url"));
-      // Lookup the javax.jnlp.BasicService object 
-      final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      this.findModelsButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          service.showDocument(findModelsUrl); 
-        }
-      });
+      if (BrowserManager.getInstance().isOnlineBrowserAvailable()) {
+        this.findModelsButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            BrowserManager.getInstance().viewURL(findModelsUrl);
+          }
+        });
+      } else {
+        this.findModelsButton.setVisible(false);             
+      }
     } catch (MalformedURLException ex) {
       throw new IllegalArgumentException(ex);
-    } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable             
-      this.findModelsButton.setVisible(false);             
     } 
+
     this.modelChoiceErrorLabel = new JLabel(resource.getString("modelChoiceErrolLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occured during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
