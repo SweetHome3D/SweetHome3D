@@ -130,6 +130,20 @@ public class SweetHome3D extends HomeApplication {
     return this.homeFrames.get(home);
   }
   
+  /**
+   * Shows and brings to front <code>home</code> frame. 
+   */
+  private void showHomeFrame(Home home) {
+    final JFrame homeFrame = application.getHomeFrame(home);
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        homeFrame.setVisible(true);
+        homeFrame.setState(JFrame.NORMAL);
+        homeFrame.toFront();
+      }
+    });
+  }
+  
   // Only one application may be created with main method or SingleInstanceService
   private static SweetHome3D application;
 
@@ -140,6 +154,8 @@ public class SweetHome3D extends HomeApplication {
   public static void main(String [] args) {
     // At first main call
     if (application == null) {
+      initSystemProperties();
+      
       // If Sweet Home 3D is launched from outside of Java Web Start
       if (ServiceManager.getServiceNames() == null) {
         // Try to call single instance server 
@@ -159,6 +175,14 @@ public class SweetHome3D extends HomeApplication {
     }
 
     if (args.length == 2 && args [0].equals("-open")) {
+      // If requested home is already opened, show it
+      for (Home home : application.getHomes()) {
+        if (args [1].equals(home.getName())) {
+          application.showHomeFrame(home);
+          return;
+        }
+      }
+      
       try {
         // Read home file in args [1] if args [0] == "-open"
         Home home = application.getHomeRecorder().readHome(args [1]);
@@ -179,41 +203,34 @@ public class SweetHome3D extends HomeApplication {
     } else {
       // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 
       final List<Home> homes = application.getHomes();
-      JFrame frame = null;
+      Home home = null;
       for (int i = homes.size() - 1; i >= 0; i--) {
         JFrame homeFrame = application.getHomeFrame(homes.get(i));
         if (homeFrame.isActive()
             || homeFrame.getState() != JFrame.ICONIFIED) {
-          frame = homeFrame;
+          home = homes.get(i);
           break;
         }
       }
       // If no frame is visible and not iconified, take any displayable frame
-      if (frame == null) {
+      if (home == null) {
         for (int i = homes.size() - 1; i >= 0; i--) {
           JFrame homeFrame = application.getHomeFrame(homes.get(i));
           if (homeFrame.isDisplayable()) {
-            frame = homeFrame;
+            home = homes.get(i);
             break;
           }
         }
       }
       
-      final JFrame shownFrame = frame;
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            shownFrame.setVisible(true);
-            shownFrame.setState(JFrame.NORMAL);
-            shownFrame.toFront();
-          }
-        });      
+      application.showHomeFrame(home);
     }
   }
 
   /**
-   * Sets application look anf feel and various <code>System</code> properties.
+   * Sets various <code>System</code> properties.
    */
-  private static void initLookAndFeel() {
+  private static void initSystemProperties() {
     // Enables Java 5 bug correction about dragging directly
     // a tree element without selecting it before :
     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
@@ -222,6 +239,12 @@ public class SweetHome3D extends HomeApplication {
     System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
     // Use Mac OS X screen menu bar for frames menu bar
     System.setProperty("apple.laf.useScreenMenuBar", "true");
+  }
+
+  /**
+   * Sets application look anf feel.
+   */
+  private static void initLookAndFeel() {
     try {
       // Apply current system look and feel
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
