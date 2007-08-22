@@ -1,6 +1,16 @@
 <?xml version="1.0"?>
+<!-- build.xml
+
+     Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+     
+     Ant build file. Available targets :
+     - build : Builds SweetHome3D.jar file in deploy directory
+     - deploy : Builds Java Web Start signed files in deploy directory
+     - windowsInstaller : Builds SweetHome3DSetup.exe file in deploy directory
+-->
 <project basedir="." default="deploy" name="SweetHome3D">
-  <target name="deploy">
+  <!-- Builds deploy/SweetHome3D.jar -->
+  <target name="build">
     <!-- Compile Sweet Home 3D -->
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes">
@@ -22,20 +32,23 @@
       </fileset>
     </copy>
     
-    <!-- Creation of SweetHome3D.jar -->
+    <!-- Create SweetHome3D.jar -->
     <jar destfile="deploy/SweetHome3D.jar" 
-    	     basedir="deploy/classes"/>
+         basedir="deploy/classes"/>
     <delete dir="deploy/classes"/>
-  
-    <!-- Creation of java3d.jar containing Windows Java 3D DLLs -->
-    <mkdir dir="deploy/windows" />
+  </target>
+	
+  <!-- Builds deploy/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
+  <target name="deploy" depends="build">
+    <!-- Create java3d.jar containing Windows Java 3D DLLs -->
+    <mkdir dir="deploy/windows"/>
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
          <include name="**/*.dll"/>
       </fileset>
     </jar>
 
-    <!-- Creation of java3d.jar containing Linux Java 3D DLLs -->
+    <!-- Create java3d.jar containing Linux Java 3D DLLs -->
     <mkdir dir="deploy/linux/i386"/>
     <jar destfile="deploy/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
@@ -62,4 +75,85 @@
       
     <echo message="deploy dir ready for ftp"/>
   </target>
+	
+  <!-- Builds deploy/SweetHome3DSetup.exe installer able to install SweetHome3D.exe 
+       with a Windows JRE and Sweet Home 3D libraries.
+       CAUTION : May be run only under Windows and requires a JRE, launch4j and Inno Setup 
+                 installed in their default location -->
+  <target name="windowsInstaller" depends="build">
+  	<!-- Copy SweetHome3D.jar and Windows Java 3D DLLs and JARs for Java 3D 
+  	     to windowsInstaller/lib -->
+  	<mkdir dir="deploy/windowsInstaller/lib"/>
+  	<copy file="deploy/SweetHome3D.jar" todir="deploy/windowsInstaller/lib" />
+  	<copy todir="deploy/windowsInstaller/lib" >
+      <fileset dir="lib">
+        <include name="*.jar"/>
+      </fileset>
+  	</copy>
+  	<copy todir="deploy/windowsInstaller/lib" >
+      <fileset dir="lib/windows">
+        <include name="*.jar"/>
+        <include name="*.dll"/>
+      </fileset>
+  	</copy>
+  	  
+  	<!-- Copy JRE to windowsInstaller/jre... excluding files mentioned 
+  	     in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
+  	<copy todir="deploy/windowsInstaller/jre1.6.0_02">
+      <fileset dir="C:\Program Files\Java\jre1.6.0_02">
+      	<include name="*"/>
+      	<include name="bin/**"/>
+      	<include name="lib/**"/>
+      	
+        <exclude name="lib/ext/sunjce_provider.jar"/>
+        <exclude name="bin/rmid.exe"/>
+        <exclude name="bin/rmiregistry.exe"/>
+        <exclude name="bin/tnameserv.exe"/>
+        <exclude name="bin/keytool.exe"/>
+        <exclude name="bin/kinit.exe"/>
+        <exclude name="bin/klist.exe"/>
+        <exclude name="bin/ktab.exe"/>
+        <exclude name="bin/policytool.exe"/>
+        <exclude name="bin/orbd.exe"/>
+        <exclude name="bin/servertool.exe"/>
+
+      	<exclude name="bin/java.exe"/>
+        <exclude name="bin/javaws.exe"/>
+        <exclude name="bin/javacpl.exe"/>
+        <exclude name="bin/jucheck.exe"/>
+        <exclude name="bin/jusched.exe"/>
+        <exclude name="bin/wsdetect.dll"/>
+        <exclude name="bin/npjava*.dll"/>
+        <exclude name="bin/npoji610.dll"/>
+        <exclude name="bin/regutils.dll"/>
+        <exclude name="bin/axbridge.dll"/>
+        <exclude name="bin/deploy.dll"/>
+        <exclude name="bin/jpicom.dll"/>
+        <exclude name="bin/javacpl.cpl"/>
+        <exclude name="bin/jpiexp.dll"/>
+        <exclude name="bin/jpinscp.dll"/>
+        <exclude name="bin/jpioji.dll"/>
+        <exclude name="bin/jpishare.dll"/>
+        <exclude name="lib/deploy.jar"/>
+        <exclude name="lib/plugin.jar"/>
+        <exclude name="lib/deploy/messages*.properties"/>
+        <exclude name="lib/deploy/splash.jpg"/>
+      </fileset>		
+    </copy>
+  	
+  	<!-- Create SweetHome3D.exe with launch4j -->
+  	<exec executable="C:\Program Files\Launch4j\launch4jc.exe">
+      <arg value="${basedir}\windowsInstallerLaunch4j.xml"/> 		
+    </exec>  	
+
+  	<!-- Create SweetHome3DSetup.exe with Inno Setup -->
+  	<exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
+      <arg value="${basedir}\windowsInstallerInnoSetup.iss"/> 		
+    </exec>  
+  	
+  	<delete file="deploy/SweetHome3D.jar"/>
+  	<delete dir="deploy/windowsInstaller"/>
+  	
+  	<echo message="deploy/SweetHome3DSetup.exe ready for ftp"/>
+  </target>	
 </project>
