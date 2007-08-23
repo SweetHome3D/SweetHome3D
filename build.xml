@@ -6,7 +6,7 @@
      Ant build file. Available targets :
      - build : Builds SweetHome3D.jar file in deploy directory
      - deploy : Builds Java Web Start signed files in deploy directory
-     - windowsInstaller : Builds SweetHome3DSetup.exe file in deploy directory
+     - windowsInstaller : Builds SweetHome3DSetup.exe file in install directory
 -->
 <project basedir="." default="deploy" name="SweetHome3D">
   <!-- Builds deploy/SweetHome3D.jar -->
@@ -82,24 +82,24 @@
                  installed in their default location -->
   <target name="windowsInstaller" depends="build">
   	<!-- Copy SweetHome3D.jar and Windows Java 3D DLLs and JARs for Java 3D 
-  	     to windowsInstaller/lib -->
-  	<mkdir dir="deploy/windowsInstaller/lib"/>
-  	<copy file="deploy/SweetHome3D.jar" todir="deploy/windowsInstaller/lib" />
-  	<copy todir="deploy/windowsInstaller/lib" >
+  	     to install/windows/tmp/lib -->
+  	<mkdir dir="install/windows/tmp/lib"/>
+  	<copy file="deploy/SweetHome3D.jar" todir="install/windows/tmp/lib" />
+  	<copy todir="install/windows/tmp/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
   	</copy>
-  	<copy todir="deploy/windowsInstaller/lib" >
+  	<copy todir="install/windows/tmp/lib" >
       <fileset dir="lib/windows">
         <include name="*.jar"/>
         <include name="*.dll"/>
       </fileset>
   	</copy>
   	  
-  	<!-- Copy JRE to windowsInstaller/jre... excluding files mentioned 
+  	<!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
   	     in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
-  	<copy todir="deploy/windowsInstaller/jre1.6.0_02">
+  	<copy todir="install/windows/tmp/jre1.6.0_02">
       <fileset dir="C:\Program Files\Java\jre1.6.0_02">
       	<include name="*"/>
       	<include name="bin/**"/>
@@ -143,16 +143,16 @@
   	
   	<!-- Create SweetHome3D.exe with launch4j -->
   	<exec executable="C:\Program Files\Launch4j\launch4jc.exe">
-      <arg value="${basedir}\windowsInstallerLaunch4j.xml"/> 		
+      <arg value="${basedir}\install\windows\installerLaunch4j.xml"/> 		
     </exec>  	
 
   	<!-- Create SweetHome3DSetup.exe with Inno Setup -->
   	<exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
-      <arg value="${basedir}\windowsInstallerInnoSetup.iss"/> 		
+      <arg value="${basedir}\install\windows\installerInnoSetup.iss"/> 		
     </exec>  
   	
   	<delete file="deploy/SweetHome3D.jar"/>
-  	<delete dir="deploy/windowsInstaller"/>
+  	<delete dir="install/windows/tmp"/>
   	
   	<echo message="deploy/SweetHome3DSetup.exe ready for ftp"/>
   </target>	
