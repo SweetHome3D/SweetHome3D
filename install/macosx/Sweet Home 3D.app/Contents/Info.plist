@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+	<key>CFBundleGetInfoString</key>
+	<string>Sweet Home 3D 1.0 Copyright 2007 eTeks</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>JavaApplicationStub</string>
+	<key>CFBundleIconFile</key>
+	<string>SweetHome3D.icns</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.eteks.sweethome3d.SweetHome3D</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Sweet Home 3D</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>SH3D</string>
+	<key>CFBundleAllowMixedLocalizations</key>
+	<string>true</string>
+
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>                 
+			<key>UTTypeIdentifier</key>                 
+			<string>com.eteks.sweethome3d.SweetHome3D</string>    
+			<key>UTTypeReferenceURL</key>
+	 		<string>http://sweethome3d.sourceforge.net/</string>             
+			<key>UTTypeDescription</key>                 
+			<string>Sweet Home 3D Document</string>  
+			<key>UTTypeIconFile</key>       
+			<string>SweetHome3DDocument.icns</string> 
+			<key>UTTypeConformsTo</key>                 
+			<array>                     
+				<string>public.data</string>
+				<string>public.content</string>                     
+			</array>
+			<key>UTTypeTagSpecification</key>                 
+			<dict>
+				<key>com.apple.ostype</key>
+				<string>SH3D</string>
+				<key>public.filename-extension</key>                 
+				<array>
+					<string>sh3d</string>                     
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+		<array>             
+		<dict>                 
+			<key>LSItemContentTypes</key>                 
+			<array>             
+				<string>com.eteks.sweethome3d.SweetHome3D</string>                 
+			</array>       
+			<key>CFBundleTypeRole</key>                 
+			<string>Editor</string>                 
+		</dict>
+	</array>
+
+	<key>Java</key>
+	<dict>
+		<key>WorkingDirectory</key>
+		<string>$JAVAROOT</string>
+		<key>VMOptions</key>
+		<string>-Xmx128m -Xbootclasspath/p:j3dcore.jar:j3dutils.jar:jogl.jar:vecmath.jar:gluegen-rt.jar -Dsun.boot.library.path=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Libraries:.</string>
+		<key>MainClass</key>
+		<string>com.eteks.sweethome3d.SweetHome3D</string>
+		<key>JVMVersion</key>
+		<string>1.5*</string>
+		<key>ClassPath</key>
+		<array>
+			<string>SweetHome3D.jar</string>
+			<string>Loader3DS1_2.jar</string>
+			<string>/Applications/Utilities/Java/J2SE 5.0/Java Cache Viewer.app/Contents/MacOS/lib/javaws.jar</string>
+		</array>
+	</dict>
+</dict>
+</plist>
