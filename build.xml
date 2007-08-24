@@ -16,14 +16,14 @@
     <!-- Compile Sweet Home 3D -->
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes">
-       <classpath>
-       	 <pathelement location="lib/Loader3DS1_2.jar"/>
-         <pathelement location="lib/windows/vecmath.jar"/>
-         <pathelement location="lib/windows/j3dutils.jar"/>
-         <pathelement location="lib/windows/j3dcore.jar"/>
-         <pathelement location="libtest/AppleJavaExtensions.jar"/>
-         <pathelement location="libtest/jnlp.jar"/>
-       </classpath>
+      <classpath>
+        <pathelement location="lib/Loader3DS1_2.jar"/>
+        <pathelement location="lib/windows/vecmath.jar"/>
+        <pathelement location="lib/windows/j3dutils.jar"/>
+        <pathelement location="lib/windows/j3dcore.jar"/>
+        <pathelement location="libtest/AppleJavaExtensions.jar"/>
+        <pathelement location="libtest/jnlp.jar"/>
+      </classpath>
     </javac>
     
     <!-- Copy resources -->
@@ -46,7 +46,7 @@
     <mkdir dir="deploy/windows"/>
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
-         <include name="**/*.dll"/>
+        <include name="**/*.dll"/>
       </fileset>
     </jar>
 
@@ -54,14 +54,15 @@
     <mkdir dir="deploy/linux/i386"/>
     <jar destfile="deploy/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
-         <include name="**/*.so"/>
+        <include name="**/*.so"/>
       </fileset>
     </jar>
  
     <!-- Copy other Java 3D jar files -->
     <copy todir="deploy">
       <fileset dir="lib">
-         <include name="**/*.jar"/>
+        <include name="**/*.jar"/>
+        <exclude name="macosx/*.jar"/>
       </fileset>
     </copy>
     
@@ -69,9 +70,9 @@
            addproperty="password"/> 
     <!-- Sign jar files in deploy dir -->
     <signjar keystore="keys.keytool" 
-           alias="SweetHome3D" storepass="${password}">
+             alias="SweetHome3D" storepass="${password}">
       <fileset dir="deploy">
-         <include name="**/*.jar"/>
+        <include name="**/*.jar"/>
       </fileset>
     </signjar>
       
