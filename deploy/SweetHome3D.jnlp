@@ -29,7 +29,7 @@
   </security>
 
   <resources>
-    <j2se version="1.5+"/>
+    <j2se version="1.5+" max-heap-size="192m"/>
     <jar href="SweetHome3D.jar"/>
     <jar href="Loader3DS1_2.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>

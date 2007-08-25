@@ -71,7 +71,7 @@
 		<key>WorkingDirectory</key>
 		<string>$JAVAROOT</string>
 		<key>VMOptions</key>
-		<string>-Xmx128m -Xbootclasspath/p:j3dcore.jar:j3dutils.jar:jogl.jar:vecmath.jar:gluegen-rt.jar -Dsun.boot.library.path=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Libraries:.</string>
+		<string>-Xmx192m -Xbootclasspath/p:j3dcore.jar:j3dutils.jar:jogl.jar:vecmath.jar:gluegen-rt.jar -Dsun.boot.library.path=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Libraries:.</string>
 		<key>MainClass</key>
 		<string>com.eteks.sweethome3d.SweetHome3D</string>
 		<key>JVMVersion</key>
