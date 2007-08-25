@@ -178,7 +178,7 @@ public class HomeController3D {
     private final float MIN_DIMENSION = 1000;
     
     private Camera topCamera;
-    private Rectangle2D homeBounds = new Rectangle2D.Float(0, 0, MIN_DIMENSION, MIN_DIMENSION);
+    private Rectangle2D homeBounds;
     private WallListener wallListener = new WallListener () {
         public void wallChanged(WallEvent ev) {
           updateCameraFromHomeBounds();
@@ -190,6 +190,10 @@ public class HomeController3D {
         }
       };
 
+    public TopCameraState() {
+      this.homeBounds = computeHomeBounds();
+    }
+      
     @Override
     public void enter() {
       this.topCamera = home.getCamera();
@@ -202,46 +206,54 @@ public class HomeController3D {
      * Updates camera location from home bounds.
      */
     private void updateCameraFromHomeBounds() {
-      Rectangle2D newHomeBounds = null;
-      // Compute plan bounds to include walls and furniture
-      for (Wall wall : home.getWalls()) {
-        if (newHomeBounds == null) {
-          newHomeBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
-        } else {
-          newHomeBounds.add(wall.getXStart(), wall.getYStart());
-        }
-        newHomeBounds.add(wall.getXEnd(), wall.getYEnd());
-      }
-      for (HomePieceOfFurniture piece : home.getFurniture()) {
-        if (piece.isVisible()) {
-          for (float [] point : piece.getPoints()) {
-            if (newHomeBounds == null) {
-              newHomeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-            } else {
-              newHomeBounds.add(point [0], point [1]);
-            }
-          }
-        }
-      }
-      if (newHomeBounds == null) {
-        newHomeBounds = new Rectangle2D.Float(0, 0, MIN_DIMENSION, MIN_DIMENSION);
-      } else {
-        // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
-        newHomeBounds = new Rectangle2D.Float(
-            (float)(MIN_DIMENSION < newHomeBounds.getWidth() 
-                        ? newHomeBounds.getMinX()
-                        : newHomeBounds.getCenterX() - MIN_DIMENSION / 2), 
-            (float)(MIN_DIMENSION < newHomeBounds.getHeight() 
-                        ? newHomeBounds.getMinY()
-                        : newHomeBounds.getCenterY() - MIN_DIMENSION / 2), 
-            (float)Math.max(MIN_DIMENSION, newHomeBounds.getWidth()), 
-            (float)Math.max(MIN_DIMENSION, newHomeBounds.getHeight()));
-      }
+      Rectangle2D newHomeBounds = computeHomeBounds();
+      // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
+      newHomeBounds = new Rectangle2D.Float(
+          (float)(MIN_DIMENSION < newHomeBounds.getWidth() 
+                      ? newHomeBounds.getMinX()
+                      : newHomeBounds.getCenterX() - MIN_DIMENSION / 2), 
+          (float)(MIN_DIMENSION < newHomeBounds.getHeight() 
+                      ? newHomeBounds.getMinY()
+                      : newHomeBounds.getCenterY() - MIN_DIMENSION / 2), 
+          (float)Math.max(MIN_DIMENSION, newHomeBounds.getWidth()), 
+          (float)Math.max(MIN_DIMENSION, newHomeBounds.getHeight()));
 
       float deltaZ = (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight())  
           - Math.max(newHomeBounds.getWidth(), newHomeBounds.getHeight()));
       this.homeBounds = newHomeBounds;
       moveCamera(deltaZ);
+    }
+
+    /**
+     * Returns home bounds that includes walls and furniture.
+     */
+    private Rectangle2D computeHomeBounds() {
+      Rectangle2D homeBounds = null;
+      // Compute plan bounds to include walls and furniture
+      for (Wall wall : home.getWalls()) {
+        if (homeBounds == null) {
+          homeBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
+        } else {
+          homeBounds.add(wall.getXStart(), wall.getYStart());
+        }
+        homeBounds.add(wall.getXEnd(), wall.getYEnd());
+      }
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
+        if (piece.isVisible()) {
+          for (float [] point : piece.getPoints()) {
+            if (homeBounds == null) {
+              homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+            } else {
+              homeBounds.add(point [0], point [1]);
+            }
+          }
+        }
+      }
+      if (homeBounds != null) {
+        return homeBounds;
+      } else {
+        return new Rectangle2D.Float(0, 0, MIN_DIMENSION, MIN_DIMENSION);
+      }
     }
     
     @Override
