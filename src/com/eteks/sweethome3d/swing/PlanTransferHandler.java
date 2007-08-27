@@ -25,8 +25,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -45,6 +47,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private ContentManager   contentManager;
   private HomeController   homeController;
   private List<Object>     copiedItems;
+  private BufferedImage    copiedImage;
 
   /**
    * Creates a handler able to transfer furniture and walls in plan.
@@ -65,13 +68,41 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   }
   
   /**
-   * Returns a {@link HomeTransferableList transferable object}
-   * that contains a copy of the selected furniture in home. 
+   * Returns a transferable object that contains a copy of the selected items in home
+   * and an image of the selected items. 
    */
   @Override
-  protected Transferable createTransferable(JComponent source) {
+  protected Transferable createTransferable(final JComponent source) {
     this.copiedItems = this.home.getSelectedItems();
-    return new HomeTransferableList(this.copiedItems);
+    final Transferable transferable = new HomeTransferableList(this.copiedItems);
+    if (source instanceof PlanComponent) {
+      // Create a transferable that contains copied items and an image
+      return new Transferable () {
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+          if (DataFlavor.imageFlavor.equals(flavor)) {
+            // Create an image that contains only selected items
+            copiedImage = ((PlanComponent)source).getClipboardImage();
+            return copiedImage;
+          } else {
+            return transferable.getTransferData(flavor);
+          }
+        }
+
+        public DataFlavor [] getTransferDataFlavors() {
+          ArrayList<DataFlavor> dataFlavors = 
+              new ArrayList<DataFlavor>(Arrays.asList(transferable.getTransferDataFlavors()));
+          dataFlavors.add(DataFlavor.imageFlavor);
+          return dataFlavors.toArray(new DataFlavor [dataFlavors.size()]);
+        }
+
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+          return transferable.isDataFlavorSupported(flavor)
+            || DataFlavor.imageFlavor.equals(flavor);
+        }
+      };
+    } else {
+      return transferable;
+    }
   }
   
   /**
@@ -83,6 +114,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
       this.homeController.cut(this.copiedItems);      
     }
     this.copiedItems = null;
+    this.copiedImage = null;
     this.homeController.enablePasteAction();    
   }
 

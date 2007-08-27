@@ -29,6 +29,7 @@ import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Paint;
 import java.awt.Point;
@@ -106,6 +107,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
     MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
     TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF}
+  private enum PaintMode {PAINT, PRINT, CLIPBOARD}
   
   private static final float MARGIN = 40;
   private Home               home;
@@ -583,7 +585,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         }
       }
     }
-    for (HomePieceOfFurniture piece : home.getFurniture()) {
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         for (float [] point : piece.getPoints()) {
           if (wallsAndFurnitureBounds == null) {
@@ -614,15 +616,15 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * this.scale,
         insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
     g2D.scale(this.scale, this.scale);
-    g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    setRenderingHints(g2D);
     // Paint component contents
     paintBackgroundImage(g2D);
     paintGrid(g2D, this.scale);
-    paintContent(g2D, this.scale, false);   
+    paintContent(g2D, this.scale, PaintMode.PAINT);   
     g2D.dispose();
   }
-
+  
+  
   /**
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
@@ -644,10 +646,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       // Center plan in component
       g2D.translate((pageFormat.getImageableWidth() / scale - wallsAndFurnitureBounds.getWidth()) / 2, 
           (pageFormat.getImageableHeight() / scale - wallsAndFurnitureBounds.getHeight()) / 2);
-      g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+      setRenderingHints(g2D);
       // Print component contents
-      paintContent(g2D, scale, true);   
+      paintContent(g2D, scale, PaintMode.PRINT);   
       g2D.dispose();
       return PAGE_EXISTS;
     } else {
@@ -655,6 +656,45 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
   }
   
+  /**
+   * Returns an image of the selected items displayed by this component 
+   * (camera excepted) with no outline at scale 1/1 (1 pixel = 1cm).
+   */
+  public BufferedImage getClipboardImage() {
+    // Create an image that contains only selected items
+    Rectangle2D selectionBounds = getSelectionBounds(false);
+    if (selectionBounds == null) {
+      return null;
+    } else {
+      // Use a scale of 1
+      float scale = 1f;
+      BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().
+        getDefaultConfiguration().createCompatibleImage((int)Math.ceil(selectionBounds.getWidth() * scale + WALL_STROKE_WIDTH), 
+              (int)Math.ceil(selectionBounds.getHeight() * scale + WALL_STROKE_WIDTH));      
+      Graphics2D g2D = (Graphics2D)image.getGraphics();
+      // Paint background in white
+      g2D.setColor(Color.WHITE);
+      g2D.fillRect(0, 0, image.getWidth(), image.getHeight());
+      // Change component coordinates system to plan system
+      g2D.scale(scale, scale);
+      g2D.translate(-selectionBounds.getMinX() + WALL_STROKE_WIDTH / 2 / scale,
+          -selectionBounds.getMinY() + WALL_STROKE_WIDTH / 2 / scale);
+      setRenderingHints(g2D);
+      // Paint component contents
+      paintContent(g2D, scale, PaintMode.CLIPBOARD);   
+      g2D.dispose();
+      return image;
+    }
+  }
+  
+  /**
+   * Sets rendering hints used to paint plan.
+   */
+  private void setRenderingHints(Graphics2D g2D) {
+    g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);    
+  }
+
   /**
    * Fills the background. 
    */
@@ -683,7 +723,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
                 backgroundImageCache = ImageIO.read(contentStream);
                 contentStream.close();
               } catch (IOException ex) {
-                backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+                backgroundImageCache = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
                 // Ignore exceptions, the user may know its background image is incorrect 
                 // if he tries to modify the background image
               } 
@@ -758,7 +798,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints plan items.
    */
-  private void paintContent(Graphics2D g2D, float scale, boolean printing) {
+  private void paintContent(Graphics2D g2D, float scale, PaintMode paintMode) {
     List<Object> selectedItems = this.home.getSelectedItems();
     Color selectionColor = UIManager.getColor("textHighlight");
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
@@ -775,9 +815,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         1 / scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / scale, 5 / scale, 5 / scale, 5 / scale}, 4 / scale);
     
-    paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, printing);
-    paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, printing);
-    if (!printing) {
+    paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, paintMode);
+    paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, paintMode);
+    if (paintMode == PaintMode.PAINT) {
       paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale);
       paintRectangleFeedback(g2D, selectionColor, scale);
@@ -790,14 +830,26 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, 
-                          float scale, boolean printing) {
+                          float scale, PaintMode paintMode) {
     float scaleInverse = 1 / scale;
-    Shape wallsArea = getWallsArea(this.home.getWalls());
+    Collection<Wall> paintedWalls;
+    if (paintMode != PaintMode.CLIPBOARD) {
+      paintedWalls = this.home.getWalls();
+    } else {
+      paintedWalls = new ArrayList<Wall>();
+      for (Object item : selectedItems) {
+        // In clipboard paint mode, paint wall only if it is selected
+        if (item instanceof Wall) {
+          paintedWalls.add((Wall)item);
+        }
+      }
+    }
+    Shape wallsArea = getWallsArea(paintedWalls);
     // Fill walls area
     g2D.setPaint(getWallPaint(scale));
     g2D.fill(wallsArea);
     
-    if (!printing) {
+    if (paintMode == PaintMode.PAINT) {
       Stroke indicatorStroke = new BasicStroke(2f);  
       for (Object item : selectedItems) {
         if (item instanceof Wall) {
@@ -853,7 +905,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Paint resize indicator of selected wall
     if (selectedItems.size() == 1 
         && selectedItems.get(0) instanceof Wall
-        && !printing) {
+        && paintMode == PaintMode.PAINT) {
       paintWallResizeIndicator(g2D, (Wall)selectedItems.get(0), indicatorPaint, scale);
     }
   }
@@ -904,7 +956,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Returns the <code>Paint</code> object used to fill walls.
    */
   private Paint getWallPaint(float scale) {
-    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().
+        getDefaultConfiguration().createCompatibleImage(10, 10);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     // Create an image displaying a line in its diagonal
     imageGraphics.setPaint(getBackground());
@@ -921,7 +974,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
                               Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                              Paint indicatorPaint, float scale, boolean printing) {
+                              Paint indicatorPaint, float scale, PaintMode paintMode) {
     BasicStroke pieceBorderStroke = new BasicStroke(1f / scale);
     if (this.sortedHomeFurniture == null) {
       // Sort home furniture in elevation order
@@ -944,30 +997,35 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Draw furniture
     for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
       if (piece.isVisible()) {
-        Shape pieceShape = getShape(piece.getPoints());
-        // Fill piece area
-        g2D.setPaint(getBackground());
-        g2D.fill(pieceShape);
-        // Draw its icon
-        paintPieceOfFurnitureIcon(g2D, piece, pieceShape, scale);
-        
-        if (selectedItems.contains(piece)
-            && !printing) {
-          // Draw selection border
-          g2D.setPaint(selectionOutlinePaint);
-          g2D.setStroke(selectionOutlineStroke);
+        boolean selectedPiece = selectedItems.contains(piece);
+        // In clipboard paint mode, paint piece only if it is selected
+        if (paintMode != PaintMode.CLIPBOARD
+            || selectedPiece) {
+          Shape pieceShape = getShape(piece.getPoints());
+          // Fill piece area
+          g2D.setPaint(getBackground());
+          g2D.fill(pieceShape);
+          // Draw its icon
+          paintPieceOfFurnitureIcon(g2D, piece, pieceShape, scale);
+          
+          if (selectedPiece
+              && paintMode == PaintMode.PAINT) {
+            // Draw selection border
+            g2D.setPaint(selectionOutlinePaint);
+            g2D.setStroke(selectionOutlineStroke);
+            g2D.draw(pieceShape);
+          }        
+          // Draw its border
+          g2D.setPaint(getForeground());
+          g2D.setStroke(pieceBorderStroke);
           g2D.draw(pieceShape);
-        }        
-        // Draw its border
-        g2D.setPaint(getForeground());
-        g2D.setStroke(pieceBorderStroke);
-        g2D.draw(pieceShape);
-        
-        if (selectedItems.size() == 1 
-            && selectedItems.get(0) == piece
-            && !printing) {
-          paintPieceOFFurnitureIndicators(g2D, 
-              (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint, scale);
+          
+          if (selectedItems.size() == 1 
+              && selectedItems.get(0) == piece
+              && paintMode == PaintMode.PAINT) {
+            paintPieceOFFurnitureIndicators(g2D, 
+                (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint, scale);
+          }
         }
       }
     }
@@ -1248,13 +1306,13 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Returns the shape matching the coordinates in <code>points</code> array.
    */
   private Shape getShape(float [][] points) {
-    GeneralPath wallPath = new GeneralPath();
-    wallPath.moveTo(points [0][0], points [0][1]);
+    GeneralPath path = new GeneralPath();
+    path.moveTo(points [0][0], points [0][1]);
     for (int i = 1; i < points.length; i++) {
-      wallPath.lineTo(points [i][0], points [i][1]);
+      path.lineTo(points [i][0], points [i][1]);
     }
-    wallPath.closePath();
-    return wallPath;
+    path.closePath();
+    return path;
   }
 
   /**
@@ -1286,33 +1344,54 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             selectionScrollUpdated = false;
-            Area area = new Area();
-            boolean selectionContainsVisibleObjects = false;
-            for (Object item : home.getSelectedItems()) {
-              if (item instanceof Wall) {
-                area.add(new Area(getShape(((Wall)item).getPoints())));
-                selectionContainsVisibleObjects = true;
-              } else if (item instanceof HomePieceOfFurniture) {
-                HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-                if (piece.isVisible()) {
-                  area.add(new Area(getShape((piece).getPoints())));
-                  selectionContainsVisibleObjects = true;
-                }
-              } else if (item instanceof ObserverCamera) {
-                ObserverCamera camera = (ObserverCamera)item;
-                area.add(new Area(getShape((camera).getPoints())));
-                selectionContainsVisibleObjects = true;
-              }
-            }      
-            
-            if (selectionContainsVisibleObjects) {
-              Rectangle pixelBounds = getShapePixelBounds(area);
+            Rectangle2D selectionBounds = getSelectionBounds(true);
+            if (selectionBounds != null) {
+              Rectangle pixelBounds = getShapePixelBounds(selectionBounds);
               pixelBounds.grow(5, 5);
               scrollRectToVisible(pixelBounds);
             }
           }
         });
     }
+  }
+
+  /**
+   * Returns the bounds of the selected items.
+   */
+  private Rectangle2D getSelectionBounds(boolean includeCamera) {
+    // Compute bounds that include selected walls and furniture
+    Rectangle2D selectionBounds = null;
+    for (Object item : this.home.getSelectedItems()) {
+      if (item instanceof Wall) {
+        for (float [] point : ((Wall)item).getPoints()) {
+          if (selectionBounds == null) {
+            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            selectionBounds.add(point [0], point [1]);
+          }
+        }
+      } else if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (piece.isVisible()) {
+          for (float [] point : piece.getPoints()) {
+            if (selectionBounds == null) {
+              selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+            } else {
+              selectionBounds.add(point [0], point [1]);
+            }
+          }
+        }
+      } else if (item instanceof ObserverCamera) {
+        for (float [] point : ((ObserverCamera)item).getPoints()) {
+          if (selectionBounds == null) {
+            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            selectionBounds.add(point [0], point [1]);
+          }
+        }
+      } 
+    }
+    return selectionBounds;
   }
 
   /**
