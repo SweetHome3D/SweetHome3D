@@ -41,7 +41,7 @@ public class HomeFurnitureController {
   private Home                home;
   private UndoableEditSupport undoSupport;
   private ResourceBundle      resource;
-  private JComponent          wallView;
+  private JComponent          homeFurnitureView;
 
   /**
    * Creates the controller of home furniture view with undo support.
@@ -53,15 +53,15 @@ public class HomeFurnitureController {
     this.undoSupport = undoSupport;
     this.resource    = ResourceBundle.getBundle(
         HomeFurnitureController.class.getName());
-    this.wallView = new HomeFurniturePanel(home, preferences, this); 
-    ((HomeFurniturePanel)this.wallView).displayView();
+    this.homeFurnitureView = new HomeFurniturePanel(home, preferences, this); 
+    ((HomeFurniturePanel)this.homeFurnitureView).displayView();
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
-    return this.wallView;
+    return this.homeFurnitureView;
   }
 
   /**
