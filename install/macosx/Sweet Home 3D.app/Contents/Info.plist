@@ -61,6 +61,10 @@
 			<array>             
 				<string>com.eteks.sweethome3d.SweetHome3D</string>                 
 			</array>       
+			<key>CFBundleTypeIconFile</key>
+			<string>SweetHome3DDocument.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Sweet Home 3D Format</string>
 			<key>CFBundleTypeRole</key>                 
 			<string>Editor</string>                 
 		</dict>
