@@ -442,8 +442,7 @@ public class SweetHome3D extends HomeApplication {
           // ensure Java SE 5 compatibility
           Class desktopClass = Class.forName("java.awt.Desktop");
           Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
-          return (Boolean)desktopClass.getMethod("browse", URI.class).
-              invoke(desktopInstance, url.toURI());
+          desktopClass.getMethod("browse", URI.class).invoke(desktopInstance, url.toURI());
         } catch (Exception ex) {
           // For any exception, let's consider simply the showDocument method failed
         }
