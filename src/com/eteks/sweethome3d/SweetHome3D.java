@@ -443,6 +443,7 @@ public class SweetHome3D extends HomeApplication {
           Class desktopClass = Class.forName("java.awt.Desktop");
           Object desktopInstance = desktopClass.getMethod("getDesktop").invoke(null);
           desktopClass.getMethod("browse", URI.class).invoke(desktopInstance, url.toURI());
+          return true;
         } catch (Exception ex) {
           // For any exception, let's consider simply the showDocument method failed
         }
