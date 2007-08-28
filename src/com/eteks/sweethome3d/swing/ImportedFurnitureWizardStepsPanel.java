@@ -95,6 +95,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -230,25 +231,44 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       });
     this.findModelsButton = new JButton(resource.getString("findModelsButton.text"));
+    BasicService basicService = null;
     try { 
-      final URL findModelsUrl = new URL(resource.getString("findModelsButton.url"));
       // Lookup the javax.jnlp.BasicService object 
-      final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
-      // If basic service supports online web browser
-      if (service.isWebBrowserSupported() && !service.isOffline()) {
-        // Add a listener that displays Find models page in browser
-        this.findModelsButton.addActionListener(new ActionListener() {
-          public void actionPerformed(ActionEvent ev) {
-            service.showDocument(findModelsUrl); 
-          }
-        });
+      basicService = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
+      // Ignore the basic service, if it doesn't support web browser
+      if (!basicService.isWebBrowserSupported()) {
+        basicService = null;
       }
-    } catch (MalformedURLException ex) {
-      throw new IllegalArgumentException(ex);
     } catch (UnavailableServiceException ex) {
-      // Too bad : service is unavailable             
-      this.findModelsButton.setVisible(false);             
-    } 
+      // Too bad : service is unavailable
+    }
+    final BasicService service = basicService;
+    this.findModelsButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          boolean documentShown = false;
+          if (service != null) {
+            try { 
+              // Display Find models page in browser
+              final URL findModelsUrl = new URL(resource.getString("findModelsButton.url"));
+              documentShown = service.showDocument(findModelsUrl); 
+            } catch (MalformedURLException ex) {
+              // Document isn't shown
+            }
+          } 
+          if (!documentShown) {
+            // If the document wasn't shown, display a message 
+            // with a copiable URL in a message box 
+            JTextArea findModelsMessageTextArea = new JTextArea( 
+                resource.getString("findModelsMessage.text"));
+            findModelsMessageTextArea.setEditable(false);
+            findModelsMessageTextArea.setOpaque(false);
+            JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+                findModelsMessageTextArea, 
+                resource.getString("findModelsMessage.title"), 
+                JOptionPane.INFORMATION_MESSAGE);
+          }
+        }
+      });
     this.modelChoiceErrorLabel = new JLabel(resource.getString("modelChoiceErrolLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occured during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
@@ -647,10 +667,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         0, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
     modelPanel.add(this.modelChoiceOrChangeButton, new GridBagConstraints(
-        0, 1, 1, 1, 1, 0, 
-        this.findModelsButton.isVisible() 
-            ? GridBagConstraints.EAST 
-            : GridBagConstraints.CENTER, 
+        0, 1, 1, 1, 1, 0, GridBagConstraints.EAST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
     modelPanel.add(this.findModelsButton, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, GridBagConstraints.WEST, 
