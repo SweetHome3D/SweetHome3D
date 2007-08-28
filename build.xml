@@ -192,6 +192,7 @@
   	<copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.0" />
   	 
   	<!-- Create install/SweetHome3D-1.0-macosx.dmg with Disk Utility -->
+    <delete file="install/SweetHome3D-1.0-macosx.dmg"/>
   	<exec executable="hdiutil">
       <arg value="create"/>
       <arg value="-srcfolder"/>
