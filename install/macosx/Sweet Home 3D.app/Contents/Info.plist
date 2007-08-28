@@ -29,44 +29,44 @@
 
 	<key>UTExportedTypeDeclarations</key>
 	<array>
-		<dict>                 
-			<key>UTTypeIdentifier</key>                 
-			<string>com.eteks.sweethome3d.SweetHome3D</string>    
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.eteks.sweethome3d.SweetHome3D</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://sweethome3d.sourceforge.net/</string>             
-			<key>UTTypeDescription</key>                 
-			<string>Sweet Home 3D Document</string>  
-			<key>UTTypeIconFile</key>       
-			<string>SweetHome3DDocument.icns</string> 
-			<key>UTTypeConformsTo</key>                 
-			<array>                     
+	 		<string>http://sweethome3d.sourceforge.net/</string>
+			<key>UTTypeDescription</key>
+			<string>Sweet Home 3D Document</string>
+			<key>UTTypeIconFile</key>
+			<string>SweetHome3DDocument.icns</string>
+			<key>UTTypeConformsTo</key>
+			<array>
 				<string>public.data</string>
-				<string>public.content</string>                     
+				<string>public.content</string>
 			</array>
-			<key>UTTypeTagSpecification</key>                 
+			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>com.apple.ostype</key>
 				<string>SH3D</string>
-				<key>public.filename-extension</key>                 
+				<key>public.filename-extension</key>
 				<array>
-					<string>sh3d</string>                     
+					<string>sh3d</string>
 				</array>
 			</dict>
 		</dict>
 	</array>
 	<key>CFBundleDocumentTypes</key>
-		<array>             
-		<dict>                 
-			<key>LSItemContentTypes</key>                 
-			<array>             
-				<string>com.eteks.sweethome3d.SweetHome3D</string>                 
-			</array>       
+		<array>
+		<dict>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.eteks.sweethome3d.SweetHome3D</string>
+			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string>SweetHome3DDocument.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Sweet Home 3D Format</string>
-			<key>CFBundleTypeRole</key>                 
-			<string>Editor</string>                 
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 		</dict>
 	</array>
 
