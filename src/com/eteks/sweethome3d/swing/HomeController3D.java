@@ -207,17 +207,6 @@ public class HomeController3D {
      */
     private void updateCameraFromHomeBounds() {
       Rectangle2D newHomeBounds = computeHomeBounds();
-      // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
-      newHomeBounds = new Rectangle2D.Float(
-          (float)(MIN_DIMENSION < newHomeBounds.getWidth() 
-                      ? newHomeBounds.getMinX()
-                      : newHomeBounds.getCenterX() - MIN_DIMENSION / 2), 
-          (float)(MIN_DIMENSION < newHomeBounds.getHeight() 
-                      ? newHomeBounds.getMinY()
-                      : newHomeBounds.getCenterY() - MIN_DIMENSION / 2), 
-          (float)Math.max(MIN_DIMENSION, newHomeBounds.getWidth()), 
-          (float)Math.max(MIN_DIMENSION, newHomeBounds.getHeight()));
-
       float deltaZ = (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight())  
           - Math.max(newHomeBounds.getWidth(), newHomeBounds.getHeight()));
       this.homeBounds = newHomeBounds;
@@ -250,7 +239,16 @@ public class HomeController3D {
         }
       }
       if (homeBounds != null) {
-        return homeBounds;
+        // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
+        return new Rectangle2D.Float(
+            (float)(MIN_DIMENSION < homeBounds.getWidth() 
+                        ? homeBounds.getMinX()
+                        : homeBounds.getCenterX() - MIN_DIMENSION / 2), 
+            (float)(MIN_DIMENSION < homeBounds.getHeight() 
+                        ? homeBounds.getMinY()
+                        : homeBounds.getCenterY() - MIN_DIMENSION / 2), 
+            (float)Math.max(MIN_DIMENSION, homeBounds.getWidth()), 
+            (float)Math.max(MIN_DIMENSION, homeBounds.getHeight()));
       } else {
         return new Rectangle2D.Float(0, 0, MIN_DIMENSION, MIN_DIMENSION);
       }
