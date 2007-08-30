@@ -174,22 +174,26 @@
   	<!-- Change executable permission of JavaApplicationStub lost during copy task -->
   	<chmod perm="+x" file="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/> 		
 
-    <!-- Copy SweetHome3D.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
+    <!-- Copy SweetHome3D.jar and its direct libs 
          to install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java -->
-    <mkdir dir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java"/>
+    <mkdir dir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
     <copy file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" />
     <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
     </copy>
-    <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" >
+    <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
+         to install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java/ext -->
+    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
+    <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java/ext" >
       <fileset dir="lib/macosx">
         <include name="*.jar"/>
         <include name="*.jnilib"/>
       </fileset>
     </copy>
-  	<copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.0" />
+    <!-- Copy COPYING.TXT to install/macosx/SweetHome3D-1.0/ -->
+  	<copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.0"/>
   	 
   	<!-- Create install/SweetHome3D-1.0-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-1.0-macosx.dmg"/>
