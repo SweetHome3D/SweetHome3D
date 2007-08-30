@@ -246,7 +246,7 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Updates components values from selected walls in <code>home</code>.
+   * Updates components values from selected furniture in <code>home</code>.
    */
   private void updateComponents(Home home) {
     List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(home.getSelectedItems());
