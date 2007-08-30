@@ -55,7 +55,7 @@ public class ResourceAction extends AbstractAction {
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix, boolean enabled) {
     String propertyPrefix = actionPrefix + ".";
-    putValue(NAME, resource.getString(propertyPrefix + NAME));
+    putValue(NAME, getOptionalString(resource, propertyPrefix + NAME));
     putValue(DEFAULT, getValue(NAME));
     putValue(POPUP, getOptionalString(resource, propertyPrefix + POPUP));
     
