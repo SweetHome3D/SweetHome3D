@@ -132,6 +132,10 @@ public class HomeComponent3D extends JComponent implements Printable {
   private WallListener              wallListener;
   private PropertyChangeListener    wallsAlphaListener;
   private FurnitureListener         furnitureListener;
+  // Offscreen printed image cache 
+  // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
+  // This image should be set to null each time the 3D view changes
+  private BufferedImage             printedImage;
 
   /**
    * Creates a 3D component that displays <code>home</code> walls and furniture, 
@@ -237,54 +241,42 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
     if (pageIndex == 0) {
-      int printSize = (int)Math.min(pageFormat.getImageableWidth(), 
+      // Compute printed image  size to render 3D view in 150 dpi
+      double printSize = Math.min(pageFormat.getImageableWidth(), 
           pageFormat.getImageableHeight());
-      Canvas3D offScreenCanvas = createOffScreenCanvas(printSize);
-  
+      int printedImageSize = (int)(printSize / 72 * 150);
+      Canvas3D offScreenCanvas = null;
       SimpleUniverse printUniverse = null;
-      if (this.universe == null) {
-        printUniverse = getUniverse(offScreenCanvas, this.home);
-      } else {
-        // Create a view associated with canvas3D
-        View view = new View();
-        view.addCanvas3D(offScreenCanvas);
-        // Reuse universe physical body, environment, projection policy, field of view and clip distances
-        Viewer universeViewer = this.universe.getViewer();
-        view.setPhysicalBody(universeViewer.getPhysicalBody());
-        view.setPhysicalEnvironment(universeViewer.getPhysicalEnvironment());
-        view.setProjectionPolicy(universeViewer.getView().getProjectionPolicy());
-        view.setFieldOfView(universeViewer.getView().getFieldOfView());
-        view.setFrontClipDistance(universeViewer.getView().getFrontClipDistance());
-        view.setBackClipDistance(universeViewer.getView().getBackClipDistance());
-        
-        // Create a viewing platform and attach it to view and universe locale
-        ViewingPlatform viewingPlatform = new ViewingPlatform();
-        viewingPlatform.setUniverse(this.universe);
-        this.universe.getLocale().addBranchGraph(
-            (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
-        view.attachViewPlatform(viewingPlatform.getViewPlatform());
-        // Reuse universe view platform transform
-        Transform3D universeViewPlatformTransform = new Transform3D();
-        this.universe.getViewingPlatform().getViewPlatformTransform().getTransform(universeViewPlatformTransform);
-        viewingPlatform.getViewPlatformTransform().setTransform(universeViewPlatformTransform);
-      }
+      if (this.printedImage == null 
+          || this.printedImage.getWidth() != printedImageSize) {
+        offScreenCanvas = createOffScreenCanvas(printedImageSize);
   
-      offScreenCanvas.renderOffScreenBuffer();
-      offScreenCanvas.waitForOffScreenRendering();
-      BufferedImage image = offScreenCanvas.getOffScreenBuffer().getImage();
+        if (this.universe == null) {
+          printUniverse = getUniverse(offScreenCanvas, this.home);
+        } else {
+          createView(offScreenCanvas, this.universe);
+        }
+        offScreenCanvas.renderOffScreenBuffer();
+        offScreenCanvas.waitForOffScreenRendering();
+        this.printedImage = offScreenCanvas.getOffScreenBuffer().getImage();
+      }
   
       Graphics2D g2D = (Graphics2D)g.create();
       // Center the 3D view in component
       g2D.translate(pageFormat.getImageableX() + (pageFormat.getImageableWidth() - printSize) / 2, 
           pageFormat.getImageableY() + (pageFormat.getImageableHeight() - printSize) / 2);
-      g2D.drawImage(image, 0, 0, printSize, printSize, this);
+      double scale = printSize / printedImageSize;
+      g2D.scale(scale, scale);
+      g2D.drawImage(this.printedImage, 0, 0, this);
       g2D.dispose();
-      
-      if (printUniverse != null) {
-        printUniverse.cleanup();
-        removeHomeListeners(this.home);
-      } else {
-        offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+
+      if (offScreenCanvas != null) {
+        if (printUniverse != null) {
+          printUniverse.cleanup();
+          removeHomeListeners(this.home);
+        } else {
+          offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+        }
       }
       return PAGE_EXISTS;
     } else {
@@ -295,14 +287,14 @@ public class HomeComponent3D extends JComponent implements Printable {
   /**
    * Returns an off screen canvas.
    */
-  private Canvas3D createOffScreenCanvas(int printSize) {
+  private Canvas3D createOffScreenCanvas(int canvasSize) {
     GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
     gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
     // Create the Java 3D canvas that will display home 
     Canvas3D offScreenCanvas = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
         getDefaultScreenDevice().getBestConfiguration(gc), true);
     Screen3D screen3D = offScreenCanvas.getScreen3D();
-    int canvas3DImageSize = printSize * 2;  
+    int canvas3DImageSize = canvasSize;  
     screen3D.setSize(canvas3DImageSize, canvas3DImageSize);
     screen3D.setPhysicalScreenWidth(2f);
     screen3D.setPhysicalScreenHeight(2f);
@@ -311,6 +303,33 @@ public class HomeComponent3D extends JComponent implements Printable {
     imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
     offScreenCanvas.setOffScreenBuffer(imageComponent2D);
     return offScreenCanvas;
+  }
+
+  /**
+   * Creates a view associated with <code>offScreenCanvas</code> and <code>universe</code>.
+   */ 
+  private void createView(Canvas3D offScreenCanvas, SimpleUniverse universe) {
+    View view = new View();
+    view.addCanvas3D(offScreenCanvas);
+    // Reuse universe physical body, environment, projection policy, field of view and clip distances
+    Viewer universeViewer = universe.getViewer();
+    view.setPhysicalBody(universeViewer.getPhysicalBody());
+    view.setPhysicalEnvironment(universeViewer.getPhysicalEnvironment());
+    view.setProjectionPolicy(universeViewer.getView().getProjectionPolicy());
+    view.setFieldOfView(universeViewer.getView().getFieldOfView());
+    view.setFrontClipDistance(universeViewer.getView().getFrontClipDistance());
+    view.setBackClipDistance(universeViewer.getView().getBackClipDistance());
+    
+    // Create a viewing platform and attach it to view and universe locale
+    ViewingPlatform viewingPlatform = new ViewingPlatform();
+    viewingPlatform.setUniverse(universe);
+    universe.getLocale().addBranchGraph(
+        (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
+    view.attachViewPlatform(viewingPlatform.getViewPlatform());
+    // Reuse universe view platform transform
+    Transform3D universeViewPlatformTransform = new Transform3D();
+    universe.getViewingPlatform().getViewPlatformTransform().getTransform(universeViewPlatformTransform);
+    viewingPlatform.getViewPlatformTransform().setTransform(universeViewPlatformTransform);
   }
 
   /**
@@ -354,6 +373,8 @@ public class HomeComponent3D extends JComponent implements Printable {
     // Update front and back clip distance to ensure their ratio is less than 3000
     view.setFrontClipDistance(frontClipDistance);
     view.setBackClipDistance(frontClipDistance * 3000);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**
@@ -372,6 +393,8 @@ public class HomeComponent3D extends JComponent implements Printable {
     transform.mul(yawRotation);
     
     viewPlatformTransform.setTransform(transform);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**
@@ -571,6 +594,8 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private void updateBackgroundColor(Background background, Home home) {
     background.setColor(new Color3f(new Color(home.getSkyColor())));
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**
@@ -608,6 +633,8 @@ public class HomeComponent3D extends JComponent implements Printable {
                                  Home home) {
     Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
     groundColoringAttributes.setColor(groundColor);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**
@@ -647,6 +674,8 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private void updateLightColor(Light light, Home home) {
     light.setColor(new Color3f(new Color(home.getLightColor())));
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**
@@ -744,6 +773,8 @@ public class HomeComponent3D extends JComponent implements Printable {
     Wall3D wall3D = new Wall3D(wall, home);
     this.homeObjects.put(wall, wall3D);
     homeRoot.addChild(wall3D);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
 
   /**
@@ -768,6 +799,8 @@ public class HomeComponent3D extends JComponent implements Printable {
   private void deleteObject(Object homeObject) {
     this.homeObjects.get(homeObject).detach();
     this.homeObjects.remove(homeObject);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
 
   /**
@@ -777,6 +810,8 @@ public class HomeComponent3D extends JComponent implements Printable {
     HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece);
     this.homeObjects.put(piece, piece3D);
     homeRoot.addChild(piece3D);
+    // Cancel printed image cache
+    this.printedImage = null;
   }
 
   /**
@@ -808,6 +843,8 @@ public class HomeComponent3D extends JComponent implements Printable {
         }
       });
     }
+    // Cancel printed image cache
+    this.printedImage = null;
   }
   
   /**

@@ -50,7 +50,6 @@ import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -1028,22 +1027,21 @@ public class HomeController  {
    * Controls page setup.
    */
   public void setupPage() {
-    HomePrint homePrint = ((HomePane)getView()).setupPage(this.home.getPrint());
-    this.home.setPrint(homePrint);
+    new PageSetupController(this.home, this.undoSupport);
   }
 
   /**
    * Controls the print preview.
    */
   public void previewPrint() {
-    // TODO Implement preview
+    new PrintPreviewController(this.home, this);
   }
 
   /**
    * Controls the print of this home.
    */
   public void print() {
-    if (!((HomePane)getView()).print(this.home.getPrint(), this)) {
+    if (!((HomePane)getView()).print()) {
       String message = String.format(this.resource.getString("printError"), this.home.getName());
       ((HomePane)getView()).showError(message);
     }

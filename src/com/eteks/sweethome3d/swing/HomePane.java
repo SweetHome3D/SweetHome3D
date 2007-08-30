@@ -20,23 +20,17 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
-import java.awt.print.Paper;
-import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
@@ -84,7 +78,6 @@ import javax.swing.event.MenuListener;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -113,6 +106,8 @@ public class HomePane extends JRootPane {
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
   
   private ContentManager                  contentManager;
+  private Home                            home;
+  private HomeController                  controller;
   private ResourceBundle                  resource;
   // Button models shared by Select and Create wall menu items and the matching tool bar buttons
   private JToggleButton.ToggleButtonModel selectToggleModel;
@@ -121,9 +116,6 @@ public class HomePane extends JRootPane {
   private JToggleButton.ToggleButtonModel viewFromTopToggleModel;
   private JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
   private JComponent                      focusedComponent;
-  private JComponent                      catalogView;
-  private JComponent                      furnitureView;
-  private JComponent                      planView;
   private TransferHandler                 catalogTransferHandler;
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
@@ -133,7 +125,9 @@ public class HomePane extends JRootPane {
    */
   public HomePane(Home home, UserPreferences preferences, 
                   ContentManager contentManager, HomeController controller) {
+    this.home = home;
     this.contentManager = contentManager;
+    this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     // Create unique toggle button models for Selection / Wall creation states
     // so Select and Create walls creation menu items and tool bar buttons 
@@ -164,7 +158,7 @@ public class HomePane extends JRootPane {
     getContentPane().add(getToolBar(), BorderLayout.NORTH);
     getContentPane().add(getMainPane(home, preferences, controller));
     
-    disableMenuItemsDuringDragAndDrop(this.planView, homeMenuBar);
+    disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
   }
   
   /**
@@ -800,15 +794,17 @@ public class HomePane extends JRootPane {
    */
   public void setTransferEnabled(boolean enabled) {
     if (enabled) {
-      this.catalogView.setTransferHandler(this.catalogTransferHandler);
-      this.furnitureView.setTransferHandler(this.furnitureTransferHandler);
-      this.planView.setTransferHandler(this.planTransferHandler);
-      ((JViewport)this.furnitureView.getParent()).setTransferHandler(this.furnitureTransferHandler);
+      this.controller.getCatalogController().getView().setTransferHandler(this.catalogTransferHandler);
+      this.controller.getFurnitureController().getView().setTransferHandler(this.furnitureTransferHandler);
+      this.controller.getPlanController().getView().setTransferHandler(this.planTransferHandler);
+      ((JViewport)this.controller.getFurnitureController().getView().getParent()).
+          setTransferHandler(this.furnitureTransferHandler);
     } else {
-      this.catalogView.setTransferHandler(null);
-      this.furnitureView.setTransferHandler(null);
-      this.planView.setTransferHandler(null);
-      ((JViewport)this.furnitureView.getParent()).setTransferHandler(null);
+      this.controller.getCatalogController().getView().setTransferHandler(null);
+      this.controller.getFurnitureController().getView().setTransferHandler(null);
+      this.controller.getPlanController().getView().setTransferHandler(null);
+      ((JViewport)this.controller.getFurnitureController().getView().getParent()).
+          setTransferHandler(null);
     }
   }
 
@@ -830,10 +826,10 @@ public class HomePane extends JRootPane {
    * Returns the catalog tree and furniture table pane. 
    */
   private JComponent getCatalogFurniturePane(HomeController controller) {
-    this.catalogView = controller.getCatalogController().getView();
-    JScrollPane catalogScrollPane = new HomeScrollPane(this.catalogView);
+    JComponent catalogView = controller.getCatalogController().getView();
+    JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
-    this.catalogView.addFocusListener(new FocusableViewListener(
+    catalogView.addFocusListener(new FocusableViewListener(
         controller, catalogScrollPane));
     
     // Create catalog view popup menu
@@ -846,29 +842,29 @@ public class HomePane extends JRootPane {
     catalogViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     catalogViewPopup.addSeparator();
     catalogViewPopup.add(getPopupAction(ActionType.IMPORT_FURNITURE));
-    this.catalogView.setComponentPopupMenu(catalogViewPopup);
+    catalogView.setComponentPopupMenu(catalogViewPopup);
 
     // Configure furniture view
-    this.furnitureView = controller.getFurnitureController().getView();
-    JScrollPane furnitureScrollPane = new HomeScrollPane(this.furnitureView);
+    final JComponent furnitureView = controller.getFurnitureController().getView();
+    JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
     // Set default traversal keys of furniture view
     KeyboardFocusManager focusManager =
         KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    this.furnitureView.setFocusTraversalKeys(
+    furnitureView.setFocusTraversalKeys(
         KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
         focusManager.getDefaultFocusTraversalKeys(
             KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
-    this.furnitureView.setFocusTraversalKeys(
+    furnitureView.setFocusTraversalKeys(
         KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
         focusManager.getDefaultFocusTraversalKeys(
             KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
 
     // Add focus listener to furniture table 
-    this.furnitureView.addFocusListener(new FocusableViewListener(
+    furnitureView.addFocusListener(new FocusableViewListener(
         controller, furnitureScrollPane));
     // Add a mouse listener that gives focus to furniture view when
     // user clicks in its viewport
-    ((JViewport)this.furnitureView.getParent()).addMouseListener(
+    ((JViewport)furnitureView.getParent()).addMouseListener(
         new MouseAdapter() {
           @Override
           public void mouseClicked(MouseEvent ev) {
@@ -889,8 +885,8 @@ public class HomePane extends JRootPane {
     furnitureViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
-    this.furnitureView.setComponentPopupMenu(furnitureViewPopup);
-    ((JViewport)this.furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
+    furnitureView.setComponentPopupMenu(furnitureViewPopup);
+    ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
     
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
@@ -906,13 +902,13 @@ public class HomePane extends JRootPane {
    */
   private JComponent getPlanView3DPane(Home home, UserPreferences preferences, 
                                        HomeController controller) {
-    this.planView = controller.getPlanController().getView();
-    JScrollPane planScrollPane = new HomeScrollPane(this.planView);
+    JComponent planView = controller.getPlanController().getView();
+    JScrollPane planScrollPane = new HomeScrollPane(planView);
     setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
     // Add a listener to update rulers visibility in preferences
     preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
         new RulersVisibilityChangeListener(this, planScrollPane, controller));
-    this.planView.addFocusListener(new FocusableViewListener(
+    planView.addFocusListener(new FocusableViewListener(
         controller, planScrollPane));
 
     // Create plan view popup menu
@@ -941,11 +937,11 @@ public class HomePane extends JRootPane {
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.ZOOM_OUT));
     planViewPopup.add(getPopupAction(ActionType.ZOOM_IN));
-    this.planView.setComponentPopupMenu(planViewPopup);
+    planView.setComponentPopupMenu(planViewPopup);
     
     // Configure 3D view
     JComponent view3D = controller.getHomeController3D().getView();
-    view3D.setPreferredSize(this.planView.getPreferredSize());
+    view3D.setPreferredSize(planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
     view3D.addFocusListener(new FocusableViewListener(
         controller, view3D));
@@ -1204,8 +1200,8 @@ public class HomePane extends JRootPane {
     try { 
       // Lookup the javax.jnlp.BasicService object 
       final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
-      // If basic service supports online web browser
-      if (service.isWebBrowserSupported() && !service.isOffline()) {
+      // If basic service supports  web browser
+      if (service.isWebBrowserSupported()) {
         // Add a listener that displays hyperlinks content in browser
         messagePane.addHyperlinkListener(new HyperlinkListener() {
           public void hyperlinkUpdate(HyperlinkEvent ev) {
@@ -1227,86 +1223,12 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Shows the page setup dialog matching <code>homePrint</code> 
-   * and returns the print attributes chosen by user.
-   * If user cancelled his choice, <code>homePrint</code> parameter is returned unchanged.
+   * Prints the home displayed by this pane and returns <code>true</code> if print was successful.
    */
-  public HomePrint setupPage(HomePrint homePrint) {
+  public boolean print() {
+    PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
     PrinterJob printerJob = PrinterJob.getPrinterJob();
-    
-    PageFormat pageFormat;
-    if (homePrint == null) {
-      pageFormat = printerJob.defaultPage();
-    } else {
-      pageFormat = printerJob.validatePage(getPageFormat(homePrint));
-    }
-    PageFormat returnedPageFormat = printerJob.pageDialog(pageFormat);
-    if (returnedPageFormat == pageFormat) {
-      // User clicked on Cancel
-      return homePrint;
-    } else {
-      // Return an HomePrint instance matching returnedPageFormat
-      HomePrint.PaperOrientation paperOrientation; 
-      switch (returnedPageFormat.getOrientation()) {
-        case PageFormat.LANDSCAPE :
-          paperOrientation = HomePrint.PaperOrientation.LANDSCAPE;
-          break;
-        case PageFormat.REVERSE_LANDSCAPE :
-          paperOrientation = HomePrint.PaperOrientation.REVERSE_LANDSCAPE;
-          break;
-        default :
-          paperOrientation = HomePrint.PaperOrientation.PORTRAIT;
-          break;
-      }
-      Paper paper = returnedPageFormat.getPaper();
-      return new HomePrint(paperOrientation, (float)paper.getWidth(), (float)paper.getHeight(),
-          (float)paper.getImageableY(), (float)paper.getImageableX(),
-          (float)(paper.getHeight() - paper.getImageableHeight() - paper.getImageableY()),
-          (float)(paper.getWidth() - paper.getImageableWidth() - paper.getImageableX()),
-          homePrint == null ? true : homePrint.isFurniturePrinted(),
-          homePrint == null ? true : homePrint.isPlanPrinted(),
-          homePrint == null ? true : homePrint.isView3DPrinted());
-    }
-  }
-  
-  /**
-   * Returns a <code>PageFormat</code> object created from <code>homePrint</code>.
-   */
-  private PageFormat getPageFormat(HomePrint homePrint) {
-    PageFormat pageFormat = new PageFormat();
-    switch (homePrint.getPaperOrientation()) {
-      case PORTRAIT :
-        pageFormat.setOrientation(PageFormat.PORTRAIT);
-        break;
-      case LANDSCAPE :
-        pageFormat.setOrientation(PageFormat.LANDSCAPE);
-        break;
-      case REVERSE_LANDSCAPE :
-        pageFormat.setOrientation(PageFormat.REVERSE_LANDSCAPE);
-        break;
-    }
-    Paper paper = new Paper();
-    paper.setSize(homePrint.getPaperWidth(), homePrint.getPaperHeight());
-    paper.setImageableArea(homePrint.getPaperLeftMargin(), homePrint.getPaperTopMargin(), 
-        homePrint.getPaperWidth() - homePrint.getPaperLeftMargin() - homePrint.getPaperRightMargin(), 
-        homePrint.getPaperHeight() - homePrint.getPaperTopMargin() - homePrint.getPaperBottomMargin());
-    pageFormat.setPaper(paper);
-    return pageFormat;
-  }
-  
-  /**
-   * Prints the views managed by the controllers in parameter.
-   */
-  public boolean print(HomePrint homePrint,
-                       HomeController controller) {
-    PrinterJob printerJob = PrinterJob.getPrinterJob();
-    PageFormat pageFormat;
-    if (homePrint == null) {
-      pageFormat = printerJob.defaultPage();
-    } else {
-      pageFormat = printerJob.validatePage(getPageFormat(homePrint));
-    }
-    printerJob.setPrintable(new PrintableComponent(homePrint, controller), pageFormat);
+    printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller), pageFormat);
     if (printerJob.printDialog()) {
       // Create a waiting glass pane for this lengthy operation
       Component previousGlassPane = getGlassPane(); 
@@ -1404,54 +1326,6 @@ public class HomePane extends JRootPane {
     
     public void focusLost(FocusEvent ev) {
       this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
-    }
-  }
-  
-  /**
-   * A printable component used to print furniture view, plan view 
-   * and 3D view.
-   */
-  private static class PrintableComponent extends JComponent implements Printable {
-    private HomePrint      homePrint;
-    private HomeController controller;
-    private int            planViewIndex = 0;
-    
-    public PrintableComponent(HomePrint homePrint, HomeController controller) {
-      this.homePrint = homePrint;
-      this.controller = controller;
-    }
-    
-    public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
-      Graphics2D g2D = (Graphics2D)g;
-      g2D.setColor(Color.WHITE);
-      g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
-                                      pageFormat.getHeight()));
-      
-      int pageExists = NO_SUCH_PAGE;
-      if ((this.homePrint == null || this.homePrint.isFurniturePrinted())
-          && pageIndex <= this.planViewIndex) {
-        // Try to print next furniture view page
-        pageExists = ((Printable)this.controller.getFurnitureController().getView()).print(g2D, pageFormat, pageIndex);
-        if (pageExists == PAGE_EXISTS) {
-          this.planViewIndex = pageIndex + 1;
-        }
-      } 
-      if ((this.homePrint == null || this.homePrint.isPlanPrinted())
-          && pageIndex == this.planViewIndex) {
-        ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
-        pageExists = PAGE_EXISTS;
-      } else if ((this.homePrint == null && pageIndex == this.planViewIndex + 1)
-                 || (this.homePrint != null
-                     && this.homePrint.isView3DPrinted()
-                     && ((this.homePrint.isPlanPrinted()
-                           && pageIndex == this.planViewIndex + 1)
-                         || (!this.homePrint.isPlanPrinted()
-                             && pageIndex == this.planViewIndex)))) {
-        ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
-        pageExists = PAGE_EXISTS;
-      }
-      
-      return pageExists;
     }
   }
 }
