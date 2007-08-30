@@ -72,20 +72,22 @@
 
 	<key>Java</key>
 	<dict>
-		<key>WorkingDirectory</key>
-		<string>$JAVAROOT</string>
 		<key>VMOptions</key>
-		<string>-Xmx192m -Xbootclasspath/p:j3dcore.jar:j3dutils.jar:jogl.jar:vecmath.jar:gluegen-rt.jar -Dsun.boot.library.path=/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Libraries:.</string>
+		<string>-Xmx192m</string>
 		<key>MainClass</key>
 		<string>com.eteks.sweethome3d.SweetHome3D</string>
 		<key>JVMVersion</key>
 		<string>1.5*</string>
 		<key>ClassPath</key>
 		<array>
-			<string>SweetHome3D.jar</string>
-			<string>Loader3DS1_2.jar</string>
-			<string>/Applications/Utilities/Java/J2SE 5.0/Java Cache Viewer.app/Contents/MacOS/lib/javaws.jar</string>
+			<string>$JAVAROOT/SweetHome3D.jar</string>
+			<string>$JAVAROOT/Loader3DS1_2.jar</string>
 		</array>
+		<key>Properties</key>
+		<dict>
+			<key>java.ext.dirs</key>
+			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home/lib/ext</string>
+		</dict>
 	</dict>
 </dict>
 </plist>
