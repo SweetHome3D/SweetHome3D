@@ -53,11 +53,11 @@ import com.eteks.sweethome3d.swing.PageSetupPanel;
 import com.eteks.sweethome3d.swing.PrintPreviewPanel;
 
 /**
- * Tests print setup and preview panes in home.
+ * Tests page setup and print preview panes in home.
  * @author Emmanuel Puybaret
  */
 public class PrintTest extends ComponentTestFixture {
-  public void testPrintSetupAndPreview() throws ComponentSearchException, InterruptedException, 
+  public void testPageSetupAndPrintPreview() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
