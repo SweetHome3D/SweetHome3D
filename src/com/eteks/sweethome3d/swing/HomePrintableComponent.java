@@ -39,7 +39,7 @@ import com.eteks.sweethome3d.model.HomePrint;
  * A printable component used to print or preview the furniture, the plan 
  * and the 3D view of a home.
  */
-class HomePrintableComponent extends JComponent implements Printable {
+public class HomePrintableComponent extends JComponent implements Printable {
   private Home           home;
   private HomeController controller;
   private int            page;
