@@ -53,6 +53,9 @@ Name: "{userdesktop}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Tasks: d
 [Run]
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\jre1.6.0_02\launch4j-tmp"
+
 [CustomMessages]
 SweetHome3DComment=Arrange the furniture of your house
 french.SweetHome3DComment=Aménagez les meubles de votre logement
