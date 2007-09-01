@@ -668,9 +668,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     } else {
       // Use a scale of 1
       float scale = 1f;
-      BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().
-        getDefaultConfiguration().createCompatibleImage((int)Math.ceil(selectionBounds.getWidth() * scale + WALL_STROKE_WIDTH), 
-              (int)Math.ceil(selectionBounds.getHeight() * scale + WALL_STROKE_WIDTH));      
+      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * scale + WALL_STROKE_WIDTH), 
+              (int)Math.ceil(selectionBounds.getHeight() * scale + WALL_STROKE_WIDTH), BufferedImage.TYPE_INT_RGB);      
       Graphics2D g2D = (Graphics2D)image.getGraphics();
       // Paint background in white
       g2D.setColor(Color.WHITE);
@@ -956,8 +955,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Returns the <code>Paint</code> object used to fill walls.
    */
   private Paint getWallPaint(float scale) {
-    BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().
-        getDefaultConfiguration().createCompatibleImage(10, 10);
+    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     // Create an image displaying a line in its diagonal
     imageGraphics.setPaint(getBackground());
