@@ -29,7 +29,6 @@ import java.awt.EventQueue;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Paint;
 import java.awt.Point;
@@ -607,7 +606,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     Graphics2D g2D = (Graphics2D)g.create();
     paintBackground(g2D);
     Insets insets = getInsets();
-    // Clip componant to avoid drawing in empty borders
+    // Clip component to avoid drawing in empty borders
     g2D.clipRect(insets.left, insets.top, 
         getWidth() - insets.left - insets.right, 
         getHeight() - insets.top - insets.bottom);
@@ -1715,7 +1714,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       Graphics2D g2D = (Graphics2D)g.create();
       paintBackground(g2D);
       Insets insets = getInsets();
-      // Clip componant to avoid drawing in empty borders
+      // Clip component to avoid drawing in empty borders
       g2D.clipRect(insets.left, insets.top, 
           getWidth() - insets.left - insets.right, 
           getHeight() - insets.top - insets.bottom);
