@@ -87,7 +87,7 @@ public class IconManager {
       if (content == this.errorIconContent ||
           content == this.waitIconContent) {
         // Load icon immediately in this thread 
-        icon = createIcon(content, height, waitingComponent, null); 
+        icon = createIcon(content, height, null); 
       } else {
         // For content different from error icon and wait icon, 
         // laod it in a different thread with a virtual proxy 
@@ -105,12 +105,9 @@ public class IconManager {
    * Returns an icon created and scaled from the content of contentKey.
    * @param content the content from which the icon image is read
    * @param height  the desired height of the returned icon
-   * @param waitingComponent a waiting component
    * @param errorIcon the returned icon in cas of error
    */
-  private Icon createIcon(Content content, int height, 
-                          Component waitingComponent,
-                          Icon      errorIcon) {
+  private Icon createIcon(Content content, int height, Icon errorIcon) {
     try {
       // Read the icon of the piece 
       InputStream contentStream = content.openStream();
@@ -142,7 +139,7 @@ public class IconManager {
       // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {
-            icon = createIcon(content, height, waitingComponent, errorIcon);
+            icon = createIcon(content, height, errorIcon);
             waitingComponent.repaint();
           }
         });
