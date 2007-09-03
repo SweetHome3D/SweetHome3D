@@ -107,8 +107,6 @@ import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.universe.SimpleUniverse;
-import com.sun.j3d.utils.universe.Viewer;
-import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * A component that displays home walls and furniture with Java 3D. 
@@ -254,7 +252,7 @@ public class HomeComponent3D extends JComponent implements Printable {
         if (this.universe == null) {
           printUniverse = getUniverse(offScreenCanvas, this.home);
         } else {
-          createView(offScreenCanvas, this.universe);
+          this.universe.getViewer().getView().addCanvas3D(offScreenCanvas);
         }
         offScreenCanvas.renderOffScreenBuffer();
         offScreenCanvas.waitForOffScreenRendering();
@@ -290,6 +288,7 @@ public class HomeComponent3D extends JComponent implements Printable {
   private Canvas3D createOffScreenCanvas(int canvasSize) {
     GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
     gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+    gc.setDoubleBuffer(GraphicsConfigTemplate3D.UNNECESSARY);
     // Create the Java 3D canvas that will display home 
     Canvas3D offScreenCanvas = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
         getDefaultScreenDevice().getBestConfiguration(gc), true);
@@ -303,33 +302,6 @@ public class HomeComponent3D extends JComponent implements Printable {
     imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
     offScreenCanvas.setOffScreenBuffer(imageComponent2D);
     return offScreenCanvas;
-  }
-
-  /**
-   * Creates a view associated with <code>offScreenCanvas</code> and <code>universe</code>.
-   */ 
-  private void createView(Canvas3D offScreenCanvas, SimpleUniverse universe) {
-    View view = new View();
-    view.addCanvas3D(offScreenCanvas);
-    // Reuse universe physical body, environment, projection policy, field of view and clip distances
-    Viewer universeViewer = universe.getViewer();
-    view.setPhysicalBody(universeViewer.getPhysicalBody());
-    view.setPhysicalEnvironment(universeViewer.getPhysicalEnvironment());
-    view.setProjectionPolicy(universeViewer.getView().getProjectionPolicy());
-    view.setFieldOfView(universeViewer.getView().getFieldOfView());
-    view.setFrontClipDistance(universeViewer.getView().getFrontClipDistance());
-    view.setBackClipDistance(universeViewer.getView().getBackClipDistance());
-    
-    // Create a viewing platform and attach it to view and universe locale
-    ViewingPlatform viewingPlatform = new ViewingPlatform();
-    viewingPlatform.setUniverse(universe);
-    universe.getLocale().addBranchGraph(
-        (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
-    view.attachViewPlatform(viewingPlatform.getViewPlatform());
-    // Reuse universe view platform transform
-    Transform3D universeViewPlatformTransform = new Transform3D();
-    universe.getViewingPlatform().getViewPlatformTransform().getTransform(universeViewPlatformTransform);
-    viewingPlatform.getViewPlatformTransform().setTransform(universeViewPlatformTransform);
   }
 
   /**
