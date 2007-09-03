@@ -1,4 +1,10 @@
 #Produced by Art of Illusion 2.2, Thu Dec 22 10:42:25 CET 2005
+#
+# Copyright (c) 2006-2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, and available at http://www.gnu.org/copyleft/gpl.txt
 g Pied
 usemtl flyellow
 v -0.98 0.005 -0.48

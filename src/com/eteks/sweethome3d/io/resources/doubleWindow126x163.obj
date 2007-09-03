@@ -1,4 +1,10 @@
 #Produced by Art of Illusion 2.4.1, Wed Jun 27 17:09:09 CEST 2007
+#
+# Copyright (c) 2006-2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, and available at http://www.gnu.org/copyleft/gpl.txt
 g sweethome3d_window_pane
 usemtl flltgrey
 v -0.345 0.614 -0.0125

@@ -1,4 +1,10 @@
 #Produced by Art of Illusion 2.2, Wed Dec 21 17:42:31 CET 2005
+#
+# Copyright (c) 2006-2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, and available at http://www.gnu.org/copyleft/gpl.txt
 g Pot
 usemtl amber
 v 0 -0.27338 -0
