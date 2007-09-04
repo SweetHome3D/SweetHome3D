@@ -823,26 +823,27 @@ public class FurnitureTable extends JTable implements Printable {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {
           int pieceIndex = ev.getIndex();
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
-          int sortedIndex = getPieceOfFurnitureIndex(piece, home, pieceIndex);
           switch (ev.getType()) {
             case ADD :
-              sortedFurniture.add(sortedIndex, piece);
-              fireTableRowsInserted(sortedIndex, sortedIndex);
+              int insertionIndex = getPieceOfFurnitureInsertionIndex(piece, home, pieceIndex);
+              sortedFurniture.add(insertionIndex, piece);
+              fireTableRowsInserted(insertionIndex, insertionIndex);
               break;
             case DELETE :
-              sortedFurniture.remove(sortedIndex);
-              fireTableRowsDeleted(sortedIndex, sortedIndex);
+              int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
+              sortedFurniture.remove(deletionIndex);
+              fireTableRowsDeleted(deletionIndex, deletionIndex);
               break;
           }
         }
 
         /**
-         * Returns the index of <code>piece</code> in furniture table, with a default index
+         * Returns the index of an added <code>piece</code> in furniture table, with a default index
          * of <code>homePieceIndex</code> if <code>home</code> furniture isn't sorted.
          * If <code>piece</code> isn't added to furniture table, the returned value is
          * equals to the insertion index where piece should be added.
          */
-        private int getPieceOfFurnitureIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
+        private int getPieceOfFurnitureInsertionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
           if (home.getFurnitureSortedProperty() == null) {
             return homePieceIndex;
           } else {
@@ -852,6 +853,18 @@ public class FurnitureTable extends JTable implements Printable {
             } else {
               return -(sortedIndex + 1);
             }              
+          }
+        }
+
+        /**
+         * Returns the index of an existing <code>piece</code> in furniture table, with a default index
+         * of <code>homePieceIndex</code> if <code>home</code> furniture isn't sorted.
+         */
+        private int getPieceOfFurnitureDeletionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
+          if (home.getFurnitureSortedProperty() == null) {
+            return homePieceIndex;
+          } else {
+            return getPieceOfFurnitureIndex(piece);              
           }
         }
       });
