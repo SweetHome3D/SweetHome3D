@@ -38,15 +38,13 @@
   </resources>
  
   <resources os="Windows">
-    <jar href="windows/j3dcore.jar"/>
-    <jar href="windows/vecmath.jar"/>
-    <jar href="windows/j3dutils.jar"/>
     <nativelib href="windows/java3d.jar"/>
   </resources>
+  <resources os="Mac OS X">
+    <property name="j3d.rend" value="jogl"/>
+    <nativelib href="macosx/java3d.jar"/>
+  </resources>
   <resources os="Linux" arch="i386">
-    <jar href="linux/i386/j3dcore.jar"/>
-    <jar href="linux/i386/vecmath.jar"/>
-    <jar href="linux/i386/j3dutils.jar"/>
     <nativelib href="linux/i386/java3d.jar"/>
   </resources>
   <resources os="SunOS" arch="x86">
@@ -57,5 +55,5 @@
   </resources>
   
   <application-desc 
-      main-class="com.eteks.sweethome3d.SweetHome3D"/>
+      main-class="com.eteks.sweethome3d.SweetHome3DBootstrap"/>
 </jnlp>

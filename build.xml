@@ -39,30 +39,55 @@
          basedir="deploy/classes"/>
     <delete dir="deploy/classes"/>
   </target>
-	
+
   <!-- Builds deploy/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
   <target name="deploy" depends="build">
     <!-- Create java3d.jar containing Windows Java 3D DLLs -->
     <mkdir dir="deploy/windows"/>
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
-        <include name="**/*.dll"/>
+        <include name="*.dll"/>
+      </fileset>
+    </jar>
+    <jar destfile="deploy/windows/java3d.jar" update="true"
+         compress="false" keepcompression="true">
+      <fileset dir="lib/windows">
+        <include name="*.jar"/>
       </fileset>
     </jar>
 
-    <!-- Create java3d.jar containing Linux Java 3D DLLs -->
+    <!-- Create java3d.jar containing Linux Java 3D DLLs and jars -->
     <mkdir dir="deploy/linux/i386"/>
     <jar destfile="deploy/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
-        <include name="**/*.so"/>
+        <include name="*.so"/>
+      </fileset>
+    </jar>
+    <jar destfile="deploy/linux/i386/java3d.jar" update="true"
+         compress="false" keepcompression="true">
+      <fileset dir="lib/linux/i386">
+        <include name="*.jar"/>
       </fileset>
     </jar>
  
-    <!-- Copy other Java 3D jar files -->
+    <!-- Create java3d.jar containing Mac OS X Java 3D DLLs and jars -->
+    <mkdir dir="deploy/macosx"/>
+    <jar destfile="deploy/macosx/java3d.jar">
+      <fileset dir="lib/macosx">
+        <include name="*.jnilib"/>
+      </fileset>
+    </jar>
+    <jar destfile="deploy/macosx/java3d.jar" update="true"
+         compress="false" keepcompression="true">
+      <fileset dir="lib/macosx">
+        <include name="*.jar"/>
+      </fileset>
+    </jar>
+ 
+    <!-- Copy other jar files -->
     <copy todir="deploy">
       <fileset dir="lib">
-        <include name="**/*.jar"/>
-        <exclude name="macosx/*.jar"/>
+        <include name="*.jar"/>
       </fileset>
     </copy>
     
@@ -78,7 +103,7 @@
       
     <echo message="deploy dir ready for ftp"/>
   </target>
-	
+
   <!-- Builds install/SweetHome3D-1.0-windows.exe installer able to install SweetHome3D.exe 
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows and requires a Windows JRE, launch4j and Inno Setup 
@@ -92,22 +117,21 @@
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
-  	</copy>
-  	<copy todir="install/windows/tmp/lib" >
+    </copy>
+    <copy todir="install/windows/tmp/lib" >
       <fileset dir="lib/windows">
-        <include name="*.jar"/>
         <include name="*.dll"/>
       </fileset>
-  	</copy>
-  	  
-  	<!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
-  	     in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
-  	<copy todir="install/windows/tmp/jre1.6.0_02">
+    </copy>
+  
+    <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
+         in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
+    <copy todir="install/windows/tmp/jre1.6.0_02">
       <fileset dir="C:\Program Files\Java\jre1.6.0_02">
-      	<include name="*"/>
-      	<include name="bin/**"/>
-      	<include name="lib/**"/>
-      	
+        <include name="*"/>
+        <include name="bin/**"/>
+        <include name="lib/**"/>
+
         <exclude name="lib/charsets.jar"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="bin/rmid.exe"/>
@@ -121,7 +145,7 @@
         <exclude name="bin/orbd.exe"/>
         <exclude name="bin/servertool.exe"/>
 
-      	<exclude name="bin/java.exe"/>
+        <exclude name="bin/java.exe"/>
         <exclude name="bin/javaws.exe"/>
         <exclude name="bin/javacpl.exe"/>
         <exclude name="bin/jucheck.exe"/>
@@ -142,24 +166,24 @@
         <exclude name="lib/plugin.jar"/>
         <exclude name="lib/deploy/messages*.properties"/>
         <exclude name="lib/deploy/splash.jpg"/>
-      </fileset>		
+      </fileset>
     </copy>
-  	
-  	<!-- Create SweetHome3D.exe with launch4j -->
-    <exec executable="C:\Program Files\Launch4j\launch4jc.exe">
-      <arg value="${basedir}\install\windows\installerLaunch4j.xml"/> 		
-    </exec>  	
 
-  	<!-- Create SweetHome3D-1.0-windows.exe with Inno Setup -->
+    <!-- Create SweetHome3D.exe with launch4j -->
+    <exec executable="C:\Program Files\Launch4j\launch4jc.exe">
+      <arg value="${basedir}\install\windows\installerLaunch4j.xml"/>
+    </exec>
+
+    <!-- Create SweetHome3D-1.0-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
-      <arg value="${basedir}\install\windows\installerInnoSetup.iss"/> 		
+      <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
-  	
+
     <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/windows/tmp"/>
-  	
+
     <echo message="install/SweetHome3D-1.0-windows.exe ready for ftp"/>
-  </target>	
+  </target>
 
   <!-- Builds install/SweetHome3D-1.0-macosx.dmg archive that contains SweetHome3D.app 
        and Sweet Home 3D libraries. 
@@ -169,10 +193,10 @@
     <mkdir dir="install/macosx/SweetHome3D-1.0/"/>
     <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app">
       <fileset dir="install/macosx/Sweet Home 3D.app"/>
-    </copy>  	  	
-  	
-  	<!-- Change executable permission of JavaApplicationStub lost during copy task -->
-  	<chmod perm="+x" file="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/> 		
+    </copy>
+
+    <!-- Change executable permission of JavaApplicationStub lost during copy task -->
+    <chmod perm="+x" file="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/>
 
     <!-- Copy SweetHome3D.jar and its direct libs 
          to install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java -->
@@ -193,23 +217,23 @@
       </fileset>
     </copy>
     <!-- Copy COPYING.TXT to install/macosx/SweetHome3D-1.0/ -->
-  	<copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.0"/>
-  	 
-  	<!-- Create install/SweetHome3D-1.0-macosx.dmg with Disk Utility -->
+    <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.0"/>
+ 
+    <!-- Create install/SweetHome3D-1.0-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-1.0-macosx.dmg"/>
-  	<exec executable="hdiutil">
+    <exec executable="hdiutil">
       <arg value="create"/>
       <arg value="-srcfolder"/>
       <arg value="install/macosx/SweetHome3D-1.0"/>
       <arg value="install/SweetHome3D-1.0-macosx.dmg"/>
-  	</exec>
-  	
+    </exec>
+
     <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/macosx/SweetHome3D-1.0"/>
-  	
+
     <echo message="install/SweetHome3D-1.0-macosx.dmg ready for ftp"/>
-  </target>	
-	
+  </target>
+
   <!-- Builds install/SweetHome3D-1.0-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux JRE installed in jre1.6.0_02 -->
@@ -225,18 +249,17 @@
     </copy>
     <copy todir="install/linux/i386/SweetHome3D-1.0/lib" >
       <fileset dir="lib/linux/i386">
-        <include name="*.jar"/>
         <include name="*.so"/>
       </fileset>
     </copy>
-  	<copy file="COPYING.TXT" todir="install/linux/i386/SweetHome3D-1.0" />
-  	      
+    <copy file="COPYING.TXT" todir="install/linux/i386/SweetHome3D-1.0" />
+      
     <!-- Copy JRE to install/linux/i386/SweetHome3D-1.0/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/i386/SweetHome3D-1.0/jre1.6.0_02">
       <fileset dir="jre1.6.0_02">
-      	<include name="**"/>
-      	
+        <include name="**"/>
+
         <exclude name="lib/charsets.jar"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="bin/rmid"/>
@@ -246,7 +269,7 @@
         <exclude name="bin/policytool"/>
         <exclude name="bin/orbd"/>
         <exclude name="bin/servertool"/>
-      </fileset>		
+      </fileset>
     </copy>
 
     <!-- Create SweetHome3D command -->
@@ -257,19 +280,19 @@
          compression="gzip">
       <tarfileset dir="install/linux/i386"
                   includes="SweetHome3D-1.0/**">
-      	<exclude name="SweetHome3D-1.0/SweetHome3D"/>
-      	<exclude name="SweetHome3D-1.0/jre1.6.0_02/bin/java"/>
+        <exclude name="SweetHome3D-1.0/SweetHome3D"/>
+        <exclude name="SweetHome3D-1.0/jre1.6.0_02/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
-      	<include name="SweetHome3D-1.0/SweetHome3D"/>
-      	<include name="SweetHome3D-1.0/jre1.6.0_02/bin/java"/>
+        <include name="SweetHome3D-1.0/SweetHome3D"/>
+        <include name="SweetHome3D-1.0/jre1.6.0_02/bin/java"/>
       </tarfileset>
     </tar>
 
     <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/linux"/>
-  	
+
     <echo message="install/SweetHome3D-1.0-linux-x86.tgz ready for ftp"/>
-  </target>	
+  </target>
 </project>

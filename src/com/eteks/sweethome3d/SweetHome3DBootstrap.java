@@ -34,7 +34,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -42,13 +41,28 @@ import java.util.jar.JarFile;
 
 /**
  * This bootstrap class loads Sweet Home 3D application classes from jars in classpath 
- * or from jars stored in the jar file containing j3dcore.jar.
+ * or from extension jars stored as resources.
  * @author Emmanuel Puybaret
  */
 public class SweetHome3DBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
     Class SweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
+    String [] java3DFiles = {
+      "j3dcore.jar", // Main Java 3D jars
+      "vecmath.jar",
+      "j3dutils.jar",
+      "j3dcore-d3d.dll", // Windows DLLs
+      "j3dcore-ogl.dll",
+      "j3dutils.dll",
+      "libj3dcore-ogl.so", // Linux DLLs
+      "libj3dcore-ogl-cg.so",
+      "gluegen-rt.jar", // Mac OS X jars and DLLs
+      "jogl.jar",
+      "libgluegen-rt.jnilib",
+      "libjogl.jnilib",
+      "libjogl_awt.jnilib",
+      "libjogl_cg.jnilib"};
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
@@ -60,7 +74,7 @@ public class SweetHome3DBootstrap {
         "com.microcrowd.loader.java3d"};
     ClassLoader java3DClassLoader = new SweetHome3DClassLoader(
         SweetHome3DBootstrapClass.getClassLoader(), SweetHome3DBootstrapClass.getProtectionDomain(),
-        applicationPackages);  
+        java3DFiles, applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
@@ -78,12 +92,13 @@ public class SweetHome3DBootstrap {
     private final ProtectionDomain protectionDomain;
     private final String [] applicationPackages;
 
-    private final Map<String, String> java3DDLLs = new HashMap<String, String>();
-    private JarFile [] java3DJars = null;
+    private final Map<String, String> extensionDlls = new HashMap<String, String>();
+    private JarFile [] extensionJars = null;
 
 
     private SweetHome3DClassLoader(ClassLoader parent, 
                                    ProtectionDomain protectionDomain, 
+                                   String [] extensionJarsAndDlls,
                                    String [] applicationPackages) {
       super(parent);
       this.protectionDomain = protectionDomain;
@@ -105,50 +120,32 @@ public class SweetHome3DBootstrap {
         dllPrefix = "lib";
       }
       
-      // Find Java 3D core jar file
-      URL java3DCoreUrl = getResource("j3dcore.jar");
-      if (java3DCoreUrl != null
-          && (java3DCoreUrl.toString().startsWith("jar:file")
-              || java3DCoreUrl.toString().startsWith("jar:http"))) {
+      // Find extension Jars and DLLs
+      ArrayList<JarFile> extensionJars = new ArrayList<JarFile>();
+      for (String extensionJarOrDll : extensionJarsAndDlls) {
         try {
-          String java3DFile;
-          String urlString = java3DCoreUrl.toString();
-          if (urlString.startsWith("jar:file:")) {
-            // On Java 5, compute from which file Java 3D core jar comes
-            java3DFile = urlString.substring("jar:file:".length(), urlString.indexOf('!'));
-          } else {
-            // From Java 6, java3DCoreUrl points to its origin URL   
-            URL java3DURL = new URL(urlString.substring("jar:".length(), urlString.indexOf('!')));
-            // Copy URL content to a tmp file
-            java3DFile = copyInputStreamToTmpFile(java3DURL.openStream(), "jar");
-          }
-                    
-          // Find the jars and the DLLs contained in java3DFile
-          JarFile jarFile = new JarFile(java3DFile, false);
-          ArrayList<JarFile> java3DJars = new ArrayList<JarFile>();
-          for (Enumeration<JarEntry> jarEntryEnum = jarFile.entries(); 
-               jarEntryEnum.hasMoreElements(); ) {
-            JarEntry jarEntry = jarEntryEnum.nextElement();                
-            String jarEntryName = jarEntry.getName();
-            boolean jarEntryIsAJar = jarEntryName.endsWith(".jar");
-            if (jarEntryIsAJar) {
+          URL extensionJarOrDllUrl = getResource(extensionJarOrDll);
+          if (extensionJarOrDllUrl != null) {
+            if (extensionJarOrDll.endsWith(".jar")) {
               // Copy jar to a tmp file
-              String java3DJar = copyInputStreamToTmpFile(jarFile.getInputStream(jarEntry), ".jar");
-              // Add tmp file to Java 3D jars list
-              java3DJars.add(new JarFile(java3DJar, false));
-            } else if (jarEntryName.endsWith(dllSuffix)) {
+              String extensionJar = copyInputStreamToTmpFile(extensionJarOrDllUrl.openStream(), ".jar");
+              // Add tmp file to extension jars list
+              extensionJars.add(new JarFile(extensionJar, false));
+            } else if (extensionJarOrDll.endsWith(dllSuffix)) {
               // Copy DLL to a tmp file
-              String java3DDLL = copyInputStreamToTmpFile(jarFile.getInputStream(jarEntry), dllSuffix);
-              // Add tmp file to Java 3D DLLs map
-              java3DDLLs.put(jarEntryName.substring(dllPrefix.length(), 
-                  jarEntryName.indexOf(dllSuffix)), java3DDLL);
-            }
+              String extensionDll = copyInputStreamToTmpFile(extensionJarOrDllUrl.openStream(), dllSuffix);
+              // Add tmp file to extension DLLs map
+              this.extensionDlls.put(extensionJarOrDll.substring(dllPrefix.length(), 
+                  extensionJarOrDll.indexOf(dllSuffix)), extensionDll);
+            }          
           }
-          // Create java3DJars array
-          this.java3DJars = java3DJars.toArray(new JarFile [java3DJars.size()]);                    
         } catch (IOException ex) {
-          throw new RuntimeException("Couldn't extract Java 3D jars", ex);
+          throw new RuntimeException("Couldn't extract extension jars", ex);
         }
+      }
+      // Create extensionJars array
+      if (extensionJars.size() > 0) {
+        this.extensionJars = extensionJars.toArray(new JarFile [extensionJars.size()]);                    
       }
     }
 
@@ -157,11 +154,11 @@ public class SweetHome3DBootstrap {
      */
     private String copyInputStreamToTmpFile(InputStream input, 
                                             String suffix) throws IOException {
-      File java3DJar = File.createTempFile("Java3D", suffix);
-      java3DJar.deleteOnExit();
+      File tmpFile = File.createTempFile("extension", suffix);
+      tmpFile.deleteOnExit();
       OutputStream output = null;
       try {
-        output = new BufferedOutputStream(new FileOutputStream(java3DJar));
+        output = new BufferedOutputStream(new FileOutputStream(tmpFile));
         byte [] buffer = new byte [8096];
         int size; 
         while ((size = input.read(buffer)) != -1) {
@@ -175,7 +172,7 @@ public class SweetHome3DBootstrap {
           output.close();
         }
       }
-      return java3DJar.toString();
+      return tmpFile.toString();
     }
 
     @Override
@@ -183,18 +180,18 @@ public class SweetHome3DBootstrap {
       // Build class file from its name 
       String classFile = name.replace('.', '/') + ".class";
       InputStream classInputStream = null;
-      // Check if searched class is a Java 3D class
-      for (JarFile java3DJar : this.java3DJars) {
-        JarEntry jarEntry = java3DJar.getJarEntry(classFile);
+      // Check if searched class is an extension class
+      for (JarFile extensionJar : this.extensionJars) {
+        JarEntry jarEntry = extensionJar.getJarEntry(classFile);
         if (jarEntry != null) {
           try {
-            classInputStream = java3DJar.getInputStream(jarEntry);
+            classInputStream = extensionJar.getInputStream(jarEntry);
           } catch (IOException ex) {
             throw new ClassNotFoundException("Couldn't read class " + name, ex);
           }
         }
       }
-      // If it's not a Java 3D class, search if its an application 
+      // If it's not an extension class, search if its an application 
       // class that can be read from resources
       if (classInputStream == null) {
         URL url = getResource(classFile);
@@ -228,18 +225,18 @@ public class SweetHome3DBootstrap {
 
     @Override
     protected String findLibrary(String libname) {
-      return this.java3DDLLs.get(libname);
+      return this.extensionDlls.get(libname);
     }
 
     @Override
     protected URL findResource(String name) {
-      if (this.java3DJars != null) {
+      if (this.extensionJars != null) {
         // Try to find if resource belongs to one of the extracted jars
-        for (JarFile java3DJar : this.java3DJars) {
-          JarEntry jarEntry = java3DJar.getJarEntry(name);
+        for (JarFile extensionJar : this.extensionJars) {
+          JarEntry jarEntry = extensionJar.getJarEntry(name);
           if (jarEntry != null) {
             try {
-              return new URL("jar:file:" + java3DJar.getName() + ":" + jarEntry.getName());
+              return new URL("jar:file:" + extensionJar.getName() + ":" + jarEntry.getName());
             } catch (MalformedURLException ex) {
               // Forget that we could have found a resource
             }
@@ -251,8 +248,8 @@ public class SweetHome3DBootstrap {
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-      // If Java 3D jars couldn't be found
-      if (this.java3DJars == null) {
+      // If no extension jars couldn't be found
+      if (this.extensionJars == null) {
         // Let default class loader do its job
         return super.loadClass(name, resolve);
       }
