@@ -47,11 +47,6 @@
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
-      </fileset>
-    </jar>
-    <jar destfile="deploy/windows/java3d.jar" update="true"
-         compress="false" keepcompression="true">
-      <fileset dir="lib/windows">
         <include name="*.jar"/>
       </fileset>
     </jar>
@@ -61,11 +56,6 @@
     <jar destfile="deploy/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
         <include name="*.so"/>
-      </fileset>
-    </jar>
-    <jar destfile="deploy/linux/i386/java3d.jar" update="true"
-         compress="false" keepcompression="true">
-      <fileset dir="lib/linux/i386">
         <include name="*.jar"/>
       </fileset>
     </jar>
@@ -75,11 +65,6 @@
     <jar destfile="deploy/macosx/java3d.jar">
       <fileset dir="lib/macosx">
         <include name="*.jnilib"/>
-      </fileset>
-    </jar>
-    <jar destfile="deploy/macosx/java3d.jar" update="true"
-         compress="false" keepcompression="true">
-      <fileset dir="lib/macosx">
         <include name="*.jar"/>
       </fileset>
     </jar>
@@ -120,6 +105,7 @@
     </copy>
     <copy todir="install/windows/tmp/lib" >
       <fileset dir="lib/windows">
+        <include name="*.jar"/>
         <include name="*.dll"/>
       </fileset>
     </copy>
@@ -249,6 +235,7 @@
     </copy>
     <copy todir="install/linux/i386/SweetHome3D-1.0/lib" >
       <fileset dir="lib/linux/i386">
+        <include name="*.jar"/>
         <include name="*.so"/>
       </fileset>
     </copy>
