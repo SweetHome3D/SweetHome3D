@@ -108,7 +108,7 @@ public class PageSetupPanel extends JPanel {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
     // First row
