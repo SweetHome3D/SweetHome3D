@@ -163,6 +163,24 @@ public class FileContentManager implements ContentManager {
           return "PNG";
         }
       }};
+  private static final String PDF_EXTENSION = ".pdf";
+  /**
+   * Supported PDF filter.
+   */
+  private static final FileFilter [] PDF_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .pdf files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(PDF_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "PDF";
+        }
+      }};
 
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
@@ -173,6 +191,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
+    this.fileFilters.put(ContentType.PDF, PDF_FILTER);
   }
   
   /**
@@ -244,14 +263,24 @@ public class FileContentManager implements ContentManager {
     String savedName;
     // Use native file dialog under Mac OS X    
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      savedName = showFileDialog(dialogTitle, contentType, null, true);
+      savedName = showFileDialog(dialogTitle, contentType, name, true);
     } else {
-      savedName = showFileChooser(dialogTitle, contentType, null, true);
+      savedName = showFileChooser(dialogTitle, contentType, name, true);
     }
-    if (contentType == ContentType.SWEET_HOME_3D 
-        && savedName != null 
-        && !savedName.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
-      savedName += SWEET_HOME_3D_EXTENSION;
+    if (savedName != null) {
+      switch(contentType) {
+        case SWEET_HOME_3D :
+          if (!savedName.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
+            savedName += SWEET_HOME_3D_EXTENSION;
+          }
+          break;
+        case PDF :
+          if (!savedName.toLowerCase().endsWith(PDF_EXTENSION)) {
+            savedName += PDF_EXTENSION;
+          }
+          break;
+      }
+      
     }
     return savedName;
   }

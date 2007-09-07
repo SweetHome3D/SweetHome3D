@@ -170,6 +170,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.PAGE_SETUP, true);
     homeView.setEnabled(HomePane.ActionType.PRINT_PREVIEW, true);
     homeView.setEnabled(HomePane.ActionType.PRINT, true);
+    homeView.setEnabled(HomePane.ActionType.PRINT_TO_PDF, true);
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, true);
@@ -1044,6 +1045,30 @@ public class HomeController  {
     if (!((HomePane)getView()).print()) {
       String message = String.format(this.resource.getString("printError"), this.home.getName());
       ((HomePane)getView()).showError(message);
+    }
+  }
+
+  /**
+   * Controls the print of this home.
+   */
+  public void printToPDF() {
+    String pdfName = ((HomePane)getView()).showPrintToPDFDialog(this.home.getName());    
+    if (pdfName != null) {
+      boolean succeeded = false;
+      try {
+        if (!this.application.getHomeRecorder().exists(pdfName)
+            || ((HomePane)getView()).confirmOverwrite(pdfName)) {
+          succeeded = ((HomePane)getView()).printToPDF(pdfName);
+        } else {
+          printToPDF();
+        }
+      } catch (RecorderException ex) {
+      }
+      
+      if (!succeeded) {
+        String message = String.format(this.resource.getString("saveError"), pdfName);
+        ((HomePane)getView()).showError(message);
+      }
     }
   }
 

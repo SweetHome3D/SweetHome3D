@@ -17,6 +17,7 @@
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes">
       <classpath>
+        <pathelement location="lib/itext-2.0.4.jar"/>
         <pathelement location="lib/Loader3DS1_2.jar"/>
         <pathelement location="lib/windows/vecmath.jar"/>
         <pathelement location="lib/windows/j3dutils.jar"/>
@@ -260,7 +261,7 @@
     </copy>
 
     <!-- Create SweetHome3D command -->
-    <concat destfile="install/linux/i386/SweetHome3D-1.0/SweetHome3D">jre1.6.0_02/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_02/lib/javaws.jar -Djava.library.path=lib -Xmx192m com.eteks.sweethome3d.SweetHome3D</concat>
+    <concat destfile="install/linux/i386/SweetHome3D-1.0/SweetHome3D">jre1.6.0_02/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/itext-2.0.4.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_02/lib/javaws.jar -Djava.library.path=lib -Xmx192m com.eteks.sweethome3d.SweetHome3D</concat>
 
     <!-- Create SweetHome3D-1.0-linux-x86.tgz archive -->
     <tar destfile="install/SweetHome3D-1.0-linux-x86.tgz"

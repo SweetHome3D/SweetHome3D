@@ -1,0 +1,100 @@
+/*
+ * HomePDFPrinter.java 7 sept. 07
+ *
+ * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+package com.eteks.sweethome3d.swing;
+
+import java.awt.Graphics;
+import java.awt.print.PageFormat;
+import java.awt.print.PrinterException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.Home;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfContentByte;
+import com.lowagie.text.pdf.PdfTemplate;
+import com.lowagie.text.pdf.PdfWriter;
+
+/**
+ * Home PDF printer. PDF creation is implemented with iText. 
+ * @author Emmanuel Puybaret
+ */
+public class HomePDFPrinter {
+  private Home           home;
+  private ContentManager contentManager;
+  private HomeController controller;
+
+  public HomePDFPrinter(Home home, ContentManager contentManager, HomeController controller) {
+    this.home = home;
+    this.contentManager = contentManager;
+    this.controller = controller;
+  }
+
+  /**
+   * Create a file <code>pdfFile</code> containing the print of a home.
+   */
+  public void printToPDF(String pdfFile) throws IOException {
+    PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+    Document pdfDocument = new Document(new Rectangle((float)pageFormat.getWidth(), (float)pageFormat.getHeight()));
+    // Set PDF document description
+    pdfDocument.addAuthor(System.getProperty("user.name", ""));
+    pdfDocument.addCreator("Sweet Home 3D");
+    pdfDocument.addCreationDate();
+    String homeName = this.home.getName();
+    if (homeName != null) {
+      pdfDocument.addTitle(this.contentManager.getPresentationName(
+          homeName, ContentManager.ContentType.PDF));
+    }
+    try {
+      // Get a PDF writer that will write to the given PDF file
+      PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
+      pdfDocument.open();
+      PdfContentByte pdfContent = pdfWriter.getDirectContent();
+      HomePrintableComponent printableComponent = new HomePrintableComponent(this.home, this.controller);
+      // Print each page
+      for (int page = 0, pageCount = printableComponent.getPageCount(); page < pageCount; page++) {
+        PdfTemplate pdfTemplate = pdfContent.createTemplate((float)pageFormat.getWidth(), 
+            (float)pageFormat.getHeight());
+        Graphics g = pdfTemplate.createGraphics((float)pageFormat.getWidth(), 
+            (float)pageFormat.getHeight());
+        
+        printableComponent.print(g, pageFormat, page);
+        
+        pdfContent.addTemplate(pdfTemplate, 0, 0);
+        g.dispose();
+        
+        if (page != pageCount - 1) {
+          pdfDocument.newPage();
+        }
+      }
+      pdfDocument.close();
+    } catch (DocumentException ex) {
+      IOException exception = new IOException("Couldn't print to PDF");
+      exception.initCause(ex);
+      throw exception;
+    } catch (PrinterException ex) {
+      IOException exception = new IOException("Couldn't print to PDF");
+      exception.initCause(ex);
+      throw exception;
+    }
+  }
+}

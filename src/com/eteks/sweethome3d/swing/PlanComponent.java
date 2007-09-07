@@ -604,7 +604,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   @Override
   protected void paintComponent(Graphics g) {
     Graphics2D g2D = (Graphics2D)g.create();
-    paintBackground(g2D);
+    Color backgroundColor = getBackground();
+    Color foregroundColor = getForeground();
+    paintBackground(g2D, backgroundColor);
     Insets insets = getInsets();
     // Clip component to avoid drawing in empty borders
     g2D.clipRect(insets.left, insets.top, 
@@ -619,7 +621,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Paint component contents
     paintBackgroundImage(g2D);
     paintGrid(g2D, this.scale);
-    paintContent(g2D, this.scale, PaintMode.PAINT);   
+    paintContent(g2D, this.scale, backgroundColor, foregroundColor, PaintMode.PAINT);   
     g2D.dispose();
   }
   
@@ -647,7 +649,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           (pageFormat.getImageableHeight() / scale - wallsAndFurnitureBounds.getHeight()) / 2);
       setRenderingHints(g2D);
       // Print component contents
-      paintContent(g2D, scale, PaintMode.PRINT);   
+      paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
       g2D.dispose();
       return PAGE_EXISTS;
     } else {
@@ -679,7 +681,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           -selectionBounds.getMinY() + WALL_STROKE_WIDTH / 2 / scale);
       setRenderingHints(g2D);
       // Paint component contents
-      paintContent(g2D, scale, PaintMode.CLIPBOARD);   
+      paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
       g2D.dispose();
       return image;
     }
@@ -696,9 +698,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Fills the background. 
    */
-  private void paintBackground(Graphics2D g2D) {
+  private void paintBackground(Graphics2D g2D, Color backgroundColor) {
     if (isOpaque()) {
-      g2D.setColor(getBackground());
+      g2D.setColor(backgroundColor);
       g2D.fillRect(0, 0, getWidth(), getHeight());
     }
   }
@@ -796,7 +798,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints plan items.
    */
-  private void paintContent(Graphics2D g2D, float scale, PaintMode paintMode) {
+  private void paintContent(Graphics2D g2D, float scale, 
+                            Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     List<Object> selectedItems = this.home.getSelectedItems();
     Color selectionColor = UIManager.getColor("textHighlight");
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
@@ -813,11 +816,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         1 / scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / scale, 5 / scale, 5 / scale, 5 / scale}, 4 / scale);
     
-    paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, paintMode);
-    paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale, paintMode);
+    paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+        scale, backgroundColor, foregroundColor, paintMode);
+    paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+        scale, backgroundColor, foregroundColor, paintMode);
     if (paintMode == PaintMode.PAINT) {
       paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
-      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, scale);
+      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+          scale, backgroundColor, foregroundColor);
       paintRectangleFeedback(g2D, selectionColor, scale);
     }
   }
@@ -827,8 +833,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                          Paint indicatorPaint, 
-                          float scale, PaintMode paintMode) {
+                          Paint indicatorPaint, float scale, 
+                          Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     float scaleInverse = 1 / scale;
     Collection<Wall> paintedWalls;
     if (paintMode != PaintMode.CLIPBOARD) {
@@ -844,7 +850,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     Shape wallsArea = getWallsArea(paintedWalls);
     // Fill walls area
-    g2D.setPaint(getWallPaint(scale));
+    g2D.setPaint(getWallPaint(scale, backgroundColor, foregroundColor));
     g2D.fill(wallsArea);
     
     if (paintMode == PaintMode.PAINT) {
@@ -896,7 +902,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
     }
     // Draw walls area
-    g2D.setPaint(getForeground());
+    g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / scale));
     g2D.draw(wallsArea);
     
@@ -953,13 +959,13 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Returns the <code>Paint</code> object used to fill walls.
    */
-  private Paint getWallPaint(float scale) {
+  private Paint getWallPaint(float scale, Color backgroundColor, Color foregroundColor) {
     BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     // Create an image displaying a line in its diagonal
-    imageGraphics.setPaint(getBackground());
+    imageGraphics.setPaint(backgroundColor);
     imageGraphics.fillRect(0, 0, 10, 10);
-    imageGraphics.setColor(getForeground());
+    imageGraphics.setColor(foregroundColor);
     imageGraphics.drawLine(0, 9, 9, 0);
     imageGraphics.dispose();
     return new TexturePaint(image, 
@@ -971,7 +977,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
                               Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                              Paint indicatorPaint, float scale, PaintMode paintMode) {
+                              Paint indicatorPaint, float scale, 
+                              Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     BasicStroke pieceBorderStroke = new BasicStroke(1f / scale);
     if (this.sortedHomeFurniture == null) {
       // Sort home furniture in elevation order
@@ -1000,7 +1007,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             || selectedPiece) {
           Shape pieceShape = getShape(piece.getPoints());
           // Fill piece area
-          g2D.setPaint(getBackground());
+          g2D.setPaint(backgroundColor);
           g2D.fill(pieceShape);
           // Draw its icon
           paintPieceOfFurnitureIcon(g2D, piece, pieceShape, scale);
@@ -1013,7 +1020,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             g2D.draw(pieceShape);
           }        
           // Draw its border
-          g2D.setPaint(getForeground());
+          g2D.setPaint(foregroundColor);
           g2D.setStroke(pieceBorderStroke);
           g2D.draw(pieceShape);
           
@@ -1192,10 +1199,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
   /**
    * Paints the observer camera at its current location, if home camera is the observer camera.
+   * @param foregroundColor 
    */
   private void paintCamera(Graphics2D g2D, List<Object> selectedItems,
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                           Paint indicatorPaint, float scale) {
+                           Paint indicatorPaint, float scale, 
+                           Color backgroundColor, Color foregroundColor) {
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera == this.home.getCamera()) {
       AffineTransform oldTransform = g2D.getTransform();
@@ -1214,9 +1223,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           new Area(CAMERA_HEAD).createTransformedArea(cameraTransform);
       
       // Paint body
-      g2D.setPaint(getBackground());
+      g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraBody);
-      g2D.setPaint(getForeground());
+      g2D.setPaint(foregroundColor);
       BasicStroke stroke = new BasicStroke(1 / scale);
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraBody);
@@ -1230,9 +1239,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
       
       // Paint head
-      g2D.setPaint(getBackground());
+      g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraHead);
-      g2D.setPaint(getForeground());
+      g2D.setPaint(foregroundColor);
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraHead);
       // Paint field of sight angle

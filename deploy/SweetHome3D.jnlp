@@ -38,19 +38,23 @@
   </resources>
  
   <resources os="Windows">
-    <nativelib href="windows/java3d.jar"/>
+    <jar href="itext-2.0.4.jar"/>
+    <jar href="windows/java3d.jar"/>
   </resources>
   <resources os="Mac OS X">
     <property name="j3d.rend" value="jogl"/>
-    <nativelib href="macosx/java3d.jar"/>
+    <jar href="macosx/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
-    <nativelib href="linux/i386/java3d.jar"/>
+    <jar href="itext-2.0.4.jar"/>
+    <jar href="linux/i386/java3d.jar"/>
   </resources>
   <resources os="SunOS" arch="x86">
+    <jar href="itext-2.0.4.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   <resources os="SunOS" arch="sparc">
+    <jar href="itext-2.0.4.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   

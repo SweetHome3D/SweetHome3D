@@ -35,6 +35,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -86,7 +87,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PREFERENCES, EXIT, 
+    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
     UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
     ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
     SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
@@ -174,6 +175,7 @@ public class HomePane extends JRootPane {
     createAction(ActionType.PAGE_SETUP, controller, "setupPage");
     createAction(ActionType.PRINT_PREVIEW, controller, "previewPrint");
     createAction(ActionType.PRINT, controller, "print");
+    createAction(ActionType.PRINT_TO_PDF, controller, "printToPDF");
     createAction(ActionType.PREFERENCES, controller, "editPreferences");
     createAction(ActionType.EXIT, controller, "exit");
     
@@ -386,8 +388,11 @@ public class HomePane extends JRootPane {
     fileMenu.add(getMenuAction(ActionType.PAGE_SETUP));
     fileMenu.add(getMenuAction(ActionType.PRINT_PREVIEW));
     fileMenu.add(getMenuAction(ActionType.PRINT));
-    // Don't add EXIT menu under Mac OS X, it's displayed in application menu  
+    // Don't add PRINT_TO_PDF, PREFERENCES and EXIT menu items under Mac OS X, 
+    // because PREFERENCES and EXIT items are displayed in application menu
+    // and PRINT_TO_PDF is available in standard Mac OS X Print dialog
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      fileMenu.add(getMenuAction(ActionType.PRINT_TO_PDF));
       fileMenu.addSeparator();
       fileMenu.add(getMenuAction(ActionType.PREFERENCES));
       fileMenu.addSeparator();
@@ -611,7 +616,6 @@ public class HomePane extends JRootPane {
   
   /**
    * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
-   * @param contentManager 
    */
   protected void updateOpenRecentHomeMenu(JMenu openRecentHomeMenu, 
                                           final HomeController controller, 
@@ -1230,14 +1234,7 @@ public class HomePane extends JRootPane {
     PrinterJob printerJob = PrinterJob.getPrinterJob();
     printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller), pageFormat);
     if (printerJob.printDialog()) {
-      // Create a waiting glass pane for this lengthy operation
-      Component previousGlassPane = getGlassPane(); 
-      JLabel waitGlassPane = new JLabel();
-      waitGlassPane.setOpaque(false);
-      waitGlassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      setGlassPane(waitGlassPane);
-      waitGlassPane.setVisible(true);
-      
+      Component previousGlassPane = getWaitGlassPane();
       try {
         printerJob.print();
       } catch (PrinterException ex) {
@@ -1247,6 +1244,43 @@ public class HomePane extends JRootPane {
       }
     }
     return true;
+  }
+
+  /**
+   * Returns a waiting glass pane for lengthy operations.
+   */
+  private Component getWaitGlassPane() {
+    Component previousGlassPane = getGlassPane(); 
+    JLabel waitGlassPane = new JLabel();
+    waitGlassPane.setOpaque(true);
+    waitGlassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    setGlassPane(waitGlassPane);
+    waitGlassPane.setVisible(true);
+    return previousGlassPane;
+  }
+  
+  /**
+   * Shows a content chooser save dialog to print a home in a PDF file.
+   */
+  public String showPrintToPDFDialog(String homeName) {
+    return this.contentManager.showSaveDialog(
+        this.resource.getString("printToPDFDialog.title"), 
+        ContentManager.ContentType.PDF, null);
+  }
+  
+  /**
+   * Prints a home to a given PDF file.
+   */
+  public boolean printToPDF(String pdfFile) {
+    Component previousGlassPane = getWaitGlassPane();
+    try {
+      new HomePDFPrinter(this.home, this.contentManager, this.controller).printToPDF(pdfFile);
+      return true;
+    } catch (IOException ex) {
+      return false;
+    } finally {
+      setGlassPane(previousGlassPane);
+    }
   }
   
   /**
@@ -1328,4 +1362,4 @@ public class HomePane extends JRootPane {
       this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
     }
   }
-}
+ }
