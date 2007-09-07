@@ -1066,7 +1066,7 @@ public class HomeController  {
       }
       
       if (!succeeded) {
-        String message = String.format(this.resource.getString("saveError"), pdfName);
+        String message = String.format(this.resource.getString("printToPDFError"), pdfName);
         ((HomePane)getView()).showError(message);
       }
     }
