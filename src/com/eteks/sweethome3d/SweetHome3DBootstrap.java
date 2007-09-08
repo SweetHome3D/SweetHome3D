@@ -49,20 +49,20 @@ public class SweetHome3DBootstrap {
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
     Class SweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
     String [] java3DFiles = {
-      "j3dcore.jar", // Main Java 3D jars
-      "vecmath.jar",
-      "j3dutils.jar",
-      "j3dcore-d3d.dll", // Windows DLLs
-      "j3dcore-ogl.dll",
-      "j3dutils.dll",
-      "libj3dcore-ogl.so", // Linux DLLs
-      "libj3dcore-ogl-cg.so",
-      "gluegen-rt.jar", // Mac OS X jars and DLLs
-      "jogl.jar",
-      "libgluegen-rt.jnilib",
-      "libjogl.jnilib",
-      "libjogl_awt.jnilib",
-      "libjogl_cg.jnilib"};
+        "j3dcore.jar", // Main Java 3D jars
+        "vecmath.jar",
+        "j3dutils.jar",
+        "j3dcore-d3d.dll", // Windows DLLs
+        "j3dcore-ogl.dll",
+        "j3dutils.dll",
+        "libj3dcore-ogl.so", // Linux DLLs
+        "libj3dcore-ogl-cg.so",
+        "gluegen-rt.jar", // Mac OS X jars and DLLs
+        "jogl.jar",
+        "libgluegen-rt.jnilib",
+        "libjogl.jnilib",
+        "libjogl_awt.jnilib",
+        "libjogl_cg.jnilib"};
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
