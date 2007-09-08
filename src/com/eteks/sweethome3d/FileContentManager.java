@@ -296,8 +296,9 @@ public class FileContentManager implements ContentManager {
         return savedName;
       }
       // If the file exists, prompt user if he wants to overwrite it
-      if (new File(savedName).exists()
-          && !confirmOverwrite(new File(savedName).getName())) {
+      File savedFile = new File(savedName);
+      if (savedFile.exists()
+          && !confirmOverwrite(savedFile.getName())) {
         return showSaveDialog(dialogTitle, contentType, savedName);
       }
     }
