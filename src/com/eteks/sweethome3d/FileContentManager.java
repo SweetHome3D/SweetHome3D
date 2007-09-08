@@ -28,6 +28,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -182,10 +183,12 @@ public class FileContentManager implements ContentManager {
         }
       }};
 
+  private ResourceBundle                  resource;
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
 
-  public FileContentManager() {    
+  public FileContentManager() {  
+    this.resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
@@ -255,6 +258,8 @@ public class FileContentManager implements ContentManager {
   
   /**
    * Returns the file path chosen by user with a save file dialog.
+   * If this file already exists, the user will be prompted whether 
+   * he wants to overwrite this existing file. 
    * @return the chosen file path or <code>null</code> if user cancelled its choice.
    */
   public String showSaveDialog(String      dialogTitle,
@@ -267,20 +272,35 @@ public class FileContentManager implements ContentManager {
     } else {
       savedName = showFileChooser(dialogTitle, contentType, name, true);
     }
+    boolean addedExtension = false;
     if (savedName != null) {
       switch(contentType) {
         case SWEET_HOME_3D :
           if (!savedName.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
             savedName += SWEET_HOME_3D_EXTENSION;
+            addedExtension = true;
           }
           break;
         case PDF :
           if (!savedName.toLowerCase().endsWith(PDF_EXTENSION)) {
             savedName += PDF_EXTENSION;
+            addedExtension = true;
           }
           break;
       }
       
+    }
+
+    // If no extension was added to file under Mac OS X, 
+    // FileDialog already asks to user if he wants to overwrite savedName
+    if (System.getProperty("os.name").startsWith("Mac OS X")
+        && !addedExtension) {
+      return savedName;
+    }
+    // If the file exists, prompt user if he wants to overwrite it
+    if (new File(savedName).exists()
+        && !confirmOverwrite(savedName, contentType)) {
+      return showSaveDialog(dialogTitle, contentType, savedName);
     }
     return savedName;
   }
@@ -377,6 +397,25 @@ public class FileContentManager implements ContentManager {
     }
   }
   
+  /**
+   * Displays a dialog that let user choose whether he wants to overwrite 
+   * file <code>fileName</code> or not.
+   * @return <code>true</code> if user confirmed to overwrite.
+   */
+  private boolean confirmOverwrite(String fileName, ContentType contentType) {
+    // Retrieve displayed text in buttons and message
+    String messageFormat = this.resource.getString("confirmOverwrite.message");
+    String message = String.format(messageFormat, 
+        getPresentationName(fileName, contentType));
+    String title = this.resource.getString("confirmOverwrite.title");
+    String replace = this.resource.getString("confirmOverwrite.overwrite");
+    String cancel = this.resource.getString("confirmOverwrite.cancel");
+    
+    return JOptionPane.showOptionDialog(getActiveParent(), message, title, 
+        JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
+  }
+
   /**
    * Returns the currently active window.
    */

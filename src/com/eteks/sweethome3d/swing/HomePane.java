@@ -1121,26 +1121,6 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Displays a dialog that let user choose whether he wants to overwrite 
-   * file <code>name</code> or not.
-   * @return <code>true</code> if user confirmed to overwrite.
-   */
-  public boolean confirmOverwrite(String homeName) {
-    // Retrieve displayed text in buttons and message
-    String messageFormat = this.resource.getString("confirmOverwrite.message");
-    String message = String.format(messageFormat, 
-        this.contentManager.getPresentationName(
-            homeName, ContentManager.ContentType.SWEET_HOME_3D));
-    String title = this.resource.getString("confirmOverwrite.title");
-    String replace = this.resource.getString("confirmOverwrite.overwrite");
-    String cancel = this.resource.getString("confirmOverwrite.cancel");
-    
-    return JOptionPane.showOptionDialog(this, message, title, 
-        JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
-  }
-
-  /**
    * Displays a dialog that let user choose whether he wants to save
    * the current home or not.
    * @return {@link SaveAnswer#SAVE} if user choosed to save home,
@@ -1362,4 +1342,4 @@ public class HomePane extends JRootPane {
       this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
     }
   }
- }
+}

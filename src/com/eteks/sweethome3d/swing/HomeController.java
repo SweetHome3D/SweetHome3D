@@ -973,27 +973,14 @@ public class HomeController  {
 
   /**
    * Saves the home managed by this controller with a different name. 
-   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in   view, 
+   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in  view, 
    * and saves home with the choosen name if any. 
-   * If this name already exists, the user will be 
-   * {@link HomePane#confirmOverwrite(String) prompted} in view whether 
-   * he wants to overwrite this existing name. 
    * @return <code>true</code> if home was saved.
    */
   public boolean saveAs() {
     String newName = ((HomePane)getView()).showSaveDialog(this.home.getName());
     if (newName != null) {
-      try {
-        if (!this.application.getHomeRecorder().exists(newName)
-            || ((HomePane)getView()).confirmOverwrite(newName)) {
-          return save(newName);
-        } else {
-          return saveAs();
-        }
-      } catch (RecorderException ex) {
-        String message = String.format(this.resource.getString("saveError"), newName);
-        ((HomePane)getView()).showError(message);
-      }
+      return save(newName);
     }
     return false;
   }
@@ -1054,18 +1041,7 @@ public class HomeController  {
   public void printToPDF() {
     String pdfName = ((HomePane)getView()).showPrintToPDFDialog(this.home.getName());    
     if (pdfName != null) {
-      boolean succeeded = false;
-      try {
-        if (!this.application.getHomeRecorder().exists(pdfName)
-            || ((HomePane)getView()).confirmOverwrite(pdfName)) {
-          succeeded = ((HomePane)getView()).printToPDF(pdfName);
-        } else {
-          printToPDF();
-        }
-      } catch (RecorderException ex) {
-      }
-      
-      if (!succeeded) {
+      if (!((HomePane)getView()).printToPDF(pdfName)) {
         String message = String.format(this.resource.getString("printToPDFError"), pdfName);
         ((HomePane)getView()).showError(message);
       }
