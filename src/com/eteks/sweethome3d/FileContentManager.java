@@ -299,7 +299,7 @@ public class FileContentManager implements ContentManager {
     }
     // If the file exists, prompt user if he wants to overwrite it
     if (new File(savedName).exists()
-        && !confirmOverwrite(savedName, contentType)) {
+        && !confirmOverwrite(new File(savedName).getName())) {
       return showSaveDialog(dialogTitle, contentType, savedName);
     }
     return savedName;
@@ -402,11 +402,10 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  private boolean confirmOverwrite(String fileName, ContentType contentType) {
+  private boolean confirmOverwrite(String fileName) {
     // Retrieve displayed text in buttons and message
     String messageFormat = this.resource.getString("confirmOverwrite.message");
-    String message = String.format(messageFormat, 
-        getPresentationName(fileName, contentType));
+    String message = String.format(messageFormat, fileName);
     String title = this.resource.getString("confirmOverwrite.title");
     String replace = this.resource.getString("confirmOverwrite.overwrite");
     String cancel = this.resource.getString("confirmOverwrite.cancel");
