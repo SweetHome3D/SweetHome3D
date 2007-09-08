@@ -34,6 +34,7 @@ import java.util.ResourceBundle;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JToolBar;
@@ -43,6 +44,7 @@ import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.Matcher;
+import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.FileDialogTester;
 import abbot.tester.JComponentTester;
 import abbot.tester.JFileChooserTester;
@@ -223,14 +225,12 @@ public class PrintTest extends ComponentTestFixture {
         });
     } else {
       final JFileChooserTester fileChooserTester = new JFileChooserTester();
-      fileChooserTester.actionSetDirectory(printToPdfDialog, System.getProperty("user.dir"));
-      fileChooserTester.actionSetFilename(printToPdfDialog, pdfFile.getName());
-      tester.invokeAndWait(new Runnable() {
-          public void run() {
-            // Select Ok option to hide dialog box in Event Dispatch Thread
-            fileChooserTester.actionApprove(printToPdfDialog);
-          }
-        });
+      final JFileChooser fileChooser = (JFileChooser)new BasicFinder().find(printToPdfDialog, 
+          new ClassMatcher(JFileChooser.class));
+      fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
+      fileChooserTester.actionSetFilename(fileChooser, pdfFile.getName());
+      // Select Ok option to hide dialog box in Event Dispatch Thread
+      fileChooserTester.actionApprove(fileChooser);
     }
     assertFalse("Print to pdf dialog still showing", printPreviewDialog.isShowing());
     // Wait PDF generation  
