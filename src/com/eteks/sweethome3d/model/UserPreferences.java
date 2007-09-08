@@ -41,15 +41,15 @@ public abstract class UserPreferences {
   public enum Unit {
     CENTIMETER, INCH;
 
-    public static float centimerToInch(float length) {
+    public static float centimeterToInch(float length) {
       return length / 2.54f;
     }
 
-    public static float centimerToFoot(float length) {
+    public static float centimeterToFoot(float length) {
       return length / 2.54f / 12;
     }
     
-    public static float inchToCentimer(float length) {
+    public static float inchToCentimeter(float length) {
       return length * 2.54f;
     }
   }

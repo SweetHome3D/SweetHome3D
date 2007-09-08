@@ -1863,7 +1863,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           text += "m";
         }
       } else {
-        text = format.format(UserPreferences.Unit.centimerToFoot(value)) + "'"; 
+        text = format.format(UserPreferences.Unit.centimeterToFoot(value)) + "'"; 
       }
       return text;
     }

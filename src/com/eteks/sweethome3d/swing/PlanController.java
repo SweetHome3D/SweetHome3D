@@ -1790,7 +1790,7 @@ public class PlanController {
         return String.format(this.centimerWallLengthToolTipFeedback, length);
       } else {
         return String.format(this.inchWallLengthToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(length));
+            UserPreferences.Unit.centimeterToInch(length));
       }
     }
   }
@@ -2222,7 +2222,7 @@ public class PlanController {
         return String.format(this.centimerElevationToolTipFeedback, height);
       } else {
         return String.format(this.inchElevationToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(height));
+            UserPreferences.Unit.centimeterToInch(height));
       }
     }
   }
@@ -2300,7 +2300,7 @@ public class PlanController {
         return String.format(this.centimerResizeToolTipFeedback, height);
       } else {
         return String.format(this.inchResizeToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(height));
+            UserPreferences.Unit.centimeterToInch(height));
       }
     }
   }
@@ -2398,8 +2398,8 @@ public class PlanController {
         return String.format(this.centimerResizeToolTipFeedback, width, depth);
       } else {
         return String.format(this.inchResizeToolTipFeedback, 
-            UserPreferences.Unit.centimerToInch(width), 
-            UserPreferences.Unit.centimerToInch(depth));
+            UserPreferences.Unit.centimeterToInch(width), 
+            UserPreferences.Unit.centimeterToInch(depth));
       }
     }
   }

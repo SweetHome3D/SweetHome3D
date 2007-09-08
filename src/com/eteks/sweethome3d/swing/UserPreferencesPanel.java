@@ -253,14 +253,14 @@ public class UserPreferencesPanel extends JPanel {
             if (centimeterButton.isSelected()) {
               if (unit == UserPreferences.Unit.INCH) {
                 setStepSize(centimeterStepSize);
-                setValue(UserPreferences.Unit.inchToCentimer(
+                setValue(UserPreferences.Unit.inchToCentimeter(
                     getNumber().floatValue()));
                 unit = UserPreferences.Unit.CENTIMETER;
               }
             } else {
               if (unit == UserPreferences.Unit.CENTIMETER) {
                 setStepSize(inchStepSize);
-                setValue(UserPreferences.Unit.centimerToInch(
+                setValue(UserPreferences.Unit.centimeterToInch(
                     getNumber().floatValue()));
                 unit = UserPreferences.Unit.INCH;
               }
@@ -274,7 +274,7 @@ public class UserPreferencesPanel extends JPanel {
      */
     public float getLength() {
       if (unit == UserPreferences.Unit.INCH) {
-        return UserPreferences.Unit.inchToCentimer(getNumber().floatValue());
+        return UserPreferences.Unit.inchToCentimeter(getNumber().floatValue());
       } else {
         return getNumber().floatValue();
       }
@@ -285,7 +285,7 @@ public class UserPreferencesPanel extends JPanel {
      */
     public void setLength(float length) {
       if (unit == UserPreferences.Unit.INCH) {
-        length = UserPreferences.Unit.centimerToInch(length);
+        length = UserPreferences.Unit.centimeterToInch(length);
       } 
       setValue(length);
     }

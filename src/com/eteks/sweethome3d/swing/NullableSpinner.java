@@ -175,7 +175,7 @@ public class NullableSpinner extends JSpinner {
       if (getValue() == null) {
         return null;
       } else if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        return UserPreferences.Unit.inchToCentimer(((Number)getValue()).floatValue());
+        return UserPreferences.Unit.inchToCentimeter(((Number)getValue()).floatValue());
       } else {
         return ((Number)getValue()).floatValue();
       }
@@ -187,7 +187,7 @@ public class NullableSpinner extends JSpinner {
     public void setLength(Float length) {
       if (length != null 
           && this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        length = UserPreferences.Unit.centimerToInch(length);
+        length = UserPreferences.Unit.centimeterToInch(length);
       } 
       setValue(length);
     }

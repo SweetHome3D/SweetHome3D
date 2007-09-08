@@ -20,7 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import static com.eteks.sweethome3d.model.UserPreferences.Unit.INCH;
-import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimerToInch;
+import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimeterToInch;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -582,7 +582,7 @@ public class FurnitureTable extends JTable implements Printable {
             this.floatRenderer = table.getDefaultRenderer(Float.class);
           }
           if (preferences.getUnit() == INCH) {
-            value = centimerToInch((Float)value);
+            value = centimeterToInch((Float)value);
           }        
           return this.floatRenderer.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);
