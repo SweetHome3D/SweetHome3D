@@ -20,8 +20,12 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
+import java.awt.Dialog;
+import java.awt.FileDialog;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterJob;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
@@ -39,8 +43,11 @@ import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.Matcher;
+import abbot.tester.FileDialogTester;
 import abbot.tester.JComponentTester;
+import abbot.tester.JFileChooserTester;
 
+import com.eteks.sweethome3d.FileContentManager;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
@@ -58,10 +65,10 @@ import com.eteks.sweethome3d.swing.PrintPreviewPanel;
  */
 public class PrintTest extends ComponentTestFixture {
   public void testPageSetupAndPrintPreview() throws ComponentSearchException, InterruptedException, 
-      NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+      NoSuchFieldException, IllegalAccessException, InvocationTargetException, IOException {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences);
+    final HomeController controller = new HomeController(home, preferences, new FileContentManager());
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home Print Test");    
@@ -183,6 +190,54 @@ public class PrintTest extends ComponentTestFixture {
         }
       });
     assertFalse("Print preview dialog still showing", printPreviewDialog.isShowing());
+    
+    // 7. Show print to PDF dialog box
+    tester.invokeLater(new Runnable() { 
+        public void run() {
+          // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
+          runAction(controller, HomePane.ActionType.PRINT_TO_PDF);
+        }
+      });
+    // Wait for print to PDF file chooser to be shown
+    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
+        HomePane.class.getName()).getString("printToPDFDialog.title"));
+    // Check dialog box is displayed
+    final Dialog printToPdfDialog = (Dialog)new BasicFinder().find(frame, 
+        new Matcher () {
+            public boolean matches(Component component) {
+              return component instanceof Dialog && component.isShowing();
+            }
+          });
+    assertTrue("Print to pdf dialog not showing", printToPdfDialog.isShowing());
+    // Change file in print to PDF file chooser 
+    File pdfFile = new File("test.pdf");
+    if (printToPdfDialog instanceof FileDialog) {
+      final FileDialogTester fileDialogTester = new FileDialogTester();
+      fileDialogTester.actionSetDirectory(printToPdfDialog, System.getProperty("user.dir"));
+      fileDialogTester.actionSetFile(printToPdfDialog, pdfFile.getName());
+      tester.invokeAndWait(new Runnable() {
+          public void run() {
+            // Select Ok option to hide dialog box in Event Dispatch Thread
+            fileDialogTester.actionAccept(printToPdfDialog);
+          }
+        });
+    } else {
+      final JFileChooserTester fileChooserTester = new JFileChooserTester();
+      fileChooserTester.actionSetDirectory(printToPdfDialog, System.getProperty("user.dir"));
+      fileChooserTester.actionSetFilename(printToPdfDialog, pdfFile.getName());
+      tester.invokeAndWait(new Runnable() {
+          public void run() {
+            // Select Ok option to hide dialog box in Event Dispatch Thread
+            fileChooserTester.actionApprove(printToPdfDialog);
+          }
+        });
+    }
+    assertFalse("Print to pdf dialog still showing", printPreviewDialog.isShowing());
+    // Wait PDF generation  
+    Thread.sleep(1000);
+    assertTrue("PDF file doesn't exist", pdfFile.exists());
+    assertTrue("PDF file is empty", pdfFile.length() > 0);
+    pdfFile.delete();
   }
   
   /**
