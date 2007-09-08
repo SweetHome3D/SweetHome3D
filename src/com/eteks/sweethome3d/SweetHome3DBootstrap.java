@@ -47,7 +47,7 @@ import java.util.jar.JarFile;
 public class SweetHome3DBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-    Class SweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
+    Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
     String [] java3DFiles = {
         "j3dcore.jar", // Main Java 3D jars
         "vecmath.jar",
@@ -73,7 +73,7 @@ public class SweetHome3DBootstrap {
         "javax.media.opengl",
         "com.microcrowd.loader.java3d"};
     ClassLoader java3DClassLoader = new SweetHome3DClassLoader(
-        SweetHome3DBootstrapClass.getClassLoader(), SweetHome3DBootstrapClass.getProtectionDomain(),
+        sweetHome3DBootstrapClass.getClassLoader(), sweetHome3DBootstrapClass.getProtectionDomain(),
         java3DFiles, applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
@@ -180,14 +180,16 @@ public class SweetHome3DBootstrap {
       // Build class file from its name 
       String classFile = name.replace('.', '/') + ".class";
       InputStream classInputStream = null;
-      // Check if searched class is an extension class
-      for (JarFile extensionJar : this.extensionJars) {
-        JarEntry jarEntry = extensionJar.getJarEntry(classFile);
-        if (jarEntry != null) {
-          try {
-            classInputStream = extensionJar.getInputStream(jarEntry);
-          } catch (IOException ex) {
-            throw new ClassNotFoundException("Couldn't read class " + name, ex);
+      if (this.extensionJars != null) {
+        // Check if searched class is an extension class
+        for (JarFile extensionJar : this.extensionJars) {
+          JarEntry jarEntry = extensionJar.getJarEntry(classFile);
+          if (jarEntry != null) {
+            try {
+              classInputStream = extensionJar.getInputStream(jarEntry);
+            } catch (IOException ex) {
+              throw new ClassNotFoundException("Couldn't read class " + name, ex);
+            }
           }
         }
       }
@@ -253,12 +255,12 @@ public class SweetHome3DBootstrap {
         // Let default class loader do its job
         return super.loadClass(name, resolve);
       }
-      // First, check if the class has already been loaded
+      // Check if the class has already been loaded
       Class loadedClass = findLoadedClass(name);
       if (loadedClass == null) {
         try {
           // Try to find if class belongs to one of the application packages
-          for (String applicationPackage : applicationPackages) {
+          for (String applicationPackage : this.applicationPackages) {
             if (name.startsWith(applicationPackage)) {
               loadedClass = findClass(name);
               break;
