@@ -35,7 +35,9 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -1249,17 +1251,28 @@ public class HomePane extends JRootPane {
   }
   
   /**
-   * Prints a home to a given PDF file.
+   * Prints a home to a given PDF file. This method may be overriden
+   * to write to another kind of output stream.
    */
   public boolean printToPDF(String pdfFile) {
     Component previousGlassPane = getWaitGlassPane();
+    OutputStream outputStream = null;
     try {
-      new HomePDFPrinter(this.home, this.contentManager, this.controller).printToPDF(pdfFile);
+      outputStream = new FileOutputStream(pdfFile);
+      new HomePDFPrinter(this.home, this.contentManager, this.controller)
+          .write(outputStream);
       return true;
     } catch (IOException ex) {
       return false;
     } finally {
       setGlassPane(previousGlassPane);
+      try {
+        if (outputStream != null) {
+          outputStream.close();
+        }
+      } catch (IOException ex) {
+        return false;
+      }
     }
   }
   

@@ -22,8 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Graphics;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
@@ -50,9 +50,9 @@ public class HomePDFPrinter {
   }
 
   /**
-   * Create a file <code>pdfFile</code> containing the print of a home.
+   * Writes to <code>outputStream</code> the print of a home in PDF format.
    */
-  public void printToPDF(String pdfFile) throws IOException {
+  public void write(OutputStream outputStream) throws IOException {
     PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
     Document pdfDocument = new Document(new Rectangle((float)pageFormat.getWidth(), (float)pageFormat.getHeight()));
     // Set PDF document description
@@ -65,8 +65,8 @@ public class HomePDFPrinter {
           homeName, ContentManager.ContentType.PDF));
     }
     try {
-      // Get a PDF writer that will write to the given PDF file
-      PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, new FileOutputStream(pdfFile));
+      // Get a PDF writer that will write to the given PDF output stream
+      PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, outputStream);
       pdfDocument.open();
       PdfContentByte pdfContent = pdfWriter.getDirectContent();
       HomePrintableComponent printableComponent = new HomePrintableComponent(this.home, this.controller);
