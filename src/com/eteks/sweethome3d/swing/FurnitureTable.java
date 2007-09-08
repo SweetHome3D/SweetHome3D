@@ -172,6 +172,7 @@ public class FurnitureTable extends JTable implements Printable {
    * Updates table columns width from the content of its cells.
    */
   private void updateTableColumnsWidth() {
+    int intercellWidth = getIntercellSpacing().width;
     TableColumnModel columnModel = getColumnModel();
     TableModel tableModel = getModel();
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
@@ -182,8 +183,8 @@ public class FurnitureTable extends JTable implements Printable {
         preferredWidth = Math.max(preferredWidth, column.getCellRenderer().getTableCellRendererComponent(
             this, tableModel.getValueAt(rowIndex, columnIndex), false, false, -1, columnIndex).getPreferredSize().width);
       }
-      column.setPreferredWidth(preferredWidth);
-      column.setWidth(preferredWidth);
+      column.setPreferredWidth(preferredWidth + intercellWidth);
+      column.setWidth(preferredWidth + intercellWidth);
     }
   }
   
