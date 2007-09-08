@@ -116,7 +116,7 @@ public class WizardControllerTest extends TestCase {
   
   public static void main(String [] args) {
     // Display the wizard controlled by ControllerTest
-    WizardController controller = new ControllerTest() {
+    new ControllerTest() {
       {
         displayView();
       }
