@@ -53,6 +53,8 @@ public interface ContentManager {
 
   /**
    * Returns the content name chosen by user with a save content dialog.
+   * If the returned name already exists, this method should have confirmed 
+   * if the user wants to overwrite it before return. 
    * @return the chosen content name or <code>null</code> if user cancelled its choice.
    */
   public abstract String showSaveDialog(String dialogTitle,
