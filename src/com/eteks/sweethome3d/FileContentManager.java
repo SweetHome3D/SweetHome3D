@@ -288,19 +288,18 @@ public class FileContentManager implements ContentManager {
           }
           break;
       }
-      
-    }
 
-    // If no extension was added to file under Mac OS X, 
-    // FileDialog already asks to user if he wants to overwrite savedName
-    if (System.getProperty("os.name").startsWith("Mac OS X")
-        && !addedExtension) {
-      return savedName;
-    }
-    // If the file exists, prompt user if he wants to overwrite it
-    if (new File(savedName).exists()
-        && !confirmOverwrite(new File(savedName).getName())) {
-      return showSaveDialog(dialogTitle, contentType, savedName);
+      // If no extension was added to file under Mac OS X, 
+      // FileDialog already asks to user if he wants to overwrite savedName
+      if (System.getProperty("os.name").startsWith("Mac OS X")
+          && !addedExtension) {
+        return savedName;
+      }
+      // If the file exists, prompt user if he wants to overwrite it
+      if (new File(savedName).exists()
+          && !confirmOverwrite(new File(savedName).getName())) {
+        return showSaveDialog(dialogTitle, contentType, savedName);
+      }
     }
     return savedName;
   }
