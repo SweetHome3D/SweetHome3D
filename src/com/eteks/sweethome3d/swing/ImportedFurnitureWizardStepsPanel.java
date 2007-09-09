@@ -1191,9 +1191,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     private void disposeUniverse() {
       // Unlink scene to universe
-      universe.getLocale().removeBranchGraph(sceneTree);
-      universe.cleanup();
-      universe = null;
+      this.universe.getLocale().removeBranchGraph(this.sceneTree);
+      this.universe.cleanup();
+      this.universe = null;
     }
     
     /**
