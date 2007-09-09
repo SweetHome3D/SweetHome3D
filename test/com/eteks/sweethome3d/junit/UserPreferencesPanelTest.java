@@ -97,8 +97,8 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setNewHomeWallHeight(panel.getNewHomeWallHeight());
     // Check preferences value
     assertPreferencesEqual(UserPreferences.Unit.INCH, false, false,
-        UserPreferences.Unit.inchToCentimer(1), 
-        UserPreferences.Unit.inchToCentimer(100), 
+        UserPreferences.Unit.inchToCentimeter(1), 
+        UserPreferences.Unit.inchToCentimeter(100), 
         preferences);
     
     // 5. Save preferences and read them in an other system preferences object
