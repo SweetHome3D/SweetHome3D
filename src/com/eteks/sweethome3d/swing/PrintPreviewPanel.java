@@ -183,7 +183,7 @@ public class PrintPreviewPanel extends JPanel {
     panel.add(this.toolBar);
     add(panel, BorderLayout.NORTH);
     // Second row
-    // Add printable component in a flow layout panel
+    // Add printable component in a proportional layout panel
     panel = new JPanel(new ProportionalLayout());
     panel.add(this.printableComponent);
     add(panel, BorderLayout.CENTER);
