@@ -30,31 +30,31 @@
 
   <resources>
     <j2se version="1.5+" max-heap-size="192m"/>
-    <jar href="SweetHome3D.jar"/>
-    <jar href="Loader3DS1_2.jar"/>
+    <jar href="lib/SweetHome3D.jar"/>
+    <jar href="lib/Loader3DS1_2.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="sun.swing.enableImprovedDragGesture" 
               value="true"/>
   </resources>
  
   <resources os="Windows">
-    <jar href="itext-2.0.4.jar"/>
-    <jar href="windows/java3d.jar"/>
+    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/windows/java3d.jar"/>
   </resources>
   <resources os="Mac OS X">
     <property name="j3d.rend" value="jogl"/>
-    <jar href="macosx/java3d.jar"/>
+    <jar href="lib/macosx/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
-    <jar href="itext-2.0.4.jar"/>
-    <jar href="linux/i386/java3d.jar"/>
+    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="SunOS" arch="x86">
-    <jar href="itext-2.0.4.jar"/>
+    <jar href="lib/itext-2.0.4.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   <resources os="SunOS" arch="sparc">
-    <jar href="itext-2.0.4.jar"/>
+    <jar href="lib/itext-2.0.4.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   

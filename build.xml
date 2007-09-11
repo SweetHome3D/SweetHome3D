@@ -5,7 +5,7 @@
      
      Ant build file. Available targets :
      - build : Builds SweetHome3D.jar file in deploy directory
-     - deploy : Builds Java Web Start signed files in deploy directory
+     - deploy : Builds Java Web Start signed files in deploy/lib directory
      - windowsInstaller : Builds SweetHome3D-1.0-windows.exe file in install directory     
      - macosxInstaller : Builds SweetHome3D-1.0-macosx.dmg file in install directory
      - linuxInstaller : Builds SweetHome3D-1.0-linux-x86.tgz file in install directory
@@ -44,10 +44,10 @@
 
   <!-- Builds deploy/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
   <target name="deploy" depends="build">
-    <mkdir dir="deploy/windows"/>
+    <mkdir dir="deploy/lib/windows"/>
   	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
-    <mkdir dir="deploy/windows"/>
-    <jar destfile="deploy/windows/java3d.jar">
+    <mkdir dir="deploy/lib/windows"/>
+    <jar destfile="deploy/lib/windows/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
       </fileset>
@@ -59,8 +59,8 @@
     </jar>
 
     <!-- Create java3d.jar containing Linux Java 3D DLLs and jars -->
-    <mkdir dir="deploy/linux/i386"/>
-    <jar destfile="deploy/linux/i386/java3d.jar">
+    <mkdir dir="deploy/lib/linux/i386"/>
+    <jar destfile="deploy/lib/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
         <include name="*.so"/>
       </fileset>
@@ -72,8 +72,8 @@
     </jar>
  
     <!-- Create java3d.jar containing Mac OS X Java 3D DLLs and jars -->
-    <mkdir dir="deploy/macosx"/>
-    <jar destfile="deploy/macosx/java3d.jar">
+    <mkdir dir="deploy/lib/macosx"/>
+    <jar destfile="deploy/lib/macosx/java3d.jar">
       <fileset dir="lib/macosx">
         <include name="*.jnilib"/>
         <include name="*.jar"/>
@@ -86,7 +86,8 @@
     </jar>
  
     <!-- Copy other jar files -->
-    <copy todir="deploy">
+    <move file="deploy/SweetHome3D.jar" todir="deploy/lib" />
+    <copy todir="deploy/lib">
       <fileset dir="lib">
         <include name="*.jar"/>
         <exclude name="j3dcore.jar"/>
@@ -97,14 +98,14 @@
     
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
-    <!-- Sign jar files in deploy dir -->
+    <!-- Sign jar files in deploy/lib dir -->
     <signjar keystore="keys.keytool" 
              alias="SweetHome3D" storepass="${password}">
-      <fileset dir="deploy">
+      <fileset dir="deploy/lib">
         <include name="**/*.jar"/>
       </fileset>
     </signjar>
-      
+
     <echo message="deploy dir ready for ftp"/>
   </target>
 
@@ -116,7 +117,7 @@
     <!-- Copy SweetHome3D.jar and Windows Java 3D DLLs and JARs for Java 3D 
          to install/windows/tmp/lib -->
     <mkdir dir="install/windows/tmp/lib"/>
-    <copy file="deploy/SweetHome3D.jar" todir="install/windows/tmp/lib" />
+    <move file="deploy/SweetHome3D.jar" todir="install/windows/tmp/lib" />
     <copy todir="install/windows/tmp/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -181,7 +182,6 @@
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
 
-    <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/windows/tmp"/>
 
     <echo message="install/SweetHome3D-1.0-windows.exe ready for ftp"/>
@@ -203,7 +203,7 @@
     <!-- Copy SweetHome3D.jar and its direct libs 
          to install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java -->
     <mkdir dir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <copy file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" />
     <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -240,7 +240,6 @@
       <arg value="install/SweetHome3D-1.0-macosx.dmg"/>
     </exec>
 
-    <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/macosx/SweetHome3D-1.0"/>
 
     <echo message="install/SweetHome3D-1.0-macosx.dmg ready for ftp"/>
@@ -253,7 +252,7 @@
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/i386/SweetHome3D-1.0/lib -->
     <mkdir dir="install/linux/i386/SweetHome3D-1.0/lib"/>
-    <copy file="deploy/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-1.0/lib" />
+    <move file="deploy/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-1.0/lib" />
     <copy todir="install/linux/i386/SweetHome3D-1.0/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -300,7 +299,6 @@
       </tarfileset>
     </tar>
 
-    <delete file="deploy/SweetHome3D.jar"/>
     <delete dir="install/linux"/>
 
     <echo message="install/SweetHome3D-1.0-linux-x86.tgz ready for ftp"/>
