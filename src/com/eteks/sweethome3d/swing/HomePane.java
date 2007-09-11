@@ -1158,6 +1158,24 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Displays a dialog that let user choose whether he wants to save
+   * a home that was created with a newer version of Sweet Home 3D.
+   * @return <code>true</code> if user confirmed to save.
+   */
+  public boolean confirmSaveNewerHome(String homeName) {
+    String message = String.format(this.resource.getString("confirmSaveNewerHome.message"), 
+        "\"" + this.contentManager.getPresentationName(
+            homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
+    String title = this.resource.getString("confirmSaveNewerHome.title");
+    String save = this.resource.getString("confirmSaveNewerHome.save");
+    String doNotSave = this.resource.getString("confirmSaveNewerHome.doNotSave");
+    
+    return JOptionPane.showOptionDialog(this, message, title, 
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {save, doNotSave}, doNotSave) == JOptionPane.YES_OPTION;
+  }
+  
+  /**
    * Displays a dialog that let user choose whether he wants to exit 
    * application or not.
    * @return <code>true</code> if user confirmed to exit.

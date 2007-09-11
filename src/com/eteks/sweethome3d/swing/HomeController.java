@@ -990,25 +990,32 @@ public class HomeController  {
    * @return <code>true</code> if home was saved.
    */
   private boolean save(String homeName) {
-    try {
-      this.application.getHomeRecorder().writeHome(this.home, homeName);
-      this.home.setName(homeName);
-      this.saveUndoLevel = 0;
-      this.home.setModified(false);
-      // Update recent homes list
-      List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
-      int homeNameIndex = recentHomes.indexOf(homeName);
-      if (homeNameIndex >= 0) {
-        recentHomes.remove(homeNameIndex);
+    // If home version is older than current version
+    // or if home name is changed
+    // or if user confirms to save a home created with a more version
+    if (this.home.getVersion() <= Home.CURRENT_VERSION
+        || !homeName.equals(this.home.getName()) 
+        || ((HomePane)getView()).confirmSaveNewerHome(homeName)) {
+      try {
+        this.application.getHomeRecorder().writeHome(this.home, homeName);
+        this.home.setName(homeName);
+        this.saveUndoLevel = 0;
+        this.home.setModified(false);
+        // Update recent homes list
+        List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
+        int homeNameIndex = recentHomes.indexOf(homeName);
+        if (homeNameIndex >= 0) {
+          recentHomes.remove(homeNameIndex);
+        }
+        recentHomes.add(0, homeName);
+        updateUserPreferencesRecentHomes(recentHomes);
+        return true;
+      } catch (RecorderException ex) {
+        String message = String.format(this.resource.getString("saveError"), homeName);
+        ((HomePane)getView()).showError(message);
       }
-      recentHomes.add(0, homeName);
-      updateUserPreferencesRecentHomes(recentHomes);
-      return true;
-    } catch (RecorderException ex) {
-      String message = String.format(this.resource.getString("saveError"), homeName);
-      ((HomePane)getView()).showError(message);
-      return false;
     }
+    return false;
   }
 
   /**

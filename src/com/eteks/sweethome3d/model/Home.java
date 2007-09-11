@@ -36,6 +36,13 @@ import java.util.List;
  */
 public class Home implements Serializable {
   private static final long serialVersionUID = 1L;
+
+  /**
+   * The current version of this home. Each time the field list is changed
+   * in <code>Home</code> class or in one of the classes that it uses,
+   * this number is increased.
+   */
+  public static final long CURRENT_VERSION = 1000;
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
@@ -63,6 +70,7 @@ public class Home implements Serializable {
   private int                                         lightColor;
   private float                                       wallsAlpha;
   private HomePrint                                   print;
+  private long                                        version;
   private transient PropertyChangeSupport             propertyChangeSupport;
 
 
@@ -143,8 +151,19 @@ public class Home implements Serializable {
     this.skyColor = (204 << 16) + (228 << 8) + 252;
     this.groundColor = 0xE0E0E0;
     this.lightColor = 0xF0F0F0;
+    
+    this.version = CURRENT_VERSION;
   }
 
+  /**
+   * Sets the version of this home and writes it to <code>out</code> stream
+   * with default writing method. 
+   */
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+    this.version = CURRENT_VERSION;
+    out.defaultWriteObject();
+  }
+  
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
@@ -979,6 +998,18 @@ public class Home implements Serializable {
     this.print = print;
   }
 
+  /**
+   * Returns the version of this home, the last time it was serialized or 
+   * or {@link #CURRENT_VERSION} if it is not serialized yet or 
+   * was serialized with Sweet Home 3D 0.x.  
+   * Version is usefull to know with which Sweet Home 3D version this home was saved
+   * and warn user that he may lose information if he saves with 
+   * current application a home created by a more recent version.
+   */
+  public long getVersion() {
+    return this.version;
+  }
+  
   /**
    * Returns a sub list of <code>items</code> that contains only home furniture.
    */
