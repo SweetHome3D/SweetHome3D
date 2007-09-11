@@ -54,7 +54,8 @@ public class SweetHome3DBootstrap {
         "j3dutils.jar",
         "j3dcore-d3d.dll", // Windows DLLs
         "j3dcore-ogl.dll",
-        "j3dutils.dll",
+        "j3dcore-ogl-cg.dll",
+        "j3dcore-ogl-chk.dll",
         "libj3dcore-ogl.so", // Linux DLLs
         "libj3dcore-ogl-cg.so",
         "gluegen-rt.jar", // Mac OS X jars and DLLs

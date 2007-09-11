@@ -43,12 +43,17 @@
 
   <!-- Builds deploy/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
   <target name="deploy" depends="build">
-    <!-- Create java3d.jar containing Windows Java 3D DLLs -->
+    <mkdir dir="deploy/windows"/>
+  	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
     <mkdir dir="deploy/windows"/>
     <jar destfile="deploy/windows/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
-        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
       </fileset>
     </jar>
 
@@ -57,7 +62,11 @@
     <jar destfile="deploy/linux/i386/java3d.jar">
       <fileset dir="lib/linux/i386">
         <include name="*.so"/>
-        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
       </fileset>
     </jar>
  
@@ -68,12 +77,20 @@
         <include name="*.jnilib"/>
         <include name="*.jar"/>
       </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
+      </fileset>
     </jar>
  
     <!-- Copy other jar files -->
     <copy todir="deploy">
       <fileset dir="lib">
         <include name="*.jar"/>
+        <exclude name="j3dcore.jar"/>
+        <exclude name="j3dutils.jar"/>
+        <exclude name="vecmath.jar"/>
       </fileset>
     </copy>
     
@@ -103,10 +120,7 @@
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
-    </copy>
-    <copy todir="install/windows/tmp/lib" >
       <fileset dir="lib/windows">
-        <include name="*.jar"/>
         <include name="*.dll"/>
       </fileset>
     </copy>
@@ -192,6 +206,11 @@
     <copy todir="install/macosx/SweetHome3D-1.0/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
+        <exclude name="j3dcore.jar"/>
+        <exclude name="j3dutils.jar"/>
+        <exclude name="vecmath.jar"/>
+      	<!-- Print to PDF menu item isn't available under Mac OS X as it's already in standard print dialog -->
+      	<exclude name="itext-2.0.4.jar"/>
       </fileset>
     </copy>
     <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
@@ -201,6 +220,11 @@
       <fileset dir="lib/macosx">
         <include name="*.jar"/>
         <include name="*.jnilib"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
       </fileset>
     </copy>
     <!-- Copy COPYING.TXT to install/macosx/SweetHome3D-1.0/ -->
@@ -233,10 +257,7 @@
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
-    </copy>
-    <copy todir="install/linux/i386/SweetHome3D-1.0/lib" >
       <fileset dir="lib/linux/i386">
-        <include name="*.jar"/>
         <include name="*.so"/>
       </fileset>
     </copy>
