@@ -992,11 +992,12 @@ public class HomeController  {
   private boolean save(String homeName) {
     // If home version is older than current version
     // or if home name is changed
-    // or if user confirms to save a home created with a more version
+    // or if user confirms to save a home created with a newer version
     if (this.home.getVersion() <= Home.CURRENT_VERSION
         || !homeName.equals(this.home.getName()) 
         || ((HomePane)getView()).confirmSaveNewerHome(homeName)) {
       try {
+        // Write home with application recorder
         this.application.getHomeRecorder().writeHome(this.home, homeName);
         this.home.setName(homeName);
         this.saveUndoLevel = 0;
