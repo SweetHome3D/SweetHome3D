@@ -1135,8 +1135,8 @@ public class HomePane extends JRootPane {
     String message;
     if (homeName != null) {
       message = String.format(messageFormat, 
-          "\"" + this.contentManager.getPresentationName(
-              homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
+          this.contentManager.getPresentationName(
+              homeName, ContentManager.ContentType.SWEET_HOME_3D));
     } else {
       message = String.format(messageFormat, "");
     }
@@ -1164,8 +1164,8 @@ public class HomePane extends JRootPane {
    */
   public boolean confirmSaveNewerHome(String homeName) {
     String message = String.format(this.resource.getString("confirmSaveNewerHome.message"), 
-        "\"" + this.contentManager.getPresentationName(
-            homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
+        this.contentManager.getPresentationName(
+            homeName, ContentManager.ContentType.SWEET_HOME_3D));
     String title = this.resource.getString("confirmSaveNewerHome.title");
     String save = this.resource.getString("confirmSaveNewerHome.save");
     String doNotSave = this.resource.getString("confirmSaveNewerHome.doNotSave");

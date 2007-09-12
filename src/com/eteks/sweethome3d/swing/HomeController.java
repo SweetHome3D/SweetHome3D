@@ -109,7 +109,7 @@ public class HomeController  {
     this(home, preferences, contentManager, null);
   }
 
-  private HomeController(Home home, 
+  private HomeController(final Home home, 
                          UserPreferences preferences,
                          ContentManager contentManager,
                          HomeApplication application) {
@@ -151,6 +151,17 @@ public class HomeController  {
       recentHomes.remove(home.getName());
       recentHomes.add(0, home.getName());
       updateUserPreferencesRecentHomes(recentHomes);
+      
+      // If home version is more recent than current version
+      if (home.getVersion() > Home.CURRENT_VERSION) {
+        // Warn the user will display a home created with a more recent version 
+        ((HomePane)getView()).invokeLater(new Runnable() { 
+            public void run() {
+              String message = String.format(resource.getString("moreRecentVersionHome"), home.getName());
+              ((HomePane)getView()).showMessage(message);
+            }
+          });
+      }
     }
   }
 
