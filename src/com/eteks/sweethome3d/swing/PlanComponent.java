@@ -850,7 +850,10 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     Shape wallsArea = getWallsArea(paintedWalls);
     // Fill walls area
-    g2D.setPaint(getWallPaint(scale, backgroundColor, foregroundColor));
+    float wallPaintScale = paintMode == PaintMode.PRINT
+        ? scale / 72 * 150 // Adjust scale to 150 dpi for print
+        : scale;
+    g2D.setPaint(getWallPaint(wallPaintScale, backgroundColor, foregroundColor));
     g2D.fill(wallsArea);
     
     if (paintMode == PaintMode.PAINT) {
