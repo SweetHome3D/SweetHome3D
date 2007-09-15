@@ -1182,16 +1182,19 @@ public class HomeComponent3D extends JComponent implements Printable {
       // Load piece real 3D model
       modelLoader.execute(new Runnable() {
           public void run() {
-            BranchGroup modelBranch = new BranchGroup();
-            modelBranch.addChild(getModelNode());
+            Node modelNode = getModelNode();
+            final BranchGroup modelBranch = new BranchGroup();
+            modelBranch.addChild(modelNode);
             // Allow appearance change on all children
             setAppearanceChangeCapability(modelBranch);
-            // Add model branch to live scene
-            pieceTransformGroup.addChild(modelBranch);
-            // Remove temporary node
-            waitBranch.detach();
+            
+            // Change live objects in Event Dispatch Thread
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
+                  // Add model branch to live scene
+                  pieceTransformGroup.addChild(modelBranch);
+                  // Remove temporary node
+                  waitBranch.detach();
                   // Update piece color, visibility and model mirror in dispatch thread as
                   // these attributes may be changed in that thread
                   updatePieceOfFurnitureColor();      

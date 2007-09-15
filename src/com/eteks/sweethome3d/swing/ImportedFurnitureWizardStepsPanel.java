@@ -938,22 +938,28 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             modelChoiceOrChangeButton.setEnabled(false);
             SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            updatePreviewComponentsModel(null);
           }
         });
       
-      updatePreviewComponentsModel(null);
       
       // Load piece model 
-      BranchGroup modelNode = ModelManager.getInstance().getModel(modelContent);
-      updatePreviewComponentsModel(modelNode);
+      final BranchGroup modelNode = ModelManager.getInstance().getModel(modelContent);
+      
+      // Change live object in Event Dispatch Thread
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            updatePreviewComponentsModel(modelNode);
+          }
+        });
       return modelNode;
     } finally {
       EventQueue.invokeLater(new Runnable() {
-        public void run() {
-          modelChoiceOrChangeButton.setEnabled(true);
-          SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(previousCursor);
-        }
-      });
+          public void run() {
+            modelChoiceOrChangeButton.setEnabled(true);
+            SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(previousCursor);
+          }
+        });
     } 
   }
   
