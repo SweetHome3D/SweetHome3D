@@ -1135,8 +1135,8 @@ public class HomePane extends JRootPane {
     String message;
     if (homeName != null) {
       message = String.format(messageFormat, 
-          this.contentManager.getPresentationName(
-              homeName, ContentManager.ContentType.SWEET_HOME_3D));
+          "\"" + this.contentManager.getPresentationName(
+              homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
     } else {
       message = String.format(messageFormat, "");
     }
