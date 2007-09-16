@@ -390,11 +390,9 @@ public class FurnitureController {
     float minYLeadPiece = getMinY(leadPiece);
     for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
       HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      if (piece != leadPiece) {
-        float minY = getMinY(piece);
-        this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
-            piece.getY() + minYLeadPiece - minY);
-      }
+      float minY = getMinY(piece);
+      this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
+          piece.getY() + minYLeadPiece - minY);
     }
   }
 
@@ -453,11 +451,9 @@ public class FurnitureController {
     float maxYLeadPiece = getMaxY(leadPiece);
     for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
       HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      if (piece != leadPiece) {
-        float maxY = getMaxY(piece);
-        this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
-            piece.getY() + maxYLeadPiece - maxY);
-      }
+      float maxY = getMaxY(piece);
+      this.home.setPieceOfFurnitureLocation(piece, piece.getX(), 
+          piece.getY() + maxYLeadPiece - maxY);
     }
   }
 
@@ -502,11 +498,9 @@ public class FurnitureController {
     float minXLeadPiece = getMinX(leadPiece);
     for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
       HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      if (piece != leadPiece) {
-        float minX = getMinX(piece);
-        this.home.setPieceOfFurnitureLocation(piece, 
-            piece.getX() + minXLeadPiece - minX, piece.getY());
-      }
+      float minX = getMinX(piece);
+      this.home.setPieceOfFurnitureLocation(piece, 
+          piece.getX() + minXLeadPiece - minX, piece.getY());
     }
   }
 
@@ -551,11 +545,9 @@ public class FurnitureController {
     float maxXLeadPiece = getMaxX(leadPiece);
     for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
       HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      if (piece != leadPiece) {
-        float maxX = getMaxX(piece);
-        this.home.setPieceOfFurnitureLocation(piece, 
-            piece.getX() + maxXLeadPiece - maxX, piece.getY());
-      }
+      float maxX = getMaxX(piece);
+      this.home.setPieceOfFurnitureLocation(piece, 
+          piece.getX() + maxXLeadPiece - maxX, piece.getY());
     }
   }
 
