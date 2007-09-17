@@ -36,7 +36,7 @@ public abstract class UserPreferences {
   private PropertyChangeSupport propertyChangeSupport;
 
   /**
-   * Unit used for dimensions.
+   * Unit used for sizes.
    */
   public enum Unit {
     CENTIMETER, INCH;
