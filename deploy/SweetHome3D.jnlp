@@ -23,6 +23,11 @@
     <description kind="short">Amenagez les meubles de votre logement</description>
     <offline-allowed/>
   </information>
+  <information locale="pt">
+    <title>Sweet Home 3D</title>
+    <description kind="short">Organiza as mobílias da sua casa</description>
+    <offline-allowed/>
+  </information>
 
   <security>
     <all-permissions/>
