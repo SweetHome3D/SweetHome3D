@@ -37,6 +37,7 @@ import java.util.Map;
  */
 public class HomePieceOfFurniture implements PieceOfFurniture {
   private static final long serialVersionUID = 1L;
+  
   /** 
    * Properties on which home furniture may be sorted.  
    */
@@ -147,7 +148,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private float      angle;
   private boolean    modelMirrored;
 
-  private transient Shape shape;
+  private transient Shape shapeCache;
 
   /**
    * Creates a home piece of furniture from an existing piece.
@@ -220,7 +221,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setDepth(float depth) {
     this.depth = depth;
-    this.shape = null;
+    this.shapeCache = null;
   }
 
   /**
@@ -237,7 +238,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setHeight(float height) {
     this.height = height;
-    this.shape = null;
+    this.shapeCache = null;
   }
 
   /**
@@ -254,7 +255,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setWidth(float width) {
     this.width = width;
-    this.shape = null;
+    this.shapeCache = null;
   }
 
   /**
@@ -348,7 +349,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setX(float x) {
     this.x = x;
-    this.shape = null;
+    this.shapeCache = null;
   }
   
   /**
@@ -365,7 +366,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setY(float y) {
     this.y = y;
-    this.shape = null;
+    this.shapeCache = null;
   }
 
   /**
@@ -382,7 +383,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setAngle(float angle) {
     this.angle = angle;
-    this.shape = null;
+    this.shapeCache = null;
   }
 
   /**
@@ -513,7 +514,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Returns the shape matching this piece.
    */
   private Shape getShape() {
-    if (this.shape == null) {
+    if (this.shapeCache == null) {
       // Create the rectangle that matches piece bounds
       Rectangle2D pieceRectangle = new Rectangle2D.Float(
           this.x - this.width / 2,
@@ -526,9 +527,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
       GeneralPath pieceShape = new GeneralPath();
       pieceShape.append(it, false);
       // Cache shape
-      this.shape = pieceShape;
+      this.shapeCache = pieceShape;
     }
-    return this.shape;
+    return this.shapeCache;
   }
   
   /**
