@@ -26,6 +26,7 @@ import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -57,6 +58,8 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,10 +85,14 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.event.MouseInputListener;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CameraEvent;
 import com.eteks.sweethome3d.model.CameraListener;
+import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.DimensionLineEvent;
+import com.eteks.sweethome3d.model.DimensionLineListener;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -119,9 +126,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private Rectangle2D        rectangleFeedback;
   private Wall               wallAlignmentFeedback;
   private Point2D            wallLocationFeeback;
-  private Rectangle2D        planBoundsCache;  
-  private boolean            planBoundsCacheValid;  
-  private BufferedImage      backgroundImageCache;
+  private DimensionLine      dimensionLineAlignmentFeedback;
+  private Point2D            dimensionLineLocationFeeback;
   private boolean            selectionScrollUpdated;
   private Cursor             rotationCursor;
   private Cursor             elevationCursor;
@@ -131,7 +137,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
   private List<HomePieceOfFurniture> sortedHomeFurniture;
-  
+
+  private Rectangle2D        planBoundsCache;  
+  private boolean            planBoundsCacheValid;  
+  private BufferedImage      backgroundImageCache;
+  private Area               wallsAreaCache;
+
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
   private static final GeneralPath FURNITURE_ELEVATION_INDICATOR;
@@ -140,11 +151,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private static final Shape       FURNITURE_HEIGHT_POINT_INDICATOR;
   private static final GeneralPath WALL_ORIENTATION_INDICATOR;
   private static final Shape       WALL_POINT;
-  private static final GeneralPath WALL_RESIZE_INDICATOR;
+  private static final GeneralPath WALL_AND_LINE_RESIZE_INDICATOR;
   private static final Shape       CAMERA_YAW_ROTATION_INDICATOR;
   private static final GeneralPath CAMERA_PITCH_ROTATION_INDICATOR;
   private static final Shape       CAMERA_BODY;
   private static final Shape       CAMERA_HEAD;  
+  private static final GeneralPath DIMENSION_LINE_END;  
   
   private static final float WALL_STROKE_WIDTH = 1.5f;
 
@@ -215,14 +227,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
     // Create a path used as a size indicator 
     // at start and end points of a selected wall
-    WALL_RESIZE_INDICATOR = new GeneralPath();
-    WALL_RESIZE_INDICATOR.moveTo(5, -2);
-    WALL_RESIZE_INDICATOR.lineTo(5, 2);
-    WALL_RESIZE_INDICATOR.moveTo(6, 0);
-    WALL_RESIZE_INDICATOR.lineTo(11, 0);
-    WALL_RESIZE_INDICATOR.moveTo(8.7f, -1.8f);
-    WALL_RESIZE_INDICATOR.lineTo(12, 0);
-    WALL_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
+    WALL_AND_LINE_RESIZE_INDICATOR = new GeneralPath();
+    WALL_AND_LINE_RESIZE_INDICATOR.moveTo(5, -2);
+    WALL_AND_LINE_RESIZE_INDICATOR.lineTo(5, 2);
+    WALL_AND_LINE_RESIZE_INDICATOR.moveTo(6, 0);
+    WALL_AND_LINE_RESIZE_INDICATOR.lineTo(11, 0);
+    WALL_AND_LINE_RESIZE_INDICATOR.moveTo(8.7f, -1.8f);
+    WALL_AND_LINE_RESIZE_INDICATOR.lineTo(12, 0);
+    WALL_AND_LINE_RESIZE_INDICATOR.lineTo(8.7f, 1.8f);
     
     // Create a path used as yaw rotation indicator for the camera
     AffineTransform transform = new AffineTransform();
@@ -256,6 +268,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     cameraHeadAreaPath.lineTo(0.04f, 0.55f);
     cameraHeadAreaPath.closePath();
     CAMERA_HEAD = new Area(cameraHeadAreaPath);
+    
+    DIMENSION_LINE_END = new GeneralPath();
+    DIMENSION_LINE_END.moveTo(-5, 5);
+    DIMENSION_LINE_END.lineTo(5, -5);
+    DIMENSION_LINE_END.moveTo(0, 5);
+    DIMENSION_LINE_END.lineTo(0, -5);
   }
 
   public PlanComponent(Home home, UserPreferences preferences,
@@ -292,33 +310,41 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * changes notifications from home. 
    */
   private void addModelListeners(Home home, UserPreferences preferences) {
-    home.addWallListener(new WallListener () {
-      public void wallChanged(WallEvent ev) {
-        planBoundsCacheValid = false;
-        // Revalidate and repaint
-        revalidate();
-      }
-    });
-    home.addSelectionListener(new SelectionListener () {
-      public void selectionChanged(SelectionEvent ev) {
-        repaint();
-      }
-    });
     home.addFurnitureListener(new FurnitureListener() {
-      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-        sortedHomeFurniture = null;
-        planBoundsCacheValid = false;
-        // Revalidate and repaint
-        revalidate();
-      }
-    });
+        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+          sortedHomeFurniture = null;
+          planBoundsCacheValid = false;
+          // Revalidate and repaint
+          revalidate();
+        }
+      });
+    home.addWallListener(new WallListener () {
+        public void wallChanged(WallEvent ev) {
+          wallsAreaCache = null;
+          planBoundsCacheValid = false;
+          // Revalidate and repaint
+          revalidate();
+        }
+      });
+    home.addDimensionLineListener(new DimensionLineListener () {
+        public void dimensionLineChanged(DimensionLineEvent ev) {
+          planBoundsCacheValid = false;
+          // Revalidate and repaint
+          revalidate();
+        }
+      });
+    home.addSelectionListener(new SelectionListener () {
+        public void selectionChanged(SelectionEvent ev) {
+          repaint();
+        }
+      });
     home.addCameraListener(new CameraListener() {
-      public void cameraChanged(CameraEvent ev) {
-        planBoundsCacheValid = false;
-        // Revalidate and repaint
-        revalidate();
-      }
-    });
+        public void cameraChanged(CameraEvent ev) {
+          planBoundsCacheValid = false;
+          // Revalidate and repaint
+          revalidate();
+        }
+      });
     home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
       new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -556,7 +582,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     if (!this.planBoundsCacheValid) {
       // Enlarge plan bounds to include home bounds and observer camera
-      Rectangle2D wallsAndFurnitureBounds = getWallsAndFurnitureBounds();
+      Rectangle2D wallsAndFurnitureBounds = getWallFurnitureDimensionLinesBounds();
       if (wallsAndFurnitureBounds != null) {
         this.planBoundsCache.add(wallsAndFurnitureBounds);
       }
@@ -569,33 +595,42 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   }
   
   /**
-   * Returns the walls and furniture bounds of the home 
+   * Returns the walls, furniture and dimension lines bounds of the home 
    * displayed by this component.
    */
-  private Rectangle2D getWallsAndFurnitureBounds() {
+  private Rectangle2D getWallFurnitureDimensionLinesBounds() {
     // Compute bounds that include walls and furniture
-    Rectangle2D wallsAndFurnitureBounds = null;
+    Rectangle2D wallsFurnitureDimensionLinesBounds = null;
     for (Wall wall : this.home.getWalls()) {
       for (float [] point : wall.getPoints()) {
-        if (wallsAndFurnitureBounds == null) {
-          wallsAndFurnitureBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        if (wallsFurnitureDimensionLinesBounds == null) {
+          wallsFurnitureDimensionLinesBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
         } else {
-          wallsAndFurnitureBounds.add(point [0], point [1]);
+          wallsFurnitureDimensionLinesBounds.add(point [0], point [1]);
         }
       }
     }
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         for (float [] point : piece.getPoints()) {
-          if (wallsAndFurnitureBounds == null) {
-            wallsAndFurnitureBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          if (wallsFurnitureDimensionLinesBounds == null) {
+            wallsFurnitureDimensionLinesBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
           } else {
-            wallsAndFurnitureBounds.add(point [0], point [1]);
+            wallsFurnitureDimensionLinesBounds.add(point [0], point [1]);
           }
         }
       }
     }
-    return wallsAndFurnitureBounds;
+    for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
+      for (float [] point : dimensionLine.getPoints()) {
+        if (wallsFurnitureDimensionLinesBounds == null) {
+          wallsFurnitureDimensionLinesBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        } else {
+          wallsFurnitureDimensionLinesBounds.add(point [0], point [1]);
+        }
+      }
+    }
+    return wallsFurnitureDimensionLinesBounds;
   }
 
   /**
@@ -630,23 +665,33 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    Rectangle2D wallsAndFurnitureBounds = getWallsAndFurnitureBounds();
-    if (wallsAndFurnitureBounds != null && pageIndex == 0) {
+    Rectangle2D printedObjectBounds = getWallFurnitureDimensionLinesBounds();
+    if (printedObjectBounds != null && pageIndex == 0) {
       Graphics2D g2D = (Graphics2D)g.create();
-      g2D.clip(new Rectangle2D.Double(pageFormat.getImageableX(), pageFormat.getImageableY(), 
-          pageFormat.getImageableWidth(), 
-          pageFormat.getImageableHeight()));
-      // Change coordinates system to plan system
-      g2D.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+      double imageableX = pageFormat.getImageableX();
+      double imageableY = pageFormat.getImageableY();
+      double imageableWidth = pageFormat.getImageableWidth();
+      double imageableHeight = pageFormat.getImageableHeight();
+      g2D.clip(new Rectangle2D.Double(imageableX, imageableY, imageableWidth, imageableHeight));
+      // Change coordinates system to paper imageable origin
+      g2D.translate(imageableX, imageableY);
       // Compute a scale that ensures the plan will fill the component
-      float scale = (float)Math.min((pageFormat.getImageableWidth() - 1) / (wallsAndFurnitureBounds.getWidth() + WALL_STROKE_WIDTH),
-          (pageFormat.getImageableHeight() - 1) / (wallsAndFurnitureBounds.getHeight() + WALL_STROKE_WIDTH));
+      float extraMargin = 0;
+      if (this.home.getWalls().size() > 0) {
+        extraMargin = WALL_STROKE_WIDTH / 2;
+      }
+      if (this.home.getDimensionLines().size() > 0) {
+        float dimensionLinesTextHeight = g2D.getFontMetrics().getHeight() * 1.5f;
+        extraMargin = Math.max(extraMargin, dimensionLinesTextHeight);
+      }
+      float scale = (float)Math.min(imageableWidth / (printedObjectBounds.getWidth() + 2 * extraMargin),
+          imageableHeight / (printedObjectBounds.getHeight() + 2 * extraMargin));
       g2D.scale(scale, scale);
-      g2D.translate(-wallsAndFurnitureBounds.getMinX() - WALL_STROKE_WIDTH / 2 / scale,
-          -wallsAndFurnitureBounds.getMinY() - WALL_STROKE_WIDTH / 2 / scale);
+      g2D.translate(-printedObjectBounds.getMinX() + extraMargin,
+          -printedObjectBounds.getMinY() + extraMargin);
       // Center plan in component
-      g2D.translate((pageFormat.getImageableWidth() / scale - wallsAndFurnitureBounds.getWidth()) / 2, 
-          (pageFormat.getImageableHeight() / scale - wallsAndFurnitureBounds.getHeight()) / 2);
+      g2D.translate((imageableWidth / scale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2, 
+          (imageableHeight / scale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2);
       setRenderingHints(g2D);
       // Print component contents
       paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
@@ -669,16 +714,25 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     } else {
       // Use a scale of 1
       float scale = 1f;
-      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * scale + WALL_STROKE_WIDTH), 
-              (int)Math.ceil(selectionBounds.getHeight() * scale + WALL_STROKE_WIDTH), BufferedImage.TYPE_INT_RGB);      
+      float extraMargin = 0;
+      List<Object> selectedItems = this.home.getSelectedItems();
+      if (Home.getWallsSubList(selectedItems).size() > 0) {
+        extraMargin = WALL_STROKE_WIDTH / 2;
+      }
+      if (Home.getDimensionLinesSubList(selectedItems).size() > 0) {
+        float dimensionLinesTextHeight = getFontMetrics(getFont()).getHeight() * scale;
+        extraMargin = Math.max(extraMargin, dimensionLinesTextHeight);
+      }
+      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * scale + 2 * extraMargin), 
+              (int)Math.ceil(selectionBounds.getHeight() * scale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
       Graphics2D g2D = (Graphics2D)image.getGraphics();
       // Paint background in white
       g2D.setColor(Color.WHITE);
       g2D.fillRect(0, 0, image.getWidth(), image.getHeight());
       // Change component coordinates system to plan system
       g2D.scale(scale, scale);
-      g2D.translate(-selectionBounds.getMinX() + WALL_STROKE_WIDTH / 2 / scale,
-          -selectionBounds.getMinY() + WALL_STROKE_WIDTH / 2 / scale);
+      g2D.translate(-selectionBounds.getMinX() + extraMargin / scale,
+          -selectionBounds.getMinY() + extraMargin / scale);
       setRenderingHints(g2D);
       // Paint component contents
       paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
@@ -692,7 +746,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void setRenderingHints(Graphics2D g2D) {
     g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);    
+    g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
   }
 
   /**
@@ -801,16 +857,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private void paintContent(Graphics2D g2D, float scale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     List<Object> selectedItems = this.home.getSelectedItems();
-    Color selectionColor = UIManager.getColor("textHighlight");
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
-      // On systems different from Mac OS X, take a darker color
-      // (Note : on Mac OS X, using SystemColor.textHighlight and 
-      // a color built from its RGB gives a different color !)
-      selectionColor = UIManager.getColor("textHighlight").darker();
-    } 
+    Color selectionColor = getSelectioncolor(); 
     Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
         selectionColor.getBlue(), 128);
     Stroke selectionOutlineStroke = new BasicStroke(6 / scale, 
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / scale, 
         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
     Stroke locationFeedbackStroke = new BasicStroke(
         1 / scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
@@ -820,11 +872,28 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         scale, backgroundColor, foregroundColor, paintMode);
     paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
         scale, backgroundColor, foregroundColor, paintMode);
+    paintDimensionLines(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
+        locationFeedbackStroke, scale, foregroundColor, paintMode);
     if (paintMode == PaintMode.PAINT) {
-      paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           scale, backgroundColor, foregroundColor);
+      paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
+      paintDimensionLineAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
       paintRectangleFeedback(g2D, selectionColor, scale);
+    }
+  }
+
+  /**
+   * Returns the color used to draw selection outlines. 
+   */
+  private Color getSelectioncolor() {
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      // On systems different from Mac OS X, take a darker color
+      // (Note : on Mac OS X, using SystemColor.textHighlight and 
+      // a color built from its RGB gives a different color !)
+      return UIManager.getColor("textHighlight").darker();
+    } else {
+      return UIManager.getColor("textHighlight");
     }
   }
 
@@ -837,8 +906,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
                           Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     float scaleInverse = 1 / scale;
     Collection<Wall> paintedWalls;
+    Shape wallsArea;
     if (paintMode != PaintMode.CLIPBOARD) {
-      paintedWalls = this.home.getWalls();
+      wallsArea = getWallsArea();
     } else {
       paintedWalls = new ArrayList<Wall>();
       for (Object item : selectedItems) {
@@ -847,8 +917,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           paintedWalls.add((Wall)item);
         }
       }
+      wallsArea = getWallsArea(paintedWalls);
     }
-    Shape wallsArea = getWallsArea(paintedWalls);
     // Fill walls area
     float wallPaintScale = paintMode == PaintMode.PRINT
         ? scale / 72 * 150 // Adjust scale to 150 dpi for print
@@ -936,27 +1006,37 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.translate(wall.getXStart(), wall.getYStart());
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(wallAngle + Math.PI);
-      g2D.draw(WALL_RESIZE_INDICATOR);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
       
       // Draw resize indicator at wall end point
       g2D.translate(wall.getXEnd(), wall.getYEnd());
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(wallAngle);
-      g2D.draw(WALL_RESIZE_INDICATOR);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
       g2D.setTransform(previousTransform);
     }
   }
   
   /**
-   * Returns an area matching the union of all wall shapes. 
+   * Returns an area matching the union of all home wall shapes. 
+   */
+  private Area getWallsArea() {
+    if (this.wallsAreaCache == null) {
+      this.wallsAreaCache = getWallsArea(this.home.getWalls());
+    }
+    return this.wallsAreaCache;
+  }
+  
+  /**
+   * Returns an area matching the union of all <code>walls</code> shapes. 
    */
   private Area getWallsArea(Collection<Wall> walls) {
-    Area area = new Area();
+    Area wallsArea = new Area();
     for (Wall wall : walls) {
-      area.add(new Area(getShape(wall.getPoints())));
-    }    
-    return area;
+      wallsArea.add(new Area(getShape(wall.getPoints())));
+    }
+    return wallsArea;
   }
   
   /**
@@ -1121,6 +1201,148 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   }
   
   /**
+   * Paints dimension lines. 
+   */
+  private void paintDimensionLines(Graphics2D g2D, List<Object> selectedItems,   
+                          Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                          Paint indicatorPaint, Stroke extensionLineStroke, float scale, 
+                          Color foregroundColor, PaintMode paintMode) {
+    Collection<DimensionLine> paintedDimensionLines;
+    if (paintMode != PaintMode.CLIPBOARD) {
+      paintedDimensionLines = this.home.getDimensionLines();
+    } else {
+      paintedDimensionLines = new ArrayList<DimensionLine>();
+      for (Object item : selectedItems) {
+        // In clipboard paint mode, paint dimension line only if it is selected
+        if (item instanceof DimensionLine) {
+          paintedDimensionLines.add((DimensionLine)item);
+        }
+      }
+    }
+
+    // Draw dimension lines
+    g2D.setPaint(foregroundColor);
+    BasicStroke dimensionLineStroke = new BasicStroke(1 / scale);
+    Format format = new DecimalFormat(this.preferences.getUnit() == UserPreferences.Unit.INCH 
+        ? "#.###" 
+        : "#");
+    // Change font size
+    Font previousFont = g2D.getFont();
+    g2D.setFont(previousFont.deriveFont(previousFont.getSize2D() * 1.5f));
+    FontMetrics fontMetrics = g2D.getFontMetrics();
+    for (DimensionLine dimensionLine : paintedDimensionLines) {
+      AffineTransform previousTransform = g2D.getTransform();
+      double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+          dimensionLine.getXEnd() - dimensionLine.getXStart());
+      float dimensionLineLength = (float)Point2D.distance(dimensionLine.getXStart(), dimensionLine.getYStart(), 
+          dimensionLine.getXEnd(), dimensionLine.getYEnd());
+      g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      g2D.rotate(angle);
+      g2D.translate(0, dimensionLine.getOffset());
+      
+      if (paintMode == PaintMode.PAINT
+          && selectedItems.contains(dimensionLine)) {
+        // Draw selection border
+        g2D.setPaint(selectionOutlinePaint);
+        g2D.setStroke(selectionOutlineStroke);
+        // Draw dimension line
+        g2D.draw(new Line2D.Float(0, 0, dimensionLineLength, 0));
+        // Draw dimension line ends
+        g2D.draw(DIMENSION_LINE_END);
+        g2D.translate(dimensionLineLength, 0);
+        g2D.draw(DIMENSION_LINE_END);
+        g2D.translate(-dimensionLineLength, 0);
+        // Draw extension lines
+        g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
+        g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
+        
+        g2D.setPaint(foregroundColor);
+      }
+      
+      g2D.setStroke(dimensionLineStroke);
+      // Draw dimension line
+      g2D.draw(new Line2D.Float(0, 0, dimensionLineLength, 0));
+      // Draw dimension line ends
+      g2D.draw(DIMENSION_LINE_END);
+      g2D.translate(dimensionLineLength, 0);
+      g2D.draw(DIMENSION_LINE_END);
+      g2D.translate(-dimensionLineLength, 0);
+      // Draw extension lines
+      g2D.setStroke(extensionLineStroke);
+      g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
+      g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
+      
+      // Draw dimension length in middle
+      String lengthText = format.format(this.preferences.getUnit() == UserPreferences.Unit.INCH
+          ? UserPreferences.Unit.centimeterToInch(dimensionLineLength) 
+          : dimensionLineLength);
+      Rectangle2D lengthTextBounds = fontMetrics.getStringBounds(lengthText, g2D);
+      
+      g2D.drawString(lengthText, 
+          (dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
+          dimensionLine.getOffset() <= 0 
+              ? -fontMetrics.getDescent() - 1 / scale
+              : fontMetrics.getAscent() + 1 / scale);
+      
+      g2D.setTransform(previousTransform);
+    }
+    g2D.setFont(previousFont);
+    
+    // Paint resize indicator of selected dimension line
+    if (selectedItems.size() == 1 
+        && selectedItems.get(0) instanceof DimensionLine
+        && paintMode == PaintMode.PAINT) {
+      paintDimensionLineResizeIndicator(g2D, (DimensionLine)selectedItems.get(0), indicatorPaint, scale);
+    }
+  }
+
+  /**
+   * Paints resize indicator on a given dimension line.
+   */
+  private void paintDimensionLineResizeIndicator(Graphics2D g2D, DimensionLine dimensionLine,
+                                                 Paint indicatorPaint, 
+                                                 float scale) {
+    if (this.resizeIndicatorVisible) {
+      g2D.setPaint(indicatorPaint);
+      g2D.setStroke(new BasicStroke(1.5f));
+
+      double wallAngle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+          dimensionLine.getXEnd() - dimensionLine.getXStart());
+      
+      AffineTransform previousTransform = g2D.getTransform();
+      float scaleInverse = 1 / scale;
+      // Draw resize indicator at the start of dimension line 
+      g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      g2D.rotate(wallAngle);
+      g2D.translate(0, dimensionLine.getOffset());
+      g2D.rotate(Math.PI);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+      
+      // Draw resize indicator at the end of dimension line 
+      g2D.translate(dimensionLine.getXEnd(), dimensionLine.getYEnd());
+      g2D.rotate(wallAngle);
+      g2D.translate(0, dimensionLine.getOffset());
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+
+      // Draw resize indicator at the middle of dimension line
+      g2D.translate((dimensionLine.getXStart() + dimensionLine.getXEnd()) / 2, 
+          (dimensionLine.getYStart() + dimensionLine.getYEnd()) / 2);
+      g2D.rotate(wallAngle);
+      g2D.translate(0, dimensionLine.getOffset());
+      g2D.rotate(dimensionLine.getOffset() <= 0 
+          ? Math.PI / 2 
+          : -Math.PI / 2);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.draw(WALL_AND_LINE_RESIZE_INDICATOR);
+      g2D.setTransform(previousTransform);
+    }
+  }
+  
+  /**
    * Paints wall location feedback.
    */
   private void paintWallAlignmentFeedback(Graphics2D g2D, 
@@ -1130,7 +1352,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     if (this.wallLocationFeeback != null) {
       float margin = 1f / scale;
       // Seach which wall start or end point is at wallLocationFeeback abcissa or ordinate
-      // ignoring the start and end point of wallFeedback
+      // ignoring the start and end point of wallAlignmentFeedback
       float x = (float)this.wallLocationFeeback.getX(); 
       float y = (float)this.wallLocationFeeback.getY();
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
@@ -1150,6 +1372,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
               deltaYToClosestWall = y - alignedWall.getYEnd();
             }                
           }
+          
           if (Math.abs(y - alignedWall.getYStart()) < margin
               && (this.wallAlignmentFeedback == null
                   || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallAlignmentFeedback))) {
@@ -1162,6 +1385,24 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXEnd())) {
               deltaXToClosestWall = x - alignedWall.getXEnd();
             }                
+          }
+
+          float [][] alignedWallPoints = alignedWall.getPoints();
+          for (int i = 0; i < alignedWallPoints.length; i++) {
+            if (Math.abs(x - alignedWallPoints [i][0]) < margin
+                && (this.wallAlignmentFeedback == null
+                    || !equalsWallPoint(alignedWallPoints [i][0], alignedWallPoints [i][1], this.wallAlignmentFeedback))) {
+              if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWallPoints [i][1])) {
+                deltaYToClosestWall = y - alignedWallPoints [i][1];
+              }
+            }
+            if (Math.abs(y - alignedWallPoints [i][1]) < margin
+                && (this.wallAlignmentFeedback == null
+                    || !equalsWallPoint(alignedWallPoints [i][0], alignedWallPoints [i][1], this.wallAlignmentFeedback))) {
+              if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWallPoints [i][0])) {
+                deltaXToClosestWall = x - alignedWallPoints [i][0];
+              }                
+            }
           }
         }
       }
@@ -1198,6 +1439,118 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private boolean equalsWallPoint(float x, float y, Wall wall) {
     return x == wall.getXStart() && y == wall.getYStart()
            || x == wall.getXEnd() && y == wall.getYEnd();
+  }
+
+  /**
+   * Paints dimension line location feedback.
+   */
+  private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
+                                                   Paint feedbackPaint, Stroke feedbackStroke,
+                                                   float scale) {
+    // Paint dimension line location feedback
+    if (this.dimensionLineLocationFeeback != null) {
+      float margin = 1f / scale;
+      // Seach which dimension line start or end point is at dimensionLineLocationFeeback abcissa or ordinate
+      // ignoring the start and end point of dimensionLineFeeback
+      float x = (float)this.dimensionLineLocationFeeback.getX(); 
+      float y = (float)this.dimensionLineLocationFeeback.getY();
+      float deltaXToClosestObject = Float.POSITIVE_INFINITY;
+      float deltaYToClosestObject = Float.POSITIVE_INFINITY;
+      for (DimensionLine alignedDimensionLine : this.home.getDimensionLines()) {
+        if (alignedDimensionLine != this.dimensionLineAlignmentFeedback) {
+          if (Math.abs(x - alignedDimensionLine.getXStart()) < margin
+              && (this.dimensionLineAlignmentFeedback == null
+                  || !equalsDimensionLinePoint(alignedDimensionLine.getXStart(), alignedDimensionLine.getYStart(), 
+                          this.dimensionLineAlignmentFeedback))) {
+            if (Math.abs(deltaYToClosestObject) > Math.abs(y - alignedDimensionLine.getYStart())) {
+              deltaYToClosestObject = y - alignedDimensionLine.getYStart();
+            }
+          } else if (Math.abs(x - alignedDimensionLine.getXEnd()) < margin
+                    && (this.dimensionLineAlignmentFeedback == null
+                        || !equalsDimensionLinePoint(alignedDimensionLine.getXEnd(), alignedDimensionLine.getYEnd(), 
+                                this.dimensionLineAlignmentFeedback))) {
+            if (Math.abs(deltaYToClosestObject) > Math.abs(y - alignedDimensionLine.getYEnd())) {
+              deltaYToClosestObject = y - alignedDimensionLine.getYEnd();
+            }                
+          }
+          if (Math.abs(y - alignedDimensionLine.getYStart()) < margin
+              && (this.dimensionLineAlignmentFeedback == null
+                  || !equalsDimensionLinePoint(alignedDimensionLine.getXStart(), alignedDimensionLine.getYStart(), 
+                          this.dimensionLineAlignmentFeedback))) {
+            if (Math.abs(deltaXToClosestObject) > Math.abs(x - alignedDimensionLine.getXStart())) {
+              deltaXToClosestObject = x - alignedDimensionLine.getXStart();
+            }
+          } else if (Math.abs(y - alignedDimensionLine.getYEnd()) < margin
+                    && (this.dimensionLineAlignmentFeedback == null
+                        || !equalsDimensionLinePoint(alignedDimensionLine.getXEnd(), alignedDimensionLine.getYEnd(), 
+                                this.dimensionLineAlignmentFeedback))) {
+            if (Math.abs(deltaXToClosestObject) > Math.abs(x - alignedDimensionLine.getXEnd())) {
+              deltaXToClosestObject = x - alignedDimensionLine.getXEnd();
+            }                
+          }
+        }
+      }
+      // Seach which wall points is at dimensionLineLocationFeeback abcissa or ordinate
+      for (Wall alignedWall : this.home.getWalls()) {
+        float [][] alignedWallPoints = alignedWall.getPoints();
+        for (int i = 0; i < alignedWallPoints.length; i++) {
+          if (Math.abs(x - alignedWallPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedWallPoints [i][1])) {
+            deltaYToClosestObject = y - alignedWallPoints [i][1];
+          }
+          if (Math.abs(y - alignedWallPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedWallPoints [i][0])) {
+            deltaXToClosestObject = x - alignedWallPoints [i][0];
+          }
+        }
+      }
+      // Seach piece of furniture points is at dimensionLineLocationFeeback abcissa or ordinate
+      for (HomePieceOfFurniture alignedFurniture : this.home.getFurniture()) {
+        float [][] alignedPiecePoints = alignedFurniture.getPoints();
+        for (int i = 0; i < alignedPiecePoints.length; i++) {
+          if (Math.abs(x - alignedPiecePoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedPiecePoints [i][1])) {
+            deltaYToClosestObject = y - alignedPiecePoints [i][1];
+          }
+          if (Math.abs(y - alignedPiecePoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedPiecePoints [i][0])) {
+            deltaXToClosestObject = x - alignedPiecePoints [i][0];
+          }
+        }
+      }
+      
+      // Draw alignment horizontal and vertical lines
+      g2D.setPaint(feedbackPaint);         
+      g2D.setStroke(feedbackStroke);
+      if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
+        if (deltaXToClosestObject > 0) {
+          g2D.draw(new Line2D.Float(x + 25 / scale, y, 
+              x - deltaXToClosestObject - 25 / scale, y));
+        } else {
+          g2D.draw(new Line2D.Float(x - 25 / scale, y, 
+              x - deltaXToClosestObject + 25 / scale, y));
+        }
+      }
+
+      if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
+        if (deltaYToClosestObject > 0) {
+          g2D.draw(new Line2D.Float(x, y + 25 / scale, 
+              x, y - deltaYToClosestObject - 25 / scale));
+        } else {
+          g2D.draw(new Line2D.Float(x, y - 25 / scale, 
+              x, y - deltaYToClosestObject + 25 / scale));
+        }
+      }
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if <code>dimensionLine</code> start or end point 
+   * equals the point (<code>x</code>, <code>y</code>).
+   */
+  private boolean equalsDimensionLinePoint(float x, float y, DimensionLine dimensionLine) {
+    return x == dimensionLine.getXStart() && y == dimensionLine.getYStart()
+           || x == dimensionLine.getXEnd() && y == dimensionLine.getYEnd();
   }
 
   /**
@@ -1388,6 +1741,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             } else {
               selectionBounds.add(point [0], point [1]);
             }
+          }
+        }
+      } else if (item instanceof DimensionLine) {
+        for (float [] point : ((DimensionLine)item).getPoints()) {
+          if (selectionBounds == null) {
+            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            selectionBounds.add(point [0], point [1]);
           }
         }
       } else if (item instanceof ObserverCamera) {
@@ -1628,6 +1989,24 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     repaint();
   }
 
+  /**
+   * Sets the location point for <code>dimensionLine</code> alignment feedback. 
+   */
+  public void setDimensionLineAlignmentFeeback(DimensionLine dimensionLine, float x, float y) {
+    this.dimensionLineAlignmentFeedback = dimensionLine;
+    this.dimensionLineLocationFeeback = new Point2D.Float(x, y);
+    repaint();
+  }
+  
+  /**
+   * Deletes the dimension line alignment feedback. 
+   */
+  public void deleteDimensionLineAlignmentFeeback() {
+    this.dimensionLineAlignmentFeedback = null;
+    this.dimensionLineLocationFeeback = null;
+    repaint();
+  }
+
   // Scrollable implementation
   public Dimension getPreferredScrollableViewportSize() {
     return getPreferredSize();
@@ -1679,7 +2058,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * A component displaying the plan horizontal or vertical ruler associated to this plan.
    */
   private class PlanRulerComponent extends JComponent {
-    private int orientation;    
+    private int   orientation;
+    private Point mouseLocation;
 
     /**
      * Creates a plan ruler.
@@ -1691,6 +2071,40 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       setOpaque(true);
       // Use same font as tooltips
       setFont(UIManager.getFont("ToolTip.font"));
+      addMouseListeners();
+    }
+
+    /**
+     * Adds a mouse listener to this ruler that stores current mouse location. 
+     */
+    private void addMouseListeners() {
+      MouseInputListener mouseInputListener = new MouseInputAdapter() {
+          @Override
+          public void mouseDragged(MouseEvent ev) {
+            mouseLocation = ev.getPoint();
+            repaint();
+          }
+  
+          @Override
+          public void mouseMoved(MouseEvent ev) {
+            mouseLocation = ev.getPoint();
+            repaint();
+          }
+
+          @Override
+          public void mouseEntered(MouseEvent ev) {
+            mouseLocation = ev.getPoint();
+            repaint();
+          }
+          
+          @Override
+          public void mouseExited(MouseEvent ev) {
+            mouseLocation = null;
+            repaint();
+          }
+        };
+      PlanComponent.this.addMouseListener(mouseInputListener);
+      PlanComponent.this.addMouseMotionListener(mouseInputListener);
     }
 
     /**
@@ -1851,6 +2265,20 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
             g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
           }
+        }
+      }
+
+      if (this.mouseLocation != null) {
+        g2D.setColor(getSelectioncolor());
+        g2D.setStroke(new BasicStroke(1 / getScale()));
+        if (this.orientation == SwingConstants.HORIZONTAL) {
+          // Draw mouse feeback vertical line
+          float x = convertXPixelToModel(this.mouseLocation.x);
+          g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
+        } else {
+          // Draw mouse feeback horizontal line
+          float y = convertYPixelToModel(this.mouseLocation.y);
+          g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
         }
       }
     }

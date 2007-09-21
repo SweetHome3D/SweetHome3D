@@ -42,7 +42,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1000;
+  public static final long CURRENT_VERSION = 1100;
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
@@ -54,6 +54,8 @@ public class Home implements Serializable {
   private transient List<SelectionListener>           selectionListeners;
   private Collection<Wall>                            walls;
   private transient List<WallListener>                wallListeners;
+  private Collection<DimensionLine>                   dimensionLines;
+  private transient List<DimensionLineListener>       dimensionLineListeners;
   private Camera                                      camera;
   private transient List<CameraListener>              cameraListeners;
   private float                                       wallHeight;
@@ -126,6 +128,7 @@ public class Home implements Serializable {
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.wallListeners = new ArrayList<WallListener>();
+    this.dimensionLineListeners = new ArrayList<DimensionLineListener>();
     this.cameraListeners = new ArrayList<CameraListener>();
     this.propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -151,6 +154,7 @@ public class Home implements Serializable {
     this.skyColor = (204 << 16) + (228 << 8) + 252;
     this.groundColor = 0xE0E0E0;
     this.lightColor = 0xF0F0F0;
+    this.dimensionLines = new ArrayList<DimensionLine>();
     
     this.version = CURRENT_VERSION;
   }
@@ -287,13 +291,13 @@ public class Home implements Serializable {
   }
 
   /**
-   * Updates the dimension of <code>piece</code>. 
+   * Updates the size of <code>piece</code>. 
    * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
    * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
    * notification.
    */
-  public void setPieceOfFurnitureDimension(HomePieceOfFurniture piece, 
-                                           float width, float depth, float height) {
+  public void setPieceOfFurnitureSize(HomePieceOfFurniture piece, 
+                                      float width, float depth, float height) {
     if (piece.getWidth() != width
         || piece.getDepth() != depth
         || piece.getHeight() != height) {
@@ -644,6 +648,123 @@ public class Home implements Serializable {
         toArray(new WallListener [this.wallListeners.size()]);
       for (WallListener listener : listeners) {
         listener.wallChanged(wallEvent);
+      }
+    }
+  }
+
+  /**
+   * Adds the dimension line <code>listener</code> in parameter to this home.
+   */
+  public void addDimensionLineListener(DimensionLineListener listener) {
+    this.dimensionLineListeners.add(listener);
+  }
+  
+  /**
+   * Removes the dimension line <code>listener</code> in parameter from this home.
+   */
+  public void removeDimensionLineListener(DimensionLineListener listener) {
+    this.dimensionLineListeners.remove(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the dimension lines of this home.
+   */
+  public Collection<DimensionLine> getDimensionLines() {
+    return Collections.unmodifiableCollection(this.dimensionLines);
+  }
+
+  /**
+   * Adds a given dimension line to the set of dimension lines of this home.
+   * Once <code>dimensionLine</code> is added, dimension line listeners added 
+   * to this home will receive a
+   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
+   * notification, with an {@link DimensionLineEvent#getType() event type} 
+   * equal to {@link DimensionLineEvent.Type#ADD ADD}. 
+   */
+  public void addDimensionLine(DimensionLine dimensionLine) {
+    // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
+    this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
+    this.dimensionLines.add(dimensionLine);
+    fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.ADD);
+  }
+
+  /**
+   * Removes a given dimension line from the set of dimension lines of this home.
+   * Once <code>dimensionLine</code> is removed, dimension line listeners added 
+   * to this home will receive a
+   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
+   * notification, with an {@link DimensionLineEvent#getType() event type} 
+   * equal to {@link DimensionLineEvent.Type#DELETE DELETE}.
+   */
+  public void deleteDimensionLine(DimensionLine dimensionLine) {
+    //  Ensure selectedItems don't keep a reference to dimension line
+    deselectItem(dimensionLine);
+    // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
+    this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
+    this.dimensionLines.remove(dimensionLine);
+    fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.DELETE);
+  }
+
+  /**
+   * Moves <code>dimensionLine</code> start point to (<code>x</code>, <code>y</code>).
+   * Once <code>dimensionLine</code> is updated, dimension line listeners added 
+   * to this home will receive a
+   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
+   * notification, with an {@link DimensionLineEvent#getType() event type} 
+   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
+   */
+  public void moveDimensionLineStartPointTo(DimensionLine dimensionLine, float x, float y) {
+    if (x != dimensionLine.getXStart() || y != dimensionLine.getYStart()) {
+      dimensionLine.setXStart(x);
+      dimensionLine.setYStart(y);
+      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Moves <code>dimensionLine</code> end point to (<code>x</code>, <code>y</code>) pixels.
+   * Once the <code>dimensionLine</code> is updated, dimension line listeners added 
+   * to this home will receive a
+   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
+   * notification, with an {@link DimensionLineEvent#getType() event type} 
+   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
+   */
+  public void moveDimensionLineEndPointTo(DimensionLine dimensionLine, float x, float y) {
+    if (x != dimensionLine.getXEnd() || y != dimensionLine.getYEnd()) {
+      dimensionLine.setXEnd(x);
+      dimensionLine.setYEnd(y);
+      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Sets the <code>offset</code> of a given dimension line.
+   * Once the <code>dimensionLine</code> is updated, dimension line listeners added 
+   * to this home will receive a
+   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
+   * notification, with an {@link DimensionLineEvent#getType() event type} 
+   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setDimensionLineOffset(DimensionLine dimensionLine, float offset) {
+    if (offset != dimensionLine.getOffset()) {
+      dimensionLine.setOffset(offset);
+      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
+    }    
+  }
+
+  /**
+   * Notifies all dimension line listeners added to this home an event of 
+   * a given type.
+   */
+  private void fireDimensionLineEvent(DimensionLine dimensionLine, DimensionLineEvent.Type eventType) {
+    if (!this.dimensionLineListeners.isEmpty()) {
+      DimensionLineEvent dimensionLineEvent = new DimensionLineEvent(this, dimensionLine, eventType);
+      // Work on a copy of dimensionLineListeners to ensure a listener 
+      // can modify safely listeners list
+      DimensionLineListener [] listeners = this.dimensionLineListeners.
+        toArray(new DimensionLineListener [this.dimensionLineListeners.size()]);
+      for (DimensionLineListener listener : listeners) {
+        listener.dimensionLineChanged(dimensionLineEvent);
       }
     }
   }
@@ -1024,6 +1145,13 @@ public class Home implements Serializable {
     return getSubList(items, Wall.class);
   }
 
+  /**
+   * Returns a sub list of <code>items</code> that contains only dimension lines.
+   */
+  public static List<DimensionLine> getDimensionLinesSubList(List<? extends Object> items) {
+    return getSubList(items, DimensionLine.class);
+  }
+  
   @SuppressWarnings("unchecked")
   private static <T> List<T> getSubList(List<? extends Object> items, 
                                         Class<T> subListClass) {

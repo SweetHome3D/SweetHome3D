@@ -138,7 +138,7 @@ public class HomeFurnitureController {
           y != null ? y.floatValue() : piece.getY());
       this.home.setPieceOfFurnitureAngle(piece, 
           angle != null ? angle.floatValue() : piece.getAngle());
-      this.home.setPieceOfFurnitureDimension(piece, 
+      this.home.setPieceOfFurnitureSize(piece, 
           width != null ? width.floatValue() : piece.getWidth(), 
           depth != null ? depth.floatValue() : piece.getDepth(), 
           height != null ? height.floatValue() : piece.getHeight());
@@ -163,7 +163,7 @@ public class HomeFurnitureController {
       this.home.setPieceOfFurnitureLocation(piece, modifiedPiece.getX(), modifiedPiece.getY());
       this.home.setPieceOfFurnitureElevation(piece, modifiedPiece.getElevation());
       this.home.setPieceOfFurnitureAngle(piece, modifiedPiece.getAngle());
-      this.home.setPieceOfFurnitureDimension(piece, 
+      this.home.setPieceOfFurnitureSize(piece, 
           modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
       this.home.setPieceOfFurnitureColor(piece, modifiedPiece.getColor());
       this.home.setPieceOfFurnitureVisible(piece, modifiedPiece.isVisible());

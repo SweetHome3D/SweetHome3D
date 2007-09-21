@@ -213,6 +213,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, true);
     homeView.setEnabled(HomePane.ActionType.SELECT, true);
     homeView.setEnabled(HomePane.ActionType.CREATE_WALLS, true);
+    homeView.setEnabled(HomePane.ActionType.CREATE_DIMENSION_LINES, true);
     homeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, true);
     ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
         this.home.getBackgroundImage() != null);
@@ -405,8 +406,8 @@ public class HomeController  {
    * Enables action bound to selection. 
    */
   private void enableActionsOnSelection() {
-    boolean wallCreationMode =  
-        getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+    boolean selectionMode =  
+        getPlanController().getMode() == PlanController.Mode.SELECTION;
     
     // Search if catalog selection contains at least one piece
     List<CatalogPieceOfFurniture> catalogSelectedItems = 
@@ -415,24 +416,26 @@ public class HomeController  {
     boolean catalogSelectionContainsOneModifiablePiece = catalogSelectedItems.size() == 1
         && catalogSelectedItems.get(0).isModifiable();
     
-    // Search if home selection contains at least one piece or one wall
+    // Search if home selection contains at least one piece, one wall or one dimension line
     List<Object> selectedItems = this.home.getSelectedItems();
     boolean homeSelectionContainsFurniture = false;
     boolean homeSelectionContainsOneCopiableObjectOrMore = false;
     boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsWalls = false;
-    if (!wallCreationMode) {
+    if (selectionMode) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
       homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
           Home.getFurnitureSubList(selectedItems).size() >= 2;
       homeSelectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
-      homeSelectionContainsOneCopiableObjectOrMore = homeSelectionContainsFurniture || homeSelectionContainsWalls; 
+      boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
+      homeSelectionContainsOneCopiableObjectOrMore = 
+          homeSelectionContainsFurniture || homeSelectionContainsWalls || homeSelectionContainsDimensionLines; 
     }
 
     HomePane view = ((HomePane)getView());
     if (this.focusedView == getCatalogController().getView()) {
       view.setEnabled(HomePane.ActionType.COPY,
-          !wallCreationMode && catalogSelectionContainsFurniture);
+          selectionMode && catalogSelectionContainsFurniture);
       view.setEnabled(HomePane.ActionType.CUT, false);
       view.setEnabled(HomePane.ActionType.DELETE, false);
       for (CatalogPieceOfFurniture piece : catalogSelectedItems) {
@@ -495,10 +498,10 @@ public class HomeController  {
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()
         || this.focusedView == getHomeController3D().getView()) {
-      boolean wallCreationMode =  
-          getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+      boolean selectionMode =  
+          getPlanController().getMode() == PlanController.Mode.SELECTION;
       view.setEnabled(HomePane.ActionType.PASTE,
-          !wallCreationMode && !view.isClipboardEmpty());
+          selectionMode && !view.isClipboardEmpty());
     } else {
       view.setEnabled(HomePane.ActionType.PASTE, false);
     }
@@ -509,18 +512,19 @@ public class HomeController  {
    */
   private void enableSelectAllAction() {
     HomePane view = ((HomePane)getView());
-    boolean wallCreationMode =  
-      getPlanController().getMode() == PlanController.Mode.WALL_CREATION;
+    boolean selectionMode =  
+      getPlanController().getMode() == PlanController.Mode.SELECTION;
     if (this.focusedView == getFurnitureController().getView()) {
       view.setEnabled(HomePane.ActionType.SELECT_ALL,
-          !wallCreationMode 
+          selectionMode 
           && this.home.getFurniture().size() > 0);
     } else if (this.focusedView == getPlanController().getView()
                || this.focusedView == getHomeController3D().getView()) {
       view.setEnabled(HomePane.ActionType.SELECT_ALL,
-          !wallCreationMode 
+          selectionMode
           && (this.home.getFurniture().size() > 0 
-              || this.home.getWalls().size() > 0));
+              || this.home.getWalls().size() > 0 
+              || this.home.getDimensionLines().size() > 0));
     } else {
       view.setEnabled(HomePane.ActionType.SELECT_ALL, false);
     }
@@ -545,7 +549,7 @@ public class HomeController  {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomePane view = ((HomePane)getView());
           view.setEnabled(HomePane.ActionType.UNDO, 
-              getPlanController().getMode() != PlanController.Mode.WALL_CREATION);
+              getPlanController().getMode() == PlanController.Mode.SELECTION);
           view.setEnabled(HomePane.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
           saveUndoLevel++;
@@ -734,6 +738,7 @@ public class HomeController  {
       this.undoSupport.beginUpdate();
       getFurnitureController().addFurniture(Home.getFurnitureSubList(items));
       getPlanController().addWalls(Home.getWallsSubList(items));
+      getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
       getPlanController().moveItems(items, dx, dy);
       this.home.setSelectedItems(items);
   

@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -41,6 +42,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CameraEvent;
 import com.eteks.sweethome3d.model.CameraListener;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -56,7 +58,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController {
   public enum Property {MODE}
   
-  public enum Mode {WALL_CREATION, SELECTION}
+  public enum Mode {WALL_CREATION, SELECTION, DIMENSION_LINES_CREATION}
   
   private JComponent            planView;
   private Home                  home;
@@ -80,6 +82,10 @@ public class PlanController {
   private ControllerState       pieceOfFurnitureResizeState;
   private ControllerState       cameraYawRotationState;
   private ControllerState       cameraPitchRotationState;
+  private ControllerState       dimensionLineCreationState;
+  private ControllerState       newDimensionLineState;
+  private ControllerState       dimensionLineResizeState;
+  private ControllerState       dimensionLineOffsetState;
   // Mouse cursor position at last mouse press
   private float                 xLastMousePress;
   private float                 yLastMousePress;
@@ -115,6 +121,10 @@ public class PlanController {
     this.pieceOfFurnitureResizeState = new PieceOfFurnitureResizeState();
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
+    this.dimensionLineCreationState = new DimensionLineCreationState();
+    this.newDimensionLineState = new NewDimensionLineState();
+    this.dimensionLineResizeState = new DimensionLineResizeState();
+    this.dimensionLineOffsetState = new DimensionLineOffsetState();
     // Set defaut state to selectionState
     setState(this.selectionState);
     
@@ -207,6 +217,8 @@ public class PlanController {
     // Store the last coodinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
+    this.xLastMouseMove = x;
+    this.yLastMouseMove = y;
     this.shiftDownLastMousePress = shiftDown; 
     this.state.pressMouse(x, y, clickCount, shiftDown);
   }
@@ -313,6 +325,34 @@ public class PlanController {
   }
 
   /**
+   * Returns the dimension line creation state.
+   */
+  public ControllerState getDimensionLineCreationState() {
+    return this.dimensionLineCreationState;
+  }
+
+  /**
+   * Returns the new dimension line state.
+   */
+  public ControllerState getNewDimensionLineState() {
+    return this.newDimensionLineState;
+  }
+
+  /**
+   * Returns the dimension line resize state.
+   */
+  private ControllerState getDimensionLineResizeState() {
+    return this.dimensionLineResizeState;
+  }
+
+  /**
+   * Returns the dimension line offset state.
+   */
+  private ControllerState getDimensionLineOffsetState() {
+    return this.dimensionLineOffsetState;
+  }
+  
+  /**
    * Returns the abscissa of mouse position at last mouse press.
    */
   protected float getXLastMousePress() {
@@ -384,6 +424,7 @@ public class PlanController {
    */
   public void selectAll() {
     List<Object> all = new ArrayList<Object>(this.home.getWalls());
+    all.addAll(this.home.getDimensionLines());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         all.add(piece);
@@ -534,6 +575,57 @@ public class PlanController {
   }
   
   /**
+   * Returns the selected dimension line with an end extension line
+   * at (<code>x</code>, <code>y</code>).
+   */
+  private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof DimensionLine) {
+      DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
+        return dimensionLine;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected dimension line with an end extension line
+   * at (<code>x</code>, <code>y</code>).
+   */
+  private DimensionLine getResizedDimensionLineEndAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof DimensionLine) {
+      DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
+        return dimensionLine;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected dimension line with a point
+   * at (<code>x</code>, <code>y</code>) at its middle.
+   */
+  private DimensionLine getOffsetDimensionLineAt(float x, float y) {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof DimensionLine) {
+      DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
+      float margin = 3 / ((PlanComponent)getView()).getScale();
+      if (dimensionLine.isMiddlePointAt(x, y, margin)) {
+        return dimensionLine;
+      }
+    } 
+    return null;
+  }
+  
+  /**
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
   private Object getItemAt(float x, float y) {
@@ -544,6 +636,13 @@ public class PlanController {
         && camera.containsPoint(x, y, margin)) {
       return camera;
     }
+    
+    for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
+      if (dimensionLine.containsPoint(x, y, margin)) {
+        return dimensionLine;
+      }
+    }    
+    
     List<HomePieceOfFurniture> furniture = this.home.getFurniture();
     // Search in home furniture in reverse order to give pripority to last drawn piece
     // at highest elevation in case it covers an other piece
@@ -579,6 +678,11 @@ public class PlanController {
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
+    }
+    for (DimensionLine dimensionLine : home.getDimensionLines()) {
+      if (dimensionLine.intersectsRectangle(x0, y0, x1, y1)) {
+        items.add(dimensionLine);
+      }
     }
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible() && piece.intersectsRectangle(x0, y0, x1, y1)) {
@@ -723,6 +827,8 @@ public class PlanController {
           this.home.deleteWall((Wall)item);
         } else if (item instanceof HomePieceOfFurniture) {
           this.home.deletePieceOfFurniture((HomePieceOfFurniture)item);
+        } else if (item instanceof DimensionLine) {
+          this.home.deleteDimensionLine((DimensionLine)item);
         }
       }
     }          
@@ -763,7 +869,13 @@ public class PlanController {
         Camera camera = (Camera)item;
         this.home.setCameraLocation(camera, camera.getX() + dx, 
             camera.getY() + dy, camera.getZ());
-      }
+      } else if (item instanceof DimensionLine) {
+        DimensionLine dimensionLine = (DimensionLine)item;
+        this.home.moveDimensionLineStartPointTo(dimensionLine, 
+            dimensionLine.getXStart() + dx, dimensionLine.getYStart() + dy);
+        this.home.moveDimensionLineEndPointTo(dimensionLine, 
+            dimensionLine.getXEnd() + dx, dimensionLine.getYEnd() + dy);
+      } 
     }
   }
   
@@ -819,6 +931,19 @@ public class PlanController {
       moveWallStartPoint(wall, x, y, true);
     } else {
       moveWallEndPoint(wall, x, y, true);
+    }    
+  }
+  
+  /**
+   * Moves <code>dimensionLine</code> start point to (<code>x</code>, <code>y</code>)
+   * if <code>startPoint</code> is true or <code>dimensionLine</code> end point 
+   * to (<code>x</code>, <code>y</code>) if <code>startPoint</code> is false.
+   */
+  private void moveDimensionLinePoint(DimensionLine dimensionLine, float x, float y, boolean startPoint) {
+    if (startPoint) {
+      this.home.moveDimensionLineStartPointTo(dimensionLine, x, y);
+    } else {
+      this.home.moveDimensionLineEndPointTo(dimensionLine, x, y);
     }    
   }
   
@@ -903,7 +1028,7 @@ public class PlanController {
 
   /**
    * Adds the walls in <code>joinedNewWalls</code> to plan component, joins
-   * them to other walls if necessary and select the added walls.
+   * them to other walls if necessary.
    */
   private void doAddWalls(JoinedWall [] joinedNewWalls) {
     // First add all walls to home
@@ -932,6 +1057,67 @@ public class PlanController {
         }
       }
     }      
+  }
+  
+  /**
+   * Add <code>newDimensionLines</code> to home and post an undoable new dimension line operation.
+   */
+  public void addDimensionLines(List<DimensionLine> newDimensionLines) {
+    for (DimensionLine dimensionLine : newDimensionLines) {
+      this.home.addDimensionLine(dimensionLine);
+    }
+    postAddDimensionLines(newDimensionLines, this.home.getSelectedItems());
+  }
+  
+  /**
+   * Posts an undoable new dimension line operation, about <code>newDimensionLines</code>.
+   */
+  private void postAddDimensionLines(List<DimensionLine> newDimensionLines, List<Object> oldSelection) {
+    if (newDimensionLines.size() > 0) {
+      final DimensionLine [] dimensionLines = newDimensionLines.toArray(
+          new DimensionLine [newDimensionLines.size()]);
+      final Object [] oldSelectedItems = 
+          oldSelection.toArray(new Object [oldSelection.size()]);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          doDeleteDimensionLines(dimensionLines);
+          selectAndShowItems(Arrays.asList(oldSelectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          doAddDimensionLines(dimensionLines);       
+          selectAndShowItems(Arrays.asList(dimensionLines));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoAddDimensionLinesName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Adds the dimension lines in <code>dimensionLines</code> to plan component.
+   */
+  private void doAddDimensionLines(DimensionLine [] dimensionLines) {
+    for (DimensionLine dimensionLine : dimensionLines) {
+      this.home.addDimensionLine(dimensionLine);
+    }
+  }
+  
+  /**
+   * Deletes dimension lines in <code>dimensionLines</code>.
+   */
+  private void doDeleteDimensionLines(DimensionLine [] dimensionLines) {
+    for (DimensionLine dimensionLine : dimensionLines) {
+      this.home.deleteDimensionLine(dimensionLine);
+    }
   }
 
   /**
@@ -968,12 +1154,23 @@ public class PlanController {
       furnitureIndex [i++] = index;
     }
     
+    // Manage dimension lines
+    List<DimensionLine> deletedDimensionLines = new ArrayList<DimensionLine>();
+    for (Object item : deletedItems) {
+      if (item instanceof DimensionLine) {
+        deletedDimensionLines.add((DimensionLine)item);
+      }
+    }
+    final DimensionLine [] dimensionLines = deletedDimensionLines.toArray(
+        new DimensionLine [deletedDimensionLines.size()]);
+    
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
         doAddWalls(joinedDeletedWalls);       
         doAddFurniture(furniture, furnitureIndex);
+        doAddDimensionLines(dimensionLines);
         selectAndShowItems(deletedItems);
       }
       
@@ -983,6 +1180,7 @@ public class PlanController {
         selectItems(deletedItems);
         doDeleteWalls(joinedDeletedWalls);       
         doDeleteFurniture(furniture);
+        doDeleteDimensionLines(dimensionLines);
       }      
 
       @Override
@@ -994,7 +1192,7 @@ public class PlanController {
   }
 
   /**
-   * Deletes walls referenced in <code>joinedDeletedWalls</code> and unselect all.
+   * Deletes walls referenced in <code>joinedDeletedWalls</code>.
    */
   private void doDeleteWalls(JoinedWall [] joinedDeletedWalls) {
     for (JoinedWall joinedWall : joinedDeletedWalls) {
@@ -1175,14 +1373,14 @@ public class PlanController {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          home.setPieceOfFurnitureDimension(piece, piece.getWidth(), piece.getDepth(), oldHeight);
+          home.setPieceOfFurnitureSize(piece, piece.getWidth(), piece.getDepth(), oldHeight);
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          home.setPieceOfFurnitureDimension(piece, piece.getWidth(), piece.getDepth(), newHeight);
+          home.setPieceOfFurnitureSize(piece, piece.getWidth(), piece.getDepth(), newHeight);
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
   
@@ -1212,7 +1410,7 @@ public class PlanController {
         public void undo() throws CannotUndoException {
           super.undo();
           home.setPieceOfFurnitureLocation(piece, oldX, oldY);
-          home.setPieceOfFurnitureDimension(piece, oldWidth, oldDepth, piece.getHeight());
+          home.setPieceOfFurnitureSize(piece, oldWidth, oldDepth, piece.getHeight());
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
         
@@ -1220,13 +1418,82 @@ public class PlanController {
         public void redo() throws CannotRedoException {
           super.redo();
           home.setPieceOfFurnitureLocation(piece, newX, newY);
-          home.setPieceOfFurnitureDimension(piece, newWidth, newDepth, piece.getHeight());
+          home.setPieceOfFurnitureSize(piece, newWidth, newDepth, piece.getHeight());
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
   
         @Override
         public String getPresentationName() {
           return resource.getString("undoPieceOfFurnitureWidthAndDepthResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Posts an undoable operation about <code>dimensionLine</code> resizing.
+   */
+  private void postDimensionLineResize(final DimensionLine dimensionLine, final float oldX, final float oldY, 
+                                       final boolean startPoint) {
+    final float newX;
+    final float newY;
+    if (startPoint) {
+      newX = dimensionLine.getXStart();
+      newY = dimensionLine.getYStart();
+    } else {
+      newX = dimensionLine.getXEnd();
+      newY = dimensionLine.getYEnd();
+    }
+    if (newX != oldX || newY != oldY) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          moveDimensionLinePoint(dimensionLine, oldX, oldY, startPoint);
+          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          moveDimensionLinePoint(dimensionLine, newX, newY, startPoint);
+          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoDimensionLineResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+  
+  /**
+   * Posts an undoable operation about <code>dimensionLine</code> offset change.
+   */
+  public void postDimensionLineOffset(final DimensionLine dimensionLine, final float oldOffset) {
+    final float newOffset = dimensionLine.getOffset();
+    if (newOffset != oldOffset) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setDimensionLineOffset(dimensionLine, oldOffset);
+          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setDimensionLineOffset(dimensionLine, newOffset);
+          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoDimensionLineOffsetName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -1322,8 +1589,8 @@ public class PlanController {
    */
   private static class PointWithMagnetism {
     private static final int STEP_COUNT = 24; // 15 degres step 
-    private float xEnd;
-    private float yEnd;
+    private float xMagnetizedPoint;
+    private float yMagnetizedPoint;
     
     /**
      * Create a point that applies magnetism to point (<code>x</code>,
@@ -1333,8 +1600,8 @@ public class PlanController {
      * radius being a multiple of 15 degres.
      */
     public PointWithMagnetism(float xStart, float yStart, float x, float y) {
-      this.xEnd = x;
-      this.yEnd = y;
+      this.xMagnetizedPoint = x;
+      this.yMagnetizedPoint = y;
       if (xStart != x && yStart != y) {
         double angleStep = 2 * Math.PI / STEP_COUNT; 
         // Caution : pixel coordinate space is indirect !
@@ -1376,9 +1643,9 @@ public class PlanController {
         
         // Apply magnetism to the smallest distance
         if (Math.abs(xEnd2 - xEnd1) < Math.abs(yEnd1 - yEnd2)) {
-          this.xEnd = xStart + (float)((yStart - y) / tanAngle2);            
+          this.xMagnetizedPoint = xStart + (float)((yStart - y) / tanAngle2);            
         } else {
-          this.yEnd = yStart - (float)((x - xStart) * tanAngle1);
+          this.yMagnetizedPoint = yStart - (float)((x - xStart) * tanAngle1);
         }
       }
     }
@@ -1386,15 +1653,15 @@ public class PlanController {
     /**
      * Returns the abscissa of end point computed with magnetism.
      */
-    float getXEnd() {
-      return this.xEnd;
+    float getXMagnetizedPoint() {
+      return this.xMagnetizedPoint;
     }
 
     /**
      * Returns the ordinate of end point computed with magnetism.
      */
-    float getYEnd() {
-      return this.yEnd;
+    float getYMagnetizedPoint() {
+      return this.yMagnetizedPoint;
     }
   }
  
@@ -1439,8 +1706,8 @@ public class PlanController {
   
   /**
    * Default selection state. This state manages transition to
-   * <code>WALL_CREATION</code> mode, the deleting of selected walls, 
-   * and the move of selected walls with arrow keys.
+   * <code>WALL_CREATION</code> and <code>DIMENSION_LINES_CREATION</code> mode, 
+   * the deleting of selected objects, and the move of selected objects with arrow keys.
    */
   private class SelectionState extends ControllerState {
     @Override
@@ -1456,9 +1723,14 @@ public class PlanController {
     
     @Override
     public void setMode(Mode mode) {
-      if (mode == Mode.WALL_CREATION) {
-        setState(getWallCreationState());
-      }
+      switch (mode) {
+        case WALL_CREATION :
+          setState(getWallCreationState());
+          break;
+        case DIMENSION_LINES_CREATION :
+          setState(getDimensionLineCreationState());
+          break;
+      } 
     }
 
     @Override
@@ -1482,11 +1754,14 @@ public class PlanController {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
-      } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
+      } else if (getResizedDimensionLineStartAt(x, y) != null
+          || getResizedDimensionLineEndAt(x, y) != null
+          || getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
           || getResizedWallEndAt(x, y) != null) {
         ((PlanComponent)getView()).setResizeCursor();
-      } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+      } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null
+          || getOffsetDimensionLineAt(x, y) != null) {
         ((PlanComponent)getView()).setHeightCursor();
       } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
         ((PlanComponent)getView()).setRotationCursor();
@@ -1508,6 +1783,11 @@ public class PlanController {
             setState(getCameraYawRotationState());
           } else if (getPitchRotatedCameraAt(x, y) != null) {
             setState(getCameraPitchRotationState());
+          } else if (getResizedDimensionLineStartAt(x, y) != null
+              || getResizedDimensionLineEndAt(x, y) != null) {
+            setState(getDimensionLineResizeState());
+          } else if (getOffsetDimensionLineAt(x, y) != null) {
+            setState(getDimensionLineOffsetState());
           } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null) {
             setState(getPieceOfFurnitureResizeState());
           } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
@@ -1651,9 +1931,10 @@ public class PlanController {
       updateSelectedItems(getXLastMousePress(), getYLastMousePress(), 
           x, y, this.selectedItemsMousePressed);
       // Update rectangle feedback
-      ((PlanComponent)getView()).setRectangleFeedback(
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setRectangleFeedback(
           getXLastMousePress(), getYLastMousePress(), x, y);
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      planView.makePointVisible(x, y);
     }
 
     @Override
@@ -1737,7 +2018,8 @@ public class PlanController {
 
   /**
    * Wall creation state. This state manages transition to
-   * <code>SELECTION</code> mode, and initial wall creation.
+   * <code>SELECTION</code> and <code>DIMENSION_LINES_CREATION</code> modes, 
+   * and initial wall creation.
    */
   private class WallCreationState extends ControllerState {
     @Override
@@ -1752,9 +2034,14 @@ public class PlanController {
 
     @Override
     public void setMode(Mode mode) {
-      if (mode == Mode.SELECTION) {
-        // Change state to SelectionState
-        setState(getSelectionState());
+      switch (mode) {
+        case SELECTION :
+          // Change state to SelectionState
+          setState(getSelectionState());
+          break;
+        case DIMENSION_LINES_CREATION :
+          setState(getDimensionLineCreationState());
+          break;
       } 
     }
 
@@ -1803,8 +2090,6 @@ public class PlanController {
     private float        yStart;
     private float        xLastEnd;
     private float        yLastEnd;
-    private float        xLastMouseMove;
-    private float        yLastMouseMove;
     private Wall         wallStartAtStart;
     private Wall         wallEndAtStart;
     private Wall         newWall;
@@ -1822,11 +2107,18 @@ public class PlanController {
     
     @Override
     public void setMode(Mode mode) {
-      if (mode != Mode.WALL_CREATION) {
-        // Escape current creation and change state to SelectionState
-        escape();
-        setState(getSelectionState());
-      }
+      switch (mode) {
+        case SELECTION :
+          // Escape current creation and change state to SelectionState
+          escape();
+          setState(getSelectionState());
+          break;
+        case DIMENSION_LINES_CREATION :
+          // Escape current creation and change state to DimensionLineCreationState
+          escape();
+          setState(getDimensionLineCreationState());
+          break;
+      } 
     }
 
     @Override
@@ -1869,8 +2161,8 @@ public class PlanController {
       if (this.magnetismEnabled) {
         PointWithMagnetism point = new PointWithMagnetism(
             this.xStart, this.yStart, x, y);
-        xEnd = point.getXEnd();
-        yEnd = point.getYEnd();
+        xEnd = point.getXMagnetizedPoint();
+        yEnd = point.getYMagnetizedPoint();
       } else {
         xEnd = x;
         yEnd = y;
@@ -1886,9 +2178,9 @@ public class PlanController {
         // Otherwise update its end point
         home.moveWallEndPointTo(this.newWall, xEnd, yEnd); 
       }         
-      ((PlanComponent)getView()).setToolTipFeedback(
-          getToolTipFeedbackText(this.newWall), x, y);
-      ((PlanComponent)getView()).setWallAlignmentFeeback(this.newWall, xEnd, yEnd);
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
+      planView.setWallAlignmentFeeback(this.newWall, xEnd, yEnd);
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
       // free, it will the wall at end of the new wall.
@@ -1908,12 +2200,10 @@ public class PlanController {
       }
 
       // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      planView.makePointVisible(x, y);
       // Update move coordinates
       this.xLastEnd = xEnd;
       this.yLastEnd = yEnd;
-      this.xLastMouseMove = x;
-      this.yLastMouseMove = y;
     }
 
     @Override
@@ -1954,7 +2244,7 @@ public class PlanController {
       // If the new wall already exists, 
       // compute again its end as if mouse moved
       if (this.newWall != null) {
-        moveMouse(this.xLastMouseMove, this.yLastMouseMove);
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
       }
     }
 
@@ -1998,6 +2288,7 @@ public class PlanController {
     private float        oldY;
     private float        deltaXToResizePoint;
     private float        deltaYToResizePoint;
+    private boolean      magnetismEnabled;
     
     @Override
     public Mode getMode() {
@@ -2018,6 +2309,7 @@ public class PlanController {
       }
       this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
       this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
+      toggleMagnetism(wasShiftDownLastMousePress());
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), 
@@ -2029,9 +2321,20 @@ public class PlanController {
     public void moveMouse(float x, float y) {
       float newX = x - this.deltaXToResizePoint;
       float newY = y - this.deltaYToResizePoint;
+      if (this.magnetismEnabled) {
+        PointWithMagnetism point = new PointWithMagnetism(
+            this.startPoint 
+                ? this.selectedWall.getXEnd()
+                : this.selectedWall.getXStart(), 
+            this.startPoint 
+                ? this.selectedWall.getYEnd()
+                : this.selectedWall.getYStart(), newX, newY);
+        newX = point.getXMagnetizedPoint();
+        newY = point.getYMagnetizedPoint();
+      } 
       moveWallPoint(this.selectedWall, newX, newY, this.startPoint);
 
-      PlanComponent planView = ((PlanComponent)getView());
+      PlanComponent planView = (PlanComponent)getView();
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), x, y);
       planView.setWallAlignmentFeeback(this.selectedWall, newX, newY);
       // Ensure point at (x,y) is visible
@@ -2045,6 +2348,14 @@ public class PlanController {
     }
 
     @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
     public void escape() {
       moveWallPoint(this.selectedWall, this.oldX, this.oldY, this.startPoint);
       setState(getSelectionState());
@@ -2052,7 +2363,7 @@ public class PlanController {
 
     @Override
     public void exit() {
-      PlanComponent planView = ((PlanComponent)getView());
+      PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(false);
       planView.deleteToolTipFeedback();
       planView.deleteWallAlignmentFeeback();
@@ -2065,8 +2376,6 @@ public class PlanController {
    */
   private class PieceOfFurnitureRotationState extends ControllerState {
     private static final int     STEP_COUNT = 24;
-    private float                xLastMouseMove;
-    private float                yLastMouseMove;
     private boolean              magnetismEnabled;
     private HomePieceOfFurniture selectedPiece;
     private float                angleMousePress;
@@ -2080,8 +2389,6 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.xLastMouseMove = getXLastMousePress();
-      this.yLastMouseMove = getYLastMousePress();
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
@@ -2091,7 +2398,7 @@ public class PlanController {
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldAngle), 
-          this.xLastMouseMove, this.yLastMouseMove);
+          getXLastMousePress(), getYLastMousePress());
     }
     
     @Override
@@ -2114,8 +2421,6 @@ public class PlanController {
       PlanComponent planView = (PlanComponent)getView();
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newAngle), x, y);
-      this.xLastMouseMove = x;
-      this.yLastMouseMove = y;      
     }
 
     @Override
@@ -2130,7 +2435,7 @@ public class PlanController {
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
       // Compute again angle as if mouse moved
-      moveMouse(this.xLastMouseMove, this.yLastMouseMove);
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -2263,7 +2568,7 @@ public class PlanController {
       newHeight = Math.max(Math.round(newHeight * 10f) / 10f, 0.1f);
 
       // Update piece new dimension
-      home.setPieceOfFurnitureDimension(this.selectedPiece, 
+      home.setPieceOfFurnitureSize(this.selectedPiece, 
           this.selectedPiece.getWidth(), this.selectedPiece.getDepth(), 
           newHeight);
 
@@ -2281,7 +2586,7 @@ public class PlanController {
 
     @Override
     public void escape() {
-      home.setPieceOfFurnitureDimension(this.selectedPiece, 
+      home.setPieceOfFurnitureSize(this.selectedPiece, 
           this.selectedPiece.getWidth(), this.selectedPiece.getDepth(), 
           this.oldHeight);
       setState(getSelectionState());
@@ -2361,7 +2666,7 @@ public class PlanController {
       float newY = (float)(topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
       home.setPieceOfFurnitureLocation(this.selectedPiece, newX, newY);
       // Update piece new dimension
-      home.setPieceOfFurnitureDimension(this.selectedPiece, newWidth, newDepth, 
+      home.setPieceOfFurnitureSize(this.selectedPiece, newWidth, newDepth, 
           this.selectedPiece.getHeight());
 
       PlanComponent planView = (PlanComponent)getView();
@@ -2380,7 +2685,7 @@ public class PlanController {
     @Override
     public void escape() {
       home.setPieceOfFurnitureLocation(this.selectedPiece, this.oldX, this.oldY);
-      home.setPieceOfFurnitureDimension(this.selectedPiece, 
+      home.setPieceOfFurnitureSize(this.selectedPiece, 
           this.oldWidth, this.oldDepth, this.selectedPiece.getHeight());
       setState(getSelectionState());
     }
@@ -2530,5 +2835,450 @@ public class PlanController {
       return String.format(this.rotationToolTipFeedback, 
           Math.round(Math.toDegrees(angle)) % 360);
     }
+  }
+
+  /**
+   * Dimension line creation state. This state manages transition to
+   * <code>SELECTION</code> mode, and initial dimension line creation.
+   */
+  private class DimensionLineCreationState extends ControllerState {
+    @Override
+    public Mode getMode() {
+      return Mode.DIMENSION_LINES_CREATION;
+    }
+
+    @Override
+    public void enter() {
+      ((PlanComponent)getView()).setCursor(Mode.WALL_CREATION);
+    }
+
+    @Override
+    public void setMode(Mode mode) {
+      switch (mode) {
+        case SELECTION :
+          // Change state to SelectionState
+          setState(getSelectionState());
+          break;
+        case WALL_CREATION :
+          setState(getWallCreationState());
+          break;
+      } 
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(null, x, y);
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown) {
+      // Change state to NewWallState
+      setState(getNewDimensionLineState());
+    }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+    }  
+  }
+
+  /**
+   * New dimension line state. This state manages dimension line creation at mouse press. 
+   */
+  private class NewDimensionLineState extends ControllerState {
+    private float         xStart;
+    private float         yStart;
+    private DimensionLine newDimensionLine;
+    private List<Object>  oldSelection;
+    private boolean       magnetismEnabled;
+    private boolean       offsetChoice;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.DIMENSION_LINES_CREATION;
+    }
+    
+    @Override
+    public void setMode(Mode mode) {
+      switch (mode) {
+        case SELECTION :
+          // Escape current creation and change state to SelectionState
+          escape();
+          setState(getSelectionState());
+          break;
+        case WALL_CREATION :
+          // Escape current creation and change state to WallCreationState
+          escape();
+          setState(getWallCreationState());
+          break;
+      } 
+    }
+
+    @Override
+    public void enter() {
+      this.oldSelection = home.getSelectedItems();
+      this.xStart = getXLastMousePress();
+      this.yStart = getYLastMousePress();
+      this.offsetChoice = false;
+      this.newDimensionLine = null;
+      deselectAll();
+      toggleMagnetism(wasShiftDownLastMousePress());
+      ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(null, getXLastMousePress(), getYLastMousePress());
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      if (offsetChoice) {
+        float distanceToDimensionLine = (float)Line2D.ptLineDist(this.xStart, this.yStart, 
+            this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
+        int relativeCCW = Line2D.relativeCCW(this.xStart, this.yStart, 
+            this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
+        home.setDimensionLineOffset(this.newDimensionLine, 
+             -Math.signum(relativeCCW) * distanceToDimensionLine);
+      } else {
+        // Compute the coordinates where dimension line end point should be moved
+        float xEnd;
+        float yEnd;
+        if (this.magnetismEnabled) {
+          PointWithMagnetism point = new PointWithMagnetism(
+              this.xStart, this.yStart, x, y);
+          xEnd = point.getXMagnetizedPoint();
+          yEnd = point.getYMagnetizedPoint();
+        } else {
+          xEnd = x;
+          yEnd = y;
+        }
+  
+        // If current dimension line doesn't exist
+        if (this.newDimensionLine == null) {
+          // Create a new one
+          this.newDimensionLine = new DimensionLine(this.xStart, this.yStart, xEnd, yEnd, 0);
+          home.addDimensionLine(newDimensionLine);
+        } else {
+          // Otherwise update its end point
+          home.moveDimensionLineEndPointTo(this.newDimensionLine, xEnd, yEnd); 
+        }         
+        PlanComponent planView = (PlanComponent)getView();
+        planView.setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
+        // Ensure point at (x,y) is visible
+        planView.makePointVisible(x, y);
+      }
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount, 
+                           boolean shiftDown) {
+      // Create a new dimension line only when it will have a length > 0
+      // meaning after the first mouse move
+      if (this.newDimensionLine != null) {
+        if (offsetChoice) {
+          selectItem(this.newDimensionLine);
+          // Post dimension line creation to undo support
+          postAddDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
+              this.oldSelection);
+          this.newDimensionLine = null;
+          // Change state to WallCreationState 
+          setState(getDimensionLineCreationState());
+        } else {
+          // Switch to offset choice
+          offsetChoice = true;
+          PlanComponent planView = (PlanComponent)getView();
+          planView.setHeightCursor();
+          planView.deleteDimensionLineAlignmentFeeback();
+        }
+      }
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // If the new dimension line already exists, 
+      // compute again its end as if mouse moved
+      if (this.newDimensionLine != null && !this.offsetChoice) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
+    }
+
+    @Override
+    public void escape() {
+      if (this.newDimensionLine != null) {
+        // Delete current created dimension line
+        home.deleteDimensionLine(this.newDimensionLine);
+      }
+      // Change state to DimensionLineCreationState 
+      setState(getDimensionLineCreationState());
+    }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+      this.newDimensionLine = null;
+      this.oldSelection = null;
+    }  
+  }
+
+  /**
+   * Dimension line resize state. This state manages dimension line resizing. 
+   */
+  private class DimensionLineResizeState extends ControllerState {
+    private DimensionLine selectedDimensionLine;
+    private boolean       startPoint;
+    private float         oldX;
+    private float         oldY;
+    private float         deltaXToResizePoint;
+    private float         deltaYToResizePoint;
+    private float         distanceFromResizePointToDimensionLine;
+    private boolean       magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+      
+      this.selectedDimensionLine = (DimensionLine)home.getSelectedItems().get(0);
+      this.startPoint = this.selectedDimensionLine 
+          == getResizedDimensionLineStartAt(getXLastMousePress(), getYLastMousePress());
+      if (this.startPoint) {
+        this.oldX = this.selectedDimensionLine.getXStart();
+        this.oldY = this.selectedDimensionLine.getYStart();
+      } else {
+        this.oldX = this.selectedDimensionLine.getXEnd();
+        this.oldY = this.selectedDimensionLine.getYEnd();
+      }
+
+      float xResizePoint;
+      float yResizePoint;
+      // Compute the closest resize point placed on the extension line and the distance 
+      // between that point and the dimension line base
+      if (this.selectedDimensionLine.getXStart() == this.selectedDimensionLine.getXEnd()) {
+        xResizePoint = this.selectedDimensionLine.getXStart();
+        if (this.startPoint) {
+          yResizePoint = this.selectedDimensionLine.getYStart();
+        } else {
+          yResizePoint = this.selectedDimensionLine.getYEnd();
+        }
+      } else if (this.selectedDimensionLine.getYStart() == this.selectedDimensionLine.getYEnd()) {
+        if (this.startPoint) {
+          xResizePoint = this.selectedDimensionLine.getXStart();
+        } else {
+          xResizePoint = this.selectedDimensionLine.getXEnd();
+        }
+        yResizePoint = this.selectedDimensionLine.getYStart();
+      } else {
+        float alpha1 = (float)(this.selectedDimensionLine.getYEnd() - this.selectedDimensionLine.getYStart()) 
+            / (this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
+        float beta1 = getYLastMousePress() - alpha1 * getXLastMousePress();
+        float alpha2 = -1 / alpha1;
+        float beta2;
+        if (this.startPoint) {
+          beta2 = this.selectedDimensionLine.getYStart() - alpha2 * this.selectedDimensionLine.getXStart();
+        } else {
+          beta2 = this.selectedDimensionLine.getYEnd() - alpha2 * this.selectedDimensionLine.getXEnd();
+        }
+        xResizePoint = (beta2 - beta1) / (alpha1 - alpha2);
+        yResizePoint = alpha1 * xResizePoint + beta1;
+      }
+
+      this.deltaXToResizePoint = getXLastMousePress() - xResizePoint;
+      this.deltaYToResizePoint = getYLastMousePress() - yResizePoint;
+      if (this.startPoint) {
+        this.distanceFromResizePointToDimensionLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
+            this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
+        planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+            this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
+      } else {
+        this.distanceFromResizePointToDimensionLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
+            this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
+        planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+            this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
+      }
+      toggleMagnetism(wasShiftDownLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      float xResizePoint = x - this.deltaXToResizePoint;
+      float yResizePoint = y - this.deltaYToResizePoint;
+      if (this.startPoint) {
+        // Compute the new start point of the dimension line knowing that the distance 
+        // from resize point to dimension line base is constant, 
+        // and that the end point of the dimension line doesn't move
+        double distanceFromResizePointToDimensionLineEnd = Point2D.distance(xResizePoint, yResizePoint, 
+            this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
+        double distanceFromDimensionLineStartToDimensionLineEnd = Math.sqrt(
+            distanceFromResizePointToDimensionLineEnd * distanceFromResizePointToDimensionLineEnd
+            - this.distanceFromResizePointToDimensionLine * this.distanceFromResizePointToDimensionLine);
+        if (distanceFromDimensionLineStartToDimensionLineEnd > 0) {
+          double dimensionLineRelativeAngle = -Math.atan2(this.distanceFromResizePointToDimensionLine, 
+              distanceFromDimensionLineStartToDimensionLineEnd);
+          if (this.selectedDimensionLine.getOffset() >= 0) {
+            dimensionLineRelativeAngle = -dimensionLineRelativeAngle;
+          }
+          double resizePointToDimensionLineEndAngle = Math.atan2(yResizePoint - this.selectedDimensionLine.getYEnd(), 
+              xResizePoint - this.selectedDimensionLine.getXEnd());
+          double dimensionLineStartToDimensionLineEndAngle = dimensionLineRelativeAngle + resizePointToDimensionLineEndAngle;
+          float newX = this.selectedDimensionLine.getXEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+              * Math.cos(dimensionLineStartToDimensionLineEndAngle));
+          float newY = this.selectedDimensionLine.getYEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+              * Math.sin(dimensionLineStartToDimensionLineEndAngle));
+
+          if (this.magnetismEnabled) {
+            PointWithMagnetism point = new PointWithMagnetism(
+                this.selectedDimensionLine.getXEnd(), 
+                this.selectedDimensionLine.getYEnd(), newX, newY);
+            newX = point.getXMagnetizedPoint();
+            newY = point.getYMagnetizedPoint();
+          } 
+
+          moveDimensionLinePoint(this.selectedDimensionLine, newX, newY, this.startPoint);        
+          ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+              newX, newY);
+        } else {
+          ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+        }        
+      } else {
+        // Compute the new end point of the dimension line knowing that the distance 
+        // from resize point to dimension line base is constant, 
+        // and that the start point of the dimension line doesn't move
+        double distanceFromResizePointToDimensionLineStart = Point2D.distance(xResizePoint, yResizePoint, 
+            this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
+        double distanceFromDimensionLineStartToDimensionLineEnd = Math.sqrt(
+            distanceFromResizePointToDimensionLineStart * distanceFromResizePointToDimensionLineStart
+            - this.distanceFromResizePointToDimensionLine * this.distanceFromResizePointToDimensionLine);
+        if (distanceFromDimensionLineStartToDimensionLineEnd > 0) {
+          double dimensionLineRelativeAngle = Math.atan2(this.distanceFromResizePointToDimensionLine, 
+              distanceFromDimensionLineStartToDimensionLineEnd);
+          if (this.selectedDimensionLine.getOffset() >= 0) {
+            dimensionLineRelativeAngle = -dimensionLineRelativeAngle;
+          }
+          double resizePointToDimensionLineStartAngle = Math.atan2(yResizePoint - this.selectedDimensionLine.getYStart(), 
+              xResizePoint - this.selectedDimensionLine.getXStart());
+          double dimensionLineStartToDimensionLineEndAngle = dimensionLineRelativeAngle + resizePointToDimensionLineStartAngle;
+          float newX = this.selectedDimensionLine.getXStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+              * Math.cos(dimensionLineStartToDimensionLineEndAngle));
+          float newY = this.selectedDimensionLine.getYStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+              * Math.sin(dimensionLineStartToDimensionLineEndAngle));
+
+          if (this.magnetismEnabled) {
+            PointWithMagnetism point = new PointWithMagnetism(
+                this.selectedDimensionLine.getXStart(), 
+                this.selectedDimensionLine.getYStart(), newX, newY);
+            newX = point.getXMagnetizedPoint();
+            newY = point.getYMagnetizedPoint();
+          } 
+
+          moveDimensionLinePoint(this.selectedDimensionLine, newX, newY, this.startPoint);
+          ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+              newX, newY);
+        } else {
+          ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+        }
+      }     
+
+      // Ensure point at (x,y) is visible
+      ((PlanComponent)getView()).makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postDimensionLineResize(this.selectedDimensionLine, this.oldX, this.oldY, this.startPoint);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      moveDimensionLinePoint(this.selectedDimensionLine, this.oldX, this.oldY, this.startPoint);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanComponent planView = (PlanComponent)getView();
+      planView.deleteDimensionLineAlignmentFeeback();
+      planView.setResizeIndicatorVisible(false);
+      this.selectedDimensionLine = null;
+    }  
+  }
+
+  /**
+   * Dimension line offset state. This state manages dimension line offset. 
+   */
+  private class DimensionLineOffsetState extends ControllerState {
+    private DimensionLine selectedDimensionLine;
+    private float         oldOffset;
+    private float         deltaXToOffsetPoint;
+    private float         deltaYToOffsetPoint;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedDimensionLine = (DimensionLine)home.getSelectedItems().get(0);
+      this.oldOffset = this.selectedDimensionLine.getOffset();
+      double angle = Math.atan2(this.selectedDimensionLine.getYEnd() - this.selectedDimensionLine.getYStart(), 
+          this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
+      float dx = (float)-Math.sin(angle) * this.oldOffset;
+      float dy = (float)Math.cos(angle) * this.oldOffset;
+      float xMiddle = (this.selectedDimensionLine.getXStart() + this.selectedDimensionLine.getXEnd()) / 2 + dx; 
+      float yMiddle = (this.selectedDimensionLine.getYStart() + this.selectedDimensionLine.getYEnd()) / 2 + dy;
+      this.deltaXToOffsetPoint = getXLastMousePress() - xMiddle;
+      this.deltaYToOffsetPoint = getYLastMousePress() - yMiddle;
+      PlanComponent planView = (PlanComponent)getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      float newX = x - this.deltaXToOffsetPoint;
+      float newY = y - this.deltaYToOffsetPoint;
+
+      float distanceToDimensionLine = 
+          (float)Line2D.ptLineDist(this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart(), 
+              this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd(), newX, newY);
+      int relativeCCW = Line2D.relativeCCW(this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart(), 
+          this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd(), newX, newY);
+      home.setDimensionLineOffset(this.selectedDimensionLine, 
+           -Math.signum(relativeCCW) * distanceToDimensionLine);
+
+      // Ensure point at (x,y) is visible
+      ((PlanComponent)getView()).makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postDimensionLineOffset(this.selectedDimensionLine, this.oldOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      home.setDimensionLineOffset(this.selectedDimensionLine, this.oldOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      ((PlanComponent)getView()).setResizeIndicatorVisible(false);
+      this.selectedDimensionLine = null;
+    }  
   }
 }

@@ -61,7 +61,7 @@ public class HomeFurniturePanelTest extends TestCase {
     home.addPieceOfFurniture(piece2);
     home.setPieceOfFurnitureLocation(piece2, piece1.getX(), piece1.getY() + 10);
     home.setPieceOfFurnitureElevation(piece2, piece1.getElevation() + 10);
-    home.setPieceOfFurnitureDimension(piece2, 
+    home.setPieceOfFurnitureSize(piece2, 
         piece1.getWidth(), piece1.getDepth() + 10, piece1.getHeight() + 10);
     home.setPieceOfFurnitureColor(piece2, 0xFF00FF);
     home.setPieceOfFurnitureVisible(piece2, !piece1.isVisible());

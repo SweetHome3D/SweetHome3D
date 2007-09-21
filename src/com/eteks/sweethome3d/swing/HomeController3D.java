@@ -175,7 +175,7 @@ public class HomeController3D {
    * Top camera controller state. 
    */
   private class TopCameraState extends CameraControllerState {
-    private final float MIN_DIMENSION = 1000;
+    private final float MIN_SIZE = 1000;
     
     private Camera topCamera;
     private Rectangle2D homeBounds;
@@ -241,16 +241,16 @@ public class HomeController3D {
       if (homeBounds != null) {
         // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
         return new Rectangle2D.Float(
-            (float)(MIN_DIMENSION < homeBounds.getWidth() 
+            (float)(MIN_SIZE < homeBounds.getWidth() 
                         ? homeBounds.getMinX()
-                        : homeBounds.getCenterX() - MIN_DIMENSION / 2), 
-            (float)(MIN_DIMENSION < homeBounds.getHeight() 
+                        : homeBounds.getCenterX() - MIN_SIZE / 2), 
+            (float)(MIN_SIZE < homeBounds.getHeight() 
                         ? homeBounds.getMinY()
-                        : homeBounds.getCenterY() - MIN_DIMENSION / 2), 
-            (float)Math.max(MIN_DIMENSION, homeBounds.getWidth()), 
-            (float)Math.max(MIN_DIMENSION, homeBounds.getHeight()));
+                        : homeBounds.getCenterY() - MIN_SIZE / 2), 
+            (float)Math.max(MIN_SIZE, homeBounds.getWidth()), 
+            (float)Math.max(MIN_SIZE, homeBounds.getHeight()));
       } else {
-        return new Rectangle2D.Float(0, 0, MIN_DIMENSION, MIN_DIMENSION);
+        return new Rectangle2D.Float(0, 0, MIN_SIZE, MIN_SIZE);
       }
     }
     

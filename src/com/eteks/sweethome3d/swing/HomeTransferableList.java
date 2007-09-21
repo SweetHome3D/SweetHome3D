@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
@@ -68,6 +69,8 @@ public class HomeTransferableList implements Transferable {
     for (Object obj : objects) {
       if (obj instanceof PieceOfFurniture) {
         list.add(new HomePieceOfFurniture((PieceOfFurniture)obj));
+      } else if (obj instanceof DimensionLine) {
+        list.add(new DimensionLine((DimensionLine)obj));
       } else if (!(obj instanceof Wall)
                  && !(obj instanceof Camera)) { // Camera isn't copiable
         throw new RuntimeException(

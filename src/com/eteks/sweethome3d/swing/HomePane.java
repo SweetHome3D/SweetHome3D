@@ -102,7 +102,7 @@ public class HomePane extends JRootPane {
     DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
     DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
     ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-    SELECT, CREATE_WALLS, DELETE_SELECTION, MODIFY_WALL, 
+    SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, 
     IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
     VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
     HELP, ABOUT}
@@ -112,9 +112,10 @@ public class HomePane extends JRootPane {
   private Home                            home;
   private HomeController                  controller;
   private ResourceBundle                  resource;
-  // Button models shared by Select and Create wall menu items and the matching tool bar buttons
+  // Button models shared by Select, Create walls and Create dimensions menu items and the matching tool bar buttons
   private JToggleButton.ToggleButtonModel selectToggleModel;
   private JToggleButton.ToggleButtonModel createWallsToggleModel;
+  private JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
   // Button models shared by View from top and View from observer menu items and the matching tool bar buttons
   private JToggleButton.ToggleButtonModel viewFromTopToggleModel;
   private JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
@@ -132,8 +133,8 @@ public class HomePane extends JRootPane {
     this.contentManager = contentManager;
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
-    // Create unique toggle button models for Selection / Wall creation states
-    // so Select and Create walls creation menu items and tool bar buttons 
+    // Create unique toggle button models for Selection / Wall creation / Dimension line creation states
+    // so Select, Create walls and Create Dimension lines menu items and tool bar buttons 
     // always reflect the same toggle state at screen
     this.selectToggleModel = new JToggleButton.ToggleButtonModel();
     this.selectToggleModel.setSelected(controller.getPlanController().getMode() 
@@ -141,6 +142,9 @@ public class HomePane extends JRootPane {
     this.createWallsToggleModel = new JToggleButton.ToggleButtonModel();
     this.createWallsToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.WALL_CREATION);
+    this.createDimensionLinesToggleModel = new JToggleButton.ToggleButtonModel();
+    this.createDimensionLinesToggleModel.setSelected(controller.getPlanController().getMode() 
+        == PlanController.Mode.DIMENSION_LINES_CREATION);
     // Create unique toggle button models for top and observer cameras
     // so View from top and View from observer creation menu items and tool bar buttons 
     // always reflect the same toggle state at screen
@@ -257,6 +261,8 @@ public class HomePane extends JRootPane {
         PlanController.Mode.SELECTION);
     createAction(ActionType.CREATE_WALLS, controller.getPlanController(), "setMode",
         PlanController.Mode.WALL_CREATION);
+    createAction(ActionType.CREATE_DIMENSION_LINES, controller.getPlanController(), "setMode",
+        PlanController.Mode.DIMENSION_LINES_CREATION);
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
@@ -352,6 +358,8 @@ public class HomePane extends JRootPane {
                 == PlanController.Mode.SELECTION);
             createWallsToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.WALL_CREATION);
+            createDimensionLinesToggleModel.setSelected(planController.getMode() 
+                == PlanController.Mode.DIMENSION_LINES_CREATION);
           }
         });
   }
@@ -434,10 +442,13 @@ public class HomePane extends JRootPane {
     planMenu.add(selectRadioButtonMenuItem);
     JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(false);
     planMenu.add(createWallsRadioButtonMenuItem);
-    // Add Select and Create Walls menu items to radio group 
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = getCreateDimensionLinesRadioButtonMenuItem(false);
+    planMenu.add(createDimensionLinesRadioButtonMenuItem);
+    // Add Select, Create Walls and Create dimensions menu items to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);  
+    group.add(createDimensionLinesRadioButtonMenuItem);  
     planMenu.addSeparator();
     planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
     planMenu.addSeparator();
@@ -669,6 +680,14 @@ public class HomePane extends JRootPane {
   }
   
   /**
+   * Returns a radio button menu item for Create dimensions action. 
+   */
+  private JRadioButtonMenuItem getCreateDimensionLinesRadioButtonMenuItem(boolean popup) {
+    return getRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, 
+        ActionType.CREATE_DIMENSION_LINES, popup);
+  }
+  
+  /**
    * Returns a radio button menu item for View from top action. 
    */
   private JRadioButtonMenuItem getViewFromTopRadioButtonMenuItem(boolean popup) {
@@ -743,10 +762,18 @@ public class HomePane extends JRootPane {
     // Don't display text with icon
     createWallsToggleButton.setText("");
     toolBar.add(createWallsToggleButton);
-    // Add Select and Create Walls buttons to radio group 
+    JToggleButton createDimensionLinesToggleButton = 
+        new JToggleButton(actions.get(ActionType.CREATE_DIMENSION_LINES));
+    // Use the same model as Create dimensions menu item
+    createDimensionLinesToggleButton.setModel(this.createDimensionLinesToggleModel);
+    // Don't display text with icon
+    createDimensionLinesToggleButton.setText("");
+    toolBar.add(createDimensionLinesToggleButton);
+    // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectToggleButton);
     group.add(createWallsToggleButton);
+    group.add(createDimensionLinesToggleButton);
     toolBar.addSeparator();
     
     toolBar.add(actions.get(ActionType.ZOOM_OUT));
@@ -933,10 +960,13 @@ public class HomePane extends JRootPane {
     planViewPopup.add(selectRadioButtonMenuItem);
     JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(true);
     planViewPopup.add(createWallsRadioButtonMenuItem);
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = getCreateDimensionLinesRadioButtonMenuItem(true);
+    planViewPopup.add(createDimensionLinesRadioButtonMenuItem);
     // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);
+    group.add(createDimensionLinesRadioButtonMenuItem);
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));

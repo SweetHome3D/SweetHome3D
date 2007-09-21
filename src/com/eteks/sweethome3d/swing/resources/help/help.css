@@ -5,6 +5,19 @@ p  {
 	margin-bottom: 7px;
 }
 	
+ul  {
+	margin-top: 0px;
+}
+	
+ol  {
+	margin-top: 0px;
+}
+	
+li  {
+	font-size: 12px;
+	font-family: "Lucida Grande";
+}
+	
 a  {
 	color: #0000ff;
 	font-size: 12px;
@@ -31,6 +44,13 @@ h3  {
 	margin-bottom: 24px
 }
 
+.plist  {
+	font-size: 12px;
+	font-family: "Lucida Grande";
+	text-decoration: none;
+	margin-bottom: 0px;
+}
+	
 .bread  {
 	color: #0000ff;
 	font-size: 10px;
