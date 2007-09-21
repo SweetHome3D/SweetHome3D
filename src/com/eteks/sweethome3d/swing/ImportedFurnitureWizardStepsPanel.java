@@ -1082,9 +1082,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
 
       this.sceneTree = createSceneTree();
       
-      // Add a hierarchy listener to create canvas universe once this component is made visible 
+      // Add an ancestor listener to create canvas universe once this component is made visible 
       // and clean up universe once its parent frame is disposed
-      addHierarchyListener();
+      addAncestorListener();
     }
 
     @Override
@@ -1139,10 +1139,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     }
 
     /**
-     * Adds a hierarchy listener to this component to manage canvas universe 
+     * Adds an ancestor listener to this component to manage canvas universe 
      * creation and clean up.  
      */
-    private void addHierarchyListener() {
+    private void addAncestorListener() {
       addAncestorListener(new AncestorListener() {
           public void ancestorAdded(AncestorEvent event) {
             if (universe == null) {

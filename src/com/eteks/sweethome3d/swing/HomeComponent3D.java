@@ -167,16 +167,16 @@ public class HomeComponent3D extends JComponent implements Printable {
       setFocusable(true);
     }
 
-    // Add a hierarchy listener to create canvas universe once this component is made visible 
+    // Add an ancestor listener to create canvas universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
-    addHierarchyListener(canvas3D, home);
+    addAncestorListener(canvas3D, home);
   }
 
   /**
-   * Adds a hierarchy listener to this component to manage canvas universe 
+   * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
    */
-  private void addHierarchyListener(final Canvas3D canvas3D, 
+  private void addAncestorListener(final Canvas3D canvas3D, 
                                     final Home home) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
