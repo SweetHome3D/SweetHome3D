@@ -200,12 +200,15 @@ public class PlanComponentTest extends ComponentTestFixture {
     // 12. Select first wall
     tester.actionClick(planComponent, 100, 100); // Give focus first
     tester.actionClick(planComponent, 40, 30);
-    // Drag cursor from (30, 30) to (50, 50) 
+    // Drag cursor from (30, 30) to (50, 50) with shift key pressed
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(30, 30))); 
     tester.actionMouseMove(planComponent, 
         new ComponentLocation(new Point(50, 50))); 
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.waitForIdle();
     tester.actionMouseRelease(); 
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check wall start point moved to (60, 60)
     assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
     assertCoordinatesEqualWallPoints(60, 60, 24, 300, wall4);
