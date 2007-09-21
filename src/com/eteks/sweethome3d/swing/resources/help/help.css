@@ -7,6 +7,8 @@ p  {
 	
 ul  {
 	margin-top: 0px;
+	list-style-type: none;
+	list-style-image: url(images/bullet.gif);
 }
 	
 ol  {
