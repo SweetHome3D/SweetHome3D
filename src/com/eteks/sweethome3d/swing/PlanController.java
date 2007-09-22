@@ -3030,7 +3030,7 @@ public class PlanController {
     private float         oldY;
     private float         deltaXToResizePoint;
     private float         deltaYToResizePoint;
-    private float         distanceFromResizePointToDimensionLine;
+    private float         distanceFromResizePointToDimensionBaseLine;
     private boolean       magnetismEnabled;
     
     @Override
@@ -3059,7 +3059,7 @@ public class PlanController {
       // Compute the closest resize point placed on the extension line and the distance 
       // between that point and the dimension line base
       if (this.selectedDimensionLine.getXStart() == this.selectedDimensionLine.getXEnd()) {
-        xResizePoint = this.selectedDimensionLine.getXStart();
+        xResizePoint = getXLastMousePress();
         if (this.startPoint) {
           yResizePoint = this.selectedDimensionLine.getYStart();
         } else {
@@ -3071,7 +3071,7 @@ public class PlanController {
         } else {
           xResizePoint = this.selectedDimensionLine.getXEnd();
         }
-        yResizePoint = this.selectedDimensionLine.getYStart();
+        yResizePoint = getYLastMousePress();
       } else {
         float alpha1 = (float)(this.selectedDimensionLine.getYEnd() - this.selectedDimensionLine.getYStart()) 
             / (this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
@@ -3090,12 +3090,12 @@ public class PlanController {
       this.deltaXToResizePoint = getXLastMousePress() - xResizePoint;
       this.deltaYToResizePoint = getYLastMousePress() - yResizePoint;
       if (this.startPoint) {
-        this.distanceFromResizePointToDimensionLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
+        this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
         planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
       } else {
-        this.distanceFromResizePointToDimensionLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
+        this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
         planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
@@ -3115,9 +3115,9 @@ public class PlanController {
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
         double distanceFromDimensionLineStartToDimensionLineEnd = Math.sqrt(
             distanceFromResizePointToDimensionLineEnd * distanceFromResizePointToDimensionLineEnd
-            - this.distanceFromResizePointToDimensionLine * this.distanceFromResizePointToDimensionLine);
+            - this.distanceFromResizePointToDimensionBaseLine * this.distanceFromResizePointToDimensionBaseLine);
         if (distanceFromDimensionLineStartToDimensionLineEnd > 0) {
-          double dimensionLineRelativeAngle = -Math.atan2(this.distanceFromResizePointToDimensionLine, 
+          double dimensionLineRelativeAngle = -Math.atan2(this.distanceFromResizePointToDimensionBaseLine, 
               distanceFromDimensionLineStartToDimensionLineEnd);
           if (this.selectedDimensionLine.getOffset() >= 0) {
             dimensionLineRelativeAngle = -dimensionLineRelativeAngle;
@@ -3125,22 +3125,22 @@ public class PlanController {
           double resizePointToDimensionLineEndAngle = Math.atan2(yResizePoint - this.selectedDimensionLine.getYEnd(), 
               xResizePoint - this.selectedDimensionLine.getXEnd());
           double dimensionLineStartToDimensionLineEndAngle = dimensionLineRelativeAngle + resizePointToDimensionLineEndAngle;
-          float newX = this.selectedDimensionLine.getXEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+          float xNewStartPoint = this.selectedDimensionLine.getXEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
               * Math.cos(dimensionLineStartToDimensionLineEndAngle));
-          float newY = this.selectedDimensionLine.getYEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+          float yNewStartPoint = this.selectedDimensionLine.getYEnd() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
               * Math.sin(dimensionLineStartToDimensionLineEndAngle));
 
           if (this.magnetismEnabled) {
             PointWithMagnetism point = new PointWithMagnetism(
                 this.selectedDimensionLine.getXEnd(), 
-                this.selectedDimensionLine.getYEnd(), newX, newY);
-            newX = point.getXMagnetizedPoint();
-            newY = point.getYMagnetizedPoint();
+                this.selectedDimensionLine.getYEnd(), xNewStartPoint, yNewStartPoint);
+            xNewStartPoint = point.getXMagnetizedPoint();
+            yNewStartPoint = point.getYMagnetizedPoint();
           } 
 
-          moveDimensionLinePoint(this.selectedDimensionLine, newX, newY, this.startPoint);        
+          moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.startPoint);        
           ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
-              newX, newY);
+              xNewStartPoint, yNewStartPoint);
         } else {
           ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
         }        
@@ -3152,9 +3152,9 @@ public class PlanController {
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
         double distanceFromDimensionLineStartToDimensionLineEnd = Math.sqrt(
             distanceFromResizePointToDimensionLineStart * distanceFromResizePointToDimensionLineStart
-            - this.distanceFromResizePointToDimensionLine * this.distanceFromResizePointToDimensionLine);
+            - this.distanceFromResizePointToDimensionBaseLine * this.distanceFromResizePointToDimensionBaseLine);
         if (distanceFromDimensionLineStartToDimensionLineEnd > 0) {
-          double dimensionLineRelativeAngle = Math.atan2(this.distanceFromResizePointToDimensionLine, 
+          double dimensionLineRelativeAngle = Math.atan2(this.distanceFromResizePointToDimensionBaseLine, 
               distanceFromDimensionLineStartToDimensionLineEnd);
           if (this.selectedDimensionLine.getOffset() >= 0) {
             dimensionLineRelativeAngle = -dimensionLineRelativeAngle;
@@ -3162,22 +3162,22 @@ public class PlanController {
           double resizePointToDimensionLineStartAngle = Math.atan2(yResizePoint - this.selectedDimensionLine.getYStart(), 
               xResizePoint - this.selectedDimensionLine.getXStart());
           double dimensionLineStartToDimensionLineEndAngle = dimensionLineRelativeAngle + resizePointToDimensionLineStartAngle;
-          float newX = this.selectedDimensionLine.getXStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+          float xNewEndPoint = this.selectedDimensionLine.getXStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
               * Math.cos(dimensionLineStartToDimensionLineEndAngle));
-          float newY = this.selectedDimensionLine.getYStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
+          float yNewEndPoint = this.selectedDimensionLine.getYStart() + (float)(distanceFromDimensionLineStartToDimensionLineEnd 
               * Math.sin(dimensionLineStartToDimensionLineEndAngle));
 
           if (this.magnetismEnabled) {
             PointWithMagnetism point = new PointWithMagnetism(
                 this.selectedDimensionLine.getXStart(), 
-                this.selectedDimensionLine.getYStart(), newX, newY);
-            newX = point.getXMagnetizedPoint();
-            newY = point.getYMagnetizedPoint();
+                this.selectedDimensionLine.getYStart(), xNewEndPoint, yNewEndPoint);
+            xNewEndPoint = point.getXMagnetizedPoint();
+            yNewEndPoint = point.getYMagnetizedPoint();
           } 
 
-          moveDimensionLinePoint(this.selectedDimensionLine, newX, newY, this.startPoint);
+          moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.startPoint);
           ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
-              newX, newY);
+              xNewEndPoint, yNewEndPoint);
         } else {
           ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
         }
