@@ -1104,6 +1104,7 @@ public class HomeController  {
       this.preferences.setUnit(preferencesPanel.getUnit());
       this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
       this.preferences.setRulersVisible(preferencesPanel.isRulersVisible());
+      this.preferences.setGridVisible(preferencesPanel.isGridVisible());
       this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
       this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
       try {

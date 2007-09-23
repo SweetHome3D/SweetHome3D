@@ -53,6 +53,8 @@ public class UserPreferencesPanel extends JPanel {
   private JCheckBox      magnetismCheckBox;
   private JLabel         rulersVisibleLabel;
   private JCheckBox      rulersCheckBox;
+  private JLabel         gridVisibleLabel;
+  private JCheckBox      gridCheckBox;
   private JLabel         newWallThicknessLabel;
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newHomeWallHeightLabel;
@@ -93,6 +95,10 @@ public class UserPreferencesPanel extends JPanel {
     this.rulersCheckBox = new JCheckBox(
         this.resource.getString("rulersCheckBox.text"));
     
+    this.gridVisibleLabel = new JLabel(this.resource.getString("gridLabel.text"));
+    this.gridCheckBox = new JCheckBox(
+        this.resource.getString("gridCheckBox.text"));
+    
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
     this.newWallThicknessSpinner = new JSpinner(new SpinnerLengthModel(
         0.5f, 0.125f, this.centimeterRadioButton));
@@ -114,6 +120,8 @@ public class UserPreferencesPanel extends JPanel {
           KeyStroke.getKeyStroke(this.resource.getString("magnetismCheckBox.mnemonic")).getKeyCode());
       this.rulersCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("rulersCheckBox.mnemonic")).getKeyCode());
+      this.gridCheckBox.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("gridCheckBox.mnemonic")).getKeyCode());
       this.newWallThicknessLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("newWallThicknessLabel.mnemonic")).getKeyCode());
       this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
@@ -153,18 +161,25 @@ public class UserPreferencesPanel extends JPanel {
         1, 2, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
-    add(this.newWallThicknessLabel, new GridBagConstraints(
+    add(this.gridVisibleLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.gridCheckBox, new GridBagConstraints(
+        1, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    
+    add(this.newWallThicknessLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.newWallThicknessSpinner, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     
     add(this.newHomeWallHeightLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.newHomeWallHeightSpinner, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
@@ -181,6 +196,8 @@ public class UserPreferencesPanel extends JPanel {
         preferences.isMagnetismEnabled());    
     this.rulersCheckBox.setSelected(
         preferences.isRulersVisible());    
+    this.gridCheckBox.setSelected(
+        preferences.isGridVisible());    
     ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).
         setLength(preferences.getNewWallThickness());
     ((SpinnerLengthModel)this.newHomeWallHeightSpinner.getModel()).
@@ -220,6 +237,13 @@ public class UserPreferencesPanel extends JPanel {
    */
   public boolean isRulersVisible() {
     return this.rulersCheckBox.isSelected();
+  } 
+  
+  /**
+   * Returns <code>true</code> if grid is visible in panel.
+   */
+  public boolean isGridVisible() {
+    return this.gridCheckBox.isSelected();
   } 
   
   /**

@@ -354,6 +354,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       });
     preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
         new UnitChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
+        new GridVisibleChangeListener(this));
   }
 
   /**
@@ -381,6 +383,29 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         if (planComponent.verticalRuler != null) {
           planComponent.verticalRuler.repaint();
         }
+      }
+    }
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class GridVisibleChangeListener implements PropertyChangeListener {
+    private WeakReference<PlanComponent>  planComponent;
+
+    public GridVisibleChangeListener(PlanComponent planComponent) {
+      this.planComponent = new WeakReference<PlanComponent>(planComponent);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If plan component was garbage collected, remove this listener from preferences
+      PlanComponent planComponent = this.planComponent.get();
+      if (planComponent == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.UNIT, this);
+      } else {
+        planComponent.repaint();
       }
     }
   }
@@ -655,7 +680,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     setRenderingHints(g2D);
     // Paint component contents
     paintBackgroundImage(g2D);
-    paintGrid(g2D, this.scale);
+    if (this.preferences.isGridVisible()) {
+      paintGrid(g2D, this.scale);
+    }
     paintContent(g2D, this.scale, backgroundColor, foregroundColor, PaintMode.PAINT);   
     g2D.dispose();
   }

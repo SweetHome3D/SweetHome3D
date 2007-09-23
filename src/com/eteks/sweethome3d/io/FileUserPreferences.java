@@ -54,6 +54,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String UNIT                      = "unit";
   private static final String MAGNETISM_ENABLED         = "magnetismEnabled";
   private static final String RULERS_VISIBLE            = "rulersVisible";
+  private static final String GRID_VISIBLE              = "gridVisible";
   private static final String NEW_HOME_WALL_HEIGHT      = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS        = "newWallThickness";
   private static final String RECENT_HOMES              = "recentHomes#";
@@ -106,6 +107,7 @@ public class FileUserPreferences extends UserPreferences {
     setUnit(unit);
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, true));
+    setGridVisible(preferences.getBoolean(GRID_VISIBLE, true));
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
             defaultPreferences.getNewWallThickness()));
     setNewHomeWallHeight(preferences.getFloat(NEW_HOME_WALL_HEIGHT,
@@ -213,6 +215,7 @@ public class FileUserPreferences extends UserPreferences {
     preferences.put(UNIT, getUnit().toString());   
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
+    preferences.putBoolean(GRID_VISIBLE, isGridVisible());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_HOME_WALL_HEIGHT, getNewHomeWallHeight());
     // Write recent homes list

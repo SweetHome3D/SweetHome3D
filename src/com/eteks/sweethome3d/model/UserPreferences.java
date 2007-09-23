@@ -30,7 +30,7 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public abstract class UserPreferences {
-  public enum Property {UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE,  
+  public enum Property {UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
   
   private PropertyChangeSupport propertyChangeSupport;
@@ -58,6 +58,7 @@ public abstract class UserPreferences {
   private Unit         unit;
   private boolean      magnetismEnabled = true;
   private boolean      rulersVisible    = true;
+  private boolean      gridVisible      = true;
   private float        newWallThickness;
   private float        newHomeWallHeight;
   private List<String> recentHomes;
@@ -159,6 +160,28 @@ public abstract class UserPreferences {
       this.rulersVisible = rulersVisible;
       this.propertyChangeSupport.firePropertyChange(Property.RULERS_VISIBLE.toString(), 
           !rulersVisible, rulersVisible);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if plan grid visible.
+   * @return <code>true</code> by default.
+   */
+  public boolean isGridVisible() {
+    return this.gridVisible;
+  }
+  
+  /**
+   * Sets whether plan grid is visible or not, and notifies
+   * listeners of this change. 
+   * @param gridVisible <code>true</code> if grid is visible,
+   *          <code>false</code> otherwise.
+   */
+  public void setGridVisible(boolean gridVisible) {
+    if (this.gridVisible != gridVisible) {
+      this.gridVisible = gridVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.toString(), 
+          !gridVisible, gridVisible);
     }
   }
 
