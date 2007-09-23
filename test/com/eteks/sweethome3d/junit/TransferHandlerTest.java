@@ -107,34 +107,46 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // 5. Use Wall creation mode
     controller.getPlanController().setMode(PlanController.Mode.WALL_CREATION);
     // Check Cut, Copy, Paste actions are disabled
+    assertActionsEnabled(controller, false, false, false, false);    
+    // Create a wall between points (25, 25) and (100, 25)
+    tester.actionClick(planComponent, 25, 25);
+    tester.actionClick(planComponent, 100, 25, InputEvent.BUTTON1_MASK, 2);
+
+    // 6. Use Dimension creation mode
+    controller.getPlanController().setMode(PlanController.Mode.DIMENSION_LINE_CREATION);
+    // Check Cut, Copy, Paste actions are disabled
     assertActionsEnabled(controller, false, false, false, false);
-    
-    // 6. Create a wall between points (20, 20) and (100, 20)
-    tester.actionClick(planComponent, 20, 20);
-    tester.actionClick(planComponent, 100, 20, InputEvent.BUTTON1_MASK, 2);
+    // 7. Create a dimension line between points (25, 35) and (100, 35)
+    tester.actionClick(planComponent, 25, 35);
+    tester.actionClick(planComponent, 100, 35, InputEvent.BUTTON1_MASK, 2);
     // Use Selection mode 
     controller.getPlanController().setMode(PlanController.Mode.SELECTION);
     // Check Cut, Copy and Delete actions are enabled
     assertActionsEnabled(controller, true, true, false, true);
     
-    // 7. Select the wall and the piece 
+    // 7. Select the dimension, the wall and the piece 
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionClick(planComponent, 30, 25); 
     tester.actionClick(planComponent, 120, 120); 
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    // Check home selection contains 3 items
+    assertEquals("Selected items wrong count", 3, home.getSelectedItems().size());
     // Cut selected items in plan component
     runAction(controller, HomePane.ActionType.CUT);
     // Check home is empty
     assertEquals("Wrong piece count in home", 0, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 0, home.getWalls().size());
+    assertEquals("Wrong dimension count in home", 0, home.getDimensionLines().size());
     // Check only Paste action is enabled
     assertActionsEnabled(controller, false, false, true, false);
 
     // 8. Paste selected items in plan component
     runAction(controller, HomePane.ActionType.PASTE);
     tester.waitForIdle();
-    // Check home contains one wall and one piece
+    // Check home contains one piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
+    assertEquals("Wrong dimension count in home", 1, home.getDimensionLines().size());
 
     // 9. Transfer focus to furniture table
     tester.actionKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK);
@@ -142,17 +154,19 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertTrue("Table doesn't have the focus", furnitureTable.isFocusOwner());
     // Delete selection 
     runAction(controller, HomePane.ActionType.DELETE);
-    // Check home contains one wall and no piece
+    // Check home contains no piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 0, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
+    assertEquals("Wrong dimension count in home", 1, home.getDimensionLines().size());
     // Check only Paste action is enabled
     assertActionsEnabled(controller, false, false, true, false);
 
     // 10. Paste selected items in furniture table
     runAction(controller, HomePane.ActionType.PASTE);
-    // Check home contains one wall and one piece
+    // Check home contains one piece, one wall and one dimension
     assertEquals("Wrong piece count in home", 1, home.getFurniture().size());
     assertEquals("Wrong wall count in home", 1, home.getWalls().size());
+    assertEquals("Wrong dimension count in home", 1, home.getDimensionLines().size());
     // Check Cut, Copy and Paste actions are enabled
     assertActionsEnabled(controller, true, true, true, true);
   }

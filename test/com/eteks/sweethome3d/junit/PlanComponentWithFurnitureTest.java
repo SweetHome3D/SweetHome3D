@@ -40,6 +40,9 @@ import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.DimensionLineEvent;
+import com.eteks.sweethome3d.model.DimensionLineListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -62,10 +65,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Show home plan frame
     showWindow(frame);
     
-    // 2. Use WALL_CREATION mode
+    // 2. Use CREATE_WALLS mode
     frame.createWallsButton.doClick();
     PlanComponent planComponent = (PlanComponent)
-      frame.homeController.getPlanController().getView();
+        frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
     // then double click at (30, 30)
     JComponentTester tester = new JComponentTester();
@@ -76,8 +79,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 30, 170);
     tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
     // Check 5 walls were added to home plan
-    assertEquals("Wrong walls count", 5, 
-        frame.home.getWalls().size());
+    assertEquals("Wrong walls count", 5, frame.home.getWalls().size());
 
     // 3. Use SELECTION mode
     frame.selectButton.doClick();
@@ -262,6 +264,77 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Check piece dimension and elevation are canceled
     assertDimensionEqualPiece(pieceWidth, pieceDepth, pieceHeight, piece);
     assertElevationEqualPiece(pieceElevation, piece);
+    
+    // Build an ordered list of dimensions added to home
+    final ArrayList<DimensionLine> orderedDimensionLines = new ArrayList<DimensionLine>();
+    frame.home.addDimensionLineListener(new DimensionLineListener () {
+      public void dimensionLineChanged(DimensionLineEvent ev) {
+        if (ev.getType() == DimensionLineEvent.Type.ADD) {
+          orderedDimensionLines.add(ev.getDimensionLine());
+        }
+      }
+    });
+    
+    // 15. Use CREATE_DIMENSION_LINES mode
+    frame.createDimensionsButton.doClick();
+    // Draw a dimension in plan
+    tester.actionClick(planComponent, 280, 81);
+    tester.actionClick(planComponent, 281, 169, InputEvent.BUTTON1_MASK, 2);
+    // Draw a dimension with extension lines
+    tester.actionClick(planComponent, 41, 175);
+    tester.actionClick(planComponent, 269, 175);
+    tester.actionClick(planComponent, 280, 185);
+    // Check 2 dimensions were added to home plan
+    assertEquals("Wrong dimensions count", 2, frame.home.getDimensionLines().size());
+    // Check one dimension is selected
+    assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
+    assertEquals("Selection doesn't contain the second dimension", 
+        frame.home.getSelectedItems().get(0), orderedDimensionLines.get(1));
+    // Check the size of the created dimension lines
+    assertEqualsDimensionLine(520, 122, 520, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
+    
+    // 16. Select the first dimension
+    frame.selectButton.doClick();
+    tester.actionClick(planComponent, 280, 90);
+    assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
+    assertEquals("Selection doesn't contain the first dimension", 
+        frame.home.getSelectedItems().get(0), orderedDimensionLines.get(0));
+    // Move its end point to (330, 167)
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(280, 167)));
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(320, 167)));
+    // Check its coordinates while Shift key isn't pressed (with magnestism)
+    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
+    // Press Shift key
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    // Check its coordinates while Shift key is pressed (with no magnestism)
+    assertEqualsDimensionLine(520, 122, 600, 298, 0, orderedDimensionLines.get(0));
+    // Release Shift key and mouse button
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);    
+    tester.actionMouseRelease();
+    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
+    
+    // 17. Click three times on undo button
+    frame.undoButton.doClick();
+    frame.undoButton.doClick();
+    frame.undoButton.doClick();
+    // Check home doesn't contain any dimension
+    assertEquals("Home dimensions set isn't empty", 0, frame.home.getDimensionLines().size());
+    
+    // 18. Click twice on redo button
+    frame.redoButton.doClick();
+    frame.redoButton.doClick();
+    // Check the size of the created dimension lines
+    assertEqualsDimensionLine(520, 122, 520, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
+    // Click again on redo button
+    frame.redoButton.doClick();
+    // Check the first dimension is selected
+    assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
+    assertEquals("Selection doesn't contain the first dimension", 
+        frame.home.getSelectedItems().get(0), orderedDimensionLines.get(0));
+    // Check the coordinates of the first dimension 
+    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
   }
 
   /**
@@ -279,6 +352,27 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         Math.abs(xEnd - wall.getXEnd()) < 1E-10);
     assertTrue("Incorrect Y end " + yEnd + " " + wall.getYEnd(), 
         Math.abs(yEnd - wall.getYEnd()) < 1E-10);
+  }
+  
+  /**
+   * Asserts the start point, the end point and the offset of 
+   * <code>dimensionLine</code> are at (<code>xStart</code>, <code>yStart</code>), 
+   * (<code>xEnd</code>, <code>yEnd</code>) and <code>offset</code>. 
+   */
+  private void assertEqualsDimensionLine(float xStart, float yStart, 
+                                         float xEnd, float yEnd,
+                                         float offset,
+                                         DimensionLine dimensionLine) {
+    assertTrue("Incorrect X start " + xStart + " " + dimensionLine.getXStart(), 
+        Math.abs(xStart - dimensionLine.getXStart()) < 1E-4);
+    assertTrue("Incorrect Y start " + yStart + " " + dimensionLine.getYStart(), 
+        Math.abs(yStart - dimensionLine.getYStart()) < 1E-4);
+    assertTrue("Incorrect X end " + xEnd + " " + dimensionLine.getXEnd(), 
+        Math.abs(xEnd - dimensionLine.getXEnd()) < 1E-4);
+    assertTrue("Incorrect Y end " + yEnd + " " + dimensionLine.getYEnd(), 
+        Math.abs(yEnd - dimensionLine.getYEnd()) < 1E-4);
+    assertTrue("Incorrect offset " + offset + " " + dimensionLine.getOffset(), 
+        Math.abs(offset - dimensionLine.getOffset()) < 1E-4);
   }
   
   /**
@@ -316,6 +410,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     private final HomeController homeController; 
     private final JToggleButton  selectButton;
     private final JToggleButton  createWallsButton;
+    private final JToggleButton  createDimensionsButton;
     private final JButton        addButton;
     private final JButton        undoButton;
     private final JButton        redoButton;
@@ -329,9 +424,11 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
       // Create buttons from HomePane actions map
       this.selectButton = new JToggleButton(actions.get(HomePane.ActionType.SELECT));
       this.createWallsButton = new JToggleButton(actions.get(HomePane.ActionType.CREATE_WALLS));
+      this.createDimensionsButton = new JToggleButton(actions.get(HomePane.ActionType.CREATE_DIMENSION_LINES));
       ButtonGroup group = new ButtonGroup();
       group.add(this.selectButton);
       group.add(this.createWallsButton);
+      group.add(this.createDimensionsButton);
       this.addButton = new JButton(actions.get(HomePane.ActionType.ADD_HOME_FURNITURE));
       this.undoButton = new JButton(actions.get(HomePane.ActionType.UNDO));
       this.redoButton = new JButton(actions.get(HomePane.ActionType.REDO));

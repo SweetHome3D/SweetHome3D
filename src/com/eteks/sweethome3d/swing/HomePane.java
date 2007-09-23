@@ -144,7 +144,7 @@ public class HomePane extends JRootPane {
         == PlanController.Mode.WALL_CREATION);
     this.createDimensionLinesToggleModel = new JToggleButton.ToggleButtonModel();
     this.createDimensionLinesToggleModel.setSelected(controller.getPlanController().getMode() 
-        == PlanController.Mode.DIMENSION_LINES_CREATION);
+        == PlanController.Mode.DIMENSION_LINE_CREATION);
     // Create unique toggle button models for top and observer cameras
     // so View from top and View from observer creation menu items and tool bar buttons 
     // always reflect the same toggle state at screen
@@ -262,7 +262,7 @@ public class HomePane extends JRootPane {
     createAction(ActionType.CREATE_WALLS, controller.getPlanController(), "setMode",
         PlanController.Mode.WALL_CREATION);
     createAction(ActionType.CREATE_DIMENSION_LINES, controller.getPlanController(), "setMode",
-        PlanController.Mode.DIMENSION_LINES_CREATION);
+        PlanController.Mode.DIMENSION_LINE_CREATION);
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
@@ -359,7 +359,7 @@ public class HomePane extends JRootPane {
             createWallsToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.WALL_CREATION);
             createDimensionLinesToggleModel.setSelected(planController.getMode() 
-                == PlanController.Mode.DIMENSION_LINES_CREATION);
+                == PlanController.Mode.DIMENSION_LINE_CREATION);
           }
         });
   }

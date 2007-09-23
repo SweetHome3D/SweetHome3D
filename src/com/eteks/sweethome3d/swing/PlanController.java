@@ -58,7 +58,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController {
   public enum Property {MODE}
   
-  public enum Mode {WALL_CREATION, SELECTION, DIMENSION_LINES_CREATION}
+  public enum Mode {WALL_CREATION, SELECTION, DIMENSION_LINE_CREATION}
   
   private JComponent            planView;
   private Home                  home;
@@ -1727,7 +1727,7 @@ public class PlanController {
         case WALL_CREATION :
           setState(getWallCreationState());
           break;
-        case DIMENSION_LINES_CREATION :
+        case DIMENSION_LINE_CREATION :
           setState(getDimensionLineCreationState());
           break;
       } 
@@ -2039,7 +2039,7 @@ public class PlanController {
           // Change state to SelectionState
           setState(getSelectionState());
           break;
-        case DIMENSION_LINES_CREATION :
+        case DIMENSION_LINE_CREATION :
           setState(getDimensionLineCreationState());
           break;
       } 
@@ -2113,7 +2113,7 @@ public class PlanController {
           escape();
           setState(getSelectionState());
           break;
-        case DIMENSION_LINES_CREATION :
+        case DIMENSION_LINE_CREATION :
           // Escape current creation and change state to DimensionLineCreationState
           escape();
           setState(getDimensionLineCreationState());
@@ -2844,7 +2844,7 @@ public class PlanController {
   private class DimensionLineCreationState extends ControllerState {
     @Override
     public Mode getMode() {
-      return Mode.DIMENSION_LINES_CREATION;
+      return Mode.DIMENSION_LINE_CREATION;
     }
 
     @Override
@@ -2896,7 +2896,7 @@ public class PlanController {
     
     @Override
     public Mode getMode() {
-      return Mode.DIMENSION_LINES_CREATION;
+      return Mode.DIMENSION_LINE_CREATION;
     }
     
     @Override
