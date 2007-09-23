@@ -1278,6 +1278,10 @@ public class HomeComponent3D extends JComponent implements Printable {
           piece.isModelMirrored() ^ piece.isBackFaceShown() 
               ? PolygonAttributes.CULL_FRONT 
               : PolygonAttributes.CULL_BACK);
+      // Flip normals if back faces of model are shown
+      if (piece.isBackFaceShown()) {
+        setBackFaceNormalFlip(getChild(0), true);
+      }
     }
 
     /**
@@ -1447,14 +1451,48 @@ public class HomeComponent3D extends JComponent implements Printable {
         }
         PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
         if (polygonAttributes == null) {
-          polygonAttributes = new PolygonAttributes();
-          polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+          polygonAttributes = createPolygonAttributesWithChangeCapabilities();
           appearance.setPolygonAttributes(polygonAttributes);
         }
         
         // Change cull face
         polygonAttributes.setCullFace(cullFace);
       }
+    }
+    
+    /**
+     * Sets whether all <code>Shape3D</code> children nodes of <code>node</code> should have 
+     * their normal flipped or not.
+     * @param backFaceNormalFlip <code>true</code> if normals should be flipped.
+     */
+    private void setBackFaceNormalFlip(Node node, boolean backFaceNormalFlip) {
+      if (node instanceof Group) {
+        // Set back face normal flip of all children
+        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          setBackFaceNormalFlip((Node)enumeration.nextElement(), backFaceNormalFlip);
+        }
+      } else if (node instanceof Shape3D) {
+        Appearance appearance = ((Shape3D)node).getAppearance();
+        if (appearance == null) {
+          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
+        }
+        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+        if (polygonAttributes == null) {
+          polygonAttributes = createPolygonAttributesWithChangeCapabilities();
+          appearance.setPolygonAttributes(polygonAttributes);
+        }
+        
+        // Change back face normal flip
+        polygonAttributes.setBackFaceNormalFlip(backFaceNormalFlip);
+      }
+    }
+
+    private PolygonAttributes createPolygonAttributesWithChangeCapabilities() {
+      PolygonAttributes polygonAttributes = new PolygonAttributes();
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
+      return polygonAttributes;
     }
 
     private Appearance createAppearanceWithChangeCapabilities() {

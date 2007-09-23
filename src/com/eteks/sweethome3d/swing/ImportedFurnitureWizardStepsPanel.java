@@ -1419,20 +1419,21 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         if (polygonAttributes == null) {
           polygonAttributes = new PolygonAttributes();
           polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+          polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
           appearance.setPolygonAttributes(polygonAttributes);
         }
       }
     }
     
     /**
-     * Sets the cull face of all <code>Shape3D</code> children nodes of displayed model.
+     * Sets the back face visibility of all <code>Shape3D</code> children nodes of displayed model.
      */
     protected void setBackFaceShown(boolean backFaceShown) {
       setBackFaceShown(this.sceneTree.getChild(0), backFaceShown);
     }
     
     /**
-     * Sets the cull face of all <code>Shape3D</code> children nodes of <code>node</code>.
+     * Sets the back face visibility of all <code>Shape3D</code> children nodes of <code>node</code>.
      */
     private void setBackFaceShown(Node node, boolean backFaceShown) {
       if (node instanceof Group) {
@@ -1448,6 +1449,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         polygonAttributes.setCullFace(backFaceShown 
             ? PolygonAttributes.CULL_FRONT
             : PolygonAttributes.CULL_BACK);
+        // Change back face normal flip
+        polygonAttributes.setBackFaceNormalFlip(backFaceShown);
       }
     }
 
