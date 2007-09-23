@@ -1504,7 +1504,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           }
         }
       }
-      // Seach piece of furniture points is at dimensionLineLocationFeeback abcissa or ordinate
+      // Seach which piece of furniture points is at dimensionLineLocationFeeback abcissa or ordinate
       for (HomePieceOfFurniture alignedFurniture : this.home.getFurniture()) {
         float [][] alignedPiecePoints = alignedFurniture.getPoints();
         for (int i = 0; i < alignedPiecePoints.length; i++) {
