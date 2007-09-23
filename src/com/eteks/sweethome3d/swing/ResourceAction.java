@@ -110,12 +110,12 @@ public class ResourceAction extends AbstractAction {
   }
   
   /**
-   * An action decorator for menu items.  
+   * An action decorator.  
    */
-  public static class MenuAction implements Action {
+  private static class AbstractDecoratedAction implements Action {
     private Action action;
 
-    public MenuAction(Action action) {
+    public AbstractDecoratedAction(Action action) {
       this.action = action;
     }
 
@@ -128,13 +128,6 @@ public class ResourceAction extends AbstractAction {
     }
 
     public Object getValue(String key) {
-      // Avoid mnemonics, tooltips and icons in Mac OS X menus
-      if (System.getProperty("os.name").startsWith("Mac OS X")
-          && (key.equals(MNEMONIC_KEY)
-              || key.equals(SMALL_ICON)
-              || key.equals(SHORT_DESCRIPTION))) {
-        return null;
-      }
       return this.action.getValue(key);
     }
 
@@ -152,6 +145,26 @@ public class ResourceAction extends AbstractAction {
 
     public void setEnabled(boolean enabled) {
       this.action.setEnabled(enabled);
+    }
+  }
+  
+  /**
+   * An action decorator for menu items.  
+   */
+  public static class MenuAction extends AbstractDecoratedAction {
+    public MenuAction(Action action) {
+      super(action);
+    }
+
+    public Object getValue(String key) {
+      // Avoid mnemonics, tooltips and icons in Mac OS X menus
+      if (System.getProperty("os.name").startsWith("Mac OS X")
+          && (key.equals(MNEMONIC_KEY)
+              || key.equals(SMALL_ICON)
+              || key.equals(SHORT_DESCRIPTION))) {
+        return null;
+      }
+      return super.getValue(key);
     }
   }
   
@@ -178,6 +191,23 @@ public class ResourceAction extends AbstractAction {
         // Avoid accelerators in Mac OS X popups
         return null;
       }
+      return super.getValue(key);
+    }
+  }
+
+  /**
+   * An action decorator for tool bar buttons.  
+   */
+  public static class ToolBarAction extends AbstractDecoratedAction {
+    public ToolBarAction(Action action) {
+      super(action);
+    }
+
+    public Object getValue(String key) {
+      // Ignore NAME in tool bar 
+      if (key.equals(NAME)) {        
+        return null;
+      } 
       return super.getValue(key);
     }
   }

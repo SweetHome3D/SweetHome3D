@@ -48,7 +48,6 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -133,6 +132,7 @@ public class HomePane extends JRootPane {
     this.contentManager = contentManager;
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
+    
     // Create unique toggle button models for Selection / Wall creation / Dimension line creation states
     // so Select, Create walls and Create Dimension lines menu items and tool bar buttons 
     // always reflect the same toggle state at screen
@@ -664,6 +664,13 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Returns an action decorated for tool bar buttons.
+   */
+  private Action getToolBarAction(ActionType actionType) {
+    return new ResourceAction.ToolBarAction(getActionMap().get(actionType));
+  }
+
+  /**
    * Returns a radio button menu item for Select action. 
    */
   private JRadioButtonMenuItem getSelectRadioButtonMenuItem(boolean popup) {
@@ -722,52 +729,45 @@ public class HomePane extends JRootPane {
    */
   private JToolBar getToolBar() {
     JToolBar toolBar = new JToolBar();
-    ActionMap actions = getActionMap();    
-    toolBar.add(actions.get(ActionType.NEW_HOME));
-    toolBar.add(actions.get(ActionType.OPEN));
-    toolBar.add(actions.get(ActionType.SAVE));
+    toolBar.add(getToolBarAction(ActionType.NEW_HOME));
+    toolBar.add(getToolBarAction(ActionType.OPEN));
+    toolBar.add(getToolBarAction(ActionType.SAVE));
     toolBar.addSeparator();
 
-    toolBar.add(actions.get(ActionType.UNDO));
-    toolBar.add(actions.get(ActionType.REDO));
+    toolBar.add(getToolBarAction(ActionType.UNDO));
+    toolBar.add(getToolBarAction(ActionType.REDO));
     toolBar.addSeparator();
     
-    toolBar.add(actions.get(ActionType.CUT));
-    toolBar.add(actions.get(ActionType.COPY));
-    toolBar.add(actions.get(ActionType.PASTE));
+    toolBar.add(getToolBarAction(ActionType.CUT));
+    toolBar.add(getToolBarAction(ActionType.COPY));
+    toolBar.add(getToolBarAction(ActionType.PASTE));
     toolBar.addSeparator();
     
-    toolBar.add(actions.get(ActionType.DELETE));
+    toolBar.add(getToolBarAction(ActionType.DELETE));
     toolBar.addSeparator();
 
-    toolBar.add(actions.get(ActionType.ADD_HOME_FURNITURE));
-    toolBar.add(actions.get(ActionType.IMPORT_FURNITURE));
-    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_TOP));
-    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
-    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_LEFT));
-    toolBar.add(actions.get(ActionType.ALIGN_FURNITURE_ON_RIGHT));
+    toolBar.add(getToolBarAction(ActionType.ADD_HOME_FURNITURE));
+    toolBar.add(getToolBarAction(ActionType.IMPORT_FURNITURE));
+    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_TOP));
+    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
+    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
+    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     toolBar.addSeparator();
    
     JToggleButton selectToggleButton = 
-        new JToggleButton(actions.get(ActionType.SELECT));
+        new JToggleButton(getToolBarAction(ActionType.SELECT));
     // Use the same model as Select menu item
     selectToggleButton.setModel(this.selectToggleModel);
-    // Don't display text with icon
-    selectToggleButton.setText("");
     toolBar.add(selectToggleButton);
     JToggleButton createWallsToggleButton = 
-        new JToggleButton(actions.get(ActionType.CREATE_WALLS));
+        new JToggleButton(getToolBarAction(ActionType.CREATE_WALLS));
     // Use the same model as Create walls menu item
     createWallsToggleButton.setModel(this.createWallsToggleModel);
-    // Don't display text with icon
-    createWallsToggleButton.setText("");
     toolBar.add(createWallsToggleButton);
     JToggleButton createDimensionLinesToggleButton = 
-        new JToggleButton(actions.get(ActionType.CREATE_DIMENSION_LINES));
+        new JToggleButton(getToolBarAction(ActionType.CREATE_DIMENSION_LINES));
     // Use the same model as Create dimensions menu item
     createDimensionLinesToggleButton.setModel(this.createDimensionLinesToggleModel);
-    // Don't display text with icon
-    createDimensionLinesToggleButton.setText("");
     toolBar.add(createDimensionLinesToggleButton);
     // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -776,11 +776,11 @@ public class HomePane extends JRootPane {
     group.add(createDimensionLinesToggleButton);
     toolBar.addSeparator();
     
-    toolBar.add(actions.get(ActionType.ZOOM_OUT));
-    toolBar.add(actions.get(ActionType.ZOOM_IN));
+    toolBar.add(getToolBarAction(ActionType.ZOOM_OUT));
+    toolBar.add(getToolBarAction(ActionType.ZOOM_IN));
     toolBar.addSeparator();
     
-    toolBar.add(actions.get(ActionType.HELP));
+    toolBar.add(getToolBarAction(ActionType.HELP));
     
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
