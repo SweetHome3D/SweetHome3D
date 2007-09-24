@@ -68,7 +68,6 @@ import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomeController;
-import com.eteks.sweethome3d.swing.HomePane;
 
 /**
  * Sweet Home 3D main class.
