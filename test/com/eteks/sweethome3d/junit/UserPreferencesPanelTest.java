@@ -48,6 +48,8 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setUnit(defaultPreferences.getUnit());
     preferences.setRulersVisible(
         defaultPreferences.isRulersVisible());
+    preferences.setGridVisible(
+        defaultPreferences.isGridVisible());
     preferences.setMagnetismEnabled(
         defaultPreferences.isMagnetismEnabled());
     preferences.setNewWallThickness(
