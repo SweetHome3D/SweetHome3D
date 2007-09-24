@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command :
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_1_0_1 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_1_1 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
