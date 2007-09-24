@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -31,11 +33,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
+import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
@@ -51,6 +55,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
+  private static final String LANGUAGE                  = "language";
   private static final String UNIT                      = "unit";
   private static final String MAGNETISM_ENABLED         = "magnetismEnabled";
   private static final String RULERS_VISIBLE            = "rulersVisible";
@@ -93,10 +98,11 @@ public class FileUserPreferences extends UserPreferences {
    * or from resource files.
    */
   public FileUserPreferences() {
-    DefaultUserPreferences defaultPreferences = 
-        new DefaultUserPreferences();
+    final Preferences preferences = getPreferences();
+    setLanguage(preferences.get(LANGUAGE, Locale.getDefault().getLanguage()));
     
-    Preferences preferences = getPreferences();
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    
     // Fill default furniture catalog 
     setCatalog(defaultPreferences.getCatalog());
     // Read additional furniture
@@ -121,6 +127,31 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     setRecentHomes(recentHomes);
+    
+    addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent evt) {
+          // Delete default pieces of current catalog          
+          Catalog catalog = getCatalog();
+          for (Category category : catalog.getCategories()) {
+            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+              if (!piece.isModifiable()) {
+                catalog.delete(piece);
+              }
+            }
+          }
+          // Read again default catalog with new default locale
+          Catalog defaultCatalog = new DefaultUserPreferences().getCatalog();
+          for (Category category : defaultCatalog.getCategories()) {
+            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+              try {
+                catalog.add(category, piece);
+              } catch (IllegalArgumentException ex) {
+                // Ignore pieces that have the same name as an existing piece
+              }
+            }
+          }
+        }
+      });
   }
 
   /**
@@ -150,12 +181,20 @@ public class FileUserPreferences extends UserPreferences {
       float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
 
-      getCatalog().add(new Category(category),
-          new CatalogPieceOfFurniture(name, icon, model,
-              width, depth, height, elevation, movable, doorOrWindow,
-              color, modelRotation, backFaceShown, iconYaw, proportional));
+      Category pieceCategory = new Category(category);
+      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
+          width, depth, height, elevation, movable, doorOrWindow,
+          color, modelRotation, backFaceShown, iconYaw, proportional);
+      try {        
+        getCatalog().add(pieceCategory, piece);
+      } catch (IllegalArgumentException ex) {
+        // If a piece with same name and category already exists in catalog
+        // replace the existing piece by the new one 
+        getCatalog().delete(piece);
+        getCatalog().add(pieceCategory, piece);
+      }
     }
-  }
+  }  
 
   /**
    * Returns model rotation parsed from key value.
@@ -200,8 +239,7 @@ public class FileUserPreferences extends UserPreferences {
     }
     return DUMMY_CONTENT;
   }
-
-
+  
   /**
    * Writes user preferences in current user preferences in system.
    */
@@ -212,6 +250,7 @@ public class FileUserPreferences extends UserPreferences {
     writeCatalog(preferences);
     
     // Write other preferences 
+    preferences.put(LANGUAGE, getLanguage());
     preferences.put(UNIT, getUnit().toString());   
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());

@@ -60,7 +60,6 @@ public class ImportedFurnitureWizardController extends WizardController {
   private CatalogPieceOfFurniture          piece;
   private UserPreferences                  preferences;
   private UndoableEditSupport              undoSupport;
-  private ResourceBundle                   resource;
   private PropertyChangeSupport            propertyChangeSupport;
 
   private ImportedFurnitureWizardStepState furnitureModelStepState;
@@ -146,12 +145,12 @@ public class ImportedFurnitureWizardController extends WizardController {
     this.piece = piece;
     this.preferences = preferences;
     this.undoSupport = undoSupport;
-    this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     // Create view
     this.stepsView = new ImportedFurnitureWizardStepsPanel(
         piece, modelName, home != null, preferences, contentManager, this);
-    setTitle(this.resource.getString(piece == null 
+    ResourceBundle resource = ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName());
+    setTitle(resource.getString(piece == null 
         ? "importFurnitureWizard.title" 
         : "modifyFurnitureWizard.title"));    
     // Initialize states
@@ -223,7 +222,8 @@ public class ImportedFurnitureWizardController extends WizardController {
         
         @Override
         public String getPresentationName() {
-          return resource.getString("undoImportFurnitureName");
+          return ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName()).
+              getString("undoImportFurnitureName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);

@@ -21,8 +21,10 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -129,6 +131,7 @@ public class PlanController {
     setState(this.selectionState);
     
     addHomeListeners();
+    addLanguageListener(preferences);
   }
 
   /**
@@ -465,6 +468,39 @@ public class PlanController {
       });
   }
 
+  /**
+   * Adds a property change listener to <code>preferences</code> to update
+   * resource bundle when preferred language changes.
+   */
+  private void addLanguageListener(UserPreferences preferences) {
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<PlanController> planController;
+
+    public LanguageChangeListener(PlanController helpPane) {
+      this.planController = new WeakReference<PlanController>(helpPane);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If plan controller was garbage collected, remove this listener from preferences
+      PlanController planController = this.planController.get();
+      if (planController == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        // Update resource from current default locale
+        planController.resource = ResourceBundle.getBundle(PlanController.class.getName());
+      }
+    }
+  }
+  
   /**
    * Returns a new wall instance between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>)
@@ -2067,8 +2103,14 @@ public class PlanController {
    * Wall modification state.  
    */
   private abstract class AbstractWallState extends ControllerState {
-    private String centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
-    private String inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
+    private String centimerWallLengthToolTipFeedback;
+    private String inchWallLengthToolTipFeedback;
+    
+    @Override
+    public void enter() {
+      this.centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
+      this.inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
+    }
     
     protected String getToolTipFeedbackText(Wall wall) {
       float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
@@ -2123,6 +2165,7 @@ public class PlanController {
 
     @Override
     public void enter() {
+      super.enter();
       this.oldSelection = home.getSelectedItems();
       this.xStart = getXLastMousePress();
       this.yStart = getYLastMousePress();
@@ -2297,6 +2340,7 @@ public class PlanController {
     
     @Override
     public void enter() {
+      super.enter();
       this.selectedWall = (Wall)home.getSelectedItems().get(0);
       this.startPoint = this.selectedWall 
           == getResizedWallStartAt(getXLastMousePress(), getYLastMousePress());
@@ -2380,7 +2424,7 @@ public class PlanController {
     private HomePieceOfFurniture selectedPiece;
     private float                angleMousePress;
     private float                oldAngle;
-    private String               rotationToolTipFeedback = resource.getString("rotationToolTipFeedback");
+    private String               rotationToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2389,6 +2433,7 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.rotationToolTipFeedback = resource.getString("rotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
@@ -2465,8 +2510,8 @@ public class PlanController {
     private float                deltaYToElevationVertex;
     private HomePieceOfFurniture selectedPiece;
     private float                oldElevation;
-    private String               centimerElevationToolTipFeedback = resource.getString("centimerElevationToolTipFeedback");
-    private String               inchElevationToolTipFeedback = resource.getString("inchElevationToolTipFeedback");
+    private String               centimerElevationToolTipFeedback;
+    private String               inchElevationToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2475,6 +2520,8 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.centimerElevationToolTipFeedback = resource.getString("centimerElevationToolTipFeedback");
+      this.inchElevationToolTipFeedback = resource.getString("inchElevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
       this.deltaYToElevationVertex = getYLastMousePress() - elevationPoint [1];
@@ -2539,8 +2586,8 @@ public class PlanController {
     private float                deltaYToResizeVertex;
     private HomePieceOfFurniture selectedPiece;
     private float                oldHeight;
-    private String               centimerResizeToolTipFeedback = resource.getString("centimerHeightResizeToolTipFeedback");
-    private String               inchResizeToolTipFeedback = resource.getString("inchHeightResizeToolTipFeedback");
+    private String               centimerResizeToolTipFeedback;
+    private String               inchResizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2549,6 +2596,8 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.centimerResizeToolTipFeedback = resource.getString("centimerHeightResizeToolTipFeedback");
+      this.inchResizeToolTipFeedback = resource.getString("inchHeightResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [3];
       this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
@@ -2621,8 +2670,8 @@ public class PlanController {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
-    private String               centimerResizeToolTipFeedback = resource.getString("centimerWidthAndDepthResizeToolTipFeedback");
-    private String               inchResizeToolTipFeedback = resource.getString("inchWidthAndDepthResizeToolTipFeedback");
+    private String               centimerResizeToolTipFeedback;
+    private String               inchResizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2631,6 +2680,8 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.centimerResizeToolTipFeedback = resource.getString("centimerWidthAndDepthResizeToolTipFeedback");
+      this.inchResizeToolTipFeedback = resource.getString("inchWidthAndDepthResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
@@ -2716,7 +2767,7 @@ public class PlanController {
     private ObserverCamera selectedCamera;
     private float          angleMousePress;
     private float          oldYaw;
-    private String         rotationToolTipFeedback = resource.getString("cameraYawRotationToolTipFeedback");
+    private String         rotationToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2725,6 +2776,7 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.rotationToolTipFeedback = resource.getString("cameraYawRotationToolTipFeedback");
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedCamera.getX()); 
@@ -2779,7 +2831,7 @@ public class PlanController {
   private class CameraPitchRotationState extends ControllerState {
     private ObserverCamera selectedCamera;
     private float          oldPitch;
-    private String         rotationToolTipFeedback = resource.getString("cameraPitchRotationToolTipFeedback");
+    private String         rotationToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2788,6 +2840,7 @@ public class PlanController {
     
     @Override
     public void enter() {
+      this.rotationToolTipFeedback = resource.getString("cameraPitchRotationToolTipFeedback");
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
       this.oldPitch = this.selectedCamera.getPitch();
       PlanComponent planView = (PlanComponent)getView();

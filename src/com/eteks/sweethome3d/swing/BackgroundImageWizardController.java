@@ -49,7 +49,6 @@ public class BackgroundImageWizardController extends WizardController {
   
   private Home                           home;
   private UndoableEditSupport            undoSupport;
-  private ResourceBundle                 resource;
   private PropertyChangeSupport          propertyChangeSupport;
 
   private BackgroundImageWizardStepState imageChoiceStepState;
@@ -72,12 +71,12 @@ public class BackgroundImageWizardController extends WizardController {
                                          UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource = ResourceBundle.getBundle(BackgroundImageWizardController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     // Create view
     this.stepsView = new BackgroundImageWizardStepsPanel(
         home.getBackgroundImage(), preferences, contentManager, this);
-    setTitle(this.resource.getString("wizard.title"));    
+    ResourceBundle resource = ResourceBundle.getBundle(BackgroundImageWizardController.class.getName());
+    setTitle(resource.getString("wizard.title"));    
     setResizable(true);
     // Initialize states
     this.imageChoiceStepState = new ImageChoiceStepState();
@@ -114,9 +113,10 @@ public class BackgroundImageWizardController extends WizardController {
       
       @Override
       public String getPresentationName() {
-        return resource.getString(oldImage == null 
-            ? "undoImportBackgroundImageName"
-            : "undoModifyBackgroundImageName");
+        return ResourceBundle.getBundle(BackgroundImageWizardController.class.getName()).
+          getString(oldImage == null 
+              ? "undoImportBackgroundImageName"
+              : "undoModifyBackgroundImageName");
       }
     };
     this.undoSupport.postEdit(undoableEdit);

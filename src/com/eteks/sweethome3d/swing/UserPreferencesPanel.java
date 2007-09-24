@@ -19,16 +19,21 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -46,6 +51,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class UserPreferencesPanel extends JPanel {
   private ResourceBundle resource;
+  private JLabel         languageLabel;
+  private JComboBox      languageComboBox;
   private JLabel         unitLabel;
   private JRadioButton   centimeterRadioButton;
   private JRadioButton   inchRadioButton;
@@ -77,6 +84,19 @@ public class UserPreferencesPanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents() {
+    this.languageLabel = new JLabel(this.resource.getString("languageLabel.text"));    
+    this.languageComboBox = new JComboBox(new String [] {"en", "fr", "pt"});
+    this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, 
+            Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          Locale locale = new Locale((String)value);
+          String displayedValue = locale.getDisplayLanguage(locale);
+          displayedValue = Character.toUpperCase(displayedValue.charAt(0)) + displayedValue.substring(1);
+          return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
+              cellHasFocus);
+        }
+      });
     this.unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
     this.centimeterRadioButton = new JRadioButton(
         this.resource.getString("centimeterRadioButton.text"), true);
@@ -112,6 +132,9 @@ public class UserPreferencesPanel extends JPanel {
    */
   private void setMnemonics() {
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      this.languageLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("languageLabel.mnemonic")).getKeyCode());
+      this.languageLabel.setLabelFor(this.languageComboBox);
       this.centimeterRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("centimeterRadioButton.mnemonic")).getKeyCode());
       this.inchRadioButton.setMnemonic(
@@ -136,50 +159,57 @@ public class UserPreferencesPanel extends JPanel {
    */
   private void layoutComponents() {
     Insets labelInsets = new Insets(0, 0, 5, 5);
-    add(this.unitLabel, new GridBagConstraints(
+    add(this.languageLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.centimeterRadioButton, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    add(this.languageComboBox, new GridBagConstraints(
+        1, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+
+    add(this.unitLabel, new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.centimeterRadioButton, new GridBagConstraints(
+        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.inchRadioButton, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     
     add(this.magnetismEnabledLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.magnetismCheckBox, new GridBagConstraints(
-        1, 1, 2, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    
-    add(this.rulersVisibleLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.rulersCheckBox, new GridBagConstraints(
+    add(this.magnetismCheckBox, new GridBagConstraints(
         1, 2, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
-    add(this.gridVisibleLabel, new GridBagConstraints(
+    add(this.rulersVisibleLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.gridCheckBox, new GridBagConstraints(
+    add(this.rulersCheckBox, new GridBagConstraints(
         1, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
-    add(this.newWallThicknessLabel, new GridBagConstraints(
+    add(this.gridVisibleLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.gridCheckBox, new GridBagConstraints(
+        1, 4, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    
+    add(this.newWallThicknessLabel, new GridBagConstraints(
+        0, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.newWallThicknessSpinner, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     
     add(this.newHomeWallHeightLabel, new GridBagConstraints(
-        0, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 6, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.newHomeWallHeightSpinner, new GridBagConstraints(
-        1, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 6, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
@@ -187,6 +217,7 @@ public class UserPreferencesPanel extends JPanel {
    * Sets components value from <code>preferences</code>.
    */
   public void setPreferences(UserPreferences preferences) {
+    this.languageComboBox.setSelectedItem(preferences.getLanguage());
     if (preferences.getUnit() == UserPreferences.Unit.INCH) {
       this.inchRadioButton.setSelected(true);
     } else {
@@ -212,6 +243,13 @@ public class UserPreferencesPanel extends JPanel {
     return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
+  }
+
+  /**
+   * Returns the chosen language in panel.
+   */
+  public String getLanguage() {
+    return (String)this.languageComboBox.getSelectedItem();
   }
 
   /**

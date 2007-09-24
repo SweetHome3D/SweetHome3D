@@ -139,7 +139,7 @@ public class HomeController  {
         home, preferences, undoSupport);
     this.homeController3D = new HomeController3D(
         home, preferences, this.undoSupport);
-    helpController = new HelpController();
+    helpController = new HelpController(preferences);
     
     this.homeView = new HomePane(home, preferences, contentManager, this);
     addListeners();
@@ -278,6 +278,7 @@ public class HomeController  {
     addHomeFurnitureListener();
     addHomeWallListener();
     addPlanControllerListener();
+    addLanguageListener();
   }
 
   /**
@@ -357,6 +358,47 @@ public class HomeController  {
     }
   }
 
+  /**
+   * Adds a property change listener to <code>preferences</code> to update
+   * undo and redo presentation names when preferred language changes.
+   */
+  private void addLanguageListener() {
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<HomeController> homeController;
+
+    public LanguageChangeListener(HomeController homeController) {
+      this.homeController = new WeakReference<HomeController>(homeController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomeController homeController = this.homeController.get();
+      if (homeController == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        homeController.resource = ResourceBundle.getBundle(
+            HomeController.class.getName());
+        // Update undo and redo name
+        ((HomePane)homeController.getView()).setUndoRedoName(
+            homeController.undoManager.canUndo() 
+                ? homeController.undoManager.getUndoPresentationName()
+                : null,
+            homeController.undoManager.canRedo() 
+                ? homeController.undoManager.getRedoPresentationName()
+                : null);
+      }
+    }
+  }
+  
   /**
    *  Adds a selection listener to home that enables / disables actions on selection.
    */
@@ -715,7 +757,7 @@ public class HomeController  {
    * Adds items to home and post a paste operation to undo support.
    */
   public void paste(final List<? extends Object> items) {
-    addItems(items, 20, 20, resource.getString("undoPasteName"));
+    addItems(items, 20, 20, "undoPasteName");
   }
 
   /**
@@ -725,14 +767,14 @@ public class HomeController  {
   public void drop(final List<? extends Object> items, float dx, float dy) {
     // Always use selection mode after a drop operation
     getPlanController().setMode(PlanController.Mode.SELECTION);
-    addItems(items, dx, dy, resource.getString("undoDropName"));
+    addItems(items, dx, dy, "undoDropName");
   }
 
   /**
    * Adds items to home.
    */
   private void addItems(final List<? extends Object> items, 
-                        float dx, float dy, final String presentationName) {
+                        float dx, float dy, final String presentationNameKey) {
     if (!items.isEmpty()) {
       // Start a compound edit that adds walls and furniture to home
       this.undoSupport.beginUpdate();
@@ -752,7 +794,7 @@ public class HomeController  {
   
           @Override
           public String getPresentationName() {
-            return presentationName;
+            return resource.getString(presentationNameKey);
           }      
         });
      
@@ -1101,6 +1143,7 @@ public class HomeController  {
     UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
     preferencesPanel.setPreferences(this.preferences);
     if (preferencesPanel.showDialog(getView())) {
+      this.preferences.setLanguage(preferencesPanel.getLanguage());
       this.preferences.setUnit(preferencesPanel.getUnit());
       this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
       this.preferences.setRulersVisible(preferencesPanel.isRulersVisible());

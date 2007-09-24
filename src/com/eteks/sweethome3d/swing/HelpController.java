@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,21 +29,22 @@ import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 
+import com.eteks.sweethome3d.model.UserPreferences;
+
 /**
  * A MVC controller for Sweet Home 3D help view.
  * @author Emmanuel Puybaret
  */
 public class HelpController {
-  private ResourceBundle resource;
   private List<URL>      history;
   private int            historyIndex;
   private JComponent     helpView;
   
-  public HelpController() {
-    this.resource = ResourceBundle.getBundle(HelpController.class.getName());
+  public HelpController(UserPreferences preferences) {
     this.history = new ArrayList<URL>();
     historyIndex = -1;
-    this.helpView = new HelpPane(this);
+    this.helpView = new HelpPane(preferences, this);
+    addLanguageListener(preferences);
   }
 
   /**
@@ -54,8 +58,45 @@ public class HelpController {
    * Displays the help view controlled by this controller. 
    */
   public void displayView() {
-    showPage(HelpController.class.getResource(this.resource.getString("helpIndex")));
+    showPage(HelpController.class.getResource(
+        ResourceBundle.getBundle(HelpController.class.getName()).getString("helpIndex")));
     ((HelpPane)getView()).displayView();
+  }
+  
+  /**
+   * Adds a property change listener to <code>preferences</code> to update
+   * displayed page when language changes.
+   */
+  private void addLanguageListener(UserPreferences preferences) {
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<HelpController> helpController;
+
+    public LanguageChangeListener(HelpController helpController) {
+      this.helpController = new WeakReference<HelpController>(helpController);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If help controller was garbage collected, remove this listener from preferences
+      HelpController helpController = this.helpController.get();
+      if (helpController == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        // Updates home page from current default locale
+        helpController.history.clear();
+        helpController.historyIndex = -1;
+        helpController.showPage(HelpController.class.getResource(
+            ResourceBundle.getBundle(HelpController.class.getName()).getString("helpIndex")));
+      }
+    }
   }
   
   /**

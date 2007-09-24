@@ -24,13 +24,14 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * User preferences.
  * @author Emmanuel Puybaret
  */
 public abstract class UserPreferences {
-  public enum Property {UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
+  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
   
   private PropertyChangeSupport propertyChangeSupport;
@@ -55,6 +56,7 @@ public abstract class UserPreferences {
   }
 
   private Catalog      catalog;
+  private String       language;
   private Unit         unit;
   private boolean      magnetismEnabled = true;
   private boolean      rulersVisible    = true;
@@ -107,6 +109,27 @@ public abstract class UserPreferences {
     return this.unit;
   }
   
+  /**
+   * Returns the preferred language to display information, noted with ISO 639 code. 
+   */
+  public String getLanguage() {
+    return this.language;
+  }
+
+  /**
+   * Sets the preferred language to display information, changes current default locale accordingly 
+   * and notifies listeners of this change.
+   */
+  public void setLanguage(String language) {
+    if (!language.equals(this.language)) {
+      String oldLanguage = this.language;
+      this.language = language;      
+      Locale.setDefault(new Locale(language, Locale.getDefault().getCountry()));
+      this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.toString(), 
+          oldLanguage, language);
+    }
+  }
+
   /**
    * Changes the unit currently in use, and notifies listeners of this change. 
    * @param unit one of the values of Unit.

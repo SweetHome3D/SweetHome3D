@@ -48,7 +48,6 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 public class FurnitureController {
   private Home                 home;
   private JComponent           furnitureView;
-  private ResourceBundle       resource;
   private UndoableEditSupport  undoSupport;
   private UserPreferences      preferences;
   private ContentManager       contentManager;
@@ -75,8 +74,6 @@ public class FurnitureController {
     this.undoSupport = undoSupport;
     this.preferences = preferences;
     this.contentManager = contentManager;
-    this.resource    = ResourceBundle.getBundle(
-        FurnitureController.class.getName());
     this.furnitureView = new FurnitureTable(home, preferences, this);
     
     // Add a selection listener that gets the lead selected piece in home
@@ -136,7 +133,8 @@ public class FurnitureController {
         
         @Override
         public String getPresentationName() {
-          return resource.getString("undoAddFurnitureName");
+          return ResourceBundle.getBundle(FurnitureController.class.getName()).
+              getString("undoAddFurnitureName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -192,7 +190,8 @@ public class FurnitureController {
         
         @Override
         public String getPresentationName() {
-          return resource.getString("undoDeleteSelectionName");
+          return ResourceBundle.getBundle(FurnitureController.class.getName()).
+              getString("undoDeleteSelectionName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -377,7 +376,8 @@ public class FurnitureController {
           
           @Override
           public String getPresentationName() {
-            return resource.getString("undoAlignName");
+            return ResourceBundle.getBundle(FurnitureController.class.getName()).
+                getString("undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -438,7 +438,8 @@ public class FurnitureController {
           
           @Override
           public String getPresentationName() {
-            return resource.getString("undoAlignName");
+            return ResourceBundle.getBundle(FurnitureController.class.getName()).
+                getString("undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -485,7 +486,8 @@ public class FurnitureController {
           
           @Override
           public String getPresentationName() {
-            return resource.getString("undoAlignName");
+            return ResourceBundle.getBundle(FurnitureController.class.getName()).
+                getString("undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -532,7 +534,8 @@ public class FurnitureController {
           
           @Override
           public String getPresentationName() {
-            return resource.getString("undoAlignName");
+            return ResourceBundle.getBundle(FurnitureController.class.getName()).
+                getString("undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);

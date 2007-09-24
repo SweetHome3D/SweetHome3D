@@ -39,8 +39,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
@@ -48,6 +51,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -88,24 +92,26 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomePane extends JRootPane {
   public enum ActionType {
-    NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
-    UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
-    ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
-    SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
-    SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
-    SORT_HOME_FURNITURE_BY_ANGLE, SORT_HOME_FURNITURE_BY_COLOR, 
-    SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
-    SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-    DISPLAY_HOME_FURNITURE_NAME, DISPLAY_HOME_FURNITURE_WIDTH, DISPLAY_HOME_FURNITURE_DEPTH, DISPLAY_HOME_FURNITURE_HEIGHT, 
-    DISPLAY_HOME_FURNITURE_X, DISPLAY_HOME_FURNITURE_Y, DISPLAY_HOME_FURNITURE_ELEVATION, 
-    DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
-    DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
-    ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-    SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, 
-    IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
-    VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
-    HELP, ABOUT}
+      NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
+      UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
+      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
+      SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
+      SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
+      SORT_HOME_FURNITURE_BY_ANGLE, SORT_HOME_FURNITURE_BY_COLOR, 
+      SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
+      SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
+      DISPLAY_HOME_FURNITURE_NAME, DISPLAY_HOME_FURNITURE_WIDTH, DISPLAY_HOME_FURNITURE_DEPTH, DISPLAY_HOME_FURNITURE_HEIGHT, 
+      DISPLAY_HOME_FURNITURE_X, DISPLAY_HOME_FURNITURE_Y, DISPLAY_HOME_FURNITURE_ELEVATION, 
+      DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
+      DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
+      ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
+      SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, 
+      IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
+      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
+      HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
+  private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
+    OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU}
   
   private ContentManager                  contentManager;
   private Home                            home;
@@ -122,6 +128,7 @@ public class HomePane extends JRootPane {
   private TransferHandler                 catalogTransferHandler;
   private TransferHandler                 furnitureTransferHandler;
   private TransferHandler                 planTransferHandler;
+  private ActionMap                       menuActionMap;
   
   /**
    * Creates this view associated with its controller.
@@ -157,8 +164,10 @@ public class HomePane extends JRootPane {
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
     
     createActions(controller);
+    createMenuActions(controller);
     createTransferHandlers(home, preferences, contentManager, controller);
     addHomeListener(home);
+    addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
     JMenuBar homeMenuBar = getHomeMenuBar(home, controller, contentManager);
     setJMenuBar(homeMenuBar);
@@ -317,6 +326,30 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Create the actions map used to create menus of this component.
+   */
+  private void createMenuActions(HomeController controller) {
+    this.menuActionMap = new ActionMap();
+    createMenuAction(MenuActionType.FILE_MENU);
+    createMenuAction(MenuActionType.EDIT_MENU);
+    createMenuAction(MenuActionType.FURNITURE_MENU);
+    createMenuAction(MenuActionType.PLAN_MENU);
+    createMenuAction(MenuActionType.VIEW_3D_MENU);
+    createMenuAction(MenuActionType.HELP_MENU);
+    createMenuAction(MenuActionType.OPEN_RECENT_HOME_MENU);
+    createMenuAction(MenuActionType.SORT_HOME_FURNITURE_MENU);
+    createMenuAction(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
+  }
+  
+  /**
+   * Creates a <code>ResourceAction</code> object stored in menu action map.
+   */
+  private void createMenuAction(MenuActionType action) {
+    this.menuActionMap.put(action, new ResourceAction(
+          this.resource, action.toString(), true));
+  }
+  
+  /**
    * Creates components transfer handlers.
    */
   private void createTransferHandlers(Home home, UserPreferences preferences,
@@ -347,6 +380,71 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Adds a property change listener to <code>preferences</code> to update
+   * actions when preferred language changes.
+   */
+  private void addLanguageListener(UserPreferences preferences) {
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane> homePane;
+
+    public LanguageChangeListener(HomePane homePane) {
+      this.homePane = new WeakReference<HomePane>(homePane);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomePane homePane = this.homePane.get();
+      if (homePane == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        homePane.setResourceLanguage((UserPreferences)ev.getSource());
+      }
+    }
+  }
+  
+  /**
+   * Sets the resource bundle from the preferred language, 
+   * and updates actions accordingly. 
+   */
+  private void setResourceLanguage(UserPreferences preferences) {
+    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
+    ActionMap actions = getActionMap();    
+    for (ActionType actionType : ActionType.values()) {
+      ((ResourceAction)actions.get(actionType)).setResource(resource);
+    }
+    for (MenuActionType menuActionType : MenuActionType.values()) {
+      ((ResourceAction)this.menuActionMap.get(menuActionType)).setResource(resource);
+    }
+    
+    // Read Swing localized properties because Swing doesn't update its internal strings automatically
+    // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
+    String [] swingResources = {"com.sun.swing.internal.plaf.basic.resources.basic",
+                                "com.sun.swing.internal.plaf.metal.resources.metal"};
+    for (String swingResource : swingResources) {
+      ResourceBundle resource;
+      try {
+        resource = ResourceBundle.getBundle(swingResource);
+      } catch (MissingResourceException ex) {
+        resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
+      }
+      // Update UIManager properties
+      for (Enumeration iter = resource.getKeys(); iter.hasMoreElements(); ) {
+        String property = (String)iter.nextElement();
+        UIManager.put(property, resource.getString(property));
+      }      
+    };
+  }
+
+  /**
    * Adds a property change listener to <code>planController</code> to update
    * Select and Create walls toggle models according to current mode.
    */
@@ -371,12 +469,12 @@ public class HomePane extends JRootPane {
                                   final HomeController controller,
                                   final ContentManager contentManager) {
     // Create File menu
-    JMenu fileMenu = new JMenu(new ResourceAction(this.resource, "FILE_MENU", true));
+    JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
     fileMenu.add(getMenuAction(ActionType.NEW_HOME));
     fileMenu.add(getMenuAction(ActionType.OPEN));
     
     final JMenu openRecentHomeMenu = 
-        new JMenu(new ResourceAction(this.resource, "OPEN_RECENT_HOME_MENU", true));
+        new JMenu(this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU));
     openRecentHomeMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
           updateOpenRecentHomeMenu(openRecentHomeMenu, controller, contentManager);
@@ -410,7 +508,7 @@ public class HomePane extends JRootPane {
     }
 
     // Create Edit menu
-    JMenu editMenu = new JMenu(new ResourceAction(this.resource, "EDIT_MENU", true));
+    JMenu editMenu = new JMenu(this.menuActionMap.get(MenuActionType.EDIT_MENU));
     editMenu.add(getMenuAction(ActionType.UNDO));
     editMenu.add(getMenuAction(ActionType.REDO));
     editMenu.addSeparator();
@@ -422,7 +520,7 @@ public class HomePane extends JRootPane {
     editMenu.add(getMenuAction(ActionType.SELECT_ALL));
 
     // Create Furniture menu
-    JMenu furnitureMenu = new JMenu(new ResourceAction(this.resource, "FURNITURE_MENU", true));
+    JMenu furnitureMenu = new JMenu(this.menuActionMap.get(MenuActionType.FURNITURE_MENU));
     furnitureMenu.add(getMenuAction(ActionType.ADD_HOME_FURNITURE));
     furnitureMenu.add(getMenuAction(ActionType.MODIFY_FURNITURE));
     furnitureMenu.addSeparator();
@@ -437,7 +535,7 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(getFurnitureDisplayPropertyMenu(home));
     
     // Create Plan menu
-    JMenu planMenu = new JMenu(new ResourceAction(this.resource, "PLAN_MENU", true));
+    JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
     JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(false);
     planMenu.add(selectRadioButtonMenuItem);
     JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(false);
@@ -474,7 +572,7 @@ public class HomePane extends JRootPane {
     planMenu.add(getMenuAction(ActionType.ZOOM_IN));
 
     // Create 3D Preview menu
-    JMenu preview3DMenu = new JMenu(new ResourceAction(this.resource, "VIEW_3D_MENU", true));
+    JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
     JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(false);
     preview3DMenu.add(viewFromTopRadioButtonMenuItem);
     JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = getViewFromObserverRadioButtonMenuItem(false);
@@ -487,7 +585,7 @@ public class HomePane extends JRootPane {
     preview3DMenu.add(getMenuAction(ActionType.MODIFY_3D_ATTRIBUTES));
     
     // Create Help menu
-    JMenu helpMenu = new JMenu(new ResourceAction(this.resource, "HELP_MENU", true));
+    JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
     helpMenu.add(getMenuAction(ActionType.HELP));      
     if (!System.getProperty("os.name").startsWith("Mac OS X")) {
       helpMenu.add(getMenuAction(ActionType.ABOUT));      
@@ -510,7 +608,7 @@ public class HomePane extends JRootPane {
    */
   private JMenu getFurnitureSortMenu(final Home home) {
     // Create Furniture Sort submenu
-    JMenu sortMenu = new JMenu(new ResourceAction(this.resource, "SORT_HOME_FURNITURE_MENU", true));
+    JMenu sortMenu = new JMenu(this.menuActionMap.get(MenuActionType.SORT_HOME_FURNITURE_MENU));
     // Map sort furniture properties to sort actions
     Map<HomePieceOfFurniture.SortableProperty, Action> sortActions = 
         new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
@@ -578,8 +676,8 @@ public class HomePane extends JRootPane {
    */
   private JMenu getFurnitureDisplayPropertyMenu(final Home home) {
     // Create Furniture Display property submenu
-    JMenu displayPropertyMenu = new JMenu(new ResourceAction(
-        this.resource, "DISPLAY_HOME_FURNITURE_PROPERTY_MENU", true));
+    JMenu displayPropertyMenu = new JMenu(
+        this.menuActionMap.get(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU));
     // Map displayProperty furniture properties to displayProperty actions
     Map<HomePieceOfFurniture.SortableProperty, Action> displayPropertyActions = 
         new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 

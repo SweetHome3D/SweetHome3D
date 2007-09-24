@@ -38,7 +38,6 @@ import com.eteks.sweethome3d.model.HomePrint;
 public class PageSetupController {
   private Home                home;
   private UndoableEditSupport undoSupport;
-  private ResourceBundle      resource;
   private JComponent          pageSetupView;
 
   /**
@@ -48,8 +47,6 @@ public class PageSetupController {
                              UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource    = ResourceBundle.getBundle(
-        PageSetupController.class.getName());
     this.pageSetupView = new PageSetupPanel(home, this); 
     ((PageSetupPanel)this.pageSetupView).displayView();
   }
@@ -83,7 +80,8 @@ public class PageSetupController {
       
       @Override
       public String getPresentationName() {
-        return resource.getString("undoSetupPageName");
+        return ResourceBundle.getBundle(PageSetupController.class.getName()).
+            getString("undoSetupPageName");
       }
     };
     this.undoSupport.postEdit(undoableEdit);

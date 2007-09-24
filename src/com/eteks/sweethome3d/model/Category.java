@@ -112,6 +112,8 @@ public class Category implements Comparable<Category> {
       throw new IllegalArgumentException(
           this.name + " doesn't contain piece " + piece.getName());
     }
+    //  Make a copy of the list to avoid conflicts in the list returned by getFurniture
+    this.furniture = new ArrayList<CatalogPieceOfFurniture>(this.furniture);
     this.furniture.remove(pieceIndex);
   }
   

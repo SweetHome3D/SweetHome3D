@@ -23,7 +23,10 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -43,6 +46,8 @@ import javax.swing.KeyStroke;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
+import com.eteks.sweethome3d.model.UserPreferences;
+
 /**
  * A pane displaying Sweet Home 3D help.
  * @author Emmanuel Puybaret
@@ -50,16 +55,15 @@ import javax.swing.event.HyperlinkListener;
 public class HelpPane extends JRootPane {
   private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, CLOSE}
 
-  private ResourceBundle resource;
   private JFrame         frame;
   private JToolBar       toolBar;
   private JEditorPane    helpEditorPane;
   
-  public HelpPane(HelpController controller) {
-    this.resource = ResourceBundle.getBundle(HelpPane.class.getName());
+  public HelpPane(UserPreferences preferences, HelpController controller) {
     createActions(controller);
     createComponents();
     layoutComponents();
+    addLanguageListener(preferences);
     if (controller != null) {
       addHyperlinkListener(controller);
       installKeyboardActions();
@@ -70,17 +74,18 @@ public class HelpPane extends JRootPane {
    * Creates actions bound to <code>controller</code>.
    */
   private void createActions(final HelpController controller) {
+    ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());    
     ActionMap actions = getActionMap();    
     try {
       actions.put(ActionType.SHOW_PREVIOUS, new ControllerAction(
-          this.resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious"));
+          resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious"));
       actions.put(ActionType.SHOW_NEXT, new ControllerAction(
-          this.resource, ActionType.SHOW_NEXT.toString(), controller, "showNext"));
+          resource, ActionType.SHOW_NEXT.toString(), controller, "showNext"));
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
     actions.put(ActionType.CLOSE, new ResourceAction(
-            this.resource, ActionType.CLOSE.toString(), true) {
+            resource, ActionType.CLOSE.toString(), true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           frame.setVisible(false);
@@ -88,6 +93,47 @@ public class HelpPane extends JRootPane {
       });
   }
 
+  /**
+   * Adds a property change listener to <code>preferences</code> to update
+   * actions when preferred language changes.
+   */
+  private void addLanguageListener(UserPreferences preferences) {
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this));
+  }
+
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<HelpPane> helpPane;
+
+    public LanguageChangeListener(HelpPane helpPane) {
+      this.helpPane = new WeakReference<HelpPane>(helpPane);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If help pane was garbage collected, remove this listener from preferences
+      HelpPane helpPane = this.helpPane.get();
+      if (helpPane == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        // Update actions from current default locale
+        ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
+        ActionMap actions = helpPane.getActionMap();    
+        for (ActionType actionType : ActionType.values()) {
+          ((ResourceAction)actions.get(actionType)).setResource(resource);
+        }
+        // Update frame title
+        if (helpPane.frame != null) {
+          helpPane.frame.setTitle(resource.getString("helpFrame.title"));
+        }
+      }
+    }
+  }
+  
   /**
    * Creates the components diaplayed by this view.
    */
@@ -160,7 +206,8 @@ public class HelpPane extends JRootPane {
       // Update frame image ans title 
       this.frame.setIconImage(new ImageIcon(
           HelpPane.class.getResource("resources/helpFrameIcon.gif")).getImage());
-      this.frame.setTitle(this.resource.getString("helpFrame.title"));
+      this.frame.setTitle(ResourceBundle.getBundle(HelpPane.class.getName()).
+          getString("helpFrame.title"));
       // Compute frame size and location
       computeFrameBounds(this.frame);
       // Just hide help frame when user close it

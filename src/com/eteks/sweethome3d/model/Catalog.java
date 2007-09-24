@@ -110,6 +110,7 @@ public abstract class Catalog {
     int index = this.categories.indexOf(category);
     // If category doesn't exist yet, add it to catagories
     if (index == -1) {
+      category = new Category(category.getName());
       add(category);
     } else {
       category = this.categories.get(index);
@@ -139,6 +140,8 @@ public abstract class Catalog {
         category.delete(piece);
         
         if (category.getFurniture().size() == 0) {
+          //  Make a copy of the list to avoid conflicts in the list returned by getCategories
+          this.categories = new ArrayList<Category>(this.categories);
           this.categories.remove(category);
           this.sorted = false;
         }

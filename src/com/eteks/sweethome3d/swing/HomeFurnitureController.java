@@ -40,7 +40,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class HomeFurnitureController {
   private Home                home;
   private UndoableEditSupport undoSupport;
-  private ResourceBundle      resource;
   private JComponent          homeFurnitureView;
 
   /**
@@ -51,8 +50,6 @@ public class HomeFurnitureController {
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource    = ResourceBundle.getBundle(
-        HomeFurnitureController.class.getName());
     this.homeFurnitureView = new HomeFurniturePanel(home, preferences, this); 
     ((HomeFurniturePanel)this.homeFurnitureView).displayView();
   }
@@ -113,7 +110,8 @@ public class HomeFurnitureController {
           
           @Override
           public String getPresentationName() {
-            return resource.getString("undoModifyFurnitureName");
+            return ResourceBundle.getBundle(HomeFurnitureController.class.getName()).
+                getString("undoModifyFurnitureName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);

@@ -40,7 +40,6 @@ import com.eteks.sweethome3d.model.Wall;
 public class WallController {
   private Home                home;
   private UndoableEditSupport undoSupport;
-  private ResourceBundle      resource;
   private JComponent          wallView;
 
   /**
@@ -51,8 +50,6 @@ public class WallController {
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource    = ResourceBundle.getBundle(
-        WallController.class.getName());
     this.wallView = new WallPanel(home, preferences, this); 
     ((WallPanel)this.wallView).displayView();
   }
@@ -110,7 +107,8 @@ public class WallController {
         
         @Override
         public String getPresentationName() {
-          return resource.getString("undoModifyWallsName");
+          return ResourceBundle.getBundle(WallController.class.getName()).
+              getString("undoModifyWallsName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);

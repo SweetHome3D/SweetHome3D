@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.io;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.RecorderException;
@@ -39,6 +40,7 @@ public class DefaultUserPreferences extends UserPreferences {
     // Read other preferences from resource bundle
     ResourceBundle resource = 
       ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
+    setLanguage(Locale.getDefault().getLanguage());
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));

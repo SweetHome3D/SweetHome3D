@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -28,6 +29,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
+import javax.swing.event.SwingPropertyChangeSupport;
 
 /**
  * An action with properties read from a resource bundle file.
@@ -35,6 +37,8 @@ import javax.swing.KeyStroke;
  */
 public class ResourceAction extends AbstractAction {
   public static final String POPUP = "Popup";
+  
+  private String actionPrefix;
   
   /**
    * Creates a disabled action with properties retrieved from a resource bundle 
@@ -54,6 +58,22 @@ public class ResourceAction extends AbstractAction {
    * @param enabled <code>true</code> if the action should be enabled at creation.
    */
   public ResourceAction(ResourceBundle resource, String actionPrefix, boolean enabled) {
+    this.actionPrefix = actionPrefix;
+    readActionProperties(resource, actionPrefix);    
+    setEnabled(enabled);
+  }
+    
+  /**
+   * Changes the resource from which properties action are read.
+   */
+  public void setResource(ResourceBundle resource) {
+    readActionProperties(resource, this.actionPrefix);
+  }
+
+  /**
+   * Reads from <code>resource</code> bundle the properties of this action.
+   */
+  private void readActionProperties(ResourceBundle resource, String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
     putValue(NAME, getOptionalString(resource, propertyPrefix + NAME));
     putValue(DEFAULT, getValue(NAME));
@@ -85,8 +105,6 @@ public class ResourceAction extends AbstractAction {
     if (mnemonicKey != null) {
       putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
-    
-    setEnabled(enabled);
   }
 
   /**
@@ -114,36 +132,54 @@ public class ResourceAction extends AbstractAction {
    */
   private static class AbstractDecoratedAction implements Action {
     private Action action;
+    private SwingPropertyChangeSupport propertyChangeSupport;
 
     public AbstractDecoratedAction(Action action) {
       this.action = action;
+      this.propertyChangeSupport = new SwingPropertyChangeSupport(this);
+      action.addPropertyChangeListener(new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            String propertyName = ev.getPropertyName();
+            if ("enabled".equals(propertyName)) {
+              propertyChangeSupport.firePropertyChange(ev);
+            } else {
+              Object newValue = getValue(propertyName);
+              // In case a property value changes, fire the new value decorated in subclasses
+              // unless new value is null (most Swing listeners don't check new value is null !)
+              if (newValue != null) {
+                propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                    propertyName, ev.getOldValue(), newValue));
+              }
+            }
+          }
+        });
     }
 
-    public void actionPerformed(ActionEvent ev) {
+    public final void actionPerformed(ActionEvent ev) {
       this.action.actionPerformed(ev);
     }
 
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-      this.action.addPropertyChangeListener(listener);
+    public final void addPropertyChangeListener(PropertyChangeListener listener) {
+      this.propertyChangeSupport.addPropertyChangeListener(listener);
     }
 
     public Object getValue(String key) {
       return this.action.getValue(key);
     }
 
-    public boolean isEnabled() {
+    public final boolean isEnabled() {
       return this.action.isEnabled();
     }
 
-    public void putValue(String key, Object value) {
+    public final void putValue(String key, Object value) {
       this.action.putValue(key, value);
     }
 
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-      this.action.removePropertyChangeListener(listener);
+    public final void removePropertyChangeListener(PropertyChangeListener listener) {
+      this.propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
-    public void setEnabled(boolean enabled) {
+    public final void setEnabled(boolean enabled) {
       this.action.setEnabled(enabled);
     }
   }

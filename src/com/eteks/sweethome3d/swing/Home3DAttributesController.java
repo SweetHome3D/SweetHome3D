@@ -39,7 +39,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class Home3DAttributesController {
   private Home                home;
   private UndoableEditSupport undoSupport;
-  private ResourceBundle      resource;
   private JComponent          wallView;
 
   /**
@@ -50,8 +49,6 @@ public class Home3DAttributesController {
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.resource    = ResourceBundle.getBundle(
-        Home3DAttributesController.class.getName());
     this.wallView = new Home3DAttributesPanel(home, preferences, this); 
     ((Home3DAttributesPanel)this.wallView).displayView();
   }
@@ -103,7 +100,8 @@ public class Home3DAttributesController {
         
         @Override
         public String getPresentationName() {
-          return resource.getString("undoModify3DAttributes");
+          return ResourceBundle.getBundle(Home3DAttributesController.class.getName()).
+              getString("undoModify3DAttributes");
         }
       };
       this.undoSupport.postEdit(undoableEdit);

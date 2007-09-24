@@ -34,6 +34,7 @@ import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -204,21 +205,23 @@ public class FurnitureTable extends JTable implements Printable {
 
   /**
    * Adds a listener to <code>preferences</code> to repaint this table
-   * when unit changes.  
+   * and its header when unit or language changes.  
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
     preferences.addPropertyChangeListener(
-        UserPreferences.Property.UNIT, new UnitChangeListener(this));
+        UserPreferences.Property.UNIT, new PreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(
+        UserPreferences.Property.LANGUAGE, new PreferencesChangeListener(this));
   }
 
   /**
    * Preferences property listener bound to this table with a weak reference to avoid
    * strong link between preferences and this table.  
    */
-  private static class UnitChangeListener implements PropertyChangeListener {
+  private static class PreferencesChangeListener implements PropertyChangeListener {
     private WeakReference<FurnitureTable>  furnitureTable;
 
-    public UnitChangeListener(FurnitureTable furnitureTable) {
+    public PreferencesChangeListener(FurnitureTable furnitureTable) {
       this.furnitureTable = new WeakReference<FurnitureTable>(furnitureTable);
     }
     
@@ -230,6 +233,7 @@ public class FurnitureTable extends JTable implements Printable {
             UserPreferences.Property.UNIT, this);
       } else {
         furnitureTable.repaint();
+        furnitureTable.getTableHeader().repaint();
       }
     }
   }
@@ -414,6 +418,7 @@ public class FurnitureTable extends JTable implements Printable {
     public FurnitureTableColumnModel(Home home, UserPreferences preferences) {
       createAvailableColumns(home, preferences);
       addHomeListener(home);
+      addLanguageListener(preferences);
       updateModelColumns(home.getFurnitureVisibleProperties());
     }
 
@@ -447,6 +452,45 @@ public class FurnitureTable extends JTable implements Printable {
           });
     }
 
+    /**
+     * Adds a property change listener to <code>preferences</code> to update
+     * column names when preferred language changes.
+     */
+    private void addLanguageListener(UserPreferences preferences) {
+      preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+          new LanguageChangeListener(this));
+    }
+
+    /**
+     * Preferences property listener bound to this component with a weak reference to avoid
+     * strong link between preferences and this component.  
+     */
+    private static class LanguageChangeListener implements PropertyChangeListener {
+      private WeakReference<FurnitureTableColumnModel> furnitureTableColumnModel;
+
+      public LanguageChangeListener(FurnitureTableColumnModel furnitureTable) {
+        this.furnitureTableColumnModel = new WeakReference<FurnitureTableColumnModel>(furnitureTable);
+      }
+      
+      public void propertyChange(PropertyChangeEvent ev) {
+        // If furniture table column model was garbage collected, remove this listener from preferences
+        FurnitureTableColumnModel furnitureTableColumnModel = this.furnitureTableColumnModel.get();
+        if (furnitureTableColumnModel == null) {
+          ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+              UserPreferences.Property.LANGUAGE, this);
+        } else {          
+          // Change column name and renderer from current locale
+          for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
+            tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(
+                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier()));
+            tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(
+                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier(),
+                (UserPreferences)ev.getSource()));
+          }
+        }
+      }
+    }
+    
     /**
      * Updates displayed columns list from furniture visible properties. 
      */
@@ -572,19 +616,18 @@ public class FurnitureTable extends JTable implements Printable {
     private TableCellRenderer getSizeRenderer(HomePieceOfFurniture.SortableProperty property,
                                               final UserPreferences preferences) {
       // Renderer super class used to display sizes
-      class SizeRenderer implements TableCellRenderer {
-        private TableCellRenderer floatRenderer;
-
+      class SizeRenderer extends DefaultTableCellRenderer {
+        private NumberFormat format = NumberFormat.getNumberInstance();
+        
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          if (this.floatRenderer == null) {
-            this.floatRenderer = table.getDefaultRenderer(Float.class);
-          }
           if (preferences.getUnit() == INCH) {
             value = centimeterToInch((Float)value);
-          }        
-          return this.floatRenderer.getTableCellRendererComponent(
+          }
+          value = format.format(value);
+          setHorizontalAlignment(JLabel.RIGHT);
+          return super.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);
         }
       };
