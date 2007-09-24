@@ -248,8 +248,6 @@ public class SweetHome3D extends HomeApplication {
     try {
       // Apply current system look and feel
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-      // Set Swing resource bundle for missing locale
-      UIManager.getDefaults().addResourceBundle("com.eteks.sweethome3d.SwingDefaults");
     } catch (Exception e) {
       // Too bad keep current look and feel
     }
