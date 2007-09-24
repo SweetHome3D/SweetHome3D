@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.Action;
@@ -70,9 +69,9 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class ImportedFurnitureWizardTest extends ComponentTestFixture {
   public void testImportFurnitureWizard() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
-    Locale.setDefault(Locale.FRANCE);
     final UserPreferences preferences = new FileUserPreferences();
-    // Ensure we use centimeter unit
+    // Ensure we use English and centimeter unit
+    preferences.setLanguage("fr");
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     final URL testedModelName = ImportedFurnitureWizardTest.class.getResource("resources/test.obj");
     // Create a dummy content manager
@@ -232,10 +231,11 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Check next button is disabled because imported furniture has a wrong name
     assertFalse("Next button isn't disabled", nextFinishOptionButton.isEnabled());
     // Rename furniture and its category 
-    final String testName = "#@" + System.currentTimeMillis() + "@#";
-    nameTextField.setText(testName);    
+    final String pieceTestName = "#@" + System.currentTimeMillis() + "@#";
+    nameTextField.setText(pieceTestName);    
+    final String categoryTestName = "sdfghjkl";
     categoryComboBox.getEditor().selectAll();
-    tester.actionKeyString(categoryComboBox.getEditor().getEditorComponent(), testName);    
+    tester.actionKeyString(categoryComboBox.getEditor().getEditorComponent(), categoryTestName);    
     // Check next button is enabled again
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
     
@@ -304,8 +304,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         preferences.getCatalog().getSelectedFurniture();
     assertEquals("Wrong selected furniture count in catalog", 1, selectedCatalogFurniture.size());
     CatalogPieceOfFurniture catalogPiece = selectedCatalogFurniture.get(0);
-    assertEquals("Wrong catalog piece name", testName, catalogPiece.getName());
-    assertEquals("Wrong catalog piece category name", testName, catalogPiece.getCategory().getName());
+    assertEquals("Wrong catalog piece name", pieceTestName, catalogPiece.getName());
+    assertEquals("Wrong catalog piece category name", categoryTestName, catalogPiece.getCategory().getName());
     assertTrue("Catalog doesn't contain new piece", 
         preferences.getCatalog().getCategories().contains(catalogPiece.getCategory()));
     assertEpsilonEquals("width", newWidth, catalogPiece.getWidth());
@@ -321,7 +321,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     List<Object> homeSelectedItems = home.getSelectedItems();
     assertEquals("Wrong selected furniture count in home", 1, homeSelectedItems.size());
     HomePieceOfFurniture homePiece = (HomePieceOfFurniture)homeSelectedItems.get(0);
-    assertEquals("Wrong home piece name", testName, homePiece.getName());
+    assertEquals("Wrong home piece name", pieceTestName, homePiece.getName());
     
     // 11. Transfer focus to catalog view with TAB keys
     tester.actionKeyStroke(KeyEvent.VK_TAB);
