@@ -211,12 +211,12 @@ public class PrintTest extends ComponentTestFixture {
             }
           });
     assertTrue("Print to pdf dialog not showing", printToPdfDialog.isShowing());
+    String pdfFileBase = "test";
     // Change file in print to PDF file chooser 
-    File pdfFile = new File("test.pdf");
     if (printToPdfDialog instanceof FileDialog) {
       final FileDialogTester fileDialogTester = new FileDialogTester();
       fileDialogTester.actionSetDirectory(printToPdfDialog, System.getProperty("user.dir"));
-      fileDialogTester.actionSetFile(printToPdfDialog, pdfFile.getName());
+      fileDialogTester.actionSetFile(printToPdfDialog, pdfFileBase);
       tester.invokeAndWait(new Runnable() {
           public void run() {
             // Select Ok option to hide dialog box in Event Dispatch Thread
@@ -228,13 +228,14 @@ public class PrintTest extends ComponentTestFixture {
       final JFileChooser fileChooser = (JFileChooser)new BasicFinder().find(printToPdfDialog, 
           new ClassMatcher(JFileChooser.class));
       fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
-      fileChooserTester.actionSetFilename(fileChooser, pdfFile.getName());
+      fileChooserTester.actionSetFilename(fileChooser, pdfFileBase);
       // Select Ok option to hide dialog box in Event Dispatch Thread
       fileChooserTester.actionApprove(fileChooser);
     }
     assertFalse("Print to pdf dialog still showing", printPreviewDialog.isShowing());
     // Wait PDF generation  
     Thread.sleep(1000);
+    File pdfFile = new File(pdfFileBase + ".pdf");
     assertTrue("PDF file doesn't exist", pdfFile.exists());
     assertTrue("PDF file is empty", pdfFile.length() > 0);
     pdfFile.delete();
