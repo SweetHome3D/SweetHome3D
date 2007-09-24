@@ -211,7 +211,7 @@ public class PrintTest extends ComponentTestFixture {
             }
           });
     assertTrue("Print to pdf dialog not showing", printToPdfDialog.isShowing());
-    String pdfFileBase = "test";
+    String pdfFileBase = "testsdfghjk";
     // Change file in print to PDF file chooser 
     if (printToPdfDialog instanceof FileDialog) {
       final FileDialogTester fileDialogTester = new FileDialogTester();
