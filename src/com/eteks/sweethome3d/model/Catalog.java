@@ -131,8 +131,9 @@ public abstract class Catalog {
    * @param piece a piece of furniture in that category.
    */
   public void delete(CatalogPieceOfFurniture piece) {
+    Category category = piece.getCategory();
     // Remove piece from its category
-    for (Category category : this.categories) {
+    if (category != null) {
       int pieceIndex = Collections.binarySearch(category.getFurniture(), piece);
       if (pieceIndex >= 0) {
         // Ensure selectedFurniture don't keep a reference to piece
@@ -149,7 +150,7 @@ public abstract class Catalog {
         firePieceOfFurnitureChanged(piece, pieceIndex, FurnitureEvent.Type.DELETE);
         return;
       }
-    }  
+    }
 
     throw new IllegalArgumentException(
         "catalog doesn't contain piece " + piece.getName());
