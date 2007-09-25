@@ -197,7 +197,7 @@ public class CatalogTree extends JTree {
       // Initialize fonts if not done
       if (this.defaultFont == null) {
         this.defaultFont = label.getFont();
-        this.modifiablePieceFont = new Font(this.defaultFont.getFamily(), Font.ITALIC, this.defaultFont.getSize());
+        this.modifiablePieceFont = this.defaultFont.deriveFont(Font.ITALIC);
         
       }
       // If node is a category, change label text
