@@ -144,7 +144,6 @@ public abstract class Catalog {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
           this.categories = new ArrayList<Category>(this.categories);
           this.categories.remove(category);
-          this.sorted = false;
         }
         
         firePieceOfFurnitureChanged(piece, pieceIndex, FurnitureEvent.Type.DELETE);

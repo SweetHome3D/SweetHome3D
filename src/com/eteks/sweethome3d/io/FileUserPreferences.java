@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -189,8 +190,13 @@ public class FileUserPreferences extends UserPreferences {
         getCatalog().add(pieceCategory, piece);
       } catch (IllegalArgumentException ex) {
         // If a piece with same name and category already exists in catalog
-        // replace the existing piece by the new one 
-        getCatalog().delete(piece);
+        // replace the existing piece by the new one
+        List<Category> categories = getCatalog().getCategories();
+        int categoryIndex = Collections.binarySearch(categories, pieceCategory);
+        List<CatalogPieceOfFurniture> furniture = categories.get(categoryIndex).getFurniture();
+        int existingPieceIndex = Collections.binarySearch(furniture, piece);        
+        getCatalog().delete(furniture.get(existingPieceIndex));
+        
         getCatalog().add(pieceCategory, piece);
       }
     }
