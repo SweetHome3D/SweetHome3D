@@ -1,4 +1,4 @@
-The following additional provisions apply to libtest/profile.jar third party software
+The following additional provisions apply to JIP profile.jar third party software
 included as part of this product.
 
 

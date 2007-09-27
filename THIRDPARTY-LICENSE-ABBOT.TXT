@@ -1,4 +1,4 @@
-The following additional provisions apply to libtest/abbot.jar third party software
+The following additional provisions apply to abbot.jar third party software
 included as part of this product.
 
 

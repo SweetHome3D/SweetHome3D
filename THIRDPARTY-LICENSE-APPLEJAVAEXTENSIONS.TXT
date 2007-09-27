@@ -1,4 +1,4 @@
-The following additional provisions apply to libtest/AppleJavaExtensions.jar third party software
+The following additional provisions apply to AppleJavaExtensions.jar third party software
 included as part of this product.
 
 

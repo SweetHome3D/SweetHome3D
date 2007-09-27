@@ -1,4 +1,4 @@
-The following additional provisions apply to lib/itext-2.0.4.jar third party software
+The following additional provisions apply to itext-2.0.4.jar third party software
 included as part of this product.
 
 

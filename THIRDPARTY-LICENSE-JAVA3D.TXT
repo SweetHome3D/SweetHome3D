@@ -1,11 +1,9 @@
-The following additional provisions apply to third party software following files 
-included as part of this product :
-- lib/j3dcore.jar 
-- lib/j3dutils.jar
-- lib/vecmath.jar
-- lib/linux/i386/ files
-- lib/windows/ files 
-- lib/macosx/ files
+The following additional provisions apply to Java 3D third party software 
+files included as part of this product :
+- j3dcore.jar 
+- j3dutils.jar
+- vecmath.jar
+- Java 3D DLLs (libj3d*.so, j3d*.dll and/or lib*.jnilib)
 
 
 JAVA DISTRIBUTION LICENSE (VER. 1.0)
