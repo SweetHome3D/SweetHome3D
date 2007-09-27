@@ -2,7 +2,7 @@ The following additional provisions apply to libtest/jdom.jar third party softwa
 included as part of this product.
 
 
- $Id: THIRDPARTY-LICENSE-JDOM.txt,v 1.1 2007-09-27 07:55:01 puybaret Exp $
+ $Id: THIRDPARTY-LICENSE-JDOM.TXT,v 1.1 2007-09-27 07:58:56 puybaret Exp $
 
  Copyright (C) 2000-2004 Jason Hunter & Brett McLaughlin.
  All rights reserved.
