@@ -126,6 +126,15 @@
         <include name="*.dll"/>
       </fileset>
     </copy>
+    <!-- Copy COPYING.TXT and licenses texts to install/windows/tmp/ -->
+    <copy file="COPYING.TXT" todir="install/windows/tmp"/>
+    <copy file="LICENSE.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/tmp" />
   
     <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
@@ -228,8 +237,11 @@
         <include name="vecmath.jar"/>
       </fileset>
     </copy>
-    <!-- Copy COPYING.TXT to install/macosx/SweetHome3D-1.1/ -->
+    <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-1.1/ -->
     <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.1"/>
+    <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/macosx/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-1.1" />
  
     <!-- Create install/SweetHome3D-1.1-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-1.1-macosx.dmg"/>
@@ -262,7 +274,12 @@
       </fileset>
     </copy>
     <copy file="COPYING.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
-      
+    <copy file="LICENSE.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/linux/i386/SweetHome3D-1.1" />
+  	
     <!-- Copy JRE to install/linux/i386/SweetHome3D-1.1/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/i386/SweetHome3D-1.1/jre1.6.0_02">
