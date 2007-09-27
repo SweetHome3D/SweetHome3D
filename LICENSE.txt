@@ -1,0 +1,16 @@
+This software is licensed by eTeks under GNU General Public License.
+Please, read COPYING.TXT file for more details about GNU General Public License.
+
+
+This software includes also materials developed by third parties.
+Please, read the following files for more details about third parties materials licences :
+- THIRDPARTY-LICENSE-JAVA3D.txt
+- THIRDPARTY-LICENSE-LOADER3DS.txt
+- THIRDPARTY-LICENSE-ITEXT.txt
+- THIRDPARTY-LICENSE-ABBOT.txt
+- THIRDPARTY-LICENSE-JDOM.txt
+- THIRDPARTY-LICENSE-APPLEJAVAEXTENSIONS.txt
+- THIRDPARTY-LICENSE-JIP.txt
+- THIRDPARTY-LICENSE-LAUNCH4J.txt
+- THIRDPARTY-LICENSE-JAVA.txt
+- THIRDPARTY-LICENSE-INNOSETUP.txt

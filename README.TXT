@@ -45,4 +45,8 @@ and choose a passphrase, with the following command run at archive root :
   keytool -genkey -keystore keys.keytool -alias SweetHome3D 
 
 
-(C) 2006-2007 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License
+Read LICENSE.TXT file for more details about licenses applicable to this software
+and included materials developed by third parties.
+    
+    
+(C) 2006-2007 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
