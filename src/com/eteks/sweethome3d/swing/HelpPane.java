@@ -20,6 +20,10 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.DefaultFocusTraversalPolicy;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -35,14 +39,20 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
@@ -53,15 +63,17 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class HelpPane extends JRootPane {
-  private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, CLOSE}
+  private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, SEARCH, CLOSE}
 
-  private JFrame         frame;
-  private JToolBar       toolBar;
-  private JEditorPane    helpEditorPane;
+  private JFrame      frame;
+  private JLabel      searchLabel;
+  private JTextField  searchTextField;
+  private JEditorPane helpEditorPane;
   
   public HelpPane(UserPreferences preferences, HelpController controller) {
     createActions(controller);
     createComponents();
+    setMnemonics();
     layoutComponents();
     addLanguageListener(preferences);
     if (controller != null) {
@@ -81,6 +93,18 @@ public class HelpPane extends JRootPane {
           resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious"));
       actions.put(ActionType.SHOW_NEXT, new ControllerAction(
           resource, ActionType.SHOW_NEXT.toString(), controller, "showNext"));
+      actions.put(ActionType.SEARCH, new ResourceAction(resource, ActionType.SEARCH.toString()) {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            final Cursor previousCursor = getCursor();
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            try {
+              controller.search(searchTextField.getText());
+            } finally {
+              setCursor(previousCursor);
+            }
+          }
+        });
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
@@ -126,9 +150,12 @@ public class HelpPane extends JRootPane {
         for (ActionType actionType : ActionType.values()) {
           ((ResourceAction)actions.get(actionType)).setResource(resource);
         }
-        // Update frame title
+        // Update frame title and search label
         if (helpPane.frame != null) {
           helpPane.frame.setTitle(resource.getString("helpFrame.title"));
+          helpPane.searchLabel.setText(resource.getString("searchLabel.text"));
+          helpPane.searchTextField.setText("");
+          helpPane.setMnemonics();
         }
       }
     }
@@ -138,34 +165,83 @@ public class HelpPane extends JRootPane {
    * Creates the components diaplayed by this view.
    */
   private void createComponents() {
-    this.toolBar = new JToolBar();
-    this.toolBar.setFloatable(false);
-    ActionMap actions = getActionMap();    
-    this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
-    this.toolBar.add(actions.get(ActionType.SHOW_NEXT));
+    ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
+    this.searchLabel = new JLabel(resource.getString("searchLabel.text"));
+    this.searchTextField = new JTextField(12);
+    this.searchTextField.addActionListener(getActionMap().get(ActionType.SEARCH));
+    // Enable search only if search text field isn't empty
+    this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
+        public void changedUpdate(DocumentEvent ev) {
+          getActionMap().get(ActionType.SEARCH).setEnabled(searchTextField.getText().trim().length() > 0);
+        }
     
-    // Remove focusable property on buttons
-    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
-      toolBar.getComponentAtIndex(i).setFocusable(false);      
-    }
+        public void insertUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+    
+        public void removeUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+      });
     
     this.helpEditorPane = new JEditorPane();
     this.helpEditorPane.setBorder(null);
     this.helpEditorPane.setEditable(false);
     this.helpEditorPane.setContentType("text/html");
     this.helpEditorPane.putClientProperty(JEditorPane.W3C_LENGTH_UNITS, Boolean.TRUE);
+    
+    setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
+        @Override
+        public Component getDefaultComponent(Container container) {
+          return helpEditorPane;
+        }
+      });
   }
 
+  /**
+   * Sets components mnemonics and label / component associations.
+   */
+  private void setMnemonics() {
+    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+      ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
+      this.searchLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(resource.getString("searchLabel.mnemonic")).getKeyCode());
+      this.searchLabel.setLabelFor(this.searchTextField);
+    }
+  }
+  
   /**
    * Layouts the components diaplayed by this view.
    */
   private void layoutComponents() {
-    getContentPane().add(this.toolBar, BorderLayout.NORTH);
+    JToolBar toolBar = new JToolBar();
+    toolBar.setFloatable(false);
+    ActionMap actions = getActionMap();    
+    toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
+    toolBar.add(actions.get(ActionType.SHOW_NEXT));
+    
+    toolBar.add(Box.createGlue());
+    toolBar.add(this.searchLabel);
+    toolBar.add(Box.createHorizontalStrut(2));
+    toolBar.add(this.searchTextField);
+    this.searchTextField.setMaximumSize(this.searchTextField.getPreferredSize());
+    toolBar.add(Box.createHorizontalStrut(2));
+    toolBar.add(actions.get(ActionType.SEARCH));
+
+    // Remove focusable property on buttons
+    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {      
+      Component component = toolBar.getComponentAtIndex(i);
+      if (component instanceof JButton) {
+        component.setFocusable(false);
+      }
+    }
+    
+    getContentPane().add(toolBar, BorderLayout.NORTH);
     getContentPane().add(new JScrollPane(this.helpEditorPane), BorderLayout.CENTER);
   }
 
   /**
-   * Adds an hyperlikn listener on the editor pane displayed by this pane.
+   * Adds an hyperlink listener on the editor pane displayed by this pane.
    */
   private void addHyperlinkListener(final HelpController controller) {
     this.helpEditorPane.addHyperlinkListener(new HyperlinkListener() {
@@ -190,6 +266,8 @@ public class HelpPane extends JRootPane {
         ActionType.SHOW_NEXT);
     inputMap.put((KeyStroke)actions.get(ActionType.CLOSE).getValue(Action.ACCELERATOR_KEY), 
         ActionType.CLOSE);
+    inputMap.put((KeyStroke)actions.get(ActionType.SEARCH).getValue(Action.ACCELERATOR_KEY), 
+        ActionType.SEARCH);
   }
 
   /**
@@ -241,6 +319,14 @@ public class HelpPane extends JRootPane {
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  /**
+   * Displays <code>htmlText</code> in this pane.
+   */
+  public void setText(String htmlText) {
+    this.helpEditorPane.setContentType("text/html");
+    this.helpEditorPane.setText(htmlText);
   }
 
   /**
