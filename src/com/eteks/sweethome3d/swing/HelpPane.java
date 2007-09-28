@@ -219,6 +219,7 @@ public class HelpPane extends JRootPane {
     ActionMap actions = getActionMap();    
     toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
     toolBar.add(actions.get(ActionType.SHOW_NEXT));
+    toolBar.add(Box.createHorizontalStrut(5));
     
     toolBar.add(Box.createGlue());
     toolBar.add(this.searchLabel);
@@ -319,14 +320,6 @@ public class HelpPane extends JRootPane {
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
-  }
-
-  /**
-   * Displays <code>htmlText</code> in this pane.
-   */
-  public void setText(String htmlText) {
-    this.helpEditorPane.setContentType("text/html");
-    this.helpEditorPane.setText(htmlText);
   }
 
   /**
