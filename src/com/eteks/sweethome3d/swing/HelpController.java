@@ -199,7 +199,7 @@ public class HelpController {
             + helpDocument.getTitle() + "</a></td><td valign='middle'>");
         // Add relevance image
         for (int i = 0; i < helpDocument.getRelevance() && i < 50; i++) {
-          htmlText.append("<img src='" + searchRelevanceImage + "'>");
+          htmlText.append("<img src='" + searchRelevanceImage + "' width='4' height='12'>");
         }
         htmlText.append("</td></tr>");
       }
