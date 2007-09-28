@@ -192,6 +192,9 @@ public class HelpController {
       String searchNotFound = String.format(resource.getString("searchNotFound"), searchedText); 
       htmlText.append("<tr><td><p>" + searchNotFound + "</td></tr>");
     } else {
+      String searchNotFound = String.format(resource.getString("searchFound"), searchedText); 
+      htmlText.append("<tr><td colspan='2'><p>" + searchNotFound + "</td></tr>");
+      
       URL searchRelevanceImage = HelpController.class.getResource("resources/searchRelevance.gif");
       for (HelpDocument helpDocument : helpDocuments) {
         // Add hyperlink to help document found
