@@ -28,6 +28,9 @@ import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.print.PageFormat;
@@ -72,6 +75,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
+import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -1480,6 +1484,28 @@ public class HomePane extends JRootPane {
   private class FocusableViewListener implements FocusListener {
     private HomeController controller;
     private JComponent     feedbackComponent;
+    private KeyListener    specialKeysListener = new KeyAdapter() {
+        @Override
+        public void keyTyped(KeyEvent ev) {
+          // This listener manages accelerator keys that may require the use of shift key 
+          // depending on keyboard layout (like + - or ?) 
+          ActionMap actionMap = getActionMap();
+          Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
+                                         actionMap.get(ActionType.ZOOM_OUT), 
+                                         actionMap.get(ActionType.HELP)};
+          int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
+          for (Action specialKeyAction : specialKeyActions) {
+            KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
+            if (ev.getKeyChar() == actionKeyStroke.getKeyChar()
+                && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
+                && specialKeyAction.isEnabled()) {
+              specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
+                  ActionEvent.ACTION_PERFORMED, (String)specialKeyAction.getValue(Action.ACTION_COMMAND_KEY)));
+              ev.consume();
+            }
+          }
+        }
+      };
   
     public FocusableViewListener(HomeController controller, 
                                  JComponent     feedbackComponent) {
@@ -1495,10 +1521,12 @@ public class HomePane extends JRootPane {
       focusedComponent = (JComponent)ev.getComponent();
       // Notify controller that active view changed
       this.controller.focusedViewChanged(focusedComponent);
+      focusedComponent.addKeyListener(specialKeysListener);
     }
     
     public void focusLost(FocusEvent ev) {
       this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
+      focusedComponent.removeKeyListener(specialKeysListener);
     }
   }
 }
