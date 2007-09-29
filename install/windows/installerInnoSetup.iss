@@ -35,6 +35,7 @@ VersionInfoCompany=eTeks
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
+Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -59,6 +60,7 @@ Type: filesandordirs; Name: "{app}\jre1.6.0_02\launch4j-tmp"
 [CustomMessages]
 SweetHome3DComment=Arrange the furniture of your house
 french.SweetHome3DComment=Aménagez les meubles de votre logement
+portuguese.SweetHome3DComment=Organiza as mobilias da sua casa
 OtherTasks=Other tasks:
 french.OtherTasks=Autres tâches :
 
