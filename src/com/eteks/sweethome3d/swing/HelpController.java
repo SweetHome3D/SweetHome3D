@@ -290,6 +290,9 @@ public class HelpController {
     return helpDocuments;
   }
 
+  /**
+   * A help HTML document parsed with <code>HTMLEditorKit</code>. 
+   */
   private static class HelpDocument extends HTMLDocument {
     // Documents set referenced in this file 
     private Set<URL>  referencedDocuments = new HashSet<URL>();
