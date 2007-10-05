@@ -520,7 +520,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
 
       public void actionPerformed(ActionEvent e) {
-        controller.moveSelection(this.dx / scale, this.dy / scale);
+        controller.moveSelection(this.dx / getScale(), this.dy / getScale());
       }
     }
     // Temporary magnestism mapped to alt key
@@ -591,9 +591,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       Rectangle2D planBounds = getPlanBounds();
       return new Dimension(
           Math.round(((float)planBounds.getWidth() + MARGIN * 2)
-                     * this.scale) + insets.left + insets.right,
+                     * getScale()) + insets.left + insets.right,
           Math.round(((float)planBounds.getHeight() + MARGIN * 2)
-                     * this.scale) + insets.top + insets.bottom);
+                     * getScale()) + insets.top + insets.bottom);
     }
   }
   
@@ -674,16 +674,17 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         getHeight() - insets.top - insets.bottom);
     // Change component coordinates system to plan system
     Rectangle2D planBounds = getPlanBounds();    
-    g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * this.scale,
-        insets.top + (MARGIN - planBounds.getMinY()) * this.scale);
-    g2D.scale(this.scale, this.scale);
+    float paintScale = getScale();
+    g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * paintScale,
+        insets.top + (MARGIN - planBounds.getMinY()) * paintScale);
+    g2D.scale(paintScale, paintScale);
     setRenderingHints(g2D);
     // Paint component contents
     paintBackgroundImage(g2D);
     if (this.preferences.isGridVisible()) {
-      paintGrid(g2D, this.scale);
+      paintGrid(g2D, paintScale);
     }
-    paintContent(g2D, this.scale, backgroundColor, foregroundColor, PaintMode.PAINT);   
+    paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);   
     g2D.dispose();
   }
   
@@ -711,17 +712,17 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         float dimensionLinesTextHeight = g2D.getFontMetrics().getHeight() * 1.5f;
         extraMargin = Math.max(extraMargin, dimensionLinesTextHeight);
       }
-      float scale = (float)Math.min(imageableWidth / (printedObjectBounds.getWidth() + 2 * extraMargin),
+      float printScale = (float)Math.min(imageableWidth / (printedObjectBounds.getWidth() + 2 * extraMargin),
           imageableHeight / (printedObjectBounds.getHeight() + 2 * extraMargin));
-      g2D.scale(scale, scale);
+      g2D.scale(printScale, printScale);
       g2D.translate(-printedObjectBounds.getMinX() + extraMargin,
           -printedObjectBounds.getMinY() + extraMargin);
       // Center plan in component
-      g2D.translate((imageableWidth / scale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2, 
-          (imageableHeight / scale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2);
+      g2D.translate((imageableWidth / printScale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2, 
+          (imageableHeight / printScale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2);
       setRenderingHints(g2D);
       // Print component contents
-      paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
+      paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
       g2D.dispose();
       return PAGE_EXISTS;
     } else {
@@ -740,29 +741,29 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       return null;
     } else {
       // Use a scale of 1
-      float scale = 1f;
+      float clipboardScale = 1f;
       float extraMargin = 0;
       List<Object> selectedItems = this.home.getSelectedItems();
       if (Home.getWallsSubList(selectedItems).size() > 0) {
         extraMargin = WALL_STROKE_WIDTH / 2;
       }
       if (Home.getDimensionLinesSubList(selectedItems).size() > 0) {
-        float dimensionLinesTextHeight = getFontMetrics(getFont()).getHeight() * scale;
+        float dimensionLinesTextHeight = getFontMetrics(getFont()).getHeight() * clipboardScale;
         extraMargin = Math.max(extraMargin, dimensionLinesTextHeight);
       }
-      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * scale + 2 * extraMargin), 
-              (int)Math.ceil(selectionBounds.getHeight() * scale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
+      BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin), 
+              (int)Math.ceil(selectionBounds.getHeight() * clipboardScale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
       Graphics2D g2D = (Graphics2D)image.getGraphics();
       // Paint background in white
       g2D.setColor(Color.WHITE);
       g2D.fillRect(0, 0, image.getWidth(), image.getHeight());
       // Change component coordinates system to plan system
-      g2D.scale(scale, scale);
-      g2D.translate(-selectionBounds.getMinX() + extraMargin / scale,
-          -selectionBounds.getMinY() + extraMargin / scale);
+      g2D.scale(clipboardScale, clipboardScale);
+      g2D.translate(-selectionBounds.getMinX() + extraMargin / clipboardScale,
+          -selectionBounds.getMinY() + extraMargin / clipboardScale);
       setRenderingHints(g2D);
       // Paint component contents
-      paintContent(g2D, scale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
+      paintContent(g2D, clipboardScale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
       g2D.dispose();
       return image;
     }
@@ -829,7 +830,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints background grid lines.
    */
-  private void paintGrid(Graphics2D g2D, float scale) {
+  private void paintGrid(Graphics2D g2D, float gridScale) {
     float mainGridSize;
     float [] gridSizes;
     if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
@@ -843,7 +844,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     // Compute grid size to get a grid where the space between each line is around 10 pixels
     float gridSize = gridSizes [0];
-    for (int i = 1; i < gridSizes.length && gridSize * scale < 10; i++) {
+    for (int i = 1; i < gridSizes.length && gridSize * gridScale < 10; i++) {
       gridSize = gridSizes [i];
     }
     
@@ -854,7 +855,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     float yMax = convertYPixelToModel(getHeight());
 
     g2D.setColor(UIManager.getColor("controlShadow"));
-    g2D.setStroke(new BasicStroke(0.5f / scale));
+    g2D.setStroke(new BasicStroke(0.5f / gridScale));
     // Draw vertical lines
     for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
       g2D.draw(new Line2D.Float(x, yMin, x, yMax));
@@ -865,7 +866,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
 
     if (mainGridSize != gridSize) {
-      g2D.setStroke(new BasicStroke(1.5f / scale,
+      g2D.setStroke(new BasicStroke(1.5f / gridScale,
           BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
       // Draw main vertical lines
       for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
@@ -881,32 +882,32 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints plan items.
    */
-  private void paintContent(Graphics2D g2D, float scale, 
+  private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     List<Object> selectedItems = this.home.getSelectedItems();
     Color selectionColor = getSelectioncolor(); 
     Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
         selectionColor.getBlue(), 128);
-    Stroke selectionOutlineStroke = new BasicStroke(6 / scale, 
+    Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / scale, 
+    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
     Stroke locationFeedbackStroke = new BasicStroke(
-        1 / scale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
-        new float [] {20 / scale, 5 / scale, 5 / scale, 5 / scale}, 4 / scale);
+        1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+        new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
     
     paintWalls(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
-        scale, backgroundColor, foregroundColor, paintMode);
+        planScale, backgroundColor, foregroundColor, paintMode);
     paintFurniture(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
-        scale, backgroundColor, foregroundColor, paintMode);
+        planScale, backgroundColor, foregroundColor, paintMode);
     paintDimensionLines(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
-        locationFeedbackStroke, scale, foregroundColor, paintMode);
+        locationFeedbackStroke, planScale, foregroundColor, paintMode);
     if (paintMode == PaintMode.PAINT) {
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
-          scale, backgroundColor, foregroundColor);
-      paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
-      paintDimensionLineAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, scale);
-      paintRectangleFeedback(g2D, selectionColor, scale);
+          planScale, backgroundColor, foregroundColor);
+      paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, planScale);
+      paintDimensionLineAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, planScale);
+      paintRectangleFeedback(g2D, selectionColor, planScale);
     }
   }
 
@@ -929,9 +930,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                          Paint indicatorPaint, float scale, 
+                          Paint indicatorPaint, float planScale, 
                           Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
-    float scaleInverse = 1 / scale;
+    float scaleInverse = 1 / planScale;
     Collection<Wall> paintedWalls;
     Shape wallsArea;
     if (paintMode != PaintMode.CLIPBOARD) {
@@ -948,8 +949,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     // Fill walls area
     float wallPaintScale = paintMode == PaintMode.PRINT
-        ? scale / 72 * 150 // Adjust scale to 150 dpi for print
-        : scale;
+        ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
+        : planScale;
     g2D.setPaint(getWallPaint(wallPaintScale, backgroundColor, foregroundColor));
     g2D.fill(wallsArea);
     
@@ -974,7 +975,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
               wall.getXEnd() - wall.getXStart());
           double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
-              wall.getXEnd(), wall.getYEnd()) * scale;
+              wall.getXEnd(), wall.getYEnd()) * planScale;
           g2D.rotate(wallAngle);
           // If the distance between start and end points is < 30
           if (distanceAtScale < 30) { 
@@ -1003,14 +1004,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
     // Draw walls area
     g2D.setPaint(foregroundColor);
-    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / scale));
+    g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
     g2D.draw(wallsArea);
     
     // Paint resize indicator of selected wall
     if (selectedItems.size() == 1 
         && selectedItems.get(0) instanceof Wall
         && paintMode == PaintMode.PAINT) {
-      paintWallResizeIndicator(g2D, (Wall)selectedItems.get(0), indicatorPaint, scale);
+      paintWallResizeIndicator(g2D, (Wall)selectedItems.get(0), indicatorPaint, planScale);
     }
   }
 
@@ -1019,7 +1020,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintWallResizeIndicator(Graphics2D g2D, Wall wall,
                                         Paint indicatorPaint, 
-                                        float scale) {
+                                        float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -1028,7 +1029,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           wall.getXEnd() - wall.getXStart());
       
       AffineTransform previousTransform = g2D.getTransform();
-      float scaleInverse = 1 / scale;
+      float scaleInverse = 1 / planScale;
       // Draw resize indicator at wall start point
       g2D.translate(wall.getXStart(), wall.getYStart());
       g2D.scale(scaleInverse, scaleInverse);
@@ -1069,7 +1070,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Returns the <code>Paint</code> object used to fill walls.
    */
-  private Paint getWallPaint(float scale, Color backgroundColor, Color foregroundColor) {
+  private Paint getWallPaint(float planScale, Color backgroundColor, Color foregroundColor) {
     BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     // Create an image displaying a line in its diagonal
@@ -1079,7 +1080,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     imageGraphics.drawLine(0, 9, 9, 0);
     imageGraphics.dispose();
     return new TexturePaint(image, 
-        new Rectangle2D.Float(0, 0, 10 / scale, 10 / scale));
+        new Rectangle2D.Float(0, 0, 10 / planScale, 10 / planScale));
   }
   
   /**
@@ -1087,9 +1088,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
                               Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                              Paint indicatorPaint, float scale, 
+                              Paint indicatorPaint, float planScale, 
                               Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
-    BasicStroke pieceBorderStroke = new BasicStroke(1f / scale);
+    BasicStroke pieceBorderStroke = new BasicStroke(1f / planScale);
     if (this.sortedHomeFurniture == null) {
       // Sort home furniture in elevation order
       this.sortedHomeFurniture = 
@@ -1120,7 +1121,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           g2D.setPaint(backgroundColor);
           g2D.fill(pieceShape);
           // Draw its icon
-          paintPieceOfFurnitureIcon(g2D, piece, pieceShape, scale);
+          paintPieceOfFurnitureIcon(g2D, piece, pieceShape, planScale);
           
           if (selectedPiece
               && paintMode == PaintMode.PAINT) {
@@ -1138,7 +1139,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
               && selectedItems.get(0) == piece
               && paintMode == PaintMode.PAINT) {
             paintPieceOFFurnitureIndicators(g2D, 
-                (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint, scale);
+                (HomePieceOfFurniture)selectedItems.get(0), indicatorPaint, planScale);
           }
         }
       }
@@ -1149,7 +1150,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
   private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, 
-                                         Shape pieceShape, float scale) {
+                                         Shape pieceShape, float planScale) {
     Shape previousClip = g2D.getClip();
     // Clip icon drawing into piece shape
     g2D.clip(pieceShape);
@@ -1160,7 +1161,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     g2D.translate(piece.getX(), piece.getY());
     // Scale icon to fit in its area
     float minDimension = Math.min(piece.getWidth(), piece.getDepth());
-    float iconScale = Math.min(1 / scale, minDimension / icon.getIconHeight());
+    float iconScale = Math.min(1 / planScale, minDimension / icon.getIconHeight());
     // If piece model is mirrored, inverse x scale
     if (piece.isModelMirrored()) {
       g2D.scale(-iconScale, iconScale);
@@ -1180,7 +1181,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private void paintPieceOFFurnitureIndicators(Graphics2D g2D, 
                                                HomePieceOfFurniture piece,
                                                Paint indicatorPaint,
-                                               float scale) {
+                                               float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -1188,7 +1189,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       AffineTransform previousTransform = g2D.getTransform();
       // Draw rotation indicator at top left vertex of the piece
       float [][] piecePoints = piece.getPoints();
-      float scaleInverse = 1 / scale;
+      float scaleInverse = 1 / planScale;
       float pieceAngle = piece.getAngle();
       g2D.translate(piecePoints [0][0], piecePoints [0][1]);
       g2D.scale(scaleInverse, scaleInverse);
@@ -1232,7 +1233,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintDimensionLines(Graphics2D g2D, List<Object> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                          Paint indicatorPaint, Stroke extensionLineStroke, float scale, 
+                          Paint indicatorPaint, Stroke extensionLineStroke, float planScale, 
                           Color foregroundColor, PaintMode paintMode) {
     Collection<DimensionLine> paintedDimensionLines;
     if (paintMode != PaintMode.CLIPBOARD) {
@@ -1249,7 +1250,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
     // Draw dimension lines
     g2D.setPaint(foregroundColor);
-    BasicStroke dimensionLineStroke = new BasicStroke(1 / scale);
+    BasicStroke dimensionLineStroke = new BasicStroke(1 / planScale);
     Format format = new DecimalFormat(this.preferences.getUnit() == UserPreferences.Unit.INCH 
         ? "#.###" 
         : "#");
@@ -1308,8 +1309,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.drawString(lengthText, 
           (dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
           dimensionLine.getOffset() <= 0 
-              ? -fontMetrics.getDescent() - 1 / scale
-              : fontMetrics.getAscent() + 1 / scale);
+              ? -fontMetrics.getDescent() - 1 / planScale
+              : fontMetrics.getAscent() + 1 / planScale);
       
       g2D.setTransform(previousTransform);
     }
@@ -1319,7 +1320,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     if (selectedItems.size() == 1 
         && selectedItems.get(0) instanceof DimensionLine
         && paintMode == PaintMode.PAINT) {
-      paintDimensionLineResizeIndicator(g2D, (DimensionLine)selectedItems.get(0), indicatorPaint, scale);
+      paintDimensionLineResizeIndicator(g2D, (DimensionLine)selectedItems.get(0), indicatorPaint, planScale);
     }
   }
 
@@ -1328,7 +1329,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintDimensionLineResizeIndicator(Graphics2D g2D, DimensionLine dimensionLine,
                                                  Paint indicatorPaint, 
-                                                 float scale) {
+                                                 float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -1337,7 +1338,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           dimensionLine.getXEnd() - dimensionLine.getXStart());
       
       AffineTransform previousTransform = g2D.getTransform();
-      float scaleInverse = 1 / scale;
+      float scaleInverse = 1 / planScale;
       // Draw resize indicator at the start of dimension line 
       g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
       g2D.rotate(wallAngle);
@@ -1374,10 +1375,10 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintWallAlignmentFeedback(Graphics2D g2D, 
                                           Paint feedbackPaint, Stroke feedbackStroke,
-                                          float scale) {
+                                          float planScale) {
     // Paint wall location feedback
     if (this.wallLocationFeeback != null) {
-      float margin = 1f / scale;
+      float margin = 1f / planScale;
       // Seach which wall start or end point is at wallLocationFeeback abcissa or ordinate
       // ignoring the start and end point of wallAlignmentFeedback
       float x = (float)this.wallLocationFeeback.getX(); 
@@ -1439,21 +1440,21 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / scale, y, 
-              x - deltaXToClosestWall - 25 / scale, y));
+          g2D.draw(new Line2D.Float(x + 25 / planScale, y, 
+              x - deltaXToClosestWall - 25 / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / scale, y, 
-              x - deltaXToClosestWall + 25 / scale, y));
+          g2D.draw(new Line2D.Float(x - 25 / planScale, y, 
+              x - deltaXToClosestWall + 25 / planScale, y));
         }
       }
 
       if (deltaYToClosestWall != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestWall > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / scale, 
-              x, y - deltaYToClosestWall - 25 / scale));
+          g2D.draw(new Line2D.Float(x, y + 25 / planScale, 
+              x, y - deltaYToClosestWall - 25 / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / scale, 
-              x, y - deltaYToClosestWall + 25 / scale));
+          g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
+              x, y - deltaYToClosestWall + 25 / planScale));
         }
       }
     }
@@ -1473,10 +1474,10 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
                                                    Paint feedbackPaint, Stroke feedbackStroke,
-                                                   float scale) {
+                                                   float planScale) {
     // Paint dimension line location feedback
     if (this.dimensionLineLocationFeeback != null) {
-      float margin = 1f / scale;
+      float margin = 1f / planScale;
       // Seach which dimension line start or end point is at dimensionLineLocationFeeback abcissa or ordinate
       // ignoring the start and end point of dimensionLineFeeback
       float x = (float)this.dimensionLineLocationFeeback.getX(); 
@@ -1551,21 +1552,21 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.setStroke(feedbackStroke);
       if (deltaXToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaXToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x + 25 / scale, y, 
-              x - deltaXToClosestObject - 25 / scale, y));
+          g2D.draw(new Line2D.Float(x + 25 / planScale, y, 
+              x - deltaXToClosestObject - 25 / planScale, y));
         } else {
-          g2D.draw(new Line2D.Float(x - 25 / scale, y, 
-              x - deltaXToClosestObject + 25 / scale, y));
+          g2D.draw(new Line2D.Float(x - 25 / planScale, y, 
+              x - deltaXToClosestObject + 25 / planScale, y));
         }
       }
 
       if (deltaYToClosestObject != Float.POSITIVE_INFINITY) {
         if (deltaYToClosestObject > 0) {
-          g2D.draw(new Line2D.Float(x, y + 25 / scale, 
-              x, y - deltaYToClosestObject - 25 / scale));
+          g2D.draw(new Line2D.Float(x, y + 25 / planScale, 
+              x, y - deltaYToClosestObject - 25 / planScale));
         } else {
-          g2D.draw(new Line2D.Float(x, y - 25 / scale, 
-              x, y - deltaYToClosestObject + 25 / scale));
+          g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
+              x, y - deltaYToClosestObject + 25 / planScale));
         }
       }
     }
@@ -1586,7 +1587,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintCamera(Graphics2D g2D, List<Object> selectedItems,
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                           Paint indicatorPaint, float scale, 
+                           Paint indicatorPaint, float planScale, 
                            Color backgroundColor, Color foregroundColor) {
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera == this.home.getCamera()) {
@@ -1609,7 +1610,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.setPaint(backgroundColor);
       g2D.fill(scaledCameraBody);
       g2D.setPaint(foregroundColor);
-      BasicStroke stroke = new BasicStroke(1 / scale);
+      BasicStroke stroke = new BasicStroke(1 / planScale);
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraBody);
   
@@ -1645,14 +1646,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       // Paint resize indicator of selected camera
       if (selectedItems.size() == 1 
           && selectedItems.get(0) == camera) {
-        paintCameraRotationIndicators(g2D, camera, indicatorPaint, scale);
+        paintCameraRotationIndicators(g2D, camera, indicatorPaint, planScale);
       }
     }
   }
 
   private void paintCameraRotationIndicators(Graphics2D g2D, 
                                              ObserverCamera camera, Paint indicatorPaint,
-                                             float scale) {
+                                             float planScale) {
     if (this.resizeIndicatorVisible) {
       g2D.setPaint(indicatorPaint);
       g2D.setStroke(new BasicStroke(1.5f));
@@ -1660,7 +1661,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       AffineTransform previousTransform = g2D.getTransform();
       // Draw yaw rotation indicator at middle of first and last point of camera 
       float [][] cameraPoints = camera.getPoints();
-      float scaleInverse = 1 / scale;
+      float scaleInverse = 1 / planScale;
       g2D.translate((cameraPoints [0][0] + cameraPoints [3][0]) / 2, 
           (cameraPoints [0][1] + cameraPoints [3][1]) / 2);
       g2D.scale(scaleInverse, scaleInverse);
@@ -1681,12 +1682,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints rectangle feedback.
    */
-  private void paintRectangleFeedback(Graphics2D g2D, Color selectionColor, float scale) {
+  private void paintRectangleFeedback(Graphics2D g2D, Color selectionColor, float planScale) {
     if (this.rectangleFeedback != null) {
       g2D.setPaint(new Color(selectionColor.getRed(), selectionColor.getGreen(), selectionColor.getBlue(), 32));
       g2D.fill(this.rectangleFeedback);
       g2D.setPaint(selectionColor);
-      g2D.setStroke(new BasicStroke(1 / scale));
+      g2D.setStroke(new BasicStroke(1 / planScale));
       g2D.draw(this.rectangleFeedback);
     }
   }
@@ -1796,7 +1797,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * moving scroll bars if needed.
    */
   public void makePointVisible(float x, float y) {
-    scrollRectToVisible(getShapePixelBounds(new Rectangle2D.Float(x, y, 1 / this.scale, 1 / this.scale)));
+    scrollRectToVisible(getShapePixelBounds(new Rectangle2D.Float(x, y, 1 / getScale(), 1 / getScale())));
   }
 
   /**
@@ -1833,7 +1834,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   public float convertXPixelToModel(int x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
-    return (x - insets.left) / this.scale - MARGIN + (float)planBounds.getMinX();
+    return (x - insets.left) / getScale() - MARGIN + (float)planBounds.getMinX();
   }
 
   /**
@@ -1842,7 +1843,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   public float convertYPixelToModel(int y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
-    return (y - insets.top) / this.scale - MARGIN + (float)planBounds.getMinY();
+    return (y - insets.top) / getScale() - MARGIN + (float)planBounds.getMinY();
   }
 
   /**
@@ -1851,7 +1852,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private int convertXModelToPixel(float x) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
-    return (int)Math.round((x - planBounds.getMinX() + MARGIN) * this.scale) + insets.left;
+    return (int)Math.round((x - planBounds.getMinX() + MARGIN) * getScale()) + insets.left;
   }
 
   /**
@@ -1860,7 +1861,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private int convertYModelToPixel(float y) {
     Insets insets = getInsets();
     Rectangle2D planBounds = getPlanBounds();    
-    return (int)Math.round((y - planBounds.getMinY() + MARGIN) * this.scale) + insets.top;
+    return (int)Math.round((y - planBounds.getMinY() + MARGIN) * getScale()) + insets.top;
   }
 
   /**
@@ -1871,8 +1872,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     return new Rectangle(
         convertXModelToPixel((float)shapeBounds.getMinX()), 
         convertYModelToPixel((float)shapeBounds.getMinY()),
-        (int)Math.round(shapeBounds.getWidth() * this.scale),
-        (int)Math.round(shapeBounds.getHeight() * this.scale));
+        (int)Math.round(shapeBounds.getWidth() * getScale()),
+        (int)Math.round(shapeBounds.getHeight() * getScale()));
   }
   
   /**
@@ -2173,13 +2174,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
           getHeight() - insets.top - insets.bottom);
       // Change component coordinates system to plan system
       Rectangle2D planBounds = getPlanBounds();    
-      g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * getScale(),
-          insets.top + (MARGIN - planBounds.getMinY()) * getScale());
-      g2D.scale(getScale(), getScale());
+      float paintScale = getScale();
+      g2D.translate(insets.left + (MARGIN - planBounds.getMinX()) * paintScale,
+          insets.top + (MARGIN - planBounds.getMinY()) * paintScale);
+      g2D.scale(paintScale, paintScale);
       g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       // Paint component contents
-      paintRuler(g2D);
+      paintRuler(g2D, paintScale);
       g2D.dispose();
     }
 
@@ -2196,7 +2198,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     /**
      * Paints background grid lines.
      */
-    private void paintRuler(Graphics2D g2D) {
+    private void paintRuler(Graphics2D g2D, float rulerScale) {
       float mainGridSize;
       float [] gridSizes;
       if (preferences.getUnit() == UserPreferences.Unit.INCH) {
@@ -2210,7 +2212,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
       // Compute grid size to get a grid where the space between each line is around 10 pixels
       float gridSize = gridSizes [0];
-      for (int i = 1; i < gridSizes.length && gridSize * getScale() < 10; i++) {
+      for (int i = 1; i < gridSizes.length && gridSize * rulerScale < 10; i++) {
         gridSize = gridSizes [i];
       }
       
@@ -2222,18 +2224,18 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
       FontMetrics metrics = getFontMetrics(getFont());
       int fontAscent = metrics.getAscent();
-      float tickSize = 5 / getScale();
-      float mainTickSize = (fontAscent + 6) / getScale();
+      float tickSize = 5 / rulerScale;
+      float mainTickSize = (fontAscent + 6) / rulerScale;
       NumberFormat format = NumberFormat.getNumberInstance();
       String maxText = getFormattedTickText(format, 100);
       int maxTextWidth = metrics.stringWidth(maxText) + 10;
       float textInterval =
         mainGridSize != gridSize
           ? mainGridSize 
-          : (float)Math.ceil(maxTextWidth / (gridSize * getScale())) * gridSize;
+          : (float)Math.ceil(maxTextWidth / (gridSize * rulerScale)) * gridSize;
       
       g2D.setColor(getForeground());
-      float lineWidth = 0.5f / getScale();
+      float lineWidth = 0.5f / rulerScale;
       g2D.setStroke(new BasicStroke(lineWidth));
       if (this.orientation == SwingConstants.HORIZONTAL) {
         // Draw horizontal rule base
@@ -2247,7 +2249,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             // Draw unit text
             AffineTransform previousTransform = g2D.getTransform();
             g2D.translate(x, yMax - mainTickSize);
-            g2D.scale(1 / getScale(), 1 / getScale());
+            g2D.scale(1 / rulerScale, 1 / rulerScale);
             g2D.drawString(getFormattedTickText(format, x), 3, fontAscent - 1);
             g2D.setTransform(previousTransform);
           } else {
@@ -2267,7 +2269,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
             // Draw unit text with a vertical orientation
             AffineTransform previousTransform = g2D.getTransform();
             g2D.translate(xMax - mainTickSize, y);
-            g2D.scale(1 / getScale(), 1 / getScale());
+            g2D.scale(1 / rulerScale, 1 / rulerScale);
             g2D.rotate(-Math.PI / 2);
             String yText = getFormattedTickText(format, y);
             g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
@@ -2280,7 +2282,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
 
       if (mainGridSize != gridSize) {
-        g2D.setStroke(new BasicStroke(1.5f / getScale(),
+        g2D.setStroke(new BasicStroke(1.5f / rulerScale,
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
         if (this.orientation == SwingConstants.HORIZONTAL) {
           // Draw main vertical lines
@@ -2297,7 +2299,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
       if (this.mouseLocation != null) {
         g2D.setColor(getSelectioncolor());
-        g2D.setStroke(new BasicStroke(1 / getScale()));
+        g2D.setStroke(new BasicStroke(1 / rulerScale));
         if (this.orientation == SwingConstants.HORIZONTAL) {
           // Draw mouse feeback vertical line
           float x = convertXPixelToModel(this.mouseLocation.x);
