@@ -1909,8 +1909,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      * Returns the icon image matching the displayed view.  
      */
     public BufferedImage getIconImage() {
-      if (System.getProperty("os.name").startsWith("Linux")) {
-        // As off screen canvas may fail on Linux, capture current canvas with Robot
+      String operatingSystem = System.getProperty("os.name");
+      if (operatingSystem.startsWith("Linux")
+          || operatingSystem.startsWith("Windows")) {
+        // As off screen canvas may fail on Linux and Windows, capture current canvas with Robot
         Component canvas3D = getCanvas3D();
         Point canvas3DOrigin = new Point();
         SwingUtilities.convertPointToScreen(canvas3DOrigin, canvas3D);
