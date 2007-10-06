@@ -42,7 +42,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 
 /**
- * A MVC controller for the furniture table.
+ * A MVC controller for the home furniture table.
  * @author Emmanuel Puybaret
  */
 public class FurnitureController {

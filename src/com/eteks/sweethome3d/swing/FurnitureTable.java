@@ -73,7 +73,7 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
- * A table displaying furniture.
+ * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
 public class FurnitureTable extends JTable implements Printable {

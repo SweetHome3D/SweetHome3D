@@ -35,7 +35,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 
 /**
- * Furniture transfer handler.
+ * Home furniture transfer handler.
  * @author Emmanuel Puybaret
  */
 public class FurnitureTransferHandler extends LocatedTransferHandler {
