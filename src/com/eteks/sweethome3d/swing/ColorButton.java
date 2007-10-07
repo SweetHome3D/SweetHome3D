@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Locale;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -37,7 +38,8 @@ import javax.swing.JLabel;
  */
 public class ColorButton extends JButton {
   // Share color chooser between ColorButton instances to keep recent colors
-  private static JColorChooser FURNITURE_COLOR_CHOOSER = new JColorChooser();
+  private static JColorChooser colorChooser;
+  private static Locale        colorChooserLocale;
   
   private Integer color;
   private String  colorDialogTitle;
@@ -73,17 +75,22 @@ public class ColorButton extends JButton {
     // Add a listener to update color
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ev) {
+        // Create color chooser instance each time default locale changed 
+        if (colorChooser == null
+            || !Locale.getDefault().equals(colorChooserLocale)) {
+          colorChooser = new JColorChooser();
+          colorChooserLocale = Locale.getDefault();
+        }
         // Update edited color in furniture color chooser
-        FURNITURE_COLOR_CHOOSER.setColor(color != null 
+        colorChooser.setColor(color != null 
             ? new Color(color)
             : null);
         JDialog colorDialog = JColorChooser.createDialog(getParent(), 
-            colorDialogTitle,
-            true, FURNITURE_COLOR_CHOOSER,
+            colorDialogTitle, true, colorChooser,
             new ActionListener () { 
               public void actionPerformed(ActionEvent e) {
                 // Change button color when user click on ok button
-                setColor(FURNITURE_COLOR_CHOOSER.getColor().getRGB());
+                setColor(colorChooser.getColor().getRGB());
               }
             }, null);
         colorDialog.setVisible(true);
