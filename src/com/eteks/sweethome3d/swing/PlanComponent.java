@@ -313,24 +313,18 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     home.addFurnitureListener(new FurnitureListener() {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {
           sortedHomeFurniture = null;
-          planBoundsCacheValid = false;
-          // Revalidate and repaint
-          revalidate();
+          invalidatePlanBoundsAndRevalidate();
         }
       });
     home.addWallListener(new WallListener () {
         public void wallChanged(WallEvent ev) {
           wallsAreaCache = null;
-          planBoundsCacheValid = false;
-          // Revalidate and repaint
-          revalidate();
+          invalidatePlanBoundsAndRevalidate();
         }
       });
     home.addDimensionLineListener(new DimensionLineListener () {
         public void dimensionLineChanged(DimensionLineEvent ev) {
-          planBoundsCacheValid = false;
-          // Revalidate and repaint
-          revalidate();
+          invalidatePlanBoundsAndRevalidate();
         }
       });
     home.addSelectionListener(new SelectionListener () {
@@ -340,9 +334,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       });
     home.addCameraListener(new CameraListener() {
         public void cameraChanged(CameraEvent ev) {
-          planBoundsCacheValid = false;
-          // Revalidate and repaint
-          revalidate();
+          invalidatePlanBoundsAndRevalidate();
         }
       });
     home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
@@ -427,6 +419,41 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
   }
 
+  /**
+   * Invalidates plan bounds cache, revalidates this component and 
+   * updates viewport position if this component is displayed in a scrolled pane.
+   */
+  private void invalidatePlanBoundsAndRevalidate() {
+    Point viewPosition = null;
+    float planBoundsMinX = (float)getPlanBounds().getMinX();
+    float planBoundsMinY = (float)getPlanBounds().getMinY();
+    JViewport parent = (JViewport)getParent();
+    if (parent instanceof JViewport) {
+      viewPosition = parent.getViewPosition();
+    }
+    
+    planBoundsCacheValid = false;
+    // Revalidate and repaint
+    revalidate();
+    
+    float planBoundsNewMinX = (float)getPlanBounds().getMinX();
+    float planBoundsNewMinY = (float)getPlanBounds().getMinY();
+    // If plan bounds upper left corner diminushed
+    if (getParent() instanceof JViewport
+        && (planBoundsNewMinX < planBoundsMinX
+            || planBoundsNewMinY < planBoundsMinY)) {
+      Dimension extentSize = parent.getExtentSize();
+      Dimension viewSize = parent.getViewSize();
+      // Update view position when scroll bars are visible
+      if (extentSize.width < viewSize.width
+          || extentSize.height < viewSize.height) {
+        int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
+        int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
+        parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+      }
+    }
+  }
+  
   /**
    * Adds AWT mouse listeners to this component that calls back <code>controller</code> methods.  
    */
@@ -1809,11 +1836,27 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
   /**
    * Sets the scale used to display the plan.
+   * If this component is displayed in a viewport the view position is updated
+   * to ensure it remains unchanged in model coordinates system.
    */
   public void setScale(float scale) {
     if (this.scale != scale) {
+      JViewport parent = (JViewport)getParent();
+      float xViewPosition = 0;
+      float yViewPosition = 0;
+      if (parent  instanceof JViewport) {
+        Point viewPosition = parent.getViewPosition();
+        xViewPosition = convertXPixelToModel(viewPosition.x);
+        yViewPosition = convertYPixelToModel(viewPosition.y);
+      }
+      
       this.scale = scale;
       revalidate();
+
+      if (parent instanceof JViewport) {
+        parent.setViewPosition(new Point(convertXModelToPixel(xViewPosition), 
+            convertYModelToPixel(yViewPosition)));
+      }
     }
   }
 
