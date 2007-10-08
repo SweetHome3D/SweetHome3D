@@ -3012,11 +3012,10 @@ public class PlanController {
           // Otherwise update its end point
           home.moveDimensionLineEndPointTo(this.newDimensionLine, xEnd, yEnd); 
         }         
-        PlanComponent planView = (PlanComponent)getView();
-        planView.setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
-        // Ensure point at (x,y) is visible
-        planView.makePointVisible(x, y);
+        ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
       }
+      // Ensure point at (x,y) is visible
+      ((PlanComponent)getView()).makePointVisible(x, y);
     }
 
     @Override
