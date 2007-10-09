@@ -17,12 +17,11 @@
     <mkdir dir="deploy/classes"/>
     <javac srcdir="src" destdir="deploy/classes"
     	   encoding="ISO-8859-1">
+      <!-- Use lib as an extension directory to override default Java 3D libraries -->
+      <extdirs>
+        <pathelement location="lib"/>
+      </extdirs>
       <classpath>
-        <pathelement location="lib/itext-2.0.4.jar"/>
-        <pathelement location="lib/Loader3DS1_2.jar"/>
-        <pathelement location="lib/vecmath.jar"/>
-        <pathelement location="lib/j3dutils.jar"/>
-        <pathelement location="lib/j3dcore.jar"/>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
       </classpath>
