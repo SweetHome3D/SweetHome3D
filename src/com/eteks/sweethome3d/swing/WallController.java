@@ -30,6 +30,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -74,7 +75,9 @@ public class WallController {
       final Float xEnd = wallPanel.getWallXEnd();
       final Float yEnd = wallPanel.getWallYEnd();
       final Integer leftSideColor = wallPanel.getWallLeftSideColor();
+      final HomeTexture leftSideTexture = wallPanel.getWallLeftSideTexture();
       final Integer rightSideColor = wallPanel.getWallRightSideColor();
+      final HomeTexture rightSideTexture = wallPanel.getWallRightSideTexture();
       final Float thickness = wallPanel.getWallThickness();
       final Float height = wallPanel.getWallHeight();
       
@@ -85,8 +88,8 @@ public class WallController {
         modifiedWalls [i] = new ModifiedWall(selectedWalls.get(i));
       }
       // Apply modification
-      doModifyWalls(modifiedWalls, 
-          xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, 
+      doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
+          leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
           thickness, height); 
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
@@ -99,8 +102,8 @@ public class WallController {
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doModifyWalls(modifiedWalls, 
-              xStart, yStart, xEnd, yEnd, leftSideColor, rightSideColor, 
+          doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
+              leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
               thickness, height); 
           home.setSelectedItems(oldSelection); 
         }
@@ -120,7 +123,8 @@ public class WallController {
    */
   private void doModifyWalls(ModifiedWall [] modifiedWalls, 
                              Float xStart, Float yStart, Float xEnd, Float yEnd,
-                             Integer leftSideColor, Integer rightSideColor,
+                             Integer leftSideColor, HomeTexture leftSideTexture, 
+                             Integer rightSideColor, HomeTexture rightSideTexture,
                              Float thickness, Float height) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
@@ -128,10 +132,20 @@ public class WallController {
       if (modifiedWalls.length == 1) {
         moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
       }
-      this.home.setWallLeftSideColor(wall, 
-          leftSideColor != null ? leftSideColor : wall.getLeftSideColor());
-      this.home.setWallRightSideColor(wall, 
-          rightSideColor != null ? rightSideColor : wall.getRightSideColor());
+      if (leftSideTexture != null) {
+        this.home.setWallLeftSideTexture(wall, leftSideTexture);
+        this.home.setWallLeftSideColor(wall, null);
+      } else if (leftSideColor != null) {
+        this.home.setWallLeftSideColor(wall, leftSideColor);
+        this.home.setWallLeftSideTexture(wall, null);
+      }
+      if (rightSideTexture != null) {
+        this.home.setWallRightSideTexture(wall, rightSideTexture);
+        this.home.setWallRightSideColor(wall, null);
+      } else if (rightSideColor != null) {
+        this.home.setWallRightSideColor(wall, rightSideColor);
+        this.home.setWallRightSideTexture(wall, null);
+      }
       this.home.setWallThickness(wall, 
           thickness != null ? thickness.floatValue() : wall.getThickness());
       this.home.setWallHeight(wall, 
@@ -151,7 +165,9 @@ public class WallController {
             modifiedWall.getXEnd(), modifiedWall.getYEnd());
       }
       this.home.setWallLeftSideColor(wall, modifiedWall.getLeftSideColor());
+      this.home.setWallLeftSideTexture(wall, modifiedWall.getLeftSideTexture());
       this.home.setWallRightSideColor(wall, modifiedWall.getRightSideColor());
+      this.home.setWallRightSideTexture(wall, modifiedWall.getRightSideTexture());
       this.home.setWallThickness(wall, modifiedWall.getThickness());
       this.home.setWallHeight(wall, modifiedWall.getHeight());
     }
@@ -186,15 +202,17 @@ public class WallController {
    * Stores the current properties values of a modified wall.
    */
   private static final class ModifiedWall {
-    private final Wall    wall;
-    private final float   xStart;
-    private final float   yStart;
-    private final float   xEnd;
-    private final float   yEnd;
-    private final Integer leftSideColor;
-    private final Integer rightSideColor;
-    private final float   thickness;
-    private final Float   height;
+    private final Wall        wall;
+    private final float       xStart;
+    private final float       yStart;
+    private final float       xEnd;
+    private final float       yEnd;
+    private final Integer     leftSideColor;
+    private final HomeTexture leftSideTexture;
+    private final Integer     rightSideColor;
+    private final HomeTexture rightSideTexture;
+    private final float       thickness;
+    private final Float       height;
 
     public ModifiedWall(Wall wall) {
       this.wall = wall;
@@ -203,7 +221,9 @@ public class WallController {
       this.xEnd = wall.getXEnd();
       this.yEnd = wall.getYEnd();
       this.leftSideColor = wall.getLeftSideColor();
+      this.leftSideTexture = wall.getLeftSideTexture();
       this.rightSideColor = wall.getRightSideColor();
+      this.rightSideTexture = wall.getRightSideTexture();
       this.thickness = wall.getThickness();
       this.height = wall.getHeight();
     }
@@ -215,9 +235,17 @@ public class WallController {
     public Integer getLeftSideColor() {
       return this.leftSideColor;
     }
+    
+    public HomeTexture getLeftSideTexture() {
+      return this.leftSideTexture;
+    }
 
     public Integer getRightSideColor() {
       return this.rightSideColor;
+    }
+    
+    public HomeTexture getRightSideTexture() {
+      return this.rightSideTexture;
     }
 
     public float getThickness() {

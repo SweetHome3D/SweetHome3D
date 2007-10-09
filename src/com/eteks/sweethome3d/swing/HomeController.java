@@ -42,7 +42,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureEvent;
@@ -66,7 +66,7 @@ public class HomeController  {
   private UserPreferences        preferences;
   private HomeApplication        application;
   private JComponent             homeView;
-  private CatalogController      catalogController;
+  private FurnitureCatalogController      catalogController;
   private FurnitureController    furnitureController;
   private PlanController         planController;
   private HomeController3D       homeController3D;
@@ -131,8 +131,8 @@ public class HomeController  {
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
     
-    this.catalogController   = new CatalogController(
-        preferences.getCatalog(), preferences, contentManager);
+    this.catalogController   = new FurnitureCatalogController(
+        preferences.getFurnitureCatalog(), preferences, contentManager);
     this.furnitureController = new FurnitureController(
         home, preferences, contentManager, this.undoSupport);
     this.planController = new PlanController(
@@ -239,7 +239,7 @@ public class HomeController  {
   /**
    * Returns the catalog controller managed by this controller.
    */
-  public CatalogController getCatalogController() {
+  public FurnitureCatalogController getCatalogController() {
     return this.catalogController;
   }
 
@@ -301,9 +301,9 @@ public class HomeController  {
   public void setCatalogFurnitureSelectionSynchronized(boolean catalogFurnitureSelectionSynchronized) {
     if (this.catalogFurnitureSelectionSynchronized ^ catalogFurnitureSelectionSynchronized) {
       if (catalogFurnitureSelectionSynchronized) {
-        this.preferences.getCatalog().addSelectionListener(catalogSelectionListener);
+        this.preferences.getFurnitureCatalog().addSelectionListener(catalogSelectionListener);
       } else {
-        this.preferences.getCatalog().removeSelectionListener(catalogSelectionListener);
+        this.preferences.getFurnitureCatalog().removeSelectionListener(catalogSelectionListener);
       }
       this.catalogFurnitureSelectionSynchronized = catalogFurnitureSelectionSynchronized;
     }
@@ -315,7 +315,7 @@ public class HomeController  {
    * when catalog is modified.
    */
   private void addCatalogFurnitureListener() {
-    this.preferences.getCatalog().addFurnitureListener(
+    this.preferences.getFurnitureCatalog().addFurnitureListener(
         new CatalogWriterFurnitureListener(this));
   }
 
@@ -337,7 +337,7 @@ public class HomeController  {
       // If controller was garbage collected, remove this listener from catalog
       final HomeController controller = this.homeController.get();
       if (controller == null) {
-        ((Catalog)ev.getSource()).removeFurnitureListener(this);
+        ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
       } else {
         if (!writingPreferences.contains(controller.preferences)) {
           writingPreferences.add(controller.preferences);
@@ -453,7 +453,7 @@ public class HomeController  {
     
     // Search if catalog selection contains at least one piece
     List<CatalogPieceOfFurniture> catalogSelectedItems = 
-        this.preferences.getCatalog().getSelectedFurniture();    
+        this.preferences.getFurnitureCatalog().getSelectedFurniture();    
     boolean catalogSelectionContainsFurniture = !catalogSelectedItems.isEmpty();
     boolean catalogSelectionContainsOneModifiablePiece = catalogSelectedItems.size() == 1
         && catalogSelectedItems.get(0).isModifiable();
@@ -659,7 +659,7 @@ public class HomeController  {
     // Use automatically selection mode  
     getPlanController().setMode(PlanController.Mode.SELECTION);
     List<CatalogPieceOfFurniture> selectedFurniture = 
-      this.preferences.getCatalog().getSelectedFurniture();
+      this.preferences.getFurnitureCatalog().getSelectedFurniture();
     if (!selectedFurniture.isEmpty()) {
       List<HomePieceOfFurniture> newFurniture = 
           new ArrayList<HomePieceOfFurniture>();

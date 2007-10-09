@@ -1,5 +1,5 @@
 /*
- * CatalogTree.java 7 avr. 2006
+ * FurnitureCatalogTree.java 7 avr. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -42,9 +42,9 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
@@ -55,8 +55,8 @@ import com.eteks.sweethome3d.model.SelectionListener;
  * A tree displaying furniture catalog by category.
  * @author Emmanuel Puybaret
  */
-public class CatalogTree extends JTree {
-  private Catalog               catalog;
+public class FurnitureCatalogTree extends JTree {
+  private FurnitureCatalog               catalog;
   private TreeSelectionListener treeSelectionListener;
   private SelectionListener     modelSelectionListener;
   private boolean               furnitureSelectionSynchronized;
@@ -64,7 +64,7 @@ public class CatalogTree extends JTree {
   /**
    * Creates a tree that displays <code>catalog</code> content.
    */
-  public CatalogTree(Catalog catalog) {
+  public FurnitureCatalogTree(FurnitureCatalog catalog) {
     this(catalog, null);
   }
 
@@ -72,7 +72,7 @@ public class CatalogTree extends JTree {
    * Creates a tree controlled by <code>controller</code>
    * that displays <code>catalog</code> content.
    */
-  public CatalogTree(Catalog catalog, CatalogController controller) {
+  public FurnitureCatalogTree(FurnitureCatalog catalog, FurnitureCatalogController controller) {
     this.catalog = catalog;
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
@@ -90,8 +90,8 @@ public class CatalogTree extends JTree {
   /** 
    * Creates the listeners that manage selection synchronization in this tree. 
    */
-  private void createSelectionListeners(final Catalog catalog, 
-                                        final CatalogController controller) {
+  private void createSelectionListeners(final FurnitureCatalog catalog, 
+                                        final FurnitureCatalogController controller) {
     this.treeSelectionListener = 
       new TreeSelectionListener () {
         public void valueChanged(TreeSelectionEvent ev) {
@@ -133,7 +133,7 @@ public class CatalogTree extends JTree {
   /**
    * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
    */
-  private void updateTreeSelectedFurniture(Catalog catalog) {
+  private void updateTreeSelectedFurniture(FurnitureCatalog catalog) {
     clearSelection();
     for (CatalogPieceOfFurniture piece : catalog.getSelectedFurniture()) {
       TreePath path = new TreePath(new Object [] {catalog, piece.getCategory(), piece});
@@ -164,7 +164,7 @@ public class CatalogTree extends JTree {
   /**
    * Adds a double click mouse listener to modify selected furniture.
    */
-  private void addMouseListener(final CatalogController controller) {
+  private void addMouseListener(final FurnitureCatalogController controller) {
     addMouseListener(new MouseAdapter () {
         @Override
         public void mouseClicked(MouseEvent ev) {
@@ -201,8 +201,8 @@ public class CatalogTree extends JTree {
         
       }
       // If node is a category, change label text
-      if (value instanceof Category) {
-        label.setText(((Category)value).getName());
+      if (value instanceof FurnitureCategory) {
+        label.setText(((FurnitureCategory)value).getName());
         label.setFont(this.defaultFont);
       } 
       // Else if node is a piece of furntiure, change label text and icon
@@ -241,10 +241,10 @@ public class CatalogTree extends JTree {
    * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.  
    */
   private static class CatalogTreeModel implements TreeModel {
-    private Catalog                 catalog;
+    private FurnitureCatalog                 catalog;
     private List<TreeModelListener> listeners;
     
-    public CatalogTreeModel(Catalog catalog) {
+    public CatalogTreeModel(FurnitureCatalog catalog) {
       this.catalog = catalog;
       this.listeners = new ArrayList<TreeModelListener>(2);
       catalog.addFurnitureListener(new CatalogFurnitureListener(this));
@@ -255,26 +255,26 @@ public class CatalogTree extends JTree {
     }
 
     public Object getChild(Object parent, int index) {
-      if (parent instanceof Catalog) {
-        return ((Catalog)parent).getCategory(index);
+      if (parent instanceof FurnitureCatalog) {
+        return ((FurnitureCatalog)parent).getCategory(index);
       } else {
-        return ((Category)parent).getPieceOfFurniture(index);
+        return ((FurnitureCategory)parent).getPieceOfFurniture(index);
       }
     }
 
     public int getChildCount(Object parent) {
-      if (parent instanceof Catalog) {
-        return ((Catalog)parent).getCategoriesCount();
+      if (parent instanceof FurnitureCatalog) {
+        return ((FurnitureCatalog)parent).getCategoriesCount();
       } else {
-        return ((Category)parent).getFurnitureCount();
+        return ((FurnitureCategory)parent).getFurnitureCount();
       } 
     }
 
     public int getIndexOfChild(Object parent, Object child) {
-      if (parent instanceof Catalog) {
-        return Collections.binarySearch(((Catalog)parent).getCategories(), (Category)child);
+      if (parent instanceof FurnitureCatalog) {
+        return Collections.binarySearch(((FurnitureCatalog)parent).getCategories(), (FurnitureCategory)child);
       } else {
-        return Collections.binarySearch(((Category)parent).getFurniture(), (CatalogPieceOfFurniture)child);
+        return Collections.binarySearch(((FurnitureCategory)parent).getFurniture(), (CatalogPieceOfFurniture)child);
       }
     }
 
@@ -328,7 +328,7 @@ public class CatalogTree extends JTree {
       public void pieceOfFurnitureChanged(FurnitureEvent ev) {
         // If catalog tree model was garbage collected, remove this listener from catalog
         CatalogTreeModel catalogTreeModel = this.catalogTreeModel.get();
-        Catalog catalog = (Catalog)ev.getSource();
+        FurnitureCatalog catalog = (FurnitureCatalog)ev.getSource();
         if (catalogTreeModel == null) {
           (catalog).removeFurnitureListener(this);
         } else {

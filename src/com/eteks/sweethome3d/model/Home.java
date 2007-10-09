@@ -42,7 +42,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1100;
+  public static final long CURRENT_VERSION = 1200;
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
@@ -545,6 +545,22 @@ public class Home implements Serializable {
   }
 
   /**
+   * Sets the left side <code>texture</code> of <code>wall</code>.
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged}
+   * notification, with an {@link WallEvent#getType() event type} 
+   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallLeftSideTexture(Wall wall, HomeTexture texture) {
+    HomeTexture wallTexture = wall.getLeftSideTexture(); 
+    if ((wallTexture == null && texture != null)
+        || (wallTexture != null && !wallTexture.equals(texture))) {
+      wall.setLeftSideTexture(texture);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Sets the right side <code>color</code> of <code>wall</code>.
    * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
    * {@link WallListener#wallChanged(WallEvent) wallChanged}
@@ -556,6 +572,22 @@ public class Home implements Serializable {
     if ((wallColor == null && color != null)
         || (wallColor != null && !wallColor.equals(color))) {
       wall.setRightSideColor(color);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
+   * Sets the right side <code>texture</code> of <code>wall</code>.
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged}
+   * notification, with an {@link WallEvent#getType() event type} 
+   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallRightSideTexture(Wall wall, HomeTexture texture) {
+    HomeTexture wallTexture = wall.getRightSideTexture(); 
+    if ((wallTexture == null && texture != null)
+        || (wallTexture != null && !wallTexture.equals(texture))) {
+      wall.setRightSideTexture(texture);
       fireWallEvent(wall, WallEvent.Type.UPDATE);
     }
   }

@@ -1,8 +1,7 @@
 /*
- * DefaultCatalog.java 7 avr. 2006
+ * DefaultTexturesCatalog.java 5 oct. 2007
  * 
- * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
- * Reserved.
+ * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -23,34 +22,29 @@ package com.eteks.sweethome3d.io;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import com.eteks.sweethome3d.model.Catalog;
-import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.TexturesCatalog;
+import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
- * Furniture default catalog read from localized resources.
+ * Textures default catalog read from localized resources.
  * @author Emmanuel Puybaret
  */
-public class DefaultCatalog extends Catalog {
+public class DefaultTexturesCatalog extends TexturesCatalog {
   private static final String NAME           = "name#";
   private static final String CATEGORY       = "category#";
-  private static final String ICON           = "icon#";
-  private static final String MODEL          = "model#";
+  private static final String IMAGE          = "image#";
   private static final String WIDTH          = "width#";
-  private static final String DEPTH          = "depth#";
   private static final String HEIGHT         = "height#";
-  private static final String MOVABLE        = "movable#";
-  private static final String DOOR_OR_WINDOW = "doorOrWindow#";
-  private static final String ELEVATION      = "elevation#";
 
   /**
-   * Creates a default catalog read from resources.
+   * Creates a default textures catalog read from resources.
    */
-  public DefaultCatalog() {
+  public DefaultTexturesCatalog() {
     ResourceBundle resource = ResourceBundle.getBundle(
-        DefaultCatalog.class.getName());
+        DefaultTexturesCatalog.class.getName());
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -60,24 +54,12 @@ public class DefaultCatalog extends Catalog {
         break;
       }
       String category = resource.getString(CATEGORY + i);
-      Content icon  = getContent(resource, ICON + i);
-      Content model = getContent(resource, MODEL + i);
+      Content image  = getContent(resource, IMAGE + i);
       float width = Float.parseFloat(resource.getString(WIDTH + i));
-      float depth = Float.parseFloat(resource.getString(DEPTH + i));
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
-      boolean movable = Boolean.parseBoolean(resource.getString(MOVABLE + i));
-      boolean doorOrWindow = Boolean.parseBoolean(
-          resource.getString(DOOR_OR_WINDOW + i));
-      float elevation = 0;
-      try {
-        elevation = Float.parseFloat(resource.getString(ELEVATION + i));
-      } catch (MissingResourceException ex) {
-        // By default elevation is null
-      }
 
-      add(new Category(category),
-          new CatalogPieceOfFurniture(name, icon, model,
-              width, depth, height, elevation, movable, doorOrWindow));
+      add(new TexturesCategory(category),
+          new CatalogTexture(name, image, width, height));
     }
   }
   
@@ -89,6 +71,6 @@ public class DefaultCatalog extends Catalog {
    */
   private Content getContent(ResourceBundle resource, String key) {
     String file = resource.getString(key);
-    return new ResourceURLContent(DefaultCatalog.class, file);
+    return new ResourceURLContent(DefaultTexturesCatalog.class, file);
   }
 }

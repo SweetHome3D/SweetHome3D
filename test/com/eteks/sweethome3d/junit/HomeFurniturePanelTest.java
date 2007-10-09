@@ -42,7 +42,7 @@ public class HomeFurniturePanelTest extends TestCase {
     UserPreferences preferences = new DefaultUserPreferences();
     // Create a home and add a selected piece of furniture to it
     Home home = new Home();
-    PieceOfFurniture firstPiece = preferences.getCatalog().
+    PieceOfFurniture firstPiece = preferences.getFurnitureCatalog().
         getCategories().get(0).getFurniture().get(0);
     HomePieceOfFurniture piece1 = new HomePieceOfFurniture(firstPiece); 
     home.addPieceOfFurniture(piece1);
@@ -100,7 +100,7 @@ public class HomeFurniturePanelTest extends TestCase {
     // Create a selected piece of furniture in a home and display it in a furniture panel
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    PieceOfFurniture firstPiece = preferences.getCatalog().
+    PieceOfFurniture firstPiece = preferences.getFurnitureCatalog().
         getCategories().get(0).getFurniture().get(0);
     HomePieceOfFurniture piece1 = new HomePieceOfFurniture(firstPiece); 
     home.addPieceOfFurniture(piece1);

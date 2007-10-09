@@ -1,5 +1,5 @@
 /*
- * Catalog.java 7 avr. 2006
+ * FurnitureCatalog.java 7 avr. 2006
  * 
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
  * Reserved.
@@ -28,18 +28,18 @@ import java.util.List;
  * Furniture catalog.
  * @author Emmanuel Puybaret
  */
-public abstract class Catalog {
-  private List<Category>                categories        = new ArrayList<Category>();
+public abstract class FurnitureCatalog {
+  private List<FurnitureCategory>                categories        = new ArrayList<FurnitureCategory>();
   private boolean                       sorted;
   private List<CatalogPieceOfFurniture> selectedFurniture = Collections.emptyList();
   private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
   private List<FurnitureListener>       furnitureListeners = new ArrayList<FurnitureListener>();
 
   /**
-   * Returns the catagories list sorted by name.
-   * @return an unmodifiable list of catagories.
+   * Returns the categories list sorted by name.
+   * @return an unmodifiable list of categories.
    */
-  public List<Category> getCategories() {
+  public List<FurnitureCategory> getCategories() {
     checkCategoriesSorted();
     return Collections.unmodifiableList(this.categories);
   }
@@ -55,7 +55,7 @@ public abstract class Catalog {
   }
 
   /**
-   * Returns the count of catagories in this catalog.
+   * Returns the count of categories in this catalog.
    */
   public int getCategoriesCount() {
     return this.categories.size();
@@ -64,7 +64,7 @@ public abstract class Catalog {
   /**
    * Returns the category at a given <code>index</code>.
    */
-  public Category getCategory(int index) {
+  public FurnitureCategory getCategory(int index) {
     checkCategoriesSorted();
     return this.categories.get(index);
   }
@@ -84,12 +84,12 @@ public abstract class Catalog {
   }
 
   /**
-   * Adds a catagory.
+   * Adds a category.
    * @param category the category to add.
    * @throws IllegalArgumentException if a category with same name as the one in
    *           parameter already exists in this catalog.
    */
-  private void add(Category category) {
+  private void add(FurnitureCategory category) {
     if (this.categories.contains(category)) {
       throw new IllegalArgumentException(
           category.getName() + " already exists in catalog");
@@ -106,11 +106,11 @@ public abstract class Catalog {
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
    */
-  public void add(Category category, CatalogPieceOfFurniture piece) {
+  public void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
     int index = this.categories.indexOf(category);
-    // If category doesn't exist yet, add it to catagories
+    // If category doesn't exist yet, add it to categories
     if (index == -1) {
-      category = new Category(category.getName());
+      category = new FurnitureCategory(category.getName());
       add(category);
     } else {
       category = this.categories.get(index);
@@ -131,7 +131,7 @@ public abstract class Catalog {
    * @param piece a piece of furniture in that category.
    */
   public void delete(CatalogPieceOfFurniture piece) {
-    Category category = piece.getCategory();
+    FurnitureCategory category = piece.getCategory();
     // Remove piece from its category
     if (category != null) {
       int pieceIndex = Collections.binarySearch(category.getFurniture(), piece);
@@ -142,7 +142,7 @@ public abstract class Catalog {
         
         if (category.getFurniture().size() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
-          this.categories = new ArrayList<Category>(this.categories);
+          this.categories = new ArrayList<FurnitureCategory>(this.categories);
           this.categories.remove(category);
         }
         

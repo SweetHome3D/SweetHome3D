@@ -35,16 +35,18 @@ import java.util.List;
 public class Wall implements Serializable  {
   private static final long serialVersionUID = 1L;
   
-  private float xStart;
-  private float yStart;
-  private float xEnd;
-  private float yEnd; 
-  private Wall  wallAtStart;
-  private Wall  wallAtEnd;
-  private float thickness;
-  private Float height;
+  private float   xStart;
+  private float   yStart;
+  private float   xEnd;
+  private float   yEnd; 
+  private Wall    wallAtStart;
+  private Wall    wallAtEnd;
+  private float   thickness;
+  private Float   height;
   private Integer leftSideColor;
+  private HomeTexture leftSideTexture;
   private Integer rightSideColor;
+  private HomeTexture rightSideTexture;
   
   private transient float [][] pointsCache;
 
@@ -70,7 +72,9 @@ public class Wall implements Serializable  {
          wall.getXEnd(), wall.getYEnd(), wall.getThickness());
     this.height = wall.getHeight();
     this.leftSideColor = wall.getLeftSideColor();
+    this.leftSideTexture = wall.getLeftSideTexture();
     this.rightSideColor = wall.getRightSideColor();
+    this.rightSideTexture = wall.getRightSideTexture();
   }
   
   /**
@@ -239,6 +243,35 @@ public class Wall implements Serializable  {
    */
   void setRightSideColor(Integer rightColor) {
     this.rightSideColor = rightColor;
+  }
+
+  
+  /**
+   * Returns the left side texture of this wall.
+   */
+  public HomeTexture getLeftSideTexture() {
+    return this.leftSideTexture;
+  }
+
+  /**
+   * Sets the left side texture of this wall.
+   */
+  void setLeftSideTexture(HomeTexture leftSideTexture) {
+    this.leftSideTexture = leftSideTexture;
+  }
+
+  /**
+   * Returns the right side texture of this wall.
+   */
+  public HomeTexture getRightSideTexture() {
+    return this.rightSideTexture;
+  }
+
+  /**
+   * Sets the right side texture of this wall.
+   */
+  void setRightSideTexture(HomeTexture rightSideTexture) {
+    this.rightSideTexture = rightSideTexture;
   }
 
   /**

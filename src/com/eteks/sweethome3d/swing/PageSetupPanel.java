@@ -26,11 +26,16 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
 import java.util.ResourceBundle;
 
+import javax.media.j3d.Canvas3D;
+import javax.media.j3d.IllegalRenderingStateException;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.Screen3D;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
@@ -39,6 +44,7 @@ import javax.swing.KeyStroke;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
+import com.sun.j3d.utils.universe.SimpleUniverse;
 
 /**
  * Home page setup editing panel.
@@ -136,17 +142,42 @@ public class PageSetupPanel extends JPanel {
   private void updateComponents(Home home) {
     HomePrint homePrint = home.getPrint();
     this.pageFormat = PageSetupPanel.getPageFormat(homePrint);
+    boolean offscreenCanvas3DSupported = isOffscreenCanvas3DSupported();
     if (homePrint != null) {
       this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
       this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
-      this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted());
+      this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
     } else {
       this.furniturePrintedCheckBox.setSelected(true);
       this.planPrintedCheckBox.setSelected(true);
-      this.view3DPrintedCheckBox.setSelected(true);
+      this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
     }
+    this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
   }
   
+  /**
+   * Returns <code>true</code> if offscreen is supported in Java 3D. 
+   * This feature is required for 3D view print. 
+   */
+  private boolean isOffscreenCanvas3DSupported() {
+    try {
+      // Create a dummy off screen canvas to check if it can be rendered in current Java 3D configuration
+      Canvas3D offScreenCanvas = new Canvas3D(SimpleUniverse.getPreferredConfiguration(), true);
+      Screen3D screen3D = offScreenCanvas.getScreen3D();
+      screen3D.setSize(1, 1);
+      screen3D.setPhysicalScreenWidth(2f);
+      screen3D.setPhysicalScreenHeight(2f);
+      BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+      ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
+      offScreenCanvas.setOffScreenBuffer(imageComponent2D);
+      
+      offScreenCanvas.renderOffScreenBuffer();
+      return true;
+    } catch (IllegalRenderingStateException ex) {
+      return false;
+    } 
+  }
+
   /**
    * Returns the print attributes matching user choice.
    */

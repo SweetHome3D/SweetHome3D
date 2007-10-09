@@ -35,8 +35,10 @@ public class DefaultUserPreferences extends UserPreferences {
    * Creates default user preferences read from resource files.
    */
   public DefaultUserPreferences() {
-    // Read default catalog
-    setCatalog(new DefaultCatalog());
+    // Read default furniture catalog
+    setFurnitureCatalog(new DefaultFurnitureCatalog());
+    // Read default textures catalog
+    setTexturesCatalog(new DefaultTexturesCatalog());
     // Read other preferences from resource bundle
     ResourceBundle resource = 
       ResourceBundle.getBundle(DefaultUserPreferences.class.getName());

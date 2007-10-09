@@ -24,19 +24,25 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -55,10 +61,14 @@ public class WallPanel extends JPanel {
   private JSpinner       xEndSpinner;
   private JLabel         yEndLabel;
   private JSpinner       yEndSpinner;
-  private JLabel         leftSideColorLabel;
+  private JRadioButton   leftSideColorRadioButton;
   private ColorButton    leftSideColorButton;
-  private JLabel         rightSideColorLabel;
+  private JRadioButton   leftSideTextureRadioButton;
+  private TextureButton  leftSideTextureButton;
+  private JRadioButton   rightSideColorRadioButton;
   private ColorButton    rightSideColorButton;
+  private JRadioButton   rightSideTextureRadioButton;
+  private TextureButton  rightSideTextureButton;
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
   private JLabel         heightLabel;
@@ -105,12 +115,47 @@ public class WallPanel extends JPanel {
     this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
     this.yEndSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.leftSideColorLabel = new JLabel(this.resource.getString("leftSideColorLabel.text"));
+    
+    this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
     this.leftSideColorButton = new ColorButton();
     this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
-    this.rightSideColorLabel = new JLabel(this.resource.getString("rightSideColorLabel.text"));
+    this.leftSideColorButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          leftSideColorRadioButton.setSelected(true);
+        }
+      });
+    this.leftSideTextureRadioButton = new JRadioButton(this.resource.getString("leftSideTextureRadioButton.text"));
+    this.leftSideTextureButton = new TextureButton(preferences);
+    this.leftSideTextureButton.setTextureDialogTitle(this.resource.getString("leftSideTextureDialog.title"));
+    this.leftSideTextureButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          leftSideTextureRadioButton.setSelected(true);
+        }
+      });
+    ButtonGroup leftSideButtonGroup = new ButtonGroup();
+    leftSideButtonGroup.add(this.leftSideColorRadioButton);
+    leftSideButtonGroup.add(this.leftSideTextureRadioButton);
+    
+    this.rightSideColorRadioButton = new JRadioButton(this.resource.getString("rightSideColorRadioButton.text"));
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
+    this.rightSideColorButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          rightSideColorRadioButton.setSelected(true);
+        }
+      });
+    this.rightSideTextureRadioButton = new JRadioButton(this.resource.getString("rightSideTextureRadioButton.text"));
+    this.rightSideTextureButton = new TextureButton(preferences);
+    this.rightSideTextureButton.setTextureDialogTitle(this.resource.getString("rightSideTextureDialog.title"));
+    this.rightSideTextureButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          rightSideTextureRadioButton.setSelected(true);
+        }
+      });
+    ButtonGroup rightSideButtonGroup = new ButtonGroup();
+    rightSideButtonGroup.add(this.rightSideColorRadioButton);
+    rightSideButtonGroup.add(this.rightSideTextureRadioButton);
+    
     this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitText));
     this.thicknessSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
@@ -142,12 +187,14 @@ public class WallPanel extends JPanel {
       this.yEndLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
-      this.leftSideColorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("leftSideColorLabel.mnemonic")).getKeyCode());
-      this.leftSideColorLabel.setLabelFor(this.leftSideColorButton);
-      this.rightSideColorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rightSideColorLabel.mnemonic")).getKeyCode());
-      this.rightSideColorLabel.setLabelFor(this.rightSideColorButton);
+      this.leftSideColorRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("leftSideColorRadioButton.mnemonic")).getKeyCode());
+      this.leftSideTextureRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("leftSideTextureRadioButton.mnemonic")).getKeyCode());
+      this.rightSideColorRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("rightSideColorRadioButton.mnemonic")).getKeyCode());
+      this.rightSideTextureRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("rightSideTextureRadioButton.mnemonic")).getKeyCode());
       this.thicknessLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("thicknessLabel.mnemonic")).getKeyCode());
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
@@ -165,7 +212,7 @@ public class WallPanel extends JPanel {
     JPanel startPointPanel = createTitledPanel(
         this.resource.getString("startPointPanel.title"),
         new JComponent [] {this.xStartLabel, this.xStartSpinner, 
-                           this.yStartLabel, this.yStartSpinner});
+                           this.yStartLabel, this.yStartSpinner}, true);
     Insets rowInsets = new Insets(0, 0, 5, 0);
     add(startPointPanel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.WEST,
@@ -174,55 +221,76 @@ public class WallPanel extends JPanel {
     JPanel endPointPanel = createTitledPanel(
         this.resource.getString("endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
-                           this.yEndLabel, this.yEndSpinner});
+                           this.yEndLabel, this.yEndSpinner}, true);
     add(endPointPanel, new GridBagConstraints(
         0, 1, 4, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Third row
-    JPanel colorsPanel = createTitledPanel(
-        this.resource.getString("colorsPanel.title"),
-        new JComponent [] {this.leftSideColorLabel, this.leftSideColorButton, 
-                           this.rightSideColorLabel, this.rightSideColorButton});
-    add(colorsPanel, new GridBagConstraints(
-        0, 2, 4, 1, 0, 0, GridBagConstraints.WEST,
+    JPanel leftSidePanel = createTitledPanel(
+        this.resource.getString("leftSidePanel.title"),
+        new JComponent [] {this.leftSideColorRadioButton, this.leftSideColorButton, 
+                           this.leftSideTextureRadioButton, this.leftSideTextureButton}, false);
+    add(leftSidePanel, new GridBagConstraints(
+        0, 2, 2, 1, 1, 0, GridBagConstraints.WEST,
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+    JPanel rightSidePanel = createTitledPanel(
+        this.resource.getString("rightSidePanel.title"),
+        new JComponent [] {this.rightSideColorRadioButton, this.rightSideColorButton, 
+                           this.rightSideTextureRadioButton, this.rightSideTextureButton}, false);
+    add(rightSidePanel, new GridBagConstraints(
+        2, 2, 2, 1, 1, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
     add(this.thicknessLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, 
-        new Insets(0, 6, 10, colorsPanel.getBorder().getBorderInsets(colorsPanel).left), 0, 0));
+        new Insets(0, 6, 10, leftSidePanel.getBorder().getBorderInsets(leftSidePanel).left), 0, 0));
     add(this.thicknessSpinner, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
     add(this.heightLabel, new GridBagConstraints(
-        2, 3, 1, 1, 1, 0, GridBagConstraints.EAST, 
+        2, 3, 1, 1, 0, 0, GridBagConstraints.EAST, 
         GridBagConstraints.NONE, new Insets(0, 5, 10, 5), 0, 0));
     add(this.heightSpinner, new GridBagConstraints(
         3, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, 
-        new Insets(0, 0, 10, colorsPanel.getBorder().getBorderInsets(colorsPanel).right), 0, 0));
+        new Insets(0, 0, 10, leftSidePanel.getBorder().getBorderInsets(leftSidePanel).right), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
         0, 4, 4, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
-  private JPanel createTitledPanel(String title, JComponent [] components) {
+  private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
     JPanel titledPanel = new JPanel(new GridBagLayout());
     titledPanel.setBorder(BorderFactory.createCompoundBorder(
         BorderFactory.createTitledBorder(title),
         BorderFactory.createEmptyBorder(0, 2, 2, 2)));    
-    Insets labelInsets = new Insets(0, 0, 0, 5);
-    Insets insets = new Insets(0, 0, 0, 5);
-    for (int i = 0; i < components.length - 1; i++) {
-      titledPanel.add(components [i], new GridBagConstraints(
-          i, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
-          GridBagConstraints.HORIZONTAL, 
-          i % 2 == 0 ? labelInsets : insets, 0, 0));
+    if (horizontal) {
+      Insets labelInsets = new Insets(0, 0, 0, 5);
+      Insets insets = new Insets(0, 0, 0, 5);
+      for (int i = 0; i < components.length - 1; i++) {
+        titledPanel.add(components [i], new GridBagConstraints(
+            i, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            GridBagConstraints.HORIZONTAL, 
+            i % 2 == 0 ? labelInsets : insets, 0, 0));
+      }
+    
+      titledPanel.add(components [components.length - 1], new GridBagConstraints(
+          components.length - 1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    } else {
+      for (int i = 0; i < components.length; i += 2) {
+        int bottomInset = i < components.length - 2  ? 0  : 5;
+        titledPanel.add(components [i], new GridBagConstraints(
+            0, i / 2, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            GridBagConstraints.HORIZONTAL, 
+            new Insets(0, 0, bottomInset , 5), 0, 0));
+        titledPanel.add(components [i + 1], new GridBagConstraints(
+            1, i / 2, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            GridBagConstraints.HORIZONTAL, new Insets(0, 0, bottomInset, 0), 0, 0));
+      }
     }
-    titledPanel.add(components [components.length - 1], new GridBagConstraints(
-        components.length - 1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     return titledPanel;
   }
 
@@ -269,6 +337,25 @@ public class WallPanel extends JPanel {
         }
       }
       this.leftSideColorButton.setColor(leftSideColor);
+      HomeTexture leftSideTexture = firstWall.getLeftSideTexture();
+      if (leftSideTexture != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!leftSideTexture.equals(selectedWalls.get(i).getLeftSideTexture())) {
+            leftSideTexture = null;
+            break;
+          }
+        }
+      }
+      this.leftSideTextureButton.setTexture(leftSideTexture);
+
+      if (leftSideColor != null && leftSideTexture != null) {
+        this.leftSideTextureRadioButton.setSelected(false);
+        this.leftSideColorRadioButton.setSelected(false);
+      } else if (leftSideTexture != null) {
+        this.leftSideTextureRadioButton.setSelected(true);
+      } else if (leftSideColor != null){
+        this.leftSideColorRadioButton.setSelected(true);
+      } 
       
       Integer rightSideColor = firstWall.getRightSideColor();
       if (rightSideColor != null) {
@@ -280,6 +367,25 @@ public class WallPanel extends JPanel {
         }
       }
       this.rightSideColorButton.setColor(rightSideColor);
+      HomeTexture rightSideTexture = firstWall.getRightSideTexture();
+      if (rightSideTexture != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!rightSideTexture.equals(selectedWalls.get(i).getRightSideTexture())) {
+            rightSideTexture = null;
+            break;
+          }
+        }
+      }
+      this.rightSideTextureButton.setTexture(rightSideTexture);
+      
+      if (rightSideColor != null && rightSideTexture != null) {
+        this.rightSideTextureRadioButton.setSelected(false);
+        this.rightSideColorRadioButton.setSelected(false);
+      } else if (rightSideTexture != null) {
+        this.rightSideTextureRadioButton.setSelected(true);
+      } else if (rightSideColor != null) {
+        this.rightSideColorRadioButton.setSelected(true);
+      } 
       
       Float thickness = firstWall.getThickness();
       for (int i = 1; i < selectedWalls.size(); i++) {
@@ -344,19 +450,61 @@ public class WallPanel extends JPanel {
   }
 
   /**
-   * Returns the edited color of the wall(s) left part or <code>null</code>.
+   * Returns the edited color of the wall(s) left side or <code>null</code>.
    */
   public Integer getWallLeftSideColor() {
-    return this.leftSideColorButton.getColor();
+    if (this.leftSideColorRadioButton.isSelected()) {
+      return this.leftSideColorButton.getColor();
+    } else {
+      return null;
+    }
   }
 
   /**
-   * Returns the edited color of the wall(s) right part or <code>null</code>.
+   * Returns the edited texture of the wall(s) left side or <code>null</code>.
+   */
+  public HomeTexture getWallLeftSideTexture() {
+    if (this.leftSideTextureRadioButton.isSelected()) {
+      TextureImage selectedTexture = (TextureImage)this.leftSideTextureButton.getTexture();
+      if (selectedTexture instanceof HomeTexture
+          || selectedTexture == null) {
+        return (HomeTexture)selectedTexture;
+      } else {
+        return new HomeTexture(selectedTexture);
+      }
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the edited color of the wall(s) right side or <code>null</code>.
    */
   public Integer getWallRightSideColor() {
-    return this.rightSideColorButton.getColor();
+    if (this.rightSideColorRadioButton.isSelected()) {
+      return this.rightSideColorButton.getColor();
+    } else {
+      return null;
+    }
   }
   
+  /**
+   * Returns the edited texture of the wall(s) right side or <code>null</code>.
+   */
+  public HomeTexture getWallRightSideTexture() {
+    if (this.rightSideTextureRadioButton.isSelected()) {
+      TextureImage selectedTexture = (TextureImage)this.rightSideTextureButton.getTexture();
+      if (selectedTexture instanceof HomeTexture
+          || selectedTexture == null) {
+        return (HomeTexture)selectedTexture;
+      } else {
+        return new HomeTexture(selectedTexture);
+      }
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Returns the edited thickness of the wall(s) or <code>null</code>.
    */

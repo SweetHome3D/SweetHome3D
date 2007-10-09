@@ -34,6 +34,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -64,6 +65,7 @@ import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
+import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
@@ -72,6 +74,8 @@ import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Screen3D;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -88,6 +92,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
@@ -99,6 +104,7 @@ import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -238,25 +244,39 @@ public class HomeComponent3D extends JComponent implements Printable {
    * Prints this component to make it fill <code>pageFormat</code> imageable size.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    if (pageIndex == 0) {
-      // Compute printed image  size to render 3D view in 150 dpi
+    if (pageIndex == 0) {     
+      // Compute printed image size to render 3D view in 150 dpi
       double printSize = Math.min(pageFormat.getImageableWidth(), 
           pageFormat.getImageableHeight());
       int printedImageSize = (int)(printSize / 72 * 150);
-      Canvas3D offScreenCanvas = null;
-      SimpleUniverse printUniverse = null;
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
-        offScreenCanvas = createOffScreenCanvas(printedImageSize);
-  
+        Canvas3D offScreenCanvas = createOffScreenCanvas(printedImageSize);
+        SimpleUniverse printUniverse = null;
+
         if (this.universe == null) {
           printUniverse = getUniverse(offScreenCanvas, this.home);
         } else {
           this.universe.getViewer().getView().addCanvas3D(offScreenCanvas);
         }
-        offScreenCanvas.renderOffScreenBuffer();
-        offScreenCanvas.waitForOffScreenRendering();
-        this.printedImage = offScreenCanvas.getOffScreenBuffer().getImage();
+       
+        try {
+          offScreenCanvas.renderOffScreenBuffer();
+          offScreenCanvas.waitForOffScreenRendering();
+          this.printedImage = offScreenCanvas.getOffScreenBuffer().getImage();
+        } catch (IllegalRenderingStateException ex) {
+          // If off screen canvas fails, consider that 3D view page doesn't exist
+          return NO_SUCH_PAGE;
+        } finally {
+          if (offScreenCanvas != null) {
+            if (printUniverse != null) {
+              printUniverse.cleanup();
+              removeHomeListeners(this.home);
+            } else {
+              offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
+            }
+          }
+        }
       }
   
       Graphics2D g2D = (Graphics2D)g.create();
@@ -268,20 +288,12 @@ public class HomeComponent3D extends JComponent implements Printable {
       g2D.drawImage(this.printedImage, 0, 0, this);
       g2D.dispose();
 
-      if (offScreenCanvas != null) {
-        if (printUniverse != null) {
-          printUniverse.cleanup();
-          removeHomeListeners(this.home);
-        } else {
-          offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
-        }
-      }
       return PAGE_EXISTS;
     } else {
       return NO_SUCH_PAGE;
     }
   }
-
+  
   /**
    * Returns an off screen canvas.
    */
@@ -875,6 +887,11 @@ public class HomeComponent3D extends JComponent implements Printable {
 
       Appearance wallAppearance = new Appearance();
       wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+      // Combinaison texture and wall color
+      TextureAttributes textureAttributes = new TextureAttributes ();
+      textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      wallAppearance.setTextureAttributes(textureAttributes);      
       wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
       wallAppearance.setMaterial(DEFAULT_MATERIAL);
       TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -896,14 +913,14 @@ public class HomeComponent3D extends JComponent implements Printable {
      * Sets the 3D geometry of this wall shapes that matches its 2D geometry.  
      */
     private void updateWallGeometry() {
-      updateWallSideGeometry(LEFT_WALL_SIDE);
-      updateWallSideGeometry(RIGHT_WALL_SIDE);
+      updateWallSideGeometry(LEFT_WALL_SIDE, ((Wall)getUserData()).getLeftSideTexture());
+      updateWallSideGeometry(RIGHT_WALL_SIDE, ((Wall)getUserData()).getRightSideTexture());
     }
     
-    private void updateWallSideGeometry(int wallSide) {
+    private void updateWallSideGeometry(int wallSide, HomeTexture texture) {
       Shape3D wallShape = (Shape3D)getChild(wallSide);
       int currentGeometriesCount = wallShape.numGeometries();
-      for (Geometry wallGeometry : getWallGeometries(wallSide)) {
+      for (Geometry wallGeometry : getWallGeometries(wallSide, texture)) {
         wallShape.addGeometry(wallGeometry);
       }
       for (int i = currentGeometriesCount - 1; i >= 0; i--) {
@@ -915,7 +932,7 @@ public class HomeComponent3D extends JComponent implements Printable {
      * Returns <code>wall</code> geometries computed with windows or doors 
      * that intersect wall.
      */
-    private Geometry[] getWallGeometries(int wallSide) {
+    private Geometry[] getWallGeometries(int wallSide, HomeTexture texture) {
       Shape wallShape = getShape(getWallSidePoints(wallSide));
       float wallHeight = getWallHeight();
       // Search which doors or windows intersect with this wall side
@@ -946,7 +963,7 @@ public class HomeComponent3D extends JComponent implements Printable {
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
           float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
           // Compute geometry for vertical part
-          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, wallHeight));
+          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, wallHeight, texture));
           // Compute geometry for bottom part
           wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
           // Compute geometry for top part
@@ -969,7 +986,7 @@ public class HomeComponent3D extends JComponent implements Printable {
             // Generate geometry for wall part above window
             if (doorOrWindowTop < wallHeight) {
               wallGeometries.add(getWallVerticalPartGeometry(
-                  wallPartPoints, doorOrWindowTop, wallHeight));
+                  wallPartPoints, doorOrWindowTop, wallHeight, texture));
               wallGeometries.add(getWallHorizontalPartGeometry(
                   wallPartPoints, doorOrWindowTop));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
@@ -977,7 +994,7 @@ public class HomeComponent3D extends JComponent implements Printable {
             // Generate geometry for wall part below window
             if (doorOrWindow.getElevation() > 0) {
               wallGeometries.add(getWallVerticalPartGeometry(
-                  wallPartPoints, 0, doorOrWindow.getElevation()));
+                  wallPartPoints, 0, doorOrWindow.getElevation(), texture));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
             }
@@ -1034,7 +1051,9 @@ public class HomeComponent3D extends JComponent implements Printable {
      * Returns the vertical rectangles that join each point of <code>points</code>
      * and spread from <code>yMin</code> to <code>yMax</code>.
      */
-    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, float yMax) {
+    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, float yMax, 
+                                                 HomeTexture texture) {
+      // Compute wall coordinates
       Point3f [] bottom = new Point3f [points.length];
       Point3f [] top    = new Point3f [points.length];
       for (int i = 0; i < points.length; i++) {
@@ -1056,6 +1075,33 @@ public class HomeComponent3D extends JComponent implements Printable {
       
       GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
       geometryInfo.setCoordinates (coords);
+
+      // Compute wall texture coordinates
+      if (texture != null) {
+        TexCoord2f [] textureCoords = new TexCoord2f [points.length * 4];
+        float yMinTextureCoords = yMin / texture.getHeight();
+        float yMaxTextureCoords = yMax / texture.getHeight();
+        TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
+        TexCoord2f lastTextureCoords = new TexCoord2f(0, yMaxTextureCoords);
+        j = 0;
+        for (int i = 0; i < points.length - 1; i++) {
+          float horizontalTextureCoords = (float)Point2D.distance(points[i][0], points[i][1], 
+              points[i + 1][0], points[i + 1][1]) / texture.getWidth();
+          textureCoords [j++] = firstTextureCoords;
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMaxTextureCoords);
+          textureCoords [j++] = lastTextureCoords;
+        }
+        float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
+            points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
+        textureCoords [j++] = firstTextureCoords;
+        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
+        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMaxTextureCoords);
+        textureCoords [j++] = lastTextureCoords;
+        geometryInfo.setTextureCoordinateParams(1, 2);
+        geometryInfo.setTextureCoordinates(0, textureCoords);
+      }
+      
       // Generate normals
       new NormalGenerator(0).generateNormals(geometryInfo);
       return geometryInfo.getIndexedGeometryArray();
@@ -1091,42 +1137,49 @@ public class HomeComponent3D extends JComponent implements Printable {
     }
     
     /**
-     * Sets wall appearance with its color.
+     * Sets wall appearance with its color, texture and transparency.
      */
     private void updateWallAppearance() {
       Wall wall = (Wall)getUserData();
-      // Update material of wall left part
-      Integer leftSideColor = wall.getLeftSideColor();
-      Appearance wallAppearance = ((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance();
-      if (leftSideColor == null && wallAppearance.getUserData() != null
-          || leftSideColor != null && !leftSideColor.equals(wallAppearance.getUserData())) {
-        // Store color in appearance user data to avoid appearance update at each wall update 
-        wallAppearance.setUserData(leftSideColor);
-        wallAppearance.setMaterial(getMaterial(leftSideColor));
+      updateWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
+          wall.getLeftSideTexture(), wall.getLeftSideColor());
+      updateWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
+          wall.getRightSideTexture(), wall.getRightSideColor());
+    }
+    
+    /**
+     * Sets wall side appearance with its color, texture and transparency.
+     */
+    private void updateWallSideAppearance(final Appearance   wallSideAppearance, 
+                                          final HomeTexture wallSideTexture,
+                                          Integer wallSideColor) {
+      // Update material and texture of wall left side
+      if (wallSideTexture == null) {
+        if (wallSideColor == null && wallSideAppearance.getUserData() != null
+            || wallSideColor != null && !wallSideColor.equals(wallSideAppearance.getUserData())) {
+          // Store color in appearance user data to avoid appearance update at each wall update 
+          wallSideAppearance.setUserData(wallSideColor);
+          wallSideAppearance.setMaterial(getMaterial(wallSideColor));
+        }
+        wallSideAppearance.setTexture(null);
+      } else {
+        wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
+        final TextureManager imageManager = TextureManager.getInstance();
+        imageManager.loadTexture(wallSideTexture.getImage(), 
+            new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {
+                  wallSideAppearance.setTexture(texture);
+                }
+              });
       }
-      // Update wall transparency
+      // Update wall left side transparency
       float wallsAlpha = this.home.getWallsAlpha();
-      TransparencyAttributes transparencyAttributes = wallAppearance.getTransparencyAttributes();
+      TransparencyAttributes transparencyAttributes = wallSideAppearance.getTransparencyAttributes();
       transparencyAttributes.setTransparency(wallsAlpha);
       // If walls alpha is equal to zero, turn off transparency to get better results 
       transparencyAttributes.setTransparencyMode(wallsAlpha == 0 
           ? TransparencyAttributes.NONE 
           : TransparencyAttributes.NICEST);
-
-      // Update material of wall right part
-      Integer rightSideColor = wall.getRightSideColor();
-      wallAppearance = ((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance();
-      if (rightSideColor == null && wallAppearance.getUserData() != null
-          || rightSideColor != null && !rightSideColor.equals(wallAppearance.getUserData())) {
-        // Store color in appearance user data to avoid appearance update at each wall update 
-        wallAppearance.setUserData(rightSideColor);
-        wallAppearance.setMaterial(getMaterial(rightSideColor));
-      }
-      // Update wall transparency
-      transparencyAttributes = wallAppearance.getTransparencyAttributes();
-      transparencyAttributes.setTransparency(this.home.getWallsAlpha());
-      transparencyAttributes.setTransparencyMode(
-          wallsAlpha == 0 ? TransparencyAttributes.NONE : TransparencyAttributes.NICEST);
     }
     
     private Material getMaterial(Integer color) {

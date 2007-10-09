@@ -39,9 +39,9 @@ import javax.swing.table.TableModel;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -65,7 +65,7 @@ public class FurnitureTableTest extends TestCase {
     UserPreferences.Unit currentUnit = preferences.getUnit();
     assertFalse("Unit is in centimeter", currentUnit == UserPreferences.Unit.CENTIMETER);
     // Get furniture catalog
-    Catalog catalog = preferences.getCatalog();
+    FurnitureCatalog catalog = preferences.getFurnitureCatalog();
     
     // 2. Create a home that contains furniture matching catalog furniture
     List<HomePieceOfFurniture> homeFurniture = createHomeFurnitureFromCatalog(catalog);
@@ -92,9 +92,9 @@ public class FurnitureTableTest extends TestCase {
   }
   
   private static List<HomePieceOfFurniture> createHomeFurnitureFromCatalog(
-      Catalog catalog) {
+      FurnitureCatalog catalog) {
     List<HomePieceOfFurniture> homeFurniture = new ArrayList<HomePieceOfFurniture>();
-    for (Category category : catalog.getCategories()) {
+    for (FurnitureCategory category : catalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         homeFurniture.add(new HomePieceOfFurniture(piece));
       }
@@ -127,7 +127,7 @@ public class FurnitureTableTest extends TestCase {
     // 1.  Create a home that contains furniture matching catalog furniture
     UserPreferences preferences = new DefaultUserPreferences();
     List<HomePieceOfFurniture> homeFurniture = 
-      createHomeFurnitureFromCatalog(preferences.getCatalog());
+      createHomeFurnitureFromCatalog(preferences.getFurnitureCatalog());
     Home home = new Home(homeFurniture);
     // Check home furniture isn't empty
     assertTrue("Home furniture is empty", homeFurniture.size() > 0);
@@ -174,7 +174,7 @@ public class FurnitureTableTest extends TestCase {
   public static void main(String [] args) {
     UserPreferences preferences = new DefaultUserPreferences();
     List<HomePieceOfFurniture> homeFurniture = 
-      createHomeFurnitureFromCatalog(preferences.getCatalog());
+      createHomeFurnitureFromCatalog(preferences.getFurnitureCatalog());
     Home home = new Home(homeFurniture);
     
     // Create a furniture table

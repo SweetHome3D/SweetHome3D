@@ -55,15 +55,16 @@ public abstract class UserPreferences {
     }
   }
 
-  private Catalog      catalog;
-  private String       language;
-  private Unit         unit;
-  private boolean      magnetismEnabled = true;
-  private boolean      rulersVisible    = true;
-  private boolean      gridVisible      = true;
-  private float        newWallThickness;
-  private float        newHomeWallHeight;
-  private List<String> recentHomes;
+  private FurnitureCatalog furnitureCatalog;
+  private TexturesCatalog  texturesCatalog;
+  private String           language;
+  private Unit             unit;
+  private boolean          magnetismEnabled = true;
+  private boolean          rulersVisible    = true;
+  private boolean          gridVisible      = true;
+  private float            newWallThickness;
+  private float            newHomeWallHeight;
+  private List<String>     recentHomes;
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this); 
@@ -92,14 +93,25 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns the catalog.
+   * Returns the furniture catalog.
    */
-  public Catalog getCatalog() {
-    return this.catalog;
+  public FurnitureCatalog getFurnitureCatalog() {
+    return this.furnitureCatalog;
   }
 
-  protected void setCatalog(Catalog catalog) {
-    this.catalog = catalog;
+  protected void setFurnitureCatalog(FurnitureCatalog catalog) {
+    this.furnitureCatalog = catalog;
+  }
+
+  /**
+   * Returns the textures catalog.
+   */
+  public TexturesCatalog getTexturesCatalog() {
+    return this.texturesCatalog;
+  }
+
+  protected void setTexturesCatalog(TexturesCatalog catalog) {
+    this.texturesCatalog = catalog;
   }
 
   /**

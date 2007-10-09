@@ -35,9 +35,9 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
@@ -77,7 +77,7 @@ public class ImportedFurnitureWizardController extends WizardController {
   private boolean                          movable;
   private boolean                          doorOrWindow;
   private Integer                          color;
-  private Category                         category;
+  private FurnitureCategory                         category;
   private boolean                          backFaceShown;
   private float [][]                       modelRotation;
   private float                            iconYaw;
@@ -180,7 +180,7 @@ public class ImportedFurnitureWizardController extends WizardController {
       addPieceOfFurniture(new HomePieceOfFurniture(newPiece));
     }
     // Remove the edited piece from catalog
-    Catalog catalog = this.preferences.getCatalog();
+    FurnitureCatalog catalog = this.preferences.getFurnitureCatalog();
     if (this.piece != null) {
       catalog.delete(this.piece);
     }
@@ -495,16 +495,16 @@ public class ImportedFurnitureWizardController extends WizardController {
   /**
    * Returns the category of the imported piece.
    */
-  public Category getCategory() {
+  public FurnitureCategory getCategory() {
     return this.category;
   }
   
   /**
    * Sets the category of the imported piece.
    */
-  public void setCategory(Category category) {
+  public void setCategory(FurnitureCategory category) {
     if (category != this.category) {
-      Category oldCategory = this.category;
+      FurnitureCategory oldCategory = this.category;
       this.category = category;
       this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.toString(), oldCategory, category);
     }

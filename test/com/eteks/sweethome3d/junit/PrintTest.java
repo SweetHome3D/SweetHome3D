@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.FileDialog;
 import java.awt.print.PageFormat;
@@ -43,7 +42,6 @@ import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
-import abbot.finder.Matcher;
 import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.FileDialogTester;
 import abbot.tester.JComponentTester;
@@ -83,8 +81,8 @@ public class PrintTest extends ComponentTestFixture {
     tester.waitForIdle();
     // Add a piece of furniture to home
     List<CatalogPieceOfFurniture> selectedPieces = Arrays.asList(
-        new CatalogPieceOfFurniture [] {preferences.getCatalog().getCategories().get(0).getFurniture().get(0)}); 
-    preferences.getCatalog().setSelectedFurniture(selectedPieces);
+        new CatalogPieceOfFurniture [] {preferences.getFurnitureCatalog().getCategories().get(0).getFurniture().get(0)}); 
+    preferences.getFurnitureCatalog().setSelectedFurniture(selectedPieces);
     runAction(controller, HomePane.ActionType.ADD_HOME_FURNITURE);
     // Check home contains one piece
     assertEquals("Home doesn't contain any furniture", 1, home.getFurniture().size());
@@ -154,11 +152,7 @@ public class PrintTest extends ComponentTestFixture {
         PrintPreviewPanel.class.getName()).getString("printPreview.title"));
     // Check dialog box is displayed
     JDialog printPreviewDialog = (JDialog)new BasicFinder().find(frame, 
-        new Matcher () {
-            public boolean matches(Component component) {
-              return component instanceof JDialog && component.isShowing();              
-            }
-          });
+        new ClassMatcher (JDialog.class, true));
     assertTrue("Print preview dialog not showing", printPreviewDialog.isShowing());
     // Retrieve PageSetupPanel components
     PrintPreviewPanel printPreviewPanel = (PrintPreviewPanel)TestUtilities.findComponent(
@@ -193,7 +187,11 @@ public class PrintTest extends ComponentTestFixture {
       });
     assertFalse("Print preview dialog still showing", printPreviewDialog.isShowing());
     
-    // 7. Show print to PDF dialog box
+    // 7. Check the created PDF file doesn't exist
+    String pdfFileBase = "testsdfghjk";
+    File pdfFile = new File(pdfFileBase + ".pdf");
+    assertFalse("PDF file already exists, delete it first", pdfFile.exists());
+    // Show print to PDF dialog box
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
@@ -205,13 +203,8 @@ public class PrintTest extends ComponentTestFixture {
         HomePane.class.getName()).getString("printToPDFDialog.title"));
     // Check dialog box is displayed
     final Dialog printToPdfDialog = (Dialog)new BasicFinder().find(frame, 
-        new Matcher () {
-            public boolean matches(Component component) {
-              return component instanceof Dialog && component.isShowing();
-            }
-          });
+        new ClassMatcher (Dialog.class, true));
     assertTrue("Print to pdf dialog not showing", printToPdfDialog.isShowing());
-    String pdfFileBase = "testsdfghjk";
     // Change file in print to PDF file chooser 
     if (printToPdfDialog instanceof FileDialog) {
       final FileDialogTester fileDialogTester = new FileDialogTester();
@@ -229,13 +222,12 @@ public class PrintTest extends ComponentTestFixture {
           new ClassMatcher(JFileChooser.class));
       fileChooserTester.actionSetDirectory(fileChooser, System.getProperty("user.dir"));
       fileChooserTester.actionSetFilename(fileChooser, pdfFileBase);
-      // Select Ok option to hide dialog box in Event Dispatch Thread
+      // Select Ok option to hide dialog box
       fileChooserTester.actionApprove(fileChooser);
     }
-    assertFalse("Print to pdf dialog still showing", printPreviewDialog.isShowing());
     // Wait PDF generation  
     Thread.sleep(1000);
-    File pdfFile = new File(pdfFileBase + ".pdf");
+    assertFalse("Print to pdf dialog still showing", printToPdfDialog.isShowing());
     assertTrue("PDF file doesn't exist", pdfFile.exists());
     assertTrue("PDF file is empty", pdfFile.length() > 0);
     pdfFile.delete();

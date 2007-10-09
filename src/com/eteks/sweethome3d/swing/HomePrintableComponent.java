@@ -77,8 +77,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     } 
     if ((homePrint == null || homePrint.isPlanPrinted())
         && page == this.planViewIndex) {
-      ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
-      pageExists = PAGE_EXISTS;
+      return ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
     } else if ((homePrint == null && page == this.planViewIndex + 1)
                || (homePrint != null
                    && homePrint.isView3DPrinted()
@@ -86,8 +85,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
                          && page == this.planViewIndex + 1)
                        || (!homePrint.isPlanPrinted()
                            && page == this.planViewIndex)))) {
-      ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
-      pageExists = PAGE_EXISTS;
+      return ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
     }
     return pageExists;
   }

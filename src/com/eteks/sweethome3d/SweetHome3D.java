@@ -52,6 +52,9 @@ import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.media.j3d.RenderingError;
+import javax.media.j3d.RenderingErrorListener;
+import javax.media.j3d.VirtualUniverse;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -171,6 +174,7 @@ public class SweetHome3D extends HomeApplication {
       }      
       
       initLookAndFeel();
+      initJava3DRenderingErrorListener();
       application = createApplication();
     }
 
@@ -250,6 +254,22 @@ public class SweetHome3D extends HomeApplication {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     } catch (Exception e) {
       // Too bad keep current look and feel
+    }
+  }
+
+  /**
+   * Adds a rendering error listener to Java 3D 
+   * to avoid default System exit in case of error during 3D rendering. 
+   */
+  private static void initJava3DRenderingErrorListener() {
+    try {
+      VirtualUniverse.addRenderingErrorListener(new RenderingErrorListener() {
+          public void errorOccurred(RenderingError error) {
+          }
+        });
+    } catch (NoSuchMethodError ex) {
+      // As addRenderingErrorListener is available since Java 3D 1.5, use 
+      // default rendering error reporting if Sweet Home 3D is linked to a previous version
     }
   }
 

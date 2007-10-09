@@ -36,13 +36,13 @@ import javax.swing.JTable;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.CatalogController;
-import com.eteks.sweethome3d.swing.CatalogTree;
+import com.eteks.sweethome3d.swing.FurnitureCatalogController;
+import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
@@ -57,7 +57,7 @@ public class HomeControllerTest extends TestCase {
   private UserPreferences     preferences;
   private Home                home;
   private HomeController      homeController;
-  private CatalogTree         catalogTree;
+  private FurnitureCatalogTree         catalogTree;
   private FurnitureController furnitureController;
   private FurnitureTable      furnitureTable;
 
@@ -66,9 +66,9 @@ public class HomeControllerTest extends TestCase {
     this.preferences = new DefaultUserPreferences();
     this.home = new Home();
     this.homeController = new HomeController(this.home, this.preferences);
-    CatalogController catalogController = 
+    FurnitureCatalogController catalogController = 
         homeController.getCatalogController();
-    this.catalogTree = (CatalogTree)catalogController.getView();
+    this.catalogTree = (FurnitureCatalogTree)catalogController.getView();
     this.furnitureController = 
         homeController.getFurnitureController();
     this.furnitureTable = 
@@ -174,7 +174,7 @@ public class HomeControllerTest extends TestCase {
    */
   public void testZoomAndAligment() {
     // Add the first two pieces of catalog first category to home
-    Category firstCategory = this.preferences.getCatalog().getCategories().get(0);
+    FurnitureCategory firstCategory = this.preferences.getFurnitureCatalog().getCategories().get(0);
     HomePieceOfFurniture firstPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
     this.home.addPieceOfFurniture(firstPiece);
     HomePieceOfFurniture secondPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(1));
@@ -268,7 +268,7 @@ public class HomeControllerTest extends TestCase {
    */
   public void testFurnitureVisibleProperties() {
     // 1. Add the first piece of catalog first category to home
-    Category firstCategory = this.preferences.getCatalog().getCategories().get(0);
+    FurnitureCategory firstCategory = this.preferences.getFurnitureCatalog().getCategories().get(0);
     HomePieceOfFurniture piece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
     this.home.addPieceOfFurniture(piece);
     // Use centimeter as unit

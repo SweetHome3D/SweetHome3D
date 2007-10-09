@@ -1,5 +1,5 @@
 /*
- * CatalogTransferHandler.java 12 sept. 2006
+ * FurnitureCatalogTransferHandler.java 12 sept. 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -32,31 +32,31 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
-import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 
 /**
  * Catalog transfer handler.
  * @author Emmanuel Puybaret
  */
-public class CatalogTransferHandler extends TransferHandler {
-  private Catalog           catalog;
+public class FurnitureCatalogTransferHandler extends TransferHandler {
+  private FurnitureCatalog           catalog;
   private ContentManager    contentManager;
-  private CatalogController catalogController;
+  private FurnitureCatalogController catalogController;
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
-  public CatalogTransferHandler(Catalog catalog) {
+  public FurnitureCatalogTransferHandler(FurnitureCatalog catalog) {
     this(catalog, null, null);
   }
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
-  public CatalogTransferHandler(Catalog catalog,
+  public FurnitureCatalogTransferHandler(FurnitureCatalog catalog,
                                 ContentManager contentManager,
-                                CatalogController catalogController) {
+                                FurnitureCatalogController catalogController) {
     this.catalog = catalog;
     this.contentManager = contentManager;
     this.catalogController = catalogController;

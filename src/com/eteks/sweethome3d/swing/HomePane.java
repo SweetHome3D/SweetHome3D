@@ -360,7 +360,7 @@ public class HomePane extends JRootPane {
                                       ContentManager contentManager,
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new CatalogTransferHandler(preferences.getCatalog(), contentManager, controller.getCatalogController());
+        new FurnitureCatalogTransferHandler(preferences.getFurnitureCatalog(), contentManager, controller.getCatalogController());
     this.furnitureTransferHandler = 
         new FurnitureTransferHandler(home, contentManager, controller);
     this.planTransferHandler = 

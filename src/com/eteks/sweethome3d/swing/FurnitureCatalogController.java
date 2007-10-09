@@ -1,5 +1,5 @@
 /*
- * CatalogController.java 15 mai 2006
+ * FurnitureCatalogController.java 15 mai 2006
  *
  * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -23,7 +23,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -32,8 +32,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * A MVC controller for the furniture catalog.
  * @author Emmanuel Puybaret
  */
-public class CatalogController {
-  private Catalog         catalog;
+public class FurnitureCatalogController {
+  private FurnitureCatalog         catalog;
   private UserPreferences preferences;
   private ContentManager  contentManager;
   private JComponent      catalogView;
@@ -42,7 +42,7 @@ public class CatalogController {
    * Creates a controller of the furniture catalog view.
    * @param catalog the furniture catalog of the application
    */
-  public CatalogController(Catalog catalog) {
+  public FurnitureCatalogController(FurnitureCatalog catalog) {
     this(catalog, null, null);
   }
 
@@ -52,13 +52,13 @@ public class CatalogController {
    * @param preferences application user preferences
    * @param contentManager contentManager for furniture import
    */
-  public CatalogController(Catalog catalog, 
+  public FurnitureCatalogController(FurnitureCatalog catalog, 
                            UserPreferences preferences, 
                            ContentManager  contentManager) {
     this.catalog = catalog;
     this.preferences = preferences;
     this.contentManager = contentManager;
-    this.catalogView = new CatalogTree(catalog, this);
+    this.catalogView = new FurnitureCatalogTree(catalog, this);
   }
 
   /**
@@ -82,7 +82,7 @@ public class CatalogController {
    * By default, selection is synchronized. 
    */
   public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
-    ((CatalogTree)getView()).setFurnitureSelectionSynchronized(furnitureSelectionSynchronized);
+    ((FurnitureCatalogTree)getView()).setFurnitureSelectionSynchronized(furnitureSelectionSynchronized);
   }
 
   /**

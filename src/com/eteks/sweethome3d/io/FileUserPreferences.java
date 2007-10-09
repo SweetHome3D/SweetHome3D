@@ -40,9 +40,9 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
-import com.eteks.sweethome3d.model.Catalog;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -105,9 +105,12 @@ public class FileUserPreferences extends UserPreferences {
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Fill default furniture catalog 
-    setCatalog(defaultPreferences.getCatalog());
+    setFurnitureCatalog(defaultPreferences.getFurnitureCatalog());
     // Read additional furniture
     readCatalog(preferences);
+    
+    // Fill default textures catalog 
+    setTexturesCatalog(defaultPreferences.getTexturesCatalog());
     
     // Read other preferences 
     Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().toString()));
@@ -131,26 +134,29 @@ public class FileUserPreferences extends UserPreferences {
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
-          // Delete default pieces of current catalog          
-          Catalog catalog = getCatalog();
-          for (Category category : catalog.getCategories()) {
+          // Delete default pieces of current furniture catalog          
+          FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
+          for (FurnitureCategory category : furnitureCatalog.getCategories()) {
             for (CatalogPieceOfFurniture piece : category.getFurniture()) {
               if (!piece.isModifiable()) {
-                catalog.delete(piece);
+                furnitureCatalog.delete(piece);
               }
             }
           }
-          // Read again default catalog with new default locale
-          Catalog defaultCatalog = new DefaultUserPreferences().getCatalog();
-          for (Category category : defaultCatalog.getCategories()) {
+          DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+          // Read again default furniture catalog with new default locale
+          FurnitureCatalog defaultCatalog = defaultPreferences.getFurnitureCatalog();
+          for (FurnitureCategory category : defaultCatalog.getCategories()) {
             for (CatalogPieceOfFurniture piece : category.getFurniture()) {
               try {
-                catalog.add(category, piece);
+                furnitureCatalog.add(category, piece);
               } catch (IllegalArgumentException ex) {
                 // Ignore pieces that have the same name as an existing piece
               }
             }
           }
+          // Read again default textures catalog
+          setTexturesCatalog(defaultPreferences.getTexturesCatalog());
         }
       });
   }
@@ -182,22 +188,22 @@ public class FileUserPreferences extends UserPreferences {
       float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + i, 0);
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
 
-      Category pieceCategory = new Category(category);
+      FurnitureCategory pieceCategory = new FurnitureCategory(category);
       CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
           width, depth, height, elevation, movable, doorOrWindow,
           color, modelRotation, backFaceShown, iconYaw, proportional);
       try {        
-        getCatalog().add(pieceCategory, piece);
+        getFurnitureCatalog().add(pieceCategory, piece);
       } catch (IllegalArgumentException ex) {
-        // If a piece with same name and category already exists in catalog
+        // If a piece with same name and category already exists in furniture catalog
         // replace the existing piece by the new one
-        List<Category> categories = getCatalog().getCategories();
+        List<FurnitureCategory> categories = getFurnitureCatalog().getCategories();
         int categoryIndex = Collections.binarySearch(categories, pieceCategory);
         List<CatalogPieceOfFurniture> furniture = categories.get(categoryIndex).getFurniture();
         int existingPieceIndex = Collections.binarySearch(furniture, piece);        
-        getCatalog().delete(furniture.get(existingPieceIndex));
+        getFurnitureCatalog().delete(furniture.get(existingPieceIndex));
         
-        getCatalog().add(pieceCategory, piece);
+        getFurnitureCatalog().add(pieceCategory, piece);
       }
     }
   }  
@@ -287,7 +293,7 @@ public class FileUserPreferences extends UserPreferences {
   private void writeCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> furnitureContentURLs = new HashSet<URL>();
     int i = 1;
-    for (Category category : getCatalog().getCategories()) {
+    for (FurnitureCategory category : getFurnitureCatalog().getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         if (piece.isModifiable()) {
           preferences.put(FURNITURE_NAME + i, piece.getName());

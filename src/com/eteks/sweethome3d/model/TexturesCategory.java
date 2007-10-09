@@ -1,8 +1,7 @@
 /*
- * Category.java 7 avr. 2006
+ * TexturesCategory.java 5 oct. 2007
  * 
- * Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights
- * Reserved.
+ * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  * 
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -26,12 +25,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Category of furniture.
+ * Category of textures.
  * @author Emmanuel Puybaret
  */
-public class Category implements Comparable<Category> {
+public class TexturesCategory implements Comparable<TexturesCategory> {
   private String                 name;
-  private List<CatalogPieceOfFurniture> furniture;
+  private List<CatalogTexture> textures;
   private boolean                sorted;
   private static final Collator  COMPARATOR = Collator.getInstance();
 
@@ -39,9 +38,9 @@ public class Category implements Comparable<Category> {
    * Create a category.
    * @param name the name of the cateory.
    */
-  public Category(String name) {
+  public TexturesCategory(String name) {
     this.name = name;
-    this.furniture = new ArrayList<CatalogPieceOfFurniture>();
+    this.textures = new ArrayList<CatalogTexture>();
   }
 
   /**
@@ -52,78 +51,62 @@ public class Category implements Comparable<Category> {
   }
 
   /**
-   * Returns the furniture list of this category sorted by name.
+   * Returns the textures list of this category sorted by name.
    * @return an unmodifiable list of furniture.
    */
-  public List<CatalogPieceOfFurniture> getFurniture() {
+  public List<CatalogTexture> getTextures() {
     checkFurnitureSorted();
-    return Collections.unmodifiableList(this.furniture);
+    return Collections.unmodifiableList(this.textures);
   }
 
   /**
-   * Checks furniture is sorted.
+   * Checks textures are sorted.
    */
   private void checkFurnitureSorted() {
     if (!this.sorted) {
-      Collections.sort(this.furniture);
+      Collections.sort(this.textures);
       this.sorted = true;
     }
   }
 
   /**
-   * Returns the count of furniture in this category.
+   * Returns the count of textures in this category.
    */
   public int getFurnitureCount() {
-    return this.furniture.size();
+    return this.textures.size();
   }
 
   /**
-   * Returns the piece of furniture at a given <code>index</code>.
+   * Returns the texture at a given <code>index</code>.
    */
-  public CatalogPieceOfFurniture getPieceOfFurniture(int index) {
+  public CatalogTexture getTexture(int index) {
     checkFurnitureSorted();
-    return this.furniture.get(index);
+    return this.textures.get(index);
   }
 
   /**
-   * Adds a piece of furniture to this category.
-   * @param piece the piece to add.
-   * @throws IllegalArgumentException if a piece with same name as the one in
+   * Adds a texture to this category.
+   * @param texture the texture to add.
+   * @throws IllegalArgumentException if a texture with same name as the one in
    *           parameter already exists in this category.
    */
-  void add(CatalogPieceOfFurniture piece) {
-    if (this.furniture.contains(piece)) {
+  void add(CatalogTexture texture) {
+    if (this.textures.contains(texture)) {
       throw new IllegalArgumentException(
-         piece.getName() + " already in category " + this.name);
+          texture.getName() + " already in category " + this.name);
     }
-    piece.setCategory(this);
-    this.furniture.add(piece);    
+    texture.setCategory(this);
+    this.textures.add(texture);    
     this.sorted = false;
   }
 
-  /**
-   * Deletes a piece of furniture from this category.
-   * @param piece the piece to remove.
-   * @throws IllegalArgumentException if the piece doesn't exist in this category.
-   */
-  void delete(CatalogPieceOfFurniture piece) {
-    int pieceIndex = this.furniture.indexOf(piece);
-    if (pieceIndex == -1) {
-      throw new IllegalArgumentException(
-          this.name + " doesn't contain piece " + piece.getName());
-    }
-    //  Make a copy of the list to avoid conflicts in the list returned by getFurniture
-    this.furniture = new ArrayList<CatalogPieceOfFurniture>(this.furniture);
-    this.furniture.remove(pieceIndex);
-  }
-  
   /**
    * Returns true if this category and the one in parameter have the same name.
    */
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof Category
-           && COMPARATOR.equals(this.name, ((Category)obj).name);
+    return obj instanceof TexturesCategory
+           && COMPARATOR.equals(this.name, ((TexturesCategory)obj).name);
   }
 
   @Override
@@ -134,7 +117,7 @@ public class Category implements Comparable<Category> {
   /**
    * Compares the names of this category and the one in parameter.
    */
-  public int compareTo(Category category) {
+  public int compareTo(TexturesCategory category) {
     return COMPARATOR.compare(this.name, category.name);
   }
 }

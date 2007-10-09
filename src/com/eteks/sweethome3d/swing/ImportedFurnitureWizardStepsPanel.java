@@ -70,6 +70,7 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
+import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
@@ -115,9 +116,9 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -195,7 +196,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         updateController(modelContent, 
             importHomePiece 
                 ? null 
-                : preferences.getCatalog().getCategories().get(0));
+                : preferences.getFurnitureCatalog().getCategories().get(0));
         // Store the default name for the chosen content
         setModelName(contentManager, modelContent, modelName);
       } catch (RecorderException ex) {
@@ -226,7 +227,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             updateController(content, 
                 importHomePiece 
                   ? null
-                  : preferences.getCatalog().getCategories().get(0));
+                  : preferences.getFurnitureCatalog().getCategories().get(0));
           }
         }
       });
@@ -375,7 +376,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         public void itemStateChanged(ItemEvent ev) {
           if (addToCatalogCheckBox.isSelected()) {
             categoryComboBox.setEnabled(true);
-            controller.setCategory((Category)categoryComboBox.getSelectedItem());
+            controller.setCategory((FurnitureCategory)categoryComboBox.getSelectedItem());
           } else {
             categoryComboBox.setEnabled(false);
             controller.setCategory(null);
@@ -383,7 +384,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       });
     this.categoryLabel = new JLabel(this.resource.getString("categoryLabel.text")); 
-    this.categoryComboBox = new JComboBox(preferences.getCatalog().getCategories().toArray());
+    this.categoryComboBox = new JComboBox(preferences.getFurnitureCatalog().getCategories().toArray());
     // The piece category isn't enabled by default for home furniture import
     this.categoryComboBox.setEnabled(!importHomePiece);
     this.categoryComboBox.setEditable(true); 
@@ -397,9 +398,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           if (name.length() == 0) {
             setItem(categoryComboBox.getSelectedItem());
           }
-          Category category = new Category(name);
+          FurnitureCategory category = new FurnitureCategory(name);
           // Search an existing category
-          List<Category> categories = preferences.getCatalog().getCategories();
+          List<FurnitureCategory> categories = preferences.getFurnitureCatalog().getCategories();
           int categoryIndex = Collections.binarySearch(categories, category);
           if (categoryIndex >= 0) {
             return categories.get(categoryIndex);
@@ -409,7 +410,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       
         public void setItem(Object value) {
-          Category category = (Category)value;
+          FurnitureCategory category = (FurnitureCategory)value;
           defaultEditor.setItem(category.getName());
         }
 
@@ -432,20 +433,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.categoryComboBox.setRenderer(new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value, int index, 
                                                       boolean isSelected, boolean cellHasFocus) {
-          Category category = (Category)value;
+          FurnitureCategory category = (FurnitureCategory)value;
           return super.getListCellRendererComponent(list, category.getName(), index, isSelected, cellHasFocus);
         }
       });
     this.categoryComboBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setCategory((Category)ev.getItem());
+          controller.setCategory((FurnitureCategory)ev.getItem());
         }
       });
     controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.CATEGORY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If category changes update category combo box
-            Category category = controller.getCategory();
+            FurnitureCategory category = controller.getCategory();
             if (category != null) {
               categoryComboBox.setSelectedItem(category);
             }
@@ -882,7 +883,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Updates controller values from <code>imageContent</code>.
    */
   private void updateController(final Content modelContent,
-                                final Category defaultCategory) {
+                                final FurnitureCategory defaultCategory) {
     // Read model in modelLoader executor
     modelLoader.execute(new Runnable() {
         public void run() {
@@ -1909,30 +1910,30 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      * Returns the icon image matching the displayed view.  
      */
     public BufferedImage getIconImage() {
-      String operatingSystem = System.getProperty("os.name");
-      if (operatingSystem.startsWith("Linux")
-          || operatingSystem.startsWith("Windows")) {
-        // As off screen canvas may fail on Linux and Windows, capture current canvas with Robot
+      BufferedImage iconImage;
+      Canvas3D offScreenCanvas = createOffScreenCanvas();
+      // Attach the off screen canvas to super class universe
+      createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+      try {
+        offScreenCanvas.renderOffScreenBuffer();
+        offScreenCanvas.waitForOffScreenRendering();
+        iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
+      } catch (IllegalRenderingStateException ex) {
+        // If off screen canvas fails, capture current canvas with Robot
         Component canvas3D = getCanvas3D();
         Point canvas3DOrigin = new Point();
         SwingUtilities.convertPointToScreen(canvas3DOrigin, canvas3D);
         try {
-          return new Robot().createScreenCapture(
+          iconImage = new Robot().createScreenCapture(
               new Rectangle(canvas3DOrigin, canvas3D.getSize()));
-        } catch (AWTException ex) {
-          throw new RuntimeException(ex);
+        } catch (AWTException ex2) {
+          throw new RuntimeException(ex2);
         }
-      } else {
-        Canvas3D offScreenCanvas = createOffScreenCanvas();
-        // Attach the off screen canvas to super class universe
-        createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-        offScreenCanvas.renderOffScreenBuffer();
-        offScreenCanvas.waitForOffScreenRendering();
-        BufferedImage iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
+      } finally {
         // Detach the off screen canvas from its view
         offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
-        return iconImage;
       }
+      return iconImage;
     }
     
     /**

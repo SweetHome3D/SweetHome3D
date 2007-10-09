@@ -37,7 +37,7 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.CatalogTree;
+import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -53,8 +53,8 @@ public class TransferHandlerTest extends ComponentTestFixture {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
     HomeController controller = new HomeController(home, preferences);
-    CatalogTree catalogTree = (CatalogTree)TestUtilities.findComponent(
-         controller.getView(), CatalogTree.class);
+    FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(
+         controller.getView(), FurnitureCatalogTree.class);
     FurnitureTable furnitureTable = (FurnitureTable)TestUtilities.findComponent(
         controller.getView(), FurnitureTable.class);
     PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(

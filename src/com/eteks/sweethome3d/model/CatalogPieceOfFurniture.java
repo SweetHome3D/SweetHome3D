@@ -45,7 +45,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private float      iconYaw;
   private boolean    modifiable;
 
-  private Category  category;
+  private FurnitureCategory  category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
 
@@ -250,14 +250,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   /**
    * Returns the category of this piece of furniture.
    */
-  public Category getCategory() {
+  public FurnitureCategory getCategory() {
     return this.category;
   }
   
   /**
    * Sets the category of this piece of furniture.
    */
-  void setCategory(Category category) {
+  void setCategory(FurnitureCategory category) {
     this.category = category;
   }
   

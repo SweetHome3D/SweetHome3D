@@ -19,7 +19,9 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -34,9 +36,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
-import com.eteks.sweethome3d.model.Catalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -108,7 +110,7 @@ public class HomeFramePane extends JRootPane {
   }
   
   /**
-   * Add listeners to <code>frame</code> and model objects.
+   * Adds listeners to <code>frame</code> and model objects.
    */
   private void addListeners(final Home home,
                             final HomeApplication application,
@@ -117,6 +119,8 @@ public class HomeFramePane extends JRootPane {
     // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(new WindowAdapter () {
+        private Component mostRecentFocusOwner;
+
         @Override
         public void windowClosing(WindowEvent ev) {
           controller.close();
@@ -127,22 +131,45 @@ public class HomeFramePane extends JRootPane {
           // Store current selected furniture in catalog for future activation
           controller.setCatalogFurnitureSelectionSynchronized(false);
           catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>(
-              application.getUserPreferences().getCatalog().getSelectedFurniture());
+              application.getUserPreferences().getFurnitureCatalog().getSelectedFurniture());
+          
+          // Java 3D 1.5 bug : windowDeactivated notifications should not be sent to this frame
+          // while canvases 3D are created in a child modal dialog like the one managing 
+          // ImportedFurnitureWizardStepsPanel. As this makes Swing loose the most recent focus owner
+          // let's store it in a field to use it when this frame will be reactivated. 
+          Component mostRecentFocusOwner = frame.getMostRecentFocusOwner();
+          if (!(mostRecentFocusOwner instanceof JFrame)
+              && mostRecentFocusOwner != null) {
+            this.mostRecentFocusOwner = mostRecentFocusOwner;
+          }
         }
         
         @Override
         public void windowActivated(WindowEvent ev) {                    
           // Let the catalog view of each frame manage its own selection :
-          // Restore stored selected furniture except if the widow was activated 
-          // because one of its child windows lost focus
-          if (ev.getOppositeWindow() == null || ev.getOppositeWindow().getParent() != frame) {
-            application.getUserPreferences().getCatalog().setSelectedFurniture(catalogSelectedFurniture);
+          // Restore stored selected furniture when the frame is activated from outside of Sweet Home 3D
+          // or from an other showed frame of Sweet Home 3D (don't rely on opposite window parent, because 
+          // Java 3D creates some hidden dummy frames to manage its canvases 3D)
+          // Note : Linux seems to always return null as an opposite window
+          if (ev.getOppositeWindow() == null || ev.getOppositeWindow().isShowing()) {
+            application.getUserPreferences().getFurnitureCatalog().setSelectedFurniture(catalogSelectedFurniture);
           } 
           controller.setCatalogFurnitureSelectionSynchronized(true);
+          
+          // Java 3D 1.5 bug : let's request focus in window for the most recent focus owner when
+          // this frame is reactivated
+          if (this.mostRecentFocusOwner != null) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  mostRecentFocusOwner.requestFocusInWindow();
+                  mostRecentFocusOwner = null;
+                }
+              });
+          }
         }        
       });
-    // Add a listener to catalog to update the catalog selection furniture
-    application.getUserPreferences().getCatalog().addFurnitureListener(
+    // Add a listener to catalog to update the catalog selected furniture displayed by this pane
+    application.getUserPreferences().getFurnitureCatalog().addFurnitureListener(
         new CatalogChangeFurnitureListener(this));
     // Dispose window when a home is deleted 
     application.addHomeListener(new HomeListener() {
@@ -183,7 +210,7 @@ public class HomeFramePane extends JRootPane {
       // If controller was garbage collected, remove this listener from catalog
       final HomeFramePane homeFramePane = this.homeFramePane.get();
       if (homeFramePane == null) {
-        ((Catalog)ev.getSource()).removeFurnitureListener(this);
+        ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
       } else {
         switch (ev.getType()) {
           case DELETE :

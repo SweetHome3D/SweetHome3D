@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -42,14 +41,14 @@ import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
-import abbot.finder.Matcher;
+import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.Category;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
@@ -220,7 +219,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertFalse("Add to catalog check box is selected", addToCatalogCheckBox.isSelected());
     assertFalse("Category combo box isn't disabled", categoryComboBox.isEnabled());
     // Check default category is first category  
-    Category firstCategory = preferences.getCatalog().getCategories().get(0);
+    FurnitureCategory firstCategory = preferences.getFurnitureCatalog().getCategories().get(0);
     assertEquals("Wrong default category", firstCategory, categoryComboBox.getSelectedItem());
     // Rename furniture with the name of the catalog first piece
     nameTextField.setText(firstCategory.getFurniture().get(0).getName());    
@@ -301,13 +300,13 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     
     // 10. Check the matching new catalog piece of furniture was created and it's the selected piece
     List<CatalogPieceOfFurniture> selectedCatalogFurniture = 
-        preferences.getCatalog().getSelectedFurniture();
+        preferences.getFurnitureCatalog().getSelectedFurniture();
     assertEquals("Wrong selected furniture count in catalog", 1, selectedCatalogFurniture.size());
     CatalogPieceOfFurniture catalogPiece = selectedCatalogFurniture.get(0);
     assertEquals("Wrong catalog piece name", pieceTestName, catalogPiece.getName());
     assertEquals("Wrong catalog piece category name", categoryTestName, catalogPiece.getCategory().getName());
     assertTrue("Catalog doesn't contain new piece", 
-        preferences.getCatalog().getCategories().contains(catalogPiece.getCategory()));
+        preferences.getFurnitureCatalog().getCategories().contains(catalogPiece.getCategory()));
     assertEpsilonEquals("width", newWidth, catalogPiece.getWidth());
     assertEpsilonEquals("depth", newDepth, catalogPiece.getDepth());
     assertEpsilonEquals("height", newHeight, catalogPiece.getHeight());
@@ -323,9 +322,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     HomePieceOfFurniture homePiece = (HomePieceOfFurniture)homeSelectedItems.get(0);
     assertEquals("Wrong home piece name", pieceTestName, homePiece.getName());
     
-    // 11. Transfer focus to catalog view with TAB keys
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    // 11. Transfer focus to tree 
+    tester.focus(controller.getCatalogController().getView());        
     // Check plan view has focus
     assertTrue("Catalog tree doesn't have the focus", 
         controller.getCatalogController().getView().isFocusOwner());
@@ -342,11 +340,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         HomePane.class.getName()).getString("confirmDeleteCatalogSelection.title"));
     // Find displayed dialog box
     JDialog confirmDeleteCatalogSelectionDialog = (JDialog)new BasicFinder().find(frame, 
-        new Matcher () {
-          public boolean matches(Component component) {
-            return component instanceof JDialog && component.isShowing();
-          }
-        });
+        new ClassMatcher (JDialog.class, true));
     // Click on Ok in dialog box
     final JOptionPane optionPane = (JOptionPane)TestUtilities.findComponent(
         confirmDeleteCatalogSelectionDialog, JOptionPane.class);
@@ -358,14 +352,14 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         }
       });
     // Check selection is empty
-    selectedCatalogFurniture = preferences.getCatalog().getSelectedFurniture();
+    selectedCatalogFurniture = preferences.getFurnitureCatalog().getSelectedFurniture();
     assertTrue("Catalog selected furniture isn't empty", selectedCatalogFurniture.isEmpty());
     // Check catalog doesn't contain the new piece
     assertFalse("Piece is still in catalog", 
-        preferences.getCatalog().getCategories().contains(catalogPiece.getCategory()));
+        preferences.getFurnitureCatalog().getCategories().contains(catalogPiece.getCategory()));
     // Check home piece of furniture is still in home and selected
     assertTrue("Home piece isn't in home", home.getFurniture().contains(homePiece));
-    assertTrue("Home piece isn't selecteed", home.getSelectedItems().contains(homePiece));
+    assertTrue("Home piece isn't selected", home.getSelectedItems().contains(homePiece));
     
     // 12. Undo furniture creation in home
     controller.getView().getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
