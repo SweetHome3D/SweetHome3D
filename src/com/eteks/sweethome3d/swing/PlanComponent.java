@@ -439,7 +439,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     float planBoundsNewMinX = (float)getPlanBounds().getMinX();
     float planBoundsNewMinY = (float)getPlanBounds().getMinY();
     // If plan bounds upper left corner diminushed
-    if (getParent() instanceof JViewport
+    if (parent instanceof JViewport
         && (planBoundsNewMinX < planBoundsMinX
             || planBoundsNewMinY < planBoundsMinY)) {
       Dimension extentSize = parent.getExtentSize();
