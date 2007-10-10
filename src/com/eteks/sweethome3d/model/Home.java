@@ -46,7 +46,7 @@ public class Home implements Serializable {
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
-    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, LIGHT_COLOR, WALLS_ALPHA, PRINT};
+    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient List<Object>                      selectedItems;
@@ -69,6 +69,7 @@ public class Home implements Serializable {
   private Camera                                      topCamera;
   private int                                         skyColor;
   private int                                         groundColor;
+  private HomeTexture                                 groundTexture;
   private int                                         lightColor;
   private float                                       wallsAlpha;
   private HomePrint                                   print;
@@ -1086,6 +1087,25 @@ public class Home implements Serializable {
       this.groundColor = groundColor;
       this.propertyChangeSupport.firePropertyChange(
           Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
+    }
+  }
+
+  /**
+   * Returns the ground texture of this home.
+   */
+  public HomeTexture getGroundTexture() {
+    return this.groundTexture;
+  }
+
+  /**
+   * Sets the ground texture of this home and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setGroundTexture(HomeTexture groundTexture) {
+    if (groundTexture != this.groundTexture) {
+      HomeTexture oldGroundTexture = this.groundTexture;
+      this.groundTexture = groundTexture;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.GROUND_TEXTURE.toString(), oldGroundTexture, groundTexture);
     }
   }
 

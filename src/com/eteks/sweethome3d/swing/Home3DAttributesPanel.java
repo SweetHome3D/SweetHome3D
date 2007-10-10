@@ -24,21 +24,27 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.ResourceBundle;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -52,8 +58,10 @@ public class Home3DAttributesPanel extends JPanel {
   private JLabel                     observerHeightLabel;
   private JSpinner                   observerHeightSpinner;
   private ResourceBundle             resource;
-  private JLabel                     groundColorLabel;
+  private JRadioButton               groundColorRadioButton;
   private ColorButton                groundColorButton;
+  private JRadioButton               groundTextureRadioButton;
+  private TextureButton              groundTextureButton;
   private JLabel                     skyColorLabel;
   private ColorButton                skyColorButton;
   private JLabel                     brightnessLabel;
@@ -94,9 +102,27 @@ public class Home3DAttributesPanel extends JPanel {
     this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitText));
     this.observerHeightSpinner = new JSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 250f));
-    this.groundColorLabel = new JLabel(this.resource.getString("groundColorLabel.text"));
+    
+    this.groundColorRadioButton = new JRadioButton(this.resource.getString("groundColorRadioButton.text"));
     this.groundColorButton = new ColorButton();
     this.groundColorButton.setColorDialogTitle(this.resource.getString("groundColorDialog.title"));
+    this.groundColorButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          groundColorRadioButton.setSelected(true);
+        }
+      });
+    this.groundTextureRadioButton = new JRadioButton(this.resource.getString("groundTextureRadioButton.text"));
+    this.groundTextureButton = new TextureButton(preferences);
+    this.groundTextureButton.setTextureDialogTitle(this.resource.getString("groundTextureDialog.title"));
+    this.groundTextureButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          groundTextureRadioButton.setSelected(true);
+        }
+      });
+    ButtonGroup group = new ButtonGroup();
+    group.add(this.groundColorRadioButton);
+    group.add(this.groundTextureRadioButton);
+    
     this.skyColorLabel = new JLabel(this.resource.getString("skyColorLabel.text"));
     this.skyColorButton = new ColorButton();
     this.skyColorButton.setColorDialogTitle(this.resource.getString("skyColorDialog.title"));
@@ -137,9 +163,10 @@ public class Home3DAttributesPanel extends JPanel {
       this.observerHeightLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("observerHeightLabel.mnemonic")).getKeyCode());
       this.observerHeightLabel.setLabelFor(this.observerHeightSpinner);
-      this.groundColorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("groundColorLabel.mnemonic")).getKeyCode());
-      this.groundColorLabel.setLabelFor(this.groundColorButton);
+      this.groundColorRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("groundColorRadioButton.mnemonic")).getKeyCode());
+      this.groundTextureRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("groundTextureRadioButton.mnemonic")).getKeyCode());
       this.skyColorLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("skyColorLabel.mnemonic")).getKeyCode());
       this.skyColorLabel.setLabelFor(this.skyColorButton);
@@ -173,31 +200,39 @@ public class Home3DAttributesPanel extends JPanel {
         3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     // Second row
-    add(this.groundColorLabel, new GridBagConstraints(
+    Insets closeLabelInsets = new Insets(0, 0, 0, 5);
+    add(this.groundColorRadioButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.groundColorButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, componentInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
     add(this.skyColorLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.skyColorButton, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Third row
-    add(this.brightnessLabel, new GridBagConstraints(
+    add(this.groundTextureRadioButton, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.groundTextureButton, new GridBagConstraints(
+        1, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
+    // Fourth row
+    add(this.brightnessLabel, new GridBagConstraints(
+        0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.brightnessSlider, new GridBagConstraints(
-        1, 2, 3, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 3, 3, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Last row
     add(this.wallsTransparencyLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.wallsTransparencySlider, new GridBagConstraints(
-        1, 3, 3, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 4, 3, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
@@ -210,6 +245,13 @@ public class Home3DAttributesPanel extends JPanel {
     ((NullableSpinner.NullableSpinnerLengthModel)this.observerHeightSpinner.getModel()).
         setLength((float)Math.round(observerCamera.getHeight() * 100) / 100);
     this.groundColorButton.setColor(home.getGroundColor());
+    HomeTexture groundTexture = home.getGroundTexture();
+    this.groundTextureButton.setTexture(groundTexture);
+    if (groundTexture != null) {
+      this.groundTextureRadioButton.setSelected(true);
+    } else {
+      this.groundColorRadioButton.setSelected(true);
+    }
     this.skyColorButton.setColor(home.getSkyColor());
     this.brightnessSlider.setValue(home.getLightColor() & 0xFF);
     this.wallsTransparencySlider.setValue((int)(home.getWallsAlpha() * 255));
@@ -234,6 +276,23 @@ public class Home3DAttributesPanel extends JPanel {
    */
   public int getGroundColor() {
     return this.groundColorButton.getColor();
+  }
+
+  /**
+   * Returns the edited ground texture.
+   */
+  public HomeTexture getGroundTexture() {
+    if (this.groundTextureRadioButton.isSelected()) {
+      TextureImage selectedTexture = (TextureImage)this.groundTextureButton.getTexture();
+      if (selectedTexture instanceof HomeTexture
+          || selectedTexture == null) {
+        return (HomeTexture)selectedTexture;
+      } else {
+        return new HomeTexture(selectedTexture);
+      }
+    } else {
+      return null;
+    }
   }
 
   /**

@@ -29,6 +29,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -68,6 +69,7 @@ public class Home3DAttributesController {
     final float observerCameraFieldOfView = attributesPanel.getObserverCameraFieldOfView();
     final float observerCameraZ = attributesPanel.getObserverCameraHeight() * 14 / 15;
     final int   groundColor = attributesPanel.getGroundColor();
+    final HomeTexture groundTexture = attributesPanel.getGroundTexture();
     final int   skyColor = attributesPanel.getSkyColor();
     final int   lightColor  = attributesPanel.getLightColor();
     final float wallsAlpha = attributesPanel.getWallsAlpha();
@@ -75,27 +77,28 @@ public class Home3DAttributesController {
     final float oldObserverCameraFieldOfView = this.home.getObserverCamera().getFieldOfView();
     final float oldObserverCameraZ = this.home.getObserverCamera().getZ();
     final int   oldGroundColor = this.home.getGroundColor();
+    final HomeTexture oldGroundTexture = this.home.getGroundTexture();
     final int   oldSkyColor = this.home.getSkyColor();
     final int   oldLightColor  = this.home.getLightColor();
     final float oldWallsAlpha = this.home.getWallsAlpha();
     
     // Apply modification
     doModifyHome(observerCameraFieldOfView, observerCameraZ, 
-        groundColor, skyColor, lightColor, wallsAlpha); 
+        groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
           doModifyHome(oldObserverCameraFieldOfView, oldObserverCameraZ, 
-              oldGroundColor, oldSkyColor, oldLightColor, oldWallsAlpha); 
+              oldGroundColor, oldGroundTexture, oldSkyColor, oldLightColor, oldWallsAlpha); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           doModifyHome(observerCameraFieldOfView, observerCameraZ, 
-              groundColor, skyColor, lightColor, wallsAlpha); 
+              groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
         }
         
         @Override
@@ -113,12 +116,13 @@ public class Home3DAttributesController {
    */
   private void doModifyHome(float observerCameraFieldOfView, 
                             float observerCameraZ, 
-                            int groundColor, int skyColor, 
+                            int groundColor, HomeTexture groundTexture, int skyColor, 
                             int lightColor, float wallsAlpha) {
     ObserverCamera observerCamera = this.home.getObserverCamera();
     this.home.setCameraFieldOfView(observerCamera, observerCameraFieldOfView);
     this.home.setCameraLocation(observerCamera, observerCamera.getX(), observerCamera.getY(), observerCameraZ);
     this.home.setGroundColor(groundColor);
+    this.home.setGroundTexture(groundTexture);
     this.home.setSkyColor(skyColor);
     this.home.setLightColor(lightColor);
     this.home.setWallsAlpha(wallsAlpha);

@@ -131,7 +131,7 @@ public class HomeComponent3D extends JComponent implements Printable {
   private CameraListener            cameraListener;
   private PropertyChangeListener    homeCameraListener;
   private PropertyChangeListener    skyColorListener;
-  private PropertyChangeListener    groundColorListener;
+  private PropertyChangeListener    groundColorAndTextureListener;
   private PropertyChangeListener    lightColorListener;
   private WallListener              wallListener;
   private PropertyChangeListener    wallsAlphaListener;
@@ -233,7 +233,8 @@ public class HomeComponent3D extends JComponent implements Printable {
     home.removeCameraListener(this.cameraListener);
     home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
     home.removePropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
-    home.removePropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorListener);
+    home.removePropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener);
+    home.removePropertyChangeListener(Home.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
     home.removePropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener);
     home.removeWallListener(this.wallListener);
     home.removePropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener);
@@ -595,36 +596,75 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private Node getGroundNode(final Home home) {
     // Use coloring attributes for ground to avoid ground lighting
-    final ColoringAttributes groundColoringAttributes = new ColoringAttributes();
+    ColoringAttributes groundColoringAttributes = new ColoringAttributes();
     groundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
-    updateGroundColor(groundColoringAttributes, home);
     
     Appearance groundAppearance = new Appearance();
     groundAppearance.setColoringAttributes(groundColoringAttributes);
+    groundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
+    groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+
+    final Shape3D groundShape = new Shape3D();
+    groundShape.setAppearance(groundAppearance);
+    groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+    groundShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
-    // Allow ground material to change
-    Box groundBox = new Box(1E5f, 0, 1E5f, groundAppearance); 
-    Shape3D topShape = groundBox.getShape(Box.TOP);
-    groundBox.removeChild(topShape);
+    updateGroundColorAndTexture(groundShape, home);
     
-    // Add a listener on ground color property change to home
-    this.groundColorListener = new PropertyChangeListener() {
+    // Add a listener on ground color and texture property change to home
+    this.groundColorAndTextureListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateGroundColor(groundColoringAttributes, home);
+          updateGroundColorAndTexture(groundShape, home);
         }
       };
-    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorListener); 
+    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
+    home.addPropertyChangeListener(Home.Property.GROUND_TEXTURE, this.groundColorAndTextureListener); 
     
-    return topShape;
+    return groundShape;
   }
   
   /**
-   * Updates ground coloring attributes from <code>home</code> ground color.
+   * Updates ground coloring and texture attributes from <code>home</code> ground color and texture.
    */
-  private void updateGroundColor(ColoringAttributes groundColoringAttributes, 
-                                 Home home) {
+  private void updateGroundColorAndTexture(Shape3D groundShape, 
+                                           Home home) {
     Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
-    groundColoringAttributes.setColor(groundColor);
+    final Appearance groundAppearance = groundShape.getAppearance();
+    groundAppearance.getColoringAttributes().setColor(groundColor);
+    HomeTexture groundTexture = home.getGroundTexture();
+    if (groundTexture != null) {
+      final TextureManager imageManager = TextureManager.getInstance();
+      imageManager.loadTexture(groundTexture.getImage(), 
+          new TextureManager.TextureObserver() {
+              public void textureUpdated(Texture texture) {
+                groundAppearance.setTexture(texture);
+              }
+            });
+    } else {
+      groundAppearance.setTexture(null);
+    }
+    
+    final float groundWidth = 1E5f;
+    // Create ground geometry
+    Point3f [] coords = {new Point3f(-groundWidth / 2, 0, -groundWidth / 2), 
+                         new Point3f(-groundWidth / 2, 0, groundWidth / 2),
+                         new Point3f(groundWidth / 2, 0, groundWidth / 2),
+                         new Point3f(groundWidth / 2, 0, -groundWidth / 2)};
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
+    geometryInfo.setCoordinates (coords);
+
+    // Compute ground texture coordinates
+    if (groundTexture != null) {
+      TexCoord2f [] textureCoords = {new TexCoord2f(0, 0),
+                                     new TexCoord2f(0, groundWidth / groundTexture.getHeight()),
+                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), groundWidth / groundTexture.getHeight()),
+                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), 0)};
+      geometryInfo.setTextureCoordinateParams(1, 2);
+      geometryInfo.setTextureCoordinates(0, textureCoords);
+    }
+    
+    groundShape.setGeometry(geometryInfo.getIndexedGeometryArray());
+
     // Cancel printed image cache
     this.printedImage = null;
   }
