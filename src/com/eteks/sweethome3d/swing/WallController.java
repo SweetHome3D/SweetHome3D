@@ -80,6 +80,7 @@ public class WallController {
       final HomeTexture rightSideTexture = wallPanel.getWallRightSideTexture();
       final Float thickness = wallPanel.getWallThickness();
       final Float height = wallPanel.getWallHeight();
+      final Float heightAtEnd = wallPanel.getWallHeightAtEnd();
       
       // Create an array of modified walls with their current properties values
       final ModifiedWall [] modifiedWalls = 
@@ -90,7 +91,7 @@ public class WallController {
       // Apply modification
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
           leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-          thickness, height); 
+          height, heightAtEnd, thickness); 
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
@@ -104,7 +105,7 @@ public class WallController {
           super.redo();
           doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
               leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-              thickness, height); 
+              height, heightAtEnd, thickness); 
           home.setSelectedItems(oldSelection); 
         }
         
@@ -125,7 +126,7 @@ public class WallController {
                              Float xStart, Float yStart, Float xEnd, Float yEnd,
                              Integer leftSideColor, HomeTexture leftSideTexture, 
                              Integer rightSideColor, HomeTexture rightSideTexture,
-                             Float thickness, Float height) {
+                             Float height, Float heightAtEnd, Float thickness) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       // Modify wall coordinates if modifiedWalls contains only one wall
@@ -146,10 +147,18 @@ public class WallController {
         this.home.setWallRightSideColor(wall, rightSideColor);
         this.home.setWallRightSideTexture(wall, null);
       }
+      if (height != null) {
+        this.home.setWallHeight(wall, height);
+        if (heightAtEnd != null) {
+          if (heightAtEnd.equals(height)) {
+            this.home.setWallHeightAtEnd(wall, null);
+          } else {
+            this.home.setWallHeightAtEnd(wall, heightAtEnd);
+          }
+        }
+      }
       this.home.setWallThickness(wall, 
           thickness != null ? thickness.floatValue() : wall.getThickness());
-      this.home.setWallHeight(wall, 
-          height != null ? height : wall.getHeight());
     }
   }
 
@@ -170,6 +179,7 @@ public class WallController {
       this.home.setWallRightSideTexture(wall, modifiedWall.getRightSideTexture());
       this.home.setWallThickness(wall, modifiedWall.getThickness());
       this.home.setWallHeight(wall, modifiedWall.getHeight());
+      this.home.setWallHeightAtEnd(wall, modifiedWall.getHeightAtEnd());
     }
   }
   
@@ -213,6 +223,7 @@ public class WallController {
     private final HomeTexture rightSideTexture;
     private final float       thickness;
     private final Float       height;
+    private final Float       heightAtEnd;
 
     public ModifiedWall(Wall wall) {
       this.wall = wall;
@@ -226,6 +237,7 @@ public class WallController {
       this.rightSideTexture = wall.getRightSideTexture();
       this.thickness = wall.getThickness();
       this.height = wall.getHeight();
+      this.heightAtEnd = wall.getHeightAtEnd();
     }
 
     public Wall getWall() {
@@ -270,6 +282,10 @@ public class WallController {
 
     public Float getHeight() {
       return this.height;
+    }
+    
+    public Float getHeightAtEnd() {
+      return this.heightAtEnd;
     }
   }
 }

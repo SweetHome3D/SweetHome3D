@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A wall of a plan.
+ * A wall of a home plan.
  * @author Emmanuel Puybaret
  */
 public class Wall implements Serializable  {
@@ -43,9 +43,10 @@ public class Wall implements Serializable  {
   private Wall    wallAtEnd;
   private float   thickness;
   private Float   height;
-  private Integer leftSideColor;
+  private Float   heightAtEnd;
+  private Integer     leftSideColor;
   private HomeTexture leftSideTexture;
-  private Integer rightSideColor;
+  private Integer     rightSideColor;
   private HomeTexture rightSideTexture;
   
   private transient float [][] pointsCache;
@@ -71,6 +72,7 @@ public class Wall implements Serializable  {
     this(wall.getXStart(), wall.getYStart(), 
          wall.getXEnd(), wall.getYEnd(), wall.getThickness());
     this.height = wall.getHeight();
+    this.heightAtEnd = wall.getHeightAtEnd();
     this.leftSideColor = wall.getLeftSideColor();
     this.leftSideTexture = wall.getLeftSideTexture();
     this.rightSideColor = wall.getRightSideColor();
@@ -198,7 +200,9 @@ public class Wall implements Serializable  {
   }
 
   /**
-   * Returns the height of this wall.
+   * Returns the height of this wall. If {@link #getHeightAtEnd() getHeightAtEnd}
+   * returns a value not <code>null</code>, the returned height should be
+   * considered as the height of this wall at its start point.
    */
   public Float getHeight() {
     return this.height;
@@ -213,6 +217,32 @@ public class Wall implements Serializable  {
     this.height = height;
   }
 
+  /**
+   * Returns the height of this wall at its end point.
+   */
+  public Float getHeightAtEnd() {
+    return this.heightAtEnd;
+  }
+
+  /**
+   * Sets the height of this wall at its end point.
+   * This method should be called from {@link Home}, which
+   * controls notifications when a wall changed.
+   */
+  void setHeightAtEnd(Float heightAtEnd) {
+    this.heightAtEnd = heightAtEnd;
+  }
+
+  /**
+   * Returns <code>true</code> if the height of this wall is different
+   * at its start and end points. 
+   */
+  public boolean isTrapezoidal() {
+    return this.height != null
+        && this.heightAtEnd != null
+        && !this.height.equals(this.heightAtEnd);  
+  }
+  
   /**
    * Returns left side color of this wall. This is the color of the left side 
    * of this wall when you go through wall from start point to end point.
@@ -288,8 +318,10 @@ public class Wall implements Serializable  {
   }
   
   /**
-   * Returns the points of each corner of a wall.
+   * Returns the points of each corner of a wall. 
    * @return an array of the 4 (x,y) coordinates of the wall corners.
+   *    The points at index 0 and 3 indicates the start of the wall, while
+   *    the points at index 1 and 2 indicates the end of the wall. 
    */
   public float [][] getPoints() {
     if (this.pointsCache == null) {

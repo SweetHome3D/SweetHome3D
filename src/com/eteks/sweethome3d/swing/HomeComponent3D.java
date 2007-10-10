@@ -851,6 +851,7 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private static class Wall3D extends ObjectBranch {
     private static final Material DEFAULT_MATERIAL = new Material();
+    private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
     
     private static final int LEFT_WALL_SIDE  = 0;
     private static final int RIGHT_WALL_SIDE = 1;
@@ -934,12 +935,32 @@ public class HomeComponent3D extends JComponent implements Printable {
      */
     private Geometry[] getWallGeometries(int wallSide, HomeTexture texture) {
       Shape wallShape = getShape(getWallSidePoints(wallSide));
-      float wallHeight = getWallHeight();
+      float wallHeightAtStart = getWallHeightAtStart();
+      float wallHeightAtEnd = getWallHeightAtEnd();
+      float maxWallHeight = Math.max(wallHeightAtStart, wallHeightAtEnd);
+      
+      // Compute wall angles and top line factors
+      Wall wall = (Wall)getUserData();
+      double wallYawAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), wall.getXEnd() - wall.getXStart()); 
+      double cosWallYawAngle = Math.cos(wallYawAngle);
+      double sinWallYawAngle = Math.sin(wallYawAngle);
+      double wallXStartWithZeroYaw = cosWallYawAngle * wall.getXStart() + sinWallYawAngle * wall.getYStart();
+      double wallXEndWithZeroYaw = cosWallYawAngle * wall.getXEnd() + sinWallYawAngle * wall.getYEnd();
+      double topLineAlpha;
+      double topLineBeta;
+      if (wallHeightAtStart == wallHeightAtEnd) {
+        topLineAlpha = 0;
+        topLineBeta = wallHeightAtStart;
+      } else {
+        topLineAlpha = (wallHeightAtEnd - wallHeightAtStart) / (wallXEndWithZeroYaw - wallXStartWithZeroYaw);
+        topLineBeta = wallHeightAtStart - topLineAlpha * wallXStartWithZeroYaw;
+      }
+      
       // Search which doors or windows intersect with this wall side
       Map<HomePieceOfFurniture, Area> intersections = new HashMap<HomePieceOfFurniture, Area>();
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
         if (piece.isDoorOrWindow() 
-            && piece.getElevation() < wallHeight) {
+            && piece.getElevation() < maxWallHeight) {
           Shape pieceShape = getShape(piece.getPoints());
           Area wallArea = new Area(wallShape);
           wallArea.intersect(new Area(pieceShape));
@@ -963,11 +984,13 @@ public class HomeComponent3D extends JComponent implements Printable {
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
           float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
           // Compute geometry for vertical part
-          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, wallHeight, texture));
+          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, 
+              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
           // Compute geometry for bottom part
           wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
           // Compute geometry for top part
-          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
+          wallGeometries.add(getWallTopPartGeometry(wallPartPoints, 
+              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
           wallPoints.clear();
         } else {
           wallPoints.add(wallPoint);
@@ -983,18 +1006,25 @@ public class HomeComponent3D extends JComponent implements Printable {
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
             HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
             float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
+            // Compute the minimum vertical position of wallPartPoints
+            double minTopY = maxWallHeight;
+            for (int i = 0; i < wallPartPoints.length; i++) {
+              double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
+              minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+            }            
             // Generate geometry for wall part above window
-            if (doorOrWindowTop < wallHeight) {
-              wallGeometries.add(getWallVerticalPartGeometry(
-                  wallPartPoints, doorOrWindowTop, wallHeight, texture));
+            if (doorOrWindowTop < minTopY) {
+              wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
+                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
               wallGeometries.add(getWallHorizontalPartGeometry(
                   wallPartPoints, doorOrWindowTop));
-              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, wallHeight));
+              wallGeometries.add(getWallTopPartGeometry(wallPartPoints, 
+                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
             }
             // Generate geometry for wall part below window
             if (doorOrWindow.getElevation() > 0) {
-              wallGeometries.add(getWallVerticalPartGeometry(
-                  wallPartPoints, 0, doorOrWindow.getElevation(), texture));
+              wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, 
+                  cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
               wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
             }
@@ -1025,40 +1055,41 @@ public class HomeComponent3D extends JComponent implements Printable {
      * Returns the points of one of the side of this wall. 
      */
     private float [][] getWallSidePoints(int wallSide) {
-      float [][] wallPoints = ((Wall)getUserData()).getPoints();
-      // Compute coordinates of the point at middle of wallPoints[0] and wallPoints[3]
-      float xP0P3Middle = (wallPoints[0][0] + wallPoints[3][0]) / 2;
-      float yP0P3Middle = (wallPoints[0][1] + wallPoints[3][1]) / 2;
-      // Compute coordinates of the point at middle of wallPoints[1] and wallPoints[2]
-      float xP1P2Middle = (wallPoints[1][0] + wallPoints[2][0]) / 2;
-      float yP1P2Middle = (wallPoints[1][1] + wallPoints[2][1]) / 2;
+      Wall wall = (Wall)getUserData();
+      float [][] wallPoints = wall.getPoints();
       
       if (wallSide == LEFT_WALL_SIDE) {
-        wallPoints [2][0] = xP1P2Middle;
-        wallPoints [2][1] = yP1P2Middle;
-        wallPoints [3][0] = xP0P3Middle;
-        wallPoints [3][1] = yP0P3Middle;
+        wallPoints [2][0] = wall.getXEnd();
+        wallPoints [2][1] = wall.getYEnd();
+        wallPoints [3][0] = wall.getXStart();
+        wallPoints [3][1] = wall.getYStart();
       } else { // RIGHT_WALL_SIDE
-        wallPoints [1][0] = xP1P2Middle;
-        wallPoints [1][1] = yP1P2Middle;
-        wallPoints [0][0] = xP0P3Middle;
-        wallPoints [0][1] = yP0P3Middle;
+        wallPoints [1][0] = wall.getXEnd();
+        wallPoints [1][1] = wall.getYEnd();
+        wallPoints [0][0] = wall.getXStart();
+        wallPoints [0][1] = wall.getYStart();
       }
       return wallPoints;
     }
 
     /**
      * Returns the vertical rectangles that join each point of <code>points</code>
-     * and spread from <code>yMin</code> to <code>yMax</code>.
+     * and spread from <code>yMin</code> to a top line described by <code>topLineAlpha</code>
+     * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
+     * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
      */
-    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, float yMax, 
+    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, 
+                                                 double cosWallYawAngle, double sinWallYawAngle, double topLineAlpha, double topLineBeta, 
                                                  HomeTexture texture) {
       // Compute wall coordinates
       Point3f [] bottom = new Point3f [points.length];
       Point3f [] top    = new Point3f [points.length];
       for (int i = 0; i < points.length; i++) {
         bottom [i] = new Point3f(points[i][0], yMin, points[i][1]);
-        top [i]    = new Point3f(points[i][0], yMax, points[i][1]);
+        // Compute vertical top point 
+        double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
+        float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+        top [i] = new Point3f(points[i][0], topY, points[i][1]);
       }
       Point3f [] coords = new Point3f [points.length * 4];
       int j = 0;
@@ -1073,31 +1104,29 @@ public class HomeComponent3D extends JComponent implements Printable {
       coords [j++] = top [0];
       coords [j++] = top [points.length - 1];
       
-      GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
       geometryInfo.setCoordinates (coords);
 
       // Compute wall texture coordinates
       if (texture != null) {
         TexCoord2f [] textureCoords = new TexCoord2f [points.length * 4];
         float yMinTextureCoords = yMin / texture.getHeight();
-        float yMaxTextureCoords = yMax / texture.getHeight();
         TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
-        TexCoord2f lastTextureCoords = new TexCoord2f(0, yMaxTextureCoords);
         j = 0;
         for (int i = 0; i < points.length - 1; i++) {
           float horizontalTextureCoords = (float)Point2D.distance(points[i][0], points[i][1], 
               points[i + 1][0], points[i + 1][1]) / texture.getWidth();
           textureCoords [j++] = firstTextureCoords;
           textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMaxTextureCoords);
-          textureCoords [j++] = lastTextureCoords;
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].getY() / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(0, top [i].getY() / texture.getHeight());
         }
         float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
             points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
         textureCoords [j++] = firstTextureCoords;
         textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMaxTextureCoords);
-        textureCoords [j++] = lastTextureCoords;
+        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [top.length - 1].getY() / texture.getHeight());
+        textureCoords [j++] = new TexCoord2f(0, top [0].getY() / texture.getHeight());
         geometryInfo.setTextureCoordinateParams(1, 2);
         geometryInfo.setTextureCoordinates(0, textureCoords);
       }
@@ -1108,7 +1137,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     }
 
     /**
-     * Returns the geometry of the top or bottom part of a wall at <code>y</code>.
+     * Returns the geometry of an horizontal part of a wall at <code>y</code>.
      */
     private Geometry getWallHorizontalPartGeometry(float [][] points, float y) {
       Point3f [] coords = new Point3f [points.length];
@@ -1124,15 +1153,48 @@ public class HomeComponent3D extends JComponent implements Printable {
     }
     
     /**
-     * Returns the height of tha wall managed by this 3D object.
+     * Returns the geometry of the top part of a wall.
      */
-    private float getWallHeight() {
+    private Geometry getWallTopPartGeometry(float [][] points, 
+                                            double cosWallYawAngle, double sinWallYawAngle, 
+                                            double topLineAlpha, double topLineBeta) {
+      Point3f [] coords = new Point3f [points.length];
+      for (int i = 0; i < points.length; i++) {
+        double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
+        float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+        coords [i] = new Point3f(points[i][0], topY, points[i][1]);
+      }
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+      geometryInfo.setCoordinates (coords);
+      geometryInfo.setStripCounts(new int [] {coords.length});
+      // Generate normals
+      new NormalGenerator(0).generateNormals(geometryInfo);
+      return geometryInfo.getIndexedGeometryArray ();
+    }
+    
+    /**
+     * Returns the height at the start of the wall managed by this 3D object.
+     */
+    private float getWallHeightAtStart() {
       Float wallHeight = ((Wall)getUserData()).getHeight();      
       if (wallHeight != null) {
         return wallHeight;
       } else {
         // If wall height isn't set, use home wall height
         return this.home.getWallHeight();
+      }
+    }
+    
+    /**
+     * Returns the height at the end of the wall managed by this 3D object.
+     */
+    private float getWallHeightAtEnd() {
+      Wall wall = (Wall)getUserData();      
+      if (wall.isTrapezoidal()) {
+        return wall.getHeightAtEnd();
+      } else {
+        // If the wall isn't trapezoidal, use same height as at wall start
+        return getWallHeightAtStart();
       }
     }
     
@@ -1155,12 +1217,7 @@ public class HomeComponent3D extends JComponent implements Printable {
                                           Integer wallSideColor) {
       // Update material and texture of wall left side
       if (wallSideTexture == null) {
-        if (wallSideColor == null && wallSideAppearance.getUserData() != null
-            || wallSideColor != null && !wallSideColor.equals(wallSideAppearance.getUserData())) {
-          // Store color in appearance user data to avoid appearance update at each wall update 
-          wallSideAppearance.setUserData(wallSideColor);
-          wallSideAppearance.setMaterial(getMaterial(wallSideColor));
-        }
+        wallSideAppearance.setMaterial(getMaterial(wallSideColor));
         wallSideAppearance.setTexture(null);
       } else {
         wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
@@ -1184,10 +1241,16 @@ public class HomeComponent3D extends JComponent implements Printable {
     
     private Material getMaterial(Integer color) {
       if (color != null) {
-        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
-                                            ((color >>> 8) & 0xFF) / 256f,
-                                                    (color & 0xFF) / 256f);
-        return new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+        Material material = materials.get(color); 
+        if (material == null) {
+          Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
+                                              ((color >>> 8) & 0xFF) / 256f,
+                                                      (color & 0xFF) / 256f);
+          material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+          // Store created materials in cache
+          materials.put(color, material);
+        }
+        return material;
       } else {
         return DEFAULT_MATERIAL;
       }

@@ -37,8 +37,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -69,10 +72,16 @@ public class WallPanel extends JPanel {
   private ColorButton    rightSideColorButton;
   private JRadioButton   rightSideTextureRadioButton;
   private TextureButton  rightSideTextureButton;
+  private JRadioButton   rectangularWallRadioButton;
+  private JLabel         rectangularWallHeightLabel;
+  private JSpinner       rectangularWallHeightSpinner;
+  private JRadioButton   slopingWallRadioButton;
+  private JLabel         slopingWallHeightAtStartLabel;
+  private JSpinner       slopingWallHeightAtStartSpinner;
+  private JLabel         slopingWallHeightAtEndLabel;
+  private JSpinner       slopingWallHeightAtEndSpinner;
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
-  private JLabel         heightLabel;
-  private JSpinner       heightSpinner;
   private JLabel         wallOrientationLabel;
 
   /**
@@ -155,13 +164,44 @@ public class WallPanel extends JPanel {
     ButtonGroup rightSideButtonGroup = new ButtonGroup();
     rightSideButtonGroup.add(this.rightSideColorRadioButton);
     rightSideButtonGroup.add(this.rightSideTextureRadioButton);
-    
+
+    this.rectangularWallRadioButton = new JRadioButton(
+        this.resource.getString("rectangularWallRadioButton.text"));
+    this.rectangularWallHeightLabel = new JLabel(
+        String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitText));
+    this.rectangularWallHeightSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
+    this.rectangularWallHeightSpinner.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          rectangularWallRadioButton.setSelected(true);
+        }
+      });
+    this.slopingWallRadioButton = new JRadioButton(
+        this.resource.getString("slopingWallRadioButton.text"));
+    this.slopingWallHeightAtStartLabel = new JLabel(this.resource.getString("slopingWallHeightAtStartLabel.text"));
+    this.slopingWallHeightAtStartSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
+    this.slopingWallHeightAtStartSpinner.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          slopingWallRadioButton.setSelected(true);
+        }
+      });
+    this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
+    this.slopingWallHeightAtEndSpinner = new NullableSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
+    this.slopingWallHeightAtEndSpinner.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          slopingWallRadioButton.setSelected(true);
+        }
+      });
+
+    ButtonGroup wallHeightButtonGroup = new ButtonGroup();
+    wallHeightButtonGroup.add(this.rectangularWallRadioButton);
+    wallHeightButtonGroup.add(this.slopingWallRadioButton);
+
     this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitText));
     this.thicknessSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
-    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitText));
-    this.heightSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
@@ -187,6 +227,7 @@ public class WallPanel extends JPanel {
       this.yEndLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
+
       this.leftSideColorRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("leftSideColorRadioButton.mnemonic")).getKeyCode());
       this.leftSideTextureRadioButton.setMnemonic(
@@ -195,12 +236,24 @@ public class WallPanel extends JPanel {
           KeyStroke.getKeyStroke(this.resource.getString("rightSideColorRadioButton.mnemonic")).getKeyCode());
       this.rightSideTextureRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("rightSideTextureRadioButton.mnemonic")).getKeyCode());
+      
+      this.rectangularWallRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("rectangularWallRadioButton.mnemonic")).getKeyCode());
+      this.rectangularWallHeightLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("rectangularWallHeightLabel.mnemonic")).getKeyCode());
+      this.rectangularWallHeightLabel.setLabelFor(this.rectangularWallHeightSpinner);
+      this.slopingWallRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("slopingWallRadioButton.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtStartLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("slopingWallHeightAtStartLabel.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtStartLabel.setLabelFor(this.slopingWallHeightAtStartSpinner);
+      this.slopingWallHeightAtEndLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("slopingWallHeightAtEndLabel.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtEndLabel.setLabelFor(this.slopingWallHeightAtEndSpinner);
+      
       this.thicknessLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("thicknessLabel.mnemonic")).getKeyCode());
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
-      this.heightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("heightLabel.mnemonic")).getKeyCode());
-      this.heightLabel.setLabelFor(this.heightSpinner);
     }
   }
   
@@ -215,7 +268,7 @@ public class WallPanel extends JPanel {
                            this.yStartLabel, this.yStartSpinner}, true);
     Insets rowInsets = new Insets(0, 0, 5, 0);
     add(startPointPanel, new GridBagConstraints(
-        0, 0, 4, 1, 0, 0, GridBagConstraints.WEST,
+        0, 0, 2, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     JPanel endPointPanel = createTitledPanel(
@@ -223,7 +276,7 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
     add(endPointPanel, new GridBagConstraints(
-        0, 1, 4, 1, 0, 0, GridBagConstraints.WEST,
+        0, 1, 2, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Third row
     JPanel leftSidePanel = createTitledPanel(
@@ -231,33 +284,70 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.leftSideColorRadioButton, this.leftSideColorButton, 
                            this.leftSideTextureRadioButton, this.leftSideTextureButton}, false);
     add(leftSidePanel, new GridBagConstraints(
-        0, 2, 2, 1, 1, 0, GridBagConstraints.WEST,
+        0, 2, 1, 1, 1, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     JPanel rightSidePanel = createTitledPanel(
         this.resource.getString("rightSidePanel.title"),
         new JComponent [] {this.rightSideColorRadioButton, this.rightSideColorButton, 
                            this.rightSideTextureRadioButton, this.rightSideTextureButton}, false);
     add(rightSidePanel, new GridBagConstraints(
-        2, 2, 2, 1, 1, 0, GridBagConstraints.WEST,
+        1, 2, 1, 1, 1, 0, GridBagConstraints.WEST,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
-    add(this.thicknessLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, 
-        new Insets(0, 6, 10, leftSidePanel.getBorder().getBorderInsets(leftSidePanel).left), 0, 0));
-    add(this.thicknessSpinner, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
-    add(this.heightLabel, new GridBagConstraints(
-        2, 3, 1, 1, 0, 0, GridBagConstraints.EAST, 
-        GridBagConstraints.NONE, new Insets(0, 5, 10, 5), 0, 0));
-    add(this.heightSpinner, new GridBagConstraints(
-        3, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.NONE, 
-        new Insets(0, 0, 10, leftSidePanel.getBorder().getBorderInsets(leftSidePanel).right), 0, 0));
+    JPanel heightPanel = new JPanel(new GridBagLayout());
+    heightPanel.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createTitledBorder(this.resource.getString("heightPanel.title")),
+        BorderFactory.createEmptyBorder(0, 2, 2, 2)));   
+    // First row of height panel
+    heightPanel.add(this.rectangularWallRadioButton, new GridBagConstraints(
+        0, 0, 5, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Second row of height panel
+    // Add a dummy label to align second and fourth row on radio buttons text
+    heightPanel.add(new JLabel(), new GridBagConstraints(
+        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), new JRadioButton().getPreferredSize().width + 2, 0));
+    heightPanel.add(this.rectangularWallHeightLabel, new GridBagConstraints(
+        1, 1, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    heightPanel.add(this.rectangularWallHeightSpinner, new GridBagConstraints(
+        2, 1, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+    // Third row of height panel
+    heightPanel.add(this.slopingWallRadioButton, new GridBagConstraints(
+        0, 2, 5, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Fourth row of height panel
+    heightPanel.add(this.slopingWallHeightAtStartLabel, new GridBagConstraints(
+        1, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    heightPanel.add(this.slopingWallHeightAtStartSpinner, new GridBagConstraints(
+        2, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    heightPanel.add(this.slopingWallHeightAtEndLabel, new GridBagConstraints(
+        3, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+    heightPanel.add(this.slopingWallHeightAtEndSpinner, new GridBagConstraints(
+        4, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    
+    add(heightPanel, new GridBagConstraints(
+        0, 3, 2, 1, 1, 0, GridBagConstraints.WEST,
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
+    // Fifth row
+    JPanel ticknessPanel = new JPanel(new GridBagLayout());
+    ticknessPanel.add(this.thicknessLabel, new GridBagConstraints(
+        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 46, 0));
+    ticknessPanel.add(this.thicknessSpinner, new GridBagConstraints(
+        1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(ticknessPanel, new GridBagConstraints(
+        0, 4, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        GridBagConstraints.NONE, new Insets(5, 0, 10, 0), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
-        0, 4, 4, 1, 0, 0, GridBagConstraints.CENTER,
+        0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
@@ -349,8 +439,7 @@ public class WallPanel extends JPanel {
       this.leftSideTextureButton.setTexture(leftSideTexture);
 
       if (leftSideColor != null && leftSideTexture != null) {
-        this.leftSideTextureRadioButton.setSelected(false);
-        this.leftSideColorRadioButton.setSelected(false);
+        deselectAllRadioButtons(this.leftSideTextureRadioButton, this.leftSideColorRadioButton);
       } else if (leftSideTexture != null) {
         this.leftSideTextureRadioButton.setSelected(true);
       } else if (leftSideColor != null){
@@ -379,26 +468,13 @@ public class WallPanel extends JPanel {
       this.rightSideTextureButton.setTexture(rightSideTexture);
       
       if (rightSideColor != null && rightSideTexture != null) {
-        this.rightSideTextureRadioButton.setSelected(false);
-        this.rightSideColorRadioButton.setSelected(false);
+        deselectAllRadioButtons(this.rightSideTextureRadioButton, this.rightSideColorRadioButton);
       } else if (rightSideTexture != null) {
         this.rightSideTextureRadioButton.setSelected(true);
       } else if (rightSideColor != null) {
         this.rightSideColorRadioButton.setSelected(true);
       } 
       
-      Float thickness = firstWall.getThickness();
-      for (int i = 1; i < selectedWalls.size(); i++) {
-        if (thickness != selectedWalls.get(i).getThickness()) {
-          thickness = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
-          .setNullable(thickness == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
-          .setLength(thickness);
-
       Float height = firstWall.getHeight();
       // If wall height was never set, use home wall height
       if (height == null && firstWall.getHeight() == null) {
@@ -414,13 +490,72 @@ public class WallPanel extends JPanel {
           break;
         }
       }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel())
+      ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel())
           .setNullable(height == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel())
+      ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel())
           .setLength(height);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel())
+          .setNullable(height == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel())
+          .setLength(height);
+
+      Float heightAtEnd = firstWall.getHeightAtEnd();
+      if (heightAtEnd != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!heightAtEnd.equals(selectedWalls.get(i).getHeightAtEnd())) {
+            heightAtEnd = null;
+            break;
+          }
+        }
+      }
+      boolean allWallsTrapezoidal = firstWall.isTrapezoidal();
+      boolean allWallsRectangular = !firstWall.isTrapezoidal();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!selectedWalls.get(i).isTrapezoidal()) {
+          allWallsTrapezoidal = false;
+        } else {
+          allWallsRectangular = false;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
+          .setNullable(heightAtEnd == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
+          .setLength(heightAtEnd == null && selectedWalls.size() == 0 ? height : heightAtEnd);
+
+      if (allWallsTrapezoidal) {
+        this.slopingWallRadioButton.setSelected(true);
+      } else if (allWallsRectangular) {
+        this.rectangularWallRadioButton.setSelected(true);
+      } else {
+        deselectAllRadioButtons(this.slopingWallRadioButton, this.rectangularWallRadioButton);
+      }
+
+      Float thickness = firstWall.getThickness();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (thickness != selectedWalls.get(i).getThickness()) {
+          thickness = null;
+          break;
+        }
+      }
+      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
+          .setNullable(thickness == null);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
+          .setLength(thickness);
     }
   }
 
+  /**
+   * Forces radio buttons to be deselected even if thay belong to a button group. 
+   */
+  private void deselectAllRadioButtons(JRadioButton ... radioButtons) {
+    for (JRadioButton radioButton : radioButtons) {
+      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
+      group.remove(radioButton);
+      radioButton.setSelected(false);
+      group.add(radioButton);
+    }    
+  }
+  
   /**
    * Returns the abscissa of the start point of the wall.
    */
@@ -516,7 +651,26 @@ public class WallPanel extends JPanel {
    * Returns the edited height of the wall(s) or <code>null</code>.
    */
   public Float getWallHeight() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).getLength();
+    if (this.slopingWallRadioButton.isSelected()) {
+      return ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel()).getLength();
+    } else if (this.rectangularWallRadioButton.isSelected()) {
+      return ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel()).getLength();
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the edited height at end of the wall(s) or <code>null</code>.
+   */
+  public Float getWallHeightAtEnd() {
+    if (this.slopingWallRadioButton.isSelected()) {
+      return ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel()).getLength();
+    } else if (this.rectangularWallRadioButton.isSelected()) {
+      return ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel()).getLength();
+    } else {
+      return null;
+    }
   }
 
   /**

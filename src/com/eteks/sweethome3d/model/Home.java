@@ -668,6 +668,22 @@ public class Home implements Serializable {
   }
 
   /**
+   * Sets the <code>heightAtEnd</code> at the end of the given <code>wall</code>. 
+   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
+   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
+   * an {@link WallEvent#getType() event type} equal to
+   * {@link WallEvent.Type#UPDATE UPDATE}. 
+   */
+  public void setWallHeightAtEnd(Wall wall, Float heightAtEnd) {
+    Float wallHeightAtEnd = wall.getHeightAtEnd(); 
+    if ((wallHeightAtEnd == null && heightAtEnd != null)
+        || (wallHeightAtEnd != null && !wallHeightAtEnd.equals(heightAtEnd))) {
+      wall.setHeightAtEnd(heightAtEnd);
+      fireWallEvent(wall, WallEvent.Type.UPDATE);
+    }
+  }
+
+  /**
    * Notifies all wall listeners added to this home an event of 
    * a given type.
    */
