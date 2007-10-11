@@ -200,19 +200,19 @@ public class Home3DAttributesPanel extends JPanel {
         3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     // Second row
-    Insets closeLabelInsets = new Insets(0, 0, 0, 5);
+    Insets closeLabelInsets = new Insets(0, 0, 2, 5);
     add(this.groundColorRadioButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.groundColorButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 10), 0, 0));
     add(this.skyColorLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.skyColorButton, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Third row
     add(this.groundTextureRadioButton, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 

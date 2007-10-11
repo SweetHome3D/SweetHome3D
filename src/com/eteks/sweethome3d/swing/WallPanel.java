@@ -371,7 +371,7 @@ public class WallPanel extends JPanel {
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     } else {
       for (int i = 0; i < components.length; i += 2) {
-        int bottomInset = i < components.length - 2  ? 0  : 5;
+        int bottomInset = i < components.length - 2  ? 2  : 0;
         titledPanel.add(components [i], new GridBagConstraints(
             0, i / 2, 1, 1, 1, 0, GridBagConstraints.WEST, 
             GridBagConstraints.HORIZONTAL, 
@@ -520,7 +520,7 @@ public class WallPanel extends JPanel {
       ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
           .setNullable(heightAtEnd == null);
       ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
-          .setLength(heightAtEnd == null && selectedWalls.size() == 0 ? height : heightAtEnd);
+          .setLength(heightAtEnd == null && selectedWalls.size() == 1 ? height : heightAtEnd);
 
       if (allWallsTrapezoidal) {
         this.slopingWallRadioButton.setSelected(true);
