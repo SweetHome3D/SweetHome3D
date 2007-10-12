@@ -109,14 +109,14 @@ class TexturePanel extends JPanel {
   private void layoutComponents() {
     // First row
     add(this.availableTexturesLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
     add(this.chosenTextureLabel, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.WEST,
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
-        0, 1, 1, 1, 1, 1, GridBagConstraints.NORTHWEST,
+        0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER,
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
     add(this.texturePreviewLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
