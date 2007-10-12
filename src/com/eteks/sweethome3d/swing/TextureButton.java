@@ -43,8 +43,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * on this button a dialog appears to let him choose an other texture.
  */
 public class TextureButton extends JButton {
-  private static TexturePanel texturePanel;
-  
   private TextureImage texture;
   private String       textureDialogTitle;
 
@@ -87,11 +85,7 @@ public class TextureButton extends JButton {
     // Add a listener to update texture
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ev) {
-        // Create leasily texture panel
-        if (texturePanel == null) {
-          texturePanel = new TexturePanel(preferences);
-        }
-        
+        TexturePanel texturePanel = new TexturePanel(preferences);
         // Update edited texture in texture panel
         texturePanel.setTexture(texture);
         // Show panel in a resizable modal dialog
