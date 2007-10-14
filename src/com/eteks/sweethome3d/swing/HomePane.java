@@ -1328,7 +1328,8 @@ public class HomePane extends JRootPane {
    */
   public void showAboutDialog() {
     String messageFormat = this.resource.getString("about.message");
-    String message = String.format(messageFormat, System.getProperty("java.version"));
+    String aboutVersion = this.resource.getString("about.version");
+    String message = String.format(messageFormat, aboutVersion, System.getProperty("java.version"));
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
