@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.io;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -40,9 +41,14 @@ public class DefaultUserPreferences extends UserPreferences {
     // Read default textures catalog
     setTexturesCatalog(new DefaultTexturesCatalog());
     // Read other preferences from resource bundle
-    ResourceBundle resource = 
-      ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
-    setLanguage(Locale.getDefault().getLanguage());
+    ResourceBundle resource = ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
+    // If current default locale isn't supported in Sweet Home 3D, let's use English  
+    String language = Locale.getDefault().getLanguage();
+    if (Arrays.asList(getSupportedLanguages()).contains(language)) {
+      setLanguage(language);
+    } else {
+      setLanguage("en");
+    }
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));

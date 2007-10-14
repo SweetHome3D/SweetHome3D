@@ -34,16 +34,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -93,16 +92,16 @@ public class FileUserPreferences extends UserPreferences {
     }
     DUMMY_CONTENT = dummyURLContent;
   }
-  
+ 
   /**
    * Creates user preferences read either from user preferences in file system, 
    * or from resource files.
    */
   public FileUserPreferences() {
     final Preferences preferences = getPreferences();
-    setLanguage(preferences.get(LANGUAGE, Locale.getDefault().getLanguage()));
-    
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+
+    setLanguage(preferences.get(LANGUAGE, defaultPreferences.getLanguage()));    
     
     // Fill default furniture catalog 
     setFurnitureCatalog(defaultPreferences.getFurnitureCatalog());

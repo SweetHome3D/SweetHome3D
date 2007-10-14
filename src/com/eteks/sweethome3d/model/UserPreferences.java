@@ -141,6 +141,13 @@ public abstract class UserPreferences {
           oldLanguage, language);
     }
   }
+  
+  /**
+   * Returns the array of available languages in Sweet Home 3D.
+   */
+  public String [] getSupportedLanguages() {
+    return new String [] {"de", "en", "fr", "it", "pt"};
+  }
 
   /**
    * Changes the unit currently in use, and notifies listeners of this change. 
@@ -259,8 +266,6 @@ public abstract class UserPreferences {
           oldHomeWallHeight, newHomeWallHeight);
     }
   }
-  
-  
   
   /**
    * Returns an unmodifiable list of the recent homes.
