@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,7 @@ import java.util.Locale;
 public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
+  private static final String [] SUPPORTED_LANGUAGES = {"de", "en", "fr", "it", "pt"}; 
   
   private PropertyChangeSupport propertyChangeSupport;
 
@@ -67,7 +69,16 @@ public abstract class UserPreferences {
   private List<String>     recentHomes;
 
   public UserPreferences() {
-    this.propertyChangeSupport = new PropertyChangeSupport(this); 
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    
+    final Locale defaultLocale = Locale.getDefault();
+    this.language = defaultLocale.getLanguage();
+    // If current default locale isn't supported in Sweet Home 3D, 
+    // let's use English as default language
+    if (!Arrays.asList(SUPPORTED_LANGUAGES).contains(this.language)) {
+      this.language = "en";
+    }
+    Locale.setDefault(new Locale(this.language, defaultLocale.getCountry()));
   }
   
   /**
@@ -99,6 +110,9 @@ public abstract class UserPreferences {
     return this.furnitureCatalog;
   }
 
+  /**
+   * Sets furniture catalog.
+   */
   protected void setFurnitureCatalog(FurnitureCatalog catalog) {
     this.furnitureCatalog = catalog;
   }
@@ -110,6 +124,9 @@ public abstract class UserPreferences {
     return this.texturesCatalog;
   }
 
+  /**
+   * Sets textures catalog.
+   */
   protected void setTexturesCatalog(TexturesCatalog catalog) {
     this.texturesCatalog = catalog;
   }
@@ -146,7 +163,7 @@ public abstract class UserPreferences {
    * Returns the array of available languages in Sweet Home 3D.
    */
   public String [] getSupportedLanguages() {
-    return new String [] {"de", "en", "fr", "it", "pt"};
+    return SUPPORTED_LANGUAGES;
   }
 
   /**

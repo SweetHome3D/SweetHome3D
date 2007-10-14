@@ -99,9 +99,9 @@ public class FileUserPreferences extends UserPreferences {
    */
   public FileUserPreferences() {
     final Preferences preferences = getPreferences();
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    setLanguage(preferences.get(LANGUAGE, getLanguage()));    
 
-    setLanguage(preferences.get(LANGUAGE, defaultPreferences.getLanguage()));    
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Fill default furniture catalog 
     setFurnitureCatalog(defaultPreferences.getFurnitureCatalog());
