@@ -72,8 +72,9 @@ public class TextureButton extends JButton {
             if (icon.getIconWidth() != icon.getIconHeight()) {
               Graphics2D g2D = (Graphics2D)g;
               AffineTransform previousTransform = g2D.getTransform();
+              g2D.translate(x + 3, y + 3);
               g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
-              icon.paintIcon(c, g2D, x + 3, y + 3);
+              icon.paintIcon(c, g2D, 0, 0);
               g2D.setTransform(previousTransform);
             } else {
               icon.paintIcon(c, g, x + 3, y + 3);
