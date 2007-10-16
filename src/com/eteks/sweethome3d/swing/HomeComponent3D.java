@@ -1158,15 +1158,15 @@ public class HomeComponent3D extends JComponent implements Printable {
               points[i + 1][0], points[i + 1][1]) / texture.getWidth();
           textureCoords [j++] = firstTextureCoords;
           textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].getY() / texture.getHeight());
-          textureCoords [j++] = new TexCoord2f(0, top [i].getY() / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].y / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(0, top [i].y / texture.getHeight());
         }
         float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
             points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
         textureCoords [j++] = firstTextureCoords;
         textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [top.length - 1].getY() / texture.getHeight());
-        textureCoords [j++] = new TexCoord2f(0, top [0].getY() / texture.getHeight());
+        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [top.length - 1].y / texture.getHeight());
+        textureCoords [j++] = new TexCoord2f(0, top [0].y / texture.getHeight());
         geometryInfo.setTextureCoordinateParams(1, 2);
         geometryInfo.setTextureCoordinates(0, textureCoords);
       }
