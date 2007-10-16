@@ -111,6 +111,8 @@ public class TextureManager {
               texture = errorTexture;
             } else {
               texture = new TextureLoader(image).getTexture();
+              texture.setMinFilter(Texture.NICEST);
+              texture.setMagFilter(Texture.NICEST);
             }
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
