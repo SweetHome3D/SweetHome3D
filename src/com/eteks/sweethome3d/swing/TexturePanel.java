@@ -22,9 +22,11 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -79,15 +81,37 @@ class TexturePanel extends JPanel {
     this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     this.availableTexturesList.setCellRenderer(new DefaultListCellRenderer() {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, 
+        public Component getListCellRendererComponent(final JList list, Object value, 
             int index, boolean isSelected, boolean cellHasFocus) {
-          CatalogTexture texture = (CatalogTexture)value;
-          setIcon(IconManager.getInstance().getIcon(texture.getImage(), 16, list));
+          final CatalogTexture texture = (CatalogTexture)value;
           value = texture.getName();
           value = texture.getCategory().getName() + " - " + value;
           Component component = super.getListCellRendererComponent(
               list, value, index, isSelected, cellHasFocus);
-          setIcon(IconManager.getInstance().getIcon(texture.getImage(), 16, list));
+          setIcon(new Icon() {
+              public int getIconWidth() {
+                return 16;
+              }
+        
+              public int getIconHeight() {
+                return 16;
+              }
+        
+              public void paintIcon(Component c, Graphics g, int x, int y) {
+                Icon icon = IconManager.getInstance().getIcon(
+                    texture.getImage(), getIconHeight(), list);
+                if (icon.getIconWidth() != icon.getIconHeight()) {
+                  Graphics2D g2D = (Graphics2D)g;
+                  AffineTransform previousTransform = g2D.getTransform();
+                  g2D.translate(x, y);
+                  g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
+                  icon.paintIcon(c, g2D, 0, 0);
+                  g2D.setTransform(previousTransform);
+                } else {
+                  icon.paintIcon(c, g, x, y);
+                }
+              }
+            });
           return component;
         }
       });
@@ -158,6 +182,7 @@ class TexturePanel extends JPanel {
     if (texture != null) {
       this.texturePreviewLabel.setIcon(
           IconManager.getInstance().getIcon(texture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel)); 
+      this.texturePreviewLabel.revalidate();
     } else {
       // Preview a dummy empty icon
       this.texturePreviewLabel.setIcon(new Icon() {
