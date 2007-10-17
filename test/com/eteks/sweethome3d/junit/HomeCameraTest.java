@@ -28,20 +28,27 @@ import java.util.ResourceBundle;
 
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
+import javax.swing.SwingUtilities;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;
+import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
+import abbot.finder.matchers.ClassMatcher;
 import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.ColorButton;
@@ -50,6 +57,8 @@ import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.swing.TextureButton;
+import com.eteks.sweethome3d.swing.TexturePanel;
 
 /**
  * Tests camera changes in home.
@@ -234,28 +243,18 @@ public class HomeCameraTest extends ComponentTestFixture {
         3.2156f, 0.2339f, home.getCamera());
     
     // 11. Edit 3D view modal dialog box
-    tester.invokeLater(new Runnable() { 
-        public void run() {
-          // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          runAction(controller, HomePane.ActionType.MODIFY_3D_ATTRIBUTES);
-        }
-      });
-    // Wait for 3D view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        Home3DAttributesPanel.class.getName()).getString("home3DAttributes.title"));
-    // Check dialog box is displayed
-    JDialog attributesDialog = (JDialog)TestUtilities.findComponent(
-        frame, JDialog.class);
-    assertTrue("3D view dialog not showing", attributesDialog.isShowing());
+    JDialog attributesDialog = showHome3DAttributesPanel(controller, frame, tester);
     // Retrieve Home3DAttributesPanel components
     Home3DAttributesPanel panel = (Home3DAttributesPanel)TestUtilities.findComponent(
-        frame, Home3DAttributesPanel.class);
+        attributesDialog, Home3DAttributesPanel.class);
     JSpinner observerFieldOfViewSpinner = 
-      (JSpinner)TestUtilities.getField(panel, "observerFieldOfViewSpinner");
+        (JSpinner)TestUtilities.getField(panel, "observerFieldOfViewSpinner");
     JSpinner observerHeightSpinner = 
         (JSpinner)TestUtilities.getField(panel, "observerHeightSpinner");
     ColorButton groundColorButton = 
         (ColorButton)TestUtilities.getField(panel, "groundColorButton");
+    TextureButton groundTextureButton = 
+        (TextureButton)TestUtilities.getField(panel, "groundTextureButton");
     ColorButton skyColorButton = 
         (ColorButton)TestUtilities.getField(panel, "skyColorButton");
     JSlider brightnessSlider = 
@@ -266,6 +265,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     float oldCameraFieldOfView = observerCamera.getFieldOfView();
     float oldCameraHeight = observerCamera.getHeight();
     int oldGroundColor = home.getGroundColor();
+    TextureImage oldGroundTexture = home.getGroundTexture();
     int oldSkyColor = home.getSkyColor();
     int oldLightColor = home.getLightColor();
     float oldWallsAlpha = home.getWallsAlpha();
@@ -275,6 +275,8 @@ public class HomeCameraTest extends ComponentTestFixture {
         observerHeightSpinner.getValue());
     assertEquals("Wrong ground color", oldGroundColor, 
         groundColorButton.getColor().intValue());
+    assertEquals("Wrong ground texture", oldGroundTexture, 
+        groundTextureButton.getTexture());
     assertEquals("Wrong sky color", oldSkyColor, 
         skyColorButton.getColor().intValue());
     assertEquals("Wrong brightness", oldLightColor & 0xFF, 
@@ -290,31 +292,115 @@ public class HomeCameraTest extends ComponentTestFixture {
     brightnessSlider.setValue(128);
     wallsTransparencySlider.setValue(128);
     // Click on Ok in dialog box
+    doClickOnOkInDialog(attributesDialog, tester);
+    // Check home attributes are modified accordingly
+    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
+        0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    
+    // 13. Undo changes
+    runAction(controller, HomePane.ActionType.UNDO);
+    // Check home attributes have previous values
+    assert3DAttributesEqualHomeAttributes(oldCameraFieldOfView, oldCameraHeight, 
+        oldGroundColor, null, oldSkyColor, oldLightColor, oldWallsAlpha, home);
+    // Redo
+    runAction(controller, HomePane.ActionType.REDO);
+    // Check home attributes are modified accordingly
+    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
+        0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    
+    // 14. Edit 3D view modal dialog box to change ground texture
+    attributesDialog = showHome3DAttributesPanel(controller, frame, tester);
+    panel = (Home3DAttributesPanel)TestUtilities.findComponent(
+        attributesDialog, Home3DAttributesPanel.class);
+    JRadioButton groundColorRadioButton = 
+        (JRadioButton)TestUtilities.getField(panel, "groundColorRadioButton");
+    final TextureButton groundTextureButton2 = 
+        (TextureButton)TestUtilities.getField(panel, "groundTextureButton");
+    JRadioButton groundTextureRadioButton = 
+        (JRadioButton)TestUtilities.getField(panel, "groundTextureRadioButton");
+    
+    // Check color and texture radio buttons
+    assertTrue("Ground color radio button isn't checked", 
+        groundColorRadioButton.isSelected());
+    assertFalse("Ground texture radio button is checked", 
+        groundTextureRadioButton.isSelected());
+    // Click on ground texture button
+    tester.invokeLater(new Runnable() { 
+        public void run() {
+          // Display texture dialog later in Event Dispatch Thread to avoid blocking test thread
+          groundTextureButton2.doClick();
+        }
+      });
+    // Wait for 3D view to be shown
+    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
+        Home3DAttributesPanel.class.getName()).getString("groundTextureDialog.title"));
+    // Check texture dialog box is displayed
+    TexturePanel texturePanel = (TexturePanel)new BasicFinder().find(frame, 
+        new ClassMatcher(TexturePanel.class, true));
+    JDialog textureDialog = (JDialog)SwingUtilities.getAncestorOfClass(JDialog.class, texturePanel);
+    assertTrue("Texture dialog not showing", textureDialog.isShowing());
+    
+    JList availableTexturesList = 
+      (JList)TestUtilities.getField(texturePanel, "availableTexturesList");
+    availableTexturesList.setSelectedIndex(0);
+    CatalogTexture firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
+    assertEquals("Wrong first texture in list", firstTexture, 
+        availableTexturesList.getSelectedValue());
+    
+    // Click on OK in texture dialog box
+    doClickOnOkInDialog(textureDialog, tester);
+    // Check color and texture radio buttons
+    assertFalse("Ground color radio button is checked", 
+        groundColorRadioButton.isSelected());
+    assertTrue("Ground texture radio button isn't checked", 
+        groundTextureRadioButton.isSelected());
+    
+    // Click on OK in 3D attributes dialog box
+    doClickOnOkInDialog(attributesDialog, tester);
+    
+    // Check home attributes are modified accordingly
+    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
+        0xFFFFFF, firstTexture, 0x000000, 0x808080, 1 / 255f * 128f, home);
+  }
+
+  /**
+   * Returns the dialog that displays home 3D attributes. 
+   */
+  private JDialog showHome3DAttributesPanel(final HomeController controller, 
+                                            JFrame parent, JComponentTester tester) 
+            throws ComponentSearchException {
+    tester.invokeLater(new Runnable() { 
+        public void run() {
+          // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
+          runAction(controller, HomePane.ActionType.MODIFY_3D_ATTRIBUTES);
+        }
+      });
+    // Wait for 3D view to be shown
+    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
+        Home3DAttributesPanel.class.getName()).getString("home3DAttributes.title"));
+    // Check dialog box is displayed
+    JDialog attributesDialog = (JDialog)new BasicFinder().find(parent, 
+        new ClassMatcher (JDialog.class, true));
+    assertTrue("3D view dialog not showing", attributesDialog.isShowing());
+    return attributesDialog;
+  }
+  
+  /**
+   * Cliks on OK in dialog to close it.
+   */
+  private void doClickOnOkInDialog(JDialog dialog, JComponentTester tester) 
+            throws ComponentSearchException {
     final JOptionPane attributesOptionPane = (JOptionPane)TestUtilities.findComponent(
-        attributesDialog, JOptionPane.class);
+        dialog, JOptionPane.class);
     tester.invokeAndWait(new Runnable() {
         public void run() {
           // Select Ok option to hide dialog box in Event Dispatch Thread
           attributesOptionPane.setValue(JOptionPane.OK_OPTION); 
         }
       });
-    assertFalse("3D view dialog still showing", attributesDialog.isShowing());
-    // Check home attributes are modified accordingly
-    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
-        0xFFFFFF, 0x000000, 0x808080, 1 / 255f * 128f, home);
-    
-    // 13. Undo changes
-    runAction(controller, HomePane.ActionType.UNDO);
-    // Check home attributes have previous values
-    assert3DAttributesEqualHomeAttributes(oldCameraFieldOfView, oldCameraHeight, 
-        oldGroundColor, oldSkyColor, oldLightColor, oldWallsAlpha, home);
-    // Redo
-    runAction(controller, HomePane.ActionType.REDO);
-    // Check home attributes are modified accordingly
-    assert3DAttributesEqualHomeAttributes((float)Math.toRadians(90), 300f, 
-        0xFFFFFF, 0x000000, 0x808080, 1 / 255f * 128f, home);
+    assertFalse("Dialog still showing", dialog.isShowing());
   }
-  
+
   /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
@@ -350,6 +436,7 @@ public class HomeCameraTest extends ComponentTestFixture {
   private void assert3DAttributesEqualHomeAttributes(float cameraFieldOfView, 
                                                      float cameraHeight, 
                                                      int groundColor, 
+                                                     TextureImage groundTexture,
                                                      int skyColor, 
                                                      int lightColor, 
                                                      float wallsAlpha, Home home) {
@@ -357,6 +444,11 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertEquals("Wrong field of view", cameraFieldOfView, observerCamera.getFieldOfView());
     assertEquals("Wrong height", cameraHeight, observerCamera.getHeight());
     assertEquals("Wrong ground color", groundColor, home.getGroundColor());
+    if (groundTexture == null) {
+      assertEquals("Wrong ground texture", groundTexture, home.getGroundTexture());
+    } else {
+      assertEquals("Wrong ground texture", groundTexture.getName(), home.getGroundTexture().getName());
+    }
     assertEquals("Wrong sky color", skyColor, home.getSkyColor());
     assertEquals("Wrong brightness", lightColor, home.getLightColor());
     assertEquals("Wrong transparency", wallsAlpha, home.getWallsAlpha());
