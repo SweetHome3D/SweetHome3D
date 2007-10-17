@@ -137,7 +137,7 @@ public class SweetHome3D extends HomeApplication {
    * Shows and brings to front <code>home</code> frame. 
    */
   private void showHomeFrame(Home home) {
-    final JFrame homeFrame = application.getHomeFrame(home);
+    final JFrame homeFrame = getHomeFrame(home);
     EventQueue.invokeLater(new Runnable() {
       public void run() {
         homeFrame.setVisible(true);
@@ -146,7 +146,7 @@ public class SweetHome3D extends HomeApplication {
       }
     });
   }
-  
+
   // Only one application may be created with main method or SingleInstanceService
   private static SweetHome3D application;
 
@@ -175,7 +175,6 @@ public class SweetHome3D extends HomeApplication {
       
       initLookAndFeel();
       application = createApplication();
-      initJava3DRenderingErrorListener(application);
     }
 
     if (args.length == 2 && args [0].equals("-open")) {
@@ -258,112 +257,6 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
-   * Adds a rendering error listener to Java 3D 
-   * to avoid default System exit in case of error during 3D rendering. 
-   */
-  private static void initJava3DRenderingErrorListener(final SweetHome3D application) {
-    try {
-      VirtualUniverse.addRenderingErrorListener(new RenderingErrorListener() {
-          public void errorOccurred(RenderingError error) {
-            switch (error.getErrorCode()) {
-              case RenderingError.NO_ERROR :
-              case RenderingError.OFF_SCREEN_BUFFER_ERROR :
-                // If offscreen canvases 3D aren't supported by Java 3D, 
-                // let classes manage the exception they will catch
-                break;
-              default :
-                // Fatal error
-                error.printVerbose();
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                      exitAfter3DError(application);
-                    }
-                  });
-            }
-          }
-        });
-    } catch (NoSuchMethodError ex) {
-      // As addRenderingErrorListener is available since Java 3D 1.5, use 
-      // default rendering error reporting if Sweet Home 3D is linked to a previous version
-    }
-  }
-
-  /**
-   * Displays a message to user about a 3D error, saves modified homes 
-   * and forces exit. 
-   */
-  private static void exitAfter3DError(final SweetHome3D application) {
-    // Check if there are modified homes
-    boolean modifiedHomes = false;
-    for (Home home : application.getHomes()) {
-      if (home.isModified()) {
-        modifiedHomes = true;
-        break;
-      }
-    }
-    
-    if (!modifiedHomes) {
-      // Show 3D error message
-      show3DError();
-    } else if (confirmSaveAfter3DError()) {
-      // Delete all homes after saving modified ones
-      for (Home home : application.getHomes()) {
-        if (home.isModified()) {
-          String homeName = home.getName();                      
-          if (homeName == null) {
-            application.getHomeFrame(home).toFront();
-            homeName = application.getContentManager().showSaveDialog(null, 
-                ContentManager.ContentType.SWEET_HOME_3D, null);
-          }
-          if (homeName != null) {
-            try {
-              // Write home with application recorder
-              application.getHomeRecorder().writeHome(home, homeName);
-            } catch (RecorderException ex) {
-              // As this is an emergency exit, don't report error   
-              ex.printStackTrace();
-            }
-          }
-          application.deleteHome(home);
-        }
-      }
-    }
-    // Close homes
-    for (Home home : application.getHomes()) {
-      application.deleteHome(home);
-    }
-    // Force exit if program didn't exit by itself
-    System.exit(0);
-  }
-
-  /**
-   * Displays in a 3D error message.
-   */
-  private static void show3DError() {
-    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-    String message = resource.getString("3DError.message");
-    String title = resource.getString("3DError.title");
-    JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
-  }
-
-  /**
-   * Displays a dialog that let user choose whether he wants to save
-   * modified homes after an error in 3D rendering system.
-   * @return <code>true</code> if user confirmed to save.
-   */
-  private static boolean confirmSaveAfter3DError() {
-    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-    String message = resource.getString("confirmSaveAfter3DError.message");
-    String title = resource.getString("confirmSaveAfter3DError.title");
-    String save = resource.getString("confirmSaveAfter3DError.save");
-    String doNotSave = resource.getString("confirmSaveAfter3DError.doNotSave");
-    
-    return JOptionPane.showOptionDialog(null, message, title, 
-        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-        null, new Object [] {save, doNotSave}, save) == JOptionPane.YES_OPTION;
-  }
-
-  /**
    * Returns main application object. 
    */
   private static SweetHome3D createApplication() {
@@ -425,6 +318,8 @@ public class SweetHome3D extends HomeApplication {
         };
       });
     
+    application.add3DRenderingErrorListener();
+    
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
       // Bind to application menu  
       MacOSXConfiguration.bindToApplicationMenu(application);
@@ -465,6 +360,112 @@ public class SweetHome3D extends HomeApplication {
     }
   }
   
+  /**
+   * Adds a rendering error listener to Java 3D 
+   * to avoid default System exit in case of error during 3D rendering. 
+   */
+  private void add3DRenderingErrorListener() {
+    try {
+      VirtualUniverse.addRenderingErrorListener(new RenderingErrorListener() {
+          public void errorOccurred(RenderingError error) {
+            switch (error.getErrorCode()) {
+              case RenderingError.NO_ERROR :
+              case RenderingError.OFF_SCREEN_BUFFER_ERROR :
+                // If offscreen canvases 3D aren't supported by Java 3D, 
+                // let Sweet Home 3D classes manage the exception they will catch
+                break;
+              default :
+                // Fatal error
+                error.printVerbose();
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      exitAfter3DError();
+                    }
+                  });
+            }
+          }
+        });
+    } catch (NoSuchMethodError ex) {
+      // As addRenderingErrorListener is available since Java 3D 1.5, use 
+      // default rendering error reporting if Sweet Home 3D is linked to a previous version
+    }
+  }
+
+  /**
+   * Displays a message to user about a 3D error, saves modified homes 
+   * and forces exit. 
+   */
+  private void exitAfter3DError() {
+    // Check if there are modified homes
+    boolean modifiedHomes = false;
+    for (Home home : getHomes()) {
+      if (home.isModified()) {
+        modifiedHomes = true;
+        break;
+      }
+    }
+    
+    if (!modifiedHomes) {
+      // Show 3D error message
+      show3DError();
+    } else if (confirmSaveAfter3DError()) {
+      // Delete all homes after saving modified ones
+      for (Home home : getHomes()) {
+        if (home.isModified()) {
+          String homeName = home.getName();                      
+          if (homeName == null) {
+            getHomeFrame(home).toFront();
+            homeName = getContentManager().showSaveDialog(null, 
+                ContentManager.ContentType.SWEET_HOME_3D, null);
+          }
+          if (homeName != null) {
+            try {
+              // Write home with application recorder
+              getHomeRecorder().writeHome(home, homeName);
+            } catch (RecorderException ex) {
+              // As this is an emergency exit, don't report error   
+              ex.printStackTrace();
+            }
+          }
+          deleteHome(home);
+        }
+      }
+    }
+    // Close homes
+    for (Home home : getHomes()) {
+      deleteHome(home);
+    }
+    // Force exit if program didn't exit by itself
+    System.exit(0);
+  }
+
+  /**
+   * Displays in a 3D error message.
+   */
+  private void show3DError() {
+    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
+    String message = resource.getString("3DError.message");
+    String title = resource.getString("3DError.title");
+    JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+  }
+
+  /**
+   * Displays a dialog that let user choose whether he wants to save
+   * modified homes after an error in 3D rendering system.
+   * @return <code>true</code> if user confirmed to save.
+   */
+  private boolean confirmSaveAfter3DError() {
+    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
+    String message = resource.getString("confirmSaveAfter3DError.message");
+    String title = resource.getString("confirmSaveAfter3DError.title");
+    String save = resource.getString("confirmSaveAfter3DError.save");
+    String doNotSave = resource.getString("confirmSaveAfter3DError.doNotSave");
+    
+    return JOptionPane.showOptionDialog(null, message, title, 
+        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {save, doNotSave}, save) == JOptionPane.YES_OPTION;
+  }
+
   /**
    * An AWT window displaying a splash screen image.
    * The window is disposed when an other AWT frame is created.
