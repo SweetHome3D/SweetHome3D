@@ -341,7 +341,7 @@ public class SweetHome3D extends HomeApplication {
   /**
    * Displays in a 3D error message.
    */
-  public static void show3DError() {
+  private static void show3DError() {
     ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
     String message = resource.getString("3DError.message");
     String title = resource.getString("3DError.title");
@@ -353,7 +353,7 @@ public class SweetHome3D extends HomeApplication {
    * modified homes after an error in 3D rendering system.
    * @return <code>true</code> if user confirmed to save.
    */
-  public static boolean confirmSaveAfter3DError() {
+  private static boolean confirmSaveAfter3DError() {
     ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
     String message = resource.getString("confirmSaveAfter3DError.message");
     String title = resource.getString("confirmSaveAfter3DError.title");
