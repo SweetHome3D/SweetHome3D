@@ -26,6 +26,8 @@ import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.WallPanel;
@@ -52,10 +54,22 @@ public class WallPanelTest extends TestCase {
     // Check values stored by wall panel components are equal to the ones set
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
-        wall1.getThickness(), home.getWallHeight(),
-        wall1.getLeftSideColor(), wall1.getRightSideColor(), panel);
-
-    // 3. Add a second selected wall to home
+        wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
+        wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
+        wall1.getRightSideColor(), wall1.getRightSideTexture(), panel);
+ 
+    // 3. Modify wall right side texture with first available texture
+    TextureImage firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
+    home.setWallRightSideColor(wall1, null);
+    home.setWallRightSideTexture(wall1, new HomeTexture(firstTexture));
+    panel = new WallPanel(home, preferences, null);
+    assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
+        wall1.getXEnd(), wall1.getYEnd(),
+        wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
+        wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
+        null, wall1.getRightSideTexture(), panel);
+    
+    // 4. Add a second selected wall to home
     Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
     home.addWall(wall2);
     home.setWallHeight(wall2, 300f);
@@ -66,7 +80,7 @@ public class WallPanelTest extends TestCase {
     panel = new WallPanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
     assertWallPanelEquals(null, null,
-        null, null, null, null, 10, null, panel);
+        null, null, null, null, null, 10, null, null, null, panel);
   }
   
   /**
@@ -74,8 +88,9 @@ public class WallPanelTest extends TestCase {
    * stored in <code>panel</code> components.
    */
   private void assertWallPanelEquals(Float xStart, Float yStart, Float xEnd, Float yEnd, 
-                                     Float thickness, Float height,
-                                     Integer leftColor, Integer rightColor,
+                                     Float thickness, Float height, Float heightAtEnd,
+                                     Integer leftColor, TextureImage leftTexture,
+                                     Integer rightColor, TextureImage rightTexture,
                                      WallPanel panel) {
     assertEquals("Wrong X start", xStart, panel.getWallXStart());
     assertEquals("Wrong Y start", yStart, panel.getWallYStart());
@@ -83,8 +98,19 @@ public class WallPanelTest extends TestCase {
     assertEquals("Wrong Y end", yEnd, panel.getWallYEnd());
     assertEquals("Wrong thickness", thickness, panel.getWallThickness());
     assertEquals("Wrong height", height, panel.getWallHeight());
+    assertEquals("Wrong heightAtEnd", height, panel.getWallHeightAtEnd());
     assertEquals("Wrong left side color", leftColor, panel.getWallLeftSideColor());
+    if (leftTexture == null) {
+      assertEquals("Wrong left side texture", leftTexture, panel.getWallLeftSideTexture());
+    } else {
+      assertEquals("Wrong left side texture", leftTexture.getName(), panel.getWallLeftSideTexture().getName());
+    }
     assertEquals("Wrong right side color", rightColor, panel.getWallRightSideColor());
+    if (leftTexture == null) {
+      assertEquals("Wrong right side texture", rightTexture, panel.getWallRightSideTexture());
+    } else {
+      assertEquals("Wrong right side texture", rightTexture.getName(), panel.getWallRightSideTexture().getName());
+    }
   }
 
   public static void main(String [] args) {
