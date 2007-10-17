@@ -305,9 +305,6 @@ public class SweetHome3D extends HomeApplication {
     if (!modifiedHomes) {
       // Show 3D error message
       show3DError();
-      for (Home home : application.getHomes()) {
-        application.deleteHome(home);
-      }
     } else if (confirmSaveAfter3DError()) {
       // Delete all homes after saving modified ones
       for (Home home : application.getHomes()) {
@@ -327,9 +324,13 @@ public class SweetHome3D extends HomeApplication {
               ex.printStackTrace();
             }
           }
+          application.deleteHome(home);
         }
-        application.deleteHome(home);
       }
+    }
+    // Close homes
+    for (Home home : application.getHomes()) {
+      application.deleteHome(home);
     }
     // Force exit if program didn't exit by itself
     System.exit(0);
