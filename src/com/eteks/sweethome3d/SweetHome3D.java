@@ -309,17 +309,14 @@ public class SweetHome3D extends HomeApplication {
         application.deleteHome(home);
       }
     } else if (confirmSaveAfter3DError()) {
-      // Delete all unmodified homes and named modified homes after saving them
+      // Delete all homes after saving modified ones
       for (Home home : application.getHomes()) {
-        if (!home.isModified()) {
-          application.deleteHome(home);
-        } else {
+        if (home.isModified()) {
           String homeName = home.getName();                      
           if (homeName == null) {
             application.getHomeFrame(home).toFront();
             homeName = application.getContentManager().showSaveDialog(null, 
                 ContentManager.ContentType.SWEET_HOME_3D, null);
-            application.getHomeFrame(home);
           }
           if (homeName != null) {
             try {
@@ -330,8 +327,8 @@ public class SweetHome3D extends HomeApplication {
               ex.printStackTrace();
             }
           }
-          application.deleteHome(home);
         }
+        application.deleteHome(home);
       }
     }
     // Force exit if program didn't exit by itself
