@@ -54,7 +54,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 /**
  * A panel that displays available textures in a list to let user make choose one. 
  */
-class TexturePanel extends JPanel {
+public class TexturePanel extends JPanel {
   private static final int PREVIEW_ICON_HEIGHT = 64; 
   
   private TextureImage texture;
