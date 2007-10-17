@@ -183,12 +183,10 @@ public class FileContentManager implements ContentManager {
         }
       }};
 
-  private ResourceBundle                  resource;
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
 
   public FileContentManager() {  
-    this.resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
@@ -335,7 +333,12 @@ public class FileContentManager implements ContentManager {
     } else {
       fileDialog.setMode(FileDialog.LOAD);
     }
+
+    if (dialogTitle == null) {
+      dialogTitle = getDefaultFileDialogTitle(save);
+    }
     fileDialog.setTitle(dialogTitle);
+    
     fileDialog.setVisible(true);
     String selectedFile = fileDialog.getFile();
     // If user choosed a file
@@ -379,6 +382,10 @@ public class FileContentManager implements ContentManager {
     if (this.currentDirectory != null) {
       fileChooser.setCurrentDirectory(this.currentDirectory);
     }
+    
+    if (dialogTitle == null) {
+      dialogTitle = getDefaultFileDialogTitle(save);
+    }
     fileChooser.setDialogTitle(dialogTitle);
     
     int option;
@@ -396,6 +403,18 @@ public class FileContentManager implements ContentManager {
       return null;
     }
   }
+
+  /**
+   * Returns default file dialog title.
+   */
+  private String getDefaultFileDialogTitle(boolean save) {
+    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
+    if (save) {
+      return resource.getString("saveDialog.title");
+    } else {
+      return resource.getString("openDialog.title");
+    }
+  }
   
   /**
    * Displays a dialog that let user choose whether he wants to overwrite 
@@ -404,11 +423,12 @@ public class FileContentManager implements ContentManager {
    */
   private boolean confirmOverwrite(String fileName) {
     // Retrieve displayed text in buttons and message
-    String messageFormat = this.resource.getString("confirmOverwrite.message");
+    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
+    String messageFormat = resource.getString("confirmOverwrite.message");
     String message = String.format(messageFormat, fileName);
-    String title = this.resource.getString("confirmOverwrite.title");
-    String replace = this.resource.getString("confirmOverwrite.overwrite");
-    String cancel = this.resource.getString("confirmOverwrite.cancel");
+    String title = resource.getString("confirmOverwrite.title");
+    String replace = resource.getString("confirmOverwrite.overwrite");
+    String cancel = resource.getString("confirmOverwrite.cancel");
     
     return JOptionPane.showOptionDialog(getActiveParent(), message, title, 
         JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
