@@ -17,21 +17,24 @@ Source code classes are compatible with Java SE 5, and this directory
 contains all the information required to compile source code
 as an Eclipse project or with Ant.
 
-If you want to compile Java files of this release with Eclipse, 
-please follow the next steps :
+If you want to compile ant test the Java files of this release 
+with Eclipse, please follow the next steps :
 1. install last JDK 5.0 available at http://java.sun.com
-2. on systems different from Mac OS X, install Java 3D 1.5.1
-   available at http://java3d.dev.java.net/ 
-3. install Eclipse available at http://www.eclipse.org
-4. in Eclipse, select File > Import... menu
-5. In "Select an import source" list of Import dialog box, 
+2. install Eclipse available at http://www.eclipse.org
+3. in Eclipse, select File > Import... menu
+4. In "Select an import source" list of Import dialog box, 
    choose "Existing project into Workspace" option
-6. click on Next buton
-7. in "Select root directory" text field, 
+5. click on Next buton
+6. in "Select root directory" text field, 
    type or select the path to the root of this archive
-8. click on Finish 
+7. click on Finish 
 
-You may execute aplications and tests of this archive, with the Eclipse Run menu.
+You may execute applications and tests of this archive, with the Eclipse Run menu.
+To execute applications and tests that require Java 3D, open Run Dialog in Eclipse, 
+select the Arguments tab of the target application, and add to the VM arguments 
+text field the option -Djava.ext.dirs=lib;lib/windows, -Djava.ext.dirs=lib:lib/macosx 
+or -Djava.ext.dirs=lib:lib/linux/i386 depending on your system.
+
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
 application at http://sweethome3d.sourceforge.net/
 
