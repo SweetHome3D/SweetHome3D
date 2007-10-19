@@ -1350,9 +1350,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     protected BranchGroup getModel() {
       TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      Enumeration children = modelTransformGroup.getAllChildren();
-      if (children.hasMoreElements()) {
-        return (BranchGroup)children.nextElement();
+      if (modelTransformGroup.numChildren() > 0) {
+        return (BranchGroup)modelTransformGroup.getChild(0);
       } else {
         return null;
       }
