@@ -52,6 +52,7 @@ import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.RenderingError;
 import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.VirtualUniverse;
@@ -291,14 +292,19 @@ public class SweetHome3D extends HomeApplication {
           switch (ev.getType()) {
             case ADD :
               Home home = ev.getHome();
-              HomeController controller = new HomeFrameController(home, application);
-              if (!this.firstApplicationHomeAdded) {
-                application.addNewHomeCloseListener(home, controller);
-                this.firstApplicationHomeAdded = true;
-              }          
-              
-              JFrame homeFrame = (JFrame)SwingUtilities.getRoot(controller.getView());
-              application.homeFrames.put(home, homeFrame);
+              try {
+                HomeController controller = new HomeFrameController(home, application);
+                if (!this.firstApplicationHomeAdded) {
+                  application.addNewHomeCloseListener(home, controller);
+                  this.firstApplicationHomeAdded = true;
+                }          
+                
+                JFrame homeFrame = (JFrame)SwingUtilities.getRoot(controller.getView());
+                application.homeFrames.put(home, homeFrame); 
+              } catch (IllegalRenderingStateException ex) {
+                // In case of a problem in Java 3D, simply exit with a message.
+                application.exitAfter3DError();
+              }
               break;
             case DELETE :
               application.homeFrames.remove(ev.getHome());

@@ -24,6 +24,7 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Shape;
@@ -151,16 +152,13 @@ public class HomeComponent3D extends JComponent implements Printable {
   
   /**
    * Creates a 3D component that displays <code>home</code> walls and furniture.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed by this component couldn't be created.
    */
   public HomeComponent3D(Home home, HomeController3D controller) {
     this.home = home;
-    // Try to get antialiasing
-    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-    // Create the Java 3D canvas that will display home 
-    Canvas3D canvas3D = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
-        getDefaultScreenDevice().getBestConfiguration(gc));
     
+    // Create the Java 3D canvas that will display home 
+    Canvas3D canvas3D = createCanvas3D(false);    
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
@@ -178,6 +176,40 @@ public class HomeComponent3D extends JComponent implements Printable {
     addAncestorListener(canvas3D, home);
   }
 
+  /**
+   * Returns a new <code>canva3D</code> instance.
+   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
+   */
+  private Canvas3D createCanvas3D(boolean offscreen) {
+    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
+    // Try to get antialiasing
+    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+    if (offscreen) {
+      gc.setDoubleBuffer(GraphicsConfigTemplate3D.UNNECESSARY);
+    }
+    GraphicsConfiguration configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
+            getDefaultScreenDevice().getBestConfiguration(gc);
+    if (configuration == null) {
+      configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
+          getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+      if (configuration == null) {
+        throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
+      }
+    }
+    
+    Canvas3D canvas3D;
+    try {
+      // Create the Java 3D canvas that will display home 
+      canvas3D = new Canvas3D(configuration, offscreen);
+    } catch (IllegalArgumentException ex) {
+      IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
+      ex2.initCause(ex);
+      throw ex2;
+    }
+    
+    return canvas3D;
+  }
+  
   /**
    * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
@@ -252,16 +284,17 @@ public class HomeComponent3D extends JComponent implements Printable {
       int printedImageSize = (int)(printSize / 72 * 150);
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
-        Canvas3D offScreenCanvas = createOffScreenCanvas(printedImageSize);
+        Canvas3D offScreenCanvas = null;
         SimpleUniverse printUniverse = null;
-
-        if (this.universe == null) {
-          printUniverse = getUniverse(offScreenCanvas, this.home);
-        } else {
-          this.universe.getViewer().getView().addCanvas3D(offScreenCanvas);
-        }
-       
         try {
+          offScreenCanvas = createOffScreenCanvas(printedImageSize);
+  
+          if (this.universe == null) {
+            printUniverse = getUniverse(offScreenCanvas, this.home);
+          } else {
+            this.universe.getViewer().getView().addCanvas3D(offScreenCanvas);
+          }
+       
           offScreenCanvas.renderOffScreenBuffer();
           offScreenCanvas.waitForOffScreenRendering();
           this.printedImage = offScreenCanvas.getOffScreenBuffer().getImage();
@@ -297,14 +330,11 @@ public class HomeComponent3D extends JComponent implements Printable {
   
   /**
    * Returns an off screen canvas.
+   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   private Canvas3D createOffScreenCanvas(int canvasSize) {
-    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-    gc.setDoubleBuffer(GraphicsConfigTemplate3D.UNNECESSARY);
-    // Create the Java 3D canvas that will display home 
-    Canvas3D offScreenCanvas = new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
-        getDefaultScreenDevice().getBestConfiguration(gc), true);
+    Canvas3D offScreenCanvas = createCanvas3D(true);
+    // Configure canvas 3D for offscreen
     Screen3D screen3D = offScreenCanvas.getScreen3D();
     int canvas3DImageSize = canvasSize;  
     screen3D.setSize(canvas3DImageSize, canvas3DImageSize);

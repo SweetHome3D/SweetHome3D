@@ -26,6 +26,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -1100,9 +1101,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       // Try to get antialiasing
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
+      GraphicsConfiguration configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
+          getDefaultScreenDevice().getBestConfiguration(gc);
+      if (configuration == null) {
+        configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
+            getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
+      }
       // Create the Java 3D canvas that will display model 
-      return new Canvas3D(GraphicsEnvironment.getLocalGraphicsEnvironment().
-          getDefaultScreenDevice().getBestConfiguration(gc), offScreen);
+      return new Canvas3D(configuration, offScreen);
     }
     
     /**

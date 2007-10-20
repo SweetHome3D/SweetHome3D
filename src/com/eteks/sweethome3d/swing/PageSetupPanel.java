@@ -175,7 +175,11 @@ public class PageSetupPanel extends JPanel {
       return true;
     } catch (IllegalRenderingStateException ex) {
       return false;
-    } 
+    } catch (NullPointerException ex) {
+      return false;
+    } catch (IllegalArgumentException ex) {
+      return false;
+    }
   }
 
   /**
