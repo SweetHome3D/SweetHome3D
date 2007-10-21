@@ -302,6 +302,7 @@ public class SweetHome3D extends HomeApplication {
                 JFrame homeFrame = (JFrame)SwingUtilities.getRoot(controller.getView());
                 application.homeFrames.put(home, homeFrame); 
               } catch (IllegalRenderingStateException ex) {
+                ex.printStackTrace();
                 // In case of a problem in Java 3D, simply exit with a message.
                 application.exitAfter3DError();
               }
