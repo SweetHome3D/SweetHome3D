@@ -62,22 +62,22 @@ import com.eteks.sweethome3d.model.WallListener;
  * @author Emmanuel Puybaret
  */
 public class HomeController  {
-  private Home                   home;
-  private UserPreferences        preferences;
-  private HomeApplication        application;
-  private JComponent             homeView;
-  private FurnitureCatalogController      catalogController;
-  private FurnitureController    furnitureController;
-  private PlanController         planController;
-  private HomeController3D       homeController3D;
-  private static HelpController  helpController;  // Only one help controller 
-  private UndoableEditSupport    undoSupport;
-  private UndoManager            undoManager;
-  private ResourceBundle         resource;
-  private int                    saveUndoLevel;
-  private JComponent             focusedView;
-  private SelectionListener      catalogSelectionListener;
-  private boolean                catalogFurnitureSelectionSynchronized;
+  private Home                       home;
+  private UserPreferences            preferences;
+  private HomeApplication            application;
+  private JComponent                 homeView;
+  private FurnitureCatalogController catalogController;
+  private FurnitureController        furnitureController;
+  private PlanController             planController;
+  private HomeController3D           homeController3D;
+  private static HelpController      helpController;  // Only one help controller 
+  private UndoableEditSupport        undoSupport;
+  private UndoManager                undoManager;
+  private ResourceBundle             resource;
+  private int                        saveUndoLevel;
+  private JComponent                 focusedView;
+  private SelectionListener          catalogSelectionListener;
+  private boolean                    catalogFurnitureSelectionSynchronized;
 
   /**
    * Creates the controller of home view.
