@@ -56,7 +56,7 @@ Name: "{userdesktop}\Sweet Home 3D"; Filename: "{app}\SweetHome3D.exe"; Tasks: d
 Filename: "{app}\SweetHome3D.exe"; Description: "{cm:LaunchProgram,Sweet Home 3D}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-Type: filesandordirs; Name: "{app}\jre1.6.0_02\launch4j-tmp"
+Type: filesandordirs; Name: "{app}\jre1.6.0_03\launch4j-tmp"
 
 [CustomMessages]
 SweetHome3DComment=Arrange the furniture of your house
