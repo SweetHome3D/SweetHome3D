@@ -23,6 +23,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.GraphicsConfigTemplate3D;
@@ -200,13 +201,18 @@ public class Component3DManager {
       offScreenCanvas.renderOffScreenBuffer();
       offScreenCanvas.waitForOffScreenRendering();
       
-      // If during the coming 200 milliseconds, latch count becomes equal to 0, this means
-      // that a rendering error happened
-      if (latch.getCount() == 0) {
+      // If latch count becomes equal to 0 during the past instructions or in the coming 10 milliseconds, 
+      // this means that a rendering error happened
+      if (latch.await(10, TimeUnit.MILLISECONDS)) {
         throw new IllegalRenderingStateException("Off screen rendering unavailable");
       }
       
       return offScreenCanvas.getOffScreenBuffer().getImage();
+    } catch (InterruptedException ex) {
+      IllegalRenderingStateException ex2 = 
+          new IllegalRenderingStateException("Off screen rendering interrupted");
+      ex2.initCause(ex);
+      throw ex2;
     } finally {
       if (offScreenCanvas != null) {
         view.removeCanvas3D(offScreenCanvas);
