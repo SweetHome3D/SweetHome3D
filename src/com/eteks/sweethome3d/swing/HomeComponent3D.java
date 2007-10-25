@@ -1282,7 +1282,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     /**
      * Sets wall side appearance with its color, texture and transparency.
      */
-    private void updateWallSideAppearance(final Appearance   wallSideAppearance, 
+    private void updateWallSideAppearance(final Appearance  wallSideAppearance, 
                                           final HomeTexture wallSideTexture,
                                           Integer wallSideColor) {
       // Update material and texture of wall left side
@@ -1291,8 +1291,8 @@ public class HomeComponent3D extends JComponent implements Printable {
         wallSideAppearance.setTexture(null);
       } else {
         wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
-        final TextureManager imageManager = TextureManager.getInstance();
-        imageManager.loadTexture(wallSideTexture.getImage(), 
+        final TextureManager textureManager = TextureManager.getInstance();
+        textureManager.loadTexture(wallSideTexture.getImage(), 
             new TextureManager.TextureObserver() {
                 public void textureUpdated(Texture texture) {
                   wallSideAppearance.setTexture(texture);
