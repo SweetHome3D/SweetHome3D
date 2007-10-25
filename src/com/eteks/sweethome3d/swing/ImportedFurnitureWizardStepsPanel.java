@@ -1067,7 +1067,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private float              viewYaw = (float) Math.PI / 8;
 
     public ModelPreviewComponent() {
-      this.canvas3D = Component3DManager.getInstance().createOnscreenCanvas3D();
+      this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();
 
       // Layout canvas3D
       setLayout(new GridLayout(1, 1));
@@ -1719,11 +1719,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
 
       this.frontViewLabel = new JLabel(resource.getString("frontViewLabel.text"));
       Component3DManager canvas3DManager = Component3DManager.getInstance();
-      this.frontViewCanvas = canvas3DManager.createOnscreenCanvas3D();
+      this.frontViewCanvas = canvas3DManager.getOnscreenCanvas3D();
       this.sideViewLabel = new JLabel(resource.getString("sideViewLabel.text"));
-      this.sideViewCanvas = canvas3DManager.createOnscreenCanvas3D();
+      this.sideViewCanvas = canvas3DManager.getOnscreenCanvas3D();
       this.topViewLabel = new JLabel(resource.getString("topViewLabel.text"));
-      this.topViewCanvas = canvas3DManager.createOnscreenCanvas3D();
+      this.topViewCanvas = canvas3DManager.getOnscreenCanvas3D();
       this.perspectiveViewLabel = new JLabel(resource.getString("perspectiveViewLabel.text"));
       
       setBorder(null);

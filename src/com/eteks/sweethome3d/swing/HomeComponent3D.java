@@ -155,7 +155,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     this.home = home;
     
     // Create the Java 3D canvas that will display home 
-    Canvas3D canvas3D = Component3DManager.getInstance().createOnscreenCanvas3D();    
+    Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();    
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);

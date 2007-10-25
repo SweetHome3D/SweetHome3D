@@ -325,7 +325,7 @@ public class SweetHome3D extends HomeApplication {
         };
       });
     
-    application.add3DRenderingErrorListener();
+    application.addComponent3DRenderingErrorListener();
     
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
       // Bind to application menu  
@@ -371,7 +371,7 @@ public class SweetHome3D extends HomeApplication {
    * Sets the rendering error listener bound to Java 3D 
    * to avoid default System exit in case of error during 3D rendering. 
    */
-  private void add3DRenderingErrorListener() {
+  private void addComponent3DRenderingErrorListener() {
     // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
     // we add it through Canvas3DManager, because offscreen rendering needs to check 
     // rendering errors with its own RenderingErrorListener
