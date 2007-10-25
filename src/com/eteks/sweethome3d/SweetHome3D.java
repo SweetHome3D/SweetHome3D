@@ -377,21 +377,12 @@ public class SweetHome3D extends HomeApplication {
     // rendering errors with its own RenderingErrorListener
     Component3DManager.getInstance().setRenderingErrorListener(new RenderingErrorListener() {
         public void errorOccurred(RenderingError error) {
-          switch (error.getErrorCode()) {
-            case RenderingError.NO_ERROR :
-            case RenderingError.OFF_SCREEN_BUFFER_ERROR :
-              // If offscreen canvases 3D aren't supported by Java 3D, 
-              // let Sweet Home 3D classes manage the exception they will catch
-              break;
-            default :
-              // Fatal error
-              error.printVerbose();
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    exitAfter3DError();
-                  }
-                });
-          }
+          error.printVerbose();
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                exitAfter3DError();
+              }
+            });
         }
       });
   }
