@@ -84,7 +84,7 @@ public class Component3DManager {
   /**
    * Returns <code>true</code> if offscreen is supported in Java 3D on user system. 
    */
-  public boolean isOffscreenCanvas3DSupported() {
+  public boolean isOffScreenImageSupported() {
     SimpleUniverse universe = null;
     try {
       // Create a universe bound to no canvas 3D

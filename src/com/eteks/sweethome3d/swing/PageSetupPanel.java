@@ -136,7 +136,8 @@ public class PageSetupPanel extends JPanel {
   private void updateComponents(Home home) {
     HomePrint homePrint = home.getPrint();
     this.pageFormat = PageSetupPanel.getPageFormat(homePrint);
-    boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffscreenCanvas3DSupported();
+    // Check if off screen image is supported 
+    boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
     if (homePrint != null) {
       this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
       this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
