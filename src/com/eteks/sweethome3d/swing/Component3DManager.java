@@ -22,11 +22,13 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.CountDownLatch;
 
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.RenderingError;
 import javax.media.j3d.RenderingErrorListener;
 import javax.media.j3d.Screen3D;
 import javax.media.j3d.View;
@@ -37,13 +39,14 @@ import com.sun.j3d.utils.universe.Viewer;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
- * Manages <code>Canvas3D</code> instantiations and Java 3D error listeners.
+ * Manager of <code>Canvas3D</code> instantiations and Java 3D error listeners.
  * @author Emmanuel Puybaret
  */
 public class Component3DManager {
   private static Component3DManager instance;
   
   private RenderingErrorListener renderingErrorListener;
+  private Boolean                offScreenImageSupported;
 
   private Component3DManager() {
   }
@@ -85,26 +88,29 @@ public class Component3DManager {
    * Returns <code>true</code> if offscreen is supported in Java 3D on user system. 
    */
   public boolean isOffScreenImageSupported() {
-    SimpleUniverse universe = null;
-    try {
-      // Create a universe bound to no canvas 3D
-      ViewingPlatform viewingPlatform = new ViewingPlatform();
-      Viewer viewer = new Viewer(new Canvas3D [0]);
-      universe = new SimpleUniverse(viewingPlatform, viewer);     
-      // Create a dummy 3D image to check if it can be rendered in current Java 3D configuration
-      getOffScreenImage(viewer.getView(), 1, 1);
-      return true;
-    } catch (IllegalRenderingStateException ex) {
-      return false;
-    } catch (NullPointerException ex) {
-      return false;
-    } catch (IllegalArgumentException ex) {
-      return false;
-    } finally {
-      if (universe != null) {
-        universe.cleanup();
+    if (this.offScreenImageSupported == null) {
+      SimpleUniverse universe = null;
+      try {
+        // Create a universe bound to no canvas 3D
+        ViewingPlatform viewingPlatform = new ViewingPlatform();
+        Viewer viewer = new Viewer(new Canvas3D [0]);
+        universe = new SimpleUniverse(viewingPlatform, viewer);     
+        // Create a dummy 3D image to check if it can be rendered in current Java 3D configuration
+        getOffScreenImage(viewer.getView(), 1, 1);
+        this.offScreenImageSupported = true;
+      } catch (IllegalRenderingStateException ex) {
+        this.offScreenImageSupported = false;
+      } catch (NullPointerException ex) {
+        this.offScreenImageSupported = false;
+      } catch (IllegalArgumentException ex) {
+        this.offScreenImageSupported = false;
+      } finally {
+        if (universe != null) {
+          universe.cleanup();
+        }
       }
     }
+    return this.offScreenImageSupported;
   }
 
   /**
@@ -174,18 +180,39 @@ public class Component3DManager {
    */
   public BufferedImage getOffScreenImage(View view, int width, int height)  {
     Canvas3D offScreenCanvas = null;
+    RenderingErrorListener previousRenderingErrorListener = getRenderingErrorListener();
     try {
+      // Replace current rendering error listener by a listener that counts down
+      // a latch to check further if a rendering error happened during off screen rendering
+      // (rendering error listener is called from a notification thread)
+      final CountDownLatch latch = new CountDownLatch(1); 
+      setRenderingErrorListener(new RenderingErrorListener() {
+          public void errorOccurred(RenderingError error) {
+            latch.countDown();
+          }
+        });
+      
+      // Create an off sreen canvas and bind it to view
       offScreenCanvas = createOffScreenCanvas(width, height);
       view.addCanvas3D(offScreenCanvas);
       
+      // Render off screen canvas
       offScreenCanvas.renderOffScreenBuffer();
       offScreenCanvas.waitForOffScreenRendering();
+      
+      // If during the coming 200 milliseconds, latch count becomes equal to 0, this means
+      // that a rendering error happened
+      if (latch.getCount() == 0) {
+        throw new IllegalRenderingStateException("Off screen rendering unavailable");
+      }
       
       return offScreenCanvas.getOffScreenBuffer().getImage();
     } finally {
       if (offScreenCanvas != null) {
         view.removeCanvas3D(offScreenCanvas);
       }
+      // Reset previous rendering error listener
+      setRenderingErrorListener(previousRenderingErrorListener);
     }
   }
 }
