@@ -24,8 +24,6 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
@@ -64,16 +62,13 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
-import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
-import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
-import javax.media.j3d.Screen3D;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
@@ -114,6 +109,8 @@ import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * A component that displays home walls and furniture with Java 3D. 
@@ -158,7 +155,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     this.home = home;
     
     // Create the Java 3D canvas that will display home 
-    Canvas3D canvas3D = createCanvas3D(false);    
+    Canvas3D canvas3D = Component3DManager.getInstance().createOnscreenCanvas3D();    
     // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
@@ -177,40 +174,6 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns a new <code>canva3D</code> instance.
-   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
-   */
-  private Canvas3D createCanvas3D(boolean offscreen) {
-    GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-    // Try to get antialiasing
-    gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-    if (offscreen) {
-      gc.setDoubleBuffer(GraphicsConfigTemplate3D.UNNECESSARY);
-    }
-    GraphicsConfiguration configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-            getDefaultScreenDevice().getBestConfiguration(gc);
-    if (configuration == null) {
-      configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-          getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
-      if (configuration == null) {
-        throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
-      }
-    }
-    
-    Canvas3D canvas3D;
-    try {
-      // Create the Java 3D canvas that will display home 
-      canvas3D = new Canvas3D(configuration, offscreen);
-    } catch (IllegalArgumentException ex) {
-      IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
-      ex2.initCause(ex);
-      throw ex2;
-    }
-    
-    return canvas3D;
-  }
-  
-  /**
    * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
    */
@@ -218,7 +181,9 @@ public class HomeComponent3D extends JComponent implements Printable {
                                     final Home home) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
-          universe = getUniverse(canvas3D, home);
+          universe = getUniverse(home);
+          // Bind universe to canvas3D
+          universe.getViewer().getView().addCanvas3D(canvas3D);
           canvas3D.setFocusable(false);
         }
         
@@ -233,19 +198,19 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns a 3D universe bound to <code>canvas3D</code> 
-   * that displays <code>home</code> objects.
+   * Returns a 3D universe that displays <code>home</code> objects.
    */
-  private SimpleUniverse getUniverse(final Canvas3D canvas3D, Home home) {
-    // Link canvas 3D to a default universe
-    SimpleUniverse universe = new SimpleUniverse(canvas3D);
+  private SimpleUniverse getUniverse(Home home) {
+    // Create a universe bound to no canvas 3D
+    ViewingPlatform viewingPlatform = new ViewingPlatform();
+    Viewer viewer = new Viewer(new Canvas3D [0]);
+    SimpleUniverse universe = new SimpleUniverse(viewingPlatform, viewer);
     
-    View view = universe.getViewer().getView();
+    View view = viewer.getView();
     // Update field of view from current camera
     updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
     
-    TransformGroup viewPlatformTransform = 
-        universe.getViewingPlatform().getViewPlatformTransform();
+    TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
     // Update point of view from current camera
     updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
     
@@ -284,32 +249,26 @@ public class HomeComponent3D extends JComponent implements Printable {
       int printedImageSize = (int)(printSize / 72 * 150);
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
-        Canvas3D offScreenCanvas = null;
         SimpleUniverse printUniverse = null;
         try {
-          offScreenCanvas = createOffScreenCanvas(printedImageSize);
-  
+          View view;
           if (this.universe == null) {
-            printUniverse = getUniverse(offScreenCanvas, this.home);
+            printUniverse = getUniverse(this.home);
+            view = printUniverse.getViewer().getView();
           } else {
-            this.universe.getViewer().getView().addCanvas3D(offScreenCanvas);
+            view = this.universe.getViewer().getView();
           }
        
-          offScreenCanvas.renderOffScreenBuffer();
-          offScreenCanvas.waitForOffScreenRendering();
-          this.printedImage = offScreenCanvas.getOffScreenBuffer().getImage();
+          this.printedImage = Component3DManager.getInstance().
+              getOffScreenImage(view, printedImageSize, printedImageSize);
         } catch (IllegalRenderingStateException ex) {
-          // If off screen canvas fails, consider that 3D view page doesn't exist
+          // If off screen canvas failed, consider that 3D view page doesn't exist
           return NO_SUCH_PAGE;
         } finally {
-          if (offScreenCanvas != null) {
-            if (printUniverse != null) {
-              printUniverse.cleanup();
-              removeHomeListeners(this.home);
-            } else {
-              offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
-            }
-          }
+          if (printUniverse != null) {
+            printUniverse.cleanup();
+            removeHomeListeners(this.home);
+          } 
         }
       }
   
@@ -328,25 +287,6 @@ public class HomeComponent3D extends JComponent implements Printable {
     }
   }
   
-  /**
-   * Returns an off screen canvas.
-   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
-   */
-  private Canvas3D createOffScreenCanvas(int canvasSize) {
-    Canvas3D offScreenCanvas = createCanvas3D(true);
-    // Configure canvas 3D for offscreen
-    Screen3D screen3D = offScreenCanvas.getScreen3D();
-    int canvas3DImageSize = canvasSize;  
-    screen3D.setSize(canvas3DImageSize, canvas3DImageSize);
-    screen3D.setPhysicalScreenWidth(2f);
-    screen3D.setPhysicalScreenHeight(2f);
-    BufferedImage image = new BufferedImage(canvas3DImageSize, canvas3DImageSize, BufferedImage.TYPE_INT_RGB);
-    ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
-    imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-    offScreenCanvas.setOffScreenBuffer(imageComponent2D);
-    return offScreenCanvas;
-  }
-
   /**
    * Adds listeners to home to update point of view from current camera.
    */

@@ -55,7 +55,6 @@ import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.RenderingError;
 import javax.media.j3d.RenderingErrorListener;
-import javax.media.j3d.VirtualUniverse;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -71,6 +70,7 @@ import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.HomeController;
 
 /**
@@ -368,34 +368,32 @@ public class SweetHome3D extends HomeApplication {
   }
   
   /**
-   * Adds a rendering error listener to Java 3D 
+   * Sets the rendering error listener bound to Java 3D 
    * to avoid default System exit in case of error during 3D rendering. 
    */
   private void add3DRenderingErrorListener() {
-    try {
-      VirtualUniverse.addRenderingErrorListener(new RenderingErrorListener() {
-          public void errorOccurred(RenderingError error) {
-            switch (error.getErrorCode()) {
-              case RenderingError.NO_ERROR :
-              case RenderingError.OFF_SCREEN_BUFFER_ERROR :
-                // If offscreen canvases 3D aren't supported by Java 3D, 
-                // let Sweet Home 3D classes manage the exception they will catch
-                break;
-              default :
-                // Fatal error
-                error.printVerbose();
-                EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                      exitAfter3DError();
-                    }
-                  });
-            }
+    // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
+    // we add it through Canvas3DManager, because offscreen rendering needs to check 
+    // rendering errors with its own RenderingErrorListener
+    Component3DManager.getInstance().setRenderingErrorListener(new RenderingErrorListener() {
+        public void errorOccurred(RenderingError error) {
+          switch (error.getErrorCode()) {
+            case RenderingError.NO_ERROR :
+            case RenderingError.OFF_SCREEN_BUFFER_ERROR :
+              // If offscreen canvases 3D aren't supported by Java 3D, 
+              // let Sweet Home 3D classes manage the exception they will catch
+              break;
+            default :
+              // Fatal error
+              error.printVerbose();
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    exitAfter3DError();
+                  }
+                });
           }
-        });
-    } catch (NoSuchMethodError ex) {
-      // As addRenderingErrorListener is available since Java 3D 1.5, use 
-      // default rendering error reporting if Sweet Home 3D is linked to a previous version
-    }
+        }
+      });
   }
 
   /**

@@ -26,8 +26,6 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -69,17 +67,14 @@ import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
-import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
-import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PhysicalBody;
 import javax.media.j3d.PhysicalEnvironment;
 import javax.media.j3d.PolygonAttributes;
-import javax.media.j3d.Screen3D;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -1072,7 +1067,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private float              viewYaw = (float) Math.PI / 8;
 
     public ModelPreviewComponent() {
-      this.canvas3D = createCanvas3D(false);
+      this.canvas3D = Component3DManager.getInstance().createOnscreenCanvas3D();
 
       // Layout canvas3D
       setLayout(new GridLayout(1, 1));
@@ -1094,23 +1089,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       return new Dimension(200, 200);
     }
 
-    /**
-     * Returns a new <code>Canvas3D</code>.
-     */
-    protected Canvas3D createCanvas3D(boolean offScreen) {
-      // Try to get antialiasing
-      GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
-      gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-      GraphicsConfiguration configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-          getDefaultScreenDevice().getBestConfiguration(gc);
-      if (configuration == null) {
-        configuration = GraphicsEnvironment.getLocalGraphicsEnvironment().
-            getDefaultScreenDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
-      }
-      // Create the Java 3D canvas that will display model 
-      return new Canvas3D(configuration, offScreen);
-    }
-    
     /**
      * Returns the canvas 3D displayed by this component.
      */
@@ -1210,12 +1188,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     }
     
     /**
-     * Creates a view for <code>canvas3D</code> bound to universe 
-     * that views current model from a point of view oriented with 
+     * Creates a view bound to universe that views current model from a point of view oriented with 
      * <code>yaw</code> and <code>pitch</code> angles.
      */
-    protected void createCanvas3DView(Canvas3D canvas3D, float yaw, float pitch, 
-                                      int projectionPolicy) {
+    protected View createView(float yaw, float pitch, int projectionPolicy) {
       if (this.universe == null) {
         createUniverse();
       }
@@ -1225,7 +1201,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       
       // Create a view associated with canvas3D
       View view = new View();
-      view.addCanvas3D(canvas3D);
       view.setPhysicalBody(physicalBody);
       view.setPhysicalEnvironment(physicalEnvironment);
       view.setProjectionPolicy(projectionPolicy);
@@ -1238,6 +1213,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
 
       // Set user point of view depending on yaw and pitch angles
       updateViewPlatformTransform(viewingPlatform.getViewPlatformTransform(), yaw, pitch);
+      return view;
     }
     
     /**
@@ -1742,11 +1718,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
 
       this.frontViewLabel = new JLabel(resource.getString("frontViewLabel.text"));
-      this.frontViewCanvas = createCanvas3D(false);
+      Component3DManager canvas3DManager = Component3DManager.getInstance();
+      this.frontViewCanvas = canvas3DManager.createOnscreenCanvas3D();
       this.sideViewLabel = new JLabel(resource.getString("sideViewLabel.text"));
-      this.sideViewCanvas = createCanvas3D(false);
+      this.sideViewCanvas = canvas3DManager.createOnscreenCanvas3D();
       this.topViewLabel = new JLabel(resource.getString("topViewLabel.text"));
-      this.topViewCanvas = createCanvas3D(false);
+      this.topViewCanvas = canvas3DManager.createOnscreenCanvas3D();
       this.perspectiveViewLabel = new JLabel(resource.getString("perspectiveViewLabel.text"));
       
       setBorder(null);
@@ -1765,14 +1742,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     private void addHierarchyListener() {
       addAncestorListener(new AncestorListener() {
           public void ancestorAdded(AncestorEvent event) {
-            // Attach the 3 other canvases to super class universe
-            createCanvas3DView(frontViewCanvas, 0, 0, View.PARALLEL_PROJECTION);
-            createCanvas3DView(sideViewCanvas, 
+            // Attach the 3 other canvases to super class universe with their own view
+            createView(0, 0, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
+            createView(
                 Locale.getDefault().equals(Locale.US) 
                     ? -(float)Math.PI / 2 
                     : (float)Math.PI / 2, 
-                0, View.PARALLEL_PROJECTION);
-            createCanvas3DView(topViewCanvas, 0, -(float)Math.PI / 2, View.PARALLEL_PROJECTION);
+                0, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
+            createView(0, -(float)Math.PI / 2, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
           }
           
           public void ancestorRemoved(AncestorEvent event) {
@@ -1916,13 +1893,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     public BufferedImage getIconImage() {
       BufferedImage iconImage;
-      Canvas3D offScreenCanvas = createOffScreenCanvas();
-      // Attach the off screen canvas to super class universe
-      createCanvas3DView(offScreenCanvas, getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
       try {
-        offScreenCanvas.renderOffScreenBuffer();
-        offScreenCanvas.waitForOffScreenRendering();
-        iconImage = offScreenCanvas.getOffScreenBuffer().getImage();
+        Dimension iconSize = getPreferredSize();
+        View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+        iconImage = Component3DManager.getInstance().
+            getOffScreenImage(view, iconSize.width, iconSize.height);
       } catch (IllegalRenderingStateException ex) {
         // If off screen canvas fails, capture current canvas with Robot
         Component canvas3D = getCanvas3D();
@@ -1934,28 +1909,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         } catch (AWTException ex2) {
           throw new RuntimeException(ex2);
         }
-      } finally {
-        // Detach the off screen canvas from its view
-        offScreenCanvas.getView().removeCanvas3D(offScreenCanvas);
-      }
+      } 
       return iconImage;
-    }
-    
-    /**
-     * Returns an off screen canvas.
-     */
-    private Canvas3D createOffScreenCanvas() {
-      Canvas3D offScreenCanvas = createCanvas3D(true);
-      Screen3D screen3D = offScreenCanvas.getScreen3D();
-      Dimension iconSize = getPreferredSize();
-      screen3D.setSize(iconSize);
-      screen3D.setPhysicalScreenWidth(2f);
-      screen3D.setPhysicalScreenHeight(2f);
-      BufferedImage image = new BufferedImage(iconSize.width, iconSize.height, BufferedImage.TYPE_INT_RGB);
-      ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
-      imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-      offScreenCanvas.setOffScreenBuffer(imageComponent2D);
-      return offScreenCanvas;
     }
   }
 }
