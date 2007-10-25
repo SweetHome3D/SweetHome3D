@@ -160,7 +160,7 @@ public class Component3DManager {
    * Returns a new off screen <code>canva3D</code> at the given size.
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
-  private Canvas3D getOffScreenCanvas(int width, int height) {
+  private Canvas3D getOffScreenCanvas3D(int width, int height) {
     Canvas3D offScreenCanvas = getCanvas3D(true);
     // Configure canvas 3D for offscreen
     Screen3D screen3D = offScreenCanvas.getScreen3D();
@@ -194,7 +194,7 @@ public class Component3DManager {
         });
       
       // Create an off sreen canvas and bind it to view
-      offScreenCanvas = getOffScreenCanvas(width, height);
+      offScreenCanvas = getOffScreenCanvas3D(width, height);
       view.addCanvas3D(offScreenCanvas);
       
       // Render off screen canvas
