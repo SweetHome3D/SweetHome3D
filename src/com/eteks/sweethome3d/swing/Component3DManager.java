@@ -135,10 +135,6 @@ public class Component3DManager {
       }
     }
 
-    // Free now any 3D resources
-    System.gc();
-    System.runFinalization();
-
     Canvas3D canvas3D;
     try {
       // Create the Java 3D canvas that will display home 
