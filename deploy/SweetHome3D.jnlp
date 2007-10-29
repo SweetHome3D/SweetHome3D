@@ -38,6 +38,7 @@
     <jar href="lib/SweetHome3D.jar"/>
     <jar href="lib/Loader3DS1_2.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
+    <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="sun.swing.enableImprovedDragGesture" 
               value="true"/>
   </resources>
