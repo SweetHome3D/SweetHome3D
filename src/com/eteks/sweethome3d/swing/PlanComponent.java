@@ -942,13 +942,15 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Returns the color used to draw selection outlines. 
    */
   private Color getSelectioncolor() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
-      // On systems different from Mac OS X, take a darker color
-      // (Note : on Mac OS X, using SystemColor.textHighlight and 
-      // a color built from its RGB gives a different color !)
-      return UIManager.getColor("textHighlight").darker();
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      if (System.getProperty("os.version").startsWith("10.4")) {
+        return UIManager.getColor("textHighlight");
+      } else { // Mac OS 10.5
+        return UIManager.getColor("List.selectionBackground");
+      }
     } else {
-      return UIManager.getColor("textHighlight");
+      // On systems different from Mac OS X, take a darker color
+      return UIManager.getColor("textHighlight").darker();
     }
   }
 
