@@ -946,7 +946,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       if (System.getProperty("os.version").startsWith("10.4")) {
         return UIManager.getColor("textHighlight");
       } else { // Mac OS 10.5
-        return UIManager.getColor("List.selectionBackground");
+        return UIManager.getColor("List.selectionBackground").darker();
       }
     } else {
       // On systems different from Mac OS X, take a darker color
