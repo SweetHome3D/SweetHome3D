@@ -99,7 +99,10 @@ public class HelpPane extends JRootPane {
             final Cursor previousCursor = getCursor();
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             try {
-              controller.search(searchTextField.getText());
+              String searchedText = searchTextField.getText().trim();
+              if (searchedText.length() > 0) {
+                controller.search(searchedText);
+              }
             } finally {
               setCursor(previousCursor);
             }
@@ -168,6 +171,12 @@ public class HelpPane extends JRootPane {
     ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
     this.searchLabel = new JLabel(resource.getString("searchLabel.text"));
     this.searchTextField = new JTextField(12);
+    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      // Use Mac OS 10.5 client properties to use search text field look and feel
+      this.searchTextField.putClientProperty("JTextField.variant", "search");
+      this.searchTextField.putClientProperty("JTextField.Search.FindAction",
+          getActionMap().get(ActionType.SEARCH));
+    } 
     this.searchTextField.addActionListener(getActionMap().get(ActionType.SEARCH));
     // Enable search only if search text field isn't empty
     this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
@@ -226,9 +235,12 @@ public class HelpPane extends JRootPane {
     toolBar.add(Box.createHorizontalStrut(2));
     toolBar.add(this.searchTextField);
     this.searchTextField.setMaximumSize(this.searchTextField.getPreferredSize());
-    toolBar.add(Box.createHorizontalStrut(2));
-    toolBar.add(actions.get(ActionType.SEARCH));
-
+    // Ignore search button under Mac OS X 10.5
+    if (!System.getProperty("os.name").startsWith("Mac OS X")
+        || System.getProperty("os.version").startsWith("10.4")) {
+      toolBar.add(Box.createHorizontalStrut(2));
+      toolBar.add(actions.get(ActionType.SEARCH));
+    }
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {      
       Component component = toolBar.getComponentAtIndex(i);
