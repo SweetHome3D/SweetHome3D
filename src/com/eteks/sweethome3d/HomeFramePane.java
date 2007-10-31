@@ -27,6 +27,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -240,21 +241,33 @@ public class HomeFramePane extends JRootPane {
    */
   private void updateFrameTitle(JFrame frame, Home home) {
     String homeName = home.getName();
+    String homeDisplayedName;
     if (homeName == null) {
-      homeName = this.resource.getString("untitled"); 
+      homeDisplayedName = this.resource.getString("untitled"); 
       if (newHomeNumber > 1) {
-        homeName += " " + newHomeNumber;
+        homeDisplayedName += " " + newHomeNumber;
       }
     } else {
-      homeName = this.application.getContentManager().getPresentationName(
+      homeDisplayedName = this.application.getContentManager().getPresentationName(
           homeName, ContentManager.ContentType.SWEET_HOME_3D);
     }
     
-    String title = homeName;
+    String title = homeDisplayedName;
     if (System.getProperty("os.name").startsWith("Mac OS X")) {
       // Use black indicator in close icon to show home is modified
-      putClientProperty("windowModified", 
-          Boolean.valueOf(home.isModified())); 
+      Boolean homeModified = Boolean.valueOf(home.isModified());
+      putClientProperty("Window.documentModified", homeModified);
+      // Set Mac OS X 10.4 property for backward compatibility
+      putClientProperty("windowModified", homeModified);
+      
+      if (homeName != null) {        
+        File homeFile = new File(homeName);
+        if (homeFile.exists()) {
+          // Update the home icon in window title bar for home files
+          putClientProperty("Window.documentFile",
+              homeFile);
+        }
+      }
     } else {
       title += " - Sweet Home 3D"; 
       if (home.isModified()) {
