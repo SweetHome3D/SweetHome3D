@@ -1524,7 +1524,9 @@ public class HomePane extends JRootPane {
   
   static {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(3, 3, 3, 3);
+      UNFOCUSED_BORDER = BorderFactory.createCompoundBorder(
+          BorderFactory.createEmptyBorder(2, 2, 2, 2),
+          BorderFactory.createLineBorder(Color.LIGHT_GRAY));
       FOCUSED_BORDER = new AbstractBorder() {
           private Insets insets = new Insets(3, 3, 3, 3);
           
