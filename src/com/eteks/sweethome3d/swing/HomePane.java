@@ -20,11 +20,16 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -53,9 +58,11 @@ import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -79,6 +86,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -89,6 +97,7 @@ import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * The MVC view that edits a home. 
@@ -143,7 +152,6 @@ public class HomePane extends JRootPane {
     this.contentManager = contentManager;
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
-    
     // Create unique toggle button models for Selection / Wall creation / Dimension line creation states
     // so Select, Create walls and Create Dimension lines menu items and tool bar buttons 
     // always reflect the same toggle state at screen
@@ -175,8 +183,17 @@ public class HomePane extends JRootPane {
     addPlanControllerListener(controller.getPlanController());
     JMenuBar homeMenuBar = getHomeMenuBar(home, controller, contentManager);
     setJMenuBar(homeMenuBar);
-    getContentPane().add(getToolBar(), BorderLayout.NORTH);
-    getContentPane().add(getMainPane(home, preferences, controller));
+    Container contentPane = getContentPane();
+    contentPane.add(getToolBar(), BorderLayout.NORTH);
+    contentPane.add(getMainPane(home, preferences, controller));
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Under Mac OS X 10.5, add some dummy labels at left and right borders
+      // to avoid the tool bar to be attached on these borders
+      // (segmented buttons created on this system aren't properly rendered
+      // when they are aligned vertically)
+      contentPane.add(new JLabel(), BorderLayout.WEST);
+      contentPane.add(new JLabel(), BorderLayout.EAST);
+    }
     
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
   }
@@ -423,10 +440,10 @@ public class HomePane extends JRootPane {
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     ActionMap actions = getActionMap();    
     for (ActionType actionType : ActionType.values()) {
-      ((ResourceAction)actions.get(actionType)).setResource(resource);
+      ((ResourceAction)actions.get(actionType)).setResource(this.resource);
     }
     for (MenuActionType menuActionType : MenuActionType.values()) {
-      ((ResourceAction)this.menuActionMap.get(menuActionType)).setResource(resource);
+      ((ResourceAction)this.menuActionMap.get(menuActionType)).setResource(this.resource);
     }
     
     // Read Swing localized properties because Swing doesn't update its internal strings automatically
@@ -503,7 +520,7 @@ public class HomePane extends JRootPane {
     // Don't add PRINT_TO_PDF, PREFERENCES and EXIT menu items under Mac OS X, 
     // because PREFERENCES and EXIT items are displayed in application menu
     // and PRINT_TO_PDF is available in standard Mac OS X Print dialog
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       fileMenu.add(getMenuAction(ActionType.PRINT_TO_PDF));
       fileMenu.addSeparator();
       fileMenu.add(getMenuAction(ActionType.PREFERENCES));
@@ -591,7 +608,7 @@ public class HomePane extends JRootPane {
     // Create Help menu
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
     helpMenu.add(getMenuAction(ActionType.HELP));      
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       helpMenu.add(getMenuAction(ActionType.ABOUT));      
     }
 
@@ -838,18 +855,17 @@ public class HomePane extends JRootPane {
 
     toolBar.add(getToolBarAction(ActionType.UNDO));
     toolBar.add(getToolBarAction(ActionType.REDO));
-    toolBar.addSeparator();
-    
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     toolBar.add(getToolBarAction(ActionType.CUT));
     toolBar.add(getToolBarAction(ActionType.COPY));
     toolBar.add(getToolBarAction(ActionType.PASTE));
-    toolBar.addSeparator();
-    
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     toolBar.add(getToolBarAction(ActionType.DELETE));
     toolBar.addSeparator();
 
     toolBar.add(getToolBarAction(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(getToolBarAction(ActionType.IMPORT_FURNITURE));
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_TOP));
     toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
     toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
@@ -876,7 +892,7 @@ public class HomePane extends JRootPane {
     group.add(selectToggleButton);
     group.add(createWallsToggleButton);
     group.add(createDimensionLinesToggleButton);
-    toolBar.addSeparator();
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     toolBar.add(getToolBarAction(ActionType.ZOOM_OUT));
     toolBar.add(getToolBarAction(ActionType.ZOOM_IN));
@@ -887,6 +903,37 @@ public class HomePane extends JRootPane {
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
       toolBar.getComponentAtIndex(i).setFocusable(false);      
+    }
+    
+    // Under Mac OS X 10.5 use segmented buttons and group them depending
+    // on whether a button is after or before a separator
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      Component previousComponent = null;
+      for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {        
+        JComponent component = (JComponent)toolBar.getComponentAtIndex(i); 
+        if (!(component instanceof AbstractButton)) {
+          previousComponent = null;
+          continue;
+        }          
+        Component nextComponent;
+        if (i < n - 1) {
+          nextComponent = toolBar.getComponentAtIndex(i + 1);
+        } else {
+          nextComponent = null;
+        }
+        component.putClientProperty("JButton.buttonType", "segmentedCapsule");
+        if (previousComponent == null
+            && !(nextComponent instanceof AbstractButton)) {
+          component.putClientProperty("JButton.segmentPosition", "only");
+        } else if (previousComponent == null) {
+          component.putClientProperty("JButton.segmentPosition", "first");
+        } else if (!(nextComponent instanceof AbstractButton)) {
+          component.putClientProperty("JButton.segmentPosition", "last");
+        } else {
+          component.putClientProperty("JButton.segmentPosition", "middle");
+        }
+        previousComponent = component;
+      }
     }
     
     return toolBar;
@@ -1043,8 +1090,7 @@ public class HomePane extends JRootPane {
     // Add a listener to update rulers visibility in preferences
     preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
         new RulersVisibilityChangeListener(this, planScrollPane, controller));
-    planView.addFocusListener(new FocusableViewListener(
-        controller, planScrollPane));
+    planView.addFocusListener(new FocusableViewListener(controller, planScrollPane));
 
     // Create plan view popup menu
     JPopupMenu planViewPopup = new JPopupMenu();
@@ -1081,8 +1127,7 @@ public class HomePane extends JRootPane {
     JComponent view3D = controller.getHomeController3D().getView();
     view3D.setPreferredSize(planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
-    view3D.addFocusListener(new FocusableViewListener(
-        controller, view3D));
+    view3D.addFocusListener(new FocusableViewListener(controller, view3D));
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
     JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(true);
@@ -1329,7 +1374,8 @@ public class HomePane extends JRootPane {
   public void showAboutDialog() {
     String messageFormat = this.resource.getString("about.message");
     String aboutVersion = this.resource.getString("about.version");
-    String message = String.format(messageFormat, aboutVersion, System.getProperty("java.version"));
+    String message = String.format(messageFormat, aboutVersion, 
+        System.getProperty("java.version"));
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);
@@ -1466,17 +1512,44 @@ public class HomePane extends JRootPane {
   private static class HomeScrollPane extends JScrollPane {
     public HomeScrollPane(JComponent view) {
       super(view);
-      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      if (OperatingSystem.isMacOSX()) {
         setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_ALWAYS);
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
     }
   }
 
-  private static final Border UNFOCUSED_BORDER = 
-    BorderFactory.createEmptyBorder(2, 2, 2, 2);
-  private static final Border FOCUSED_BORDER = 
-    BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2); 
+  private static final Border UNFOCUSED_BORDER;
+  private static final Border FOCUSED_BORDER;
+  
+  static {
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(3, 3, 3, 3);
+      FOCUSED_BORDER = new AbstractBorder() {
+          private Insets insets = new Insets(3, 3, 3, 3);
+          
+          public Insets getBorderInsets(Component c) {
+            return this.insets;
+          }
+    
+          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            // Paint a gradient paint around component
+            Rectangle rect = getInteriorRectangle(c, x, y, width, height);
+            g.setColor(Color.GRAY);
+            g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
+            Color focusColor = UIManager.getColor("textHighlight");
+            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 192));
+            g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
+            g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 2, 2);
+            g.setColor(focusColor);
+            g.drawRoundRect(rect.x - 2, rect.y - 2, rect.width + 3, rect.height + 3, 1, 1);
+          }
+        };
+    } else {
+      UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+      FOCUSED_BORDER = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
+    }
+  }
 
   /**
    * A focus listener that calls <code>focusChanged</code> in 

@@ -20,8 +20,10 @@
 package com.eteks.sweethome3d;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FocusTraversalPolicy;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -30,10 +32,12 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
@@ -47,6 +51,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * A pane that displays a 
@@ -93,6 +98,42 @@ public class HomeFramePane extends JRootPane {
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
     updateFrameTitle(homeFrame, this.home);
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Under Mac OS X 10.5 use standard grey look
+      putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
+      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
+      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
+          controller.getCatalogController().getView(),
+          controller.getFurnitureController().getView(),
+          controller.getPlanController().getView(),
+          controller.getHomeController3D().getView()});      
+      homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+          @Override
+          public Component getComponentAfter(Container container, Component component) {
+            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
+          }
+    
+          @Override
+          public Component getComponentBefore(Container container, Component component) {
+            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
+          }
+    
+          @Override
+          public Component getDefaultComponent(Container container) {
+            return focusableComponents.get(0);
+          }
+    
+          @Override
+          public Component getFirstComponent(Container container) {
+            return focusableComponents.get(0);
+          }
+    
+          @Override
+          public Component getLastComponent(Container container) {
+            return focusableComponents.get(focusableComponents.size() - 1);
+          }
+        });
+    }
     // Compute frame size and location
     computeFrameBounds(homeFrame);
     // Enable windows to update their content while window resizing
@@ -149,7 +190,7 @@ public class HomeFramePane extends JRootPane {
         public void windowActivated(WindowEvent ev) {                    
           // Let the catalog view of each frame manage its own selection :
           // Restore stored selected furniture when the frame is activated from outside of Sweet Home 3D
-          // or from an other showed frame of Sweet Home 3D (don't rely on opposite window parent, because 
+          // or from an other shown frame of Sweet Home 3D (don't rely on opposite window parent, because 
           // Java 3D creates some hidden dummy frames to manage its canvases 3D)
           // Note : Linux seems to always return null as an opposite window
           if (ev.getOppositeWindow() == null || ev.getOppositeWindow().isShowing()) {
@@ -253,19 +294,21 @@ public class HomeFramePane extends JRootPane {
     }
     
     String title = homeDisplayedName;
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      // Use black indicator in close icon to show home is modified
+    if (OperatingSystem.isMacOSX()) {
+      // Use black indicator in close icon for a modified home 
       Boolean homeModified = Boolean.valueOf(home.isModified());
-      putClientProperty("Window.documentModified", homeModified);
       // Set Mac OS X 10.4 property for backward compatibility
       putClientProperty("windowModified", homeModified);
       
-      if (homeName != null) {        
-        File homeFile = new File(homeName);
-        if (homeFile.exists()) {
-          // Update the home icon in window title bar for home files
-          putClientProperty("Window.documentFile",
-              homeFile);
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        putClientProperty("Window.documentModified", homeModified);
+        
+        if (homeName != null) {        
+          File homeFile = new File(homeName);
+          if (homeFile.exists()) {
+            // Update the home icon in window title bar for home files
+            putClientProperty("Window.documentFile", homeFile);
+          }
         }
       }
     } else {

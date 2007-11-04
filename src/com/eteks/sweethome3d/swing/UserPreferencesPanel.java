@@ -28,6 +28,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -44,6 +45,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * User preferences panel.
@@ -85,7 +87,7 @@ public class UserPreferencesPanel extends JPanel {
    */
   private void createComponents() {
     this.languageLabel = new JLabel(this.resource.getString("languageLabel.text"));    
-    this.languageComboBox = new JComboBox(new String [] {"en", "fr", "pt"});
+    this.languageComboBox = new JComboBox();
     this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, 
@@ -131,7 +133,7 @@ public class UserPreferencesPanel extends JPanel {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.languageLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("languageLabel.mnemonic")).getKeyCode());
       this.languageLabel.setLabelFor(this.languageComboBox);
@@ -158,9 +160,12 @@ public class UserPreferencesPanel extends JPanel {
    * Layouts panel composants in panel with their labels. 
    */
   private void layoutComponents() {
+    int labelAlignment = OperatingSystem.isMacOSX() 
+        ? GridBagConstraints.EAST
+        : GridBagConstraints.WEST;
     Insets labelInsets = new Insets(0, 0, 5, 5);
     add(this.languageLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
     add(this.languageComboBox, new GridBagConstraints(
@@ -168,7 +173,7 @@ public class UserPreferencesPanel extends JPanel {
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
 
     add(this.unitLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.centimeterRadioButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
@@ -178,35 +183,35 @@ public class UserPreferencesPanel extends JPanel {
         GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     
     add(this.magnetismEnabledLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.magnetismCheckBox, new GridBagConstraints(
         1, 2, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
     add(this.rulersVisibleLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.rulersCheckBox, new GridBagConstraints(
         1, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
     add(this.gridVisibleLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.gridCheckBox, new GridBagConstraints(
         1, 4, 2, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     
     add(this.newWallThicknessLabel, new GridBagConstraints(
-        0, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 5, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.newWallThicknessSpinner, new GridBagConstraints(
         1, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     
     add(this.newHomeWallHeightLabel, new GridBagConstraints(
-        0, 6, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.newHomeWallHeightSpinner, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.WEST, 
@@ -217,6 +222,7 @@ public class UserPreferencesPanel extends JPanel {
    * Sets components value from <code>preferences</code>.
    */
   public void setPreferences(UserPreferences preferences) {
+    this.languageComboBox.setModel(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
     this.languageComboBox.setSelectedItem(preferences.getLanguage());
     if (preferences.getUnit() == UserPreferences.Unit.INCH) {
       this.inchRadioButton.setSelected(true);

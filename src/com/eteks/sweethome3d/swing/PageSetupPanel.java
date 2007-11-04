@@ -39,6 +39,7 @@ import javax.swing.KeyStroke;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Home page setup editing panel.
@@ -95,7 +96,7 @@ public class PageSetupPanel extends JPanel {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.pageFormatButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("pageFormatButton.mnemonic")).getKeyCode());
       this.furniturePrintedCheckBox.setMnemonic(

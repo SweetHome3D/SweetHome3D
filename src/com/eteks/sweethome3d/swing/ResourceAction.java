@@ -31,6 +31,8 @@ import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * An action with properties read from a resource bundle file.
  * @author Emmanuel Puybaret
@@ -194,7 +196,7 @@ public class ResourceAction extends AbstractAction {
 
     public Object getValue(String key) {
       // Avoid mnemonics, tooltips and icons in Mac OS X menus
-      if (System.getProperty("os.name").startsWith("Mac OS X")
+      if (OperatingSystem.isMacOSX()
           && (key.equals(MNEMONIC_KEY)
               || key.equals(SMALL_ICON)
               || key.equals(SHORT_DESCRIPTION))) {
@@ -222,7 +224,7 @@ public class ResourceAction extends AbstractAction {
       } else if (key.equals(SMALL_ICON)) {
         // Avoid icons in popus
         return null;
-      } else if (System.getProperty("os.name").startsWith("Mac OS X")
+      } else if (OperatingSystem.isMacOSX()
                  && key.equals(ACCELERATOR_KEY)) {
         // Avoid accelerators in Mac OS X popups
         return null;

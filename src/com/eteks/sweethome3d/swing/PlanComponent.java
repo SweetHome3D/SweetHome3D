@@ -104,6 +104,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * A component displaying the plan of a home.
@@ -292,14 +293,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       setFocusable(true);
       setAutoscrolls(true);
     }
-    this.rotationCursor = createCustomCursor("resources/rotationCursor16x16.png",
-        "resources/rotationCursor32x32.png", "Rotation cursor");
-    this.elevationCursor = createCustomCursor("resources/elevationCursor16x16.png",
-        "resources/elevationCursor32x32.png", "Elevation cursor");
-    this.heightCursor = createCustomCursor("resources/heightCursor16x16.png",
-        "resources/heightCursor32x32.png", "Height cursor");
-    this.resizeCursor = createCustomCursor("resources/resizeCursor16x16.png",
-        "resources/resizeCursor32x32.png", "Resize cursor");
+    this.rotationCursor = createCustomCursor("resources/cursors/rotation16x16.png",
+        "resources/cursors/rotation32x32.png", "Rotation cursor");
+    this.elevationCursor = createCustomCursor("resources/cursors/elevation16x16.png",
+        "resources/cursors/elevation32x32.png", "Elevation cursor");
+    this.heightCursor = createCustomCursor("resources/cursors/height16x16.png",
+        "resources/cursors/height32x32.png", "Height cursor");
+    this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
+        "resources/cursors/resize32x32.png", "Resize cursor");
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
     super.setBackground(UIManager.getColor("window"));
@@ -942,11 +943,11 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * Returns the color used to draw selection outlines. 
    */
   private Color getSelectioncolor() {
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      if (System.getProperty("os.version").startsWith("10.4")) {
-        return UIManager.getColor("textHighlight");
-      } else { // Mac OS 10.5
+    if (OperatingSystem.isMacOSX()) {
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         return UIManager.getColor("List.selectionBackground").darker();
+      } else { 
+        return UIManager.getColor("textHighlight");
       }
     } else {
       // On systems different from Mac OS X, take a darker color

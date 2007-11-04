@@ -69,6 +69,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Wizard panel for background image choice. 
@@ -204,7 +205,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.scaleDistanceLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("scaleDistanceLabel.mnemonic")).getKeyCode());
       this.scaleDistanceLabel.setLabelFor(this.scaleDistanceSpinner);
@@ -376,7 +377,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
       // Display a waiting image while loading
       if (waitImage == null) {
         waitImage = ImageIO.read(BackgroundImageWizardStepsPanel.class.
-            getResource("resources/wait.png"));
+            getResource(resource.getString("waitIcon")));
       }
       updatePreviewComponentsImage(waitImage);
       
@@ -413,7 +414,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private void setImageChangeTexts() {
     this.imageChoiceOrChangeLabel.setText(this.resource.getString("imageChangeLabel.text")); 
     this.imageChoiceOrChangeButton.setText(this.resource.getString("imageChangeButton.text"));
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("imageChangeButton.mnemonic")).getKeyCode());
     }
@@ -426,7 +427,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private void setImageChoiceTexts() {
     this.imageChoiceOrChangeLabel.setText(this.resource.getString("imageChoiceLabel.text")); 
     this.imageChoiceOrChangeButton.setText(this.resource.getString("imageChoiceButton.text"));
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("imageChoiceButton.mnemonic")).getKeyCode());
     }

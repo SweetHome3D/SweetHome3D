@@ -43,6 +43,7 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -57,6 +58,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * A pane displaying Sweet Home 3D help.
@@ -171,8 +173,8 @@ public class HelpPane extends JRootPane {
     ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
     this.searchLabel = new JLabel(resource.getString("searchLabel.text"));
     this.searchTextField = new JTextField(12);
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
-      // Use Mac OS 10.5 client properties to use search text field look and feel
+    // Under Mac OS 10.5 use client properties to use search text field look and feel
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       this.searchTextField.putClientProperty("JTextField.variant", "search");
       this.searchTextField.putClientProperty("JTextField.Search.FindAction",
           getActionMap().get(ActionType.SEARCH));
@@ -211,7 +213,7 @@ public class HelpPane extends JRootPane {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
       this.searchLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(resource.getString("searchLabel.mnemonic")).getKeyCode());
@@ -228,16 +230,26 @@ public class HelpPane extends JRootPane {
     ActionMap actions = getActionMap();    
     toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
     toolBar.add(actions.get(ActionType.SHOW_NEXT));
+    // Use segmented buttons under Mac OS X 10.5
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
+      previousButton.putClientProperty("JButton.buttonType", "segmentedCapsule");
+      previousButton.putClientProperty("JButton.segmentPosition", "first");
+      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
+      nextButton.putClientProperty("JButton.buttonType", "segmentedCapsule");
+      nextButton.putClientProperty("JButton.segmentPosition", "last");
+    }    
     toolBar.add(Box.createHorizontalStrut(5));
     
     toolBar.add(Box.createGlue());
-    toolBar.add(this.searchLabel);
-    toolBar.add(Box.createHorizontalStrut(2));
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      toolBar.add(this.searchLabel);
+      toolBar.add(Box.createHorizontalStrut(2));
+    }
     toolBar.add(this.searchTextField);
     this.searchTextField.setMaximumSize(this.searchTextField.getPreferredSize());
-    // Ignore search button under Mac OS X 10.5
-    if (!System.getProperty("os.name").startsWith("Mac OS X")
-        || System.getProperty("os.version").startsWith("10.4")) {
+    // Ignore search button under Mac OS X 10.5 (it's included in the search field)
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       toolBar.add(Box.createHorizontalStrut(2));
       toolBar.add(actions.get(ActionType.SEARCH));
     }
@@ -294,11 +306,15 @@ public class HelpPane extends JRootPane {
             setRootPane(HelpPane.this);
           }
         };
+      ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
       // Update frame image ans title 
       this.frame.setIconImage(new ImageIcon(
-          HelpPane.class.getResource("resources/helpFrameIcon.gif")).getImage());
-      this.frame.setTitle(ResourceBundle.getBundle(HelpPane.class.getName()).
-          getString("helpFrame.title"));
+          HelpPane.class.getResource(resource.getString("helpFrame.icon"))).getImage());
+      // Under Mac OS X 10.5 use standard grey look
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
+      }
+      this.frame.setTitle(resource.getString("helpFrame.title"));
       // Compute frame size and location
       computeFrameBounds(this.frame);
       // Just hide help frame when user close it

@@ -42,10 +42,10 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -197,7 +197,8 @@ public class FurnitureCatalogTree extends JTree {
       // Initialize fonts if not done
       if (this.defaultFont == null) {
         this.defaultFont = label.getFont();
-        this.modifiablePieceFont = this.defaultFont.deriveFont(Font.ITALIC);
+        this.modifiablePieceFont = 
+            new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
         
       }
       // If node is a category, change label text

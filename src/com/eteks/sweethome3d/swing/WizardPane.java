@@ -43,6 +43,8 @@ import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * Wizard pane. 
  * @author Emmanuel Puybaret
@@ -73,7 +75,7 @@ public class WizardPane extends JOptionPane {
     String cancelOption = resource.getString("cancelOption");
     // Make backOptionButton appear at left of nextFinishOptionButton
     if (UIManager.getBoolean("OptionPane.isYesLast")
-        || System.getProperty("os.name").startsWith("Mac OS X")) {
+        || OperatingSystem.isMacOSX()) {
       setOptions(new Object [] {cancelOption, this.nextFinishOptionButton, this.backOptionButton});      
     } else {
       setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
@@ -83,7 +85,7 @@ public class WizardPane extends JOptionPane {
   private void createOptionButtons() {
     this.backOptionButton = new JButton(resource.getString("backOptionButton.text"));
     this.backOptionButton.setEnabled(false);
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.backOptionButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("backOptionButton.mnemonic")).getKeyCode());
     }
@@ -136,7 +138,7 @@ public class WizardPane extends JOptionPane {
     this.nextFinishOptionButton.setText(resource.getString(lastStep 
         ? "finishOptionButton.text" 
         : "nextOptionButton.text"));
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.nextFinishOptionButton.setMnemonic(KeyStroke.getKeyStroke(this.resource.getString(
           lastStep 
               ? "finishOptionButton.mnemonic" 

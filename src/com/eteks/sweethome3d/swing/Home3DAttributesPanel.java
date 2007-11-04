@@ -46,6 +46,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Home 3D attributes editing panel.
@@ -156,7 +157,7 @@ public class Home3DAttributesPanel extends JPanel {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.observerFieldOfViewLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("observerFieldOfViewLabel.mnemonic")).getKeyCode());
       this.observerFieldOfViewLabel.setLabelFor(this.observerFieldOfViewLabel);
@@ -183,17 +184,20 @@ public class Home3DAttributesPanel extends JPanel {
    * Layouts panel composants in panel with their labels. 
    */
   private void layoutComponents() {
+    int labelAlignment = OperatingSystem.isMacOSX() 
+        ? GridBagConstraints.EAST
+        : GridBagConstraints.WEST;
     // First row
     Insets labelInsets = new Insets(0, 0, 10, 5);
     add(this.observerFieldOfViewLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets componentInsets = new Insets(0, 0, 10, 10);
     add(this.observerFieldOfViewSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, componentInsets, 10, 0));
     add(this.observerHeightLabel, new GridBagConstraints(
-        2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.observerHeightSpinner, new GridBagConstraints(
@@ -202,34 +206,34 @@ public class Home3DAttributesPanel extends JPanel {
     // Second row
     Insets closeLabelInsets = new Insets(0, 0, 2, 5);
     add(this.groundColorRadioButton, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.groundColorButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 10), 0, 0));
     add(this.skyColorLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.skyColorButton, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Third row
     add(this.groundTextureRadioButton, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.groundTextureButton, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     // Fourth row
     add(this.brightnessLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.brightnessSlider, new GridBagConstraints(
         1, 3, 3, 1, 0, 0, GridBagConstraints.WEST, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Last row
     add(this.wallsTransparencyLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.wallsTransparencySlider, new GridBagConstraints(
         1, 4, 3, 1, 0, 0, GridBagConstraints.WEST, 

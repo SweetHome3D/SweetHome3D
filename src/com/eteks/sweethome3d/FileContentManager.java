@@ -37,6 +37,7 @@ import javax.swing.filechooser.FileFilter;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -247,7 +248,7 @@ public class FileContentManager implements ContentManager {
   public String showOpenDialog(String      dialogTitle,
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (OperatingSystem.isMacOSX()) {
       return showFileDialog(dialogTitle, contentType, null, false);
     } else {
       return showFileChooser(dialogTitle, contentType, null, false);
@@ -265,7 +266,7 @@ public class FileContentManager implements ContentManager {
                                String      name) {
     String savedName;
     // Use native file dialog under Mac OS X    
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (OperatingSystem.isMacOSX()) {
       savedName = showFileDialog(dialogTitle, contentType, name, true);
     } else {
       savedName = showFileChooser(dialogTitle, contentType, name, true);
@@ -289,7 +290,7 @@ public class FileContentManager implements ContentManager {
 
       // If no extension was added to file under Mac OS X, 
       // FileDialog already asks to user if he wants to overwrite savedName
-      if (System.getProperty("os.name").startsWith("Mac OS X")
+      if (OperatingSystem.isMacOSX()
           && !addedExtension) {
         return savedName;
       }

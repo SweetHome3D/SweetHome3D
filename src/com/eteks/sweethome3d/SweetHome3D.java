@@ -72,6 +72,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.HomeController;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Sweet Home 3D main class.
@@ -252,6 +253,11 @@ public class SweetHome3D extends HomeApplication {
     try {
       // Apply current system look and feel
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      // Change default titled borders under Mac OS X 10.5
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        UIManager.put("TitledBorder.border", 
+            UIManager.getBorder("TitledBorder.aquaVariant"));
+      }
     } catch (Exception e) {
       // Too bad keep current look and feel
     }
@@ -312,7 +318,7 @@ public class SweetHome3D extends HomeApplication {
               
               // If application has no more home 
               if (application.getHomes().isEmpty()
-                  && !System.getProperty("os.name").startsWith("Mac OS X")) {
+                  && !OperatingSystem.isMacOSX()) {
                 // If SingleInstanceService is available, remove the listener that was added on it
                 if (singleInstanceService != null) {
                   singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
@@ -327,7 +333,7 @@ public class SweetHome3D extends HomeApplication {
     
     application.addComponent3DRenderingErrorListener();
     
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (OperatingSystem.isMacOSX()) {
       // Bind to application menu  
       MacOSXConfiguration.bindToApplicationMenu(application);
     }
@@ -554,7 +560,7 @@ public class SweetHome3D extends HomeApplication {
         } catch (Exception ex) {
           // For any exception, let's consider simply the showDocument method failed
         }
-      } else if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      } else if (OperatingSystem.isMacOSX()) {
         try {
           Runtime.getRuntime().exec(new String [] {"open", url.toString()});
           return true;
@@ -590,7 +596,7 @@ public class SweetHome3D extends HomeApplication {
         }
       }
       // For other Java versions, let's support only Mac OS X
-      return System.getProperty("os.name").startsWith("Mac OS X");
+      return OperatingSystem.isMacOSX();
     }
 
     private boolean isJava6() {

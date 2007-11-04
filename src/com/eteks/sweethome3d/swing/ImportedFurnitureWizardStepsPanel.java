@@ -117,6 +117,7 @@ import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.sun.j3d.utils.universe.SimpleUniverse;
@@ -227,7 +228,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           }
         }
       });
-    this.findModelsButton = new JButton(resource.getString("findModelsButton.text"));
+    this.findModelsButton = new JButton(this.resource.getString("findModelsButton.text"));
     BasicService basicService = null;
     try { 
       // Lookup the javax.jnlp.BasicService object 
@@ -266,16 +267,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           }
         }
       });
-    this.modelChoiceErrorLabel = new JLabel(resource.getString("modelChoiceErrolLabel.text"));
+    this.modelChoiceErrorLabel = new JLabel(this.resource.getString("modelChoiceErrolLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occured during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
     this.modelPreviewComponent = new ModelPreviewComponent();
     
     // Orientation panel components
     this.orientationLabel = new JLabel(this.resource.getString("orientationLabel.text"));
-    this.turnLeftButton = new JButton(
-        new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnLeft.gif")));
-    this.turnLeftButton.addActionListener(new ActionListener() {
+    this.turnLeftButton = new JButton(new ResourceAction(this.resource, "TURN_LEFT", true) {
+        @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D leftRotation = new Transform3D();
@@ -284,9 +284,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           updateModelRotation(leftRotation);
         }
       });
-    this.turnRightButton = new JButton(
-        new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnRight.gif")));
-    this.turnRightButton.addActionListener(new ActionListener() {
+    this.turnRightButton = new JButton(new ResourceAction(this.resource, "TURN_RIGHT", true) {
+        @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D rightRotation = new Transform3D();
@@ -295,9 +294,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           updateModelRotation(rightRotation);
         }
       });
-    this.turnUpButton = new JButton(
-        new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnUp.gif")));
-    this.turnUpButton.addActionListener(new ActionListener() {
+    this.turnUpButton = new JButton(new ResourceAction(this.resource, "TURN_UP", true) {
+        @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D upRotation = new Transform3D();
@@ -306,9 +304,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           updateModelRotation(upRotation);
         }
       });
-    this.turnDownButton = new JButton(
-        new ImageIcon(ImportedFurnitureWizardStepsPanel.class.getResource("resources/turnDown.gif")));
-    this.turnDownButton.addActionListener(new ActionListener() {
+    this.turnDownButton = new JButton(new ResourceAction(this.resource, "TURN_DOWN", true) {
+        @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
           Transform3D downRotation = new Transform3D();
@@ -613,7 +610,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.findModelsButton.setMnemonic(
           KeyStroke.getKeyStroke(resource.getString("findModelsButton.mnemonic")).getKeyCode());
       this.backFaceShownCheckBox.setMnemonic(
@@ -976,7 +973,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private void setModelChangeTexts() {
     this.modelChoiceOrChangeLabel.setText(this.resource.getString("modelChangeLabel.text")); 
     this.modelChoiceOrChangeButton.setText(this.resource.getString("modelChangeButton.text"));
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("modelChangeButton.mnemonic")).getKeyCode());
     }
@@ -988,7 +985,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private void setModelChoiceTexts() {
     this.modelChoiceOrChangeLabel.setText(this.resource.getString("modelChoiceLabel.text")); 
     this.modelChoiceOrChangeButton.setText(this.resource.getString("modelChoiceButton.text"));
-    if (!System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("modelChoiceButton.mnemonic")).getKeyCode());
     }
@@ -1159,7 +1156,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       // Link scene to universe
       this.universe.addBranchGraph(this.sceneTree);
       
-      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+      if (OperatingSystem.isMacOSX()) {
         EventQueue.invokeLater(new Runnable() {
           public void run() {
             // Force a real repaint of the component with a resize of its root, 
