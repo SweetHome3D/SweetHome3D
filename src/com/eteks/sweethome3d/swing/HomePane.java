@@ -1533,6 +1533,7 @@ public class HomePane extends JRootPane {
           }
     
           public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Color previousColor = g.getColor();
             // Paint a gradient paint around component
             Rectangle rect = getInteriorRectangle(c, x, y, width, height);
             g.setColor(Color.GRAY);
@@ -1543,6 +1544,8 @@ public class HomePane extends JRootPane {
             g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 2, 2);
             g.setColor(focusColor);
             g.drawRoundRect(rect.x - 2, rect.y - 2, rect.width + 3, rect.height + 3, 1, 1);
+            
+            g.setColor(previousColor);
           }
         };
     } else {
