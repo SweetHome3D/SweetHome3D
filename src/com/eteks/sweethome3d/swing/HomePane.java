@@ -1551,7 +1551,13 @@ public class HomePane extends JRootPane {
           }
         };
     } else {
-      UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+      if (OperatingSystem.isMacOSX()) {
+        UNFOCUSED_BORDER = BorderFactory.createCompoundBorder(
+            BorderFactory.createEmptyBorder(1, 1, 1, 1),
+            BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+      } else {
+        UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
+      }
       FOCUSED_BORDER = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
     }
   }

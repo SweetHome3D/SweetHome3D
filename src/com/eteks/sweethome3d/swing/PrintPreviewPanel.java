@@ -40,6 +40,7 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.InputMap;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -49,6 +50,7 @@ import javax.swing.KeyStroke;
 import javax.swing.border.AbstractBorder;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Home print preview editing panel.
@@ -164,6 +166,15 @@ public class PrintPreviewPanel extends JPanel {
     ActionMap actions = getActionMap();    
     this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS_PAGE));
     this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
+    // Use segmented buttons under Mac OS X 10.5
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
+      previousButton.putClientProperty("JButton.buttonType", "segmented");
+      previousButton.putClientProperty("JButton.segmentPosition", "first");
+      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
+      nextButton.putClientProperty("JButton.buttonType", "segmented");
+      nextButton.putClientProperty("JButton.segmentPosition", "last");
+    }    
     this.toolBar.add(Box.createHorizontalStrut(20));
     this.toolBar.add(this.pageLabel);
     
