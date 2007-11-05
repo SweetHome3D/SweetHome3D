@@ -192,7 +192,7 @@ public class FurnitureCatalogTree extends JTree {
     if (path != null
         && path.getPathCount() == 3) {
       CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
-      String tooltip = "<html><center><b>" + piece.getName() + "</b>";
+      String tooltip = "<html><center>&nbsp;<b>" + piece.getName() + "</b>&nbsp;";
       if (piece.getCreator() != null) {
         String creatorFormat = 
             ResourceBundle.getBundle(FurnitureCatalogTree.class.getName()).getString("tooltipCreator");
