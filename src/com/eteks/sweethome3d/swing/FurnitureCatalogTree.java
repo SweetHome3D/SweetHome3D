@@ -30,10 +30,12 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
+import javax.swing.ToolTipManager;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -50,6 +52,7 @@ import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * A tree displaying furniture catalog by category.
@@ -85,6 +88,7 @@ public class FurnitureCatalogTree extends JTree {
       addMouseListener(controller);
     }
     setDragEnabled(true);
+    ToolTipManager.sharedInstance().registerComponent(this);
   }
   
   /** 
@@ -179,6 +183,31 @@ public class FurnitureCatalogTree extends JTree {
       });
   }
 
+  /**
+   * Returns a tooltip for furniture pieces described in this tree.
+   */
+  @Override
+  public String getToolTipText(MouseEvent ev) {
+    TreePath path = getPathForLocation(ev.getX(), ev.getY());
+    if (path != null
+        && path.getPathCount() == 3) {
+      CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
+      String tooltip = "<html><center><b>" + piece.getName() + "</b>";
+      if (piece.getCreator() != null) {
+        String creatorFormat = 
+            ResourceBundle.getBundle(FurnitureCatalogTree.class.getName()).getString("tooltipCreator");
+        tooltip += "<br>" + String.format(creatorFormat, piece.getCreator());
+      }
+      if (piece.getIcon() instanceof URLContent) {
+        tooltip += "<br><img width='128' height='128' src='" 
+          + ((URLContent)piece.getIcon()).getURL() + "'>"; 
+      }
+      return tooltip;
+    } else {
+      return null;
+    }
+  }
+  
   /**
    * Cell renderer for this catalog tree.
    */
