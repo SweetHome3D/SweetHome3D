@@ -45,6 +45,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -439,10 +440,10 @@ public class FileUserPreferences extends UserPreferences {
    * Returns Sweet Home 3D application folder. 
    */
   private File getApplicationFolder() throws IOException {
-    if (System.getProperty("os.name").startsWith("Mac OS X")) {
+    if (OperatingSystem.isMacOSX()) {
       return new File(MacOSXFileManager.getApplicationSupportFolder(), 
              "eTeks" + File.separator + "Sweet Home 3D");
-    } else if (System.getProperty("os.name").startsWith("Windows")) {
+    } else if (OperatingSystem.isWindows()) {
       File applicationFolder = new File(System.getProperty("user.home"), "Application Data");
       // If user Application Data directory doesn't exist, use user home
       if (!applicationFolder.exists()) {
