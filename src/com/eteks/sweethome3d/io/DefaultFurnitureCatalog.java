@@ -22,10 +22,10 @@ package com.eteks.sweethome3d.io;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
@@ -43,13 +43,26 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String MOVABLE        = "movable#";
   private static final String DOOR_OR_WINDOW = "doorOrWindow#";
   private static final String ELEVATION      = "elevation#";
+  private static final String MODEL_ROTATION = "modelRotation#";
+  private static final String CREATOR        = "creator#";
 
   /**
    * Creates a default furniture catalog read from resources.
    */
   public DefaultFurnitureCatalog() {
-    ResourceBundle resource = ResourceBundle.getBundle(
-        DefaultFurnitureCatalog.class.getName());
+    readFurniture(ResourceBundle.getBundle(
+        DefaultFurnitureCatalog.class.getName()));
+    
+    String classPackage = DefaultFurnitureCatalog.class.getName();
+    classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
+    readFurniture(ResourceBundle.getBundle(
+        classPackage + ".ContributedFurnitureCatalog"));
+  }
+
+  /**
+   * Reads each piece of furniture described in <code>resource</code> bundle.
+   */
+  private void readFurniture(ResourceBundle resource) {
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -73,10 +86,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       } catch (MissingResourceException ex) {
         // By default elevation is null
       }
+      float [][] modelRotation = getModelRotation(resource, MODEL_ROTATION + i);
+      String creator = "eTeks";
+      try {
+        creator = resource.getString(CREATOR + i);
+      } catch (MissingResourceException ex) {
+        // By default creator is eTeks
+      }
 
       add(new FurnitureCategory(category),
           new CatalogPieceOfFurniture(name, icon, model,
-              width, depth, height, elevation, movable, doorOrWindow));
+              width, depth, height, elevation, movable, doorOrWindow, 
+              modelRotation, creator));
     }
   }
   
@@ -89,5 +110,26 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private Content getContent(ResourceBundle resource, String key) {
     String file = resource.getString(key);
     return new ResourceURLContent(DefaultFurnitureCatalog.class, file);
+  }
+  
+  /**
+   * Returns model rotation parsed from key value.
+   */
+  private float [][] getModelRotation(ResourceBundle resource, String key) {
+      try {
+        String modelRotationString = resource.getString(key);
+        String [] values = modelRotationString.split(" ", 9);
+        return new float [][] {{Float.parseFloat(values [0]), 
+                                Float.parseFloat(values [1]), 
+                                Float.parseFloat(values [2])}, 
+                               {Float.parseFloat(values [3]), 
+                                Float.parseFloat(values [4]), 
+                                Float.parseFloat(values [5])}, 
+                               {Float.parseFloat(values [6]), 
+                                Float.parseFloat(values [7]), 
+                                Float.parseFloat(values [8])}};
+      } catch (MissingResourceException ex) {
+        return null;
+      }
   }
 }
