@@ -37,6 +37,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
+Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
