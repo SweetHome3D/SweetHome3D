@@ -29,6 +29,8 @@ import java.text.Collator;
 public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurniture>, PieceOfFurniture {
   private static final long serialVersionUID = 1L;
 
+  private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+
   private String     name;
   private Content    icon;
   private Content    model;
@@ -40,6 +42,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private boolean    movable;
   private boolean    doorOrWindow;
   private float [][] modelRotation;
+  private String     creator;
   private boolean    backFaceShown;
   private Integer    color;
   private float      iconYaw;
@@ -48,6 +51,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private FurnitureCategory  category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
+
 
   /**
    * Creates a catalog piece of furniture.
@@ -82,7 +86,29 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow) {
     this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
-        new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}, false, (float)Math.PI / 8, true, false);
+        INDENTITY_ROTATION, null, false, (float)Math.PI / 8, true, false);
+  }
+         
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param name  the name of the new piece
+   * @param icon an URL to the icon file of the new piece
+   * @param model an URL to the 3D model file of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param creator the creator of the model
+   */
+  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
+                                 float width, float depth, float height, float elevation, 
+                                 boolean movable, boolean doorOrWindow, 
+                                 float [][] modelRotation, String creator) {
+    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
+        modelRotation, creator, false, (float)Math.PI / 8, true, false);
   }
          
   /**
@@ -108,13 +134,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
     this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
-        color, modelRotation, backFaceShown, iconYaw, proportional, true);
+        color, modelRotation, null, backFaceShown, iconYaw, proportional, true);
   }
   
   private CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                   float width, float depth, float height, float elevation, 
                                   boolean movable, boolean doorOrWindow, Integer color,
-                                  float [][] modelRotation, boolean backFaceShown,
+                                  float [][] modelRotation, String creator, boolean backFaceShown,
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.name = name;
     this.icon = icon;
@@ -125,7 +151,12 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.elevation = elevation;
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
-    this.modelRotation = deepCopy(modelRotation);
+    this.creator = creator;
+    if (modelRotation == null) {
+      this.modelRotation = INDENTITY_ROTATION;
+    } else {
+      this.modelRotation = deepCopy(modelRotation);
+    }
     this.backFaceShown = backFaceShown;
     this.color = color;
     this.iconYaw = iconYaw;
@@ -211,6 +242,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                            {modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]}};
   }
 
+  /**
+   * Returns the creator of this piece.
+   */
+  public String getCreator() {
+    return this.creator;
+  }
+  
   /**
    * Returns <code>true</code> if the back face of the piece of furniture
    * model should be displayed.
