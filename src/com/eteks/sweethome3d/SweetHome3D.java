@@ -317,15 +317,14 @@ public class SweetHome3D extends HomeApplication {
               application.homeFrames.remove(ev.getHome());
               
               // If application has no more home 
-              if (application.getHomes().isEmpty()) {
+              if (application.getHomes().isEmpty()
+                  && !OperatingSystem.isMacOSX()) {
                 // If SingleInstanceService is available, remove the listener that was added on it
                 if (singleInstanceService != null) {
                   singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
                 }
-                if (!OperatingSystem.isMacOSX()) {
-                  // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
-                  System.exit(0);
-                }
+                // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
+                System.exit(0);
               }
               break;
           }
@@ -703,27 +702,31 @@ public class SweetHome3D extends HomeApplication {
      * Returns <code>true</code> if single instance server was successfully called.
      */
     public static boolean callSingleInstanceServer(String [] mainArgs) {
-      Preferences preferences = Preferences.userNodeForPackage(SweetHome3D.class);
-      int singleInstancePort = preferences.getInt(SINGLE_INSTANCE_PORT, -1);
-      if (singleInstancePort != -1) {
-        try {
-          // Try to connect to single instance server
-          Socket socket = new Socket("127.0.0.1", singleInstancePort);
-          // Write main args
-          BufferedWriter writer = new BufferedWriter(
-              new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
-          for (String arg : mainArgs) {
-            writer.write(arg);
-            writer.write("\t");
+      if (!OperatingSystem.isMacOSX()) {
+        // No server under Mac OS X, multiple application launches are managed by
+        // com.apple.eawt.ApplicationListener in MacOSXConfiguration class
+        Preferences preferences = Preferences.userNodeForPackage(SweetHome3D.class);
+        int singleInstancePort = preferences.getInt(SINGLE_INSTANCE_PORT, -1);
+        if (singleInstancePort != -1) {
+          try {
+            // Try to connect to single instance server
+            Socket socket = new Socket("127.0.0.1", singleInstancePort);
+            // Write main args
+            BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+            for (String arg : mainArgs) {
+              writer.write(arg);
+              writer.write("\t");
+            }
+            writer.write("\n");
+            writer.close();
+            socket.close();
+            return true;
+          } catch (IOException ex) {
+            // Return false
           }
-          writer.write("\n");
-          writer.close();
-          socket.close();
-          return true;
-        } catch (IOException ex) {
-          // Return false
         }
-      } 
+      }
       return false;
     }
   }
