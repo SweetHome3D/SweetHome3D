@@ -13,7 +13,7 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVerName=Sweet Home 3D version 1.1
+AppVerName=Sweet Home 3D version 1.2
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -22,12 +22,12 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-1.1-windows
+OutputBaseFilename=..\SweetHome3D-1.2-windows
 Compression=lzma
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=1.1.0.0
-VersionInfoTextVersion=1.1
+VersionInfoVersion=1.2.0.0
+VersionInfoTextVersion=1.2
 VersionInfoDescription=Sweet Home 3D Setup
 VersionInfoCopyright=Copyright (c) 2007 eTeks
 VersionInfoCompany=eTeks
