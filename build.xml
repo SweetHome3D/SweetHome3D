@@ -201,10 +201,10 @@
        and Sweet Home 3D libraries. 
        CAUTION : May be run only under Mac OS X and requires Disk Utility -->
   <target name="macosxInstaller" depends="build">
-    <!-- Copy Sweet Home 3D.app files to install/macosx/SweetHome3D-1.1 -->
+    <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-1.1/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-1.1/"/>
     <copy todir="install/macosx/SweetHome3D-1.1/Sweet Home 3D.app">
-      <fileset dir="install/macosx/Sweet Home 3D.app"/>
+      <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
 
     <!-- Change executable permission of JavaApplicationStub lost during copy task -->
