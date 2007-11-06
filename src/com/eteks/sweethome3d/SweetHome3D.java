@@ -317,14 +317,15 @@ public class SweetHome3D extends HomeApplication {
               application.homeFrames.remove(ev.getHome());
               
               // If application has no more home 
-              if (application.getHomes().isEmpty()
-                  && !OperatingSystem.isMacOSX()) {
+              if (application.getHomes().isEmpty()) {
                 // If SingleInstanceService is available, remove the listener that was added on it
                 if (singleInstanceService != null) {
                   singleInstanceService.removeSingleInstanceListener(singleInstanceListener);
                 }
-                // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
-                System.exit(0);
+                if (!OperatingSystem.isMacOSX()) {
+                  // Exit (under Mac OS X, exit is managed by MacOSXConfiguration)
+                  System.exit(0);
+                }
               }
               break;
           }
