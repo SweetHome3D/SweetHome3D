@@ -921,7 +921,7 @@ public class HomePane extends JRootPane {
         } else {
           nextComponent = null;
         }
-        component.putClientProperty("JButton.buttonType", "segmentedCapsule");
+        component.putClientProperty("JButton.buttonType", "segmentedTextured");
         if (previousComponent == null
             && !(nextComponent instanceof AbstractButton)) {
           component.putClientProperty("JButton.segmentPosition", "only");

@@ -169,10 +169,10 @@ public class PrintPreviewPanel extends JPanel {
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
-      previousButton.putClientProperty("JButton.buttonType", "segmented");
+      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       previousButton.putClientProperty("JButton.segmentPosition", "first");
       JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
-      nextButton.putClientProperty("JButton.buttonType", "segmented");
+      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       nextButton.putClientProperty("JButton.segmentPosition", "last");
     }    
     this.toolBar.add(Box.createHorizontalStrut(20));

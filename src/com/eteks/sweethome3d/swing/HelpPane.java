@@ -233,10 +233,10 @@ public class HelpPane extends JRootPane {
     // Use segmented buttons under Mac OS X 10.5
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
-      previousButton.putClientProperty("JButton.buttonType", "segmentedCapsule");
+      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       previousButton.putClientProperty("JButton.segmentPosition", "first");
       JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
-      nextButton.putClientProperty("JButton.buttonType", "segmentedCapsule");
+      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
       nextButton.putClientProperty("JButton.segmentPosition", "last");
     }    
     toolBar.add(Box.createHorizontalStrut(5));
@@ -310,10 +310,6 @@ public class HelpPane extends JRootPane {
       // Update frame image ans title 
       this.frame.setIconImage(new ImageIcon(
           HelpPane.class.getResource(resource.getString("helpFrame.icon"))).getImage());
-      // Under Mac OS X 10.5 use standard grey look
-      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
-      }
       this.frame.setTitle(resource.getString("helpFrame.title"));
       // Compute frame size and location
       computeFrameBounds(this.frame);

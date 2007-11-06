@@ -99,8 +99,6 @@ public class HomeFramePane extends JRootPane {
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
     updateFrameTitle(homeFrame, this.home);
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Under Mac OS X 10.5 use standard grey look
-      putClientProperty("apple.awt.brushMetalLook", Boolean.TRUE);
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
           controller.getCatalogController().getView(),
