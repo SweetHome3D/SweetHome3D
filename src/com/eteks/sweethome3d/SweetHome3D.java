@@ -625,7 +625,12 @@ public class SweetHome3D extends HomeApplication {
     
     public void addSingleInstanceListener(SingleInstanceListener l) {
       if (this.singleInstanceListeners.isEmpty()) {
-        launchSingleInstanceServer();     
+        if (!OperatingSystem.isMacOSX()) {
+          // Launching a server is useless under Mac OS X because further launches will
+          // be notified by com.apple.eawt.ApplicationListener added to application 
+          // in MacOSXConfiguration class
+          launchSingleInstanceServer();
+        }
       }      
       this.singleInstanceListeners.add(l);
     }
