@@ -668,7 +668,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         // Paint image with a 0.5 alpha
         paintImage(g2D, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
 
-        Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
+        Color scaleDistanceLineColor = OperatingSystem.isMacOSXLeopardOrSuperior() 
+            ? UIManager.getColor("List.selectionBackground") 
+            : UIManager.getColor("textHighlight");
+     
         g2D.setPaint(scaleDistanceLineColor);
         
         // Use same origin and scale as image drawing in super class
@@ -783,7 +786,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         // Paint image with a 0.5 alpha 
         paintImage(g, AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));        
         
-        Color scaleDistanceLineColor = UIManager.getColor("textHighlight");
+        Color scaleDistanceLineColor = OperatingSystem.isMacOSXLeopardOrSuperior() 
+            ? UIManager.getColor("List.selectionBackground") 
+            : UIManager.getColor("textHighlight");;
         g2D.setPaint(scaleDistanceLineColor);
         
         g2D.translate(translation.x, translation.y);
