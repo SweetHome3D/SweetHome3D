@@ -386,7 +386,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.categoryComboBox.setEditor(new ComboBoxEditor() {
         public Object getItem() {
           String name = (String)defaultEditor.getItem();
-          name.trim();
+          name = name.trim();
           // If category is empty, replace it by the last selected item
           if (name.length() == 0) {
             setItem(categoryComboBox.getSelectedItem());
