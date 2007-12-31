@@ -166,7 +166,7 @@ public class HelpController {
     String [] searchedWords = searchedText.split("\\s");
 
     List<HelpDocument> helpDocuments = searchInHelpDocuments(helpIndex, searchedWords);
-    // Build dinamically the search result page
+    // Build dynamically the search result page
     final StringBuilder htmlText = new StringBuilder(
         "<html><head><link href='" 
         + HelpController.class.getResource("resources/help/help.css")
@@ -192,8 +192,8 @@ public class HelpController {
       String searchNotFound = String.format(resource.getString("searchNotFound"), searchedText); 
       htmlText.append("<tr><td><p>" + searchNotFound + "</td></tr>");
     } else {
-      String searchNotFound = String.format(resource.getString("searchFound"), searchedText); 
-      htmlText.append("<tr><td colspan='2'><p>" + searchNotFound + "</td></tr>");
+      String searchFound = String.format(resource.getString("searchFound"), searchedText); 
+      htmlText.append("<tr><td colspan='2'><p>" + searchFound + "</td></tr>");
       
       URL searchRelevanceImage = HelpController.class.getResource("resources/searchRelevance.gif");
       for (HelpDocument helpDocument : helpDocuments) {
@@ -236,7 +236,7 @@ public class HelpController {
   /**
    * Searches <code>searchedWords</code> in help documents and returns 
    * the list of matching documents sorted from the most relevant to the least relevant.
-   * This method uses some Swing classes for their HTML parsing capibilities 
+   * This method uses some Swing classes for their HTML parsing capabilities 
    * and not to create components.
    */
   public List<HelpDocument> searchInHelpDocuments(URL helpIndex, String [] searchedWords) {
@@ -244,7 +244,7 @@ public class HelpController {
     parsedDocuments.add(helpIndex);
     
     List<HelpDocument> helpDocuments = new ArrayList<HelpDocument>();
-    // Parcours de toutes les urls qui sont ajoutées à parsedHtmlFiles
+    // Parse all the URLs added to parsedDocuments at each loop
     HTMLEditorKit html = new HTMLEditorKit();
     for (int i = 0; i < parsedDocuments.size(); i++) {
       URL helpDocumentUrl = (URL)parsedDocuments.get(i);
@@ -252,7 +252,7 @@ public class HelpController {
       try {
         urlReader = new InputStreamReader(helpDocumentUrl.openStream(), "ISO-8859-1");
 
-        // Création d'un document HTML ajouté à l'ensemble htmlFiles
+        // Create an HTML document
         HelpDocument helpDocument = new HelpDocument(helpDocumentUrl, searchedWords);
         // Parse HTML file
         html.read(urlReader, helpDocument, 0);

@@ -167,7 +167,7 @@ public class HelpPane extends JRootPane {
   }
   
   /**
-   * Creates the components diaplayed by this view.
+   * Creates the components displayed by this view.
    */
   private void createComponents() {
     ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
@@ -222,7 +222,7 @@ public class HelpPane extends JRootPane {
   }
   
   /**
-   * Layouts the components diaplayed by this view.
+   * Layouts the components displayed by this view.
    */
   private void layoutComponents() {
     JToolBar toolBar = new JToolBar();
