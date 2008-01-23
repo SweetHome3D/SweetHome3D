@@ -1517,7 +1517,8 @@ public class HomeComponent3D extends JComponent implements Printable {
             || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
           Appearance appearance = shape.getAppearance();
           if (appearance == null) {
-            shape.setAppearance(createAppearanceWithChangeCapabilities());
+            appearance = createAppearanceWithChangeCapabilities();
+            ((Shape3D)node).setAppearance(appearance);
           }
           // Use appearance user data to store shape default material
           Material defaultMaterial = (Material)appearance.getUserData();
@@ -1549,7 +1550,8 @@ public class HomeComponent3D extends JComponent implements Printable {
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance == null) {
-          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
+          appearance = createAppearanceWithChangeCapabilities();
+          ((Shape3D)node).setAppearance(appearance);
         }
         RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
         if (renderingAttributes == null) {
@@ -1577,7 +1579,8 @@ public class HomeComponent3D extends JComponent implements Printable {
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance == null) {
-          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
+          appearance = createAppearanceWithChangeCapabilities();
+          ((Shape3D)node).setAppearance(appearance);
         }
         PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
         if (polygonAttributes == null) {
@@ -1605,7 +1608,8 @@ public class HomeComponent3D extends JComponent implements Printable {
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance == null) {
-          ((Shape3D)node).setAppearance(createAppearanceWithChangeCapabilities());
+          appearance = createAppearanceWithChangeCapabilities();
+          ((Shape3D)node).setAppearance(appearance);
         }
         PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
         if (polygonAttributes == null) {
