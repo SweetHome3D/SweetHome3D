@@ -158,10 +158,10 @@ public class HelpPane extends JRootPane {
         // Update frame title and search label
         if (helpPane.frame != null) {
           helpPane.frame.setTitle(resource.getString("helpFrame.title"));
-          helpPane.searchLabel.setText(resource.getString("searchLabel.text"));
-          helpPane.searchTextField.setText("");
-          helpPane.setMnemonics();
         }
+        helpPane.searchLabel.setText(resource.getString("searchLabel.text"));
+        helpPane.searchTextField.setText("");
+        helpPane.setMnemonics();
       }
     }
   }
