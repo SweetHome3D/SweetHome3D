@@ -139,8 +139,8 @@
   
     <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
-    <copy todir="install/windows/tmp/jre1.6.0_03">
-      <fileset dir="C:\Program Files\Java\jre1.6.0_03">
+    <copy todir="install/windows/tmp/jre1.6.0_04">
+      <fileset dir="C:\Program Files\Java\jre1.6.0_04">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -262,7 +262,7 @@
 
   <!-- Builds install/SweetHome3D-1.2-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux JRE installed in jre1.6.0_03 -->
+       CAUTION : Requires a Linux JRE installed in jre1.6.0_04 -->
   <target name="linuxInstaller" depends="build">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/i386/SweetHome3D-1.2/lib -->
@@ -287,8 +287,8 @@
   	
     <!-- Copy JRE to install/linux/i386/SweetHome3D-1.2/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/i386/SweetHome3D-1.2/jre1.6.0_03">
-      <fileset dir="jre1.6.0_03">
+    <copy todir="install/linux/i386/SweetHome3D-1.2/jre1.6.0_04">
+      <fileset dir="jre1.6.0_04">
         <include name="**"/>
 
         <exclude name="lib/charsets.jar"/>
@@ -304,7 +304,7 @@
     </copy>
 
     <!-- Create SweetHome3D command -->
-    <concat destfile="install/linux/i386/SweetHome3D-1.2/SweetHome3D">jre1.6.0_03/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/itext-2.0.4.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_03/lib/javaws.jar -Djava.library.path=lib -Xmx192m com.eteks.sweethome3d.SweetHome3D</concat>
+    <concat destfile="install/linux/i386/SweetHome3D-1.2/SweetHome3D">jre1.6.0_04/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/itext-2.0.4.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_04/lib/javaws.jar -Djava.library.path=lib -Xmx192m com.eteks.sweethome3d.SweetHome3D</concat>
 
     <!-- Create SweetHome3D-1.2-linux-x86.tgz archive -->
     <tar destfile="install/SweetHome3D-1.2-linux-x86.tgz"
@@ -312,12 +312,12 @@
       <tarfileset dir="install/linux/i386"
                   includes="SweetHome3D-1.2/**">
         <exclude name="SweetHome3D-1.2/SweetHome3D"/>
-        <exclude name="SweetHome3D-1.2/jre1.6.0_03/bin/java"/>
+        <exclude name="SweetHome3D-1.2/jre1.6.0_04/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
         <include name="SweetHome3D-1.2/SweetHome3D"/>
-        <include name="SweetHome3D-1.2/jre1.6.0_03/bin/java"/>
+        <include name="SweetHome3D-1.2/jre1.6.0_04/bin/java"/>
       </tarfileset>
     </tar>
 
