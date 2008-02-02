@@ -28,6 +28,11 @@
     <description kind="short">Organiza as mobilias da sua casa</description>
     <offline-allowed/>
   </information>
+  <information locale="cs">
+    <title>Sweet Home 3D</title>
+    <description kind="short">Sestavte si design interieru va\u0161eho domu</description>
+    <offline-allowed/>
+  </information>
 
   <security>
     <all-permissions/>
