@@ -34,7 +34,7 @@ import java.util.Locale;
 public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
-  private static final String [] SUPPORTED_LANGUAGES = {"de", "en", "fr", "it", "pt"}; 
+  private static final String [] SUPPORTED_LANGUAGES = {"cs", "de", "en", "fr", "it", "pt"}; 
   
   private PropertyChangeSupport propertyChangeSupport;
 
