@@ -94,7 +94,7 @@ public class ObserverCamera extends Camera {
   public float getWidth() {
     // Adult width is 4 times the distance between head and eyes location
     float width = getZ() * 4 / 14;
-    return Math.max(width, 20);
+    return Math.min(Math.max(width, 20), 62.5f);
   }
   
   /**
@@ -104,7 +104,7 @@ public class ObserverCamera extends Camera {
   public float getDepth() {
     // Adult depth is equal to the 2 / 5 of its width 
     float depth = getZ() * 8 / 70;
-    return Math.max(depth, 8);
+    return Math.min(Math.max(depth, 8), 25);
   }
   
   /**

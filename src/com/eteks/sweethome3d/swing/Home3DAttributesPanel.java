@@ -102,7 +102,7 @@ public class Home3DAttributesPanel extends JPanel {
     this.observerFieldOfViewSpinner = new JSpinner(new SpinnerNumberModel(10, 10, 120, 1));
     this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitText));
     this.observerHeightSpinner = new JSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 250f));
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f));
     
     this.groundColorRadioButton = new JRadioButton(this.resource.getString("groundColorRadioButton.text"));
     this.groundColorButton = new ColorButton();
