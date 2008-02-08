@@ -175,8 +175,9 @@ public class SweetHome3D extends HomeApplication {
         }
       }      
       
-      initLookAndFeel();
       application = createApplication();
+      // Init look and feel afterwards to ensure that Swing takes into account default locale change
+      initLookAndFeel();
     }
 
     if (args.length == 2 && args [0].equals("-open")) {
@@ -258,7 +259,7 @@ public class SweetHome3D extends HomeApplication {
         UIManager.put("TitledBorder.border", 
             UIManager.getBorder("TitledBorder.aquaVariant"));
       }
-    } catch (Exception e) {
+    } catch (Exception ex) {
       // Too bad keep current look and feel
     }
   }
