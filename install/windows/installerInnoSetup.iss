@@ -39,11 +39,12 @@ Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
+Name: "czech"; MessagesFile: "compiler:Languages\Czech.isl"
+Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 ;Name: associate; Description: "{cm:AssocFileExtension,Sweet Home 3D,sh3d}"; GroupDescription: "{cm:OtherTasks}"
-
 
 [Files]
 Source: "tmp\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

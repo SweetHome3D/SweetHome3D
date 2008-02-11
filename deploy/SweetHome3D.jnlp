@@ -30,9 +30,14 @@
   </information>
   <information locale="cs">
     <title>Sweet Home 3D</title>
-    <description kind="short">Sestavte si design interieru va\u0161eho domu</description>
+    <description kind="short">Sestavte si design interieru vaseho domu</description>
     <offline-allowed/>
   </information>
+  <information locale="pl">
+    <title>Sweet Home 3D</title>
+    <description kind="short">Zaprojektuj wnetrze swojego domu</description>
+    <offline-allowed/>
+  </information>  
 
   <security>
     <all-permissions/>
