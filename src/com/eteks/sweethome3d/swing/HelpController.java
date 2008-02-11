@@ -164,11 +164,13 @@ public class HelpController {
     ResourceBundle resource = ResourceBundle.getBundle(HelpController.class.getName());
     URL helpIndex = HelpController.class.getResource(resource.getString("helpIndex"));
     String [] searchedWords = searchedText.split("\\s");
-
+    for (int i = 0; i < searchedWords.length; i++) {
+      searchedWords [i] = searchedWords [i].toLowerCase();
+    }
     List<HelpDocument> helpDocuments = searchInHelpDocuments(helpIndex, searchedWords);
     // Build dynamically the search result page
     final StringBuilder htmlText = new StringBuilder(
-        "<html><head><link href='" 
+        "<html><head><meta http-equiv='content-type' content='text/html;charset=UTF-8'><link href='" 
         + HelpController.class.getResource("resources/help/help.css")
         + "' rel='stylesheet'></head><body bgcolor='#ffffff'>\n"
         + "<div id='banner'><div id='helpheader'>"
@@ -223,7 +225,7 @@ public class HelpController {
                 @Override
                 public InputStream getInputStream() throws IOException {
                   return new ByteArrayInputStream(
-                      htmlText.toString().getBytes("ISO-8859-1"));
+                      htmlText.toString().getBytes("UTF-8"));
                 }
               };
           }
