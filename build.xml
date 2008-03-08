@@ -287,7 +287,6 @@
   	
     <!-- Copy JRE to install/linux/i386/SweetHome3D-1.2.1/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-  	<!--
     <copy todir="install/linux/i386/SweetHome3D-1.2.1/jre1.6.0_04">
       <fileset dir="jre1.6.0_04">
         <include name="**"/>
@@ -303,7 +302,6 @@
         <exclude name="bin/servertool"/>
       </fileset>
     </copy>
-    -->
 
     <!-- Create SweetHome3D command -->
     <concat destfile="install/linux/i386/SweetHome3D-1.2.1/SweetHome3D">#!/bin/sh
