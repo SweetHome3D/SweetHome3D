@@ -776,7 +776,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         extraMargin = WALL_STROKE_WIDTH / 2;
       }
       if (Home.getDimensionLinesSubList(selectedItems).size() > 0) {
-        float dimensionLinesTextHeight = getFontMetrics(getFont()).getHeight() * clipboardScale;
+        float dimensionLinesTextHeight = getFontMetrics(getFont()).getHeight() * 1.5f * clipboardScale;
         extraMargin = Math.max(extraMargin, dimensionLinesTextHeight);
       }
       BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin), 
