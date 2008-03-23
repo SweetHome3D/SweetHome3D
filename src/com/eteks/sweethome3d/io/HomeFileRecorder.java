@@ -49,7 +49,7 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class HomeFileRecorder implements HomeRecorder {
   /**
    * Writes home data.
-   * @throws RecorderException if a probleme occured while writing home.
+   * @throws RecorderException if a problem occurred while writing home.
    */
   public void writeHome(Home home, String name) throws RecorderException {
     HomeOutputStream out = null;
@@ -72,7 +72,7 @@ public class HomeFileRecorder implements HomeRecorder {
 
   /**
    * Returns a home instance read from its file <code>name</code>.
-   * @throws RecorderException if a probleme occured while reading home, 
+   * @throws RecorderException if a problem occurred while reading home, 
    *   or if file <code>name</code> doesn't exist.
    */
   public Home readHome(String name) throws RecorderException {
@@ -116,7 +116,7 @@ public class HomeFileRecorder implements HomeRecorder {
     }
 
     /**
-     * Writes home in a zipped stream followed by <code>Content</code> objets 
+     * Writes home in a zipped stream followed by <code>Content</code> objects 
      * it points to.
      */
     public void writeHome(Home home) throws IOException {
