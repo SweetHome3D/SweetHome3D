@@ -19,7 +19,14 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -39,10 +46,13 @@ import javax.vecmath.Vector3f;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.microcrowd.loader.java3d.max3ds.Loader3DS;
 import com.sun.j3d.loaders.IncorrectFormatException;
 import com.sun.j3d.loaders.Loader;
 import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
+import com.sun.j3d.loaders.lw3d.Lw3dLoader;
+import com.sun.j3d.loaders.objectfile.ObjectFile;
 
 /**
  * Singleton managing 3D models cache.
@@ -134,9 +144,10 @@ public class ModelManager {
       contentURL = TemporaryURLContent.copyToTemporaryURLContent(content);
     }
     
-    Loader [] loaders = {new com.sun.j3d.loaders.objectfile.ObjectFile(),
-                         new com.microcrowd.loader.java3d.max3ds.Loader3DS(),
-                         new com.sun.j3d.loaders.lw3d.Lw3dLoader()};
+    Loader [] loaders = {new ObjectFile(),
+                         new ObjectFileTranslator(),
+                         new Loader3DS(),
+                         new Lw3dLoader()};
     Exception lastException = null;
     for (Loader loader : loaders) {
       try {     
@@ -214,6 +225,120 @@ public class ModelManager {
       }
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
+    }
+  }
+
+  /**
+   * An object file loader that translates lines starting by "o" unsupported by 
+   * <code>ObjectFile</code> loader to lines starting by "g".
+   */
+  public static class ObjectFileTranslator extends ObjectFile {
+    @Override
+    public Scene load(final URL defaultUrl) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
+      try {
+        // Load scene with a filtered URL input stream
+        return super.load(new URL(defaultUrl, "", new URLStreamHandler() {
+            @Override
+            protected URLConnection openConnection(URL url) throws IOException {
+              // Get default connection
+              final URLConnection defaultConnection = defaultUrl.openConnection();
+              return new URLConnection(url) {
+                  @Override
+                  public void connect() throws IOException {
+                    defaultConnection.connect();
+                  }
+                  
+                  @Override
+                  public InputStream getInputStream() throws IOException {
+                    InputStream defaultInputStream = defaultConnection.getInputStream();
+                    return new OToGFilterInputStream(defaultInputStream);
+                  }
+                };
+            }
+          }));
+      } catch (MalformedURLException ex) {
+        // If url is malformed, let default implementation decide what to do  
+        return super.load(defaultUrl);
+      }
+    }
+  }
+
+  /**
+   * An input stream filter that replaces lines starting by 'o' letter 
+   * followed by a space by 'g' letters.
+   */
+  private static class OToGFilterInputStream extends PushbackInputStream {
+    public OToGFilterInputStream(InputStream in) {
+      super(in, 2);
+    }
+
+    @Override
+    public int read() throws IOException {
+      int b = super.read();
+      // If read byte is a line return followed by a 'o' and a space or a tab, 
+      // replace 'o' by 'g'
+      if (b == '\n'
+          || b == '\r') {
+        int nextByte = super.read();
+        if (nextByte == 'o') {
+          int nextNextByte = super.read();
+          if (nextNextByte != -1) {
+            unread(nextNextByte);
+          }
+          if (nextNextByte == ' ' || nextNextByte == '\t') {
+            unread('g');
+          } else {
+            unread(nextByte);
+          }
+        } else if (nextByte != -1) {
+          unread(nextByte);
+        }
+      }
+      return b;
+    }
+
+    @Override
+    public int read(byte [] bytes, int off, int len) throws IOException {
+      int byteCount = super.read(bytes, off, len);
+      if (byteCount >= 0) {
+        for (int i = 0; i < byteCount; i++) {
+          byte b = bytes [off + i];
+          // If read byte is a line return followed by a 'o' and a space or a tab, 
+          // replace 'o' by 'g'
+          if (b == '\n'
+              || b == '\r') {
+            int nextByte;
+            if (i >= byteCount - 1) {
+              nextByte = super.read();
+            } else {
+              nextByte = bytes [off + i + 1];
+            }
+            
+            if (nextByte == 'o') {
+              int nextNextByte;
+              if (i >= byteCount - 2) {
+                nextNextByte = super.read();
+                if (nextNextByte != -1) {
+                  unread(nextNextByte);
+                }
+              } else {
+                nextNextByte = bytes [off + i + 2];
+              }
+              
+              if (nextNextByte == ' ' || nextNextByte == '\t') {
+                if (i >= byteCount - 1) {
+                  unread('g');
+                } else {
+                  bytes [off + i + 1] = 'g';
+                }
+              } 
+            } else if (i >= byteCount - 1 && nextByte != -1) {              
+              unread(nextByte);
+            }
+          }
+        }
+      }
+      return byteCount;
     }
   }
 }
