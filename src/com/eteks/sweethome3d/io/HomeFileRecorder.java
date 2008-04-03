@@ -53,17 +53,30 @@ public class HomeFileRecorder implements HomeRecorder {
    */
   public void writeHome(Home home, String name) throws RecorderException {
     HomeOutputStream out = null;
+    File tempFile = null;
     try {
-      // Open a stream on file name
-      out = new HomeOutputStream(new FileOutputStream(name));
+      // Open a stream on a temporary file name
+      tempFile = File.createTempFile("save", ".sh3d");
+      out = new HomeOutputStream(new FileOutputStream(tempFile));
       // Write home with HomeOuputStream
       out.writeHome(home);
     } catch (IOException ex) {
       throw new RecorderException("Can't save home " + name, ex);
     } finally {
       try {
-        if (out != null)
+        if (out != null) {
           out.close();
+          // As writing succeeded, replace old file by temporary file
+          File homeFile = new File(name);
+          if (homeFile.exists()
+              && !homeFile.delete()) {
+            tempFile.delete();
+            throw new RecorderException("Can't replace file " + name);
+          }
+          if (!tempFile.renameTo(homeFile)) {
+            throw new RecorderException("Can't rename file " + tempFile + " to " + name);
+          }
+        }
       } catch (IOException ex) {
         throw new RecorderException("Can't close file " + name, ex);
       }
@@ -89,8 +102,9 @@ public class HomeFileRecorder implements HomeRecorder {
       throw new RecorderException("Missing classes to read home from " + name, ex);
     } finally {
       try {
-        if (in != null)
+        if (in != null) {
           in.close();
+        }
       } catch (IOException ex) {
         throw new RecorderException("Can't close file " + name, ex);
       }
