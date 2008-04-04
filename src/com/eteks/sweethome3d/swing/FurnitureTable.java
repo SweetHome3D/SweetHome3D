@@ -178,11 +178,14 @@ public class FurnitureTable extends JTable implements Printable {
     TableModel tableModel = getModel();
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       TableColumn column = columnModel.getColumn(columnIndex);
+      int modelColumnIndex = convertColumnIndexToModel(columnIndex);
       int preferredWidth = column.getHeaderRenderer().getTableCellRendererComponent(
           this, column.getHeaderValue(), false, false, -1, columnIndex).getPreferredSize().width;
       for (int rowIndex = 0, m = tableModel.getRowCount(); rowIndex < m; rowIndex++) {
-        preferredWidth = Math.max(preferredWidth, column.getCellRenderer().getTableCellRendererComponent(
-            this, tableModel.getValueAt(rowIndex, columnIndex), false, false, -1, columnIndex).getPreferredSize().width);
+        preferredWidth = Math.max(preferredWidth, 
+            column.getCellRenderer().getTableCellRendererComponent(
+                this, tableModel.getValueAt(rowIndex, modelColumnIndex), false, false, -1, columnIndex).
+                    getPreferredSize().width);
       }
       column.setPreferredWidth(preferredWidth + intercellWidth);
       column.setWidth(preferredWidth + intercellWidth);
