@@ -264,8 +264,8 @@ public class WallPanel extends JPanel {
    */
   private void layoutComponents(UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
-        ? GridBagConstraints.EAST
-        : GridBagConstraints.WEST;
+        ? GridBagConstraints.LINE_END
+        : GridBagConstraints.LINE_START;
     // First row
     JPanel startPointPanel = createTitledPanel(
         this.resource.getString("startPointPanel.title"),
@@ -279,7 +279,7 @@ public class WallPanel extends JPanel {
       rowInsets = new Insets(0, 0, 5, 0);
     }
     add(startPointPanel, new GridBagConstraints(
-        0, 0, 2, 1, 0, 0, GridBagConstraints.WEST,
+        0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     JPanel endPointPanel = createTitledPanel(
@@ -287,7 +287,7 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
     add(endPointPanel, new GridBagConstraints(
-        0, 1, 2, 1, 0, 0, GridBagConstraints.WEST,
+        0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Third row
     JPanel leftSidePanel = createTitledPanel(
@@ -295,14 +295,14 @@ public class WallPanel extends JPanel {
         new JComponent [] {this.leftSideColorRadioButton, this.leftSideColorButton, 
                            this.leftSideTextureRadioButton, this.leftSideTextureButton}, false);
     add(leftSidePanel, new GridBagConstraints(
-        0, 2, 1, 1, 1, 0, GridBagConstraints.WEST,
+        0, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     JPanel rightSidePanel = createTitledPanel(
         this.resource.getString("rightSidePanel.title"),
         new JComponent [] {this.rightSideColorRadioButton, this.rightSideColorButton, 
                            this.rightSideTextureRadioButton, this.rightSideTextureButton}, false);
     add(rightSidePanel, new GridBagConstraints(
-        1, 2, 1, 1, 1, 0, GridBagConstraints.WEST,
+        1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
     JPanel heightPanel = new JPanel(new GridBagLayout());
@@ -311,53 +311,53 @@ public class WallPanel extends JPanel {
         BorderFactory.createEmptyBorder(0, 2, 2, 2)));   
     // First row of height panel
     heightPanel.add(this.rectangularWallRadioButton, new GridBagConstraints(
-        0, 0, 5, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Second row of height panel
     // Add a dummy label to align second and fourth row on radio buttons text
     heightPanel.add(new JLabel(), new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), new JRadioButton().getPreferredSize().width + 2, 0));
     heightPanel.add(this.rectangularWallHeightLabel, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     heightPanel.add(this.rectangularWallHeightSpinner, new GridBagConstraints(
-        2, 1, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     // Third row of height panel
     heightPanel.add(this.slopingWallRadioButton, new GridBagConstraints(
-        0, 2, 5, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 2, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
     // Fourth row of height panel
     heightPanel.add(this.slopingWallHeightAtStartLabel, new GridBagConstraints(
         1, 3, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtStartSpinner, new GridBagConstraints(
-        2, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        2, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtEndLabel, new GridBagConstraints(
         3, 3, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtEndSpinner, new GridBagConstraints(
-        4, 3, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        4, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     
     add(heightPanel, new GridBagConstraints(
-        0, 3, 2, 1, 1, 0, GridBagConstraints.WEST,
+        0, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
     // Fifth row
     JPanel ticknessPanel = new JPanel(new GridBagLayout());
     ticknessPanel.add(this.thicknessLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 62, 0));
     if (OperatingSystem.isMacOSX()) {
-      this.thicknessLabel.setHorizontalAlignment(JLabel.RIGHT);
+      this.thicknessLabel.setHorizontalAlignment(JLabel.TRAILING);
     }
     ticknessPanel.add(this.thicknessSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+        1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(ticknessPanel, new GridBagConstraints(
-        0, 4, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 10, 0), 0, 0));
     // Last row
     add(this.wallOrientationLabel, new GridBagConstraints(
@@ -377,8 +377,8 @@ public class WallPanel extends JPanel {
     
     if (horizontal) {
       int labelAlignment = OperatingSystem.isMacOSX() 
-          ? GridBagConstraints.EAST
-          : GridBagConstraints.WEST;
+          ? GridBagConstraints.LINE_END
+          : GridBagConstraints.LINE_START;
       Insets labelInsets = new Insets(0, 0, 0, 5);
       Insets insets = new Insets(0, 0, 0, 5);
       for (int i = 0; i < components.length - 1; i += 2) {
@@ -386,22 +386,22 @@ public class WallPanel extends JPanel {
             i, 0, 1, 1, 1, 0, labelAlignment, 
             GridBagConstraints.NONE, labelInsets, 0, 0));
         titledPanel.add(components [i + 1], new GridBagConstraints(
-            i + 1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            i + 1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
             GridBagConstraints.HORIZONTAL, insets, 0, 0));
       }
     
       titledPanel.add(components [components.length - 1], new GridBagConstraints(
-          components.length - 1, 0, 1, 1, 1, 0, GridBagConstraints.WEST, 
+          components.length - 1, 0, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     } else {
       for (int i = 0; i < components.length; i += 2) {
         int bottomInset = i < components.length - 2  ? 2  : 0;
         titledPanel.add(components [i], new GridBagConstraints(
-            0, i / 2, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            0, i / 2, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
             GridBagConstraints.NONE, 
             new Insets(0, 0, bottomInset , 5), 0, 0));
         titledPanel.add(components [i + 1], new GridBagConstraints(
-            1, i / 2, 1, 1, 1, 0, GridBagConstraints.WEST, 
+            1, i / 2, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, bottomInset, 0), 0, 0));
       }
     }

@@ -157,64 +157,65 @@ public class UserPreferencesPanel extends JPanel {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
     int labelAlignment = OperatingSystem.isMacOSX() 
-        ? GridBagConstraints.EAST
-        : GridBagConstraints.WEST;
+        ? GridBagConstraints.LINE_END
+        : GridBagConstraints.LINE_START;
     Insets labelInsets = new Insets(0, 0, 5, 5);
+    // First row
     add(this.languageLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
     add(this.languageComboBox, new GridBagConstraints(
-        1, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-
+    // Second row
     add(this.unitLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.centimeterRadioButton, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.inchRadioButton, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets , 0, 0));
-    
+    // Third row
     add(this.magnetismEnabledLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.magnetismCheckBox, new GridBagConstraints(
-        1, 2, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    
+    // Fourth row
     add(this.rulersVisibleLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.rulersCheckBox, new GridBagConstraints(
-        1, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    
+    // Fifth row
     add(this.gridVisibleLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.gridCheckBox, new GridBagConstraints(
-        1, 4, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    
+    // Sixth row
     add(this.newWallThicknessLabel, new GridBagConstraints(
         0, 5, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.newWallThicknessSpinner, new GridBagConstraints(
-        1, 5, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    
+    // Seventh row
     add(this.newHomeWallHeightLabel, new GridBagConstraints(
         0, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.newHomeWallHeightSpinner, new GridBagConstraints(
-        1, 6, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 

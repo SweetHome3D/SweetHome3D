@@ -181,12 +181,12 @@ public class Home3DAttributesPanel extends JPanel {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
     int labelAlignment = OperatingSystem.isMacOSX() 
-        ? GridBagConstraints.EAST
-        : GridBagConstraints.WEST;
+        ? GridBagConstraints.LINE_END
+        : GridBagConstraints.LINE_START;
     // First row
     Insets labelInsets = new Insets(0, 0, 10, 5);
     add(this.observerFieldOfViewLabel, new GridBagConstraints(
@@ -194,14 +194,14 @@ public class Home3DAttributesPanel extends JPanel {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets componentInsets = new Insets(0, 0, 10, 10);
     add(this.observerFieldOfViewSpinner, new GridBagConstraints(
-        1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 10, 0));
     add(this.observerHeightLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.observerHeightSpinner, new GridBagConstraints(
-        3, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
     // Second row
     Insets closeLabelInsets = new Insets(0, 0, 2, 5);
@@ -209,34 +209,34 @@ public class Home3DAttributesPanel extends JPanel {
         0, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.groundColorButton, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 10), 0, 0));
     add(this.skyColorLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.skyColorButton, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
     // Third row
     add(this.groundTextureRadioButton, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.groundTextureButton, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     // Fourth row
     add(this.brightnessLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.brightnessSlider, new GridBagConstraints(
-        1, 3, 3, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Last row
     add(this.wallsTransparencyLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.wallsTransparencySlider, new GridBagConstraints(
-        1, 4, 3, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 4, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 

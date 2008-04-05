@@ -227,13 +227,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     
     JPanel imageChoicePanel = new JPanel(new GridBagLayout());
     imageChoicePanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     imageChoicePanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     imageChoicePanel.add(this.imageChoiceErrorLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     imageChoicePanel.add(this.imageChoicePreviewComponent, new GridBagConstraints(
         0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
@@ -241,13 +241,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     
     JPanel scalePanel = new JPanel(new GridBagLayout());
     scalePanel.add(this.scaleLabel, new GridBagConstraints(
-        0, 0, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     scalePanel.add(this.scaleDistanceLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     scalePanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     scalePanel.add(this.scalePreviewComponent, new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
@@ -255,19 +255,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
 
     JPanel originPanel = new JPanel(new GridBagLayout());
     originPanel.add(this.originLabel, new GridBagConstraints(
-        0, 0, 4, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
     originPanel.add(this.xOriginLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     originPanel.add(this.xOriginSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 10), -10, 0));
     originPanel.add(this.yOriginLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     originPanel.add(this.yOriginSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
     originPanel.add(this.originPreviewComponent, new GridBagConstraints(
         0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 

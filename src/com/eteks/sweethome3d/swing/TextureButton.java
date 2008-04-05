@@ -93,7 +93,7 @@ public class TextureButton extends JButton {
         JOptionPane optionPane = new JOptionPane(texturePanel, JOptionPane.PLAIN_MESSAGE, 
             JOptionPane.OK_CANCEL_OPTION);
         JDialog dialog = optionPane.createDialog(
-            SwingUtilities.getRoot(TextureButton.this), textureDialogTitle);
+            SwingUtilities.getRootPane(TextureButton.this), textureDialogTitle);
         dialog.setMinimumSize(getPreferredSize());
         dialog.setResizable(true);
         dialog.setVisible(true);

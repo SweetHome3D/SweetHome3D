@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -847,7 +848,7 @@ public class HomePane extends JRootPane {
    * Returns the tool bar displayed in this pane.
    */
   private JToolBar getToolBar() {
-    JToolBar toolBar = new JToolBar();
+    final JToolBar toolBar = new JToolBar();
     toolBar.add(getToolBarAction(ActionType.NEW_HOME));
     toolBar.add(getToolBarAction(ActionType.OPEN));
     toolBar.add(getToolBarAction(ActionType.SAVE));
@@ -905,9 +906,25 @@ public class HomePane extends JRootPane {
       toolBar.getComponentAtIndex(i).setFocusable(false);      
     }
     
-    // Under Mac OS X 10.5 use segmented buttons and group them depending
-    // on whether a button is after or before a separator
+    updateToolBarButtonsStyle(toolBar);
+    toolBar.addPropertyChangeListener("componentOrientation", 
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateToolBarButtonsStyle(toolBar);
+          }
+        });
+    
+    return toolBar;
+  }
+
+  /**
+   * Under Mac OS X 10.5 use segmented buttons and group them depending
+    on toolbar orientation and whether a button is after or before a separator.
+   */
+  private void updateToolBarButtonsStyle(JToolBar toolBar) {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+      ComponentOrientation orientation = toolBar.getComponentOrientation();
       Component previousComponent = null;
       for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {        
         JComponent component = (JComponent)toolBar.getComponentAtIndex(i); 
@@ -926,17 +943,21 @@ public class HomePane extends JRootPane {
             && !(nextComponent instanceof AbstractButton)) {
           component.putClientProperty("JButton.segmentPosition", "only");
         } else if (previousComponent == null) {
-          component.putClientProperty("JButton.segmentPosition", "first");
+          component.putClientProperty("JButton.segmentPosition", 
+              orientation == ComponentOrientation.RIGHT_TO_LEFT 
+                ? "last"
+                : "first");
         } else if (!(nextComponent instanceof AbstractButton)) {
-          component.putClientProperty("JButton.segmentPosition", "last");
+          component.putClientProperty("JButton.segmentPosition",
+              orientation == ComponentOrientation.RIGHT_TO_LEFT 
+                ? "first"
+                : "last");
         } else {
           component.putClientProperty("JButton.segmentPosition", "middle");
         }
         previousComponent = component;
       }
     }
-    
-    return toolBar;
   }
   
   /**

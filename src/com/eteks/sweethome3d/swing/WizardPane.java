@@ -214,7 +214,7 @@ public class WizardPane extends JOptionPane {
           }
         });
       // We don't use JOptionPane icon to let icon background spread in all height 
-      messagePanel.add(iconLabel, BorderLayout.WEST);
+      messagePanel.add(iconLabel, BorderLayout.LINE_START);
     } 
   }
 

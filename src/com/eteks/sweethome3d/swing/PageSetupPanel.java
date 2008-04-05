@@ -119,15 +119,15 @@ public class PageSetupPanel extends JPanel {
     // Second row
     Insets componentInsets = new Insets(0, 0, 5, 0);
     add(this.furniturePrintedCheckBox, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, componentInsets , 0, 0));
     // Third row
     add(this.planPrintedCheckBox, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, componentInsets , 0, 0));
     // Last row
     add(this.view3DPrintedCheckBox, new GridBagConstraints(
-        0, 3, 2, 1, 0, 0, GridBagConstraints.WEST, 
+        0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
