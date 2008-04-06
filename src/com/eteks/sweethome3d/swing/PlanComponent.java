@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.ComponentOrientation;
 import java.awt.Composite;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -2267,6 +2268,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       float yMin = (float)planBounds.getMinY() - MARGIN;
       float xMax = convertXPixelToModel(getWidth());
       float yMax = convertYPixelToModel(getHeight());
+      boolean leftToRightOriented = getComponentOrientation() == ComponentOrientation.LEFT_TO_RIGHT;
 
       FontMetrics metrics = getFontMetrics(getFont());
       int fontAscent = metrics.getAscent();
@@ -2305,24 +2307,42 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         }
       } else {
         // Draw vertical rule base
-        g2D.draw(new Line2D.Float(xMax - lineWidth, yMin, xMax - lineWidth, yMax));
+        if (leftToRightOriented) {
+          g2D.draw(new Line2D.Float(xMax - lineWidth, yMin, xMax - lineWidth, yMax));
+        } else {
+          g2D.draw(new Line2D.Float(xMin + lineWidth, yMin, xMin + lineWidth, yMax));
+        }
         // Draw horizontal lines
         for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
           if (Math.abs(Math.abs(y) % textInterval - textInterval) < 1E-2 
               || Math.abs(Math.abs(y) % textInterval) < 1E-2) {
-            // Draw big tick
-            g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
-            // Draw unit text with a vertical orientation
             AffineTransform previousTransform = g2D.getTransform();
-            g2D.translate(xMax - mainTickSize, y);
-            g2D.scale(1 / rulerScale, 1 / rulerScale);
-            g2D.rotate(-Math.PI / 2);
             String yText = getFormattedTickText(format, y);
-            g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
+            if (leftToRightOriented) {
+              // Draw big tick
+              g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+              // Draw unit text with a vertical orientation
+              g2D.translate(xMax - mainTickSize, y);
+              g2D.scale(1 / rulerScale, 1 / rulerScale);
+              g2D.rotate(-Math.PI / 2);
+              g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
+            } else {
+              // Draw big tick
+              g2D.draw(new Line2D.Float(xMin, y, xMin +  mainTickSize, y));
+              // Draw unit text with a vertical orientation
+              g2D.translate(xMin + mainTickSize, y);
+              g2D.scale(1 / rulerScale, 1 / rulerScale);
+              g2D.rotate(Math.PI / 2);
+              g2D.drawString(yText, 3, fontAscent - 1);
+            }
             g2D.setTransform(previousTransform);
           } else {
             // Draw small tick
-            g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
+            if (leftToRightOriented) {
+              g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
+            } else {
+              g2D.draw(new Line2D.Float(xMin, y, xMin + tickSize, y));
+            }
           }
         }
       }
@@ -2338,7 +2358,11 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         } else {
           // Draw positive main horizontal lines
           for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
-            g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+            if (leftToRightOriented) {
+              g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+            } else {
+              g2D.draw(new Line2D.Float(xMin, y, xMax + mainTickSize, y));
+            }
           }
         }
       }
@@ -2353,7 +2377,11 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         } else {
           // Draw mouse feeback horizontal line
           float y = convertYPixelToModel(this.mouseLocation.y);
-          g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+          if (leftToRightOriented) {
+            g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
+          } else {
+            g2D.draw(new Line2D.Float(xMin, y, xMin + mainTickSize, y));
+          }
         }
       }
     }
