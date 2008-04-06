@@ -224,6 +224,7 @@ public class UserPreferencesPanel extends JPanel {
    */
   public void setPreferences(UserPreferences preferences) {
     this.languageComboBox.setModel(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
+    this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
     this.languageComboBox.setSelectedItem(preferences.getLanguage());
     if (preferences.getUnit() == UserPreferences.Unit.INCH) {
       this.inchRadioButton.setSelected(true);
