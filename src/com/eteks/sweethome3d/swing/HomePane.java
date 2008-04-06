@@ -919,7 +919,7 @@ public class HomePane extends JRootPane {
 
   /**
    * Under Mac OS X 10.5 use segmented buttons and group them depending
-    on toolbar orientation and whether a button is after or before a separator.
+   * on toolbar orientation and whether a button is after or before a separator.
    */
   private void updateToolBarButtonsStyle(JToolBar toolBar) {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
@@ -944,14 +944,14 @@ public class HomePane extends JRootPane {
           component.putClientProperty("JButton.segmentPosition", "only");
         } else if (previousComponent == null) {
           component.putClientProperty("JButton.segmentPosition", 
-              orientation == ComponentOrientation.RIGHT_TO_LEFT 
-                ? "last"
-                : "first");
-        } else if (!(nextComponent instanceof AbstractButton)) {
-          component.putClientProperty("JButton.segmentPosition",
-              orientation == ComponentOrientation.RIGHT_TO_LEFT 
+              orientation == ComponentOrientation.LEFT_TO_RIGHT 
                 ? "first"
                 : "last");
+        } else if (!(nextComponent instanceof AbstractButton)) {
+          component.putClientProperty("JButton.segmentPosition",
+              orientation == ComponentOrientation.LEFT_TO_RIGHT 
+                ? "last"
+                : "first");
         } else {
           component.putClientProperty("JButton.segmentPosition", "middle");
         }

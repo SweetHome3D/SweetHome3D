@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d;
 
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -34,6 +35,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
@@ -50,6 +52,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -132,6 +135,8 @@ public class HomeFramePane extends JRootPane {
           }
         });
     }
+    // Change component orientation
+    applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     // Compute frame size and location
     computeFrameBounds(homeFrame);
     // Enable windows to update their content while window resizing
@@ -211,6 +216,9 @@ public class HomeFramePane extends JRootPane {
     // Add a listener to catalog to update the catalog selected furniture displayed by this pane
     application.getUserPreferences().getFurnitureCatalog().addFurnitureListener(
         new CatalogChangeFurnitureListener(this));
+    // Add a listener to preferences to apply component orientation to frame matching current language
+    application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(frame));
     // Dispose window when a home is deleted 
     application.addHomeListener(new HomeListener() {
         public void homeChanged(HomeEvent ev) {
@@ -233,7 +241,7 @@ public class HomeFramePane extends JRootPane {
         }
       });
   }
-  
+
   /**
    * Catalog listener that updates catalog selection furniture each time a piece of furniture 
    * is deleted from catalog. This listener is bound to this controller 
@@ -261,6 +269,29 @@ public class HomeFramePane extends JRootPane {
     }
   }
 
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private WeakReference<JFrame> frame;
+
+    public LanguageChangeListener(JFrame frame) {
+      this.frame = new WeakReference<JFrame>(frame);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If frame was garbage collected, remove this listener from preferences
+      JFrame frame = this.frame.get();
+      if (frame == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+      }
+    }
+  }
+  
   /**
    * Computes <code>frame</code> size and location to fit into screen.
    */

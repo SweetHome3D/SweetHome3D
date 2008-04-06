@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Frame;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -30,6 +31,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
@@ -248,6 +250,7 @@ public class WizardPane extends JOptionPane {
     }
     
     this.dialog = createDialog(parent, this.title);
+    this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     this.dialog.setMinimumSize(getSize());
     this.dialog.setResizable(this.resizable);
     this.dialog.setVisible(true);

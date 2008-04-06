@@ -21,12 +21,14 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
+import java.util.Locale;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -94,6 +96,7 @@ public class TextureButton extends JButton {
             JOptionPane.OK_CANCEL_OPTION);
         JDialog dialog = optionPane.createDialog(
             SwingUtilities.getRootPane(TextureButton.this), textureDialogTitle);
+        dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         dialog.setMinimumSize(getPreferredSize());
         dialog.setResizable(true);
         dialog.setVisible(true);

@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
@@ -33,6 +34,9 @@ import java.awt.LayoutManager;
 import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.geom.GeneralPath;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.Action;
@@ -166,15 +170,14 @@ public class PrintPreviewPanel extends JPanel {
     ActionMap actions = getActionMap();    
     this.toolBar.add(actions.get(ActionType.SHOW_PREVIOUS_PAGE));
     this.toolBar.add(actions.get(ActionType.SHOW_NEXT_PAGE));
-    // Use segmented buttons under Mac OS X 10.5
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
-      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      previousButton.putClientProperty("JButton.segmentPosition", "first");
-      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
-      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      nextButton.putClientProperty("JButton.segmentPosition", "last");
-    }    
+    updateToolBarButtonsStyle(this.toolBar);
+    this.toolBar.addPropertyChangeListener("componentOrientation", 
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateToolBarButtonsStyle(toolBar);
+          }
+        });
+    
     this.toolBar.add(Box.createHorizontalStrut(20));
     this.toolBar.add(this.pageLabel);
     
@@ -185,7 +188,31 @@ public class PrintPreviewPanel extends JPanel {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Under Mac OS X 10.5 use segmented buttons with properties 
+   * depending on toolbar orientation.
+   */
+  private void updateToolBarButtonsStyle(JToolBar toolBar) {
+    // Use segmented buttons under Mac OS X 10.5
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+      ComponentOrientation orientation = toolBar.getComponentOrientation();
+      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
+      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
+      previousButton.putClientProperty("JButton.segmentPosition", 
+          orientation == ComponentOrientation.LEFT_TO_RIGHT 
+            ? "first"
+            : "last");
+      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
+      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
+      nextButton.putClientProperty("JButton.segmentPosition", 
+          orientation == ComponentOrientation.LEFT_TO_RIGHT 
+            ? "last"
+            : "first");
+    }
+  }
+    
+  /**
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
     // First row
@@ -226,6 +253,7 @@ public class PrintPreviewPanel extends JPanel {
     }
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
     JDialog dialog = optionPane.createDialog(parent, dialogTitle);
+    dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     dialog.setMinimumSize(dialog.getPreferredSize());
     dialog.setResizable(true);
     dialog.setVisible(true);

@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.DefaultFocusTraversalPolicy;
@@ -32,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
@@ -158,6 +160,8 @@ public class HelpPane extends JRootPane {
         // Update frame title and search label
         if (helpPane.frame != null) {
           helpPane.frame.setTitle(resource.getString("helpFrame.title"));
+          helpPane.frame.applyComponentOrientation(
+              ComponentOrientation.getOrientation(Locale.getDefault()));
         }
         helpPane.searchLabel.setText(resource.getString("searchLabel.text"));
         helpPane.searchTextField.setText("");
@@ -225,20 +229,18 @@ public class HelpPane extends JRootPane {
    * Layouts the components displayed by this view.
    */
   private void layoutComponents() {
-    JToolBar toolBar = new JToolBar();
+    final JToolBar toolBar = new JToolBar();
     toolBar.setFloatable(false);
     ActionMap actions = getActionMap();    
     toolBar.add(actions.get(ActionType.SHOW_PREVIOUS));
     toolBar.add(actions.get(ActionType.SHOW_NEXT));
-    // Use segmented buttons under Mac OS X 10.5
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
-      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      previousButton.putClientProperty("JButton.segmentPosition", "first");
-      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
-      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
-      nextButton.putClientProperty("JButton.segmentPosition", "last");
-    }    
+    updateToolBarButtonsStyle(toolBar);
+    toolBar.addPropertyChangeListener("componentOrientation", 
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateToolBarButtonsStyle(toolBar);
+          }
+        });
     toolBar.add(Box.createHorizontalStrut(5));
     
     toolBar.add(Box.createGlue());
@@ -265,6 +267,30 @@ public class HelpPane extends JRootPane {
     getContentPane().add(new JScrollPane(this.helpEditorPane), BorderLayout.CENTER);
   }
 
+  /**
+   * Under Mac OS X 10.5 use segmented buttons with properties 
+   * depending on toolbar orientation.
+   */
+  private void updateToolBarButtonsStyle(JToolBar toolBar) {
+    // Use segmented buttons under Mac OS X 10.5
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+      ComponentOrientation orientation = toolBar.getComponentOrientation();
+      JComponent previousButton = (JComponent)toolBar.getComponentAtIndex(0);
+      previousButton.putClientProperty("JButton.buttonType", "segmentedTextured");
+      previousButton.putClientProperty("JButton.segmentPosition", 
+          orientation == ComponentOrientation.LEFT_TO_RIGHT 
+            ? "first"
+            : "last");
+      JComponent nextButton = (JComponent)toolBar.getComponentAtIndex(1);
+      nextButton.putClientProperty("JButton.buttonType", "segmentedTextured");
+      nextButton.putClientProperty("JButton.segmentPosition", 
+          orientation == ComponentOrientation.LEFT_TO_RIGHT 
+            ? "last"
+            : "first");
+    }
+  }
+    
   /**
    * Adds an hyperlink listener on the editor pane displayed by this pane.
    */
@@ -307,10 +333,11 @@ public class HelpPane extends JRootPane {
           }
         };
       ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
-      // Update frame image ans title 
+      // Update frame image and title 
       this.frame.setIconImage(new ImageIcon(
           HelpPane.class.getResource(resource.getString("helpFrame.icon"))).getImage());
       this.frame.setTitle(resource.getString("helpFrame.title"));
+      this.frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
       // Compute frame size and location
       computeFrameBounds(this.frame);
       // Just hide help frame when user close it
