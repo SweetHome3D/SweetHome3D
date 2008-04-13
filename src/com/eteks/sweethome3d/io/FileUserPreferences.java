@@ -373,17 +373,36 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Writes <code>key</code> <code>content</code> in <code>preferences</code>.
-   * @param furnitureContents 
    */
   private void putContent(Preferences preferences, String key, 
                           Content content, 
                           Set<URL> furnitureContentURLs) throws RecorderException {
     if (content instanceof TemporaryURLContent) {
-      putContent(preferences, key, copyToApplicationURLContent(content), furnitureContentURLs);
+      URLContent urlContent = (URLContent)content;
+      URLContent copiedContent;
+      if (urlContent.isJAREntry()) {
+        try {
+          // If content is a JAR entry copy the content of its URL and rebuild a new URL content from 
+          // this copy and the entry name
+          copiedContent = copyToApplicationURLContent(new URLContent(urlContent.getJAREntryURL()));
+          copiedContent = new URLContent(new URL("jar:" + copiedContent.getURL() + "!/" + urlContent.getJAREntryName()));
+        } catch (MalformedURLException ex) {
+          // Shouldn't happen
+          throw new RecorderException("Can't build URL", ex);
+        }
+      } else {
+        copiedContent = copyToApplicationURLContent(urlContent);
+      }
+      putContent(preferences, key, copiedContent, furnitureContentURLs);
     } else if (content instanceof URLContent) {
-      URL contentURL = ((URLContent)content).getURL();
-      preferences.put(key, contentURL.toString());
-      furnitureContentURLs.add(contentURL);
+      URLContent urlContent = (URLContent)content;
+      preferences.put(key, urlContent.getURL().toString());
+      // Add to furnitureContentURLs the URL to the application file
+      if (urlContent.isJAREntry()) {
+        furnitureContentURLs.add(urlContent.getJAREntryURL());
+      } else {
+        furnitureContentURLs.add(urlContent.getURL());
+      }
     } else {
       putContent(preferences, key, copyToApplicationURLContent(content), furnitureContentURLs);
     }
@@ -393,7 +412,7 @@ public class FileUserPreferences extends UserPreferences {
    * Returns a content object that references a copy of <code>content</code> in 
    * user application folder.
    */
-  private Content copyToApplicationURLContent(Content content) throws RecorderException {
+  private URLContent copyToApplicationURLContent(Content content) throws RecorderException {
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {

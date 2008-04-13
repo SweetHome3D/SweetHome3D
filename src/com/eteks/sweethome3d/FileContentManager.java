@@ -106,6 +106,19 @@ public class FileContentManager implements ContentManager {
        public String getDescription() {
          return "3DS";
        }
+     },
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
+         // Accept directories and ZIP files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".zip");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "ZIP";
+       }
      }};
   /**
    * Supported image file filters.

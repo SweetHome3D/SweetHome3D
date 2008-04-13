@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.tools;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import com.eteks.sweethome3d.model.Content;
@@ -51,5 +52,43 @@ public class URLContent implements Content {
    */
   public InputStream openStream() throws IOException {
     return this.url.openStream();
+  }
+  
+  /**
+   * Returns <code>true</code> if the URL stored by this content 
+   * references an entry in a JAR.
+   */
+  public boolean isJAREntry() {
+    return "jar".equals(this.url.getProtocol());
+  }
+  
+  /**
+   * Returns the URL base of a JAR entry.
+   * @throws IllegalStateException if the URL of this content 
+   *                    doesn't reference an entry in a JAR.
+   */
+  public URL getJAREntryURL() {
+    if (!isJAREntry()) {
+      throw new IllegalStateException("Content isn't a JAR entry");
+    }
+    try {
+      String file = this.url.getFile();
+      return new URL(file.substring(0, file.indexOf('!')));
+    } catch (MalformedURLException ex) {
+      throw new IllegalStateException("Invalid URL base for JAR entry", ex);
+    }
+  }
+
+  /**
+   * Returns the name of a JAR entry.
+   * @throws IllegalStateException if the URL of this content 
+   *                    doesn't reference an entry in a JAR URL.
+   */
+  public String getJAREntryName() {
+    if (!isJAREntry()) {
+      throw new IllegalStateException("Content isn't a JAR entry");
+    }
+    String file = this.url.getFile();
+    return file.substring(file.indexOf('!') + 2);
   }
 }

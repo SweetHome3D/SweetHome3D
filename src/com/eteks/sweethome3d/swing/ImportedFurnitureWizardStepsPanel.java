@@ -55,6 +55,8 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.BasicService;
@@ -882,25 +884,68 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Updates controller values from <code>imageContent</code>.
+   * Reads <code>modelContent</code> and updates controller values.
    */
   private void updateController(final Content modelContent,
                                 final FurnitureCategory defaultCategory) {
     // Read model in modelLoader executor
     modelLoader.execute(new Runnable() {
         public void run() {
+          Content content = null;
           BranchGroup model = null;
           try {
             model = readModel(modelContent);
+            content = modelContent;
           } catch (IOException ex) {
-            // Model loading failed
+            // If content couldn't be loaded, try to load model as a zipped file
+            if (modelContent instanceof URLContent) {
+              URLContent urlContent = (URLContent)modelContent;
+              ZipInputStream zipIn = null;
+              try {
+                // Open zipped stream
+                zipIn = new ZipInputStream(urlContent.openStream());
+                // Parse entries to see if one is readable
+                for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+                  try {
+                    String entryName = entry.getName();
+                    // Ignore directory entries and entries starting by a dot
+                    if (!entryName.endsWith("/")) {
+                      int slashIndex = entryName.lastIndexOf('/');
+                      String entryFileName = entryName.substring(++slashIndex);
+                      if (!entryFileName.startsWith(".")) {
+                        URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
+                        content = modelContent instanceof TemporaryURLContent 
+                            ? new TemporaryURLContent(entryUrl)
+                            : new URLContent(entryUrl);
+                        model = readModel(content);
+                        break;
+                      }
+                    }
+                  } catch (IOException ex3) {
+                    // Ignore exception and try next entry
+                  }
+                }
+              } catch (IOException ex2) {
+                model = null;
+              } finally {
+                try {
+                  if (zipIn != null) {
+                    zipIn.close();
+                  }
+                } catch (IOException ex2) {
+                  // Ignore close exception
+                }
+              }
+            }
           }
+          
           final BranchGroup readModel = model;
+          final Content readContent = content;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 if (readModel != null) {
-                  controller.setModel(modelContent);
+                  controller.setModel(readContent);
                   setModelChangeTexts();
                   modelChoiceErrorLabel.setVisible(false);
                   controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});

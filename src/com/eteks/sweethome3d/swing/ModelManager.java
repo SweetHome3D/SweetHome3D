@@ -53,6 +53,7 @@ import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.lw3d.Lw3dLoader;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
+import com.sun.j3d.utils.image.ImageException;
 
 /**
  * Singleton managing 3D models cache.
@@ -68,11 +69,13 @@ public class ModelManager {
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
   
   private static ModelManager instance;
+  
   // Map storing loaded model nodes
-  private Map<Content, BranchGroup> modelNodes = new WeakHashMap<Content, BranchGroup>();
+  private Map<Content, BranchGroup> modelNodes;
   
   private ModelManager() {    
     // This class is a singleton
+    this.modelNodes = new WeakHashMap<Content, BranchGroup>();
   }
   
   /**
@@ -137,17 +140,28 @@ public class ModelManager {
     }
     
     // Ensure we use a URLContent object
-    URLContent contentURL;
+    URLContent urlContent;
     if (content instanceof URLContent) {
-      contentURL = (URLContent)content;
+      urlContent = (URLContent)content;
     } else {
-      contentURL = TemporaryURLContent.copyToTemporaryURLContent(content);
+      urlContent = TemporaryURLContent.copyToTemporaryURLContent(content);
     }
     
-    Loader [] loaders = {new ObjectFile(),
-                         new ObjectFileTranslator(),
-                         new Loader3DS(),
-                         new Lw3dLoader()};
+    modelNode = loadModel(urlContent);
+    
+    // Store in cache a clone of model node for future copies 
+    modelNodes.put(content, (BranchGroup)modelNode.cloneTree(true));
+    return modelNode;
+  }
+  
+  /**
+   * Returns the model read from <code>urlContent</code> with one of the loaders in parameter.
+   */
+  private BranchGroup loadModel(URLContent urlContent) throws IOException {
+    Loader []  loaders = new Loader [] {new ObjectFile(),
+                                        new ObjectFileTranslator(),
+                                        new Loader3DS(),
+                                        new Lw3dLoader()};
     Exception lastException = null;
     for (Loader loader : loaders) {
       try {     
@@ -156,16 +170,15 @@ public class ModelManager {
             & ~(Loader.LOAD_LIGHT_NODES | Loader.LOAD_FOG_NODES 
                 | Loader.LOAD_BACKGROUND_NODES | Loader.LOAD_VIEW_GROUPS));
         // Return the first scene that can be loaded from model URL content
-        Scene scene = loader.load(contentURL.getURL());
+        Scene scene = loader.load(urlContent.getURL());
 
         // Update transparency of scene window panes shapes
         updateShapeNamesAndWindowPanesTransparency(scene);
         
-        modelNode = scene.getSceneGroup();
+        BranchGroup modelNode = scene.getSceneGroup();
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLights(modelNode);
-        // Store in cache a clone of model node for future copies 
-        modelNodes.put(content, (BranchGroup)modelNode.cloneTree(true));
+
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -174,6 +187,8 @@ public class ModelManager {
       } catch (ParsingErrorException ex) {
         lastException = ex;
       } catch (IOException ex) {
+        lastException = ex;
+      } catch (ImageException ex) {
         lastException = ex;
       }
     }
@@ -189,7 +204,7 @@ public class ModelManager {
     } else {
       throw (IOException)lastException;
     } 
-  }
+  }  
   
   /**
    * Updates the name of scene shapes and transparency window panes shapes.
@@ -251,7 +266,7 @@ public class ModelManager {
                   @Override
                   public InputStream getInputStream() throws IOException {
                     InputStream defaultInputStream = defaultConnection.getInputStream();
-                    return new OToGFilterInputStream(defaultInputStream);
+                    return new OPrefixToGPrefixFilterInputStream(defaultInputStream);
                   }
                 };
             }
@@ -267,8 +282,8 @@ public class ModelManager {
    * An input stream filter that replaces lines starting by 'o' letter 
    * followed by a space by 'g' letters.
    */
-  private static class OToGFilterInputStream extends PushbackInputStream {
-    public OToGFilterInputStream(InputStream in) {
+  private static class OPrefixToGPrefixFilterInputStream extends PushbackInputStream {
+    public OPrefixToGPrefixFilterInputStream(InputStream in) {
       super(in, 2);
     }
 

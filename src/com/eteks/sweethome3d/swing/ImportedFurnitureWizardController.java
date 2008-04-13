@@ -93,7 +93,7 @@ public class ImportedFurnitureWizardController extends WizardController {
   
   /**
    * Creates a controller that edits a new catalog piece of furniture with a given 
-   * <code>model</code>.
+   * <code>modelName</code>.
    */
   public ImportedFurnitureWizardController(String modelName,
                                            UserPreferences preferences,
@@ -122,7 +122,7 @@ public class ImportedFurnitureWizardController extends WizardController {
   
   /**
    * Creates a controller that edits a new imported home piece of furniture
-   * with a given <code>model</code>.
+   * with a given <code>modelName</code>.
    */
   public ImportedFurnitureWizardController(Home home,
                                            String modelName,

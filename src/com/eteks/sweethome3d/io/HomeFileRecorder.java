@@ -144,26 +144,105 @@ public class HomeFileRecorder implements HomeRecorder {
       objectOut.writeObject(home);
       objectOut.flush();
       zipOut.closeEntry();
-      byte [] buffer = new byte [8096];
       // Write Content objects in files "0" to "n"
       for (int i = 0, n = contents.size(); i < n; i++) {
-        InputStream contentIn = null;
-        try {
-          zipOut.putNextEntry(new ZipEntry(String.valueOf(i)));
-          contentIn = contents.get(i).openStream();          
-          int size; 
-          while ((size = contentIn.read(buffer)) != -1) {
-            zipOut.write(buffer, 0, size);
+        Content content = contents.get(i);
+        String entryNameOrDirectory = String.valueOf(i);
+        if (content instanceof URLContent
+            && ((URLContent)content).isJAREntry()) {
+          URLContent urlContent = (URLContent)content;
+          // If content comes from a home stream
+          if (urlContent instanceof HomeURLContent) {
+            writeHomeZipEntries(zipOut, entryNameOrDirectory, (HomeURLContent)urlContent);            
+          } else {
+            writeZipEntries(zipOut, entryNameOrDirectory, urlContent);
           }
-          zipOut.closeEntry();  
-        } finally {
-          if (contentIn != null) {          
-            contentIn.close();
-          }
+        } else {
+          writeZipEntry(zipOut, entryNameOrDirectory, content);
         }
       }  
       // Finish zip writing
       zipOut.finish();
+    }
+
+    /**
+     * Writes in <code>zipOut</code> stream one or more entries matching the content
+     * <code>urlContent</code> coming from a home file.
+     */
+    private void writeHomeZipEntries(ZipOutputStream zipOut,
+                                     String entryNameOrDirectory,
+                                     HomeURLContent urlContent) throws IOException {
+      String entryName = urlContent.getJAREntryName();
+      int slashIndex = entryName.indexOf('/');
+      // If content comes from a directory of a home file
+      if (slashIndex > 0) {
+        String entryDirectory = entryName.substring(0, slashIndex + 1);
+        ZipInputStream zipIn = null;
+        try {
+          // Open zipped stream that contains urlContent
+          zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
+          // Write in home stream each zipped stream entry that is stored in the same directory  
+          for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+            String zipEntryName = entry.getName();
+            if (zipEntryName.startsWith(entryDirectory)) {
+              Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
+              writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(slashIndex), siblingContent);
+            }
+          }
+        } finally {
+          if (zipIn != null) {
+            zipIn.close();
+          }
+        }
+      } else {
+        writeZipEntry(zipOut, entryNameOrDirectory, urlContent);
+      }
+    }
+
+    /**
+     * Writes in <code>zipOut</code> stream all the sibling files of the zipped 
+     * <code>urlContent</code>.
+     */
+    private void writeZipEntries(ZipOutputStream zipOut, 
+                                 String directory,
+                                 URLContent urlContent) throws IOException {
+      ZipInputStream zipIn = null;
+      try {
+        // Open zipped stream that contains urlContent
+        zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
+        // Write each zipped stream entry in home stream 
+        for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+          String zipEntryName = entry.getName();
+          Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
+          writeZipEntry(zipOut, directory + "/" + zipEntryName, siblingContent);
+        }
+      } finally {
+        if (zipIn != null) {
+          zipIn.close();
+        }
+      }
+    }
+
+    /**
+     * Writes in <code>zipOut</code> stream a new entry named <code>entryName</code> that 
+     * contains a given <code>content</code>.
+     */
+    private void writeZipEntry(ZipOutputStream zipOut, String entryName, Content content) throws IOException {
+      byte [] buffer = new byte [8096];
+      InputStream contentIn = null;
+      try {
+        zipOut.putNextEntry(new ZipEntry(entryName));
+        contentIn = content.openStream();          
+        int size; 
+        while ((size = contentIn.read(buffer)) != -1) {
+          zipOut.write(buffer, 0, size);
+        }
+        zipOut.closeEntry();  
+      } finally {
+        if (contentIn != null) {          
+          contentIn.close();
+        }
+      }
     }
 
     /**
@@ -181,8 +260,29 @@ public class HomeFileRecorder implements HomeRecorder {
         if (obj instanceof Content) {
           // Add obj to Content objects list
           contents.add((Content)obj);
+
+          String subEntryName = "";
+          if (obj instanceof URLContent) {
+            URLContent urlContent = (URLContent)obj;
+            // If content comes from a zipped content 
+            if (urlContent.isJAREntry()) {
+              String entryName = urlContent.getJAREntryName();
+              if (urlContent instanceof HomeURLContent) {
+                int slashIndex = entryName.indexOf('/');
+                // If content comes from a directory of a home file
+                if (slashIndex > 0) {
+                  // Retrieve entry name in zipped stream without the directory
+                  subEntryName = entryName.substring(slashIndex);
+                }
+              } else {
+                // Retrieve entry name in zipped stream
+                subEntryName = "/" + urlContent.getJAREntryName();
+              }
+            }
+          } 
+
           // Return a temporary URL that points to content object 
-          return new URLContent(new URL("jar:file:temp!/" + (contents.size() - 1)));
+          return new URLContent(new URL("jar:file:temp!/" + (contents.size() - 1) + subEntryName));
         } else {
           return obj;
         }
@@ -259,11 +359,20 @@ public class HomeFileRecorder implements HomeRecorder {
           URL tmpURL = ((URLContent)obj).getURL();
           // Replace "temp" in URL by current temporary file
           URL fileURL = new URL(tmpURL.toString().replace("temp", tempFile.toString()));
-          return new URLContent(fileURL);
+          return new HomeURLContent(fileURL);
         } else {
           return obj;
         }
       }
+    }
+  }
+
+  /**
+   * An URL content read from a home stream.
+   */
+  private static class HomeURLContent extends URLContent {
+    public HomeURLContent(URL url) {
+      super(url);
     }
   }
 }
