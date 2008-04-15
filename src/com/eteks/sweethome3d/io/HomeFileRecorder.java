@@ -40,6 +40,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -148,8 +149,10 @@ public class HomeFileRecorder implements HomeRecorder {
       for (int i = 0, n = contents.size(); i < n; i++) {
         Content content = contents.get(i);
         String entryNameOrDirectory = String.valueOf(i);
-        if (content instanceof URLContent
-            && ((URLContent)content).isJAREntry()) {
+        if (content instanceof ResourceURLContent) {
+          writeResourceZipEntries(zipOut, entryNameOrDirectory, (ResourceURLContent)content);
+        } else if (content instanceof URLContent
+                   && ((URLContent)content).isJAREntry()) {
           URLContent urlContent = (URLContent)content;
           // If content comes from a home stream
           if (urlContent instanceof HomeURLContent) {
@@ -163,6 +166,53 @@ public class HomeFileRecorder implements HomeRecorder {
       }  
       // Finish zip writing
       zipOut.finish();
+    }
+
+    /**
+     * Writes in <code>zipOut</code> stream one or more entries matching the content
+     * <code>urlContent</code> coming from a resource file.
+     */
+    private void writeResourceZipEntries(ZipOutputStream zipOut,
+                                         String entryNameOrDirectory,
+                                         ResourceURLContent urlContent) throws IOException {
+      if (urlContent.isResourceInDirectory()) {
+        if (urlContent.isJAREntry()) {
+          String entryName = urlContent.getJAREntryName();
+          int lastSlashIndex = entryName.lastIndexOf('/');
+          String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
+          ZipInputStream zipIn = null;
+          try {
+            // Open zipped stream that contains urlContent
+            zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
+            // Write in home stream each zipped stream entry that is stored in the same directory  
+            for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+              String zipEntryName = entry.getName();
+              if (zipEntryName.startsWith(entryDirectory)) {
+                Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
+                writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
+              }
+            }
+          } finally {
+            if (zipIn != null) {
+              zipIn.close();
+            }
+          }
+        } else {
+          // This should be the case only when resource isn't in a JAR file during development
+          File contentFile = new File(urlContent.getURL().getFile());
+          File parentFile = new File(contentFile.getParent());
+          File [] siblingFiles = parentFile.listFiles();
+          // Write in home stream each file that is stored in the same directory  
+          for (File siblingFile : siblingFiles) {
+            if (!siblingFile.isDirectory()) {
+              writeZipEntry(zipOut, entryNameOrDirectory + "/" + siblingFile.getName(), 
+                  new URLContent(siblingFile.toURI().toURL()));
+            }
+          }
+        }
+      } else {
+        writeZipEntry(zipOut, entryNameOrDirectory, urlContent);
+      }
     }
 
     /**
@@ -264,7 +314,7 @@ public class HomeFileRecorder implements HomeRecorder {
           String subEntryName = "";
           if (obj instanceof URLContent) {
             URLContent urlContent = (URLContent)obj;
-            // If content comes from a zipped content 
+            // If content comes from a zipped content  
             if (urlContent.isJAREntry()) {
               String entryName = urlContent.getJAREntryName();
               if (urlContent instanceof HomeURLContent) {
@@ -274,9 +324,22 @@ public class HomeFileRecorder implements HomeRecorder {
                   // Retrieve entry name in zipped stream without the directory
                   subEntryName = entryName.substring(slashIndex);
                 }
+              } else if (urlContent instanceof ResourceURLContent) {
+                ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
+                if (resourceUrlContent.isResourceInDirectory()) {
+                  // If content is a resource coming from a JAR file, retrieve its file name
+                  subEntryName = entryName.substring(entryName.lastIndexOf('/'));
+                }
               } else {
                 // Retrieve entry name in zipped stream
-                subEntryName = "/" + urlContent.getJAREntryName();
+                subEntryName = "/" + entryName;
+              }            
+            } else if (urlContent instanceof ResourceURLContent) {
+              ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
+              // If content is a resource coming from a directory (this should be the case 
+              // only when resource isn't in a JAR file during development), retrieve its file name
+              if (resourceUrlContent.isResourceInDirectory()) {
+                subEntryName = "/" + new File(resourceUrlContent.getURL().getFile()).getName();
               }
             }
           } 

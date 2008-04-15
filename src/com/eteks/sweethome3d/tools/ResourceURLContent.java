@@ -26,8 +26,9 @@ package com.eteks.sweethome3d.tools;
 public class ResourceURLContent extends URLContent {
   private static final long serialVersionUID = 1L;
 
-  private Class  resourceClass;
-  private String resourceName;
+  private Class             resourceClass;
+  private String            resourceName;
+  private boolean           resourceInDirectory;
   
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
@@ -36,12 +37,26 @@ public class ResourceURLContent extends URLContent {
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
   public ResourceURLContent(Class resourceClass, String resourceName) {
+    this(resourceClass, resourceName, false);    
+  }
+
+  /**
+   * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
+   * @param resourceClass the class to which the resource name is relative
+   * @param resourceName  the name of the resource
+   * @param resourceInDirectory  if <code>true</code> then the resource is in a directory 
+   *                      with other required resources
+   * @throws IllegalArgumentException if the resource doesn't match a valid resource.
+   */
+  public ResourceURLContent(Class resourceClass, String resourceName, 
+                            boolean resourceInDirectory) {
     super(resourceClass.getResource(resourceName));
     if (getURL() == null) {
       throw new IllegalArgumentException("Unknown resource " + resourceName);
     }
     this.resourceClass = resourceClass;
     this.resourceName = resourceName;    
+    this.resourceInDirectory = resourceInDirectory;
   }
 
   /**
@@ -56,5 +71,13 @@ public class ResourceURLContent extends URLContent {
    */
   public String getResourceName() {
     return this.resourceName;
+  }
+  
+  /**
+   * Returns <code>true</code> if the resource is in a directory 
+   * with other required resources.
+   */
+  public boolean isResourceInDirectory() {
+    return this.resourceInDirectory;
   }
 }

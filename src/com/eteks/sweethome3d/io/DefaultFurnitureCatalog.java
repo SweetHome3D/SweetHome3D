@@ -33,18 +33,19 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultFurnitureCatalog extends FurnitureCatalog {
-  private static final String NAME           = "name#";
-  private static final String CATEGORY       = "category#";
-  private static final String ICON           = "icon#";
-  private static final String MODEL          = "model#";
-  private static final String WIDTH          = "width#";
-  private static final String DEPTH          = "depth#";
-  private static final String HEIGHT         = "height#";
-  private static final String MOVABLE        = "movable#";
-  private static final String DOOR_OR_WINDOW = "doorOrWindow#";
-  private static final String ELEVATION      = "elevation#";
-  private static final String MODEL_ROTATION = "modelRotation#";
-  private static final String CREATOR        = "creator#";
+  private static final String NAME               = "name#";
+  private static final String CATEGORY           = "category#";
+  private static final String ICON               = "icon#";
+  private static final String MODEL              = "model#";
+  private static final String WIDTH              = "width#";
+  private static final String DEPTH              = "depth#";
+  private static final String HEIGHT             = "height#";
+  private static final String MOVABLE            = "movable#";
+  private static final String DOOR_OR_WINDOW     = "doorOrWindow#";
+  private static final String ELEVATION          = "elevation#";
+  private static final String MODEL_ROTATION     = "modelRotation#";
+  private static final String CREATOR            = "creator#";
+  private static final String MODEL_IN_DIRECTORY = "modelInDirectory#";
 
   /**
    * Creates a default furniture catalog read from resources.
@@ -72,8 +73,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         break;
       }
       String category = resource.getString(CATEGORY + i);
-      Content icon  = getContent(resource, ICON + i);
-      Content model = getContent(resource, MODEL + i);
+      Content icon  = getContent(resource, ICON + i, false);
+      boolean modelInDirectory = false;
+      try {
+        modelInDirectory = Boolean.parseBoolean(resource.getString(MODEL_IN_DIRECTORY + i));
+      } catch (MissingResourceException ex) {
+        // By default inDirectory is false
+      }
+      Content model = getContent(resource, MODEL + i, modelInDirectory);
       float width = Float.parseFloat(resource.getString(WIDTH + i));
       float depth = Float.parseFloat(resource.getString(DEPTH + i));
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
@@ -105,11 +112,13 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Returns a valid content instance from the resource file value of key.
    * @param resource a resource bundle
    * @param key      the key of a resource file
+   * @param inDirectory if <code>true</code> the resource is in a directory 
+   *                    with other required resources
    * @throws IllegalArgumentException if the file value doesn't match a valid resource.
    */
-  private Content getContent(ResourceBundle resource, String key) {
+  private Content getContent(ResourceBundle resource, String key, boolean inDirectory) {
     String file = resource.getString(key);
-    return new ResourceURLContent(DefaultFurnitureCatalog.class, file);
+    return new ResourceURLContent(DefaultFurnitureCatalog.class, file, inDirectory);
   }
   
   /**
