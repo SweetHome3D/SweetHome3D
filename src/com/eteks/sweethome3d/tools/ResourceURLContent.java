@@ -28,7 +28,7 @@ public class ResourceURLContent extends URLContent {
 
   private Class             resourceClass;
   private String            resourceName;
-  private boolean           resourceInDirectory;
+  private boolean           multiPartResource;
   
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
@@ -44,19 +44,19 @@ public class ResourceURLContent extends URLContent {
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
    * @param resourceClass the class to which the resource name is relative
    * @param resourceName  the name of the resource
-   * @param resourceInDirectory  if <code>true</code> then the resource is in a directory 
-   *                      with other required resources
+   * @param multiPartResource  if <code>true</code> then the resource is a multi part resource 
+   *           stored in a directory with other required resources
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
   public ResourceURLContent(Class resourceClass, String resourceName, 
-                            boolean resourceInDirectory) {
+                            boolean multiPartResource) {
     super(resourceClass.getResource(resourceName));
     if (getURL() == null) {
       throw new IllegalArgumentException("Unknown resource " + resourceName);
     }
     this.resourceClass = resourceClass;
     this.resourceName = resourceName;    
-    this.resourceInDirectory = resourceInDirectory;
+    this.multiPartResource = multiPartResource;
   }
 
   /**
@@ -74,10 +74,10 @@ public class ResourceURLContent extends URLContent {
   }
   
   /**
-   * Returns <code>true</code> if the resource is in a directory 
-   * with other required resources.
+   * Returns <code>true</code> if the resource is a multi part resource stored 
+   * in a directory with other required resources.
    */
-  public boolean isResourceInDirectory() {
-    return this.resourceInDirectory;
+  public boolean isMultiPartResource() {
+    return this.multiPartResource;
   }
 }

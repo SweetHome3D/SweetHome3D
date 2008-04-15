@@ -175,7 +175,7 @@ public class HomeFileRecorder implements HomeRecorder {
     private void writeResourceZipEntries(ZipOutputStream zipOut,
                                          String entryNameOrDirectory,
                                          ResourceURLContent urlContent) throws IOException {
-      if (urlContent.isResourceInDirectory()) {
+      if (urlContent.isMultiPartResource()) {
         if (urlContent.isJAREntry()) {
           String entryName = urlContent.getJAREntryName();
           int lastSlashIndex = entryName.lastIndexOf('/');
@@ -326,7 +326,7 @@ public class HomeFileRecorder implements HomeRecorder {
                 }
               } else if (urlContent instanceof ResourceURLContent) {
                 ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
-                if (resourceUrlContent.isResourceInDirectory()) {
+                if (resourceUrlContent.isMultiPartResource()) {
                   // If content is a resource coming from a JAR file, retrieve its file name
                   subEntryName = entryName.substring(entryName.lastIndexOf('/'));
                 }
@@ -338,7 +338,7 @@ public class HomeFileRecorder implements HomeRecorder {
               ResourceURLContent resourceUrlContent = (ResourceURLContent)urlContent;
               // If content is a resource coming from a directory (this should be the case 
               // only when resource isn't in a JAR file during development), retrieve its file name
-              if (resourceUrlContent.isResourceInDirectory()) {
+              if (resourceUrlContent.isMultiPartResource()) {
                 subEntryName = "/" + new File(resourceUrlContent.getURL().getFile()).getName();
               }
             }
