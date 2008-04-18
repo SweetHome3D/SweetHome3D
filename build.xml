@@ -6,9 +6,9 @@
      Ant build file. Available targets :
      - build : Builds SweetHome3D.jar file in deploy directory
      - deploy : Builds Java Web Start signed files in deploy/lib directory
-     - windowsInstaller : Builds SweetHome3D-1.2.1-windows.exe file in install directory     
-     - macosxInstaller : Builds SweetHome3D-1.2.1-macosx.dmg file in install directory
-     - linuxInstaller : Builds SweetHome3D-1.2.1-linux-x86.tgz file in install directory
+     - windowsInstaller : Builds SweetHome3D-1.2.2-windows.exe file in install directory     
+     - macosxInstaller : Builds SweetHome3D-1.2.2-macosx.dmg file in install directory
+     - linuxInstaller : Builds SweetHome3D-1.2.2-linux-x86.tgz file in install directory
 -->
 <project basedir="." default="deploy" name="SweetHome3D">
   <!-- Builds deploy/SweetHome3D.jar -->
@@ -108,7 +108,7 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <!-- Builds install/SweetHome3D-1.2.1-windows.exe installer able to install SweetHome3D.exe 
+  <!-- Builds install/SweetHome3D-1.2.2-windows.exe installer able to install SweetHome3D.exe 
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows and requires a Windows JRE, launch4j and Inno Setup 
                  installed in their default location -->
@@ -187,34 +187,34 @@
       <arg value="${basedir}\install\windows\installerLaunch4j.xml"/>
     </exec>
 
-    <!-- Create SweetHome3D-1.2.1-windows.exe with Inno Setup -->
+    <!-- Create SweetHome3D-1.2.2-windows.exe with Inno Setup -->
     <exec executable="C:\Program Files\Inno Setup 5\ISCC.exe">
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
 
     <delete dir="install/windows/tmp"/>
 
-    <echo message="install/SweetHome3D-1.2.1-windows.exe ready for ftp"/>
+    <echo message="install/SweetHome3D-1.2.2-windows.exe ready for ftp"/>
   </target>
 
-  <!-- Builds install/SweetHome3D-1.2.1-macosx.dmg archive that contains SweetHome3D.app 
+  <!-- Builds install/SweetHome3D-1.2.2-macosx.dmg archive that contains SweetHome3D.app 
        and Sweet Home 3D libraries. 
        CAUTION : May be run only under Mac OS X and requires Disk Utility -->
   <target name="macosxInstaller" depends="build">
-    <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app -->
-    <mkdir dir="install/macosx/SweetHome3D-1.2.1/"/>
-    <copy todir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app">
+    <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app -->
+    <mkdir dir="install/macosx/SweetHome3D-1.2.2/"/>
+    <copy todir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app">
       <fileset dir="install/macosx/Sweet Home 3D"/>
     </copy>
 
     <!-- Change executable permission of JavaApplicationStub lost during copy task -->
-    <chmod perm="+x" file="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/>
+    <chmod perm="+x" file="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/MacOS/JavaApplicationStub"/>
 
     <!-- Copy SweetHome3D.jar and its direct libs 
-         to install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java -->
-    <mkdir dir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <move file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java" />
-    <copy todir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java" >
+         to install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java -->
+    <mkdir dir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
+    <move file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java" />
+    <copy todir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
         <exclude name="j3dcore.jar"/>
@@ -225,9 +225,9 @@
       </fileset>
     </copy>
     <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
-         to install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java/ext -->
-    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <copy todir="install/macosx/SweetHome3D-1.2.1/Sweet Home 3D.app/Contents/Resources/Java/ext" >
+         to install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java/ext -->
+    <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
+    <copy todir="install/macosx/SweetHome3D-1.2.2/Sweet Home 3D.app/Contents/Resources/Java/ext" >
       <fileset dir="lib/macosx">
         <include name="*.jar"/>
         <include name="*.jnilib"/>
@@ -238,37 +238,37 @@
         <include name="vecmath.jar"/>
       </fileset>
     </copy>
-    <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-1.2.1/ -->
-    <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.2.1"/>
-    <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/macosx/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-1.2.1" />
-  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/macosx/SweetHome3D-1.2.1" />
-  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/macosx/SweetHome3D-1.2.1" />
+    <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-1.2.2/ -->
+    <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-1.2.2"/>
+    <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/macosx/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-1.2.2" />
+  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/macosx/SweetHome3D-1.2.2" />
+  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/macosx/SweetHome3D-1.2.2" />
  
-    <!-- Create install/SweetHome3D-1.2.1-macosx.dmg with Disk Utility -->
-    <delete file="install/SweetHome3D-1.2.1-macosx.dmg"/>
+    <!-- Create install/SweetHome3D-1.2.2-macosx.dmg with Disk Utility -->
+    <delete file="install/SweetHome3D-1.2.2-macosx.dmg"/>
     <exec executable="hdiutil">
       <arg value="create"/>
       <arg value="-srcfolder"/>
-      <arg value="install/macosx/SweetHome3D-1.2.1"/>
-      <arg value="install/SweetHome3D-1.2.1-macosx.dmg"/>
+      <arg value="install/macosx/SweetHome3D-1.2.2"/>
+      <arg value="install/SweetHome3D-1.2.2-macosx.dmg"/>
     </exec>
 
-    <delete dir="install/macosx/SweetHome3D-1.2.1"/>
+    <delete dir="install/macosx/SweetHome3D-1.2.2"/>
 
-    <echo message="install/SweetHome3D-1.2.1-macosx.dmg ready for ftp"/>
+    <echo message="install/SweetHome3D-1.2.2-macosx.dmg ready for ftp"/>
   </target>
 
-  <!-- Builds install/SweetHome3D-1.2.1-linux-x86.tgz archive that contains SweetHome3D command
+  <!-- Builds install/SweetHome3D-1.2.2-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux JRE installed in jre1.6.0_04 -->
   <target name="linuxInstaller" depends="build">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
-         to install/linux/i386/SweetHome3D-1.2.1/lib -->
-    <mkdir dir="install/linux/i386/SweetHome3D-1.2.1/lib"/>
-    <move file="deploy/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-1.2.1/lib" />
-    <copy todir="install/linux/i386/SweetHome3D-1.2.1/lib" >
+         to install/linux/i386/SweetHome3D-1.2.2/lib -->
+    <mkdir dir="install/linux/i386/SweetHome3D-1.2.2/lib"/>
+    <move file="deploy/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-1.2.2/lib" />
+    <copy todir="install/linux/i386/SweetHome3D-1.2.2/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
       </fileset>
@@ -276,18 +276,18 @@
         <include name="*.so"/>
       </fileset>
     </copy>
-    <copy file="COPYING.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-    <copy file="LICENSE.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-JAVA.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />
-  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-1.2.1" />  	
+    <copy file="COPYING.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+    <copy file="LICENSE.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-JAVA.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+    <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />
+  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-1.2.2" />  	
   	
-    <!-- Copy JRE to install/linux/i386/SweetHome3D-1.2.1/jre... excluding files mentioned 
+    <!-- Copy JRE to install/linux/i386/SweetHome3D-1.2.2/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/i386/SweetHome3D-1.2.1/jre1.6.0_04">
+    <copy todir="install/linux/i386/SweetHome3D-1.2.2/jre1.6.0_04">
       <fileset dir="jre1.6.0_04">
         <include name="**"/>
 
@@ -304,27 +304,27 @@
     </copy>
 
     <!-- Create SweetHome3D command -->
-    <concat destfile="install/linux/i386/SweetHome3D-1.2.1/SweetHome3D">#!/bin/sh
+    <concat destfile="install/linux/i386/SweetHome3D-1.2.2/SweetHome3D">#!/bin/sh
 cd `dirname $0`
-jre1.6.0_04/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/itext-2.0.4.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_04/lib/javaws.jar -Djava.library.path=lib -Xmx192m com.eteks.sweethome3d.SweetHome3D</concat>
+jre1.6.0_04/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/itext-2.0.4.jar:lib/j3dcore.jar:lib/j3dutils.jar:lib/vecmath.jar:jre1.6.0_04/lib/javaws.jar -Djava.library.path=lib -Xmx256m com.eteks.sweethome3d.SweetHome3D</concat>
 
-    <!-- Create SweetHome3D-1.2.1-linux-x86.tgz archive -->
-    <tar destfile="install/SweetHome3D-1.2.1-linux-x86.tgz"
+    <!-- Create SweetHome3D-1.2.2-linux-x86.tgz archive -->
+    <tar destfile="install/SweetHome3D-1.2.2-linux-x86.tgz"
          compression="gzip">
       <tarfileset dir="install/linux/i386"
-                  includes="SweetHome3D-1.2.1/**">
-        <exclude name="SweetHome3D-1.2.1/SweetHome3D"/>
-        <exclude name="SweetHome3D-1.2.1/jre1.6.0_04/bin/java"/>
+                  includes="SweetHome3D-1.2.2/**">
+        <exclude name="SweetHome3D-1.2.2/SweetHome3D"/>
+        <exclude name="SweetHome3D-1.2.2/jre1.6.0_04/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
-        <include name="SweetHome3D-1.2.1/SweetHome3D"/>
-        <include name="SweetHome3D-1.2.1/jre1.6.0_04/bin/java"/>
+        <include name="SweetHome3D-1.2.2/SweetHome3D"/>
+        <include name="SweetHome3D-1.2.2/jre1.6.0_04/bin/java"/>
       </tarfileset>
     </tar>
 
     <delete dir="install/linux"/>
 
-    <echo message="install/SweetHome3D-1.2.1-linux-x86.tgz ready for ftp"/>
+    <echo message="install/SweetHome3D-1.2.2-linux-x86.tgz ready for ftp"/>
   </target>
 </project>

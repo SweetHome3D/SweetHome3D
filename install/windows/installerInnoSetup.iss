@@ -13,7 +13,7 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVerName=Sweet Home 3D version 1.2.1
+AppVerName=Sweet Home 3D version 1.2.2
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -22,14 +22,14 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-1.2.1-windows
+OutputBaseFilename=..\SweetHome3D-1.2.2-windows
 Compression=lzma
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=1.2.1.0
-VersionInfoTextVersion=1.2.1
+VersionInfoVersion=1.2.2.0
+VersionInfoTextVersion=1.2.2
 VersionInfoDescription=Sweet Home 3D Setup
-VersionInfoCopyright=Copyright (c) 2007 eTeks
+VersionInfoCopyright=Copyright (c) 2007-2008 eTeks
 VersionInfoCompany=eTeks
 
 [Languages]
@@ -41,6 +41,7 @@ Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "czech"; MessagesFile: "compiler:Languages\Czech.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
