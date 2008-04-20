@@ -867,6 +867,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                     controller.setHeight(piece.getHeight());
                     controller.setMovable(piece.isMovable());
                     controller.setDoorOrWindow(piece.isDoorOrWindow());
+                    controller.setElevation(piece.getElevation());
                     controller.setColor(piece.getColor());
                     controller.setIconYaw(piece.getIconYaw());
                     controller.setProportional(piece.isProportional());
