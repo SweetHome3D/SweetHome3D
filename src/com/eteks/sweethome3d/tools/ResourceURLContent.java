@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.tools;
 
+import java.net.URL;
+
+
 /**
  * URL content read from a class resource.
  * @author Emmanuel Puybaret
@@ -26,53 +29,46 @@ package com.eteks.sweethome3d.tools;
 public class ResourceURLContent extends URLContent {
   private static final long serialVersionUID = 1L;
 
-  private Class             resourceClass;
-  private String            resourceName;
-  private boolean           multiPartResource;
+  private boolean multiPartResource;
   
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
-   * @param resourceClass the class to which the resource name is relative
+   * @param resourceClass the class relative to the resource name to load
    * @param resourceName  the name of the resource
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
-  public ResourceURLContent(Class resourceClass, String resourceName) {
-    this(resourceClass, resourceName, false);    
+  public ResourceURLContent(Class<?> resourceClass, 
+                            String resourceName) {
+    this(resourceClass, resourceName, false);
   }
 
   /**
    * Creates a content for <code>resourceName</code> relative to <code>resourceClass</code>.
-   * @param resourceClass the class to which the resource name is relative
+   * @param resourceClass the class relative to the resource name to load
    * @param resourceName  the name of the resource
    * @param multiPartResource  if <code>true</code> then the resource is a multi part resource 
    *           stored in a directory with other required resources
    * @throws IllegalArgumentException if the resource doesn't match a valid resource.
    */
-  public ResourceURLContent(Class resourceClass, String resourceName, 
+  public ResourceURLContent(Class<?> resourceClass,
+                            String resourceName, 
                             boolean multiPartResource) {
     super(resourceClass.getResource(resourceName));
     if (getURL() == null) {
       throw new IllegalArgumentException("Unknown resource " + resourceName);
     }
-    this.resourceClass = resourceClass;
-    this.resourceName = resourceName;    
     this.multiPartResource = multiPartResource;
   }
 
   /**
-   * Returns the class to which the resource is relative.
+   * Creates a content for <code>resourceUrl</code> 
+   * @param resourceUrl  the URL of the resource
    */
-  public Class getResourceClass() {
-    return this.resourceClass;
+  public ResourceURLContent(URL url, boolean multiPartResource) {
+    super(url);
+    this.multiPartResource = true;
   }
 
-  /**
-   * Returns the resource name relative to resource class.
-   */
-  public String getResourceName() {
-    return this.resourceName;
-  }
-  
   /**
    * Returns <code>true</code> if the resource is a multi part resource stored 
    * in a directory with other required resources.

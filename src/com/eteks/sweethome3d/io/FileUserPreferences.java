@@ -458,7 +458,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns Sweet Home 3D application folder. 
    */
-  private File getApplicationFolder() throws IOException {
+  static File getApplicationFolder() throws IOException {
     if (OperatingSystem.isMacOSX()) {
       return new File(MacOSXFileManager.getApplicationSupportFolder(), 
              "eTeks" + File.separator + "Sweet Home 3D");
