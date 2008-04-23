@@ -31,7 +31,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -125,6 +127,7 @@ public class HomeFileRecorder implements HomeRecorder {
    */
   private static class HomeOutputStream extends FilterOutputStream {
     private List<Content> contents = new ArrayList<Content>();
+    private Map<URL, List<String>> zipUrlEntriesCache = new HashMap<URL, List<String>>();
     
     public HomeOutputStream(OutputStream out) throws IOException {
       super(out);
@@ -177,24 +180,15 @@ public class HomeFileRecorder implements HomeRecorder {
                                          ResourceURLContent urlContent) throws IOException {
       if (urlContent.isMultiPartResource()) {
         if (urlContent.isJAREntry()) {
+          URL zipUrl = urlContent.getJAREntryURL();
           String entryName = urlContent.getJAREntryName();
           int lastSlashIndex = entryName.lastIndexOf('/');
           String entryDirectory = entryName.substring(0, lastSlashIndex + 1);
-          ZipInputStream zipIn = null;
-          try {
-            // Open zipped stream that contains urlContent
-            zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
-            // Write in home stream each zipped stream entry that is stored in the same directory  
-            for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-              String zipEntryName = entry.getName();
-              if (zipEntryName.startsWith(entryDirectory)) {
-                Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
-                writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
-              }
-            }
-          } finally {
-            if (zipIn != null) {
-              zipIn.close();
+          // Write in home stream each zipped stream entry that is stored in the same directory  
+          for (String zipEntryName : getZipUrlEntries(zipUrl)) {
+            if (zipEntryName.startsWith(entryDirectory)) {
+              Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" + zipEntryName));
+              writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
             }
           }
         } else {
@@ -216,6 +210,30 @@ public class HomeFileRecorder implements HomeRecorder {
     }
 
     /**
+     * Returns the list of entries contained in <code>zipUrl</code>.
+     */
+    private List<String> getZipUrlEntries(URL zipUrl) throws IOException {
+      List<String> zipUrlEntries = this.zipUrlEntriesCache.get(zipUrl);
+      if (zipUrlEntries == null) {
+        zipUrlEntries = new ArrayList<String>();
+        this.zipUrlEntriesCache.put(zipUrl, zipUrlEntries);
+        ZipInputStream zipIn = null;
+        try {
+          // Search all entries of zip url
+          zipIn = new ZipInputStream(zipUrl.openStream());
+          for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+            zipUrlEntries.add(entry.getName());
+          }
+        } finally {
+          if (zipIn != null) {
+            zipIn.close();
+          }
+        }
+      }
+      return zipUrlEntries;
+    }
+    
+    /**
      * Writes in <code>zipOut</code> stream one or more entries matching the content
      * <code>urlContent</code> coming from a home file.
      */
@@ -226,22 +244,13 @@ public class HomeFileRecorder implements HomeRecorder {
       int slashIndex = entryName.indexOf('/');
       // If content comes from a directory of a home file
       if (slashIndex > 0) {
+        URL zipUrl = urlContent.getJAREntryURL();
         String entryDirectory = entryName.substring(0, slashIndex + 1);
-        ZipInputStream zipIn = null;
-        try {
-          // Open zipped stream that contains urlContent
-          zipIn = new ZipInputStream(urlContent.getJAREntryURL().openStream());
-          // Write in home stream each zipped stream entry that is stored in the same directory  
-          for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-            String zipEntryName = entry.getName();
-            if (zipEntryName.startsWith(entryDirectory)) {
-              Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" + zipEntryName));
-              writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(slashIndex), siblingContent);
-            }
-          }
-        } finally {
-          if (zipIn != null) {
-            zipIn.close();
+        // Write in home stream each zipped stream entry that is stored in the same directory  
+        for (String zipEntryName : getZipUrlEntries(zipUrl)) {
+          if (zipEntryName.startsWith(entryDirectory)) {
+            Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" + zipEntryName));
+            writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(slashIndex), siblingContent);
           }
         }
       } else {
