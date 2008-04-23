@@ -66,7 +66,7 @@ public class ResourceURLContent extends URLContent {
    */
   public ResourceURLContent(URL url, boolean multiPartResource) {
     super(url);
-    this.multiPartResource = true;
+    this.multiPartResource = multiPartResource;
   }
 
   /**
