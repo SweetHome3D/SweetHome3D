@@ -29,9 +29,9 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public abstract class FurnitureCatalog {
-  private List<FurnitureCategory>                categories        = new ArrayList<FurnitureCategory>();
+  private List<FurnitureCategory>       categories         = new ArrayList<FurnitureCategory>();
   private boolean                       sorted;
-  private List<CatalogPieceOfFurniture> selectedFurniture = Collections.emptyList();
+  private List<CatalogPieceOfFurniture> selectedFurniture  = Collections.emptyList();
   private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
   private List<FurnitureListener>       furnitureListeners = new ArrayList<FurnitureListener>();
 
