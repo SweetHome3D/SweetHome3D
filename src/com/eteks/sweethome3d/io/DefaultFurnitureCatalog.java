@@ -187,7 +187,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
       CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
           width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator);
-      addPieceOfFurnitureToCatalog(pieceCategory, piece, furnitureHomonymsCounter);
+      add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
     
@@ -195,9 +195,9 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
    * in its category its name will be suffixed indicating its sequence.
    */
-  private void addPieceOfFurnitureToCatalog(FurnitureCategory pieceCategory,
-                                            CatalogPieceOfFurniture piece,
-                                            Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
+  private void add(FurnitureCategory pieceCategory,
+                   CatalogPieceOfFurniture piece,
+                   Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
     try {        
       add(pieceCategory, piece);
     } catch (IllegalHomonymException ex) {
@@ -218,7 +218,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           piece.getIcon(), piece.getModel(),
           piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
           piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator());
-      addPieceOfFurnitureToCatalog(pieceCategory, piece, furnitureHomonymsCounter);
+      add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
   
