@@ -24,9 +24,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -34,6 +34,7 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
@@ -59,22 +60,30 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
   
   private static final String PLUGIN_FURNITURE_DIRECTORY = "furniture";
-  private static final String PLUGIN_FURNITURE_EXTENSION = ".zip";
+  private static final String PLUGIN_FURNITURE_EXTENSION = ".sh3f";
   private static final String PLUGIN_FURNITURE_CATALOG_FAMILY = "PluginFurnitureCatalog";
+  
+  private static final String HOMONYM_FURNITURE_FORMAT = "%s -%d-";
   
   /**
    * Creates a default furniture catalog read from resources.
    */
   public DefaultFurnitureCatalog() {
-    readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), null, false);
+    Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
+        new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
+    
+    readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
+        null, furnitureHomonymsCounter);
     
     String classPackage = DefaultFurnitureCatalog.class.getName();
     classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
-    readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), null, false);
+    readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
+        null, furnitureHomonymsCounter);
     
     try {
       // Try do load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath 
-      readFurniture(ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), null, true);
+      readFurniture(ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), 
+          null, furnitureHomonymsCounter);
     } catch (MissingResourceException ex) {
       // Ignore additional furniture catalog
     }
@@ -89,7 +98,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             try {
               // Try do load Furniture property file from current file  
               readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                  new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), furnitureFile, true);
+                  new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
+                  furnitureFile, furnitureHomonymsCounter);
             } catch (MissingResourceException ex) {
               // Ignore furniture plugin
             }
@@ -108,7 +118,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    */
   private void readFurniture(ResourceBundle resource, 
                              File furnitureFile,
-                             boolean replaceHomonyms) {
+                             Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -149,23 +159,38 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
       CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
           width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator);
-      try {        
-        add(pieceCategory, piece);
-      } catch (IllegalArgumentException ex) {
-        if (replaceHomonyms) {
-          // If a piece with same name and category already exists in furniture catalog
-          // replace the existing piece by the new one
-          List<FurnitureCategory> categories = getCategories();
-          int categoryIndex = Collections.binarySearch(categories, pieceCategory);
-          List<CatalogPieceOfFurniture> furniture = categories.get(categoryIndex).getFurniture();
-          int existingPieceIndex = Collections.binarySearch(furniture, piece);        
-          delete(furniture.get(existingPieceIndex));
-          
-          add(pieceCategory, piece);
-        } else {
-          throw ex;
-        }
+      addPieceOfFurnitureToCatalog(pieceCategory, piece, furnitureHomonymsCounter);
+    }
+  }
+  
+  /**
+   * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
+   * in its category its name will be suffixed indicating its sequence.
+   */
+  private void addPieceOfFurnitureToCatalog(FurnitureCategory pieceCategory,
+                                            CatalogPieceOfFurniture piece,
+                                            Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
+    try {        
+      add(pieceCategory, piece);
+    } catch (IllegalHomonymException ex) {
+      // Search the counter of piece name
+      Map<CatalogPieceOfFurniture, Integer> categoryFurnitureHomonymsCounter = 
+          furnitureHomonymsCounter.get(pieceCategory);
+      if (categoryFurnitureHomonymsCounter == null) {
+        categoryFurnitureHomonymsCounter = new HashMap<CatalogPieceOfFurniture, Integer>();
+        furnitureHomonymsCounter.put(pieceCategory, categoryFurnitureHomonymsCounter);
       }
+      Integer pieceHomonymCounter = categoryFurnitureHomonymsCounter.get(piece);
+      if (pieceHomonymCounter == null) {
+        pieceHomonymCounter = 1;
+      }
+      categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
+      // Try to add piece again to catalog with a suffix indicating its sequence
+      piece = new CatalogPieceOfFurniture(String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter), 
+          piece.getIcon(), piece.getModel(),
+          piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
+          piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator());
+      addPieceOfFurnitureToCatalog(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
   

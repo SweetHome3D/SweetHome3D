@@ -91,7 +91,7 @@ public abstract class FurnitureCatalog {
    */
   private void add(FurnitureCategory category) {
     if (this.categories.contains(category)) {
-      throw new IllegalArgumentException(
+      throw new IllegalHomonymException(
           category.getName() + " already exists in catalog");
     }
     this.categories.add(category);

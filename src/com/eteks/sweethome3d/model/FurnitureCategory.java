@@ -93,7 +93,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    */
   void add(CatalogPieceOfFurniture piece) {
     if (this.furniture.contains(piece)) {
-      throw new IllegalArgumentException(
+      throw new IllegalHomonymException(
          piece.getName() + " already in category " + this.name);
     }
     piece.setCategory(this);
