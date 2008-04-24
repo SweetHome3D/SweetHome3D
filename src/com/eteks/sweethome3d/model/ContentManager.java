@@ -24,7 +24,7 @@ package com.eteks.sweethome3d.model;
  * @author Emmanuel Puybaret
  */
 public interface ContentManager {
-  public enum ContentType {SWEET_HOME_3D, MODEL, IMAGE, PDF};
+  public enum ContentType {SWEET_HOME_3D, MODEL, IMAGE, PDF, FURNITURE_CATALOG};
 
   /**
    * Returns a {@link Content content} object that references a given content name.

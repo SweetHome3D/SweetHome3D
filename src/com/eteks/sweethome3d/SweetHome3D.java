@@ -28,8 +28,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -60,6 +65,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.ContentManager;
@@ -189,18 +195,14 @@ public class SweetHome3D extends HomeApplication {
         }
       }
       
-      try {
+      if (application.getContentManager().isAcceptable(args [1], 
+          ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open"
-        Home home = application.getHomeRecorder().readHome(args [1]);
-        home.setName(args [1]); 
-        application.addHome(home);
-      } catch (RecorderException ex) {
-        // Show an error message dialog if home couldn't be read
-        ResourceBundle resource = ResourceBundle.getBundle(
-            HomeController.class.getName());
-        String message = String.format(resource.getString("openError"), args [1]);
-        JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
-            JOptionPane.ERROR_MESSAGE);
+        readHome(args [1]);
+      } else if (application.getContentManager().isAcceptable(args [1], 
+          ContentManager.ContentType.FURNITURE_CATALOG)) {
+        importFurnitureCatalog(args [1]); 
+        main(new String [0]);
       }
     } else if (application.getHomes().isEmpty()) {
       // Create a default home 
@@ -230,6 +232,70 @@ public class SweetHome3D extends HomeApplication {
       }
       
       application.showHomeFrame(home);
+    }
+  }
+
+  /**
+   * Reads home from <code>homeFile</code>.
+   */
+  private static void readHome(String homeFile) {
+    try {
+      Home home = application.getHomeRecorder().readHome(homeFile);
+      home.setName(homeFile); 
+      application.addHome(home);
+    } catch (RecorderException ex) {
+      // Show an error message dialog if home couldn't be read
+      ResourceBundle resource = ResourceBundle.getBundle(HomeController.class.getName());
+      String message = String.format(resource.getString("openError"), homeFile);
+      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
+          JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  /**
+   * Imports furniture catalog file to plugin furniture catalog folder.
+   */
+  private static void importFurnitureCatalog(String furnitureCatalogFile) {
+    try {
+      String furnitureCatalogFileName = new File(furnitureCatalogFile).getName();
+      File pluginFurnitureCatalogFolder = ((DefaultFurnitureCatalog)application.
+          getUserPreferences().getFurnitureCatalog()).getPluginFurnitureCatalogFolder();
+      File destinationFile = new File(pluginFurnitureCatalogFolder, furnitureCatalogFileName);
+      
+      if (!destinationFile.exists()
+          || ((FileContentManager)application.getContentManager()).
+                confirmOverwrite(furnitureCatalogFileName)) {
+        // Copy furnitureCatalogFile to plugin furniture catalog folder
+        InputStream tempIn = null;
+        OutputStream tempOut = null;
+        try {
+          tempIn = new FileInputStream(furnitureCatalogFile);
+          tempOut = new FileOutputStream(destinationFile);
+          byte [] buffer = new byte [8096];
+          int size; 
+          while ((size = tempIn.read(buffer)) != -1) {
+            tempOut.write(buffer, 0, size);
+          }
+        } finally {
+          if (tempIn != null) {
+            tempIn.close();
+          }
+          if (tempOut != null) {
+            tempOut.close();
+          }
+        }
+      }
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            ((FileUserPreferences)application.getUserPreferences()).updateDefaultCatalogs();
+          }
+        });
+    } catch (IOException ex) {
+      // Show an error message dialog if file couldn't be read
+      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
+      String message = String.format(
+          resource.getString("importFurnitureCatalogFileError"), furnitureCatalogFile);
+      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
     }
   }
 

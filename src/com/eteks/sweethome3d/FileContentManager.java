@@ -64,6 +64,24 @@ public class FileContentManager implements ContentManager {
           return "Sweet Home 3D";
         }
       }};
+  private static final String FURNITURE_CATALOG_EXTENSION = ".sh3f";
+  /**
+   * Supported Sweet Home 3D file filters.
+   */
+  private static final FileFilter [] FURNITURE_CATALOG_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .sh3f files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(FURNITURE_CATALOG_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "Furniture catalog";
+        }
+      }};
   /**
    * Supported 3D model file filters.
    */
@@ -204,6 +222,7 @@ public class FileContentManager implements ContentManager {
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
+    this.fileFilters.put(ContentType.FURNITURE_CATALOG, FURNITURE_CATALOG_FILTER);
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
@@ -435,7 +454,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  private boolean confirmOverwrite(String fileName) {
+  public boolean confirmOverwrite(String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");

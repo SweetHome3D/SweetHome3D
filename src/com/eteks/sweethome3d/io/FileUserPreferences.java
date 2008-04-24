@@ -134,31 +134,38 @@ public class FileUserPreferences extends UserPreferences {
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
-          // Delete default pieces of current furniture catalog          
-          FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
-          for (FurnitureCategory category : furnitureCatalog.getCategories()) {
-            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-              if (!piece.isModifiable()) {
-                furnitureCatalog.delete(piece);
-              }
-            }
-          }
-          DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
-          // Read again default furniture catalog with new default locale
-          FurnitureCatalog defaultCatalog = defaultPreferences.getFurnitureCatalog();
-          for (FurnitureCategory category : defaultCatalog.getCategories()) {
-            for (CatalogPieceOfFurniture piece : category.getFurniture()) {
-              try {
-                furnitureCatalog.add(category, piece);
-              } catch (IllegalArgumentException ex) {
-                // Ignore pieces that have the same name as an existing piece
-              }
-            }
-          }
-          // Read again default textures catalog
-          setTexturesCatalog(defaultPreferences.getTexturesCatalog());
+          updateDefaultCatalogs();
         }
       });
+  }
+
+  /**
+   * Reloads furniture and textures default catalogs.
+   */
+  public void updateDefaultCatalogs() {
+    // Delete default pieces of current furniture catalog          
+    FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
+    for (FurnitureCategory category : furnitureCatalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        if (!piece.isModifiable()) {
+          furnitureCatalog.delete(piece);
+        }
+      }
+    }
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    // Read again default furniture catalog with new default locale
+    FurnitureCatalog defaultCatalog = defaultPreferences.getFurnitureCatalog();
+    for (FurnitureCategory category : defaultCatalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        try {
+          furnitureCatalog.add(category, piece);
+        } catch (IllegalArgumentException ex) {
+          // Ignore pieces that have the same name as an existing piece
+        }
+      }
+    }
+    // Read again default textures catalog
+    setTexturesCatalog(defaultPreferences.getTexturesCatalog());
   }
 
   /**
@@ -468,8 +475,7 @@ public class FileUserPreferences extends UserPreferences {
       if (!applicationFolder.exists()) {
         applicationFolder = new File(System.getProperty("user.home"));
       }
-      return new File(applicationFolder, 
-          "eTeks" + File.separator + "Sweet Home 3D");      
+      return new File(applicationFolder, "eTeks" + File.separator + "Sweet Home 3D");      
     } else { 
       // Unix
       return new File(System.getProperty("user.home"), ".eteks/sweethome3d");

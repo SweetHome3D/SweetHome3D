@@ -158,7 +158,7 @@ public abstract class UserPreferences {
           oldLanguage, language);
     }
   }
-  
+
   /**
    * Returns the array of available languages in Sweet Home 3D.
    */
