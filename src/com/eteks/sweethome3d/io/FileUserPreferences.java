@@ -50,7 +50,7 @@ import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
- * User preferences intialized from 
+ * User preferences initialized from 
  * {@link com.eteks.sweethome3d.io.DefaultUserPreferences default user preferences}
  * and stored in user preferences on local file system. 
  * @author Emmanuel Puybaret
