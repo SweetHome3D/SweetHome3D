@@ -20,11 +20,16 @@
 package com.eteks.sweethome3d.io;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -46,6 +51,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String CATEGORY         = "category#";
   private static final String ICON             = "icon#";
   private static final String MODEL            = "model#";
+  private static final String MULTI_PART_MODEL = "multiPartModel#";
   private static final String WIDTH            = "width#";
   private static final String DEPTH            = "depth#";
   private static final String HEIGHT           = "height#";
@@ -54,7 +60,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String ELEVATION        = "elevation#";
   private static final String MODEL_ROTATION   = "modelRotation#";
   private static final String CREATOR          = "creator#";
-  private static final String MULTI_PART_MODEL = "multiPartModel#";
+  private static final String ID               = "id#";
   
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
@@ -71,38 +77,46 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   public DefaultFurnitureCatalog() {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
+    List<String> identifiedFurniture = new ArrayList<String>();
     
     readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
-        null, furnitureHomonymsCounter);
+        null, furnitureHomonymsCounter, identifiedFurniture);
     
     String classPackage = DefaultFurnitureCatalog.class.getName();
     classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
     readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
-        null, furnitureHomonymsCounter);
+        null, furnitureHomonymsCounter, identifiedFurniture);
     
     try {
       // Try do load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath 
       readFurniture(ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), 
-          null, furnitureHomonymsCounter);
+          null, furnitureHomonymsCounter, identifiedFurniture);
     } catch (MissingResourceException ex) {
       // Ignore additional furniture catalog
     }
     
     try {
-      // Try to load zip files from plugin directory
+      // Try to load sh3f files from plugin directory
       File furniturePluginDirectory = new File(FileUserPreferences.getApplicationFolder(), PLUGIN_FURNITURE_DIRECTORY);
-      File [] furnitureFiles = furniturePluginDirectory.listFiles();
+      File [] furnitureFiles = furniturePluginDirectory.listFiles(new FileFilter () {
+        public boolean accept(File pathname) {
+          return pathname.isFile()
+              && pathname.getName().toLowerCase().endsWith(PLUGIN_FURNITURE_EXTENSION);
+        }
+      });
+      
       if (furnitureFiles != null) {
+        // Treat furniture files in reverse order so file named with a date will be taken into account 
+        // from most recent to least recent
+        Arrays.sort(furnitureFiles, Collections.reverseOrder());
         for (File furnitureFile : furnitureFiles) {
-          if (furnitureFile.getName().toLowerCase().endsWith(PLUGIN_FURNITURE_EXTENSION)) {
-            try {
-              // Try do load Furniture property file from current file  
-              readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                  new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
-                  furnitureFile, furnitureHomonymsCounter);
-            } catch (MissingResourceException ex) {
-              // Ignore furniture plugin
-            }
+          try {
+            // Try do load Furniture property file from current file  
+            readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
+                new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
+                furnitureFile, furnitureHomonymsCounter, identifiedFurniture);
+          } catch (MissingResourceException ex) {
+            // Ignore furniture plugin
           }
         }
       }
@@ -118,7 +132,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    */
   private void readFurniture(ResourceBundle resource, 
                              File furnitureFile,
-                             Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter) {
+                             Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
+                             List<String> identifiedFurniture) {
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -155,6 +170,19 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       } catch (MissingResourceException ex) {
         // By default creator is eTeks
       }
+      try {
+        String id = resource.getString(ID + i);
+        if (identifiedFurniture.contains(id)) {
+          return;
+        } else {
+          // Add id to identifiedFurniture to be sure that two pieces with a same ID
+          // won't be added twice to furniture catalog (in case they are cited twice
+          // in different furniture properties files)
+          identifiedFurniture.add(id);
+        }
+      } catch (MissingResourceException ex) {
+        // Don't take into account furniture that don't have an ID
+      }
 
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
       CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
@@ -162,7 +190,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       addPieceOfFurnitureToCatalog(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
-  
+    
   /**
    * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
    * in its category its name will be suffixed indicating its sequence.
@@ -226,16 +254,23 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       try {
         String modelRotationString = resource.getString(key);
         String [] values = modelRotationString.split(" ", 9);
-        return new float [][] {{Float.parseFloat(values [0]), 
-                                Float.parseFloat(values [1]), 
-                                Float.parseFloat(values [2])}, 
-                               {Float.parseFloat(values [3]), 
-                                Float.parseFloat(values [4]), 
-                                Float.parseFloat(values [5])}, 
-                               {Float.parseFloat(values [6]), 
-                                Float.parseFloat(values [7]), 
-                                Float.parseFloat(values [8])}};
+        
+        if (values.length == 9) {
+          return new float [][] {{Float.parseFloat(values [0]), 
+                                  Float.parseFloat(values [1]), 
+                                  Float.parseFloat(values [2])}, 
+                                 {Float.parseFloat(values [3]), 
+                                  Float.parseFloat(values [4]), 
+                                  Float.parseFloat(values [5])}, 
+                                 {Float.parseFloat(values [6]), 
+                                  Float.parseFloat(values [7]), 
+                                  Float.parseFloat(values [8])}};
+        } else {
+          return null;
+        }
       } catch (MissingResourceException ex) {
+        return null;
+      } catch (NumberFormatException ex) {
         return null;
       }
   }
