@@ -264,13 +264,14 @@ public class SweetHome3D extends HomeApplication {
       
       if (!destinationFile.exists()
           || ((FileContentManager)application.getContentManager()).
-                confirmOverwrite(furnitureCatalogFileName)) {
+                confirmOverwrite(furnitureCatalogFileName)) {        
         // Copy furnitureCatalogFile to plugin furniture catalog folder
         InputStream tempIn = null;
         OutputStream tempOut = null;
         try {
           tempIn = new FileInputStream(furnitureCatalogFile);
-          tempOut = new FileOutputStream(destinationFile);
+          pluginFurnitureCatalogFolder.mkdirs();
+          tempOut = new FileOutputStream(destinationFile);          
           byte [] buffer = new byte [8096];
           int size; 
           while ((size = tempIn.read(buffer)) != -1) {
