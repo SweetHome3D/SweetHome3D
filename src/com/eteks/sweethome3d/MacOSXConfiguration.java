@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -61,7 +62,7 @@ class MacOSXConfiguration {
   public static void bindToApplicationMenu(final SweetHome3D homeApplication) {
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = new HomeController(new Home(), homeApplication);
-    HomePane defaultHomeView = (HomePane)defaultController.getView();
+    final HomePane defaultHomeView = (HomePane)defaultController.getView();
     for (HomePane.ActionType action : HomePane.ActionType.values()) {
       switch (action) {
         case ABOUT :
@@ -75,14 +76,18 @@ class MacOSXConfiguration {
       }
     }
     
-    // Create a default undecorated frame out of sight 
-    // and attach the application menu bar of empty view to it
-    JFrame defaultFrame = new JFrame();
-    defaultFrame.setLocation(-10, 0);
-    defaultFrame.setUndecorated(true);
-    defaultFrame.setVisible(true);
-    defaultFrame.setJMenuBar(defaultHomeView.getJMenuBar());
-    addWindowMenuToFrame(defaultFrame, homeApplication, true);
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        // Create a default undecorated frame out of sight 
+        // and attach the application menu bar of empty view to it
+        JFrame defaultFrame = new JFrame();
+        defaultFrame.setLocation(-10, 0);
+        defaultFrame.setUndecorated(true);
+        defaultFrame.setVisible(true);
+        defaultFrame.setJMenuBar(defaultHomeView.getJMenuBar());
+        addWindowMenuToFrame(defaultFrame, homeApplication, true);
+      }
+    });
 
     Application application = new Application();
     // Add a listener on Mac OS X application that will call

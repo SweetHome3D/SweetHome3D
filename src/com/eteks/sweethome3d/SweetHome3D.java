@@ -122,19 +122,6 @@ public class SweetHome3D extends HomeApplication {
   }
   
   /**
-   * Adds a given <code>home</code> to this application, 
-   * in the Event Dispatch Thread.
-   */
-  @Override
-  public void addHome(final Home home) {
-    EventQueue.invokeLater(new Runnable() {
-        public void run() {
-          SweetHome3D.super.addHome(home);
-        }
-      });
-  }
-  
-  /**
    * Returns the frame that displays a given <code>home</code>.
    */
   public JFrame getHomeFrame(Home home) {
@@ -146,13 +133,9 @@ public class SweetHome3D extends HomeApplication {
    */
   private void showHomeFrame(Home home) {
     final JFrame homeFrame = getHomeFrame(home);
-    EventQueue.invokeLater(new Runnable() {
-      public void run() {
-        homeFrame.setVisible(true);
-        homeFrame.setState(JFrame.NORMAL);
-        homeFrame.toFront();
-      }
-    });
+    homeFrame.setVisible(true);
+    homeFrame.setState(JFrame.NORMAL);
+    homeFrame.toFront();
   }
 
   // Only one application may be created with main method or SingleInstanceService
@@ -160,13 +143,14 @@ public class SweetHome3D extends HomeApplication {
 
   /**
    * Sweet Home 3D entry point.
-   * @param args may contain one .sh3d file to open, following a <code>-open</code> option.  
+   * @param args may contain one .sh3d or .sh3f file to open, 
+   *     following a <code>-open</code> option.  
    */
-  public static void main(String [] args) {
+  public static void main(final String [] args) {
     // At first main call
     if (application == null) {
       initSystemProperties();
-      
+
       // If Sweet Home 3D is launched from outside of Java Web Start
       if (ServiceManager.getServiceNames() == null) {
         // Try to call single instance server 
@@ -180,12 +164,24 @@ public class SweetHome3D extends HomeApplication {
           ServiceManager.setServiceManagerStub(new StandaloneServiceManager());
         }
       }      
-      
+
       application = createApplication();
       // Init look and feel afterwards to ensure that Swing takes into account default locale change
       initLookAndFeel();
     }
+    
+    // Run everything else in Event Dispatch Thread
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        runApplication(args);
+      }
+    });
+  }
 
+  /**
+   * Runs application once initialized.
+   */
+  private static void runApplication(String [] args) {
     if (args.length == 2 && args [0].equals("-open")) {
       // If requested home is already opened, show it
       for (Home home : application.getHomes()) {
@@ -202,7 +198,7 @@ public class SweetHome3D extends HomeApplication {
       } else if (application.getContentManager().isAcceptable(args [1], 
           ContentManager.ContentType.FURNITURE_CATALOG)) {
         importFurnitureCatalog(args [1]); 
-        main(new String [0]);
+        runApplication(new String [0]);
       }
     } else if (application.getHomes().isEmpty()) {
       // Create a default home 
@@ -234,7 +230,7 @@ public class SweetHome3D extends HomeApplication {
       application.showHomeFrame(home);
     }
   }
-
+  
   /**
    * Reads home from <code>homeFile</code>.
    */
@@ -286,11 +282,7 @@ public class SweetHome3D extends HomeApplication {
           }
         }
       }
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            ((FileUserPreferences)application.getUserPreferences()).updateDefaultCatalogs();
-          }
-        });
+      ((FileUserPreferences)application.getUserPreferences()).updateDefaultCatalogs();
     } catch (IOException ex) {
       // Show an error message dialog if file couldn't be read
       ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
