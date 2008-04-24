@@ -55,20 +55,20 @@ public class HomeFileRecorder implements HomeRecorder {
    * @throws RecorderException if a problem occurred while writing home.
    */
   public void writeHome(Home home, String name) throws RecorderException {
-    HomeOutputStream out = null;
+    HomeOutputStream homeOut = null;
     File tempFile = null;
     try {
-      // Open a stream on a temporary file name
+      // Open a stream on a temporary file 
       tempFile = File.createTempFile("save", ".sh3d");
-      out = new HomeOutputStream(new FileOutputStream(tempFile));
+      homeOut = new HomeOutputStream(new FileOutputStream(tempFile));
       // Write home with HomeOuputStream
-      out.writeHome(home);
+      homeOut.writeHome(home);
     } catch (IOException ex) {
       throw new RecorderException("Can't save home " + name, ex);
     } finally {
       try {
-        if (out != null) {
-          out.close();
+        if (homeOut != null) {
+          homeOut.close();
           // As writing succeeded, replace old file by temporary file
           File homeFile = new File(name);
           if (homeFile.exists()
@@ -77,7 +77,27 @@ public class HomeFileRecorder implements HomeRecorder {
             throw new RecorderException("Can't replace file " + name);
           }
           if (!tempFile.renameTo(homeFile)) {
-            throw new RecorderException("Can't rename file " + tempFile + " to " + name);
+            // If rename fails try to copy temporary file to home file
+            byte [] buffer = new byte [8096];
+            OutputStream out = null;
+            InputStream in = null;
+            try {
+              out = new FileOutputStream(homeFile);
+              in = new FileInputStream(tempFile);          
+              int size; 
+              while ((size = in.read(buffer)) != -1) {
+                out.write(buffer, 0, size);
+              }
+            } catch (IOException ex) { 
+              throw new RecorderException("Can't copy file " + tempFile + " to " + name);
+            } finally {
+              if (out != null) {          
+                out.close();
+              }
+              if (in != null) {          
+                in.close();
+              }
+            }
           }
         }
       } catch (IOException ex) {
