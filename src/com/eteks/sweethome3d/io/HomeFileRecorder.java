@@ -76,7 +76,7 @@ public class HomeFileRecorder implements HomeRecorder {
             tempFile.delete();
             throw new RecorderException("Can't replace file " + name);
           }
-          if (true) {
+          if (!tempFile.renameTo(homeFile)) {
             // If rename fails try to copy temporary file to home file
             byte [] buffer = new byte [8096];
             OutputStream out = null;
