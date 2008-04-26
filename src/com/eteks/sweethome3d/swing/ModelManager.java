@@ -22,6 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PushbackInputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -158,9 +160,30 @@ public class ModelManager {
    * Returns the model read from <code>urlContent</code> with one of the loaders in parameter.
    */
   private BranchGroup loadModel(URLContent urlContent) throws IOException {
+    Loader3DS loader3DSWithNoStackTraces = new Loader3DS() {
+      @Override
+      public Scene load(URL url) throws FileNotFoundException {
+        PrintStream defaultSystemErrorStream = System.err;
+        try {
+          // Ignore stack traces on System.err during 3DS file loading
+          System.setErr(new PrintStream (new OutputStream() {
+              @Override
+              public void write(int b) throws IOException {
+                // Do nothing
+              }
+            }));
+          // Default load
+          return super.load(url);
+        } finally {
+          // Reset default err print stream
+          System.setErr(defaultSystemErrorStream);
+        }
+      }
+    };
+
     Loader []  loaders = new Loader [] {new ObjectFile(),
                                         new ObjectFileTranslator(),
-                                        new Loader3DS(),
+                                        loader3DSWithNoStackTraces,
                                         new Lw3dLoader()};
     Exception lastException = null;
     for (Loader loader : loaders) {
