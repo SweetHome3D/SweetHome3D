@@ -177,7 +177,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       try {
         String id = resource.getString(ID + i);
         if (identifiedFurniture.contains(id)) {
-          return;
+          continue;
         } else {
           // Add id to identifiedFurniture to be sure that two pieces with a same ID
           // won't be added twice to furniture catalog (in case they are cited twice
