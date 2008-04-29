@@ -1,6 +1,7 @@
-#Mon May 15 08:40:00 CEST 2006
+#Thu Nov 15 17:12:27 CET 2007
 eclipse.preferences.version=1
-formatter_settings_version=8
+formatter_profile=_SweetHome3D
+formatter_settings_version=11
 internal.default.compliance=default
 org.eclipse.jdt.ui.exception.name=ex
 org.eclipse.jdt.ui.gettersetter.use.is=true
