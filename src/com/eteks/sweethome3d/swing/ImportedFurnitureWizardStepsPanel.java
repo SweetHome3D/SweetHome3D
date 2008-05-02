@@ -170,6 +170,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private JButton                           clearColorButton;
   private JLabel                            iconLabel;
   private IconPreviewComponent              iconPreviewComponent;
+  private Cursor                            defaultCursor; 
 
   private static Executor                   modelLoader = Executors.newSingleThreadExecutor();
 
@@ -980,13 +981,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Caution : this method must be thread safe because it's called from image loader executor. 
    */
   private BranchGroup readModel(Content modelContent) throws IOException {
-    final Cursor previousCursor = getCursor(); 
     try {
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             modelChoiceOrChangeButton.setEnabled(false);
-            SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).
-                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
+            if (defaultCursor == null) {
+              defaultCursor = rootPane.getCursor();
+            }
+            rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             updatePreviewComponentsModel(null);
           }
         });
@@ -1006,7 +1009,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
       EventQueue.invokeLater(new Runnable() {
           public void run() {
             modelChoiceOrChangeButton.setEnabled(true);
-            SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(previousCursor);
+            SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(defaultCursor);
           }
         });
     } 
