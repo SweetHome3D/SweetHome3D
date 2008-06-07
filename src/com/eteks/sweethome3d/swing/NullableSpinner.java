@@ -169,7 +169,7 @@ public class NullableSpinner extends JSpinner {
     }
 
     /**
-     * Returns the diplayed value in centimeter.
+     * Returns the displayed value in centimeter.
      */
     public Float getLength() {
       if (getValue() == null) {
