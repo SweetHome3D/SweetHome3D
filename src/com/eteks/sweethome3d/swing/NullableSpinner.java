@@ -63,7 +63,7 @@ public class NullableSpinner extends JSpinner {
               @Override
               public String valueToString(Object value) throws ParseException {
                 if (value == null && ((NullableSpinnerNumberModel)getModel()).isNullable()) {
-                  // Return empty text forn null values
+                  // Return empty text for null values
                   return "";
                 } else {
                   return formatter.valueToString(value);
