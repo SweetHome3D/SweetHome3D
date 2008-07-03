@@ -307,7 +307,7 @@ public class SweetHome3D extends HomeApplication {
   }
 
   /**
-   * Sets application look anf feel.
+   * Sets application look and feel.
    */
   private static void initLookAndFeel() {
     try {
