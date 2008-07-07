@@ -6,314 +6,300 @@ files included as part of this product :
 - Java 3D DLLs (libj3d*.so, j3d*.dll and/or lib*.jnilib)
 
 
-JAVA DISTRIBUTION LICENSE (VER. 1.0)
-Java 3D
+Sun Microsystems, Inc. ("Sun") ENTITLEMENT for SOFTWARE
 
-I. LICENSE GRANTS, TERMS AND RESTRICTIONS
+Licensee/Company: Entity receiving Software.
 
-1.0 General License Terms. This Java Distribution License ("JDL")
-is between Sun Microsystems, Inc. ("Sun") and You where "You" means
-the individual or legal entity exercising rights under this JDL.
-"Technology" means the following as provided under this JDL: (i) the
-source code and binary code from the Reference Implementation ("RI")
-of the Java 3D(TM) version 1.5 Specification (the "Specification") and
-related documentation, all as revised or upgraded and made available
-hereunder; and (ii) the associated technology compatibility kit ("TCK").
-The TCK contains the TCK documentation, user's guide ("TCK User's Guide"),
-test tools and test suite associated with the Specification, as revised
-or upgraded by Sun. The TCK is provided so that You may determine if Your
-implementation is compliant with the Specification. "Modifications" means
-any (i) change or addition to or derivative of the Technology; or (ii) new
-source or object code implementing the Specification for the Technology.
-"Commercial Use" means: (i) Your use of the RI and/or Modifications as
-part of a Compatible Implementation within Your business or organization,
-but only by Your employees or agents; and/or (ii) any use or distribution,
-directly or indirectly by You of the RI and/or Modifications as part
-of a Compatible Implementation to any third party, alone or bundled
-with any other software or hardware, for direct or indirect commercial
-or strategic gain or advantage. By Your use or distribution of the
-Technology and Modifications, You agree to the terms of this JDL.
+Effective Date: Date of delivery of the Software to You.
 
-2.0 License Grants, Restrictions and Termination.
+Software: JAVA 3D, VERSION 1.5.2.
 
-2.1 Commercial Use and Internal Deployment License Grants. Subject
-to the terms of this JDL, Sun grants to You, to the extent of Sun's
-licensable copyrights, patents and trade secrets in the RI, a limited,
-non-exclusive, non-transferable, worldwide and royalty-free license to
-modify, compile, reproduce, distribute, internally use and internally
-deploy code and related documentation from the RI and/or Modifications
-for Commercial Use, but only as part of Your own Compatible Implementation
-(as defined below), and only if You make such distributions as follows:
+License Term: Perpetual (subject to termination under the SLA).
 
-(i) Source Code. You can only distribute source code for the RI and
-Modifications under all of the following conditions: (a) You make such
-distribution under the terms of this JDL; (b) without offering or imposing
-any different terms; (c) to a receipient who has accepted the terms of
-this JDL; and (d) You provide a copy of this JDL to each such receipient;
+Licensed Unit: Software Copy.
 
-(ii) Binary Code. You can distribute binary code for the RI and
-Modifications but only under license terms which (a) have been accepted
-by the receipient; (b) are consistent, and not conflicting, with the
-terms of the JDL; and (c) where such terms are no less protective of
-Sun than the terms of this JDL.
+Licensed unit Count: Unlimited.
 
-2.2 TCK License Grant. Subject to the terms of this JDL, Sun grants to
-You, to the extent of Sun's licensable copyrights, patents and trade
-secrets in the TCK, a limited, non-exclusive, non-transferable, worldwide
-and royalty-free license to internally use the TCK for the sole purpose of
-developing and testing Your Compatible Implementations (as defined below).
+Permitted Uses:
 
-2.2.1 TCK Master Support Agreement. If you desire support for the TCK,
-You may execute a separate TCK master support agreement with Sun.
+1. You may reproduce and use the Software for Your own Individual,
+Commercial, and Research and Instructional Use for the purposes
+of designing, developing, testing, and running Your applets and
+applications("Programs").
 
-2.2.2 TCK Use Terms. Your TCK license grant hereunder is expressly
-conditioned upon your continued adherance to the following restrictions:
+2. Subject to the terms and conditions of this Agreement and
+restrictions and exceptions set forth in the Software's documentation,
+You may reproduce and distribute portions of Software identified as a
+redistributable in the documentation ("Redistributable"), provided that:
 
-(i) You may not sublicense or distribute the TCK to any third party except
-for any specific TCK code files identified as redistributables in the
-TCK User's Guide ("Redistributables"), but only: (a) as part of a TCK
-Adaptor accompanying a Compatible Implementation (where a "TCK Adaptor"
-means a program that effects interoperability between the TCK and the
-Compatible Implementation); and (b) pursuant to a license agreement that
-protects Sun's interests consistent with the terms of the JDL;
+(a) You distribute Redistributable complete and unmodified and only
+bundled as part of Your Programs,
 
-(ii) You may not create derivative works of the TCK nor of any of its
-components except for the Redistributables in a TCK Adaptor;
+(b) Your Programs add significant and primary functionality to the
+Redistributable,
 
-(iii) You may not disassemble or decompile binary portions of the TCK's
-test suites or test tools or otherwise attempt to derive the source code
-from such binary portions;
+(c) You distribute Redistributable for the sole purpose of running
+Your Programs,
 
-(iv) You may not develop other test suites intended to validate
-compatibility with the Specification to which the TCK licensed hereunder
-corresponds;
+(d) You do not distribute additional software intended to replace any
+component(s) of the Redistributable,
 
-(v) You may not use the TCK to test a third party's product;
+(e) You do not remove or alter any proprietary legends or notices
+contained in or on the Redistributable.
 
-(vi) You may not make Commercial Use of code which implements any
-portion of the Specification unless such code is included in a Compatible
-Implementation;
+(f) You only distribute the Redistributable subject to a license agreement
+that protects Sun's interests consistent with the terms contained in
+this Agreement, and
 
-(vii) You may disclose Test Reports (where "Test Reports" means
-those reports generated by the TCK which identify only configuration
-information and the status of individual or aggregate test executions) for
-an implementation which You are attempting to certify in accordance with
-the terms of this JDL for the sole purpose of making Your implementation
-a Compatible Implementation, but you may not make any claims of
-comparative compatibility nor disclose any other TCK testing information
-to any party. For example, You cannot claim that Your implementation is
-"nearly compatible" or "98% compatible." When You share Test Reports in
-any public forum, including mailing lists, marketing material or press
-releases, and Your implementation is not a Compatible Implementation,
-You must state that Your implementation is "not compatible;" and
+(g) You agree to defend and indemnify Sun and its licensors from and
+against any damages, costs, liabilities, settlement amounts and/or
+expenses  (including attorneys' fees) incurred in connection with any
+claim, lawsuit or action by any third party that arises or results from
+the use or distribution of any and all Programs and/or Redistributable.
 
-(viii) You will protect the TCK as confidential information of Sun and,
-except as expressly authorized herein, You may not disclose the TCK to
-any third party. This obligation of confidentiality with respect to the
-TCK will survive any termination or expiration of this JDL.
+3. Java Technology Restrictions.  You may not create, modify, or change
+the behavior of, or authorize Your licensees to create, modify, or change
+the behavior of, classes, interfaces, or subpackages that are in any way
+identified as "java", "javax", "sun" or similar convention as specified
+by Sun in any naming convention designation.
 
-2.3 Term and Termination. This JDL shall have an initial term of two (2)
-years after your acceptance of this JDL and shall thereafter automatically
-renew for additional one year terms unless either party provides notice to
-the other party sixty (60) days prior to an anniversary date. The license
-grants of this JDL, are expressly conditioned upon Your not acting outside
-their scope, and Your continued compliance with the material provisions
-of this JDL. All license grants under this JDL will automatically and
-immediately be revoked without notice if You fail to so comply. Upon
-termination or expiration of this JDL, You must discontinue all use
-and distribution of the Technology and any Compatible Implementation
-licensed under this JDL. All sublicenses You have properly granted
-hereunder shall survive termination or expiration of Your rights under
-the JDL. Provisions which should, by their nature, remain in effect after
-termination or expiration shall survive, including, without limitation,
-the provisions of Article II (General Terms) and the TCK confidentiality
-obligations under this JDL.
 
-2.4 General License Restrictions. Some portions of the Technology are
-provided with notices and/or open source or other licenses from other
-parties which govern the use of those portions. Your use or distribution
-of encryption technology contained within the Technlogy is subject to
-all applicable governmental regulations of the United States of America
-and the country where the Technology is deployed. You agree to comply
-with the U.S. export controls and trade laws of other countries that
-apply to the Technology and Compatible Implementations. You acknowledge
-that the Technology is not designed, licensed or intended for use in the
-design, construction, operation or maintenance of any nuclear facility.
-Other than the rights granted herein, Sun retains all rights, title,
-and interest in the Technlogy.
+SOFTWARE LICENSE AGREEMENT
 
-3.0 Compatibility and Use of the TCK.
+READ THE TERMS OF THIS AGREEMENT ("AGREEMENT") CAREFULLY BEFORE OPENING
+SOFTWARE MEDIA PACKAGE. BY OPENING SOFTWARE MEDIA PACKAGE, YOU AGREE TO
+THE TERMS OF THIS AGREEMENT. IF YOU ARE ACCESSING SOFTWARE ELECTRONICALLY,
+INDICATE YOUR ACCEPTANCE OF THESE TERMS BY SELECTING THE "ACCEPT" (OR
+EQUIVALENT) BUTTON AT THE END OF THIS AGREEMENT. IF YOU DO NOT AGREE TO
+ALL OF THE TERMS, PROMPTLY RETURN THE UNUSED SOFTWARE TO YOUR PLACE OF
+PURCHASE FOR A REFUND OR, IF SOFTWARE IS ACCESSED ELECTRONICALLY, SELECT
+THE "DECLINE" (OR EQUIVALENT) BUTTON AT THE END OF THIS AGREEMENT. IF YOU
+HAVE SEPARATELY AGREED TO LICENSE TERMS ("MASTER TERMS") FOR YOUR LICENSE
+TO THIS SOFTWARE, THEN SECTIONS 1-6 OF THIS AGREEMENT ("SUPPLEMENTAL
+LICENSE TERMS") SHALL SUPPLEMENT AND SUPERSEDE THE MASTER TERMS IN
+RELATION TO THIS SOFTWARE.
 
-3.1 Compatible Implementation TCK Requirements. Your use of the RI and/or
-Modifications as part of an implementation of the Specification is a
-"Compatible Implementation" if the implementation meets the following
-requirements:
+1. Definitions.
 
-3.1.1 A Compatible Implementation must comply with the full Specification,
-including all its required interfaces and functionality;
+(a) "Entitlement" means the collective set of applicable documents
+authorized by Sun evidencing your obligation to pay associated fees (if
+any) for the license, associated Services, and the authorized scope of
+use of Software under this Agreement.
 
-3.1.2 A Compatible Implementation must either: (i) pass the most
-current compatibility requirements (as defined by the TCK User's Guide)
-which were made available by Sun one hundred twenty (120) days before
-first commercial shipment ("FCS") of each version of the Compatible
-Implementation (eg. if Your FCS was December 31, 2003, You must have
-passed the most current version of the TCK as of September 2, 2003); or
-(ii) at Your option, pass all the compatibility requirements of a newer
-version of the TCK and its associated TCK User's Guide;
+(b) "Licensed Unit" means the unit of measure by which your use of
+Software and/or Service is licensed, as described in your Entitlement.
 
-3.1.3 A Compatible Implementation may not modify the functional behavior
-of the "Java Classes" which means the specific class libraries associated
-with the Technology; and
+(c) "Permitted Use" means the licensed Software use(s) authorized in
+this Agreement as specified in your Entitlement. The Permitted Use
+for any bundled Sun software not specified in your Entitlement will be
+evaluation use as provided in Section 3.
 
-3.1.4 A Compatible Implementation may not modify, subset, superset or
-otherwise extend the Licensor Name Space, nor include any public or
-protected packages, classes, Java interfaces, fields or methods within
-the Licensor Name Space other than those required and/or authorized
-by the Specification. "Licensor Name Space" means the public class or
-interface declarations whose names begin with "java", "javax", "com.sun"
-or their equivalents in any subsequent naming convention adopted by
-Sun through the Java Community Process, or any recognized successors or
-replacements thereof.
+(d) "Service" means the service(s) that Sun or its delegate will provide,
+if any, as selected in your Entitlement and as further described in the
+applicable service listings at www.sun.com/service/servicelist.
 
-3.2 Self-Certification for Compatibility. You shall self-certify that Your
-Compatible Implementation passes the applicable TCK as set forth above,
-if and when Your Compatible Implementation in fact does so, provided that:
+(e) "Software" means the Sun software described in your Entitlement. Also,
+certain software may be included for evaluation use under Section 3.
 
-3.2.1 If Sun policy (as communicated to You by Sun) also requires
-verification of compatibility for Your Compatible Implementation
-then You shall, prior to the FCS of the Compatible Implementation,
-submit verification of compatibility to Sun or to an independent test
-facility designated by Sun. If such verification is by an independent
-test facility, then the reasonable costs of such activity (including any
-applicable fees) shall be at Your expense. Sun may publish or otherwise
-disclose Your test results.
+(f) "You" and "Your" means the individual or legal entity specified
+in the Entitlement, or for evaluation purposes, the entity performing
+the evaluation.
 
-3.2.2 Upon thirty (30) days written notice by Sun, and no more than two
-(2) times per calendar year, You shall permit Sun or its authorized
-representative to inspect and test any Compatible Implementation which
-has been self-certified per this subsection 3.2 to ensure that such
-Compatible Implementation meets the compatibility and other requirements
-for a Compatible Implementation as set forth herein. The reasonable
-costs of such inspection shall be at Sun's expense; provided, however,
-that You shall reimburse Sun for such costs if the inspection reveals
-that the Compatible Implementation does not meet such requirements and
-these deficiencies are not cured within thirty (30) days.
+2. License Grant and Entitlement.
 
-4.0 Fees and Royalties. There are no fees or royalites associated with
-the license grants for the Technology licensed under this JDL.
+Subject to the terms of your Entitlement, Sun grants you a nonexclusive,
+nontransferable limited license to use Software for its Permitted Use for
+the license term. Your Entitlement will specify (a) Software licensed,
+(b) the Permitted Use, (c) the license term, and (d) the Licensed Units.
 
-II. GENERAL TERMS
+Additionally, if your Entitlement includes Services, then it will also
+specify the (e) Service and (f) service term.
 
-5.0 No Warranty. THE TECHNOLOGY AND/OR MODIFICATIONS ARE PROVIDED "AS IS",
-WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS, IMPLIED OR STATUTORY
-INCLUDING, WITHOUT LIMITATION, WARRANTIES THAT THE TECHNOLOGY AND/OR
-MODIFICATIONS ARE FREE OF DEFECTS, MERCHANTABLE, FIT FOR A PARTICULAR
-PURPOSE, OR NON-INFRINGING OF THIRD PARTY RIGHTS. YOU AGREE THAT YOU BEAR
-THE ENTIRE RISK IN CONNECTION WITH YOUR USE AND DISTRIBUTION OF ANY AND
-ALL TECHNOLOGY AND/OR MODIFICATIONS UNDER THIS JDL. SOME JURISDICTIONS
-DO NOT PERMIT THE EXCLUSION OF IMPLIED WARRANTIES SO THE ABOVE EXCLUSIONS
-MAY NOT APPLY TO YOU
+If your rights to Software or Services are limited in duration and the
+date such rights begin is other than the purchase date, your Entitlement
+will provide that beginning date(s).
 
-6.0 Infringement Claims. Sun may terminate this JDL, in Sun's sole
-discretion, upon any action initiated by You alleging that the use
-or distribution of the Technology and/or Modifications by Sun, or
-any other licensee of the Technology and/or Modifications, infringes
-a patent owned or controlled by You. In addition, if any portion of,
-or functionality implemented by, the Technology becomes the subject of
-a claim or threatened claim of infringement ("Affected Materials"), Sun
-may, at its sole option, (i) attempt to procure the rights necessary for
-You to continue using the Affected Materials, (ii) modify the Affected
-Materials so that they are no longer infringing, or (iii) immediately
-suspend Your rights to use and distribute the Affected Materials under
-this JDL by providing notice of suspension to You in a reasonable manner,
-and refund toYou the amount, if any, having then actually been paid by
-You to Sun under this JDL, on a straight line, five year basis .
+The Entitlement may be delivered to you in various ways depending on
+the manner in which you obtain Software and Services, for example, the
+Entitlement may be provided in your receipt, invoice or your contract
+with Sun or authorized Sun reseller. It may also be in electronic format
+if you download Software.
 
-7.0 Limitation of Liability. Sun will be not be liable for any claims
-relating to, or arising out of, this JDL, whether in tort, contract or
-otherwise, in an amount in excess of any annual license fees You paid to
-Sun for the Technology. IN NO EVENT WILL SUN BE LIABLE FOR ANY INDIRECT,
-SPECIAL, INCIDENTAL, CONSEQUENTIAL OR PUNITIVE DAMAGES IN CONNECTION
-WITH OR ARISING OUT OF THIS JDL (INCLUDING, WITHOUT LIMITATION, LOSS OF
-PROFITS, USE, DATA, OR ECONOMIC ADVANTAGE OF ANY SORT), HOWEVER IT ARISES
-AND UNDER ANY THEORY OF LIABILITY (including negligence), REGARDLESS OF
-WHETHER OR NOT SUN HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-FURTHERMORE, LIABILITY UNDER THIS JDL SHALL BE SO LIMITED AND EXCLUDED,
-NOTWITHSTANDING FAILURE OF THE ESSENTIAL PURPOSE OF ANY REMEDY. TO THE
-EXTENT ANY INDIRECT, PUNITIVE, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
-DAMAGES YOU INCUR FOR ANY REASON WHATSOEVER CANNOT BE DISCLAIMED THEN
-THE ENTIRE LIABILITY OF SUN UNDER ANY PROVISION OF THIS JDL, AND YOUR
-EXCLUSIVE REMEDY FOR ANY SUCH DAMAGES, SHALL BE LIMITED TO THE GREATER
-OF THE AMOUNT ACTUALLY PAID BY YOU FOR THE TECHNOLOGY OR FIVE HUNDRED
-US DOLLARS, WHICHEVER IS GREATER. SOME JURISDICTIONS DO NOT PERMIT THE
-EXCLUSION OR LIMITATION OF INCIDENTALS OR CONSEQUENTIAL DAMAGES SO THE
-ABOVE EXCLUSION AND LIMITATION MAY NOT APPLY TO YOU.
+3. Permitted Use.
 
-8.0 Support. Sun does not provide any support for the Technology or the
-TCK to either You or Your customers under this JDL. Support for the TCK
-is provided under a separate TCK master support agreement. If You desire
-support for the RI, You may contact Sun. You are solely reponsible for
-providing all support to Your customers with respect to the Technology,
-TCK, Modifications and/or Compatible Implementation.
+As selected in your Entitlement, one or more of the following Permitted
+Uses will apply to your use of Software. Unless you have an Entitlement
+that expressly permits it, you may not use Software for any of the other
+Permitted Uses. If you don't have an Entitlement, or if your Entitlement
+doesn't cover additional software delivered to you, then such software
+is for your Evaluation Use.
 
-9.0 Marketing and Press Announcements. Your initial press announcement
-concerning execution of this JDL must be reviewed and approved by
-Sun prior to its release. You hereby authorizes Sun to include You
-in a published list of licensees of the Technology. Sun shall also
-be authorized to use Your name in advertising, marketing collateral,
-and customer success stories prepared by or on behalf of Sun for the
-Technology subject to Your prior approval, such approval not to be
-unreasonably withheld or delayed.
+(a) Evaluation Use. You may evaluate Software internally for a period
+of 90 days from your first use.
 
-10.0 Notices. All notices required by this JDL must be in writing.
-Sun shall deliver notice to You via either e-mail or by physical mail
-based on the information You provided to Sun when you accepted this JDL.
-Notices by You to Sun will be effective only upon receipt by Sun at
-the following physical addresses: Sun Microsystems, Inc., 4150 Network
-Circle, Santa Clara, California 95054, Attn.: Sun Software VP of Sales,
-cc: General Counsel, cc: Product Law Legal Department or to such different
-address as Sun provides on the Technology Site for such purpose.
+(b) Research and Instructional Use. You may use Software internally to
+design, develop and test, and also to provide instruction on such uses.
 
-11.0 Proprietary Rights Notices and Branding Requirements. There are
-no specific branding requirements associated with the Technology under
-this JDL. You may not remove any copyright notices, trademark notices or
-other proprietary legends of Sun or its suppliers contained on or in the
-Technology, including any notices of licenses for open source components.
-You agree to comply with the Sun Trademark and Logo Usage Requirements
-currently located at http://www.sun.com/policies/trademarks. Except as
-provided in this JDL, no right, title or interest to Sun's trademarks,
-brands or logos is granted herein.
+(c) Individual Use. You may use Software internally for personal,
+individual use.
 
-12.0 U.S. Government End Users. The Technology and Modifications are a
-"commercial item," as that term is defined in 48 C.F.R. 2.101 (Oct.
-1995), consisting of "commercial computer software" and "commercial
-computer software documentation," as such terms are used in 48 C.F.R.
-12.212 (Sept. 1995). Consistent with 48 C.F.R. 12.212 and 48 C.F.R.
-227.7202-1 through 227.7202-4 (June 1995), all U.S. Government End Users
-acquire Technology and/or Modifications with only those rights set forth
-herein. You agree to pass this notice to Your licensees.
+(d) Commercial Use. You may use Software internally for your own
+commercial purposes.
 
-13.0 Miscellaneous. This JDL is governed by the laws of the United
-States and the State of California, as applied to contracts entered
-into and performed in California between California residents. The
-relationship created under this JDL is that of licensor and licensee and
-does not create any other relationship such as a partnership, franchise,
-joint venture, agency or employment relationship between the parties.
-This JDL may not be assigned or transferred by either party without
-the prior written consent of the other party, which consent shall not
-be unreasonably withheld or delayed, except that Sun may assign: (i)
-to an affiliated company, or (ii) in the event of a merger, acquisition
-or sale of all or substantially all of the assets of Sun. Any express
-waiver or failure to exercise promptly any right under this Agreement will
-not create a continuing waiver nor any expectation of non-enforcement.
-The disclaimer of warranties and limitations of liability constitute
-an essential basis of the bargain in this JDL. This JDL represents the
-complete agreement of the parties concerning the subject matter hereof
-and may not be modified or amended in whole or part, except by a written
-instrument signed by the parties' authorized representatives. Nothing
-herein shall supersede or modify the terms of any separate signed written
-license agreement You may have executed with Sun regarding the Technology.
+(e) Service Provider Use. You may make Software functionality accessible
+(but not by providing Software itself or through outsourcing services)
+to your end users in an extranet deployment, but not to your affiliated
+companies or to government agencies.
 
-YOU:    By:  ___________________________________        Name:  ___________________________________
+4. Licensed Units.
 
-        Title: __________________________________       Date: _____________________________________
+Your Permitted Use is limited to the number of Licensed Units stated
+in your Entitlement. If you require additional Licensed Units, you will
+need additional Entitlement(s).
+
+5. Restrictions.
+
+(a) The copies of Software provided to you under this Agreement
+is licensed, not sold, to you by Sun. Sun reserves all rights not
+expressly granted. (b) You may make a single archival copy of Software,
+but otherwise may not copy, modify, or distribute Software. However if
+the Sun documentation accompanying Software lists specific portions of
+Software, such as header files, class libraries, reference source code,
+and/or redistributable files, that may be handled differently, you may
+do so only as provided in the Sun documentation. (c) You may not rent,
+lease, lend or encumber Software. (d) Unless enforcement is prohibited by
+applicable law, you may not decompile, or reverse engineer Software. (e)
+The terms and conditions of this Agreement will apply to any Software
+updates, provided to you at Sun's discretion, that replace and/or
+supplement the original Software, unless such update contains a separate
+license. (f) You may not publish or provide the results of any benchmark
+or comparison tests run on Software to any third party without the prior
+written consent of Sun. (g) Software is confidential and copyrighted. (h)
+Unless otherwise specified, if Software is delivered with embedded or
+bundled software that enables functionality of Software, you may not
+use such software on a stand-alone basis or use any portion of such
+software to interoperate with any program(s) other than Software. (i)
+Software may contain programs that perform automated collection of
+system data and/or automated software updating services. System data
+collected through such programs may be used by Sun, its subcontractors,
+and its service delivery partners for the purpose of providing you with
+remote system services and/or improving Sun's software and systems. (j)
+Software is not designed, licensed or intended for use in the design,
+construction, operation or maintenance of any nuclear facility and Sun
+and its licensors disclaim any express or implied warranty of fitness
+for such uses. (k) No right, title or interest in or to any trademark,
+service mark, logo or trade name of Sun or its licensors is granted
+under this Agreement.
+
+6. Java Compatibility and Open Source.
+
+Software may contain Java technology. You may not create additional
+classes to, or modifications of, the Java technology, except under
+compatibility requirements available under a separate agreement available
+at www.java.net.
+
+Sun supports and benefits from the global community of open source
+developers, and thanks the community for its important contributions
+and open standards-based technology, which Sun has adopted into many of
+its products.
+
+Please note that portions of Software may be provided with notices and
+open source licenses from such communities and third parties that govern
+the use of those portions, and any licenses granted hereunder do not alter
+any rights and obligations you may have under such open source licenses,
+however, the disclaimer of warranty and limitation of liability provisions
+in this Agreement will apply to all Software in this distribution.
+
+7. Term and Termination.
+
+The license and service term are set forth in your Entitlement(s). Your
+rights under this Agreement will terminate immediately without notice from
+Sun if you materially breach it or take any action in derogation of Sun's
+and/or its licensors' rights to Software. Sun may terminate this Agreement
+should any Software become, or in Sun's reasonable opinion likely to
+become, the subject of a claim of intellectual property infringement or
+trade secret misappropriation. Upon termination, you will cease use of,
+and destroy, Software and confirm compliance in writing to Sun. Sections
+1, 5, 6, 7, and 9-15 will survive termination of the Agreement.
+
+8. Limited Warranty.
+
+Sun warrants to you that for a period of 90 days from the date of
+purchase, as evidenced by a copy of the receipt, the media on which
+Software is furnished (if any) will be free of defects in materials
+and workmanship under normal use. Except for the foregoing, Software is
+provided "AS IS". Your exclusive remedy and Sun's entire liability under
+this limited warranty will be at Sun's option to replace Software media
+or refund the fee paid for Software. Some states do not allow limitations
+on certain implied warranties, so the above may not apply to you. This
+limited warranty gives you specific legal rights. You may have others,
+which vary from state to state.
+
+9. Disclaimer of Warranty.
+
+UNLESS SPECIFIED IN THIS AGREEMENT, ALL EXPRESS OR IMPLIED CONDITIONS,
+REPRESENTATIONS AND WARRANTIES, INCLUDING ANY IMPLIED WARRANTY OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR NON-INFRINGEMENT
+ARE DISCLAIMED, EXCEPT TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO
+BE LEGALLY INVALID.
+
+10. Limitation of Liability.
+
+TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL SUN OR ITS LICENSORS
+BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR SPECIAL, INDIRECT,
+CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED REGARDLESS
+OF THE THEORY OF LIABILITY, ARISING OUT OF OR RELATED TO THE USE OF
+OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES. In no event will Sun's liability to you,
+whether in contract, tort (including negligence), or otherwise, exceed
+the amount paid by you for Software under this Agreement. The foregoing
+limitations will apply even if the above stated warranty fails of its
+essential purpose. Some states do not allow the exclusion of incidental
+or consequential damages, so some of the terms above may not be applicable
+to you.
+
+11. Export Regulations.
+
+All Software, documents, technical data, and any other materials delivered
+under this Agreement are subject to U.S. export control laws and may be
+subject to export or import regulations in other countries. You agree
+to comply strictly with these laws and regulations and acknowledge that
+you have the responsibility to obtain any licenses to export, re-export,
+or import as may be required after delivery to you.
+
+12. U.S. Government Restricted Rights.
+
+If Software is being acquired by or on behalf of the U.S. Government or
+by a U.S. Government prime contractor or subcontractor (at any tier),
+then the Government's rights in Software and accompanying documentation
+will be only as set forth in this Agreement; this is in accordance with
+48 CFR 227.7201 through 227.7202-4 (for Department of Defense (DOD)
+acquisitions) and with 48 CFR 2.101 and 12.212 (for non-DOD acquisitions).
+
+13. Governing Law.
+
+Any action related to this Agreement will be governed by California
+law and controlling U.S. federal law. No choice of law rules of any
+jurisdiction will apply.
+
+14. Severability.
+
+If any provision of this Agreement is held to be unenforceable, this
+Agreement will remain in effect with the provision omitted, unless
+omission would frustrate the intent of the parties, in which case this
+Agreement will immediately terminate.
+
+15. Integration.
+
+This Agreement, including any terms contained in your Entitlement, is the
+entire agreement between you and Sun relating to its subject matter. It
+supersedes all prior or contemporaneous oral or written communications,
+proposals, representations and warranties and prevails over any
+conflicting or additional terms of any quote, order, acknowledgment, or
+other communication between the parties relating to its subject matter
+during the term of this Agreement. No modification of this Agreement will
+be binding, unless in writing and signed by an authorized representative
+of each party.
+
+Please contact Sun Microsystems, Inc. 4150 Network Circle, Santa Clara,
+California 95054 if you have questions.
