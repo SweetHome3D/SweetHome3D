@@ -134,8 +134,8 @@
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/tmp" />
-  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/windows/tmp" />
-  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/windows/tmp" />
   
     <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
@@ -243,8 +243,8 @@
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-1.3" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/macosx/SweetHome3D-1.3" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-1.3" />
-  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/macosx/SweetHome3D-1.3" />
-  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/macosx/SweetHome3D-1.3" />
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/macosx/SweetHome3D-1.3" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/macosx/SweetHome3D-1.3" />
  
     <!-- Create install/SweetHome3D-1.3-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-1.3-macosx.dmg"/>
@@ -282,8 +282,8 @@
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT" todir="install/linux/i386/SweetHome3D-1.3" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-1.3" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT" todir="install/linux/i386/SweetHome3D-1.3" />
-  	<copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/linux/i386/SweetHome3D-1.3" />
-  	<copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-1.3" />  	
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT" todir="install/linux/i386/SweetHome3D-1.3" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-1.3" />  	
   	
     <!-- Copy JRE to install/linux/i386/SweetHome3D-1.3/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
