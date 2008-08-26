@@ -27,7 +27,7 @@
     <mainClass>com.eteks.sweethome3d.SweetHome3D</mainClass>
     <cp>lib/SweetHome3D.jar</cp>
     <cp>lib/Loader3DS1_2.jar</cp>
-    <cp>lib/itext-2.0.4.jar</cp>
+    <cp>lib/iText-2.1.2u.jar</cp>
     <cp>lib/j3dcore.jar</cp>
     <cp>lib/j3dutils.jar</cp>
     <cp>lib/vecmath.jar</cp>

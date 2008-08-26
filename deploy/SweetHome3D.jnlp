@@ -36,7 +36,12 @@
   <information locale="pl">
     <title>Sweet Home 3D</title>
     <description kind="short">Zaprojektuj wnetrze swojego domu</description>
-    <offline-allowed/>
+    <offline-allowed/>    
+  </information>  
+  <information locale="hu">
+    <title>Sweet Home 3D</title>
+    <description kind="short">Keszitse el lakasanak belso kialakitasat!</description>
+    <offline-allowed/>    
   </information>  
 
   <security>
@@ -54,7 +59,7 @@
   </resources>
  
   <resources os="Windows">
-    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/iText-2.1.2u.jar"/>
     <jar href="lib/windows/java3d.jar"/>
   </resources>
   <resources os="Mac OS X">
@@ -62,15 +67,15 @@
     <jar href="lib/macosx/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
-    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/iText-2.1.2u.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="SunOS" arch="x86">
-    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/iText-2.1.2u.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   <resources os="SunOS" arch="sparc">
-    <jar href="lib/itext-2.0.4.jar"/>
+    <jar href="lib/iText-2.1.2u.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   
