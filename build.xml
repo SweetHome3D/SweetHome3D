@@ -9,6 +9,7 @@
      - windowsInstaller : Builds SweetHome3D-1.3.1-windows.exe file in install directory     
      - macosxInstaller : Builds SweetHome3D-1.3.1-macosx.dmg file in install directory
      - linuxInstaller : Builds SweetHome3D-1.3.1-linux-x86.tgz file in install directory
+     - sourceArchive : Builds SweetHome3D-1.3.1-src.zip file in install directory
 -->
 <project basedir="." default="deploy" name="SweetHome3D">
   <!-- Builds deploy/SweetHome3D.jar -->
@@ -325,5 +326,37 @@ jre1.6.0_06/bin/java -classpath lib/SweetHome3D.jar:lib/Loader3DS1_2.jar:lib/iTe
     <delete dir="install/linux"/>
 
     <echo message="install/SweetHome3D-1.3.1-linux-x86.tgz ready for ftp"/>
+  </target>
+
+  <!-- Builds install/SweetHome3D-1.3.1-src.zip archive that contains 
+       SweetHome3D source files in directory named SweetHome3D-1.3.1-src -->
+  <target name="sourceArchive">
+    <mkdir dir="install/source/SweetHome3D-1.3.1-src"/>
+  	<copy todir="install/source/SweetHome3D-1.3.1-src">
+      <fileset dir=".">
+      	<include name="build.xml"/>
+      	<include name="*.TXT"/>
+        <include name="src/**"/>
+        <include name="test/**"/>
+        <include name="lib/**"/>
+        <include name="libtest/**"/>
+      	<!-- Do not include generated files that may belong to 
+      	     deploy and install directories -->
+        <include name="deploy/SweetHome3D*.*"/>
+        <include name="install/macosx/**"/>
+        <include name="install/windows/**"/>
+      	<!-- Eclipse project files -->
+        <include name=".settings/**"/>
+        <include name=".classpath"/>
+        <include name=".project"/>
+      </fileset>
+    </copy>
+
+  	<zip destfile="install/SweetHome3D-1.3.1-src.zip" basedir="install/source"
+  		 includes="SweetHome3D-1.3.1-src/**" />
+
+    <delete dir="install/source"/>
+
+    <echo message="install/SweetHome3D-1.3.1-src.zip ready for ftp"/>
   </target>
 </project>
