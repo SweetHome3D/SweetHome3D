@@ -40,15 +40,15 @@
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
     <maxHeapSize>0</maxHeapSize>
-    <opt>-Djava.library.path=lib -Xmx256m</opt>
+    <opt>-Djava.library.path=lib -Xmx384m</opt>
   </jre>
   <versionInfo>
-    <fileVersion>1.3.0.0</fileVersion>
-    <txtFileVersion>1.3</txtFileVersion>
+    <fileVersion>1.3.1.0</fileVersion>
+    <txtFileVersion>1.3.1</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2008 eTeks</copyright>
-    <productVersion>1.3.0.0</productVersion>
-    <txtProductVersion>1.3</txtProductVersion>
+    <productVersion>1.3.1.0</productVersion>
+    <txtProductVersion>1.3.1</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>

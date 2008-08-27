@@ -1,8 +1,8 @@
 ; installerInnoSetup.iss
 ;
-; Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+; Copyright (c) 2007-2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
 ;
-; SweetHome3DSetup.exe creator
+; SweetHome3D-1.3.1-windows.exe setup program creator
 ; This script requires Inno setup available at http://www.jrsoftware.org/isinfo.php
 ; and a tmp directory stored in current directory containing :
 ;   a SweetHome3D.exe file built with launch4j
@@ -13,7 +13,7 @@
 
 [Setup]
 AppName=Sweet Home 3D
-AppVerName=Sweet Home 3D version 1.3
+AppVerName=Sweet Home 3D version 1.3.1
 AppPublisher=eTeks
 AppPublisherURL=http://www.eteks.com
 AppSupportURL=http://sweethome3d.sourceforge.net
@@ -22,12 +22,12 @@ DefaultDirName={pf}\Sweet Home 3D
 DefaultGroupName=eTeks Sweet Home 3D
 LicenseFile=..\..\COPYING.TXT
 OutputDir=.
-OutputBaseFilename=..\SweetHome3D-1.3-windows
+OutputBaseFilename=..\SweetHome3D-1.3.1-windows
 Compression=lzma
 SolidCompression=yes
 ChangesAssociations=yes
-VersionInfoVersion=1.3.0.0
-VersionInfoTextVersion=1.3
+VersionInfoVersion=1.3.1.0
+VersionInfoTextVersion=1.3.1
 VersionInfoDescription=Sweet Home 3D Setup
 VersionInfoCopyright=Copyright (c) 2007-2008 eTeks
 VersionInfoCompany=eTeks
@@ -42,6 +42,8 @@ Name: "german"; MessagesFile: "compiler:Languages\German.isl"
 Name: "czech"; MessagesFile: "compiler:Languages\Czech.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
+Name: "hungarian"; MessagesFile: "compiler:Languages\Hungarian.isl"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -67,6 +69,9 @@ SweetHome3DComment=Arrange the furniture of your house
 french.SweetHome3DComment=Aménagez les meubles de votre logement
 portuguese.SweetHome3DComment=Organiza as mobilias da sua casa
 brazilianportuguese.SweetHome3DComment=Organiza as mobilias da sua casa
+czech.SweetHome3DComment=Sestavte si design interieru vaseho domu
+polish.SweetHome3DComment=Zaprojektuj wnetrze swojego domu
+hungarian.SweetHome3DComment=Keszitse el lakasanak belso kialakitasat!
 OtherTasks=Other tasks:
 french.OtherTasks=Autres tâches :
 
