@@ -64,6 +64,12 @@ public abstract class UserPreferences {
         return this.format;
       }
       
+      @Override
+      public String getName() {
+        checkLocaleChange();
+        return this.name;
+      }
+      
       private void checkLocaleChange() {
         // Instantiate formats if locale changed
         if (!Locale.getDefault().equals(this.formatLocale)) {
@@ -98,11 +104,6 @@ public abstract class UserPreferences {
       public float getMinimumLength() {
         return 0.1f;
       }
-      
-      @Override
-      public String getName() {
-        return this.name;
-      }
     }, 
     
     INCH {
@@ -119,6 +120,23 @@ public abstract class UserPreferences {
       
       @Override
       public Format getLengthFormatWithUnit() {
+        checkLocaleChange();
+        return this.inchFormat;
+      }
+
+      @Override
+      public Format getLengthFormat() {
+        return getLengthFormatWithUnit();
+      }
+
+      
+      @Override
+      public String getName() {
+        checkLocaleChange();
+        return this.name;
+      }
+      
+      private void checkLocaleChange() {
         // Instantiate format if locale changed
         if (!Locale.getDefault().equals(this.formatLocale)) {
           this.formatLocale = Locale.getDefault();  
@@ -162,14 +180,8 @@ public abstract class UserPreferences {
             }
           };
         }
-        return this.inchFormat;
       }
-
-      @Override
-      public Format getLengthFormat() {
-        return getLengthFormatWithUnit();
-      }
-
+      
       @Override
       public float getMagnetizedLength(float length, float maxDelta) {
         // Use a maximum precision of 1/8 inch depending on maxDelta
@@ -192,11 +204,6 @@ public abstract class UserPreferences {
       @Override
       public float getMinimumLength() {        
         return UserPreferences.Unit.inchToCentimeter(0.125f);
-      }
-      
-      @Override
-      public String getName() {
-        return this.name;
       }
     };
 
@@ -225,6 +232,11 @@ public abstract class UserPreferences {
      * Returns a format able to format lengths.
      */
     public abstract Format getLengthFormat(); 
+
+    /**
+     * Returns a localized name of this unit.
+     */
+    public abstract String getName();
     
     /**
      * Returns the value close to the given length under magnetism. 
@@ -235,11 +247,6 @@ public abstract class UserPreferences {
      * Returns the minimum value for length.
      */
     public abstract float getMinimumLength();
-
-    /**
-     * Returns a localized name of this unit.
-     */
-    public abstract String getName();
   }
 
   private FurnitureCatalog furnitureCatalog;

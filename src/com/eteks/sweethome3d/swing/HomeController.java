@@ -664,7 +664,17 @@ public class HomeController  {
       List<HomePieceOfFurniture> newFurniture = 
           new ArrayList<HomePieceOfFurniture>();
       for (CatalogPieceOfFurniture piece : selectedFurniture) {
-        newFurniture.add(new HomePieceOfFurniture(piece));
+        HomePieceOfFurniture homePiece = new HomePieceOfFurniture(piece);
+        // If magnetism is enabled, adjust piece size and elevation
+        if (this.preferences.isMagnetismEnabled()) {
+          this.home.setPieceOfFurnitureSize(homePiece, 
+              this.preferences.getUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f),
+              this.preferences.getUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f),
+              this.preferences.getUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f)); 
+          this.home.setPieceOfFurnitureElevation(homePiece,
+              this.preferences.getUnit().getMagnetizedLength(homePiece.getElevation(), 0.1f));
+        }
+        newFurniture.add(homePiece);
       }
       // Add newFurniture to home with furnitureController
       getFurnitureController().addFurniture(newFurniture);
@@ -778,7 +788,19 @@ public class HomeController  {
     if (!items.isEmpty()) {
       // Start a compound edit that adds walls and furniture to home
       this.undoSupport.beginUpdate();
-      getFurnitureController().addFurniture(Home.getFurnitureSubList(items));
+      List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
+      // If magnetism is enabled, adjust furniture size and elevation
+      if (this.preferences.isMagnetismEnabled()) {
+        for (HomePieceOfFurniture piece : addedFurniture) {
+          this.home.setPieceOfFurnitureSize(piece, 
+              this.preferences.getUnit().getMagnetizedLength(piece.getWidth(), 0.1f),
+              this.preferences.getUnit().getMagnetizedLength(piece.getDepth(), 0.1f),
+              this.preferences.getUnit().getMagnetizedLength(piece.getHeight(), 0.1f)); 
+          this.home.setPieceOfFurnitureElevation(piece,
+              this.preferences.getUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
+        }
+      }
+      getFurnitureController().addFurniture(addedFurniture);
       getPlanController().addWalls(Home.getWallsSubList(items));
       getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
       getPlanController().moveItems(items, dx, dy);
