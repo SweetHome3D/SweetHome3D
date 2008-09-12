@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -113,11 +112,12 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Show home plan frame
     showWindow(frame);
     JComponentTester tester = new JComponentTester();
-    tester.waitForIdle();
-    
-    // 2. Transfer focus to plan view with TAB keys
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.waitForIdle();    
+
+    // 2. Transfer focus to plan view 
+    controller.getPlanController().getView().requestFocusInWindow();      
+    tester.waitForIdle();    
+
     // Check plan view has focus
     assertTrue("Plan component doesn't have the focus", 
         controller.getPlanController().getView().isFocusOwner());
@@ -210,7 +210,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Check current step is attributes
     tester.waitForIdle();
     assertStepShowing(panel, false, false, true, false);    
-    
+        
     // 6. Check default furniture name is the presentation name proposed by content manager
     assertEquals("Wrong default name", "test", 
         contentManager.getPresentationName(testedModelName.toString(), ContentManager.ContentType.MODEL));

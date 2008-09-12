@@ -24,6 +24,7 @@ import java.awt.BorderLayout;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,14 +71,16 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     PlanComponent planComponent = (PlanComponent)
         frame.homeController.getPlanController().getView();
     // Click at (30, 30), (220, 30), (270, 80), (270, 170), (30, 170) 
-    // then double click at (30, 30)
+    // then double click at (30, 30) with no magnetism
     JComponentTester tester = new JComponentTester();
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 30, 30);
     tester.actionClick(planComponent, 220, 30);
     tester.actionClick(planComponent, 270, 80);
     tester.actionClick(planComponent, 270, 170);
     tester.actionClick(planComponent, 30, 170);
     tester.actionClick(planComponent, 30, 30, InputEvent.BUTTON1_MASK, 2);
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check 5 walls were added to home plan
     assertEquals("Wrong walls count", 5, frame.home.getWalls().size());
 
@@ -121,9 +124,9 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // 5. Press mouse button at top left vertex of selected piece 
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(120, 120)));
-    // Drag mouse to (-depthPixel / 2 - 2, widthPixel / 2) pixels from piece center
+    // Drag mouse to (-depthPixel / 2 - 1, widthPixel / 2) pixels from piece center
     tester.actionMouseMove(planComponent, new ComponentLocation( 
-        new Point(120 + widthPixel / 2 - depthPixel / 2 - 2, 
+        new Point(120 + widthPixel / 2 - depthPixel / 2 - 1, 
                   120 + depthPixel / 2 + widthPixel / 2))); 
     tester.actionMouseRelease(); 
     // Check piece angle is 3 * PI / 2 (=-90°)
@@ -134,9 +137,9 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionMousePress(planComponent, new ComponentLocation(
         new Point(120 + widthPixel / 2 - depthPixel / 2, 
                   120 + depthPixel / 2 + widthPixel / 2)));
-    // Drag mouse to the previous position plus 2 pixels along x axis
+    // Drag mouse to the previous position plus 1 pixel along x axis
     tester.actionMouseMove(planComponent, new ComponentLocation(
-        new Point(122, 120))); 
+        new Point(121, 120))); 
     // Check piece angle is 0°
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
     // Press Shift key
@@ -158,10 +161,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Check selected items contains the piece of furniture and the fifth wall
     List<Object> selectedItems = 
       new ArrayList<Object>(frame.home.getSelectedItems());
-    assertEquals("Wrong selected items count", 
-        2, selectedItems.size());
-    assertTrue("Piece of furniture not selected", 
-        selectedItems.contains(piece));
+    assertEquals("Wrong selected items count", 2, selectedItems.size());
+    assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
     // Remove piece form list to get the selected wall
     selectedItems.remove(piece);
     Wall fifthWall = (Wall)selectedItems.get(0);
@@ -180,7 +181,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Check the piece of furniture moved 20 cm along x axis
     assertLocationAndOrientationEqualPiece(
         pieceX + 20, pieceY, (float)Math.PI * 3 / 2, piece);
-    assertCoordinatesEqualWallPoints(40, 300, 40, 20, fifthWall);
+     assertCoordinatesEqualWallPoints(40, 300, 40, 20, fifthWall);
     
     // 9. Click twice on undo button
     frame.undoButton.doClick();
@@ -215,13 +216,15 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     selectedItems = frame.home.getSelectedItems();
     assertEquals("Wrong selected items count", 1, selectedItems.size());
     assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
-    // Drag mouse (4,4) pixels out of piece box
+    // Drag mouse (4,4) pixels out of piece box with magnetism disabled
     Thread.sleep(1000); // Wait 1s to avoid double click
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2)));
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
         pieceXPixel + depthPixel / 2 + 4, pieceYPixel - widthPixel / 2 + 4))); 
     tester.actionMouseRelease();
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check piece width and depth were resized (caution : piece angle is oriented at 90°)
     assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
         pieceDepth + 4 / planComponent.getScale(), pieceHeight, piece);
@@ -243,7 +246,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Check piece height was resized 
     assertDimensionEqualPiece(pieceWidth - 4 / planComponent.getScale(), 
         pieceDepth + 4 / planComponent.getScale(), 
-        pieceHeight - 4 / planComponent.getScale(), piece);
+        Math.round((pieceHeight - 4 / planComponent.getScale()) * 2) / 2, piece);
 
     // 13. Click at point (pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2) 
     //     at elevation vertex of the piece
@@ -291,7 +294,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEquals("Selection doesn't contain the second dimension", 
         frame.home.getSelectedItems().get(0), orderedDimensionLines.get(1));
     // Check the size of the created dimension lines
-    assertEqualsDimensionLine(520, 122, 520, 298, 0, orderedDimensionLines.get(0));
+    DimensionLine firstDimensionLine = orderedDimensionLines.get(0);
+    assertEqualsDimensionLine(520, 122, 520, 298, 0, firstDimensionLine);
     assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
     
     // 16. Select the first dimension
@@ -299,20 +303,26 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 280, 90);
     assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
     assertEquals("Selection doesn't contain the first dimension", 
-        frame.home.getSelectedItems().get(0), orderedDimensionLines.get(0));
+        frame.home.getSelectedItems().get(0), firstDimensionLine);
     // Move its end point to (330, 167)
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(280, 167)));
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(320, 167)));
     // Check its coordinates while Shift key isn't pressed (with magnestism)
-    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
+    // Check its length with magnetism 
+    float firstDimensionLineLength = (float)Point2D.distance(
+        firstDimensionLine.getXStart(), firstDimensionLine.getYStart(), 
+        firstDimensionLine.getXEnd(), firstDimensionLine.getYEnd());
+    assertTrue("Incorrect length 182 " + firstDimensionLineLength, 
+        Math.abs(182 - firstDimensionLineLength) < 1E-4);
     // Press Shift key
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
     // Check its coordinates while Shift key is pressed (with no magnestism)
-    assertEqualsDimensionLine(520, 122, 600, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(520, 122, 600, 298, 0, firstDimensionLine);
     // Release Shift key and mouse button
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);    
     tester.actionMouseRelease();
-    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
     
     // 17. Click three times on undo button
     frame.undoButton.doClick();
@@ -325,16 +335,16 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     frame.redoButton.doClick();
     frame.redoButton.doClick();
     // Check the size of the created dimension lines
-    assertEqualsDimensionLine(520, 122, 520, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(520, 122, 520, 298f, 0, firstDimensionLine);
     assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
     // Click again on redo button
     frame.redoButton.doClick();
     // Check the first dimension is selected
     assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
     assertEquals("Selection doesn't contain the first dimension", 
-        frame.home.getSelectedItems().get(0), orderedDimensionLines.get(0));
+        frame.home.getSelectedItems().get(0), firstDimensionLine);
     // Check the coordinates of the first dimension 
-    assertEqualsDimensionLine(520, 122, 567.159f, 298, 0, orderedDimensionLines.get(0));
+    assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
   }
 
   /**
@@ -400,9 +410,12 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
    */
   private void assertDimensionEqualPiece(float width, float depth, float height,
                               HomePieceOfFurniture piece) {
-    assertTrue("Incorrect width", Math.abs(width - piece.getWidth()) < 1E-10);
-    assertTrue("Incorrect depth", Math.abs(depth - piece.getDepth()) < 1E-10);
-    assertTrue("Incorrect height", Math.abs(height - piece.getHeight()) < 1E-10);
+    assertTrue("Incorrect width " + width + " " + piece.getWidth(), 
+        Math.abs(width - piece.getWidth()) < 1E-5);
+    assertTrue("Incorrect depth " + depth + " " + piece.getDepth(), 
+        Math.abs(depth - piece.getDepth()) < 1E-5);
+    assertTrue("Incorrect height " + height + " " + piece.getHeight(), 
+        Math.abs(height - piece.getHeight()) < 1E-5);
   }
   
   private static class TestFrame extends JFrame {

@@ -85,9 +85,10 @@ public class HomeCameraTest extends ComponentTestFixture {
     showWindow(frame);
     JComponentTester tester = new JComponentTester();
     tester.waitForIdle();
-    // Transfer focus to plan view with TAB keys
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
-    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    // Transfer focus to plan view 
+    planComponent.requestFocusInWindow();
+    tester.waitForIdle();
+    
     // Check plan view has focus
     assertTrue("Plan component doesn't have the focus", planComponent.isFocusOwner());
     // Check default camera is the top camera
@@ -100,11 +101,14 @@ public class HomeCameraTest extends ComponentTestFixture {
     // 2. Create one wall between points (50, 50) and (150, 50) at a bigger scale
     runAction(controller, HomePane.ActionType.CREATE_WALLS);
     runAction(controller, HomePane.ActionType.ZOOM_IN);
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
     tester.actionClick(planComponent, 50, 50);
     tester.actionClick(planComponent, 150, 50, InputEvent.BUTTON1_MASK, 2);
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check wall length is 100 * plan scale
     Wall wall = home.getWalls().iterator().next();
-    assertTrue("Incorrect wall length ", 
+    assertTrue("Incorrect wall length " + 100 / planComponent.getScale() 
+               + " " + (wall.getXEnd() - wall.getXStart()), 
         Math.abs(wall.getXEnd() - wall.getXStart() - 100 / planComponent.getScale()) < 1E-3);
     float xWallMiddle = (wall.getXEnd() + wall.getXStart()) / 2;
     float yWallMiddle = (wall.getYEnd() + wall.getYStart()) / 2;

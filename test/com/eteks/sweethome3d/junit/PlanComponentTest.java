@@ -219,10 +219,14 @@ public class PlanComponentTest extends ComponentTestFixture {
    * <code>wall</code> are at (<code>xStart</code>, <code>yStart</code>), (<code>xEnd</code>, <code>yEnd</code>). 
    */
   private void assertCoordinatesEqualWallPoints(float xStart, float yStart, float xEnd, float yEnd, Wall wall) {
-    assertTrue("Incorrect X start", Math.abs(xStart - wall.getXStart()) < 1E-10);
-    assertTrue("Incorrect Y start", Math.abs(yStart - wall.getYStart()) < 1E-10);
-    assertTrue("Incorrect X end", Math.abs(xEnd - wall.getXEnd()) < 1E-10);
-    assertTrue("Incorrect Y end", Math.abs(yEnd - wall.getYEnd()) < 1E-10);
+    assertTrue("Incorrect X start " + xStart + " " + wall.getXStart(), 
+        Math.abs(xStart - wall.getXStart()) < 1E-10);
+    assertTrue("Incorrect Y start " + yStart + " " + wall.getYStart(), 
+        Math.abs(yStart - wall.getYStart()) < 1E-10);
+    assertTrue("Incorrect X end " + xEnd + " " + wall.getXEnd(), 
+        Math.abs(xEnd - wall.getXEnd()) < 1E-10);
+    assertTrue("Incorrect Y end " + yEnd + " " + wall.getYEnd(), 
+        Math.abs(yEnd - wall.getYEnd()) < 1E-10);
   }
 
   /**

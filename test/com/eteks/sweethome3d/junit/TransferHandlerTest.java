@@ -20,12 +20,18 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.Action;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 
 import junit.extensions.abbot.ComponentTestFixture;
@@ -43,6 +49,7 @@ import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.PlanController;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Tests drag and drop, and cut / copy / paste.
@@ -62,6 +69,40 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home TransferHandler Test");    
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
+      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
+          controller.getCatalogController().getView(),
+          controller.getFurnitureController().getView(),
+          controller.getPlanController().getView(),
+          controller.getHomeController3D().getView()});      
+      frame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+          @Override
+          public Component getComponentAfter(Container container, Component component) {
+            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
+          }
+    
+          @Override
+          public Component getComponentBefore(Container container, Component component) {
+            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
+          }
+    
+          @Override
+          public Component getDefaultComponent(Container container) {
+            return focusableComponents.get(0);
+          }
+    
+          @Override
+          public Component getFirstComponent(Container container) {
+            return focusableComponents.get(0);
+          }
+    
+          @Override
+          public Component getLastComponent(Container container) {
+            return focusableComponents.get(focusableComponents.size() - 1);
+          }
+        });
+    }
     frame.add(controller.getView());
     frame.pack();
 
@@ -92,9 +133,9 @@ public class TransferHandlerTest extends ComponentTestFixture {
     // Check top left corner of the piece is at (200, 200) 
     HomePieceOfFurniture piece = home.getFurniture().get(0);
     assertTrue("Incorrect X " + piece.getX(), 
-        Math.abs(200 - piece.getX() + piece.getWidth() / 2) < 1E-10);
+        Math.abs(200 - piece.getX() + piece.getWidth() / 2) < 1E-5);
     assertTrue("Incorrect Y " + piece.getY(), 
-        Math.abs(200 - piece.getY() + piece.getDepth() / 2) < 1E-10);
+        Math.abs(200 - piece.getY() + piece.getDepth() / 2) < 1E-5);
 
     // 4.  Transfer focus to plan view with TAB keys
     tester.actionKeyStroke(KeyEvent.VK_TAB);
