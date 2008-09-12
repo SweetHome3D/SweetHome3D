@@ -93,15 +93,13 @@ public class Home3DAttributesPanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences) {
-    // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
+    // Get unit name matching current unit 
+    String unitName = preferences.getUnit().getName();
+    
     this.observerFieldOfViewLabel = new JLabel(this.resource.getString("observerFieldOfViewLabel.text"));
-    this.observerFieldOfViewSpinner = new JSpinner(new SpinnerNumberModel(10, 10, 120, 1));
-    this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitText));
-    this.observerHeightSpinner = new JSpinner(
+    this.observerFieldOfViewSpinner = new AutoCommitSpinner(new SpinnerNumberModel(10, 10, 120, 1));
+    this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitName));
+    this.observerHeightSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f));
     
     this.groundColorRadioButton = new JRadioButton(this.resource.getString("groundColorRadioButton.text"));

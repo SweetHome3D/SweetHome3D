@@ -108,23 +108,20 @@ public class WallPanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences) {
-    // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
+    // Get unit name matching current unit 
+    String unitName = preferences.getUnit().getName();
     
-    this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
-    this.xStartSpinner = new JSpinner(
+    this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    this.xStartSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
-    this.yStartSpinner = new JSpinner(
+    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    this.yStartSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
-    this.xEndSpinner = new JSpinner(
+    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    this.xEndSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
-    this.yEndSpinner = new JSpinner(
+    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    this.yEndSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
     
     this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
@@ -170,7 +167,7 @@ public class WallPanel extends JPanel {
     this.rectangularWallRadioButton = new JRadioButton(
         this.resource.getString("rectangularWallRadioButton.text"));
     this.rectangularWallHeightLabel = new JLabel(
-        String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitText));
+        String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitName));
     this.rectangularWallHeightSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
     this.rectangularWallHeightSpinner.addChangeListener(new ChangeListener() {
@@ -201,7 +198,7 @@ public class WallPanel extends JPanel {
     wallHeightButtonGroup.add(this.rectangularWallRadioButton);
     wallHeightButtonGroup.add(this.slopingWallRadioButton);
 
-    this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitText));
+    this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitName));
     this.thicknessSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource

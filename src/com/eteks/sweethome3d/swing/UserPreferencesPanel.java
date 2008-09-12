@@ -122,10 +122,10 @@ public class UserPreferencesPanel extends JPanel {
         this.resource.getString("gridCheckBox.text"));
     
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
-    this.newWallThicknessSpinner = new JSpinner(new SpinnerLengthModel(
+    this.newWallThicknessSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
         0.5f, 0.125f, this.centimeterRadioButton));
     this.newHomeWallHeightLabel = new JLabel(this.resource.getString("newHomeWallHeightLabel.text"));
-    this.newHomeWallHeightSpinner = new JSpinner(new SpinnerLengthModel(
+    this.newHomeWallHeightSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
         10f, 2f, this.centimeterRadioButton));
   }
   

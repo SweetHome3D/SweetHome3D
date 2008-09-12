@@ -90,9 +90,12 @@ public class FurnitureCatalogController {
    */
   public void modifySelectedFurniture() {
     if (this.preferences != null) {
-      CatalogPieceOfFurniture piece = this.catalog.getSelectedFurniture().get(0);
-      if (piece.isModifiable()) {
-        new ImportedFurnitureWizardController(piece, this.preferences, this.contentManager);
+      List<CatalogPieceOfFurniture> selectedFurniture = this.catalog.getSelectedFurniture();
+      if (selectedFurniture.size() > 0) {
+        CatalogPieceOfFurniture piece = selectedFurniture.get(0);
+        if (piece.isModifiable()) {
+          new ImportedFurnitureWizardController(piece, this.preferences, this.contentManager);
+        }
       }
     }
   }

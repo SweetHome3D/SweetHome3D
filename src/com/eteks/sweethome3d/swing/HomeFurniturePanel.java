@@ -98,32 +98,30 @@ public class HomeFurniturePanel extends JPanel {
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences) {
-    // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
+    // Get unit name matching current unit 
+    String unitName = preferences.getUnit().getName();
+    
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(10);
-    this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitText));
+    this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     this.xSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitText));
+    this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
     this.ySpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitText));
+    this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitName));
     this.elevationSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0, 1000f));
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
     this.angleSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
-    this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitText));
+    this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitName));
     this.widthSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
-    this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitText));
+    this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitName));
     this.depthSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
-    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitText));
+    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitName));
     this.heightSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));

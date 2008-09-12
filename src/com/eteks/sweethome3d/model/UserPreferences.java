@@ -21,11 +21,15 @@ package com.eteks.sweethome3d.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 
 /**
  * User preferences.
@@ -42,7 +46,159 @@ public abstract class UserPreferences {
    * Unit used for sizes.
    */
   public enum Unit {
-    CENTIMETER, INCH;
+    CENTIMETER {
+      private Locale        formatLocale;  
+      private String        name;
+      private DecimalFormat formatWithUnit;
+      private DecimalFormat format;
+      
+      @Override
+      public Format getLengthFormatWithUnit() {
+        checkLocaleChange();
+        return this.formatWithUnit;
+      }
+
+      @Override
+      public Format getLengthFormat() {
+        checkLocaleChange();
+        return this.format;
+      }
+      
+      private void checkLocaleChange() {
+        // Instantiate formats if locale changed
+        if (!Locale.getDefault().equals(this.formatLocale)) {
+          this.formatLocale = Locale.getDefault();  
+          ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
+          this.name = resource.getString("centimerUnit");
+          this.formatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
+          this.format = new DecimalFormat("#,##0.#");          
+        }
+      }
+
+      @Override
+      public float getMagnetizedLength(float length, float maxDelta) {
+        // Use a maximum precision of 1 mm depending on maxDelta
+        maxDelta *= 2;
+        float precision = 1 / 10f;
+        if (maxDelta > 100) {
+          precision = 100;
+        } else if (maxDelta > 10) {
+          precision = 10;
+        } else if (maxDelta > 5) {
+          precision = 5;
+        } else if (maxDelta > 1) {
+          precision = 1;
+        } else if  (maxDelta > 0.5f) {
+          precision = 0.5f;
+        } 
+        return Math.round(length / precision) * precision;
+      }
+
+      @Override
+      public float getMinimumLength() {
+        return 0.1f;
+      }
+      
+      @Override
+      public String getName() {
+        return this.name;
+      }
+    }, 
+    
+    INCH {
+      private Locale        formatLocale;
+      private String        name;
+      private DecimalFormat inchFormat;
+      private final char [] fractionCharacters = {'\u215b',   // 1/8
+                                                  '\u00bc',   // 1/4  
+                                                  '\u215c',   // 3/8
+                                                  '\u00bd',   // 1/2
+                                                  '\u215d',   // 5/8
+                                                  '\u00be',   // 3/4
+                                                  '\u215e'};  // 7/8
+      
+      @Override
+      public Format getLengthFormatWithUnit() {
+        // Instantiate format if locale changed
+        if (!Locale.getDefault().equals(this.formatLocale)) {
+          this.formatLocale = Locale.getDefault();  
+          ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
+          this.name = resource.getString("inchUnit");
+          
+          // Create format for feet and inches
+          final Format footFormat = new DecimalFormat("#,##0''");
+          this.inchFormat = new DecimalFormat("0.000\"") {            
+            @Override
+            public StringBuffer format(double number, StringBuffer result,
+                                       FieldPosition fieldPosition) {
+              float feet = (float)Math.floor(centimeterToFoot((float)number));              
+              float remainingInches = centimeterToInch((float)number - feetToCentimeter(feet));
+              if (remainingInches >= 11.9995f) {
+                feet++;
+                remainingInches -= 12;
+              }
+              footFormat.format(feet, result, fieldPosition);
+              // Format remaining inches only if it's larger that 0.0005
+              if (remainingInches >= 0.0005f) {
+                // Try to format decimals with 1/8, 1/4, 1/2 fractions first
+                int integerPart = (int)Math.floor(remainingInches);
+                float fractionPart = remainingInches - integerPart;
+                float remainderToClosestEighth = fractionPart % 0.125f;
+                if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
+                  int eighth = Math.round(fractionPart * 8); 
+                  String remainingInchesString;
+                  if (eighth == 0 || eighth == 8) {
+                    remainingInchesString = Math.round(remainingInches) + "\"";
+                  } else {
+                    remainingInchesString = String.valueOf(integerPart) + fractionCharacters [eighth - 1] + "\"";
+                  }
+                  result.append(remainingInchesString);
+                  fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
+                } else {                
+                  super.format(remainingInches, result, fieldPosition);
+                }
+              }
+              return result;
+            }
+          };
+        }
+        return this.inchFormat;
+      }
+
+      @Override
+      public Format getLengthFormat() {
+        return getLengthFormatWithUnit();
+      }
+
+      @Override
+      public float getMagnetizedLength(float length, float maxDelta) {
+        // Use a maximum precision of 1/8 inch depending on maxDelta
+        maxDelta = centimeterToInch(maxDelta) * 2;
+        float precision = 1 / 8f;
+        if (maxDelta > 6) {
+          precision = 6;
+        } else if (maxDelta > 3) {
+          precision = 3;
+        } else if (maxDelta > 1) {
+          precision = 1;
+        } else if  (maxDelta > 0.5f) {
+          precision = 0.5f;
+        } else if  (maxDelta > 0.25f) {
+          precision = 0.25f;
+        }
+        return inchToCentimeter(Math.round(centimeterToInch(length) / precision) * precision);
+      }
+
+      @Override
+      public float getMinimumLength() {        
+        return UserPreferences.Unit.inchToCentimeter(0.125f);
+      }
+      
+      @Override
+      public String getName() {
+        return this.name;
+      }
+    };
 
     public static float centimeterToInch(float length) {
       return length / 2.54f;
@@ -55,6 +211,35 @@ public abstract class UserPreferences {
     public static float inchToCentimeter(float length) {
       return length * 2.54f;
     }
+    
+    public static float feetToCentimeter(float length) {
+      return length * 2.54f * 12;
+    }
+    
+    /**
+     * Returns a format able to format lengths with their localized unit.
+     */
+    public abstract Format getLengthFormatWithUnit(); 
+
+    /**
+     * Returns a format able to format lengths.
+     */
+    public abstract Format getLengthFormat(); 
+    
+    /**
+     * Returns the value close to the given length under magnetism. 
+     */
+    public abstract float getMagnetizedLength(float length, float maxDelta);
+
+    /**
+     * Returns the minimum value for length.
+     */
+    public abstract float getMinimumLength();
+
+    /**
+     * Returns a localized name of this unit.
+     */
+    public abstract String getName();
   }
 
   private FurnitureCatalog furnitureCatalog;

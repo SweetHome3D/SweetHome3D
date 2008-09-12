@@ -127,7 +127,7 @@ public class PlanController {
     this.newDimensionLineState = new NewDimensionLineState();
     this.dimensionLineResizeState = new DimensionLineResizeState();
     this.dimensionLineOffsetState = new DimensionLineOffsetState();
-    // Set defaut state to selectionState
+    // Set default state to selectionState
     setState(this.selectionState);
     
     addHomeListeners();
@@ -217,7 +217,7 @@ public class PlanController {
    * Processes a mouse button pressed event.
    */
   public void pressMouse(float x, float y, int clickCount, boolean shiftDown) {
-    // Store the last coodinates of a mouse press
+    // Store the last coordinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
     this.xLastMouseMove = x;
@@ -420,7 +420,7 @@ public class PlanController {
    */
   public void setScale(float newScale) {
     ((PlanComponent)getView()).setScale(newScale);
-  }
+  } 
   
   /**
    * Selects all visible objects in home.
@@ -1624,35 +1624,52 @@ public class PlanController {
    * A point which coordinates are computed with a magnetism algorithm.
    */
   private static class PointWithMagnetism {
-    private static final int STEP_COUNT = 24; // 15 degres step 
+    private static final int STEP_COUNT = 24; // 15 degrees step 
     private float xMagnetizedPoint;
     private float yMagnetizedPoint;
     
     /**
      * Create a point that applies magnetism to point (<code>x</code>,
-     * <code>y</code>). Point xEnd or yEnd coordinates may be different from
+     * <code>y</code>). Point end coordinates may be different from
      * x or y, to match the closest point belonging to one of the radius of a
-     * circle centered at (<code>xStart</code>, <code>yStart</code>, each
-     * radius being a multiple of 15 degres.
+     * circle centered at (<code>xStart</code>, <code>yStart</code>), each
+     * radius being a multiple of 15 degrees. The length of the line joining
+     * (<code>xStart</code>, <code>yStart</code>) to the computed point is 
+     * approximated depending on the current <code>unit</code> and scale.
      */
-    public PointWithMagnetism(float xStart, float yStart, float x, float y) {
+    public PointWithMagnetism(float xStart, float yStart, float x, float y, 
+                              UserPreferences.Unit unit, float maxLengthDelta) {
       this.xMagnetizedPoint = x;
       this.yMagnetizedPoint = y;
-      if (xStart != x && yStart != y) {
+      if (xStart == x) {
+        // Apply magnetism to the length of the line joining start point to magnetized point
+        float magnetizedLength = unit.getMagnetizedLength(Math.abs(yStart - y), maxLengthDelta);
+        this.yMagnetizedPoint = yStart + (float)(magnetizedLength * Math.signum(y - yStart));
+      } else if (yStart == y) {
+        // Apply magnetism to the length of the line joining start point to magnetized point
+        float magnetizedLength = unit.getMagnetizedLength(Math.abs(xStart - x), maxLengthDelta);
+        this.xMagnetizedPoint = xStart + (float)(magnetizedLength * Math.signum(x - xStart));
+      } else { // xStart != x && yStart != y
         double angleStep = 2 * Math.PI / STEP_COUNT; 
         // Caution : pixel coordinate space is indirect !
         double angle = Math.atan2(yStart - y, x - xStart);
         // Compute previous angle closest to a step angle (multiple of angleStep) 
         double previousStepAngle = Math.floor(angle / angleStep) * angleStep;
+        double angle1;
         double tanAngle1;
+        double angle2;
         double tanAngle2;
         // Compute the tan of previousStepAngle and the next step angle
         if (Math.tan(angle) > 0) {
+          angle1 = previousStepAngle;
           tanAngle1 = Math.tan(previousStepAngle);
+          angle2 = previousStepAngle + angleStep;
           tanAngle2 = Math.tan(previousStepAngle + angleStep);
         } else {
           // If slope is negative inverse the order of the two angles
+          angle1 = previousStepAngle + angleStep;
           tanAngle1 = Math.tan(previousStepAngle + angleStep);
+          angle2 = previousStepAngle;
           tanAngle2 = Math.tan(previousStepAngle);
         }
         // Search in the first quarter of the trigonometric circle, 
@@ -1678,12 +1695,22 @@ public class PlanController {
         }
         
         // Apply magnetism to the smallest distance
+        double magnetismAngle;
         if (Math.abs(xEnd2 - xEnd1) < Math.abs(yEnd1 - yEnd2)) {
+          magnetismAngle = angle2; 
           this.xMagnetizedPoint = xStart + (float)((yStart - y) / tanAngle2);            
         } else {
+          magnetismAngle = angle1; 
           this.yMagnetizedPoint = yStart - (float)((x - xStart) * tanAngle1);
         }
-      }
+        
+        // Apply magnetism to the length of the line joining start point 
+        // to magnetized point
+        float magnetizedLength = unit.getMagnetizedLength((float)Point2D.distance(xStart, yStart, 
+            this.xMagnetizedPoint, this.yMagnetizedPoint), maxLengthDelta);
+        this.xMagnetizedPoint = xStart + (float)(magnetizedLength * Math.cos(magnetismAngle));            
+        this.yMagnetizedPoint = yStart - (float)(magnetizedLength * Math.sin(magnetismAngle));
+      }       
     }
 
     /**
@@ -2103,24 +2130,18 @@ public class PlanController {
    * Wall modification state.  
    */
   private abstract class AbstractWallState extends ControllerState {
-    private String centimerWallLengthToolTipFeedback;
-    private String inchWallLengthToolTipFeedback;
+    private String wallLengthToolTipFeedback;
     
     @Override
     public void enter() {
-      this.centimerWallLengthToolTipFeedback = resource.getString("centimerWallLengthToolTipFeedback");
-      this.inchWallLengthToolTipFeedback = resource.getString("inchWallLengthToolTipFeedback");
+      this.wallLengthToolTipFeedback = resource.getString("wallLengthToolTipFeedback");
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
       float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
           wall.getXEnd(), wall.getYEnd());
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerWallLengthToolTipFeedback, length);
-      } else {
-        return String.format(this.inchWallLengthToolTipFeedback, 
-            UserPreferences.Unit.centimeterToInch(length));
-      }
+      return String.format(this.wallLengthToolTipFeedback, 
+          preferences.getUnit().getLengthFormatWithUnit().format(length));
     }
   }
 
@@ -2198,12 +2219,13 @@ public class PlanController {
 
     @Override
     public void moveMouse(float x, float y) {
+      PlanComponent planView = (PlanComponent)getView();
       // Compute the coordinates where wall end point should be moved
       float xEnd;
       float yEnd;
       if (this.magnetismEnabled) {
         PointWithMagnetism point = new PointWithMagnetism(
-            this.xStart, this.yStart, x, y);
+            this.xStart, this.yStart, x, y, preferences.getUnit(), planView.getPixelLength());
         xEnd = point.getXMagnetizedPoint();
         yEnd = point.getYMagnetizedPoint();
       } else {
@@ -2221,7 +2243,6 @@ public class PlanController {
         // Otherwise update its end point
         home.moveWallEndPointTo(this.newWall, xEnd, yEnd); 
       }         
-      PlanComponent planView = (PlanComponent)getView();
       planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
       planView.setWallAlignmentFeeback(this.newWall, xEnd, yEnd);
       
@@ -2363,6 +2384,7 @@ public class PlanController {
     
     @Override
     public void moveMouse(float x, float y) {
+      PlanComponent planView = (PlanComponent)getView();
       float newX = x - this.deltaXToResizePoint;
       float newY = y - this.deltaYToResizePoint;
       if (this.magnetismEnabled) {
@@ -2372,13 +2394,13 @@ public class PlanController {
                 : this.selectedWall.getXStart(), 
             this.startPoint 
                 ? this.selectedWall.getYEnd()
-                : this.selectedWall.getYStart(), newX, newY);
+                : this.selectedWall.getYStart(), newX, newY, 
+            preferences.getUnit(), planView.getPixelLength());
         newX = point.getXMagnetizedPoint();
         newY = point.getYMagnetizedPoint();
       } 
       moveWallPoint(this.selectedWall, newX, newY, this.startPoint);
 
-      PlanComponent planView = (PlanComponent)getView();
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), x, y);
       planView.setWallAlignmentFeeback(this.selectedWall, newX, newY);
       // Ensure point at (x,y) is visible
@@ -2507,11 +2529,11 @@ public class PlanController {
    * Furniture elevation state. This states manages the elevation change of a piece of furniture.
    */
   private class PieceOfFurnitureElevationState extends ControllerState {
+    private boolean              magnetismEnabled;
     private float                deltaYToElevationVertex;
     private HomePieceOfFurniture selectedPiece;
     private float                oldElevation;
-    private String               centimerElevationToolTipFeedback;
-    private String               inchElevationToolTipFeedback;
+    private String               elevationToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2520,12 +2542,13 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.centimerElevationToolTipFeedback = resource.getString("centimerElevationToolTipFeedback");
-      this.inchElevationToolTipFeedback = resource.getString("inchElevationToolTipFeedback");
+      this.elevationToolTipFeedback = resource.getString("elevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
       this.deltaYToElevationVertex = getYLastMousePress() - elevationPoint [1];
       this.oldElevation = this.selectedPiece.getElevation();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ wasShiftDownLastMousePress();
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldElevation), 
@@ -2535,15 +2558,18 @@ public class PlanController {
     @Override
     public void moveMouse(float x, float y) {
       // Compute the new height of the piece 
+      PlanComponent planView = (PlanComponent)getView();
       float [] topRightPoint = this.selectedPiece.getPoints() [1];
       float deltaY = y - this.deltaYToElevationVertex - topRightPoint[1];
       float newElevation = this.oldElevation - deltaY;
-      newElevation = Math.max(Math.round(newElevation * 10f) / 10f, 0f);
+      newElevation = Math.max(newElevation, 0f);
+      if (this.magnetismEnabled) {
+        newElevation = preferences.getUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
+      }
 
       // Update piece new dimension
       home.setPieceOfFurnitureElevation(this.selectedPiece, newElevation);
 
-      PlanComponent planView = (PlanComponent)getView();
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newElevation), x, y);
@@ -2553,6 +2579,15 @@ public class PlanController {
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureElevation(this.selectedPiece, this.oldElevation);
       setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -2570,12 +2605,8 @@ public class PlanController {
     }  
     
     private String getToolTipFeedbackText(float height) {
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerElevationToolTipFeedback, height);
-      } else {
-        return String.format(this.inchElevationToolTipFeedback, 
-            UserPreferences.Unit.centimeterToInch(height));
-      }
+      return String.format(this.elevationToolTipFeedback,  
+          preferences.getUnit().getLengthFormatWithUnit().format(height));
     }
   }
 
@@ -2583,11 +2614,11 @@ public class PlanController {
    * Furniture height state. This states manages the height resizing of a piece of furniture.
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
+    private boolean              magnetismEnabled;
     private float                deltaYToResizeVertex;
     private HomePieceOfFurniture selectedPiece;
     private float                oldHeight;
-    private String               centimerResizeToolTipFeedback;
-    private String               inchResizeToolTipFeedback;
+    private String               resizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2596,12 +2627,13 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.centimerResizeToolTipFeedback = resource.getString("centimerHeightResizeToolTipFeedback");
-      this.inchResizeToolTipFeedback = resource.getString("inchHeightResizeToolTipFeedback");
+      this.resizeToolTipFeedback = resource.getString("heightResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [3];
       this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
       this.oldHeight = this.selectedPiece.getHeight();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ wasShiftDownLastMousePress();
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldHeight), 
@@ -2611,17 +2643,21 @@ public class PlanController {
     @Override
     public void moveMouse(float x, float y) {
       // Compute the new height of the piece 
+      PlanComponent planView = (PlanComponent)getView();
       float [] bottomLeftPoint = this.selectedPiece.getPoints() [3];
       float deltaY = y - this.deltaYToResizeVertex - bottomLeftPoint[1];
       float newHeight = this.oldHeight - deltaY;
-      newHeight = Math.max(Math.round(newHeight * 10f) / 10f, 0.1f);
+      newHeight = Math.max(newHeight, 0f);
+      if (this.magnetismEnabled) {
+        newHeight = preferences.getUnit().getMagnetizedLength(newHeight, planView.getPixelLength());
+      }
+      newHeight = Math.max(newHeight, preferences.getUnit().getMinimumLength());
 
       // Update piece new dimension
       home.setPieceOfFurnitureSize(this.selectedPiece, 
           this.selectedPiece.getWidth(), this.selectedPiece.getDepth(), 
           newHeight);
 
-      PlanComponent planView = (PlanComponent)getView();
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newHeight), x, y);
@@ -2631,6 +2667,15 @@ public class PlanController {
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureHeightResize(this.selectedPiece, this.oldHeight);
       setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -2650,12 +2695,8 @@ public class PlanController {
     }  
     
     private String getToolTipFeedbackText(float height) {
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerResizeToolTipFeedback, height);
-      } else {
-        return String.format(this.inchResizeToolTipFeedback, 
-            UserPreferences.Unit.centimeterToInch(height));
-      }
+      return String.format(this.resizeToolTipFeedback,  
+          preferences.getUnit().getLengthFormatWithUnit().format(height));
     }
   }
 
@@ -2663,6 +2704,7 @@ public class PlanController {
    * Furniture resize state. This states manages the resizing of a piece of furniture.
    */
   private class PieceOfFurnitureResizeState extends ControllerState {
+    private boolean              magnetismEnabled;
     private float                deltaXToResizeVertex;
     private float                deltaYToResizeVertex;
     private HomePieceOfFurniture selectedPiece;
@@ -2670,8 +2712,7 @@ public class PlanController {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
-    private String               centimerResizeToolTipFeedback;
-    private String               inchResizeToolTipFeedback;
+    private String               resizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2680,8 +2721,7 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.centimerResizeToolTipFeedback = resource.getString("centimerWidthAndDepthResizeToolTipFeedback");
-      this.inchResizeToolTipFeedback = resource.getString("inchWidthAndDepthResizeToolTipFeedback");
+      this.resizeToolTipFeedback = resource.getString("widthAndDepthResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
@@ -2690,6 +2730,8 @@ public class PlanController {
       this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
       this.oldDepth = this.selectedPiece.getDepth();
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ wasShiftDownLastMousePress();
       PlanComponent planView = (PlanComponent)getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
@@ -2700,6 +2742,7 @@ public class PlanController {
     public void moveMouse(float x, float y) {
       // Compute the new location and dimension of the piece to let 
       // its bottom right point be at mouse location
+      PlanComponent planView = (PlanComponent)getView();
       float angle = this.selectedPiece.getAngle();
       double cos = Math.cos(angle); 
       double sin = Math.sin(angle); 
@@ -2709,8 +2752,12 @@ public class PlanController {
       float newWidth =  (float)(deltaY * sin + deltaX * cos);
       float newDepth =  (float)(deltaY * cos - deltaX * sin);
 
-      newWidth = Math.max(Math.round(newWidth * 10f) / 10f, 0.1f);
-      newDepth = Math.max(Math.round(newDepth * 10f) / 10f, 0.1f);
+      if (this.magnetismEnabled) {
+        newWidth = preferences.getUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
+        newDepth = preferences.getUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
+      }
+      newWidth = Math.max(newWidth, preferences.getUnit().getMinimumLength());
+      newDepth = Math.max(newDepth, preferences.getUnit().getMinimumLength());
 
       // Update piece new location
       float newX = (float)(topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
@@ -2720,7 +2767,6 @@ public class PlanController {
       home.setPieceOfFurnitureSize(this.selectedPiece, newWidth, newDepth, 
           this.selectedPiece.getHeight());
 
-      PlanComponent planView = (PlanComponent)getView();
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
       planView.setToolTipFeedback(getToolTipFeedbackText(newWidth, newDepth), x, y);
@@ -2731,6 +2777,15 @@ public class PlanController {
       postPieceOfFurnitureWidthAndDepthResize(this.selectedPiece, this.oldX, this.oldY, 
           this.oldWidth, this.oldDepth);
       setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again angle as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -2750,13 +2805,9 @@ public class PlanController {
     }  
     
     private String getToolTipFeedbackText(float width, float depth) {
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
-        return String.format(this.centimerResizeToolTipFeedback, width, depth);
-      } else {
-        return String.format(this.inchResizeToolTipFeedback, 
-            UserPreferences.Unit.centimeterToInch(width), 
-            UserPreferences.Unit.centimeterToInch(depth));
-      }
+      return String.format(this.resizeToolTipFeedback,  
+          preferences.getUnit().getLengthFormatWithUnit().format(width),  
+          preferences.getUnit().getLengthFormatWithUnit().format(depth));
     }
   }
 
@@ -2982,6 +3033,7 @@ public class PlanController {
 
     @Override
     public void moveMouse(float x, float y) {
+      PlanComponent planView = (PlanComponent)getView();
       if (offsetChoice) {
         float distanceToDimensionLine = (float)Line2D.ptLineDist(this.xStart, this.yStart, 
             this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
@@ -2995,7 +3047,8 @@ public class PlanController {
         float yEnd;
         if (this.magnetismEnabled) {
           PointWithMagnetism point = new PointWithMagnetism(
-              this.xStart, this.yStart, x, y);
+              this.xStart, this.yStart, x, y,
+              preferences.getUnit(), planView.getPixelLength());
           xEnd = point.getXMagnetizedPoint();
           yEnd = point.getYMagnetizedPoint();
         } else {
@@ -3012,10 +3065,10 @@ public class PlanController {
           // Otherwise update its end point
           home.moveDimensionLineEndPointTo(this.newDimensionLine, xEnd, yEnd); 
         }         
-        ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
+        planView.setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
       }
       // Ensure point at (x,y) is visible
-      ((PlanComponent)getView()).makePointVisible(x, y);
+      planView.makePointVisible(x, y);
     }
 
     @Override
@@ -3157,6 +3210,7 @@ public class PlanController {
     
     @Override
     public void moveMouse(float x, float y) {
+      PlanComponent planView = (PlanComponent)getView();
       float xResizePoint = x - this.deltaXToResizePoint;
       float yResizePoint = y - this.deltaYToResizePoint;
       if (this.startPoint) {
@@ -3185,16 +3239,17 @@ public class PlanController {
           if (this.magnetismEnabled) {
             PointWithMagnetism point = new PointWithMagnetism(
                 this.selectedDimensionLine.getXEnd(), 
-                this.selectedDimensionLine.getYEnd(), xNewStartPoint, yNewStartPoint);
+                this.selectedDimensionLine.getYEnd(), xNewStartPoint, yNewStartPoint,
+                preferences.getUnit(), planView.getPixelLength());
             xNewStartPoint = point.getXMagnetizedPoint();
             yNewStartPoint = point.getYMagnetizedPoint();
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.startPoint);        
-          ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+          planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
               xNewStartPoint, yNewStartPoint);
         } else {
-          ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+          planView.deleteDimensionLineAlignmentFeeback();
         }        
       } else {
         // Compute the new end point of the dimension line knowing that the distance 
@@ -3222,16 +3277,17 @@ public class PlanController {
           if (this.magnetismEnabled) {
             PointWithMagnetism point = new PointWithMagnetism(
                 this.selectedDimensionLine.getXStart(), 
-                this.selectedDimensionLine.getYStart(), xNewEndPoint, yNewEndPoint);
+                this.selectedDimensionLine.getYStart(), xNewEndPoint, yNewEndPoint,
+                preferences.getUnit(), planView.getPixelLength());
             xNewEndPoint = point.getXMagnetizedPoint();
             yNewEndPoint = point.getYMagnetizedPoint();
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.startPoint);
-          ((PlanComponent)getView()).setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+          planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
               xNewEndPoint, yNewEndPoint);
         } else {
-          ((PlanComponent)getView()).deleteDimensionLineAlignmentFeeback();
+          planView.deleteDimensionLineAlignmentFeeback();
         }
       }     
 

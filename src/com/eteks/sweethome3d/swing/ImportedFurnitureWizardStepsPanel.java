@@ -212,10 +212,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                                 final UserPreferences preferences,
                                 final ContentManager contentManager) {
     // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
+    String unitText = preferences.getUnit().getName();
 
     // Model panel components
     this.modelChoiceOrChangeLabel = new JLabel(); 

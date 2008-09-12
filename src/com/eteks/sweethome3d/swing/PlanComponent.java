@@ -59,8 +59,6 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.text.DecimalFormat;
-import java.text.Format;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1282,9 +1280,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Draw dimension lines
     g2D.setPaint(foregroundColor);
     BasicStroke dimensionLineStroke = new BasicStroke(1 / planScale);
-    Format format = new DecimalFormat(this.preferences.getUnit() == UserPreferences.Unit.INCH 
-        ? "#.###" 
-        : "#");
     // Change font size
     Font previousFont = g2D.getFont();
     g2D.setFont(previousFont.deriveFont(previousFont.getSize2D() * 1.5f));
@@ -1332,9 +1327,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
       
       // Draw dimension length in middle
-      String lengthText = format.format(this.preferences.getUnit() == UserPreferences.Unit.INCH
-          ? UserPreferences.Unit.centimeterToInch(dimensionLineLength) 
-          : dimensionLineLength);
+      String lengthText = this.preferences.getUnit().getLengthFormat().format(dimensionLineLength);
       Rectangle2D lengthTextBounds = fontMetrics.getStringBounds(lengthText, g2D);
       
       g2D.drawString(lengthText, 
@@ -1911,6 +1904,13 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     return (int)Math.round((y - planBounds.getMinY() + MARGIN) * getScale()) + insets.top;
   }
 
+  /**
+   * Returns the length in centimeters of a pixel with the current scale.
+   */
+  public float getPixelLength() {
+    return 1 / getScale();
+  }
+  
   /**
    * Returns the bounds of <code>shape</code> in pixels coordinates space.
    */

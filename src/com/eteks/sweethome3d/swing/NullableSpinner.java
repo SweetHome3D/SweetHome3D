@@ -22,15 +22,16 @@ package com.eteks.sweethome3d.swing;
 import java.text.ParseException;
 
 import javax.swing.JFormattedTextField;
-import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.text.DefaultFormatter;
+import javax.swing.text.NumberFormatter;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * Spinner that accepts empty string values. In this case the returned value is <code>null</code>. 
  */
-public class NullableSpinner extends JSpinner {
+public class NullableSpinner extends AutoCommitSpinner {
   /**
    * Creates a default nullable spinner able to edit an integer. 
    */
@@ -41,22 +42,28 @@ public class NullableSpinner extends JSpinner {
   /**
    * Creates a nullable spinner from <code>model</code>. 
    */
- public NullableSpinner(NullableSpinnerNumberModel model) {
+  public NullableSpinner(NullableSpinnerNumberModel model) {
     super(model);
     final JFormattedTextField textField = ((DefaultEditor)getEditor()).getTextField();
-    final JFormattedTextField.AbstractFormatter formatter = textField.getFormatter();
+    final JFormattedTextField.AbstractFormatter defaultFormatter = textField.getFormatter();
     // Change formatted text field formatter to enable the edition of empty values
     textField.setFormatterFactory(new JFormattedTextField.AbstractFormatterFactory() {
         @Override
         public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField tf) {
-          return new JFormattedTextField.AbstractFormatter () {
+          return new NumberFormatter () {
+              {
+                if (defaultFormatter instanceof DefaultFormatter) {
+                  setCommitsOnValidEdit(((DefaultFormatter)defaultFormatter).getCommitsOnValidEdit());
+                }
+              }
+              
               @Override
               public Object stringToValue(String text) throws ParseException {
                 if (text.length() == 0 && ((NullableSpinnerNumberModel)getModel()).isNullable()) {
                   // Return null for empty text 
                   return null;
                 } else {
-                  return formatter.stringToValue(text);
+                  return defaultFormatter.stringToValue(text);
                 }
               }
 
@@ -66,7 +73,7 @@ public class NullableSpinner extends JSpinner {
                   // Return empty text for null values
                   return "";
                 } else {
-                  return formatter.valueToString(value);
+                  return defaultFormatter.valueToString(value);
                 }
               }
             };
@@ -116,7 +123,7 @@ public class NullableSpinner extends JSpinner {
     }
 
     /**
-     * Sets model value. This method is overriden to store whether current value is <code>null</code> 
+     * Sets model value. This method is overridden to store whether current value is <code>null</code> 
      * or not (super class <code>setValue</code> doesn't accept <code>null</code> value).
      */
     @Override

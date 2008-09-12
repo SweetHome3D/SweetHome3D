@@ -23,7 +23,9 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Composite;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -32,9 +34,14 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.LayoutManager2;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.Stroke;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -45,13 +52,17 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -59,7 +70,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
+import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
@@ -117,11 +130,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    */
   private void createComponents(UserPreferences preferences, 
                                 final ContentManager contentManager) {
-    // Get unit text matching current unit 
-    String unitText = this.resource.getString(
-        preferences.getUnit() == UserPreferences.Unit.CENTIMETER
-            ? "centimeterUnit"
-            : "inchUnit");
+    // Get unit name matching current unit 
+    String unitName = preferences.getUnit().getName();
 
     // Image choice panel components
     this.imageChoiceOrChangeLabel = new JLabel(); 
@@ -135,16 +145,43 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         }
       });
     this.imageChoiceErrorLabel = new JLabel(resource.getString("imageChoiceErrolLabel.text"));
-    // Make imageChoiceErrorLabel visible only if an error occured during image content loading
+    // Make imageChoiceErrorLabel visible only if an error occurred during image content loading
     this.imageChoiceErrorLabel.setVisible(false);
     this.imageChoicePreviewComponent = new ImagePreviewComponent();
+    // Add a transfer handler to image preview component to let user drag and drop an image in component
+    this.imageChoicePreviewComponent.setTransferHandler(new TransferHandler() {
+        @Override
+        public boolean canImport(JComponent comp, DataFlavor [] flavors) {
+          return Arrays.asList(flavors).contains(DataFlavor.javaFileListFlavor);
+        }
+        
+        @Override
+        public boolean importData(JComponent comp, Transferable transferedFiles) {
+          boolean success = true;
+          try {
+            List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
+            updateController(contentManager.getContent(files.get(0).getAbsolutePath()));
+          } catch (UnsupportedFlavorException ex) {
+            success = false;
+          } catch (IOException ex) {
+            success = false;
+          } catch (RecorderException ex) {
+            success = false;
+          }
+          if (!success) {
+            JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
+                resource.getString("imageChoiceError"));
+          }
+          return success;
+        }
+      });
     
     // Image scale panel components
     this.scaleLabel = new JLabel(this.resource.getString("scaleLabel.text"));
     this.scaleDistanceLabel = new JLabel(
-        String.format(this.resource.getString("scaleDistanceLabel.text"), unitText));
+        String.format(this.resource.getString("scaleDistanceLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel scaleDistanceSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 1f, 1000000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.99f, 1000000f);
     this.scaleDistanceSpinner = new NullableSpinner(scaleDistanceSpinnerModel);
     this.scaleDistanceSpinner.getModel().addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -166,9 +203,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     // Image origin panel components
     this.originLabel = new JLabel(this.resource.getString("originLabel.text"));
     this.xOriginLabel = new JLabel(
-        String.format(this.resource.getString("xOriginLabel.text"), unitText)); 
+        String.format(this.resource.getString("xOriginLabel.text"), unitName)); 
     this.yOriginLabel = new JLabel(
-        String.format(this.resource.getString("yOriginLabel.text"), unitText)); 
+        String.format(this.resource.getString("yOriginLabel.text"), unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
     this.xOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
@@ -225,53 +262,60 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     this.cardLayout = new CardLayout();
     setLayout(this.cardLayout);
     
-    JPanel imageChoicePanel = new JPanel(new GridBagLayout());
-    imageChoicePanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
+    JPanel imageChoiceTopPanel = new JPanel(new GridBagLayout());
+    imageChoiceTopPanel.add(this.imageChoiceOrChangeLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    imageChoicePanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
+    imageChoiceTopPanel.add(this.imageChoiceOrChangeButton, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    imageChoicePanel.add(this.imageChoiceErrorLabel, new GridBagConstraints(
+    imageChoiceTopPanel.add(this.imageChoiceErrorLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
-    imageChoicePanel.add(this.imageChoicePreviewComponent, new GridBagConstraints(
-        0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
     
-    JPanel scalePanel = new JPanel(new GridBagLayout());
-    scalePanel.add(this.scaleLabel, new GridBagConstraints(
+    JPanel imageChoicePanel = new JPanel(new ProportionalBottomComponentLayout());
+    imageChoicePanel.add(imageChoiceTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    imageChoicePanel.add(this.imageChoicePreviewComponent, 
+        ProportionalBottomComponentLayout.Constraints.BOTTOM);
+    
+    JPanel scaleTopPanel = new JPanel(new GridBagLayout());
+    scaleTopPanel.add(this.scaleLabel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    scalePanel.add(this.scaleDistanceLabel, new GridBagConstraints(
+    scaleTopPanel.add(this.scaleDistanceLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    scalePanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
+    scaleTopPanel.add(this.scaleDistanceSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    scalePanel.add(this.scalePreviewComponent, new GridBagConstraints(
-        0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
+    
+    JPanel scalePanel = new JPanel(new ProportionalBottomComponentLayout());
+    scalePanel.add(scaleTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    scalePanel.add(this.scalePreviewComponent, 
+        ProportionalBottomComponentLayout.Constraints.BOTTOM);
 
-    JPanel originPanel = new JPanel(new GridBagLayout());
-    originPanel.add(this.originLabel, new GridBagConstraints(
+
+    JPanel originTopPanel = new JPanel(new GridBagLayout());
+    originTopPanel.add(this.originLabel, new GridBagConstraints(
         0, 0, 4, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(5, 0, 5, 0), 0, 0));
-    originPanel.add(this.xOriginLabel, new GridBagConstraints(
+    originTopPanel.add(this.xOriginLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    originPanel.add(this.xOriginSpinner, new GridBagConstraints(
+    originTopPanel.add(this.xOriginSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 10), -10, 0));
-    originPanel.add(this.yOriginLabel, new GridBagConstraints(
+    originTopPanel.add(this.yOriginLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
-    originPanel.add(this.yOriginSpinner, new GridBagConstraints(
+    originTopPanel.add(this.yOriginSpinner, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
-    originPanel.add(this.originPreviewComponent, new GridBagConstraints(
-        0, 2, 4, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.BOTH, new Insets(5, 0, 5, 0), 0, 0));
+    
+    JPanel originPanel = new JPanel(new ProportionalBottomComponentLayout());
+    originPanel.add(originTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    originPanel.add(this.originPreviewComponent, 
+        ProportionalBottomComponentLayout.Constraints.BOTTOM);
 
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
     add(scalePanel, BackgroundImageWizardController.Step.SCALE.name());
@@ -434,7 +478,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns an image content choosen for a content chooser dialog.
+   * Returns an image content chosen for a content chooser dialog.
    */
   private Content showImageChoiceDialog(ContentManager contentManager) {
     String imageName = contentManager.showOpenDialog( 
@@ -451,14 +495,232 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
 
   /**
+   * A layout manager that displays two components at the top of each other. 
+   * The component at top is sized at container width and at its preferred height.
+   * The component at bottom is centered in the rest of the space and sized proportionally to its preferred size.
+   */
+  private static class ProportionalBottomComponentLayout implements LayoutManager2 {
+    public enum Constraints {TOP, BOTTOM}
+
+    private Component topComponent;
+    private Component bottomComponent;
+    private int       gap;
+
+    /**
+     * Creates a layout manager which layouts its component 
+     * with a default gap of 5 pixels between them.
+     */
+    public ProportionalBottomComponentLayout() {
+      this(5);
+    }
+
+    /**
+     * Creates a layout manager which layouts its component 
+     * with a given <code>gap</code> between them.
+     */
+    public ProportionalBottomComponentLayout(int gap) {
+      this.gap = gap;
+    }
+    
+    /**
+     * Records a given <code>component</code> in this layout manager as the component at 
+     * <code>Constraints.TOP</code> or at <code>Constraints.BOTTOM</code> of its container.
+     */
+    public void addLayoutComponent(Component component, Object constraints) {
+      if (constraints == Constraints.TOP) {
+        this.topComponent = component; 
+      } else if (constraints == Constraints.BOTTOM) {
+        this.bottomComponent = component;
+      }
+    }
+
+    /**
+     * Do not use.
+     */
+    public void addLayoutComponent(String name, Component comp) {
+      throw new IllegalArgumentException("Use addLayoutComponent with a Constraints object");
+    }
+
+    /**
+     * Removes the given <code>component</code> from the ones managed by this layout manager.
+     */
+    public void removeLayoutComponent(Component component) {
+    }
+    
+    /**
+     * Returns 0.5.
+     */
+    public float getLayoutAlignmentX(Container target) {
+      return 0.5f;
+    }
+
+    /**
+     * Return 0.
+     */
+    public float getLayoutAlignmentY(Container target) {
+      return 0f;
+    }
+
+    /**
+     * Invalidates layout.
+     */
+    public void invalidateLayout(Container target) {
+      // Sizes are computed on the fly each time
+    }
+
+    /**
+     * Layouts the container.
+     */
+    public void layoutContainer(Container parent) {
+      Insets parentInsets = parent.getInsets();
+      int parentAvailableWidth = parent.getWidth() - parentInsets.left - parentInsets.right;
+      int parentAvailableHeight = parent.getHeight() - parentInsets.top - parentInsets.bottom;
+      
+      // Component at top is sized at container width and at its preferred height
+      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
+      if (topComponentUsed) {
+        this.topComponent.setBounds(parentInsets.left, parentInsets.top, 
+            parentAvailableWidth, 
+            Math.min(this.topComponent.getPreferredSize().height, parentAvailableHeight));
+      }
+      // Component is centered in the rest of the space and sized proportionally to its preferred size
+      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
+        Dimension bottomComponentPreferredSize = this.bottomComponent.getPreferredSize();
+        int bottomComponentHeight = parentAvailableHeight;
+        int bottomComponentY = parentInsets.top;
+        if (topComponentUsed) {
+          int occupiedHeight = this.topComponent.getHeight() + this.gap;
+          bottomComponentHeight -= occupiedHeight;
+          bottomComponentY += occupiedHeight;
+        }
+        int bottomComponentWidth = bottomComponentHeight * bottomComponentPreferredSize.width 
+                                   / bottomComponentPreferredSize.height;
+        int bottomComponentX = parentInsets.left;
+        // Adjust component width and height if it's larger than parent
+        if (bottomComponentWidth > parentAvailableWidth) {
+          bottomComponentWidth = parentAvailableWidth;
+          int previousHeight = bottomComponentHeight;
+          bottomComponentHeight = bottomComponentWidth * bottomComponentPreferredSize.height 
+                                  / bottomComponentPreferredSize.width;
+          bottomComponentY += (previousHeight - bottomComponentHeight)  / 2;
+        } else {
+          // Center component in width
+          bottomComponentX += (parentAvailableWidth - bottomComponentWidth)  / 2; 
+        }
+          
+        this.bottomComponent.setBounds(bottomComponentX, bottomComponentY, 
+            bottomComponentWidth, bottomComponentHeight);
+      }
+    }
+
+    /**
+     * Returns the largest minimum width of the components managed by this layout manager,
+     * and the sum of their minimum heights.
+     */
+    public Dimension minimumLayoutSize(Container parent) {
+      Insets parentInsets = parent.getInsets();
+      int minWidth = 0;
+      int minHeight = 0;
+      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
+      if (topComponentUsed) {
+        Dimension topComponentMinSize = this.topComponent.getMinimumSize();
+        minWidth = Math.max(minWidth, topComponentMinSize.width);
+        minHeight = topComponentMinSize.height;
+      }
+      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
+        Dimension bottomComponentMinSize = this.bottomComponent.getMinimumSize();
+        minWidth = Math.max(minWidth, bottomComponentMinSize.width);
+        minHeight += bottomComponentMinSize.height;
+        if (topComponentUsed) {
+          minHeight += this.gap;
+        }
+      }
+      
+      return new Dimension(minWidth + parentInsets.left + parentInsets.right, 
+          minHeight + parentInsets.top + parentInsets.bottom);
+    }
+
+    /**
+     * Returns the largest maximum width of the components managed by this layout manager,
+     * and the sum of their maximum heights.
+     */
+    public Dimension maximumLayoutSize(Container parent) {
+      Insets parentInsets = parent.getInsets();
+      int maxWidth = 0;
+      int maxHeight = 0;
+      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
+      if (topComponentUsed) {
+        Dimension topComponentMaxSize = this.topComponent.getMaximumSize();
+        maxWidth = Math.max(maxWidth, topComponentMaxSize.width);
+        maxHeight = topComponentMaxSize.height;
+      }
+      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
+        Dimension bottomComponentMaxSize = this.bottomComponent.getMaximumSize();
+        maxWidth = Math.max(maxWidth, bottomComponentMaxSize.width);
+        maxHeight += bottomComponentMaxSize.height;
+        if (topComponentUsed) {
+          maxHeight += this.gap;
+        }
+      }
+      
+      return new Dimension(maxWidth + parentInsets.left + parentInsets.right, 
+          maxHeight + parentInsets.top + parentInsets.bottom);
+    }
+
+    public Dimension preferredLayoutSize(Container parent) {
+      Insets parentInsets = parent.getInsets();
+      int preferredWidth = 0;
+      int preferredHeight = 0;
+      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
+      if (topComponentUsed) {
+        Dimension topComponentPreferredSize = this.topComponent.getPreferredSize();
+        preferredWidth = Math.max(preferredWidth, topComponentPreferredSize.width);
+        preferredHeight = topComponentPreferredSize.height;
+      }
+      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
+        Dimension bottomComponentPreferredSize = this.bottomComponent.getPreferredSize();
+        preferredWidth = Math.max(preferredWidth, bottomComponentPreferredSize.width);
+        preferredHeight += bottomComponentPreferredSize.height;
+        if (topComponentUsed) {
+          preferredHeight += this.gap;
+        }
+      }
+      
+      return new Dimension(preferredWidth + parentInsets.left + parentInsets.right, 
+          preferredHeight + parentInsets.top + parentInsets.bottom);
+    }
+  }
+  
+  /**
    * Preview component for image choice. 
    */
   private static class ImagePreviewComponent extends JComponent {
     private BufferedImage image;
+    
+    public ImagePreviewComponent() {
+      setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
+    }
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(400, 300);
+      final int defaultPreferredWidth = 300; 
+      final int defaultPreferredHeight = 300; 
+      if (image == null) {
+        return new Dimension(defaultPreferredWidth, defaultPreferredHeight);
+      } else {
+        // Compute the component preferred size in such a way 
+        // its bigger dimension (width or height) is 300 pixels
+        Insets insets = getInsets();
+        int maxImagePreferredWith   = defaultPreferredWidth - insets.left - insets.right;
+        int maxImagePreferredHeight = defaultPreferredHeight - insets.top - insets.bottom;
+        float widthScale = (float)image.getWidth() / maxImagePreferredWith;
+        float heightScale = (float)image.getHeight() / maxImagePreferredHeight;
+        if (widthScale > heightScale) {
+          return new Dimension(defaultPreferredWidth, (int)(image.getHeight() / widthScale) + insets.top + insets.bottom);
+        } else {
+          return new Dimension((int)(image.getWidth() / heightScale) + insets.left + insets.right, defaultPreferredHeight);
+        }
+      }
     }
     
     @Override
@@ -497,7 +759,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      */
     public void setImage(BufferedImage image) {
       this.image = image;
-      this.repaint();
+      revalidate();
+      repaint();
     }
 
     /**
@@ -674,6 +937,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      
         g2D.setPaint(scaleDistanceLineColor);
         
+        AffineTransform oldTransform = g2D.getTransform();
+        Stroke oldStroke = g2D.getStroke();
         // Use same origin and scale as image drawing in super class
         g2D.translate(translation.x, translation.y);
         g2D.scale(scale, scale);       
@@ -688,17 +953,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
         double angle = Math.atan2(scaleDistancePoints [1][1] - scaleDistancePoints [0][1], 
                     scaleDistancePoints [1][0] - scaleDistancePoints [0][0]);
-        AffineTransform oldTransform = g2D.getTransform();
+        AffineTransform oldTransform2 = g2D.getTransform();
         g2D.translate(scaleDistancePoints [0][0], scaleDistancePoints [0][1]);
         g2D.rotate(angle);
         Shape endLine = new Line2D.Double(0, 5 / scale, 0, -5 / scale);
         g2D.draw(endLine);
-        g2D.setTransform(oldTransform);
+        g2D.setTransform(oldTransform2);
         
         // Draw end point line
         g2D.translate(scaleDistancePoints [1][0], scaleDistancePoints [1][1]);
         g2D.rotate(angle);
         g2D.draw(endLine);
+        g2D.setTransform(oldTransform);
+        g2D.setStroke(oldStroke);
       }
     }
   }
@@ -791,6 +1058,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             : UIManager.getColor("textHighlight");;
         g2D.setPaint(scaleDistanceLineColor);
         
+        AffineTransform oldTransform = g2D.getTransform();
+        Stroke oldStroke = g2D.getStroke();
         g2D.translate(translation.x, translation.y);
         // Rescale according to scale distance
         float [][] scaleDistancePoints = this.controller.getScaleDistancePoints();
@@ -811,6 +1080,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));        
         g2D.draw(new Line2D.Double(8 / scale, 0, -8 / scale, 0));
         g2D.draw(new Line2D.Double(0, 8 / scale, 0, -8 / scale));
+        g2D.setTransform(oldTransform);
+        g2D.setStroke(oldStroke);
       }
     }
   }

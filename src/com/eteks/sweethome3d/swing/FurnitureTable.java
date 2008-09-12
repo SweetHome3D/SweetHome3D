@@ -19,9 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import static com.eteks.sweethome3d.model.UserPreferences.Unit.INCH;
-import static com.eteks.sweethome3d.model.UserPreferences.Unit.centimeterToInch;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -34,7 +31,6 @@ import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -620,15 +616,10 @@ public class FurnitureTable extends JTable implements Printable {
                                               final UserPreferences preferences) {
       // Renderer super class used to display sizes
       class SizeRenderer extends DefaultTableCellRenderer {
-        private NumberFormat format = NumberFormat.getNumberInstance();
-        
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          if (preferences.getUnit() == INCH) {
-            value = centimeterToInch((Float)value);
-          }
-          value = format.format(value);
+          value = preferences.getUnit().getLengthFormat().format((Float)value);
           setHorizontalAlignment(JLabel.RIGHT);
           return super.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);
