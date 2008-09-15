@@ -40,6 +40,9 @@ import com.eteks.sweethome3d.swing.UserPreferencesPanel;
 public class UserPreferencesPanelTest extends TestCase {
   public void testUserPreferencesPanel() 
        throws RecorderException, NoSuchFieldException, IllegalAccessException {
+    // 0. Keep a copy of current preferences
+    UserPreferences previousPreferences = new FileUserPreferences();
+    
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences defaultPreferences = new DefaultUserPreferences();
@@ -118,6 +121,9 @@ public class UserPreferencesPanelTest extends TestCase {
         preferences.isGridVisible(), 
         preferences.getNewWallThickness(),  
         preferences.getNewHomeWallHeight(), readPreferences);
+    
+    // Restore previous preferences
+    previousPreferences.write();
   }
   
   /**
