@@ -2712,7 +2712,8 @@ public class PlanController {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
-    private String               resizeToolTipFeedback;
+    private String               widthResizeToolTipFeedback;
+    private String               depthResizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -2721,7 +2722,8 @@ public class PlanController {
     
     @Override
     public void enter() {
-      this.resizeToolTipFeedback = resource.getString("widthAndDepthResizeToolTipFeedback");
+      this.widthResizeToolTipFeedback = resource.getString("widthResizeToolTipFeedback");
+      this.depthResizeToolTipFeedback = resource.getString("depthResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
@@ -2805,9 +2807,10 @@ public class PlanController {
     }  
     
     private String getToolTipFeedbackText(float width, float depth) {
-      return String.format(this.resizeToolTipFeedback,  
-          preferences.getUnit().getLengthFormatWithUnit().format(width),  
-          preferences.getUnit().getLengthFormatWithUnit().format(depth));
+      return "<html>" + String.format(this.widthResizeToolTipFeedback,  
+              preferences.getUnit().getLengthFormatWithUnit().format(width))
+          + "<br>" + String.format(this.depthResizeToolTipFeedback,
+              preferences.getUnit().getLengthFormatWithUnit().format(depth));
     }
   }
 
