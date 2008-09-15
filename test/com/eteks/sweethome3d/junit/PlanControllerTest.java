@@ -20,6 +20,8 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.EventQueue;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +48,17 @@ public class PlanControllerTest extends TestCase {
    * Performs the same tests as {@link PlanComponentTest#testPlanComponent()} 
    * but with direct calls to controller in memory.
    */
-  public void testPlanContoller() {
+  public void testPlanContoller() throws InterruptedException, InvocationTargetException {
+    // Run test in Event Dispatch Thread because the default view associated 
+    // to plan controller instance performs some actions in EDT even if it's not displayed
+    EventQueue.invokeAndWait(new Runnable() {
+        public void run() {
+          runPlanContollerTest();          
+        }
+      });
+  }
+  
+  private void runPlanContollerTest() { 
     // 1. Create a frame that displays a PlanComponent at its preferred size, 
     Home home = new Home();
     UserPreferences preferences = new DefaultUserPreferences();
@@ -201,10 +213,14 @@ public class PlanControllerTest extends TestCase {
    * <code>wall</code> are at (<code>xStart</code>, <code>yStart</code>), (<code>xEnd</code>, <code>yEnd</code>). 
    */
   private void assertCoordinatesEqualWallPoints(float xStart, float yStart, float xEnd, float yEnd, Wall wall) {
-    assertTrue("Incorrect X start", Math.abs(xStart - wall.getXStart()) < 1E-10);
-    assertTrue("Incorrect Y start", Math.abs(yStart - wall.getYStart()) < 1E-10);
-    assertTrue("Incorrect X end", Math.abs(xEnd - wall.getXEnd()) < 1E-10);
-    assertTrue("Incorrect Y end", Math.abs(yEnd - wall.getYEnd()) < 1E-10);
+    assertTrue("Incorrect X start " + xStart + " " + wall.getXStart(), 
+        Math.abs(xStart - wall.getXStart()) < 1E-10);
+    assertTrue("Incorrect Y start " + yStart + " " + wall.getYStart(), 
+        Math.abs(yStart - wall.getYStart()) < 1E-10);
+    assertTrue("Incorrect X end " + xEnd + " " + wall.getXEnd(), 
+        Math.abs(xEnd - wall.getXEnd()) < 1E-10);
+    assertTrue("Incorrect Y end " + yEnd + " " + wall.getYEnd(), 
+        Math.abs(yEnd - wall.getYEnd()) < 1E-10);
   }
 
   /**
