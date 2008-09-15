@@ -438,7 +438,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     
     float planBoundsNewMinX = (float)getPlanBounds().getMinX();
     float planBoundsNewMinY = (float)getPlanBounds().getMinY();
-    // If plan bounds upper left corner diminushed
+    // If plan bounds upper left corner diminished
     if (parent instanceof JViewport
         && (planBoundsNewMinX < planBoundsMinX
             || planBoundsNewMinY < planBoundsMinY)) {
@@ -633,7 +633,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
     }
     if (!this.planBoundsCacheValid) {
-      // Enlarge plan bounds to include home bounds and observer camera
+      // Enlarge plan bounds to include background image, home bounds and observer camera
+      if (this.backgroundImageCache != null) {
+        BackgroundImage backgroundImage = this.home.getBackgroundImage();
+        this.planBoundsCache.add(this.backgroundImageCache.getWidth() * backgroundImage.getScale() - backgroundImage.getXOrigin(),
+            this.backgroundImageCache.getHeight() * backgroundImage.getScale() - backgroundImage.getYOrigin());
+      }
       Rectangle2D wallsAndFurnitureBounds = getWallFurnitureDimensionLinesBounds();
       if (wallsAndFurnitureBounds != null) {
         this.planBoundsCache.add(wallsAndFurnitureBounds);
@@ -838,6 +843,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
                 // Ignore exceptions, the user may know its background image is incorrect 
                 // if he tries to modify the background image
               } 
+              invalidatePlanBoundsAndRevalidate();
               repaint();
             } 
           });
