@@ -1165,6 +1165,8 @@ public class HomePane extends JRootPane {
     view3D.setComponentPopupMenu(view3DPopup);
     view3DPopup.addSeparator();
     view3DPopup.add(getMenuAction(ActionType.MODIFY_3D_ATTRIBUTES));
+    view3DPopup.addSeparator();
+    view3DPopup.add(getMenuAction(ActionType.EXPORT_TO_OBJ));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
