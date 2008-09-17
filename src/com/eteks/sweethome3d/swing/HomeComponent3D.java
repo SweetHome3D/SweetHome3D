@@ -34,24 +34,38 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.imageio.ImageIO;
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
@@ -62,12 +76,20 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
+import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.IndexedQuadArray;
+import javax.media.j3d.IndexedTriangleArray;
+import javax.media.j3d.IndexedTriangleFanArray;
+import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.QuadArray;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
@@ -75,6 +97,9 @@ import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
+import javax.media.j3d.TriangleArray;
+import javax.media.j3d.TriangleFanArray;
+import javax.media.j3d.TriangleStripArray;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -120,6 +145,9 @@ public class HomeComponent3D extends JComponent implements Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
+  
+  private static final NumberFormat OBJ_NUMBER_FORMAT = new DecimalFormat("0.###", new DecimalFormatSymbols(Locale.US));
+  private static final boolean OBJ_REDUCE_FILE_SIZE = false;
   
   private Home                      home;
   private SimpleUniverse            universe;
@@ -181,7 +209,7 @@ public class HomeComponent3D extends JComponent implements Printable {
                                     final Home home) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
-          universe = getUniverse(home);
+          universe = createUniverse(home);
           // Bind universe to canvas3D
           universe.getViewer().getView().addCanvas3D(canvas3D);
           canvas3D.setFocusable(false);
@@ -198,9 +226,9 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns a 3D universe that displays <code>home</code> objects.
+   * Returns a new 3D universe that displays <code>home</code> objects.
    */
-  private SimpleUniverse getUniverse(Home home) {
+  private SimpleUniverse createUniverse(Home home) {
     // Create a universe bound to no canvas 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     Viewer viewer = new Viewer(new Canvas3D [0]);
@@ -218,7 +246,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     addCameraListeners(home, view, viewPlatformTransform);
     
     // Link scene matching home to universe
-    universe.addBranchGraph(getSceneTree(home));
+    universe.addBranchGraph(createSceneTree(home));
     
     return universe;
   }
@@ -253,7 +281,7 @@ public class HomeComponent3D extends JComponent implements Printable {
         try {
           View view;
           if (this.universe == null) {
-            printUniverse = getUniverse(this.home);
+            printUniverse = createUniverse(this.home);
             view = printUniverse.getViewer().getView();
           } else {
             view = this.universe.getViewer().getView();
@@ -328,7 +356,13 @@ public class HomeComponent3D extends JComponent implements Printable {
     // Update front and back clip distance to ensure their ratio is less than 3000
     view.setFrontClipDistance(frontClipDistance);
     view.setBackClipDistance(frontClipDistance * 3000);
-    // Cancel printed image cache
+    clearPrintedImageCache();
+  }
+
+  /**
+   * Frees printed image kept in cache.
+   */
+  private void clearPrintedImageCache() {
     this.printedImage = null;
   }
   
@@ -348,8 +382,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     transform.mul(yawRotation);
     
     viewPlatformTransform.setTransform(transform);
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
   
   /**
@@ -514,16 +547,16 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns scene tree root.
+   * Returns a new scene tree root.
    */
-  private BranchGroup getSceneTree(Home home) {
+  private BranchGroup createSceneTree(Home home) {
     BranchGroup root = new BranchGroup();
 
     // Build scene tree
-    root.addChild(getHomeTree(home));
-    root.addChild(getBackgroundNode(home));
-    root.addChild(getGroundNode(home));
-    for (Light light : getLights(home)) {
+    root.addChild(createHomeTree(home));
+    root.addChild(createBackgroundNode(home));
+    root.addChild(createGroundNode(home, -1E5f / 2, -1E5f / 2, 1E5f, 1E5f));
+    for (Light light : createLights(home)) {
       root.addChild(light);
     }
 
@@ -531,9 +564,9 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns the background node.  
+   * Returns a new background node.  
    */
-  private Node getBackgroundNode(final Home home) {
+  private Node createBackgroundNode(final Home home) {
     final Background background = new Background();
     updateBackgroundColor(background, home);
     // Allow background color to change
@@ -557,14 +590,17 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private void updateBackgroundColor(Background background, Home home) {
     background.setColor(new Color3f(new Color(home.getSkyColor())));
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
   
   /**
-   * Returns the ground node.  
+   * Returns a new ground node.  
    */
-  private Node getGroundNode(final Home home) {
+  private Node createGroundNode(final Home home,
+                                final float groundOriginX,
+                                final float groundOriginY,
+                                final float groundWidth,
+                                final float groundDepth) {
     // Use coloring attributes for ground to avoid ground lighting
     ColoringAttributes groundColoringAttributes = new ColoringAttributes();
     groundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
@@ -579,12 +615,14 @@ public class HomeComponent3D extends JComponent implements Printable {
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     groundShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
-    updateGroundColorAndTexture(groundShape, home);
+    updateGroundColorAndTexture(groundShape, home, 
+        groundOriginX, groundOriginY, groundWidth, groundDepth);
     
     // Add a listener on ground color and texture property change to home
     this.groundColorAndTextureListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateGroundColorAndTexture(groundShape, home);
+          updateGroundColorAndTexture(groundShape, home, 
+              groundOriginX, groundOriginY, groundWidth, groundDepth);
         }
       };
     home.addPropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
@@ -597,7 +635,11 @@ public class HomeComponent3D extends JComponent implements Printable {
    * Updates ground coloring and texture attributes from <code>home</code> ground color and texture.
    */
   private void updateGroundColorAndTexture(Shape3D groundShape, 
-                                           Home home) {
+                                           Home home, 
+                                           float groundOriginX,
+                                           float groundOriginY,
+                                           float groundWidth,
+                                           float groundDepth) {
     Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
     final Appearance groundAppearance = groundShape.getAppearance();
     groundAppearance.getColoringAttributes().setColor(groundColor);
@@ -614,20 +656,19 @@ public class HomeComponent3D extends JComponent implements Printable {
       groundAppearance.setTexture(null);
     }
     
-    final float groundWidth = 1E5f;
     // Create ground geometry
-    Point3f [] coords = {new Point3f(-groundWidth / 2, 0, -groundWidth / 2), 
-                         new Point3f(-groundWidth / 2, 0, groundWidth / 2),
-                         new Point3f(groundWidth / 2, 0, groundWidth / 2),
-                         new Point3f(groundWidth / 2, 0, -groundWidth / 2)};
+    Point3f [] coords = {new Point3f(groundOriginX, 0, groundOriginY), 
+                         new Point3f(groundOriginX, 0, groundOriginY + groundDepth),
+                         new Point3f(groundOriginX + groundWidth, 0, groundOriginY + groundDepth),
+                         new Point3f(groundOriginX + groundWidth, 0, groundOriginY)};
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates (coords);
 
     // Compute ground texture coordinates
     if (groundTexture != null) {
       TexCoord2f [] textureCoords = {new TexCoord2f(0, 0),
-                                     new TexCoord2f(0, groundWidth / groundTexture.getHeight()),
-                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), groundWidth / groundTexture.getHeight()),
+                                     new TexCoord2f(0, groundDepth / groundTexture.getHeight()),
+                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()),
                                      new TexCoord2f(groundWidth / groundTexture.getWidth(), 0)};
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
@@ -635,14 +676,13 @@ public class HomeComponent3D extends JComponent implements Printable {
     
     groundShape.setGeometry(geometryInfo.getIndexedGeometryArray());
 
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
   
   /**
    * Returns the lights of the scene.
    */
-  private Light [] getLights(final Home home) {
+  private Light [] createLights(final Home home) {
     final Light [] lights = {
         new DirectionalLight(new Color3f(), new Vector3f(1.5f, -0.8f, -1)),         
         new DirectionalLight(new Color3f(), new Vector3f(-1.5f, -0.8f, -1)), 
@@ -676,16 +716,712 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private void updateLightColor(Light light, Home home) {
     light.setColor(new Color3f(new Color(home.getLightColor())));
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
   
   /**
-   * Returns <code>home</code> tree node, with branches for each wall 
+   * Exports this 3D view to the given OBJ file.
+   */
+  public boolean exportToOBJ(String objName) {
+    String mtlName = objName.substring(0, objName.length() - 4) + ".mtl";
+    try {
+      Writer writer = new OutputStreamWriter(
+          new BufferedOutputStream(new FileOutputStream(objName)), "ISO-8859-1");      
+      String header = "#\n# Generated by Sweet Home 3D - " + new Date() + "\n# http://sweethome3d.sourceforge.net/\n#\n";
+      writer.write(header);
+      writer.write("mtllib " + new File(mtlName).getName() + "\n");
+      
+      AtomicInteger vertexOffset = new AtomicInteger();
+      AtomicInteger normalOffset = new AtomicInteger();
+      AtomicInteger textureCoordinatesOffset = new AtomicInteger();
+      Map<ComparableAppearance, String> appearances = new LinkedHashMap<ComparableAppearance, String>();
+      
+      if (this.home.getWalls().size() > 0) {
+        // Create a not alive new ground to be able to explore its coordinates without setting capabilities
+        Rectangle2D homeBounds = computeExportedHomeBounds();
+        Node groundNode = createGroundNode(this.home, 
+            (float)homeBounds.getX(), (float)homeBounds.getY(), 
+            (float)homeBounds.getWidth(), (float)homeBounds.getHeight());
+        writeNode(writer, groundNode, "ground", vertexOffset, normalOffset, textureCoordinatesOffset, appearances);
+      }
+      
+      // Write 3D walls 
+      int i = 0;
+      for (Wall wall : this.home.getWalls()) {
+        // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
+        Wall3D wallNode = new Wall3D(wall, this.home);
+        String objectName = "wall_" + ++i;
+        writeNode(writer, wallNode, objectName, vertexOffset, normalOffset, textureCoordinatesOffset, appearances);
+      }
+      // Write 3D furniture 
+      i = 0;
+      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+        // Create a not alive new piece to be able to explore its coordinates without setting capabilities
+        HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, true);
+        String objectName = "piece_" + ++i;
+        writeNode(writer, pieceNode, objectName, vertexOffset, normalOffset, textureCoordinatesOffset, appearances);
+      }
+      writer.close();
+      
+      exportAppearancesToMTL(mtlName, header, appearances);
+      
+      return true;
+    } catch (IOException ex) {
+      return false;
+    } 
+  }
+  
+  /**
+   * Exports a set of appearance to the given file.  
+   */
+  private void exportAppearancesToMTL(String mtlName, String header, 
+                                      Map<ComparableAppearance, String> appearances) throws IOException {
+    Writer writer = null;
+    try {
+      writer = new OutputStreamWriter(
+          new BufferedOutputStream(new FileOutputStream(mtlName)), "ISO-8859-1");      
+      writer.write(header);
+      
+      for (Map.Entry<ComparableAppearance, String> appearanceEntry : appearances.entrySet()) {
+        Appearance appearance = appearanceEntry.getKey().getAppearance();        
+        String appearanceName = appearanceEntry.getValue();
+        writer.write("\nnewmtl " + appearanceName + "\n");
+        Material material = appearance.getMaterial();
+        if (material != null) {
+          writer.write("illum 1\n");
+          Color3f color = new Color3f();
+          material.getAmbientColor(color);          
+          writer.write("Ka " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          material.getDiffuseColor(color);          
+          writer.write("Kd " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          material.getSpecularColor(color);          
+          writer.write("Ks " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          writer.write("Ns " + material.getShininess() + "\n");
+        } else {
+          ColoringAttributes coloringAttributes = appearance.getColoringAttributes();
+          if (coloringAttributes != null) {
+            writer.write("illum 0\n");
+            Color3f color = new Color3f();
+            coloringAttributes.getColor(color);          
+            writer.write("Ka " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+            writer.write("Kd " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+            writer.write("Ks " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          }
+        }
+        TransparencyAttributes transparency = appearance.getTransparencyAttributes();
+        if (transparency != null && transparency.getTransparency() != 0) {
+          writer.write("Ni 1\n");
+          writer.write("d " + transparency.getTransparency() + "\n");
+        }
+        Texture texture = appearance.getTexture();
+        if (texture != null) {
+          ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
+          RenderedImage image = imageComponent.getRenderedImage();
+          File imageFile = new File(mtlName.substring(0, mtlName.length() - 4) + "_" + appearanceName + ".jpg");
+          ImageIO.write(image, "JPEG", imageFile);
+          writer.write("map_Kd " + imageFile.getName() + "\n");
+        }
+      }      
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
+    }
+  }
+
+  /**
+   * Returns home bounds. 
+   */
+  private Rectangle2D computeExportedHomeBounds() {
+    Rectangle2D homeBounds = null;
+    // Compute plan bounds to include walls and furniture
+    for (Wall wall : home.getWalls()) {
+      if (homeBounds == null) {
+        homeBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
+      } else {
+        homeBounds.add(wall.getXStart(), wall.getYStart());
+      }
+      homeBounds.add(wall.getXEnd(), wall.getYEnd());
+    }
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      if (piece.isVisible()) {
+        for (float [] point : piece.getPoints()) {
+          if (homeBounds == null) {
+            homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            homeBounds.add(point [0], point [1]);
+          }
+        }
+      }
+    }
+    return homeBounds;
+  }
+  
+  /**
+   * Writes  all the shapes children of <code>node</code> at OBJ format. 
+   */
+  private void writeNode(Writer writer, Node node, 
+                         String nodeName, AtomicInteger vertexOffset, 
+                         AtomicInteger normalOffset, 
+                         AtomicInteger textureCoordinatesOffset, 
+                         Map<ComparableAppearance, String> appearances) throws IOException {
+    if (node instanceof Group) {
+      // Write all children
+      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        writeNode(writer, (Node)enumeration.nextElement(), nodeName, 
+            vertexOffset, normalOffset, textureCoordinatesOffset, appearances);
+      }
+    } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
+      // Retrieve transformation needed to be applied to vertices
+      Transform3D transformToRoot = new Transform3D();
+      shape.getLocalToVworld(transformToRoot);
+      // Build a unique object name
+      String shapeName = null;
+      if (shape.getUserData() instanceof String) {
+        shapeName = (String)shape.getUserData(); 
+      }
+      String objectName;
+      if (shapeName != null && accept(shapeName)) {
+        objectName = nodeName + "_" + vertexOffset + "_" + shapeName;
+      } else {
+        objectName = nodeName + "_" + vertexOffset;
+      }
+      
+      writer.write("g " + objectName + "\n");
+      if (appearance != null) {
+        ComparableAppearance comparableAppearance = new ComparableAppearance(appearance);
+        String appearanceName = appearances.get(comparableAppearance);
+        if (appearanceName == null) {
+          // Store appearance
+          appearanceName = objectName;
+          appearances.put(comparableAppearance, appearanceName);
+        } 
+        writer.write("usemtl " + appearanceName + "\n");
+      }
+      // Write object geometries
+      for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+        writeNodeGeometry(writer, shape.getGeometry(i), 
+            vertexOffset, normalOffset, textureCoordinatesOffset, transformToRoot);
+      }
+    }    
+  }
+  
+  public boolean accept(String shapeName) {
+    for (int i = 0; i < shapeName.length(); i++) {
+      char car = shapeName.charAt(i);
+      if (!(car >= 'a' && car < 'z'
+            || car >= 'A' && car < 'Z'
+            || car == '_')) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Writes a 3D geometry at OBJ format.
+   */
+  private void writeNodeGeometry(Writer writer, Geometry geometry, 
+                                 AtomicInteger vertexOffset, 
+                                 AtomicInteger normalOffset, 
+                                 AtomicInteger textureCoordinatesOffset, 
+                                 Transform3D transformToRoot) throws IOException {
+    if (geometry instanceof GeometryArray) {
+      GeometryArray geometryArray = (GeometryArray)geometry;      
+      int vertexOffsetValue = vertexOffset.get() + 1;
+      int normalOffsetValue = normalOffset.get() + 1;
+      int textureCoordinatesOffsetValue = textureCoordinatesOffset.get() + 1;      
+      
+      Map<Point3f, Integer> vertexIndices = new HashMap<Point3f, Integer>();
+      int [] vertexIndexSubstitutes = new int [geometryArray.getVertexCount()];
+      
+      boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
+      Map<Vector3f, Integer> normalIndices = new HashMap<Vector3f, Integer>();
+      int [] normalIndexSubstitutes = new int [geometryArray.getVertexCount()];
+      
+      boolean textureCoordinatesDefined = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0;
+      Map<TexCoord2f, Integer> textureCoordinatesIndices = new HashMap<TexCoord2f, Integer>();
+      int [] textureCoordinatesIndexSubstitutes = new int [geometryArray.getVertexCount()];
+      
+      if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+        if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+          float [] vertexData = geometryArray.getInterleavedVertices();
+          int vertexSize = vertexData.length / geometryArray.getVertexCount();
+          // Write vertices coordinates 
+          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+               index < n; index++, i += vertexSize) {
+            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+            writeVertex(writer, transformToRoot, vertex, index,
+                vertexIndices, vertexIndexSubstitutes);
+          }
+          // Write normals
+          if (normalsDefined) {
+            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+                 index < n; index++, i += vertexSize) {
+              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+              writeNormal(writer, transformToRoot, normal, index,
+                  normalIndices, normalIndexSubstitutes);
+            }
+          }
+          // Write texture coordinates
+          if (textureCoordinatesDefined) {
+            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
+                  index < n; index++, i += vertexSize) {
+              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
+              writeTextureCoordinates(writer, textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+            }
+          }
+        } else {
+          // Write vertices coordinates
+          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+          for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+            Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
+            writeVertex(writer, transformToRoot, vertex, index,
+                vertexIndices, vertexIndexSubstitutes);
+          }
+          // Write normals
+          if (normalsDefined) {
+            float [] normalCoordinates = geometryArray.getNormalRefFloat();
+            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+              Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
+              writeNormal(writer, transformToRoot, normal, index,
+                  normalIndices, normalIndexSubstitutes);
+            }
+          }
+          // Write texture coordinates
+          if (textureCoordinatesDefined) {
+            float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
+            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
+              TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
+              writeTextureCoordinates(writer, textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+            }
+          }
+        }
+      } else {
+        // Write vertices coordinates
+        for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+          Point3f vertex = new Point3f();
+          geometryArray.getCoordinate(index, vertex);
+          writeVertex(writer, transformToRoot, vertex, index,
+              vertexIndices, vertexIndexSubstitutes);
+        }
+        // Write normals
+        if (normalsDefined) {
+          for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+            Vector3f normal = new Vector3f();
+            geometryArray.getNormal(index, normal);
+            writeNormal(writer, transformToRoot, normal, index,
+                normalIndices, normalIndexSubstitutes);
+          }
+        }
+        // Write texture coordinates
+        if (textureCoordinatesDefined) {
+          for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+            TexCoord2f textureCoordinates = new TexCoord2f();
+            geometryArray.getTextureCoordinate(0, index, textureCoordinates);
+            writeTextureCoordinates(writer, textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+          }
+        }
+      }
+
+      // Write triangles or quadrilaterals depending on the geometry
+      if (geometryArray instanceof IndexedGeometryArray) {
+        if (geometryArray instanceof IndexedTriangleArray) {
+          IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
+          for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
+            writeIndexedTriangle(writer, triangleArray, i, i + 1, i + 2, 
+                vertexIndexSubstitutes, vertexOffsetValue,  
+                normalIndexSubstitutes, normalOffsetValue, 
+                textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+          }
+        } else if (geometryArray instanceof IndexedQuadArray) {
+          IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
+          for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
+            writeIndexedQuadrilateral(writer, quadArray, i, i + 1, i + 2, i + 3, 
+                vertexIndexSubstitutes, vertexOffsetValue,  
+                normalIndexSubstitutes, normalOffsetValue,  
+                textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+          }
+        } else if (geometryArray instanceof IndexedTriangleStripArray) {
+          IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
+          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
+          triangleStripArray.getStripIndexCounts(stripVertexCount);
+          int initialIndex = 0;
+          for (int strip = 0; strip < stripVertexCount.length; strip++) {
+            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
+              if (j % 2 == 0) {
+                writeIndexedTriangle(writer, triangleStripArray, i, i + 1, i + 2, 
+                    vertexIndexSubstitutes, vertexOffsetValue, 
+                    normalIndexSubstitutes, normalOffsetValue,  
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+              } else { // Vertices of odd triangles are in reverse order               
+                writeIndexedTriangle(writer, triangleStripArray, i, i + 2, i + 1, 
+                    vertexIndexSubstitutes, vertexOffsetValue, 
+                    normalIndexSubstitutes, normalOffsetValue,  
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+              }
+            }
+            initialIndex += stripVertexCount [strip];
+          }
+        } else if (geometryArray instanceof IndexedTriangleFanArray) {
+          IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
+          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
+          triangleFanArray.getStripIndexCounts(stripVertexCount);
+          int initialIndex = 0;
+          for (int strip = 0; strip < stripVertexCount.length; strip++) {
+            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
+              writeIndexedTriangle(writer, triangleFanArray, initialIndex, i + 1, i + 2, 
+                  vertexIndexSubstitutes, vertexOffsetValue,  
+                  normalIndexSubstitutes, normalOffsetValue,  
+                  textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+            }
+            initialIndex += stripVertexCount [strip];
+          }
+        } 
+      } else {
+        if (geometryArray instanceof TriangleArray) {
+          TriangleArray triangleArray = (TriangleArray)geometryArray;
+          for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
+            writeTriangle(writer, triangleArray, i, i + 1, i + 2, 
+                vertexIndexSubstitutes, vertexOffsetValue,  
+                normalIndexSubstitutes, normalOffsetValue,  
+                textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+          }
+        } else if (geometryArray instanceof QuadArray) {
+          QuadArray quadArray = (QuadArray)geometryArray;
+          for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
+            writeQuadrilateral(writer, quadArray, i, i + 1, i + 2, i + 3, 
+                vertexIndexSubstitutes, vertexOffsetValue,  
+                normalIndexSubstitutes, normalOffsetValue,  
+                textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+          }
+        } else if (geometryArray instanceof TriangleStripArray) {
+          TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
+          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
+          triangleStripArray.getStripVertexCounts(stripVertexCount);
+          int initialIndex = 0;
+          for (int strip = 0; strip < stripVertexCount.length; strip++) {
+            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
+              if (j % 2 == 0) {
+                writeTriangle(writer, triangleStripArray, i, i + 1, i + 2, 
+                    vertexIndexSubstitutes, vertexOffsetValue,  
+                    normalIndexSubstitutes, normalOffsetValue,  
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+              } else { // Vertices of odd triangles are in reverse order               
+                writeTriangle(writer, triangleStripArray, i, i + 2, i + 1, 
+                    vertexIndexSubstitutes, vertexOffsetValue,  
+                    normalIndexSubstitutes, normalOffsetValue,  
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+              }
+            }
+            initialIndex += stripVertexCount [strip];
+          }
+        } else if (geometryArray instanceof TriangleFanArray) {
+          TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
+          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
+          triangleFanArray.getStripVertexCounts(stripVertexCount);
+          int initialIndex = 0;
+          for (int strip = 0; strip < stripVertexCount.length; strip++) {
+            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
+              writeTriangle(writer, triangleFanArray, initialIndex, i + 1, i + 2, 
+                  vertexIndexSubstitutes, vertexOffsetValue,  
+                  normalIndexSubstitutes, normalOffsetValue,  
+                  textureCoordinatesIndexSubstitutes, textureCoordinatesOffsetValue);
+            }
+            initialIndex += stripVertexCount [strip];
+          }
+        }
+      }
+      
+      vertexOffset.set(vertexOffset.get() + vertexIndices.size());
+      if (normalsDefined) {
+        normalOffset.set(normalOffset.get() + normalIndices.size());
+      }        
+      if (textureCoordinatesDefined) {
+        textureCoordinatesOffset.set(textureCoordinatesOffset.get() + textureCoordinatesIndices.size());
+      } 
+    } 
+  }
+
+  /**
+   * Applies to <code>vertex</code> the given transformation, and writes it in
+   * a line v at OBJ format, if the vertex isn't a key of <code>vertexIndices</code> yet.  
+   */
+  private void writeVertex(Writer writer,
+                           Transform3D transformToRoot,
+                           Point3f vertex, int index,
+                           Map<Point3f, Integer> vertexIndices,
+                           int [] vertexIndexSubstitutes) throws IOException {
+    transformToRoot.transform(vertex);
+    Integer vertexIndex = vertexIndices.get(vertex);
+    if (vertexIndex == null) {
+      vertexIndexSubstitutes [index] = vertexIndices.size();
+      vertexIndices.put(vertex, vertexIndexSubstitutes [index]);
+      // Write only once unique vertices
+      if (OBJ_REDUCE_FILE_SIZE) {
+        writer.write("v " + OBJ_NUMBER_FORMAT.format(vertex.x) 
+            + " " + OBJ_NUMBER_FORMAT.format(vertex.y) 
+            + " " + OBJ_NUMBER_FORMAT.format(vertex.z) + "\n");
+      } else {
+        writer.write("v " + vertex.x + " " + vertex.y + " " + vertex.z + "\n");
+      }
+    } else {
+      vertexIndexSubstitutes [index] = vertexIndex;
+    }
+  }
+
+  /**
+   * Applies to <code>normal</code> the given transformation, and writes it in
+   * a line vn at OBJ format, if the normal isn't a key of <code>normalIndices</code> yet.  
+   */
+  private void writeNormal(Writer writer,
+                           Transform3D transformToRoot,
+                           Vector3f normal, int index,
+                           Map<Vector3f, Integer> normalIndices,
+                           int [] normalIndexSubstitutes) throws IOException {
+    transformToRoot.transform(normal);
+    Integer normalIndex = normalIndices.get(normal);
+    if (normalIndex == null) {
+      normalIndexSubstitutes [index] = normalIndices.size();
+      normalIndices.put(normal, normalIndexSubstitutes [index]);
+      // Write only once unique normals
+      if (OBJ_REDUCE_FILE_SIZE) {
+        writer.write("vn " + OBJ_NUMBER_FORMAT.format(normal.x) 
+            + " " + OBJ_NUMBER_FORMAT.format(normal.y) 
+            + " " + OBJ_NUMBER_FORMAT.format(normal.z) + "\n");
+      } else {
+        writer.write("vn " + normal.x + " " + normal.y + " " + normal.z + "\n");
+      }
+    } else {
+      normalIndexSubstitutes [index] = normalIndex;
+    }
+  }
+
+  /**
+   * Writes <code>textureCoordinates</code> in a line vt at OBJ format, 
+   * if the texture coordinates isn't a key of <code>textureCoordinatesIndices</code> yet.  
+   */
+  private void writeTextureCoordinates(Writer writer,
+                                       TexCoord2f textureCoordinates, int index,
+                                       Map<TexCoord2f, Integer> textureCoordinatesIndices,
+                                       int [] textureCoordinatesIndexSubstitutes) throws IOException {
+    Integer textureCoordinatesIndex = textureCoordinatesIndices.get(textureCoordinates);
+    if (textureCoordinatesIndex == null) {
+      textureCoordinatesIndexSubstitutes [index] = textureCoordinatesIndices.size();
+      textureCoordinatesIndices.put(textureCoordinates, textureCoordinatesIndexSubstitutes [index]);
+      // Write only once unique texture coordinates
+      if (OBJ_REDUCE_FILE_SIZE) {
+        writer.write("vt " + OBJ_NUMBER_FORMAT.format(textureCoordinates.x) 
+            + " " + OBJ_NUMBER_FORMAT.format(textureCoordinates.y) + " 0\n");
+      } else {
+        writer.write("vt " + textureCoordinates.x + " " + textureCoordinates.y + " 0\n");
+      }
+    } else {
+      textureCoordinatesIndexSubstitutes [index] = textureCoordinatesIndex;
+    }
+  }
+
+  /**
+   * Writes the triangle indices given at vertexIndex1, vertexIndex2, vertexIndex3, 
+   * in a line f at OBJ format. 
+   */
+  private void writeIndexedTriangle(Writer writer, IndexedGeometryArray geometryArray, 
+                                    int vertexIndex1, int vertexIndex2, int vertexIndex3, 
+                                    int [] vertexIndexSubstitutes, int vertexOffset, 
+                                    int [] normalIndexSubstitutes, int normalOffset,                                     
+                                    int [] textureCoordinatesIndexSubstitutes, int textureCoordinatesOffset) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex2)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex3)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex2)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex3)]) + "\n");
+      }
+    } else {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+      }
+    }
+  }
+  
+  /**
+   * Writes the quadrilateral indices given at vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4,
+   * in a line f at OBJ format. 
+   */
+  private void writeIndexedQuadrilateral(Writer writer, IndexedGeometryArray geometryArray, 
+                                         int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
+                                         int [] vertexIndexSubstitutes, int vertexOffset, 
+                                         int [] normalIndexSubstitutes, int normalOffset,                                      
+                                         int [] textureCoordinatesIndexSubstitutes, int textureCoordinatesOffset) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex2)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex3)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex4)]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex4)]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex2)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex3)]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex4)]) + "\n");
+      }
+    } else {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex1)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex2)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex3)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [geometryArray.getNormalIndex(vertexIndex4)]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) + "\n");
+      }
+    }
+  }
+  
+  /**
+   * Writes the triangle indices given at vertexIndex1, vertexIndex2, vertexIndex3, 
+   * in a line f at OBJ format. 
+   */
+  private void writeTriangle(Writer writer, GeometryArray geometryArray, 
+                             int vertexIndex1, int vertexIndex2, int vertexIndex3, 
+                             int [] vertexIndexSubstitutes, int vertexOffset, 
+                             int [] normalIndexSubstitutes, int normalOffset,                                      
+                             int [] textureCoordinatesIndexSubstitutes, int textureCoordinatesOffset) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex1]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex2]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex3]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex3]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex3]) + "\n");
+      }
+    } else {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex1]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex2]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex3]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + " "  + (vertexOffset + vertexIndex2) 
+            + " "  + (vertexOffset + vertexIndex3) + "\n");
+      }
+    }
+  }
+  
+  /**
+   * Writes the quadrilateral indices given at vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4,
+   * in a line f at OBJ format. 
+   */
+  private void writeQuadrilateral(Writer writer, GeometryArray geometryArray, 
+                                  int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
+                                  int [] vertexIndexSubstitutes, int vertexOffset, 
+                                  int [] normalIndexSubstitutes, int normalOffset,                                      
+                                  int [] textureCoordinatesIndexSubstitutes, int textureCoordinatesOffset) throws IOException {
+    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex1]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex2]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex3]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex3]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex4]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex4]) 
+            + "/" + (normalOffset + normalIndexSubstitutes [vertexIndex4]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex3]) 
+            + " " + (vertexOffset + vertexIndexSubstitutes [vertexIndex4]) 
+            + "/" + (textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex4]) + "\n");
+      }
+    } else {
+      if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex1]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex2]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex3]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex4]) 
+            + "//" + (normalOffset + normalIndexSubstitutes [vertexIndex4]) + "\n");
+      } else {
+        writer.write("f " + (vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
+            + " "  + (vertexOffset + vertexIndexSubstitutes [vertexIndex4]) + "\n");
+      }
+    }
+  }
+  
+  /**
+   * Returns a <code>home</code> new tree node, with branches for each wall 
    * and piece of furniture of <code>home</code>. 
    */
-  private Node getHomeTree(Home home) {
-    Group homeRoot = getHomeRoot();
+  private Node createHomeTree(Home home) {
+    Group homeRoot = createHomeRoot();
     // Add walls and pieces already available 
     for (Wall wall : home.getWalls()) {
       addWall(homeRoot, wall, home);
@@ -700,9 +1436,9 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Returns the group at home subtree root.
+   * Returns a new group at home subtree root.
    */
-  private Group getHomeRoot() {
+  private Group createHomeRoot() {
     Group homeGroup = new Group();    
     //  Allow group to have new children
     homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
@@ -775,8 +1511,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     Wall3D wall3D = new Wall3D(wall, home);
     this.homeObjects.put(wall, wall3D);
     homeRoot.addChild(wall3D);
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
 
   /**
@@ -801,8 +1536,7 @@ public class HomeComponent3D extends JComponent implements Printable {
   private void deleteObject(Object homeObject) {
     this.homeObjects.get(homeObject).detach();
     this.homeObjects.remove(homeObject);
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
 
   /**
@@ -812,8 +1546,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece);
     this.homeObjects.put(piece, piece3D);
     homeRoot.addChild(piece3D);
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
 
   /**
@@ -824,7 +1557,7 @@ public class HomeComponent3D extends JComponent implements Printable {
   }
 
   /**
-   * Updates <code>objects</code> later. Sould be invoked from Event Dispatch Thread.
+   * Updates <code>objects</code> later. Should be invoked from Event Dispatch Thread.
    */
   private void updateObjects(Collection<? extends Object> objects) {
     if (this.homeObjectsToUpdate != null) {
@@ -845,8 +1578,7 @@ public class HomeComponent3D extends JComponent implements Printable {
         }
       });
     }
-    // Cancel printed image cache
-    this.printedImage = null;
+    clearPrintedImageCache();
   }
   
   /**
@@ -878,18 +1610,18 @@ public class HomeComponent3D extends JComponent implements Printable {
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
       // Add wall left and right empty shapes to branch
-      addChild(getWallPartShape());
-      addChild(getWallPartShape());
+      addChild(createWallPartShape());
+      addChild(createWallPartShape());
       // Set wall shape geometry and appearance
       updateWallGeometry();
       updateWallAppearance();
     }
 
     /**
-     * Returns a wall part shape with no geometry  
+     * Returns a new wall part shape with no geometry  
      * and a default appearance with a white material.
      */
-    private Node getWallPartShape() {
+    private Node createWallPartShape() {
       Shape3D wallShape = new Shape3D();
       // Allow wall shape to change its geometry
       wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
@@ -931,7 +1663,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     private void updateWallSideGeometry(int wallSide, HomeTexture texture) {
       Shape3D wallShape = (Shape3D)getChild(wallSide);
       int currentGeometriesCount = wallShape.numGeometries();
-      for (Geometry wallGeometry : getWallGeometries(wallSide, texture)) {
+      for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
         wallShape.addGeometry(wallGeometry);
       }
       for (int i = currentGeometriesCount - 1; i >= 0; i--) {
@@ -943,7 +1675,7 @@ public class HomeComponent3D extends JComponent implements Printable {
      * Returns <code>wall</code> geometries computed with windows or doors 
      * that intersect wall.
      */
-    private Geometry[] getWallGeometries(int wallSide, HomeTexture texture) {
+    private Geometry [] createWallGeometries(int wallSide, HomeTexture texture) {
       Shape wallShape = getShape(getWallSidePoints(wallSide));
       float wallHeightAtStart = getWallHeightAtStart();
       float wallHeightAtEnd = getWallHeightAtEnd();
@@ -994,12 +1726,12 @@ public class HomeComponent3D extends JComponent implements Printable {
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
           float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
           // Compute geometry for vertical part
-          wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, 
+          wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
               cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
           // Compute geometry for bottom part
-          wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
+          wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
           // Compute geometry for top part
-          wallGeometries.add(getWallTopPartGeometry(wallPartPoints, 
+          wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
               cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
           wallPoints.clear();
         } else {
@@ -1009,7 +1741,7 @@ public class HomeComponent3D extends JComponent implements Printable {
       }
       
       // Generate geometry for each wall part above and below a window
-      for (Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
+      for (Map.Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
         for (PathIterator it = windowIntersection.getValue().getPathIterator(null); !it.isDone(); ) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
@@ -1024,19 +1756,19 @@ public class HomeComponent3D extends JComponent implements Printable {
             }            
             // Generate geometry for wall part above window
             if (doorOrWindowTop < minTopY) {
-              wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
+              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
                   cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
-              wallGeometries.add(getWallHorizontalPartGeometry(
+              wallGeometries.add(createWallHorizontalPartGeometry(
                   wallPartPoints, doorOrWindowTop));
-              wallGeometries.add(getWallTopPartGeometry(wallPartPoints, 
+              wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
                   cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
             }
             // Generate geometry for wall part below window
             if (doorOrWindow.getElevation() > 0) {
-              wallGeometries.add(getWallVerticalPartGeometry(wallPartPoints, 0, 
+              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
                   cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture));
-              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, 0));
-              wallGeometries.add(getWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
+              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
+              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
             }
             wallPoints.clear();
           } else {
@@ -1088,9 +1820,10 @@ public class HomeComponent3D extends JComponent implements Printable {
      * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
      * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
      */
-    private Geometry getWallVerticalPartGeometry(float [][] points, float yMin, 
-                                                 double cosWallYawAngle, double sinWallYawAngle, double topLineAlpha, double topLineBeta, 
-                                                 HomeTexture texture) {
+    private Geometry createWallVerticalPartGeometry(float [][] points, float yMin, 
+                                                    double cosWallYawAngle, double sinWallYawAngle, 
+                                                    double topLineAlpha, double topLineBeta, 
+                                                    HomeTexture texture) {
       // Compute wall coordinates
       Point3f [] bottom = new Point3f [points.length];
       Point3f [] top    = new Point3f [points.length];
@@ -1149,7 +1882,7 @@ public class HomeComponent3D extends JComponent implements Printable {
     /**
      * Returns the geometry of an horizontal part of a wall at <code>y</code>.
      */
-    private Geometry getWallHorizontalPartGeometry(float [][] points, float y) {
+    private Geometry createWallHorizontalPartGeometry(float [][] points, float y) {
       Point3f [] coords = new Point3f [points.length];
       for (int i = 0; i < points.length; i++) {
         coords [i] = new Point3f(points[i][0], y, points[i][1]);
@@ -1165,9 +1898,9 @@ public class HomeComponent3D extends JComponent implements Printable {
     /**
      * Returns the geometry of the top part of a wall.
      */
-    private Geometry getWallTopPartGeometry(float [][] points, 
-                                            double cosWallYawAngle, double sinWallYawAngle, 
-                                            double topLineAlpha, double topLineBeta) {
+    private Geometry createWallTopPartGeometry(float [][] points, 
+                                               double cosWallYawAngle, double sinWallYawAngle, 
+                                               double topLineAlpha, double topLineBeta) {
       Point3f [] coords = new Point3f [points.length];
       for (int i = 0; i < points.length; i++) {
         double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
@@ -1274,6 +2007,10 @@ public class HomeComponent3D extends JComponent implements Printable {
     private static Executor modelLoader = Executors.newSingleThreadExecutor();
 
     public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
+      this(piece, false);
+    }
+
+    public HomePieceOfFurniture3D(HomePieceOfFurniture piece, boolean waitModelLoadingEnd) {
       setUserData(piece);      
 
       // Allow piece branch to be removed from its parent
@@ -1281,59 +2018,67 @@ public class HomeComponent3D extends JComponent implements Printable {
       // Allow to read branch transform child
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
-      createPieceOfFurnitureNode();
-
-      // Set piece model initial location, orientation and size
-      updatePieceOfFurnitureTransform();
+      createPieceOfFurnitureNode(waitModelLoadingEnd);
     }
 
     /**
      * Creates the piece node with its transform group and add it to the piece branch. 
      */
-    private void createPieceOfFurnitureNode() {
+    private void createPieceOfFurnitureNode(boolean waitModelLoadingEnd) {
       final TransformGroup pieceTransformGroup = new TransformGroup();
       // Allow the change of the transformation that sets piece size and position
       pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-
-      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
-      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
       pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
-
-      // While loading model use a temporary node that displays a white box  
-      final BranchGroup waitBranch = new BranchGroup();
-      waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
-      waitBranch.addChild(getModelBox(Color.WHITE));      
-      // Allow appearance change on all children
-      setAppearanceChangeCapability(waitBranch);
-      
-      pieceTransformGroup.addChild(waitBranch);
       addChild(pieceTransformGroup);
-      
-      // Load piece real 3D model
-      modelLoader.execute(new Runnable() {
-          public void run() {
-            Node modelNode = getModelNode();
-            final BranchGroup modelBranch = new BranchGroup();
-            modelBranch.addChild(modelNode);
-            // Allow appearance change on all children
-            setAppearanceChangeCapability(modelBranch);
-            
-            // Change live objects in Event Dispatch Thread
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Add model branch to live scene
-                  pieceTransformGroup.addChild(modelBranch);
-                  // Remove temporary node
-                  waitBranch.detach();
-                  // Update piece color, visibility and model mirror in dispatch thread as
-                  // these attributes may be changed in that thread
-                  updatePieceOfFurnitureColor();      
-                  updatePieceOfFurnitureVisibility();
-                  updatePieceOfFurnitureModelMirrored();
-                }
-              });
-          }
-        });
+
+      if (waitModelLoadingEnd) {
+        Node modelNode = getModelNode();
+        pieceTransformGroup.addChild(modelNode);
+        // Allow appearance change on all children
+        setAppearanceChangeCapability(modelNode);
+        update();
+      } else {
+        pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        
+        // While loading model use a temporary node that displays a white box  
+        final BranchGroup waitBranch = new BranchGroup();
+        waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
+        waitBranch.addChild(getModelBox(Color.WHITE));      
+        // Allow appearance change on all children
+        setAppearanceChangeCapability(waitBranch);
+        
+        pieceTransformGroup.addChild(waitBranch);
+        
+        // Set piece model initial location, orientation and size      
+        updatePieceOfFurnitureTransform();
+        
+        // Load piece real 3D model
+        modelLoader.execute(new Runnable() {
+            public void run() {
+              Node modelNode = getModelNode();
+              final BranchGroup modelBranch = new BranchGroup();
+              modelBranch.addChild(modelNode);
+              // Allow appearance change on all children
+              setAppearanceChangeCapability(modelBranch);
+              
+              // Change live objects in Event Dispatch Thread
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    // Add model branch to live scene
+                    pieceTransformGroup.addChild(modelBranch);
+                    // Remove temporary node
+                    waitBranch.detach();
+                    // Update piece color, visibility and model mirror in dispatch thread as
+                    // these attributes may be changed in that thread
+                    updatePieceOfFurnitureColor();      
+                    updatePieceOfFurnitureVisibility();
+                    updatePieceOfFurnitureModelMirrored();
+                  }
+                });
+            }
+          });
+      }
     }
 
     @Override
@@ -1643,6 +2388,108 @@ public class HomeComponent3D extends JComponent implements Printable {
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
       appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
       appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+    }
+  }
+  
+  /**
+   * An <code>Appearance</code> wrapper able to compare appearance equality.  
+   */
+  public static class ComparableAppearance {
+    private Appearance appearance;
+    
+    public ComparableAppearance(Appearance appearance) {
+      this.appearance = appearance;
+    }
+    
+    public Appearance getAppearance() {
+      return this.appearance;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof ComparableAppearance) {
+        Appearance appearance2 = ((ComparableAppearance)obj).appearance; 
+        Material material1 = this.appearance.getMaterial();
+        Material material2 = appearance2.getMaterial();
+        if ((material1 == null) ^ (material2 == null)) {
+          return false;
+        } else if (material1 != material2) {
+          Color3f color1 = new Color3f();
+          Color3f color2 = new Color3f();
+          material1.getAmbientColor(color1);
+          material2.getAmbientColor(color2);
+          if (!color1.equals(color2)) {
+            return false;
+          } else {
+            material1.getDiffuseColor(color1);
+            material2.getDiffuseColor(color2);
+            if (!color1.equals(color2)) {
+              return false;
+            } else {
+              material1.getEmissiveColor(color1);
+              material2.getEmissiveColor(color2);
+              if (!color1.equals(color2)) {
+                return false;
+              } else {
+                material1.getSpecularColor(color1);
+                material2.getSpecularColor(color2);
+                if (!color1.equals(color2)) {
+                  return false;
+                } else if (material1.getShininess() != material2.getShininess()) {
+                  return false;
+                }
+              }
+            }
+          }
+        }
+        TransparencyAttributes transparency1 = this.appearance.getTransparencyAttributes();
+        TransparencyAttributes transparency2 = appearance2.getTransparencyAttributes();
+        if ((transparency1 == null) ^ (transparency2 == null)) {
+          return false;
+        } else if (transparency1 != transparency2) {
+          if (transparency1.getTransparency() != transparency2.getTransparency()) {
+            return false;
+          }
+        }
+        Texture texture1 = this.appearance.getTexture();
+        Texture texture2 = appearance2.getTexture();
+        if ((texture1 == null) ^ (texture2 == null)) {
+          return false;
+        } else if (texture1 != texture2) {
+          if (texture1.getImage(0) != texture2.getImage(0)) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+    
+    @Override
+    public int hashCode() {
+      int code = 0;
+      Material material = this.appearance.getMaterial();
+      if (material != null) {
+        Color3f color = new Color3f();
+        material.getAmbientColor(color);
+        code += color.hashCode();
+        material.getDiffuseColor(color);
+        code += color.hashCode();
+        material.getEmissiveColor(color);
+        code += color.hashCode();
+        material.getSpecularColor(color);
+        code += color.hashCode();
+        code += Float.floatToIntBits(material.getShininess());
+      }
+      TransparencyAttributes transparency = this.appearance.getTransparencyAttributes();
+      if (transparency != null) {
+        code += Float.floatToIntBits(transparency.getTransparency());
+      }
+      Texture texture = this.appearance.getTexture();
+      if (texture != null) {
+        code += texture.getImage(0).hashCode();
+      }
+      return code;
     }
   }
 }

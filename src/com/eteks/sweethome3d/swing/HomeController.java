@@ -224,6 +224,9 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomePane.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomePane.ActionType.MODIFY_3D_ATTRIBUTES, true);
+    homeView.setEnabled(HomePane.ActionType.EXPORT_TO_OBJ, 
+        this.home.getFurniture().size() > 0 
+        || this.home.getWalls().size() > 0);
     homeView.setEnabled(HomePane.ActionType.HELP, true);
     homeView.setEnabled(HomePane.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
@@ -583,6 +586,16 @@ public class HomeController  {
   }
   
   /**
+   * Enables zoom actions depending on current scale.
+   */
+  private void enableExportActions() {
+    HomePane view = ((HomePane)getView());
+    view.setEnabled(HomePane.ActionType.EXPORT_TO_OBJ, 
+        this.home.getFurniture().size() > 0 
+        || this.home.getWalls().size() > 0);
+  }
+
+  /**
    * Adds undoable edit listener to undo support that enables Undo action.
    */
   private void addUndoSupportListener() {
@@ -609,6 +622,7 @@ public class HomeController  {
           if (ev.getType() == FurnitureEvent.Type.ADD 
               || ev.getType() == FurnitureEvent.Type.DELETE) {
             enableSelectAllAction();
+            enableExportActions();
           }
         }
       });
@@ -623,6 +637,7 @@ public class HomeController  {
         if (ev.getType() == WallEvent.Type.ADD 
             || ev.getType() == WallEvent.Type.DELETE) {
           enableSelectAllAction();
+          enableExportActions();
         }
       }
     });
@@ -1100,6 +1115,19 @@ public class HomeController  {
   }
 
   /**
+   * Controls the export of the 3D view of current home to a OBJ file.
+   */
+  public void exportToOBJ() {
+    String objName = ((HomePane)getView()).showExportToOBJDialog(this.home.getName());    
+    if (objName != null) {
+      if (!getHomeController3D().exportToOBJ(objName)) {
+        String message = String.format(this.resource.getString("exportToOBJError"), objName);
+        ((HomePane)getView()).showError(message);
+      }
+    }
+  }
+  
+  /**
    * Controls page setup.
    */
   public void setupPage() {
@@ -1124,7 +1152,7 @@ public class HomeController  {
   }
 
   /**
-   * Controls the print of this home.
+   * Controls the print of this home in a PDF file.
    */
   public void printToPDF() {
     String pdfName = ((HomePane)getView()).showPrintToPDFDialog(this.home.getName());    

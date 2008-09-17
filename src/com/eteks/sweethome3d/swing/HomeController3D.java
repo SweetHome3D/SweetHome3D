@@ -104,6 +104,13 @@ public class HomeController3D {
   }
 
   /**
+   * Controls the export of the 3D view to the given OBJ file.
+   */
+  public boolean exportToOBJ(String objName) {
+    return ((HomeComponent3D)getView()).exportToOBJ(objName);
+  }
+  
+  /**
    * Changes current state of controller.
    */
   protected void setCameraState(CameraControllerState state) {

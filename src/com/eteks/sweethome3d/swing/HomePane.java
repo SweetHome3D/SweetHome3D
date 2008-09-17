@@ -121,7 +121,7 @@ public class HomePane extends JRootPane {
       ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
       SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, 
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
-      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES,
+      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES, EXPORT_TO_OBJ,
       HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
@@ -313,6 +313,7 @@ public class HomePane extends JRootPane {
         controller.getHomeController3D(), "viewFromObserver");
     createAction(ActionType.MODIFY_3D_ATTRIBUTES, 
         controller.getHomeController3D(), "modifyAttributes");
+    createAction(ActionType.EXPORT_TO_OBJ, controller, "exportToOBJ");
     
     createAction(ActionType.HELP, controller, "help");
     createAction(ActionType.ABOUT, controller, "about");
@@ -605,6 +606,8 @@ public class HomePane extends JRootPane {
     group.add(viewFromObserverRadioButtonMenuItem);
     preview3DMenu.addSeparator();
     preview3DMenu.add(getMenuAction(ActionType.MODIFY_3D_ATTRIBUTES));
+    preview3DMenu.addSeparator();
+    preview3DMenu.add(getMenuAction(ActionType.EXPORT_TO_OBJ));
     
     // Create Help menu
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
@@ -1492,6 +1495,15 @@ public class HomePane extends JRootPane {
         return false;
       }
     }
+  }
+  
+  /**
+   * Shows a content chooser save dialog to export a 3D home in a OBJ file.
+   */
+  public String showExportToOBJDialog(String homeName) {
+    return this.contentManager.showSaveDialog(
+        this.resource.getString("exportToOBJDialog.title"), 
+        ContentManager.ContentType.OBJ, null);
   }
   
   /**

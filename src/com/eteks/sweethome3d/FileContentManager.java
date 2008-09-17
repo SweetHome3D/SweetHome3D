@@ -82,23 +82,29 @@ public class FileContentManager implements ContentManager {
           return "Furniture catalog";
         }
       }};
+  private static final String OBJ_EXTENSION = ".obj";
+  /**
+   * Supported OBJ filter.
+   */
+  private static final FileFilter [] OBJ_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .obj files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(OBJ_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "OBJ - Wavefront";
+        }
+      }};
   /**
    * Supported 3D model file filters.
    */
   private static final FileFilter [] MODEL_FILTERS = {
-     new FileFilter() {
-       @Override
-       public boolean accept(File file) {
-         // Accept directories and OBJ files
-         return file.isDirectory()
-                || file.getName().toLowerCase().endsWith(".obj");
-       }
-   
-       @Override
-       public String getDescription() {
-         return "OBJ";
-       }
-     },
+     OBJ_FILTER [0],
      new FileFilter() {
        @Override
        public boolean accept(File file) {
@@ -109,7 +115,7 @@ public class FileContentManager implements ContentManager {
    
        @Override
        public String getDescription() {
-         return "LWS";
+         return "LWS - LightWave Scene";
        }
      },
      new FileFilter() {
@@ -226,6 +232,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
+    this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
   }
   
   /**
@@ -315,6 +322,12 @@ public class FileContentManager implements ContentManager {
         case PDF :
           if (!savedName.toLowerCase().endsWith(PDF_EXTENSION)) {
             savedName += PDF_EXTENSION;
+            addedExtension = true;
+          }
+          break;
+        case OBJ :
+          if (!savedName.toLowerCase().endsWith(OBJ_EXTENSION)) {
+            savedName += OBJ_EXTENSION;
             addedExtension = true;
           }
           break;
