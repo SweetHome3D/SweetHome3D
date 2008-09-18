@@ -28,6 +28,12 @@ import javax.vecmath.Vector3f;
 
 import junit.framework.TestCase;
 
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.swing.HomeController3D;
 import com.eteks.sweethome3d.swing.OBJWriter;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Sphere;
@@ -37,6 +43,9 @@ import com.sun.j3d.utils.geometry.Sphere;
  * @author Emmanuel Puybaret
  */
 public class OBJWriterTest extends TestCase {
+  /**
+   * Simple test of OBJWriter class with Java 3D objects.
+   */
   public void testOBJWriter() throws IOException {
     // 1. Open the OBJ file "Test.obj"
     OBJWriter writer = new OBJWriter("Test@#.obj", "Test", 3);
@@ -60,6 +69,46 @@ public class OBJWriterTest extends TestCase {
     if (!new File("Test@#.obj").delete()
         || !new File("Test@#.mtl").delete()) {
       fail("Couldn't delete test files");
+    }
+  }
+  
+  /**
+   * Tests home export to OBJ format.
+   */
+  public void testHomeExportToOBJ() {
+    // 1. Create an empty home and a 3D controller
+    UserPreferences preferences = new DefaultUserPreferences();
+    Home home = new Home();
+    HomeController3D homeController3D = new HomeController3D(home, preferences, null);
+    
+    // 2. Add to home a wall and a piece of furniture
+    home.addWall(new Wall(0, 0, 0, 1000, 10));
+    HomePieceOfFurniture piece = new HomePieceOfFurniture(
+        preferences.getFurnitureCatalog().getCategory(0).getPieceOfFurniture(0));
+    home.addPieceOfFurniture(piece);
+    home.setPieceOfFurnitureLocation(piece, 500, 500);
+    assertEquals("Incorrect wall count", 1, home.getWalls().size());
+    assertEquals("Incorrect furniture count", 1, home.getFurniture().size());
+
+    // 3. Export home to OBJ file
+    File dir = new File("Tmp@#");
+    dir.mkdir();
+    File objFile = new File(dir, "Test.obj");
+    File mtlFile = new File(dir, "Test.mtl");
+    assertFalse(objFile + " exists", objFile.exists());
+    assertFalse(mtlFile + " exists", mtlFile.exists());
+    
+    homeController3D.exportToOBJ(objFile.toString());
+    assertTrue(objFile + " wasn't created", objFile.exists());
+    assertTrue(mtlFile + " wasn't created", mtlFile.exists());
+    
+    for (File file : dir.listFiles()) {
+      if (!file.delete()) {
+        fail("Couldn't delete test file " + file);
+      }
+    }
+    if (!dir.delete()) {
+      fail("Couldn't delete test dir");
     }
   }
 }
