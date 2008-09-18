@@ -52,9 +52,11 @@ import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
+import javax.media.j3d.RestrictedAccessException;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.TriangleArray;
 import javax.media.j3d.TriangleFanArray;
@@ -230,7 +232,7 @@ public class OBJWriter extends FilterWriter {
 
   /**
    * Writes all the 3D shapes children of <code>node</code> at OBJ format. 
-   * If the path from <code>node</code> to shapes counts some transformations, 
+   * If there are transformation groups on the path from <code>node</code> to its shapes, 
    * they'll be applied to the coordinates written on output.
    * The <code>node</code> shouldn't be alive or if it's alive it should have the 
    * capabilities to read its children, the geometries and the appearance of its shapes.
@@ -243,7 +245,7 @@ public class OBJWriter extends FilterWriter {
   
   /**
    * Writes all the 3D shapes children of <code>node</code> at OBJ format. 
-   * If the path from <code>node</code> to shapes counts some transformations, 
+   * If there are transformation groups on the path from <code>node</code> to its shapes, 
    * they'll be applied to the coordinates written on output.
    * The <code>node</code> shouldn't be alive or if it's alive, it should have the 
    * capabilities to read its children, the geometries and the appearance of its shapes.
@@ -260,19 +262,26 @@ public class OBJWriter extends FilterWriter {
       }
       this.firstNode = false;
     }
+    
+    writeNode(node, node, nodeName);
+  }
+
+  /**
+   * Writes all the 3D shapes children of <code>node</code> at OBJ format.
+   */ 
+  private void writeNode(Node parent, Node node, String nodeName) throws IOException {
     if (node instanceof Group) {
       // Write all children
       Enumeration enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        writeNode((Node)enumeration.nextElement(), nodeName);
+        writeNode(parent, (Node)enumeration.nextElement(), nodeName);
       }
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
       
       // Retrieve transformation needed to be applied to vertices
-      Transform3D transformToRoot = new Transform3D();
-      shape.getLocalToVworld(transformToRoot);
+      Transform3D transformationToParent = getTransformationToParent(parent, node);
 
       // Build a unique human readable object name
       String objectName = "";
@@ -308,9 +317,27 @@ public class OBJWriter extends FilterWriter {
       
       // Write object geometries
       for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        writeNodeGeometry(shape.getGeometry(i), transformToRoot);
+        writeNodeGeometry(shape.getGeometry(i), transformationToParent);
       }
     }    
+  }
+  
+  /**
+   * Returns the transformation applied to a <code>child</code> 
+   * on the path to <code>parent</code>. 
+   */
+  private Transform3D getTransformationToParent(Node parent, Node child) {
+    Transform3D transform = new Transform3D();
+    if (child instanceof TransformGroup) {
+      ((TransformGroup)child).getTransform(transform);
+    }
+    if (child != parent) {
+      Transform3D parentTransform = getTransformationToParent(parent, child.getParent());
+      parentTransform.mul(transform);
+      return parentTransform;
+    } else {
+      return transform;
+    }
   }
   
   /**
@@ -336,7 +363,7 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes a 3D geometry at OBJ format.
    */
-  private void writeNodeGeometry(Geometry geometry, Transform3D transformToRoot) throws IOException {
+  private void writeNodeGeometry(Geometry geometry, Transform3D transformationToParent) throws IOException {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
       int vertexOffsetValue = this.vertexOffset.get() + 1;
@@ -362,7 +389,7 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
                index < n; index++, i += vertexSize) {
             Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-            writeVertex(transformToRoot, vertex, index,
+            writeVertex(transformationToParent, vertex, index,
                 vertexIndices, vertexIndexSubstitutes);
           }
           // Write normals
@@ -370,7 +397,7 @@ public class OBJWriter extends FilterWriter {
             for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                  index < n; index++, i += vertexSize) {
               Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              writeNormal(transformToRoot, normal, index,
+              writeNormal(transformationToParent, normal, index,
                   normalIndices, normalIndexSubstitutes);
             }
           }
@@ -387,7 +414,7 @@ public class OBJWriter extends FilterWriter {
           float [] vertexCoordinates = geometryArray.getCoordRefFloat();
           for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
             Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
-            writeVertex(transformToRoot, vertex, index,
+            writeVertex(transformationToParent, vertex, index,
                 vertexIndices, vertexIndexSubstitutes);
           }
           // Write normals
@@ -395,7 +422,7 @@ public class OBJWriter extends FilterWriter {
             float [] normalCoordinates = geometryArray.getNormalRefFloat();
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
               Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-              writeNormal(transformToRoot, normal, index,
+              writeNormal(transformationToParent, normal, index,
                   normalIndices, normalIndexSubstitutes);
             }
           }
@@ -413,7 +440,7 @@ public class OBJWriter extends FilterWriter {
         for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
           Point3f vertex = new Point3f();
           geometryArray.getCoordinate(index, vertex);
-          writeVertex(transformToRoot, vertex, index,
+          writeVertex(transformationToParent, vertex, index,
               vertexIndices, vertexIndexSubstitutes);
         }
         // Write normals
@@ -421,7 +448,7 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             Vector3f normal = new Vector3f();
             geometryArray.getNormal(index, normal);
-            writeNormal(transformToRoot, normal, index,
+            writeNormal(transformationToParent, normal, index,
                 normalIndices, normalIndexSubstitutes);
           }
         }
@@ -558,11 +585,11 @@ public class OBJWriter extends FilterWriter {
    * Applies to <code>vertex</code> the given transformation, and writes it in
    * a line v at OBJ format, if the vertex isn't a key of <code>vertexIndices</code> yet.  
    */
-  private void writeVertex(Transform3D transformToRoot,
+  private void writeVertex(Transform3D transformationToParent,
                            Point3f vertex, int index,
                            Map<Point3f, Integer> vertexIndices,
                            int [] vertexIndexSubstitutes) throws IOException {
-    transformToRoot.transform(vertex);
+    transformationToParent.transform(vertex);
     Integer vertexIndex = vertexIndices.get(vertex);
     if (vertexIndex == null) {
       vertexIndexSubstitutes [index] = vertexIndices.size();
@@ -584,11 +611,11 @@ public class OBJWriter extends FilterWriter {
    * Applies to <code>normal</code> the given transformation, and writes it in
    * a line vn at OBJ format, if the normal isn't a key of <code>normalIndices</code> yet.  
    */
-  private void writeNormal(Transform3D transformToRoot,
+  private void writeNormal(Transform3D transformationToParent,
                            Vector3f normal, int index,
                            Map<Vector3f, Integer> normalIndices,
                            int [] normalIndexSubstitutes) throws IOException {
-    transformToRoot.transform(normal);
+    transformationToParent.transform(normal);
     Integer normalIndex = normalIndices.get(normal);
     if (normalIndex == null) {
       normalIndexSubstitutes [index] = normalIndices.size();
@@ -851,11 +878,11 @@ public class OBJWriter extends FilterWriter {
           writer.write("illum 1\n");
           Color3f color = new Color3f();
           material.getAmbientColor(color);          
-          writer.write("Ka " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          writer.write("Ka " + color.x + " " + color.y + " " + color.z + "\n");
           material.getDiffuseColor(color);          
-          writer.write("Kd " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          writer.write("Kd " + color.x + " " + color.y + " " + color.z + "\n");
           material.getSpecularColor(color);          
-          writer.write("Ks " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+          writer.write("Ks " + color.x + " " + color.y + " " + color.z + "\n");
           writer.write("Ns " + material.getShininess() + "\n");
         } else {
           ColoringAttributes coloringAttributes = appearance.getColoringAttributes();
@@ -863,9 +890,9 @@ public class OBJWriter extends FilterWriter {
             writer.write("illum 0\n");
             Color3f color = new Color3f();
             coloringAttributes.getColor(color);          
-            writer.write("Ka " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
-            writer.write("Kd " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
-            writer.write("Ks " + color.getX() + " " + color.getY() + " " + color.getZ() + "\n");
+            writer.write("Ka " + color.x + " " + color.y + " " + color.z + "\n");
+            writer.write("Kd " + color.x + " " + color.y + " " + color.z + "\n");
+            writer.write("Ks " + color.x + " " + color.y + " " + color.z + "\n");
           }
         }
         TransparencyAttributes transparency = appearance.getTransparencyAttributes();
