@@ -117,6 +117,9 @@
 		<key>ClassPath</key>
 		<array>
 			<string>$JAVAROOT/SweetHome3D.jar</string>
+			<string>$JAVAROOT/Furniture.jar</string>
+			<string>$JAVAROOT/Textures.jar</string>
+			<string>$JAVAROOT/Help.jar</string>
 			<string>$JAVAROOT/Loader3DS1_2.jar</string>
 		</array>
 		<key>Properties</key>

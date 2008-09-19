@@ -26,6 +26,9 @@
   <classPath>
     <mainClass>com.eteks.sweethome3d.SweetHome3D</mainClass>
     <cp>lib/SweetHome3D.jar</cp>
+    <cp>lib/Furniture.jar</cp>
+    <cp>lib/Textures.jar</cp>
+    <cp>lib/Help.jar</cp>
     <cp>lib/Loader3DS1_2.jar</cp>
     <cp>lib/iText-2.1.2u.jar</cp>
     <cp>lib/j3dcore.jar</cp>
