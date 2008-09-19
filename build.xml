@@ -392,6 +392,7 @@
         <include name="deploy/SweetHome3D*.*"/>
         <include name="install/macosx/**"/>
         <include name="install/windows/**"/>
+        <include name="install/linux/**"/>
       	<!-- Eclipse project files -->
         <include name=".settings/**"/>
         <include name=".classpath"/>
