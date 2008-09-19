@@ -92,7 +92,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    */
   void add(CatalogTexture texture) {
     if (this.textures.contains(texture)) {
-      throw new IllegalArgumentException(
+      throw new IllegalHomonymException(
           texture.getName() + " already in category " + this.name);
     }
     texture.setCategory(this);
