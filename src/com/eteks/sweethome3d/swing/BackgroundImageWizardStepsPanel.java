@@ -23,9 +23,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Composite;
-import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -34,7 +32,6 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.LayoutManager2;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -273,10 +270,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
     
-    JPanel imageChoicePanel = new JPanel(new ProportionalBottomComponentLayout());
-    imageChoicePanel.add(imageChoiceTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    JPanel imageChoicePanel = new JPanel(new ProportionalLayout());
+    imageChoicePanel.add(imageChoiceTopPanel, ProportionalLayout.Constraints.TOP);
     imageChoicePanel.add(this.imageChoicePreviewComponent, 
-        ProportionalBottomComponentLayout.Constraints.BOTTOM);
+        ProportionalLayout.Constraints.BOTTOM);
     
     JPanel scaleTopPanel = new JPanel(new GridBagLayout());
     scaleTopPanel.add(this.scaleLabel, new GridBagConstraints(
@@ -289,10 +286,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     
-    JPanel scalePanel = new JPanel(new ProportionalBottomComponentLayout());
-    scalePanel.add(scaleTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    JPanel scalePanel = new JPanel(new ProportionalLayout());
+    scalePanel.add(scaleTopPanel, ProportionalLayout.Constraints.TOP);
     scalePanel.add(this.scalePreviewComponent, 
-        ProportionalBottomComponentLayout.Constraints.BOTTOM);
+        ProportionalLayout.Constraints.BOTTOM);
 
 
     JPanel originTopPanel = new JPanel(new GridBagLayout());
@@ -312,10 +309,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), -10, 0));
     
-    JPanel originPanel = new JPanel(new ProportionalBottomComponentLayout());
-    originPanel.add(originTopPanel, ProportionalBottomComponentLayout.Constraints.TOP);
+    JPanel originPanel = new JPanel(new ProportionalLayout());
+    originPanel.add(originTopPanel, ProportionalLayout.Constraints.TOP);
     originPanel.add(this.originPreviewComponent, 
-        ProportionalBottomComponentLayout.Constraints.BOTTOM);
+        ProportionalLayout.Constraints.BOTTOM);
 
     add(imageChoicePanel, BackgroundImageWizardController.Step.CHOICE.name());
     add(scalePanel, BackgroundImageWizardController.Step.SCALE.name());
@@ -494,203 +491,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     return null;
   }
 
-  /**
-   * A layout manager that displays two components at the top of each other. 
-   * The component at top is sized at container width and at its preferred height.
-   * The component at bottom is centered in the rest of the space and sized proportionally to its preferred size.
-   */
-  private static class ProportionalBottomComponentLayout implements LayoutManager2 {
-    public enum Constraints {TOP, BOTTOM}
-
-    private Component topComponent;
-    private Component bottomComponent;
-    private int       gap;
-
-    /**
-     * Creates a layout manager which layouts its component 
-     * with a default gap of 5 pixels between them.
-     */
-    public ProportionalBottomComponentLayout() {
-      this(5);
-    }
-
-    /**
-     * Creates a layout manager which layouts its component 
-     * with a given <code>gap</code> between them.
-     */
-    public ProportionalBottomComponentLayout(int gap) {
-      this.gap = gap;
-    }
-    
-    /**
-     * Records a given <code>component</code> in this layout manager as the component at 
-     * <code>Constraints.TOP</code> or at <code>Constraints.BOTTOM</code> of its container.
-     */
-    public void addLayoutComponent(Component component, Object constraints) {
-      if (constraints == Constraints.TOP) {
-        this.topComponent = component; 
-      } else if (constraints == Constraints.BOTTOM) {
-        this.bottomComponent = component;
-      }
-    }
-
-    /**
-     * Do not use.
-     */
-    public void addLayoutComponent(String name, Component comp) {
-      throw new IllegalArgumentException("Use addLayoutComponent with a Constraints object");
-    }
-
-    /**
-     * Removes the given <code>component</code> from the ones managed by this layout manager.
-     */
-    public void removeLayoutComponent(Component component) {
-    }
-    
-    /**
-     * Returns 0.5.
-     */
-    public float getLayoutAlignmentX(Container target) {
-      return 0.5f;
-    }
-
-    /**
-     * Return 0.
-     */
-    public float getLayoutAlignmentY(Container target) {
-      return 0f;
-    }
-
-    /**
-     * Invalidates layout.
-     */
-    public void invalidateLayout(Container target) {
-      // Sizes are computed on the fly each time
-    }
-
-    /**
-     * Layouts the container.
-     */
-    public void layoutContainer(Container parent) {
-      Insets parentInsets = parent.getInsets();
-      int parentAvailableWidth = parent.getWidth() - parentInsets.left - parentInsets.right;
-      int parentAvailableHeight = parent.getHeight() - parentInsets.top - parentInsets.bottom;
-      
-      // Component at top is sized at container width and at its preferred height
-      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
-      if (topComponentUsed) {
-        this.topComponent.setBounds(parentInsets.left, parentInsets.top, 
-            parentAvailableWidth, 
-            Math.min(this.topComponent.getPreferredSize().height, parentAvailableHeight));
-      }
-      // Component is centered in the rest of the space and sized proportionally to its preferred size
-      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
-        Dimension bottomComponentPreferredSize = this.bottomComponent.getPreferredSize();
-        int bottomComponentHeight = parentAvailableHeight;
-        int bottomComponentY = parentInsets.top;
-        if (topComponentUsed) {
-          int occupiedHeight = this.topComponent.getHeight() + this.gap;
-          bottomComponentHeight -= occupiedHeight;
-          bottomComponentY += occupiedHeight;
-        }
-        int bottomComponentWidth = bottomComponentHeight * bottomComponentPreferredSize.width 
-                                   / bottomComponentPreferredSize.height;
-        int bottomComponentX = parentInsets.left;
-        // Adjust component width and height if it's larger than parent
-        if (bottomComponentWidth > parentAvailableWidth) {
-          bottomComponentWidth = parentAvailableWidth;
-          int previousHeight = bottomComponentHeight;
-          bottomComponentHeight = bottomComponentWidth * bottomComponentPreferredSize.height 
-                                  / bottomComponentPreferredSize.width;
-          bottomComponentY += (previousHeight - bottomComponentHeight)  / 2;
-        } else {
-          // Center component in width
-          bottomComponentX += (parentAvailableWidth - bottomComponentWidth)  / 2; 
-        }
-          
-        this.bottomComponent.setBounds(bottomComponentX, bottomComponentY, 
-            bottomComponentWidth, bottomComponentHeight);
-      }
-    }
-
-    /**
-     * Returns the largest minimum width of the components managed by this layout manager,
-     * and the sum of their minimum heights.
-     */
-    public Dimension minimumLayoutSize(Container parent) {
-      Insets parentInsets = parent.getInsets();
-      int minWidth = 0;
-      int minHeight = 0;
-      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
-      if (topComponentUsed) {
-        Dimension topComponentMinSize = this.topComponent.getMinimumSize();
-        minWidth = Math.max(minWidth, topComponentMinSize.width);
-        minHeight = topComponentMinSize.height;
-      }
-      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
-        Dimension bottomComponentMinSize = this.bottomComponent.getMinimumSize();
-        minWidth = Math.max(minWidth, bottomComponentMinSize.width);
-        minHeight += bottomComponentMinSize.height;
-        if (topComponentUsed) {
-          minHeight += this.gap;
-        }
-      }
-      
-      return new Dimension(minWidth + parentInsets.left + parentInsets.right, 
-          minHeight + parentInsets.top + parentInsets.bottom);
-    }
-
-    /**
-     * Returns the largest maximum width of the components managed by this layout manager,
-     * and the sum of their maximum heights.
-     */
-    public Dimension maximumLayoutSize(Container parent) {
-      Insets parentInsets = parent.getInsets();
-      int maxWidth = 0;
-      int maxHeight = 0;
-      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
-      if (topComponentUsed) {
-        Dimension topComponentMaxSize = this.topComponent.getMaximumSize();
-        maxWidth = Math.max(maxWidth, topComponentMaxSize.width);
-        maxHeight = topComponentMaxSize.height;
-      }
-      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
-        Dimension bottomComponentMaxSize = this.bottomComponent.getMaximumSize();
-        maxWidth = Math.max(maxWidth, bottomComponentMaxSize.width);
-        maxHeight += bottomComponentMaxSize.height;
-        if (topComponentUsed) {
-          maxHeight += this.gap;
-        }
-      }
-      
-      return new Dimension(maxWidth + parentInsets.left + parentInsets.right, 
-          maxHeight + parentInsets.top + parentInsets.bottom);
-    }
-
-    public Dimension preferredLayoutSize(Container parent) {
-      Insets parentInsets = parent.getInsets();
-      int preferredWidth = 0;
-      int preferredHeight = 0;
-      boolean topComponentUsed = this.topComponent != null && this.topComponent.getParent() != null;
-      if (topComponentUsed) {
-        Dimension topComponentPreferredSize = this.topComponent.getPreferredSize();
-        preferredWidth = Math.max(preferredWidth, topComponentPreferredSize.width);
-        preferredHeight = topComponentPreferredSize.height;
-      }
-      if (this.bottomComponent != null && this.bottomComponent.getParent() != null) {
-        Dimension bottomComponentPreferredSize = this.bottomComponent.getPreferredSize();
-        preferredWidth = Math.max(preferredWidth, bottomComponentPreferredSize.width);
-        preferredHeight += bottomComponentPreferredSize.height;
-        if (topComponentUsed) {
-          preferredHeight += this.gap;
-        }
-      }
-      
-      return new Dimension(preferredWidth + parentInsets.left + parentInsets.right, 
-          preferredHeight + parentInsets.top + parentInsets.bottom);
-    }
-  }
-  
   /**
    * Preview component for image choice. 
    */

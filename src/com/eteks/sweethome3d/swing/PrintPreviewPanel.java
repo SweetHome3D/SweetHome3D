@@ -19,18 +19,14 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.LayoutManager;
 import java.awt.Paint;
 import java.awt.event.ActionEvent;
 import java.awt.geom.GeneralPath;
@@ -77,7 +73,7 @@ public class PrintPreviewPanel extends JPanel {
   public PrintPreviewPanel(Home home,
                            HomeController homeController,
                            PrintPreviewController printPreviewController) {
-    super(new BorderLayout());
+    super(new ProportionalLayout());
     this.resource = ResourceBundle.getBundle(PrintPreviewPanel.class.getName());
     createActions();
     installKeyboardActions();
@@ -215,16 +211,12 @@ public class PrintPreviewPanel extends JPanel {
    * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
-    // First row
-    // Add toolbar in a flow layout panel to make it centered
+    // Add toolbar at top in a flow layout panel to make it centered
     JPanel panel = new JPanel();
     panel.add(this.toolBar);
-    add(panel, BorderLayout.NORTH);
-    // Second row
-    // Add printable component in a proportional layout panel
-    panel = new JPanel(new ProportionalLayout());
-    panel.add(this.printableComponent);
-    add(panel, BorderLayout.CENTER);
+    add(panel, ProportionalLayout.Constraints.TOP);
+    // Add printable component at bottom of proportional layout panel
+    add(this.printableComponent, ProportionalLayout.Constraints.BOTTOM);
   }
 
   /**
@@ -258,40 +250,5 @@ public class PrintPreviewPanel extends JPanel {
     dialog.setResizable(true);
     dialog.setVisible(true);
     dialog.dispose();
-  }
-  
-  /**
-   * A layout manager that layouts one component in such a way that this component
-   * will always be proportional to its preferred dimension and will fill its parent width or height.
-   */
-  private static class ProportionalLayout implements LayoutManager {
-    public void addLayoutComponent(String name, Component component) {
-    }
-
-    public void layoutContainer(Container parent) {
-      Component component = parent.getComponent(0);
-      Dimension preferredSize = component.getPreferredSize();
-      Dimension parentSize = parent.getSize();
-      if ((float)parentSize.width / parentSize.height > (float)preferredSize.width / preferredSize.height) {
-        // Make the component fill its parent height and center it in parent width
-        int componentWidth = preferredSize.width * parentSize.height / preferredSize.height;
-        component.setBounds((parentSize.width - componentWidth) / 2, 0, componentWidth, parentSize.height);
-      } else {
-        // Make the component fill its parent width and center it in parent height
-        int componentHeight = preferredSize.height * parentSize.width / preferredSize.width;
-        component.setBounds(0, (parentSize.height - componentHeight) / 2, parentSize.width, componentHeight);
-      }
-    }
-
-    public Dimension minimumLayoutSize(Container parent) {
-      return parent.getComponent(0).getMinimumSize();
-    }
-
-    public Dimension preferredLayoutSize(Container parent) {
-      return parent.getComponent(0).getPreferredSize();
-    }
-
-    public void removeLayoutComponent(Component component) {
-    }
   }
 }
