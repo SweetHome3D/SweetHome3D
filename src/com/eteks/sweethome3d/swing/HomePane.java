@@ -1437,7 +1437,7 @@ public class HomePane extends JRootPane {
   public boolean print() {
     PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
     PrinterJob printerJob = PrinterJob.getPrinterJob();
-    printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller), pageFormat);
+    printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller, getFont()), pageFormat);
     if (printerJob.printDialog()) {
       Component previousGlassPane = getWaitGlassPane();
       try {
@@ -1482,7 +1482,7 @@ public class HomePane extends JRootPane {
     OutputStream outputStream = null;
     try {
       outputStream = new FileOutputStream(pdfFile);
-      new HomePDFPrinter(this.home, this.contentManager, this.controller)
+      new HomePDFPrinter(this.home, this.contentManager, this.controller, getFont())
           .write(outputStream);
       return true;
     } catch (IOException ex) {

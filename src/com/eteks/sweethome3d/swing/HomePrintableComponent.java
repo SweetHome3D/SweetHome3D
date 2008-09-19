@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
@@ -42,6 +43,7 @@ import com.eteks.sweethome3d.model.HomePrint;
 public class HomePrintableComponent extends JComponent implements Printable {
   private Home           home;
   private HomeController controller;
+  private Font           defaultFont;
   private int            page;
   private int            pageCount = -1;
   private int            planViewIndex;
@@ -51,9 +53,10 @@ public class HomePrintableComponent extends JComponent implements Printable {
    * furniture view, the plan view and 3D view of the <code>home</code> 
    * managed by <code>controller</code>.
    */
-  public HomePrintableComponent(Home home, HomeController controller) {
+  public HomePrintableComponent(Home home, HomeController controller, Font defaultFont) {
     this.home = home;
     this.controller = controller;
+    this.defaultFont = defaultFont;
   }
   
   /**
@@ -61,6 +64,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
    */
   public int print(Graphics g, PageFormat pageFormat, int page) throws PrinterException {
     Graphics2D g2D = (Graphics2D)g;
+    g2D.setFont(this.defaultFont);
     g2D.setColor(Color.WHITE);
     g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
                                     pageFormat.getHeight()));

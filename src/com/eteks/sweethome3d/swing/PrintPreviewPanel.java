@@ -124,7 +124,7 @@ public class PrintPreviewPanel extends JPanel {
    * Creates and initializes components.
    */
   private void createComponents(Home home, HomeController homeController) {
-    this.printableComponent = new HomePrintableComponent(home, homeController);
+    this.printableComponent = new HomePrintableComponent(home, homeController, getFont());
     this.printableComponent.setBorder(BorderFactory.createCompoundBorder(
         new AbstractBorder() {
           @Override

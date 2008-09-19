@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
@@ -42,11 +43,14 @@ public class HomePDFPrinter {
   private Home           home;
   private ContentManager contentManager;
   private HomeController controller;
+  private Font           defaultFont;
 
-  public HomePDFPrinter(Home home, ContentManager contentManager, HomeController controller) {
+  public HomePDFPrinter(Home home, ContentManager contentManager, 
+                        HomeController controller, Font defaultFont) {
     this.home = home;
     this.contentManager = contentManager;
     this.controller = controller;
+    this.defaultFont = defaultFont;
   }
 
   /**
@@ -68,14 +72,16 @@ public class HomePDFPrinter {
       // Get a PDF writer that will write to the given PDF output stream
       PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, outputStream);
       pdfDocument.open();
+      
       PdfContentByte pdfContent = pdfWriter.getDirectContent();
-      HomePrintableComponent printableComponent = new HomePrintableComponent(this.home, this.controller);
+      HomePrintableComponent printableComponent = 
+        new HomePrintableComponent(this.home, this.controller, this.defaultFont);
       // Print each page
       for (int page = 0, pageCount = printableComponent.getPageCount(); page < pageCount; page++) {
         PdfTemplate pdfTemplate = pdfContent.createTemplate((float)pageFormat.getWidth(), 
             (float)pageFormat.getHeight());
-        Graphics g = pdfTemplate.createGraphics((float)pageFormat.getWidth(), 
-            (float)pageFormat.getHeight());
+        Graphics g = pdfTemplate.createGraphicsShapes((float)pageFormat.getWidth(), 
+            (float)pageFormat.getHeight());        
         
         printableComponent.print(g, pageFormat, page);
         
