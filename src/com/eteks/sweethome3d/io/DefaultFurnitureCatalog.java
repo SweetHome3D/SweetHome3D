@@ -83,8 +83,13 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     
     String classPackage = DefaultFurnitureCatalog.class.getName();
     classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
-    readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
-        null, furnitureHomonymsCounter, identifiedFurniture);
+    try {
+      // Try do load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
+      readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
+          null, furnitureHomonymsCounter, identifiedFurniture);
+    } catch (MissingResourceException ex) {
+      // Ignore contributed furniture catalog
+    }
     
     try {
       // Try do load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath 
