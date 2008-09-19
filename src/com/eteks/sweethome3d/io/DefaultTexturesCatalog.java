@@ -19,11 +19,14 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
@@ -39,10 +42,15 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private static final String WIDTH          = "width#";
   private static final String HEIGHT         = "height#";
 
+  private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
+  
   /**
    * Creates a default textures catalog read from resources.
    */
   public DefaultTexturesCatalog() {
+    Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
+        new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
+
     ResourceBundle resource = ResourceBundle.getBundle(
         DefaultTexturesCatalog.class.getName());
     for (int i = 1;; i++) {
@@ -59,10 +67,40 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
 
       add(new TexturesCategory(category),
-          new CatalogTexture(name, image, width, height));
+          new CatalogTexture(name, image, width, height),
+          textureHomonymsCounter);
     }
   }
   
+  /**
+   * Adds a <code>piece</code> to its category in catalog. If <code>piece</code> has an homonym
+   * in its category its name will be suffixed indicating its sequence.
+   */
+  private void add(TexturesCategory textureCategory,
+                   CatalogTexture texture,
+                   Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
+    try {        
+      add(textureCategory, texture);
+    } catch (IllegalHomonymException ex) {
+      // Search the counter of piece name
+      Map<CatalogTexture, Integer> categoryTextureHomonymsCounter = 
+        textureHomonymsCounter.get(textureCategory);
+      if (categoryTextureHomonymsCounter == null) {
+        categoryTextureHomonymsCounter = new HashMap<CatalogTexture, Integer>();
+        textureHomonymsCounter.put(textureCategory, categoryTextureHomonymsCounter);
+      }
+      Integer textureHomonymCounter = categoryTextureHomonymsCounter.get(texture);
+      if (textureHomonymCounter == null) {
+        textureHomonymCounter = 1;
+      }
+      categoryTextureHomonymsCounter.put(texture, ++textureHomonymCounter);
+      // Try to add texture again to catalog with a suffix indicating its sequence
+      texture = new CatalogTexture(String.format(HOMONYM_TEXTURE_FORMAT, texture.getName(), textureHomonymCounter), 
+          texture.getImage(), texture.getWidth(), texture.getHeight());
+      add(textureCategory, texture, textureHomonymsCounter);
+    }
+  }
+
   /**
    * Returns a valid content instance from the resource file value of key.
    * @param resource a resource bundle
