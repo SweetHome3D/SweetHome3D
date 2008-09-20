@@ -26,12 +26,15 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.ResourceBundle;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -331,9 +334,20 @@ public class Home3DAttributesPanel extends JPanel {
         break;
       }
     }
-    if (JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
-          JOptionPane.OK_CANCEL_OPTION, 
-          JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+    JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+    final JDialog dialog = optionPane.createDialog(parent, dialogTitle);
+    // Add a listener that transfer focus to first text field when dialog is shown
+    dialog.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent ev) {
+          ((JSpinner.DefaultEditor)observerFieldOfViewSpinner.getEditor()).getTextField().requestFocusInWindow();
+          dialog.removeComponentListener(this);
+        }
+      });
+    dialog.setVisible(true);
+    
+    dialog.dispose();
+    if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue()) 
         && this.controller != null) {
       this.controller.modifyHome();
     }
