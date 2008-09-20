@@ -19,15 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.EventQueue;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
-import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultFormatter;
 
 /**
@@ -44,22 +39,6 @@ public class AutoCommitSpinner extends JSpinner {
     JComponent editor = getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
       final JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();
-      // Select text in spinner editor at focus gain
-      textField.addFocusListener(new FocusAdapter() {
-          @Override
-          public void focusGained(FocusEvent ev) {
-            // Check opposite component and this spinner share the same root
-            if (ev.getOppositeComponent() != null
-                && SwingUtilities.getRoot(ev.getOppositeComponent()) 
-                    == SwingUtilities.getRoot(AutoCommitSpinner.this)) {
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    textField.selectAll();
-                  }
-                });
-            }
-          }
-        });
       // Commit text during edition
       if (textField.getFormatter() instanceof DefaultFormatter) {
         ((DefaultFormatter)textField.getFormatter()).setCommitsOnValidEdit(true);
