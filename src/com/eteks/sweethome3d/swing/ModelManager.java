@@ -195,10 +195,15 @@ public class ModelManager {
         // Return the first scene that can be loaded from model URL content
         Scene scene = loader.load(urlContent.getURL());
 
+        BranchGroup modelNode = scene.getSceneGroup();
+        // If model doesn't have any child, consider the file as wrong
+        if (modelNode.numChildren() == 0) {
+          throw new IllegalArgumentException("Empty model");
+        }
+        
         // Update transparency of scene window panes shapes
         updateShapeNamesAndWindowPanesTransparency(scene);
         
-        BranchGroup modelNode = scene.getSceneGroup();
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLights(modelNode);
 
