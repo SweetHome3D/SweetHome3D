@@ -82,6 +82,7 @@ public class WizardPane extends JOptionPane {
     } else {
       setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
     }
+    setInitialValue(this.nextFinishOptionButton);
   }
 
   private void createOptionButtons() {
