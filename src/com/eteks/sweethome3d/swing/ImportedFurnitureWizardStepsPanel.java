@@ -34,6 +34,9 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -46,6 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -98,6 +102,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.AncestorEvent;
@@ -217,14 +222,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     // Model panel components
     this.modelChoiceOrChangeLabel = new JLabel(); 
     this.modelChoiceOrChangeButton = new JButton();
+    final FurnitureCategory defaultModelCategory = importHomePiece 
+        ? null
+        : preferences.getFurnitureCatalog().getCategories().get(0);
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           Content content = showModelChoiceDialog(contentManager);
           if (content != null) {
-            updateController(content, 
-                importHomePiece 
-                  ? null
-                  : preferences.getFurnitureCatalog().getCategories().get(0));
+            updateController(content, defaultModelCategory);
           }
         }
       });
@@ -271,7 +276,38 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     // Make modelChoiceErrorLabel visible only if an error occured during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
     this.modelPreviewComponent = new ModelPreviewComponent();
-    
+    // Add a transfer handler to model preview component to let user drag and drop a file in component
+    this.modelPreviewComponent.setTransferHandler(new TransferHandler() {
+        @Override
+        public boolean canImport(JComponent comp, DataFlavor [] flavors) {
+          return Arrays.asList(flavors).contains(DataFlavor.javaFileListFlavor);
+        }
+        
+        @Override
+        public boolean importData(JComponent comp, Transferable transferedFiles) {
+          boolean success = true;
+          try {
+            List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
+            String modelName = files.get(0).getAbsolutePath();
+            Content modelContent = contentManager.getContent(modelName);
+            // Store the default name for the chosen content
+            setModelName(contentManager, modelContent, modelName);
+            updateController(modelContent, defaultModelCategory);
+          } catch (UnsupportedFlavorException ex) {
+            success = false;
+          } catch (IOException ex) {
+            success = false;
+          } catch (RecorderException ex) {
+            success = false;
+          }
+          if (!success) {
+            JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+                resource.getString("modelChoiceError"));
+          }
+          return success;
+        }
+      });
+   
     // Orientation panel components
     this.orientationLabel = new JLabel(this.resource.getString("orientationLabel.text"));
     this.turnLeftButton = new JButton(new ResourceAction(this.resource, "TURN_LEFT", true) {
