@@ -320,9 +320,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Switches to the component card maching <code>step</code>.   
+   * Switches to the component card matching <code>step</code>.   
    */
-  public void setStep(BackgroundImageWizardController.Step step) {
+  public void setStep(final BackgroundImageWizardController.Step step) {
     this.cardLayout.show(this, step.name());
   }
 
