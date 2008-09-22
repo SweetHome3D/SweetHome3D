@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
 
@@ -467,11 +468,14 @@ public class HomeController  {
     boolean homeSelectionContainsOneCopiableObjectOrMore = false;
     boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsWalls = false;
+    boolean homeSelectionContainsOneWall = false;
     if (selectionMode) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
       homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
           Home.getFurnitureSubList(selectedItems).size() >= 2;
-      homeSelectionContainsWalls = !Home.getWallsSubList(selectedItems).isEmpty();
+      List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
+      homeSelectionContainsWalls = !selectedWalls.isEmpty();
+      homeSelectionContainsOneWall = selectedWalls.size() == 1;
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
       homeSelectionContainsOneCopiableObjectOrMore = 
           homeSelectionContainsFurniture || homeSelectionContainsWalls || homeSelectionContainsDimensionLines; 
@@ -527,6 +531,8 @@ public class HomeController  {
         homeSelectionContainsWalls);
     view.setEnabled(HomePane.ActionType.REVERSE_WALL_DIRECTION,
         homeSelectionContainsWalls);
+    view.setEnabled(HomePane.ActionType.SPLIT_WALL,
+        homeSelectionContainsOneWall);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP,
         homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM,

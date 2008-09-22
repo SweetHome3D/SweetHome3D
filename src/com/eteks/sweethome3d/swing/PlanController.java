@@ -401,7 +401,7 @@ public class PlanController {
   }
   
   /**
-   * Controls the modification of selected walls.
+   * Controls the direction reverse of selected walls.
    */
   public void reverseSelectedWallsDirection() {
     List<Wall> selectedWalls = Home.getWallsSubList(this.home.getSelectedItems());
@@ -455,13 +455,13 @@ public class PlanController {
       this.home.moveWallEndPointTo(wall, xStart, yStart);
 
       Wall wallAtStart = wall.getWallAtStart();            
-      Wall wallAtEnd = wall.getWallAtEnd();      
       boolean joinedAtEndOfWallAtStart =
         wallAtStart != null
         && wallAtStart.getWallAtEnd() == wall;
       boolean joinedAtStartOfWallAtStart =
         wallAtStart != null
         && wallAtStart.getWallAtStart() == wall;
+      Wall wallAtEnd = wall.getWallAtEnd();      
       boolean joinedAtEndOfWallAtEnd =
         wallAtEnd != null
         && wallAtEnd.getWallAtEnd() == wall;
@@ -502,6 +502,112 @@ public class PlanController {
     }
   }
   
+  /**
+   * Controls the split of the selected wall in two joined walls of equal length.
+   */
+  public void splitSelectedWall() {
+    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
+    if (selectedWalls.size() == 1) {
+      Wall splitWall = selectedWalls.get(0);
+      JoinedWall splitJoinedWall = new JoinedWall(splitWall);
+      float xStart = splitWall.getXStart();
+      float yStart = splitWall.getYStart();
+      float xEnd = splitWall.getXEnd();
+      float yEnd = splitWall.getYEnd();
+      float xMiddle = (xStart + xEnd) / 2;
+      float yMiddle = (yStart + yEnd) / 2;
+
+      Wall wallAtStart = splitWall.getWallAtStart();            
+      boolean joinedAtEndOfWallAtStart =
+        wallAtStart != null
+        && wallAtStart.getWallAtEnd() == splitWall;
+      boolean joinedAtStartOfWallAtStart =
+        wallAtStart != null
+        && wallAtStart.getWallAtStart() == splitWall;
+      Wall wallAtEnd = splitWall.getWallAtEnd();      
+      boolean joinedAtEndOfWallAtEnd =
+        wallAtEnd != null
+        && wallAtEnd.getWallAtEnd() == splitWall;
+      boolean joinedAtStartOfWallAtEnd =
+        wallAtEnd != null
+        && wallAtEnd.getWallAtStart() == splitWall;
+
+      // Create new walls with copy constructor to copy their characteristics 
+      Wall firstWall = new Wall(splitWall);
+      this.home.addWall(firstWall);
+      Wall secondWall = new Wall(splitWall);
+      this.home.addWall(secondWall);
+      
+      // Change split walls end and start point
+      this.home.moveWallEndPointTo(firstWall, xMiddle, yMiddle);
+      this.home.moveWallStartPointTo(secondWall, xMiddle, yMiddle);
+      if (splitWall.getHeightAtEnd() != null) {
+        Float heightAtMiddle = (splitWall.getHeight() + splitWall.getHeightAtEnd()) / 2;
+        this.home.setWallHeightAtEnd(firstWall, heightAtMiddle);
+        this.home.setWallHeight(secondWall, heightAtMiddle);
+      } 
+            
+      this.home.setWallAtEnd(firstWall, secondWall);
+      this.home.setWallAtStart(secondWall, firstWall);
+      
+      this.home.setWallAtStart(firstWall, wallAtStart);
+      if (joinedAtEndOfWallAtStart) {
+        this.home.setWallAtEnd(wallAtStart, firstWall);
+      } else if (joinedAtStartOfWallAtStart) {
+        this.home.setWallAtStart(wallAtStart, firstWall);
+      }
+      
+      this.home.setWallAtEnd(secondWall, wallAtEnd);
+      if (joinedAtEndOfWallAtEnd) {
+        this.home.setWallAtEnd(wallAtEnd, secondWall);
+      } else if (joinedAtStartOfWallAtEnd) {
+        this.home.setWallAtStart(wallAtEnd, secondWall);
+      }
+      
+      // Delete split wall
+      this.home.deleteWall(splitWall);
+      selectAndShowItems(Arrays.asList(new Wall [] {firstWall}));
+      
+      postSplitSelectedWalls(splitJoinedWall, 
+          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems);
+    }
+  }
+  
+  /**
+   * Posts an undoable split wall operation.
+   */
+  private void postSplitSelectedWalls(final JoinedWall splitJoinedWall, 
+                                      final JoinedWall firstJoinedWall, 
+                                      final JoinedWall secondJoinedWall,
+                                      List<Object> oldSelection) {
+    final Object [] oldSelectedItems = 
+        oldSelection.toArray(new Object [oldSelection.size()]);
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        doDeleteWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall});
+        doAddWalls(new JoinedWall [] {splitJoinedWall});
+        selectAndShowItems(Arrays.asList(oldSelectedItems));
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doDeleteWalls(new JoinedWall [] {splitJoinedWall});
+        doAddWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall});
+        selectAndShowItems(Arrays.asList(new Wall [] {firstJoinedWall.getWall()}));
+      }      
+
+      @Override
+      public String getPresentationName() {
+        return resource.getString("undoSplitWallsName");
+      }      
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+
   /**
    * Controls the modification of selected furniture.
    */

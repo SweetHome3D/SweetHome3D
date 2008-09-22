@@ -119,7 +119,7 @@ public class HomePane extends JRootPane {
       DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
       DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
       ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-      SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, REVERSE_WALL_DIRECTION,
+      SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, REVERSE_WALL_DIRECTION, SPLIT_WALL,
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
       VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES, EXPORT_TO_OBJ,
       HELP, ABOUT}
@@ -299,7 +299,9 @@ public class HomePane extends JRootPane {
     createAction(ActionType.MODIFY_WALL, 
         controller.getPlanController(), "modifySelectedWalls");
     createAction(ActionType.REVERSE_WALL_DIRECTION, 
-        controller.getPlanController(), "reverseSelectedWallsDirection");    
+        controller.getPlanController(), "reverseSelectedWallsDirection");
+    createAction(ActionType.SPLIT_WALL, 
+        controller.getPlanController(), "splitSelectedWall");
     createAction(ActionType.IMPORT_BACKGROUND_IMAGE, 
         controller, "importBackgroundImage");
     createAction(ActionType.MODIFY_BACKGROUND_IMAGE, 
@@ -575,6 +577,7 @@ public class HomePane extends JRootPane {
     planMenu.addSeparator();
     planMenu.add(getMenuAction(ActionType.MODIFY_WALL));
     planMenu.add(getMenuAction(ActionType.REVERSE_WALL_DIRECTION));
+    planMenu.add(getMenuAction(ActionType.SPLIT_WALL));
     planMenu.addSeparator();
     final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
         getMenuAction(home.getBackgroundImage() == null 
@@ -1146,6 +1149,7 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     planViewPopup.add(getPopupAction(ActionType.MODIFY_WALL));
     planViewPopup.add(getPopupAction(ActionType.REVERSE_WALL_DIRECTION));
+    planViewPopup.add(getPopupAction(ActionType.SPLIT_WALL));
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.ZOOM_OUT));
     planViewPopup.add(getPopupAction(ActionType.ZOOM_IN));

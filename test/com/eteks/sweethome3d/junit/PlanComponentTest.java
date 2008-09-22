@@ -228,6 +228,28 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check wall start point moved to (60, 60)
     assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
     assertCoordinatesEqualWallPoints(60, 60, 24, 300, wall4);
+    
+    // 14. Select first wall 
+    tester.actionClick(planComponent, 60, 50);
+    assertSelectionContains(frame.home, wall1);
+    // Split first wall in two walls
+    frame.splitButton.doClick();
+    Wall wall5 = orderedWalls.get(orderedWalls.size() - 2);
+    Wall wall6 = orderedWalls.get(orderedWalls.size() - 1);
+    assertSelectionContains(frame.home, wall5);
+    assertCoordinatesEqualWallPoints(60, 60, 282, 40, wall5);
+    assertCoordinatesEqualWallPoints(282, 40, 504, 20, wall6);
+    assertWallsAreJoined(wall4, wall5, wall6); 
+    assertWallsAreJoined(wall5, wall6, wall2); 
+    assertFalse("Split wall still present in home", frame.home.getWalls().contains(wall1));
+    // Undo operation and check undone state
+    frame.undoButton.doClick();
+    assertSelectionContains(frame.home, wall1);
+    assertCoordinatesEqualWallPoints(60, 60, 504, 20, wall1);
+    assertWallsAreJoined(wall4, wall1, wall2); 
+    assertTrue("Split wall not present in home", frame.home.getWalls().contains(wall1));
+    assertFalse("Wall still present in home", frame.home.getWalls().contains(wall5));
+    assertFalse("Wall still present in home", frame.home.getWalls().contains(wall6));
   }
 
   /**
@@ -291,6 +313,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     private final JButton        undoButton;
     private final JButton        redoButton;
     private final JButton        reverseDirectionButton;
+    private final JButton        splitButton;
 
     public PlanTestFrame() {
       super("Plan Component Test");
@@ -338,6 +361,12 @@ public class PlanComponentTest extends ComponentTestFixture {
             planController.reverseSelectedWallsDirection();
           }
         });
+      this.splitButton = new JButton("Split");
+      this.splitButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            planController.splitSelectedWall();
+          }
+        });
       // Add a tool bar to the frame with mode toggle button, 
       // undo and redo buttons
       JToolBar toolBar = new JToolBar();
@@ -345,6 +374,7 @@ public class PlanComponentTest extends ComponentTestFixture {
       toolBar.add(this.undoButton);
       toolBar.add(this.redoButton);
       toolBar.add(this.reverseDirectionButton);
+      toolBar.add(this.splitButton);
       // Add the tool bar at top of the window
       add(toolBar, BorderLayout.NORTH);
       // Pack frame to ensure home plan component is at its preferred size 
