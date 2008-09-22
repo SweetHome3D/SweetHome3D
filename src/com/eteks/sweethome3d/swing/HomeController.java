@@ -525,6 +525,8 @@ public class HomeController  {
                  || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomePane.ActionType.MODIFY_WALL,
         homeSelectionContainsWalls);
+    view.setEnabled(HomePane.ActionType.REVERSE_WALL_DIRECTION,
+        homeSelectionContainsWalls);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP,
         homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM,

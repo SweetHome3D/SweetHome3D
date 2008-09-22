@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.model.CameraListener;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -396,6 +397,108 @@ public class PlanController {
   public void modifySelectedWalls() {
     if (!Home.getWallsSubList(this.home.getSelectedItems()).isEmpty()) {
       new WallController(this.home, this.preferences, this.undoSupport);
+    }
+  }
+  
+  /**
+   * Controls the modification of selected walls.
+   */
+  public void reverseSelectedWallsDirection() {
+    List<Wall> selectedWalls = Home.getWallsSubList(this.home.getSelectedItems());
+    if (!selectedWalls.isEmpty()) {
+      Wall [] reversedWalls = selectedWalls.toArray(new Wall [selectedWalls.size()]);
+      doReverseWallsDirection(reversedWalls);
+      postReverseSelectedWallsDirection(reversedWalls, this.home.getSelectedItems());
+    }
+  }
+  
+  /**
+   * Posts an undoable reverse wall operation, about <code>walls</code>.
+   */
+  private void postReverseSelectedWallsDirection(final Wall [] walls, 
+                                                 List<Object> oldSelection) {
+    final Object [] oldSelectedItems = 
+        oldSelection.toArray(new Object [oldSelection.size()]);
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        doReverseWallsDirection(walls);
+        selectAndShowItems(Arrays.asList(oldSelectedItems));
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doReverseWallsDirection(walls);
+        selectAndShowItems(Arrays.asList(oldSelectedItems));
+      }      
+
+      @Override
+      public String getPresentationName() {
+        return resource.getString("undoReverseWallsDirectionName");
+      }      
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Reverses the <code>walls</code> direction.
+   */
+  private void doReverseWallsDirection(Wall [] walls) {
+    for (Wall wall : walls) {
+      float xStart = wall.getXStart();
+      float yStart = wall.getYStart();
+      float xEnd = wall.getXEnd();
+      float yEnd = wall.getYEnd();
+      this.home.moveWallStartPointTo(wall, xEnd, yEnd);
+      this.home.moveWallEndPointTo(wall, xStart, yStart);
+
+      Wall wallAtStart = wall.getWallAtStart();            
+      Wall wallAtEnd = wall.getWallAtEnd();      
+      boolean joinedAtEndOfWallAtStart =
+        wallAtStart != null
+        && wallAtStart.getWallAtEnd() == wall;
+      boolean joinedAtStartOfWallAtStart =
+        wallAtStart != null
+        && wallAtStart.getWallAtStart() == wall;
+      boolean joinedAtEndOfWallAtEnd =
+        wallAtEnd != null
+        && wallAtEnd.getWallAtEnd() == wall;
+      boolean joinedAtStartOfWallAtEnd =
+        wallAtEnd != null
+        && wallAtEnd.getWallAtStart() == wall;
+      
+      this.home.setWallAtStart(wall, wallAtEnd);
+      this.home.setWallAtEnd(wall, wallAtStart);
+      
+      if (joinedAtEndOfWallAtStart) {
+        this.home.setWallAtEnd(wallAtStart, wall);
+      } else if (joinedAtStartOfWallAtStart) {
+        this.home.setWallAtStart(wallAtStart, wall);
+      }
+      
+      if (joinedAtEndOfWallAtEnd) {
+        this.home.setWallAtEnd(wallAtEnd, wall);
+      } else if (joinedAtStartOfWallAtEnd) {
+        this.home.setWallAtStart(wallAtEnd, wall);
+      }
+      
+      Integer rightSideColor = wall.getRightSideColor();
+      HomeTexture rightSideTexture = wall.getRightSideTexture();
+      Integer leftSideColor = wall.getLeftSideColor();
+      HomeTexture leftSideTexture = wall.getLeftSideTexture();      
+      this.home.setWallLeftSideColor(wall, rightSideColor);
+      this.home.setWallLeftSideTexture(wall, rightSideTexture);
+      this.home.setWallRightSideColor(wall, leftSideColor);
+      this.home.setWallRightSideTexture(wall, leftSideTexture);
+      
+      Float heightAtEnd = wall.getHeightAtEnd();
+      if (heightAtEnd != null) {
+        Float height = wall.getHeight();
+        this.home.setWallHeight(wall, heightAtEnd);
+        this.home.setWallHeightAtEnd(wall, height);
+      }
     }
   }
   

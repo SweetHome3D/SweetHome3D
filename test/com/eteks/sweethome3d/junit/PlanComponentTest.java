@@ -197,7 +197,23 @@ public class PlanComponentTest extends ComponentTestFixture {
     // Check the second and the third wall are selected
     assertSelectionContains(frame.home, wall2, wall3);
     
-    // 12. Select first wall
+    // 12. Reverse directions of selected walls
+    float xStartWall2 = wall2.getXStart();
+    float yStartWall2 = wall2.getYStart();
+    float xStartWall3 = wall3.getXStart();
+    float yStartWall3 = wall3.getYStart();
+    float xEndWall3 = wall3.getXEnd();
+    float yEndWall3 = wall3.getYEnd();
+    frame.reverseDirectionButton.doClick();
+    // Check the second and the third wall are still selected
+    assertSelectionContains(frame.home, wall2, wall3);
+    // Check wall2 and wall3 were reserved
+    assertCoordinatesEqualWallPoints(xStartWall3, yStartWall3, xStartWall2, yStartWall2, wall2);
+    assertCoordinatesEqualWallPoints(xEndWall3, yEndWall3, xStartWall3, yStartWall3, wall3);
+    assertWallsAreJoined(wall3, wall2, wall1); 
+    assertWallsAreJoined(wall4, wall3, wall2);
+    
+    // 13. Select first wall
     tester.actionClick(planComponent, 100, 100); // Give focus first
     tester.actionClick(planComponent, 40, 30);
     // Drag cursor from (30, 30) to (50, 50) with shift key pressed
@@ -274,6 +290,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     private final JToggleButton  modeButton;
     private final JButton        undoButton;
     private final JButton        redoButton;
+    private final JButton        reverseDirectionButton;
 
     public PlanTestFrame() {
       super("Plan Component Test");
@@ -315,12 +332,19 @@ public class PlanComponentTest extends ComponentTestFixture {
           undoManager.redo();
         }
       });
+      this.reverseDirectionButton = new JButton("Reverse");
+      this.reverseDirectionButton.addActionListener(new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            planController.reverseSelectedWallsDirection();
+          }
+        });
       // Add a tool bar to the frame with mode toggle button, 
       // undo and redo buttons
       JToolBar toolBar = new JToolBar();
       toolBar.add(this.modeButton);
       toolBar.add(this.undoButton);
       toolBar.add(this.redoButton);
+      toolBar.add(this.reverseDirectionButton);
       // Add the tool bar at top of the window
       add(toolBar, BorderLayout.NORTH);
       // Pack frame to ensure home plan component is at its preferred size 
