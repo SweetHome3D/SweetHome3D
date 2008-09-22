@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.undo.UndoManager;
 import javax.swing.undo.UndoableEditSupport;
@@ -61,6 +62,7 @@ public class PlanControllerTest extends TestCase {
   private void runPlanContollerTest() { 
     // 1. Create a frame that displays a PlanComponent at its preferred size, 
     Home home = new Home();
+    Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
     UndoableEditSupport undoSupport = new UndoableEditSupport();
     UndoManager undoManager = new UndoManager();

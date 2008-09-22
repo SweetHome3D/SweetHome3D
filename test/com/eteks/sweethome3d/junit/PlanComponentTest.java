@@ -29,6 +29,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -319,6 +320,7 @@ public class PlanComponentTest extends ComponentTestFixture {
       super("Plan Component Test");
       // Create model objects
       this.home = new Home();
+      Locale.setDefault(Locale.FRANCE);
       UserPreferences preferences = new DefaultUserPreferences();
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
