@@ -97,17 +97,17 @@ public class HomeFramePane extends JRootPane {
         setRootPane(HomeFramePane.this);
       }
     };
-    // Update frame image ans title 
+    // Update frame image and title 
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
     updateFrameTitle(homeFrame, this.home);
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          controller.getCatalogController().getView(),
-          controller.getFurnitureController().getView(),
-          controller.getPlanController().getView(),
-          controller.getHomeController3D().getView()});      
+          this.controller.getCatalogController().getView(),
+          this.controller.getFurnitureController().getView(),
+          this.controller.getPlanController().getView(),
+          this.controller.getHomeController3D().getView()});      
       homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
