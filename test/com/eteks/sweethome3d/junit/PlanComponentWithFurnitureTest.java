@@ -212,6 +212,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     int pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
     int pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
     tester.actionClick(planComponent, pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2);
+    
     // Check selected items contains only the piece of furniture 
     selectedItems = frame.home.getSelectedItems();
     assertEquals("Wrong selected items count", 1, selectedItems.size());
@@ -298,7 +299,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertEqualsDimensionLine(520, 122, 520, 298, 0, firstDimensionLine);
     assertEqualsDimensionLine(42, 310, 498, 310, 20, orderedDimensionLines.get(1));
     
-    // 16. Select the first dimension
+    // 16. Select the first dimension line
     frame.selectButton.doClick();
     tester.actionClick(planComponent, 280, 90);
     assertEquals("Wrong selection", 1, frame.home.getSelectedItems().size());
@@ -307,7 +308,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Move its end point to (330, 167)
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(280, 167)));
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(320, 167)));
-    // Check its coordinates while Shift key isn't pressed (with magnestism)
+    // Check its coordinates while Shift key isn't pressed (with magnetism)
     assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
     // Check its length with magnetism 
     float firstDimensionLineLength = (float)Point2D.distance(
@@ -317,7 +318,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         Math.abs(182 - firstDimensionLineLength) < 1E-4);
     // Press Shift key
     tester.actionKeyPress(KeyEvent.VK_SHIFT);
-    // Check its coordinates while Shift key is pressed (with no magnestism)
+    // Check its coordinates while Shift key is pressed (with no magnetism)
     assertEqualsDimensionLine(520, 122, 600, 298, 0, firstDimensionLine);
     // Release Shift key and mouse button
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);    
@@ -345,6 +346,100 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         frame.home.getSelectedItems().get(0), firstDimensionLine);
     // Check the coordinates of the first dimension 
     assertEqualsDimensionLine(520, 122, 567.105f, 297.7985f, 0, firstDimensionLine);
+    
+    // 19. Select two walls, the piece and a dimension line
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(20, 100)));
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(200, 200)));
+    tester.actionMouseRelease();
+    // Check selection
+    selectedItems = frame.home.getSelectedItems();
+    assertEquals("Selection doesn't contain 4 items", 4, selectedItems.size());    
+    int wallsCount = frame.home.getWalls().size();
+    int furnitureCount = frame.home.getFurniture().size();
+    int dimensionLinesCount = frame.home.getDimensionLines().size();
+    HomePieceOfFurniture selectedPiece = Home.getFurnitureSubList(selectedItems).get(0);
+    pieceX = selectedPiece.getX();
+    pieceY = selectedPiece.getY();
+    // Start items duplication 
+    tester.actionKeyPress(KeyEvent.VK_ALT);
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(50, 170)));
+    // Check selection changed
+    assertFalse("Selection didn't change", selectedItems.equals(frame.home.getSelectedItems()));
+    assertEquals("Selection doesn't contain 4 items", 4, frame.home.getSelectedItems().size());    
+    assertEquals("No new wall", wallsCount + 2, frame.home.getWalls().size());    
+    assertEquals("No new piece", furnitureCount + 1, frame.home.getFurniture().size());    
+    assertEquals("No new dimension lines", dimensionLinesCount + 1, frame.home.getDimensionLines().size());
+    
+    // 20. Duplicate and move items
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(70, 200)));
+    // Check the piece moved and the original piece didn't move 
+    HomePieceOfFurniture movedPiece = 
+        Home.getFurnitureSubList(frame.home.getSelectedItems()).get(0);
+    assertLocationAndOrientationEqualPiece(pieceX + 20 / planComponent.getScale(), 
+        pieceY + 30 / planComponent.getScale(), selectedPiece.getAngle(), movedPiece);
+    assertLocationAndOrientationEqualPiece(pieceX, pieceY, selectedPiece.getAngle(), selectedPiece);
+    
+    // 21. Release Alt key
+    tester.actionKeyRelease(KeyEvent.VK_ALT);
+    // Check original items replaced duplicated items
+    assertTrue("Original items not selected", selectedItems.equals(frame.home.getSelectedItems()));
+    assertLocationAndOrientationEqualPiece(pieceX + 20 / planComponent.getScale(), 
+        pieceY + 30 / planComponent.getScale(), selectedPiece.getAngle(), selectedPiece);
+    assertFalse("Duplicated piece still in home", frame.home.getFurniture().contains(movedPiece));
+    // Press Alt key again 
+    tester.actionKeyPress(KeyEvent.VK_ALT);
+    // Check the duplicated piece moved and the original piece moved back to its original location 
+    movedPiece = Home.getFurnitureSubList(frame.home.getSelectedItems()).get(0);
+    assertLocationAndOrientationEqualPiece(pieceX + 20 / planComponent.getScale(), 
+        pieceY + 30 / planComponent.getScale(), selectedPiece.getAngle(), movedPiece);
+    assertLocationAndOrientationEqualPiece(pieceX, pieceY, selectedPiece.getAngle(), selectedPiece);
+    // Press Escape key
+    tester.actionKeyStroke(KeyEvent.VK_ESCAPE);
+    // Check no items where duplicated
+    assertTrue("Original items not selected", selectedItems.equals(frame.home.getSelectedItems()));
+    assertLocationAndOrientationEqualPiece(pieceX, pieceY, selectedPiece.getAngle(), selectedPiece);
+    assertEquals("New walls created", wallsCount, frame.home.getWalls().size());    
+    assertEquals("New pieces created", furnitureCount, frame.home.getFurniture().size());    
+    assertEquals("New dimension lines created", dimensionLinesCount, frame.home.getDimensionLines().size());
+    tester.actionMouseRelease();
+    
+    // 22. Duplicate items
+    tester.actionMousePress(planComponent, new ComponentLocation(new Point(50, 170)));
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(50, 190)));
+    tester.actionMouseRelease();
+    tester.actionKeyRelease(KeyEvent.VK_ALT);
+    // Check the duplicated piece moved and the original piece didn't move
+    List<Object> movedItems = frame.home.getSelectedItems();
+    assertEquals("Selection doesn't contain 4 items", 4, movedItems.size());    
+    movedPiece = Home.getFurnitureSubList(movedItems).get(0);
+    assertLocationAndOrientationEqualPiece(pieceX, 
+        pieceY + 20 / planComponent.getScale(), selectedPiece.getAngle(), movedPiece);
+    assertLocationAndOrientationEqualPiece(pieceX, pieceY, selectedPiece.getAngle(), selectedPiece);
+    // Check the duplicated walls are joined to each other
+    List<Wall> movedWalls = Home.getWallsSubList(movedItems);
+    Wall movedWall1 = movedWalls.get(0);
+    Wall movedWall2 = movedWalls.get(1);
+    assertFalse("First moved wall not new", selectedItems.contains(movedWall1));
+    assertFalse("Second moved wall not new", selectedItems.contains(movedWall2));
+    assertSame("First moved wall not joined to second one", movedWall2, movedWall1.getWallAtEnd());
+    assertSame("Second moved wall not joined to first one", movedWall1, movedWall2.getWallAtStart());
+    
+    // 23. Undo duplication
+    frame.undoButton.doClick();
+    // Check piece and walls don't belong to home
+    assertFalse("Piece still in home", frame.home.getFurniture().contains(movedPiece));
+    assertFalse("First wall still in home", frame.home.getWalls().contains(movedWall1));
+    assertFalse("Second wall still in home", frame.home.getWalls().contains(movedWall2));
+    // Check original items are selected
+    assertTrue("Original items not selected", selectedItems.equals(frame.home.getSelectedItems()));
+    // Redo
+    frame.redoButton.doClick();
+    // Check piece and walls belong to home
+    assertTrue("Piece not in home", frame.home.getFurniture().contains(movedPiece));
+    assertTrue("First wall not in home", frame.home.getWalls().contains(movedWall1));
+    assertTrue("Second wall not in home", frame.home.getWalls().contains(movedWall2));
+    // Check moved items are selected
+    assertTrue("Original items not selected", movedItems.equals(frame.home.getSelectedItems()));
   }
 
   /**

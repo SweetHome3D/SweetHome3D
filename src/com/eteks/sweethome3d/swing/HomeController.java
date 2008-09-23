@@ -139,7 +139,7 @@ public class HomeController  {
     this.furnitureController = new FurnitureController(
         home, preferences, contentManager, this.undoSupport);
     this.planController = new PlanController(
-        home, preferences, undoSupport);
+        home, preferences, contentManager, undoSupport);
     this.homeController3D = new HomeController3D(
         home, preferences, this.undoSupport);
     helpController = new HelpController(preferences);
@@ -811,7 +811,7 @@ public class HomeController  {
   private void addItems(final List<? extends Object> items, 
                         float dx, float dy, final String presentationNameKey) {
     if (!items.isEmpty()) {
-      // Start a compound edit that adds walls and furniture to home
+      // Start a compound edit that adds walls, furniture and dimension lines to home
       this.undoSupport.beginUpdate();
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
       // If magnetism is enabled, adjust furniture size and elevation
@@ -825,7 +825,7 @@ public class HomeController  {
               this.preferences.getUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
         }
       }
-      getFurnitureController().addFurniture(addedFurniture);
+      getPlanController().addFurniture(addedFurniture);
       getPlanController().addWalls(Home.getWallsSubList(items));
       getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
       getPlanController().moveItems(items, dx, dy);

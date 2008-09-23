@@ -325,7 +325,7 @@ public class PlanComponentTest extends ComponentTestFixture {
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);
-      this.planController = new PlanController(this.home, preferences, undoSupport);
+      this.planController = new PlanController(this.home, preferences, null, undoSupport);
       // Add plan component to frame at its preferred size 
       add(new JScrollPane(this.planController.getView()));
       // Create a toggle button for plan component mode 

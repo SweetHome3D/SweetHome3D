@@ -39,6 +39,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.TexturePaint;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -112,7 +113,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class PlanComponent extends JComponent implements Scrollable, Printable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
     MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
-    TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF}
+    TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
+    DUPLICATION_ON, DUPLICATION_OFF}
   private enum PaintMode {PAINT, PRINT, CLIPBOARD}
   
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
@@ -135,6 +137,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private Cursor             elevationCursor;
   private Cursor             heightCursor;
   private Cursor             resizeCursor;
+  private Cursor             duplicationCursor;
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
@@ -302,6 +305,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         "resources/cursors/height32x32.png", "Height cursor");
     this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
         "resources/cursors/resize32x32.png", "Resize cursor");
+    this.duplicationCursor = DragSource.DefaultCopyDrop;
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
     super.setBackground(UIManager.getColor("window"));
@@ -472,7 +476,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();
           controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
-              ev.getClickCount(), ev.isShiftDown());
+              ev.getClickCount(), ev.isShiftDown(), ev.isAltDown());
         }
       }
 
@@ -520,12 +524,16 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     inputMap.put(KeyStroke.getKeyStroke("DELETE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
     inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.MOVE_SELECTION_LEFT);
     inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
     inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
     inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+    inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.DUPLICATION_ON);
+    inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DUPLICATION_OFF);
   }
  
   /**
@@ -534,13 +542,13 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private void createActions(final PlanController controller) {
     // Delete selection action mapped to back space and delete keys
     Action deleteSelectionAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent ev) {
         controller.deleteSelection();
       }
     };
     // Escape action mapped to Esc key
     Action escapeAction = new AbstractAction() {
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent ev) {
         controller.escape();
       }
     };
@@ -554,11 +562,11 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         this.dy = dy;
       }
 
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent ev) {
         controller.moveSelection(this.dx / getScale(), this.dy / getScale());
       }
     }
-    // Temporary magnestism mapped to alt key
+    // Temporary magnetism mapped to Shift key
     class ToggleMagnetismAction extends AbstractAction {
       private final boolean toggle;
       
@@ -566,8 +574,20 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         this.toggle = toggle;
       }
 
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(ActionEvent ev) {
         controller.toggleMagnetism(this.toggle);
+      }
+    }
+    // Duplication mapped to Alt key
+    class DuplicationAction extends AbstractAction {
+      private final boolean duplicationActivated;
+      
+      public DuplicationAction(boolean duplicationActivated) {
+        this.duplicationActivated = duplicationActivated;
+      }
+
+      public void actionPerformed(ActionEvent ev) {
+        controller.activateDuplication(this.duplicationActivated);
       }
     }
     ActionMap actionMap = getActionMap();
@@ -579,6 +599,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     actionMap.put(ActionType.MOVE_SELECTION_RIGHT, new MoveSelectionAction(1, 0));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_ON, new ToggleMagnetismAction(true));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_OFF, new ToggleMagnetismAction(false));
+    actionMap.put(ActionType.DUPLICATION_ON, new DuplicationAction(true));
+    actionMap.put(ActionType.DUPLICATION_OFF, new DuplicationAction(false));
   }
 
   /**
@@ -1965,6 +1987,13 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   public void setResizeCursor() {
     setCursor(this.resizeCursor);
+  }
+  
+  /**
+   * Sets the cursor of this component as duplication cursor. 
+   */
+  public void setDuplicationCursor() {
+    setCursor(this.duplicationCursor);
   }
   
   /**

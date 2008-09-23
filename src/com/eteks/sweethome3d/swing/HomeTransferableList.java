@@ -62,9 +62,9 @@ public class HomeTransferableList implements Transferable {
   }
 
   /**
-   * Performs a deep copy of <code>objects</code>.
+   * Performs a deep copy of home <code>objects</code>.
    */
-  private List<Object> deepCopy(List<? extends Object> objects) {
+  public static List<Object> deepCopy(List<? extends Object> objects) {
     List<Object> list = new ArrayList<Object>();
     for (Object obj : objects) {
       if (obj instanceof PieceOfFurniture) {

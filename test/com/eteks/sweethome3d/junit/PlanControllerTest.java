@@ -67,7 +67,7 @@ public class PlanControllerTest extends TestCase {
     UndoableEditSupport undoSupport = new UndoableEditSupport();
     UndoManager undoManager = new UndoManager();
     undoSupport.addUndoableEditListener(undoManager);
-    PlanController planController = new PlanController(home, preferences, undoSupport);
+    PlanController planController = new PlanController(home, preferences, null, undoSupport);
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
@@ -83,19 +83,19 @@ public class PlanControllerTest extends TestCase {
     planController.setMode(PlanController.Mode.WALL_CREATION);
     // Click at (20, 20), (500, 22), (498, 300), then double click at (20, 302) in home coordinates space 
     planController.moveMouse(20, 20);
-    planController.pressMouse(20, 20, 1, false);
+    planController.pressMouse(20, 20, 1, false, false);
     planController.toggleMagnetism(false);
     planController.releaseMouse(20, 20);
     planController.moveMouse(500, 22);
-    planController.pressMouse(500, 22, 1, false);
+    planController.pressMouse(500, 22, 1, false, false);
     planController.releaseMouse(500, 22);
     planController.moveMouse(498, 300);
-    planController.pressMouse(498, 300, 1, false);
+    planController.pressMouse(498, 300, 1, false, false);
     planController.releaseMouse(498, 300);
     planController.moveMouse(20, 302);
-    planController.pressMouse(20, 302, 1, false);
+    planController.pressMouse(20, 302, 1, false, false);
     planController.releaseMouse(20, 302);
-    planController.pressMouse(20, 302, 2, false);
+    planController.pressMouse(20, 302, 2, false, false);
     planController.releaseMouse(20, 302);
     // Check 3 walls were created at (20, 20), (500, 20), (500, 300) and (20, 300) coordinates
     Wall wall1 = orderedWalls.get(0);
@@ -113,13 +113,13 @@ public class PlanControllerTest extends TestCase {
 
     // 3. Click at (20, 300), then double click at (60, 60) with Alt key depressed
     planController.moveMouse(20, 300);
-    planController.pressMouse(20, 300, 1, false);
+    planController.pressMouse(20, 300, 1, false, false);
     planController.releaseMouse(20, 300);
     planController.toggleMagnetism(true);
     planController.moveMouse(60, 60);
-    planController.pressMouse(60, 60, 1, false);
+    planController.pressMouse(60, 60, 1, false, false);
     planController.releaseMouse(60, 60);
-    planController.pressMouse(60, 60, 2, false);
+    planController.pressMouse(60, 60, 2, false, false);
     planController.releaseMouse(60, 60);
     planController.toggleMagnetism(false);
     // Check a forth wall was created at (20, 300), (60, 60) coordinates
@@ -142,12 +142,12 @@ public class PlanControllerTest extends TestCase {
     planController.setMode(PlanController.Mode.WALL_CREATION);
     //  Click at (22, 18), then double click at (20, 300)
     planController.moveMouse(22, 18);
-    planController.pressMouse(22, 18, 1, false);
+    planController.pressMouse(22, 18, 1, false, false);
     planController.releaseMouse(22, 18);
     planController.moveMouse(20, 300);
-    planController.pressMouse(20, 300, 1, false);
+    planController.pressMouse(20, 300, 1, false, false);
     planController.releaseMouse(20, 300);
-    planController.pressMouse(20, 300, 2, false);
+    planController.pressMouse(20, 300, 2, false, false);
     planController.releaseMouse(20, 300);
     // Check a new forth wall was created at (20, 20), (20, 300) coordinates
     wall4 = orderedWalls.get(orderedWalls.size() - 1);
@@ -159,7 +159,7 @@ public class PlanControllerTest extends TestCase {
     planController.setMode(PlanController.Mode.SELECTION);
     // Drag and drop cursor from (360, 160) to (560, 320)
     planController.moveMouse(360, 160);
-    planController.pressMouse(360, 160, 1, false);
+    planController.pressMouse(360, 160, 1, false, false);
     planController.moveMouse(560, 320);
     planController.releaseMouse(560, 320);
     // Check the selected walls are the second and third ones
@@ -176,14 +176,14 @@ public class PlanControllerTest extends TestCase {
 
     // 8. Click at (504, 40) with Shift key depressed
     planController.moveMouse(504, 40);
-    planController.pressMouse(504, 40, 1, true);
+    planController.pressMouse(504, 40, 1, true, false);
     planController.releaseMouse(504, 40);
     // Check the second wall was removed from selection
     assertSelectionContains(home, wall3);
 
      // 9. Drag cursor from (60, 20) to (60, 60) 
     planController.moveMouse(60, 20);
-    planController.pressMouse(60, 20, 1, false);
+    planController.pressMouse(60, 20, 1, false, false);
     planController.moveMouse(60, 60);
     // Check first wall is selected and that it moved
     assertSelectionContains(home, wall1);

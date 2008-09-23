@@ -155,15 +155,20 @@ public class FurnitureController {
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteSelection() {
+    deleteFurniture(Home.getFurnitureSubList(this.home.getSelectedItems()));    
+  }
+  
+  /**
+   * Deletes the furniture of <code>deletedFurniture</code> from home.
+   * Once the selected furniture is deleted, undo support will receive a new undoable edit.
+   */
+  public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
     // Sort the selected furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
         new TreeMap<Integer, HomePieceOfFurniture>(); 
-    for (Object item : this.home.getSelectedItems()) {
-      if (item instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        sortedMap.put(homeFurniture.indexOf(piece), piece); 
-      }
+    for (HomePieceOfFurniture piece : deletedFurniture) {
+      sortedMap.put(homeFurniture.indexOf(piece), piece); 
     }
     final HomePieceOfFurniture [] furniture = sortedMap.values().
         toArray(new HomePieceOfFurniture [sortedMap.size()]); 
@@ -198,8 +203,7 @@ public class FurnitureController {
     }
   }
   
-  private void doDeleteFurniture(
-                      HomePieceOfFurniture [] furniture) { 
+  private void doDeleteFurniture(HomePieceOfFurniture [] furniture) { 
     for (HomePieceOfFurniture piece : furniture) {
       this.home.deletePieceOfFurniture(piece);
     }
@@ -208,8 +212,7 @@ public class FurnitureController {
   /**
    * Updates the selected furniture in home.
    */
-  public void setSelectedFurniture(
-           List<HomePieceOfFurniture> selectedFurniture) {
+  public void setSelectedFurniture(List<HomePieceOfFurniture> selectedFurniture) {
     this.home.setSelectedItems(selectedFurniture);
   }
 
