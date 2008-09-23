@@ -193,7 +193,7 @@ public class Component3DManager {
           }
         });
       
-      // Create an off sreen canvas and bind it to view
+      // Create an off screen canvas and bind it to view
       offScreenCanvas = getOffScreenCanvas3D(width, height);
       view.addCanvas3D(offScreenCanvas);
       
