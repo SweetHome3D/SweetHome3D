@@ -30,6 +30,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -89,6 +90,8 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
@@ -127,6 +130,13 @@ public class HomePane extends JRootPane {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
     OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU}
   
+  private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
+  private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
+  private static final String PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.PlanPaneDividerLocation";
+  private static final String PLAN_VIEWPORT_X_VISUAL_PROPERTY               = "com.eteks.sweethome3d.SweetHome3D.PlanViewportX";
+  private static final String PLAN_VIEWPORT_Y_VISUAL_PROPERTY               = "com.eteks.sweethome3d.SweetHome3D.PlanViewportY";
+  private static final String FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY          = "com.eteks.sweethome3d.SweetHome3D.FurnitureViewportY";
+
   private ContentManager                  contentManager;
   private Home                            home;
   private HomeController                  controller;
@@ -930,7 +940,7 @@ public class HomePane extends JRootPane {
    * Under Mac OS X 10.5 use segmented buttons and group them depending
    * on toolbar orientation and whether a button is after or before a separator.
    */
-  private void updateToolBarButtonsStyle(JToolBar toolBar) {
+  private void updateToolBarButtonsStyle(final JToolBar toolBar) {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
       ComponentOrientation orientation = toolBar.getComponentOrientation();
@@ -1026,18 +1036,41 @@ public class HomePane extends JRootPane {
   private JComponent getMainPane(Home home, UserPreferences preferences, 
                                  HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-        getCatalogFurniturePane(controller), 
+        getCatalogFurniturePane(home, controller), 
         getPlanView3DPane(home, preferences, controller));
-    mainPane.setContinuousLayout(true);
-    mainPane.setOneTouchExpandable(true);
-    mainPane.setResizeWeight(0.3);
+    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3);
     return mainPane;
+  }
+
+  /**
+   * Configures <code>splitPane</code> divider location. 
+   * If <code>dividerLocationProperty</code> visual property exists in <code>home</code>,
+   * its value will be used, otherwise the given resize weight will be used.
+   */
+  private void configureSplitPane(JSplitPane splitPane,
+                                  final Home home,
+                                  final String dividerLocationProperty,
+                                  double defaultResizeWeight) {
+    splitPane.setContinuousLayout(true);
+    splitPane.setOneTouchExpandable(true);
+    splitPane.setResizeWeight(defaultResizeWeight);
+    // Restore divider location previously set 
+    Integer dividerLocation = (Integer)home.getVisualProperty(dividerLocationProperty);
+    if (dividerLocation != null) {
+      splitPane.setDividerLocation(dividerLocation);
+    }
+    splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            home.setVisualProperty(dividerLocationProperty, ev.getNewValue());
+          }
+        });
   }
 
   /**
    * Returns the catalog tree and furniture table pane. 
    */
-  private JComponent getCatalogFurniturePane(HomeController controller) {
+  private JComponent getCatalogFurniturePane(final Home home, HomeController controller) {
     JComponent catalogView = controller.getCatalogController().getView();
     JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
@@ -1076,13 +1109,23 @@ public class HomePane extends JRootPane {
         controller, furnitureScrollPane));
     // Add a mouse listener that gives focus to furniture view when
     // user clicks in its viewport
-    ((JViewport)furnitureView.getParent()).addMouseListener(
+    final JViewport viewport = furnitureScrollPane.getViewport();
+    viewport.addMouseListener(
         new MouseAdapter() {
           @Override
           public void mouseClicked(MouseEvent ev) {
             furnitureView.requestFocusInWindow();
           }
         });    
+    Integer viewportY = (Integer)home.getVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY);
+    if (viewportY != null) {
+      viewport.setViewPosition(new Point(0, viewportY));
+    }
+    viewport.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          home.setVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, viewport.getViewPosition().y);
+        }
+      });
     
     // Create furniture view popup menu
     JPopupMenu furnitureViewPopup = new JPopupMenu();
@@ -1103,16 +1146,14 @@ public class HomePane extends JRootPane {
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         catalogScrollPane, furnitureScrollPane);
-    catalogFurniturePane.setContinuousLayout(true);
-    catalogFurniturePane.setOneTouchExpandable(true);
-    catalogFurniturePane.setResizeWeight(0.5);
+    configureSplitPane(catalogFurniturePane, home, CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5);
     return catalogFurniturePane;
   }
 
   /**
    * Returns the plan view and 3D view pane. 
    */
-  private JComponent getPlanView3DPane(Home home, UserPreferences preferences, 
+  private JComponent getPlanView3DPane(final Home home, UserPreferences preferences, 
                                        HomeController controller) {
     JComponent planView = controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(planView);
@@ -1121,6 +1162,20 @@ public class HomePane extends JRootPane {
     preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
         new RulersVisibilityChangeListener(this, planScrollPane, controller));
     planView.addFocusListener(new FocusableViewListener(controller, planScrollPane));
+    // Restore viewport position if it exists
+    final JViewport viewport = planScrollPane.getViewport();
+    Integer viewportX = (Integer)home.getVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
+    Integer viewportY = (Integer)home.getVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY);
+    if (viewportX != null && viewportY != null) {
+      viewport.setViewPosition(new Point(viewportX, viewportY));
+    }
+    viewport.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          Point viewportPosition = viewport.getViewPosition();
+          home.setVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, viewportPosition.x);
+          home.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
+        }
+      });
 
     // Create plan view popup menu
     JPopupMenu planViewPopup = new JPopupMenu();
@@ -1179,9 +1234,7 @@ public class HomePane extends JRootPane {
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         planScrollPane, view3D);
-    planView3DPane.setContinuousLayout(true);
-    planView3DPane.setOneTouchExpandable(true);
-    planView3DPane.setResizeWeight(0.5);
+    configureSplitPane(planView3DPane, home, PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5);
     return planView3DPane;
   }
   

@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The home managed by the application with its furniture and walls.
@@ -45,12 +47,12 @@ public class Home implements Serializable {
   public static final long CURRENT_VERSION = 1300;
   
   public enum Property {NAME, MODIFIED,
-    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,
+    FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
     BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
-  private transient List<Object>                      selectedItems;
   private transient List<FurnitureListener>           furnitureListeners;
+  private transient List<Object>                      selectedItems;
   private transient List<SelectionListener>           selectionListeners;
   private Collection<Wall>                            walls;
   private transient List<WallListener>                wallListeners;
@@ -58,11 +60,8 @@ public class Home implements Serializable {
   private transient List<DimensionLineListener>       dimensionLineListeners;
   private Camera                                      camera;
   private transient List<CameraListener>              cameraListeners;
-  private float                                       wallHeight;
   private String                                      name;
-  private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
-  private boolean                                     furnitureDescendingSorted;
-  private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
+  private float                                       wallHeight;
   private transient boolean                           modified;
   private BackgroundImage                             backgroundImage;
   private ObserverCamera                              observerCamera;
@@ -73,8 +72,12 @@ public class Home implements Serializable {
   private int                                         lightColor;
   private float                                       wallsAlpha;
   private HomePrint                                   print;
-  private long                                        version;
+  private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
+  private boolean                                     furnitureDescendingSorted;
+  private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
+  private Map<String,Object>                          visualProperties;
   private transient PropertyChangeSupport             propertyChangeSupport;
+  private long                                        version;
 
 
   /**
@@ -156,6 +159,7 @@ public class Home implements Serializable {
     this.groundColor = 0xE0E0E0;
     this.lightColor = 0xF0F0F0;
     this.dimensionLines = new ArrayList<DimensionLine>();
+    this.visualProperties = new HashMap<String, Object>();
     
     this.version = CURRENT_VERSION;
   }
@@ -1185,6 +1189,20 @@ public class Home implements Serializable {
           Property.PRINT.toString(), oldPrint, print);
     }
     this.print = print;
+  }
+  
+  /**
+   * Returns the value of the visual property <code>propertyName</code> associated with this home.
+   */
+  public Object getVisualProperty(String propertyName) {
+    return this.visualProperties.get(propertyName);
+  }
+  
+  /**
+   * Sets a visual property associated with this home.
+   */
+  public void setVisualProperty(String propertyName, Object propertyValue) {
+    this.visualProperties.put(propertyName, propertyValue);
   }
 
   /**

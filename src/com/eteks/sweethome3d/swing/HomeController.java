@@ -65,6 +65,7 @@ import com.eteks.sweethome3d.model.WallListener;
 public class HomeController  {
   private Home                       home;
   private UserPreferences            preferences;
+  private ContentManager             contentManager;
   private HomeApplication            application;
   private JComponent                 homeView;
   private FurnitureCatalogController catalogController;
@@ -116,6 +117,7 @@ public class HomeController  {
                          HomeApplication application) {
     this.home = home;
     this.preferences = preferences;
+    this.contentManager = contentManager;
     this.application = application;
     this.undoSupport = new UndoableEditSupport() {
         @Override
@@ -1236,7 +1238,7 @@ public class HomeController  {
    */
   public void importBackgroundImage() {
     new BackgroundImageWizardController(this.home, this.preferences, 
-        this.application.getContentManager(), this.undoSupport);
+        this.contentManager, this.undoSupport);
   }
   
   /**

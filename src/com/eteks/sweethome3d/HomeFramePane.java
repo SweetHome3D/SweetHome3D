@@ -26,6 +26,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -62,6 +64,13 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class HomeFramePane extends JRootPane {
+  private static final String FRAME_X_VISUAL_PROPERTY       = "com.eteks.sweethome3d.SweetHome3D.FrameX";
+  private static final String FRAME_Y_VISUAL_PROPERTY       = "com.eteks.sweethome3d.SweetHome3D.FrameY";
+  private static final String FRAME_WIDTH_VISUAL_PROPERTY   = "com.eteks.sweethome3d.SweetHome3D.FrameWidth";
+  private static final String FRAME_HEIGHT_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.FrameHeight";
+  private static final String SCREEN_WIDTH_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.ScreenWidth";
+  private static final String SCREEN_HEIGHT_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ScreenHeight";
+  
   private static int                    newHomeCount;
   private int                           newHomeNumber;
   private Home                          home;
@@ -138,7 +147,7 @@ public class HomeFramePane extends JRootPane {
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     // Compute frame size and location
-    computeFrameBounds(homeFrame);
+    computeFrameBounds(this.home, homeFrame);
     // Enable windows to update their content while window resizing
     getToolkit().setDynamicLayout(true); 
     // The best solution should be to avoid the 3 following statements 
@@ -161,6 +170,23 @@ public class HomeFramePane extends JRootPane {
                             final HomeApplication application,
                             final HomeFrameController controller,
                             final JFrame frame) {
+    // Add a listener that keeps track of window location and size
+    frame.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent ev) {
+          home.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
+          home.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
+          Dimension userScreenSize = getUserScreenSize();
+          home.setVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY, userScreenSize.width);
+          home.setVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, userScreenSize.height);
+        }
+        
+        @Override
+        public void componentMoved(ComponentEvent ev) {
+          home.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
+          home.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
+        }
+      });
     // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(new WindowAdapter () {
@@ -211,8 +237,8 @@ public class HomeFramePane extends JRootPane {
                 }
               });
           }
-        }        
-      });
+        } 
+      });    
     // Add a listener to catalog to update the catalog selected furniture displayed by this pane
     application.getUserPreferences().getFurnitureCatalog().addFurnitureListener(
         new CatalogChangeFurnitureListener(this));
@@ -295,15 +321,40 @@ public class HomeFramePane extends JRootPane {
   /**
    * Computes <code>frame</code> size and location to fit into screen.
    */
-  private void computeFrameBounds(JFrame frame) {
-    frame.setLocationByPlatform(true);
-    frame.pack();
+  private void computeFrameBounds(Home home, JFrame frame) {
+    Integer x = (Integer)home.getVisualProperty(FRAME_X_VISUAL_PROPERTY);
+    Integer y = (Integer)home.getVisualProperty(FRAME_Y_VISUAL_PROPERTY);
+    Integer width = (Integer)home.getVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY);
+    Integer height = (Integer)home.getVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY);
+    Integer screenWidth = (Integer)home.getVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
+    Integer screenHeight = (Integer)home.getVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
+    
+    Dimension screenSize = getUserScreenSize();
+    // If home frame bounds exist and screen resolution didn't reduce 
+    if (x != null && y != null 
+        && width != null && height != null 
+        && screenWidth != null && screenHeight != null
+        && screenWidth >= screenSize.width
+        && screenHeight >= screenSize.height) {
+      // Reuse home bounds
+      frame.setBounds(x, y, width, height);
+    } else {      
+      frame.setLocationByPlatform(true);
+      frame.pack();
+      frame.setSize(Math.min(screenSize.width * 4 / 5, frame.getWidth()), 
+              Math.min(screenSize.height * 4 / 5, frame.getHeight()));
+    }
+  }
+
+  /**
+   * Returns the screen size available to user. 
+   */
+  private Dimension getUserScreenSize() {
     Dimension screenSize = getToolkit().getScreenSize();
     Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
     screenSize.width -= screenInsets.left + screenInsets.right;
     screenSize.height -= screenInsets.top + screenInsets.bottom;
-    frame.setSize(Math.min(screenSize.width * 4 / 5, frame.getWidth()), 
-            Math.min(screenSize.height * 4 / 5, frame.getHeight()));
+    return screenSize;
   }
   
   /**
