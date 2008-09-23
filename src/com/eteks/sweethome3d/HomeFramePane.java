@@ -174,17 +174,17 @@ public class HomeFramePane extends JRootPane {
     frame.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
-          home.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
-          home.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
+          controller.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
+          controller.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
           Dimension userScreenSize = getUserScreenSize();
-          home.setVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY, userScreenSize.width);
-          home.setVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, userScreenSize.height);
+          controller.setVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY, userScreenSize.width);
+          controller.setVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, userScreenSize.height);
         }
         
         @Override
         public void componentMoved(ComponentEvent ev) {
-          home.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
-          home.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
+          controller.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
+          controller.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
         }
       });
     // Control frame closing and activation 

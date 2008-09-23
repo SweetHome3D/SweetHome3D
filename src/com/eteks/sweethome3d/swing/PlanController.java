@@ -62,6 +62,8 @@ public class PlanController extends FurnitureController {
   
   public enum Mode {WALL_CREATION, SELECTION, DIMENSION_LINE_CREATION}
   
+  private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
+
   private JComponent            planView;
   private Home                  home;
   private UserPreferences       preferences;
@@ -135,6 +137,12 @@ public class PlanController extends FurnitureController {
     
     addHomeListeners();
     addLanguageListener(preferences);
+    
+    // Restore previous scale if it exists
+    Float scale = (Float)home.getVisualProperty(SCALE_VISUAL_PROPERTY);
+    if (scale != null) {
+      setScale(scale);
+    }
   }
 
   /**
@@ -638,8 +646,9 @@ public class PlanController extends FurnitureController {
   /**
    * Controls the scale in plan view. 
    */
-  public void setScale(float newScale) {
-    ((PlanComponent)getView()).setScale(newScale);
+  public void setScale(float scale) {
+    ((PlanComponent)getView()).setScale(scale);
+    this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
   } 
   
   /**

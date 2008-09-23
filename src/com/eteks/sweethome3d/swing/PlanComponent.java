@@ -117,8 +117,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     DUPLICATION_ON, DUPLICATION_OFF}
   private enum PaintMode {PAINT, PRINT, CLIPBOARD}
   
-  private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
-
   private static final float MARGIN = 40;
   private Home               home;
   private UserPreferences    preferences;
@@ -309,12 +307,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
     super.setBackground(UIManager.getColor("window"));
-    
-    // Restore previous scale if it exists
-    Float scale = (Float)home.getVisualProperty(SCALE_VISUAL_PROPERTY);
-    if (scale != null) {
-      this.scale = scale;
-    }
   }
 
   /**
@@ -1884,8 +1876,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       }
       
       this.scale = scale;
-      this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
-      
       revalidate();
 
       if (parent instanceof JViewport) {

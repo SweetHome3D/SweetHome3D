@@ -1294,4 +1294,12 @@ public class HomeController  {
     planController.setScale(newScale);
     enableZoomActions();
   }
+
+  /**
+   * Controls the change of value of a visual property in home.
+   */
+  public void setVisualProperty(String propertyName,
+                                Object propertyValue) {
+    this.home.setVisualProperty(propertyName, propertyValue);
+  }
 }
