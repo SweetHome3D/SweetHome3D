@@ -244,8 +244,10 @@ public class WizardPane extends JOptionPane {
   public void displayView() {
     this.dialog = createDialog(FocusManager.getCurrentManager().getActiveWindow(), this.title);
     this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
-    this.dialog.setMinimumSize(getSize());
     this.dialog.setResizable(this.resizable);
+    // Pack again because resize decorations may have changed dialog preferred size
+    this.dialog.pack();
+    this.dialog.setMinimumSize(getSize());
     this.dialog.setVisible(true);
     this.dialog.dispose();
   }
