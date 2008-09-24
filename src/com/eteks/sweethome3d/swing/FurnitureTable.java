@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -406,6 +407,68 @@ public class FurnitureTable extends JTable implements Printable {
     setColumnModel(columnModel);
     setGridColor(gridColor);
     return pageExists;
+  }
+  
+  /**
+   * Returns a CSV formatted text describing the selected pieces of <code>furniture</code>.  
+   */
+  public String getClipboardCSV() {
+    StringBuilder csv = new StringBuilder(); 
+    String lineSeparator = System.getProperty("line.separator");
+    // Header
+    for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+      if (columnIndex > 0) {
+        csv.append("\t");
+      }
+      csv.append(this.columnModel.getColumn(columnIndex).getHeaderValue());
+    }
+    csv.append(lineSeparator);
+    
+    // Selected values 
+    for (int rowIndex : getSelectedRows()) {
+      HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)getModel().getValueAt(rowIndex, 0);
+      for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
+        if (columnIndex > 0) {
+          csv.append("\t");
+        }
+        TableColumn column = this.columnModel.getColumn(columnIndex);
+        switch ((HomePieceOfFurniture.SortableProperty)column.getIdentifier()) {
+          case NAME :
+            // Copy piece name
+            csv.append(copiedPiece.getName());
+            break;
+          case COLOR :
+            // Copy piece color at #xxxxxx format
+            csv.append(copiedPiece.getColor() != null 
+                ? "#" + Integer.toHexString(copiedPiece.getColor()).substring(2)
+                : "");
+            break;
+          case WIDTH :
+          case DEPTH :
+          case HEIGHT : 
+          case X : 
+          case Y :
+          case ELEVATION : 
+          case ANGLE :
+            // Copy numbers as they are displayed by their renderer
+            csv.append(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
+            break;
+          case MOVABLE :
+            // Copy boolean as true or false
+            csv.append(copiedPiece.isMovable());
+            break;
+          case DOOR_OR_WINDOW : 
+            csv.append(copiedPiece.isDoorOrWindow());
+            break;
+          case VISIBLE :
+            csv.append(copiedPiece.isVisible());
+            break;
+        }
+      }
+      csv.append(lineSeparator);
+    }
+    return csv.toString();
   }
   
   /**

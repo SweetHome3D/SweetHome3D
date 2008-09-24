@@ -25,6 +25,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -43,6 +44,7 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
   private ContentManager             contentManager;
   private HomeController             homeController;
   private List<HomePieceOfFurniture> copiedFurniture;
+  private String                     copiedCSV;
 
   /**
    * Creates a handler able to transfer home furniture.
@@ -70,9 +72,37 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
   @Override
   protected Transferable createTransferable(JComponent source) {
     this.copiedFurniture = Home.getFurnitureSubList(this.home.getSelectedItems());
-    return new HomeTransferableList(this.copiedFurniture);
+    final Transferable transferable = new HomeTransferableList(this.copiedFurniture);
+    if (source instanceof FurnitureTable) {
+      // Create a text that describes furniture in CSV format
+      this.copiedCSV = ((FurnitureTable)source).getClipboardCSV();
+      // Create a transferable that contains copied furniture and its CSV description 
+      return new Transferable () {
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+          if (DataFlavor.stringFlavor.equals(flavor)) {
+            return copiedCSV;
+          } else {
+            return transferable.getTransferData(flavor);
+          }
+        }
+
+        public DataFlavor [] getTransferDataFlavors() {
+          ArrayList<DataFlavor> dataFlavors = 
+              new ArrayList<DataFlavor>(Arrays.asList(transferable.getTransferDataFlavors()));
+          dataFlavors.add(DataFlavor.stringFlavor);
+          return dataFlavors.toArray(new DataFlavor [dataFlavors.size()]);
+        }
+
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+          return transferable.isDataFlavorSupported(flavor)
+            || DataFlavor.stringFlavor.equals(flavor);
+        }
+      };
+    } else {
+      return transferable;
+    }
   }
-  
+
   /**
    * Removes the copied element once moved.
    */
@@ -82,6 +112,7 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
       this.homeController.cut(copiedFurniture);      
     }
     this.copiedFurniture = null;
+    this.copiedCSV = null;
     this.homeController.enablePasteAction();
   }
 
