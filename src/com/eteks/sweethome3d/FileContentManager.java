@@ -19,10 +19,7 @@
  */
 package com.eteks.sweethome3d;
 
-import java.awt.Component;
 import java.awt.FileDialog;
-import java.awt.Frame;
-import java.awt.Window;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -30,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -356,8 +354,8 @@ public class FileContentManager implements ContentManager {
                                 final ContentType   contentType,
                                 String              name, 
                                 boolean             save) {
-    FileDialog fileDialog = 
-        new FileDialog(JOptionPane.getFrameForComponent(getActiveParent()));
+    FileDialog fileDialog = new FileDialog(JOptionPane.getFrameForComponent(
+        FocusManager.getCurrentManager().getActiveWindow()));
 
     // Set selected file
     if (save && name != null) {
@@ -436,9 +434,9 @@ public class FileContentManager implements ContentManager {
     
     int option;
     if (save) {
-      option = fileChooser.showSaveDialog(getActiveParent());
+      option = fileChooser.showSaveDialog(FocusManager.getCurrentManager().getActiveWindow());
     } else {
-      option = fileChooser.showOpenDialog(getActiveParent());
+      option = fileChooser.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow());
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve current directory for future calls
@@ -476,25 +474,8 @@ public class FileContentManager implements ContentManager {
     String replace = resource.getString("confirmOverwrite.overwrite");
     String cancel = resource.getString("confirmOverwrite.cancel");
     
-    return JOptionPane.showOptionDialog(getActiveParent(), message, title, 
-        JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+    return JOptionPane.showOptionDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+        message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
-  }
-
-  /**
-   * Returns the currently active window.
-   */
-  private Component getActiveParent() {
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        return frame;
-      } else for (Component child : frame.getComponents()) {
-        if (child instanceof Window
-            && ((Window)child).isActive()) {
-          return child;
-        }
-      }
-    }
-    return null;
   }
 }

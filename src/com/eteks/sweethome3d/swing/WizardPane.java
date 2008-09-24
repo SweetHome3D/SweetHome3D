@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Frame;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -34,6 +33,7 @@ import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -242,15 +242,7 @@ public class WizardPane extends JOptionPane {
    * Displays this wizard view in a modal dialog.
    */
   public void displayView() {
-    Component parent = null;
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        parent = frame;
-        break;
-      }
-    }
-    
-    this.dialog = createDialog(parent, this.title);
+    this.dialog = createDialog(FocusManager.getCurrentManager().getActiveWindow(), this.title);
     this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     this.dialog.setMinimumSize(getSize());
     this.dialog.setResizable(this.resizable);

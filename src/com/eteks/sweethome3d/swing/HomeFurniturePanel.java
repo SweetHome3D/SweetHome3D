@@ -20,9 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -34,6 +32,7 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import javax.swing.FocusManager;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -471,16 +470,8 @@ public class HomeFurniturePanel extends JPanel {
    */
   public void displayView() {
     String dialogTitle = resource.getString("homeFurniture.title");
-    Component parent = null;
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        parent = frame;
-        break;
-      }
-    }
-    
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(parent, dialogTitle);
+    final JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
     // Add a listener that transfer focus to first text field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

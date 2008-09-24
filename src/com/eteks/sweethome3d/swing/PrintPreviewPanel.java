@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Frame;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -39,6 +38,7 @@ import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.FocusManager;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -236,15 +236,8 @@ public class PrintPreviewPanel extends JPanel {
    */
   public void displayView() {
     String dialogTitle = resource.getString("printPreview.title");
-    Component parent = null;
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        parent = frame;
-        break;
-      }
-    }
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
-    JDialog dialog = optionPane.createDialog(parent, dialogTitle);
+    JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     dialog.setMinimumSize(dialog.getPreferredSize());
     dialog.setResizable(true);

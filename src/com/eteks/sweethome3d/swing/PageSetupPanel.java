@@ -19,8 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.Component;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -31,6 +29,7 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
 import java.util.ResourceBundle;
 
+import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
@@ -183,14 +182,7 @@ public class PageSetupPanel extends JPanel {
    */
   public void displayView() {
     String dialogTitle = resource.getString("pageSetup.title");
-    Component parent = null;
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        parent = frame;
-        break;
-      }
-    }
-    if (JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
+    if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getActiveWindow(), this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {
