@@ -1832,10 +1832,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           public void ancestorAdded(AncestorEvent event) {
             // Attach the 3 other canvases to super class universe with their own view
             createView(0, 0, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
-            createView(
-                Locale.getDefault().equals(Locale.US) 
-                    ? -(float)Math.PI / 2 
-                    : (float)Math.PI / 2, 
+            createView(Locale.getDefault().equals(Locale.US) 
+                          ? -(float)Math.PI / 2 
+                          : (float)Math.PI / 2, 
                 0, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
             createView(0, -(float)Math.PI / 2, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
           }
@@ -1980,13 +1979,22 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      * Returns the icon image matching the displayed view.  
      */
     public BufferedImage getIconImage() {
-      BufferedImage iconImage;
-      try {
-        Dimension iconSize = getPreferredSize();
-        View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-        iconImage = Component3DManager.getInstance().
-            getOffScreenImage(view, iconSize.width, iconSize.height);
-      } catch (IllegalRenderingStateException ex) {
+      BufferedImage iconImage = null;
+      // Under Mac OS X 10.5 (build 1.5.0_13-b05-237) / Java 3D 1.5, there's a very strange bug 
+      // with 3D offscreen images that happens *only* when the user imports furniture from the menu
+      if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        try {
+          // Create icon from an off screen image  
+          Dimension iconSize = getPreferredSize();        
+          View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+          iconImage = Component3DManager.getInstance().
+              getOffScreenImage(view, iconSize.width, iconSize.height);
+        } catch (IllegalRenderingStateException ex) {
+          // Catch exception to create an image with Robot 
+        }
+      }
+      
+      if (iconImage == null) {
         // If off screen canvas fails, capture current canvas with Robot
         Component canvas3D = getCanvas3D();
         Point canvas3DOrigin = new Point();
@@ -1997,7 +2005,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         } catch (AWTException ex2) {
           throw new RuntimeException(ex2);
         }
-      } 
+
+      }
+      
       return iconImage;
     }
   }
