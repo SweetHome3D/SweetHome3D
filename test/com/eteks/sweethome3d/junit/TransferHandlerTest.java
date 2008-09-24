@@ -25,8 +25,13 @@ import java.awt.Container;
 import java.awt.FocusTraversalPolicy;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -47,6 +52,7 @@ import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.HomeTransferableList;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.PlanController;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -56,7 +62,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class TransferHandlerTest extends ComponentTestFixture {
-  public void testTransferHandler() throws ComponentSearchException {
+  public void testTransferHandler() throws ComponentSearchException, UnsupportedFlavorException, IOException {
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
     HomeController controller = new HomeController(home, preferences);
@@ -180,6 +186,10 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertEquals("Wrong dimension count in home", 0, home.getDimensionLines().size());
     // Check only Paste action is enabled
     assertActionsEnabled(controller, false, false, true, false);
+    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    // Check clipboard contains two different data flavors (HomeTransferableList and Image)
+    assertTrue("Missing home data flavor", clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR));
+    assertTrue("Missing String flavor", clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor));
 
     // 8. Paste selected items in plan component
     runAction(controller, HomePane.ActionType.PASTE);
@@ -210,6 +220,12 @@ public class TransferHandlerTest extends ComponentTestFixture {
     assertEquals("Wrong dimension count in home", 1, home.getDimensionLines().size());
     // Check Cut, Copy and Paste actions are enabled
     assertActionsEnabled(controller, true, true, true, true);
+    
+    // 11. Copy selected furniture in clipboard while furniture table has focus
+    runAction(controller, HomePane.ActionType.COPY);    
+    // Check clipboard contains two different data flavors (HomeTransferableList and String)
+    assertTrue("Missing home data flavor", clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR));
+    assertTrue("Missing String flavor", clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor));
   }
   
   /**
