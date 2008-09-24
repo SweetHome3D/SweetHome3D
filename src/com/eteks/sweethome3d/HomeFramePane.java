@@ -336,7 +336,7 @@ public class HomeFramePane extends JRootPane {
   /**
    * Computes <code>frame</code> size and location to fit into screen.
    */
-  private void computeFrameBounds(Home home, JFrame frame) {
+  private void computeFrameBounds(Home home, final JFrame frame) {
     Integer x = (Integer)home.getVisualProperty(FRAME_X_VISUAL_PROPERTY);
     Integer y = (Integer)home.getVisualProperty(FRAME_Y_VISUAL_PROPERTY);
     Integer width = (Integer)home.getVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY);
@@ -355,7 +355,16 @@ public class HomeFramePane extends JRootPane {
       // Reuse home bounds
       frame.setBounds(x, y, width, height);
       if (maximized != null && maximized) {
-        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        if (OperatingSystem.isLinux()) {
+          EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Under Linux, maximize frame once it's displayed
+              frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
+          });
+        } else {
+          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        }
       }
     } else {      
       frame.setLocationByPlatform(true);
