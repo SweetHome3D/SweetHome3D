@@ -64,12 +64,13 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class HomeFramePane extends JRootPane {
-  private static final String FRAME_X_VISUAL_PROPERTY       = "com.eteks.sweethome3d.SweetHome3D.FrameX";
-  private static final String FRAME_Y_VISUAL_PROPERTY       = "com.eteks.sweethome3d.SweetHome3D.FrameY";
-  private static final String FRAME_WIDTH_VISUAL_PROPERTY   = "com.eteks.sweethome3d.SweetHome3D.FrameWidth";
-  private static final String FRAME_HEIGHT_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.FrameHeight";
-  private static final String SCREEN_WIDTH_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.ScreenWidth";
-  private static final String SCREEN_HEIGHT_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ScreenHeight";
+  private static final String FRAME_X_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameX";
+  private static final String FRAME_Y_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameY";
+  private static final String FRAME_WIDTH_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.FrameWidth";
+  private static final String FRAME_HEIGHT_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.FrameHeight";
+  private static final String FRAME_MAXIMIZED_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.FrameMaximized";
+  private static final String SCREEN_WIDTH_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.ScreenWidth";
+  private static final String SCREEN_HEIGHT_VISUAL_PROPERTY   = "com.eteks.sweethome3d.SweetHome3D.ScreenHeight";
   
   private static int                    newHomeCount;
   private int                           newHomeNumber;
@@ -174,8 +175,11 @@ public class HomeFramePane extends JRootPane {
     frame.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent ev) {
-          controller.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
-          controller.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
+          // Store new size only if frame isn't maximized
+          if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
+            controller.setVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY, frame.getWidth());
+            controller.setVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY, frame.getHeight());
+          }
           Dimension userScreenSize = getUserScreenSize();
           controller.setVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY, userScreenSize.width);
           controller.setVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY, userScreenSize.height);
@@ -183,15 +187,24 @@ public class HomeFramePane extends JRootPane {
         
         @Override
         public void componentMoved(ComponentEvent ev) {
-          controller.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
-          controller.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
+          // Store new location only if frame isn't maximized
+          if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != JFrame.MAXIMIZED_BOTH) {
+            controller.setVisualProperty(FRAME_X_VISUAL_PROPERTY, frame.getX());
+            controller.setVisualProperty(FRAME_Y_VISUAL_PROPERTY, frame.getY());
+          }
         }
       });
     // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-    frame.addWindowListener(new WindowAdapter () {
+    WindowAdapter windowListener = new WindowAdapter () {
         private Component mostRecentFocusOwner;
 
+        @Override
+        public void windowStateChanged(WindowEvent ev) {
+          controller.setVisualProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
+              (frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH);
+        }
+        
         @Override
         public void windowClosing(WindowEvent ev) {
           controller.close();
@@ -238,7 +251,9 @@ public class HomeFramePane extends JRootPane {
               });
           }
         } 
-      });    
+      };
+    frame.addWindowListener(windowListener);    
+    frame.addWindowStateListener(windowListener);    
     // Add a listener to catalog to update the catalog selected furniture displayed by this pane
     application.getUserPreferences().getFurnitureCatalog().addFurnitureListener(
         new CatalogChangeFurnitureListener(this));
@@ -326,6 +341,7 @@ public class HomeFramePane extends JRootPane {
     Integer y = (Integer)home.getVisualProperty(FRAME_Y_VISUAL_PROPERTY);
     Integer width = (Integer)home.getVisualProperty(FRAME_WIDTH_VISUAL_PROPERTY);
     Integer height = (Integer)home.getVisualProperty(FRAME_HEIGHT_VISUAL_PROPERTY);
+    Boolean maximized = (Boolean)home.getVisualProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY);
     Integer screenWidth = (Integer)home.getVisualProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
     Integer screenHeight = (Integer)home.getVisualProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
     
@@ -338,6 +354,9 @@ public class HomeFramePane extends JRootPane {
         && screenHeight >= screenSize.height) {
       // Reuse home bounds
       frame.setBounds(x, y, width, height);
+      if (maximized != null && maximized) {
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+      }
     } else {      
       frame.setLocationByPlatform(true);
       frame.pack();
