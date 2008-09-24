@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -214,6 +215,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // 6. Check default furniture name is the presentation name proposed by content manager
     assertEquals("Wrong default name", "test", 
         contentManager.getPresentationName(testedModelName.toString(), ContentManager.ContentType.MODEL));
+    // Check name text field has focus
+    assertSame("Name field doesn't have focus", nameTextField,
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Check Add to catalog check box isn't selected and category combo box 
     // is disabled when furniture is imported in home
     assertFalse("Add to catalog check box is selected", addToCatalogCheckBox.isSelected());

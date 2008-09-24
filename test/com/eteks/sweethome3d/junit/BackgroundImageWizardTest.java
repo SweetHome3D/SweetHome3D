@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -27,7 +28,6 @@ import java.util.ResourceBundle;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JSpinner;
 
@@ -153,8 +153,11 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     // 4. Check scale distance spinner value is empty
     assertEquals("Scale distance spinner isn't empty", null, scaleDistanceSpinner.getValue());
     assertFalse("Next button is enabled", nextFinishOptionButton.isEnabled());
+    // Check scale spinner field has focus
+    assertSame("Scale spinner doesn't have focus", ((JSpinner.DefaultEditor)scaleDistanceSpinner.getEditor()).getTextField(),
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Enter as scale
-    tester.actionKeyString(((JSpinner.DefaultEditor)scaleDistanceSpinner.getEditor()).getTextField(), "100");    
+    tester.actionKeyString("100");    
     // Check next button is enabled 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
     nextFinishOptionButton.doClick();
@@ -166,9 +169,10 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Wrong origin x spinner value", new Float(0), xOriginSpinner.getValue());
     assertEquals("Wrong origin y spinner value", new Float(0), yOriginSpinner.getValue());
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
+    assertSame("Origin x spinner doesn't have focus", ((JSpinner.DefaultEditor)xOriginSpinner.getEditor()).getTextField(),
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Change origin
-    JFormattedTextField originXTextField = ((JSpinner.DefaultEditor)xOriginSpinner.getEditor()).getTextField();
-    tester.actionKeyString(originXTextField, "1");    
+    tester.actionKeyString("1");    
     assertEquals("Wrong origin x spinner value", 10f, xOriginSpinner.getValue());
 
     nextFinishOptionButton.doClick();

@@ -323,7 +323,15 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Switches to the component card matching <code>step</code>.   
    */
   public void setStep(final BackgroundImageWizardController.Step step) {
-    this.cardLayout.show(this, step.name());
+    this.cardLayout.show(this, step.name());    
+    switch (step) {
+      case SCALE:
+        ((JSpinner.DefaultEditor)this.scaleDistanceSpinner.getEditor()).getTextField().requestFocusInWindow();
+        break;
+      case ORIGIN:
+        ((JSpinner.DefaultEditor)this.xOriginSpinner.getEditor()).getTextField().requestFocusInWindow();
+        break;
+    }
   }
 
   /**

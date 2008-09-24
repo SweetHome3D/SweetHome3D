@@ -31,6 +31,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -273,7 +274,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       });
     this.modelChoiceErrorLabel = new JLabel(this.resource.getString("modelChoiceErrolLabel.text"));
-    // Make modelChoiceErrorLabel visible only if an error occured during model content loading
+    // Make modelChoiceErrorLabel visible only if an error occurred during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
     this.modelPreviewComponent = new ModelPreviewComponent();
     // Add a transfer handler to model preview component to let user drag and drop a file in component
@@ -832,6 +833,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    */
   public void setStep(ImportedFurnitureWizardController.Step step) {
     this.cardLayout.show(this, step.name());
+    switch (step) {
+      case ATTRIBUTES:
+        this.nameTextField.requestFocusInWindow();
+        break;
+    }
   }
 
   /**
@@ -1246,22 +1252,26 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           getViewYaw(), getViewPitch());
       // Link scene to universe
       this.universe.addBranchGraph(this.sceneTree);
-      
+
       if (OperatingSystem.isMacOSX()) {
+        final Component root = SwingUtilities.getRoot(ModelPreviewComponent.this);
         EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            // Force a real repaint of the component with a resize of its root, 
-            // otherwise some canvas 3D may not be displayed
-            Component root = SwingUtilities.getRoot(ModelPreviewComponent.this);
-            Dimension rootSize = root.getSize();
-            root.setSize(new Dimension(rootSize.width + 1, rootSize.height));
-            try {
-              Thread.sleep(100);
-            } catch (InterruptedException ex) {
-            }
-            root.setSize(new Dimension(rootSize.width, rootSize.height));
-          } 
-        });
+            public void run() {
+              // Force a real repaint of the component with a resize of its root, 
+              // otherwise some canvas 3D may not be displayed
+              Dimension rootSize = root.getSize();
+              root.setSize(new Dimension(rootSize.width + 1, rootSize.height));
+              try {
+                Thread.sleep(100);
+              } catch (InterruptedException ex) {
+              }
+              root.setSize(new Dimension(rootSize.width, rootSize.height));
+              // Request focus again even if dialog isn't supposed to have lost focus !
+              if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != root) {
+                root.requestFocus();
+              }
+            } 
+          });
       }
     }
     
