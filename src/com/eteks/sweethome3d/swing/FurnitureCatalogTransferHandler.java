@@ -41,7 +41,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
  */
 public class FurnitureCatalogTransferHandler extends TransferHandler {
   private FurnitureCatalog           catalog;
-  private ContentManager    contentManager;
+  private ContentManager             contentManager;
   private FurnitureCatalogController catalogController;
 
   /**
