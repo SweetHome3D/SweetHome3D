@@ -226,7 +226,7 @@ public class PrintTest extends ComponentTestFixture {
       fileChooserTester.actionApprove(fileChooser);
     }
     // Wait PDF generation  
-    Thread.sleep(1000);
+    Thread.sleep(1500);
     assertFalse("Print to pdf dialog still showing", printToPdfDialog.isShowing());
     assertTrue("PDF file doesn't exist", pdfFile.exists());
     assertTrue("PDF file is empty", pdfFile.length() > 0);
