@@ -76,12 +76,12 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     this.copiedItems = this.home.getSelectedItems();
     final Transferable transferable = new HomeTransferableList(this.copiedItems);
     if (source instanceof PlanComponent) {
+      // Create an image that contains only selected items
+      this.copiedImage = ((PlanComponent)source).getClipboardImage();
       // Create a transferable that contains copied items and an image
       return new Transferable () {
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
           if (DataFlavor.imageFlavor.equals(flavor)) {
-            // Create an image that contains only selected items
-            copiedImage = ((PlanComponent)source).getClipboardImage();
             return copiedImage;
           } else {
             return transferable.getTransferData(flavor);
