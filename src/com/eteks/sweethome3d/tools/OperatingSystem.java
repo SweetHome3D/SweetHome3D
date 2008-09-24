@@ -29,7 +29,14 @@ public class OperatingSystem {
   }
 
   /**
-   * Returns <code>true</code> if current operating is Windows
+   * Returns <code>true</code> if current operating is Linux.
+   */
+  public static boolean isLinux() {
+    return System.getProperty("os.name").startsWith("Linux");
+  }
+
+  /**
+   * Returns <code>true</code> if current operating is Windows.
    */
   public static boolean isWindows() {
     return System.getProperty("os.name").startsWith("Windows");
