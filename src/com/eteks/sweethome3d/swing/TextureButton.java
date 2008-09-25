@@ -25,8 +25,11 @@ import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.geom.AffineTransform;
 import java.util.Locale;
 
@@ -35,6 +38,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.TextureImage;
@@ -88,17 +92,27 @@ public class TextureButton extends JButton {
     // Add a listener to update texture
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ev) {
-        TexturePanel texturePanel = new TexturePanel(preferences);
+        final TexturePanel texturePanel = new TexturePanel(preferences);
         // Update edited texture in texture panel
         texturePanel.setTexture(texture);
         // Show panel in a resizable modal dialog
         JOptionPane optionPane = new JOptionPane(texturePanel, JOptionPane.PLAIN_MESSAGE, 
             JOptionPane.OK_CANCEL_OPTION);
-        JDialog dialog = optionPane.createDialog(
+        final JDialog dialog = optionPane.createDialog(
             SwingUtilities.getRootPane(TextureButton.this), textureDialogTitle);
         dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-        dialog.setMinimumSize(getPreferredSize());
         dialog.setResizable(true);
+        // Pack again because resize decorations may have changed dialog preferred size
+        dialog.pack();
+        dialog.setMinimumSize(getPreferredSize());
+        // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
+        dialog.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentShown(ComponentEvent ev) {
+              KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(texturePanel);
+              dialog.removeComponentListener(this);
+            }
+          });
         dialog.setVisible(true);
         dialog.dispose();
         if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
