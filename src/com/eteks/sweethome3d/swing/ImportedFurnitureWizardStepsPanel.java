@@ -308,6 +308,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           return success;
         }
       });
+    this.modelPreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
    
     // Orientation panel components
     this.orientationLabel = new JLabel(this.resource.getString("orientationLabel.text"));

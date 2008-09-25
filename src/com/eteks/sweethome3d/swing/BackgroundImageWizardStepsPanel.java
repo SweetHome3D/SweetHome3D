@@ -92,7 +92,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private JLabel                          imageChoiceOrChangeLabel;
   private JButton                         imageChoiceOrChangeButton;
   private JLabel                          imageChoiceErrorLabel;
-  private ImagePreviewComponent           imageChoicePreviewComponent;
+  private ScaledImageComponent           imageChoicePreviewComponent;
   private JLabel                          scaleLabel;
   private JLabel                          scaleDistanceLabel;
   private JSpinner                        scaleDistanceSpinner;
@@ -102,7 +102,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private JSpinner                        xOriginSpinner;
   private JLabel                          yOriginLabel;
   private JSpinner                        yOriginSpinner;
-  private ImagePreviewComponent           originPreviewComponent;
+  private ScaledImageComponent           originPreviewComponent;
   
   private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
   private static BufferedImage            waitImage;
@@ -144,7 +144,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     this.imageChoiceErrorLabel = new JLabel(resource.getString("imageChoiceErrolLabel.text"));
     // Make imageChoiceErrorLabel visible only if an error occurred during image content loading
     this.imageChoiceErrorLabel.setVisible(false);
-    this.imageChoicePreviewComponent = new ImagePreviewComponent();
+    this.imageChoicePreviewComponent = new ScaledImageComponent();
     // Add a transfer handler to image preview component to let user drag and drop an image in component
     this.imageChoicePreviewComponent.setTransferHandler(new TransferHandler() {
         @Override
@@ -172,6 +172,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
           return success;
         }
       });
+    this.imageChoicePreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
     
     // Image scale panel components
     this.scaleLabel = new JLabel(this.resource.getString("scaleLabel.text"));
@@ -502,10 +503,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   /**
    * Preview component for image choice. 
    */
-  private static class ImagePreviewComponent extends JComponent {
+  private static class ScaledImageComponent extends JComponent {
     private BufferedImage image;
     
-    public ImagePreviewComponent() {
+    public ScaledImageComponent() {
       setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
     }
 
@@ -547,7 +548,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
             RenderingHints.VALUE_RENDER_QUALITY);
         AffineTransform oldTransform = g2D.getTransform();
         Composite oldComposite = g2D.getComposite();
-        Point translation = getImageTranslation();
+        Point translation = getImageTranslation();      
         g2D.translate(translation.x, translation.y);
         float scale = getImageScale();
         g2D.scale(scale, scale);    
@@ -583,8 +584,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      */
     protected float getImageScale() {
       if (image != null) {
-        return Math.min(1, Math.min((float)getWidth() / image.getWidth(), 
-            (float)getHeight() / image.getHeight()));
+        Insets insets = getInsets();
+        return Math.min(1, Math.min((float)(getWidth() - insets.left - insets.right) / image.getWidth(), 
+            (float)(getHeight() - insets.top - insets.bottom) / image.getHeight()));
       } else {
         return 1;
       }
@@ -595,8 +597,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
      */
     protected Point getImageTranslation() {
       float scale = getImageScale();
-      return new Point(Math.round((getWidth() - image.getWidth() * scale) / 2),
-          Math.round((getHeight() - image.getHeight() * scale) / 2));
+      Insets insets = getInsets();
+      return new Point(insets.left + (getWidth() - insets.left - insets.right - Math.round(image.getWidth() * scale)) / 2,
+          insets.top + (getHeight() - insets.top - insets.bottom - Math.round(image.getHeight() * scale)) / 2);
     }
 
     /**
@@ -614,7 +617,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   /**
    * Preview component for image scale distance choice. 
    */
-  private static class ScaleImagePreviewComponent extends ImagePreviewComponent {
+  private static class ScaleImagePreviewComponent extends ScaledImageComponent {
     private BackgroundImageWizardController controller;
 
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
@@ -781,7 +784,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   /**
    * Preview component for image scale distance choice. 
    */
-  private static class OriginImagePreviewComponent extends ImagePreviewComponent {
+  private static class OriginImagePreviewComponent extends ScaledImageComponent {
     private BackgroundImageWizardController controller;
 
     public OriginImagePreviewComponent(BackgroundImageWizardController controller) {
