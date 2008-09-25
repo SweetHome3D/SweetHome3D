@@ -1640,10 +1640,12 @@ public class HomePane extends JRootPane {
             g.setColor(Color.GRAY);
             g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
             Color focusColor = UIManager.getColor("Focus.color");
+            int   transparency = 192;
             if (focusColor == null) {
               focusColor = UIManager.getColor("textHighlight");
+              transparency = 128;
             }
-            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 160));
+            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparency));
             g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
             g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 2, 2);
             g.setColor(focusColor);
