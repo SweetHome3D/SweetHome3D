@@ -38,7 +38,6 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.TextureImage;
