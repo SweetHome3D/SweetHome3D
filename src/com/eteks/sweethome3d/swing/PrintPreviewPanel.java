@@ -239,8 +239,10 @@ public class PrintPreviewPanel extends JPanel {
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
     JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
-    dialog.setMinimumSize(dialog.getPreferredSize());
     dialog.setResizable(true);
+    // Pack again because resize decorations may have changed dialog preferred size
+    dialog.pack();
+    dialog.setMinimumSize(dialog.getPreferredSize());
     dialog.setVisible(true);
     dialog.dispose();
   }
