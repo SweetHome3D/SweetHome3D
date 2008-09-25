@@ -1639,8 +1639,11 @@ public class HomePane extends JRootPane {
             Rectangle rect = getInteriorRectangle(c, x, y, width, height);
             g.setColor(Color.GRAY);
             g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
-            Color focusColor = UIManager.getColor("textHighlight");
-            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 192));
+            Color focusColor = UIManager.getColor("Focus.color");
+            if (focusColor == null) {
+              focusColor = UIManager.getColor("textHighlight");
+            }
+            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), 160));
             g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
             g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 2, 2);
             g.setColor(focusColor);
