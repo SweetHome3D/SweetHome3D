@@ -972,7 +972,12 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private Color getSelectioncolor() {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        return UIManager.getColor("List.selectionBackground").darker();
+        Color selectionColor = UIManager.getColor("Focus.color").darker();
+        if (selectionColor != null) {
+          return selectionColor;
+        } else {
+          return UIManager.getColor("List.selectionBackground").darker();
+        }
       } else { 
         return UIManager.getColor("textHighlight");
       }
@@ -1635,7 +1640,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
 
   /**
    * Paints the observer camera at its current location, if home camera is the observer camera.
-   * @param foregroundColor 
    */
   private void paintCamera(Graphics2D g2D, List<Object> selectedItems,
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
