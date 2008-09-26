@@ -164,14 +164,14 @@ public class PlanController extends FurnitureController {
   }
   
   /**
-   * Adds the property change <code>listener</code> in parameter to this home.
+   * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
     this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
   }
 
   /**
-   * Removes the property change <code>listener</code> in parameter from this home.
+   * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
     this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
