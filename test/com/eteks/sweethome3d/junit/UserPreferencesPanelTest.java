@@ -57,8 +57,8 @@ public class UserPreferencesPanelTest extends TestCase {
         defaultPreferences.isMagnetismEnabled());
     preferences.setNewWallThickness(
         defaultPreferences.getNewWallThickness());
-    preferences.setNewHomeWallHeight(
-        defaultPreferences.getNewHomeWallHeight());
+    preferences.setNewWallHeight(
+        defaultPreferences.getNewWallHeight());
     
     // 2. Create a user preferences panel 
     UserPreferencesPanel panel = new UserPreferencesPanel();
@@ -76,7 +76,7 @@ public class UserPreferencesPanelTest extends TestCase {
     JSpinner newWallThicknessSpinner = 
         (JSpinner)TestUtilities.getField(panel, "newWallThicknessSpinner");
     JSpinner newHomeWallHeightSpinner = 
-        (JSpinner)TestUtilities.getField(panel, "newHomeWallHeightSpinner");
+        (JSpinner)TestUtilities.getField(panel, "newWallHeightSpinner");
     // Check panel components value
     assertTrue("Centimeter radio button isn't selected", 
         centimeterRadioButton.isSelected());
@@ -88,7 +88,7 @@ public class UserPreferencesPanelTest extends TestCase {
     assertEquals("Wrong default thickness", 
         newWallThicknessSpinner.getValue(), defaultPreferences.getNewWallThickness());
     assertEquals("Wrong default wall height", 
-        newHomeWallHeightSpinner.getValue(), defaultPreferences.getNewHomeWallHeight());
+        newHomeWallHeightSpinner.getValue(), defaultPreferences.getNewWallHeight());
     
     // 3. Change panel values
     inchRadioButton.setSelected(true);
@@ -104,7 +104,7 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setRulersVisible(panel.isRulersVisible());
     preferences.setGridVisible(panel.isGridVisible());
     preferences.setNewWallThickness(panel.getNewWallThickness());
-    preferences.setNewHomeWallHeight(panel.getNewHomeWallHeight());
+    preferences.setNewWallHeight(panel.getNewWallHeight());
     // Check preferences value
     assertPreferencesEqual(UserPreferences.Unit.INCH, false, false, false,
         UserPreferences.Unit.inchToCentimeter(1), 
@@ -120,7 +120,7 @@ public class UserPreferencesPanelTest extends TestCase {
         preferences.isRulersVisible(), 
         preferences.isGridVisible(), 
         preferences.getNewWallThickness(),  
-        preferences.getNewHomeWallHeight(), readPreferences);
+        preferences.getNewWallHeight(), readPreferences);
     
     // Restore previous preferences
     previousPreferences.write();
@@ -148,6 +148,6 @@ public class UserPreferencesPanelTest extends TestCase {
     assertEquals("Wrong new wall thickness", newWallThickness, 
         preferences.getNewWallThickness());
     assertEquals("Wrong new home wall height", newHomeWallHeight,
-        preferences.getNewHomeWallHeight());
+        preferences.getNewWallHeight());
   }
 }

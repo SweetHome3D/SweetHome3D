@@ -43,7 +43,7 @@ public class DefaultUserPreferences extends UserPreferences {
     Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
-    setNewHomeWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
+    setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
   }
 

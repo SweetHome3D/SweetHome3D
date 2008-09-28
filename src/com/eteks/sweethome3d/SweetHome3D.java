@@ -202,7 +202,7 @@ public class SweetHome3D extends HomeApplication {
       }
     } else if (application.getHomes().isEmpty()) {
       // Create a default home 
-      Home home = new Home(application.getUserPreferences().getNewHomeWallHeight());
+      Home home = new Home(application.getUserPreferences().getNewWallHeight());
       application.addHome(home);
     } else {
       // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 

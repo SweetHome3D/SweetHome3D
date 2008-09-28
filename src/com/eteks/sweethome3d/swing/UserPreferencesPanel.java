@@ -66,8 +66,8 @@ public class UserPreferencesPanel extends JPanel {
   private JCheckBox      gridCheckBox;
   private JLabel         newWallThicknessLabel;
   private JSpinner       newWallThicknessSpinner;
-  private JLabel         newHomeWallHeightLabel;
-  private JSpinner       newHomeWallHeightSpinner;
+  private JLabel         newWallHeightLabel;
+  private JSpinner       newWallHeightSpinner;
   
   /**
    * Creates a preferences panel that layouts the mutable properties
@@ -124,8 +124,8 @@ public class UserPreferencesPanel extends JPanel {
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
     this.newWallThicknessSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
         0.5f, 0.125f, this.centimeterRadioButton));
-    this.newHomeWallHeightLabel = new JLabel(this.resource.getString("newHomeWallHeightLabel.text"));
-    this.newHomeWallHeightSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
+    this.newWallHeightLabel = new JLabel(this.resource.getString("newWallHeightLabel.text"));
+    this.newWallHeightSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
         10f, 2f, this.centimeterRadioButton));
   }
   
@@ -150,9 +150,9 @@ public class UserPreferencesPanel extends JPanel {
       this.newWallThicknessLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("newWallThicknessLabel.mnemonic")).getKeyCode());
       this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
-      this.newHomeWallHeightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("newHomeWallHeightLabel.mnemonic")).getKeyCode());
-      this.newHomeWallHeightLabel.setLabelFor(this.newHomeWallHeightSpinner);
+      this.newWallHeightLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("newWallHeightLabel.mnemonic")).getKeyCode());
+      this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
     }
   }
   
@@ -211,10 +211,10 @@ public class UserPreferencesPanel extends JPanel {
         1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Seventh row
-    add(this.newHomeWallHeightLabel, new GridBagConstraints(
+    add(this.newWallHeightLabel, new GridBagConstraints(
         0, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(this.newHomeWallHeightSpinner, new GridBagConstraints(
+    add(this.newWallHeightSpinner, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
@@ -239,8 +239,8 @@ public class UserPreferencesPanel extends JPanel {
         preferences.isGridVisible());    
     ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).
         setLength(preferences.getNewWallThickness());
-    ((SpinnerLengthModel)this.newHomeWallHeightSpinner.getModel()).
-        setLength(preferences.getNewHomeWallHeight());
+    ((SpinnerLengthModel)this.newWallHeightSpinner.getModel()).
+        setLength(preferences.getNewWallHeight());
   }
   
   /**
@@ -300,10 +300,10 @@ public class UserPreferencesPanel extends JPanel {
   }
 
   /**
-   * Returns the new home wall height in panel.
+   * Returns the new wall height in panel.
    */
-  public float getNewHomeWallHeight() {
-    return ((SpinnerLengthModel)this.newHomeWallHeightSpinner.getModel()).getLength();
+  public float getNewWallHeight() {
+    return ((SpinnerLengthModel)this.newWallHeightSpinner.getModel()).getLength();
   }
 
   private static class SpinnerLengthModel extends SpinnerNumberModel {

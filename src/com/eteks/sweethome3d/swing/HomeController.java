@@ -940,7 +940,7 @@ public class HomeController  {
    */
   public void newHome() {
     this.application.addHome(
-        new Home(this.preferences.getNewHomeWallHeight()));
+        new Home(this.preferences.getNewWallHeight()));
   }
 
   /**
@@ -1209,7 +1209,7 @@ public class HomeController  {
       this.preferences.setRulersVisible(preferencesPanel.isRulersVisible());
       this.preferences.setGridVisible(preferencesPanel.isGridVisible());
       this.preferences.setNewWallThickness(preferencesPanel.getNewWallThickness());
-      this.preferences.setNewHomeWallHeight(preferencesPanel.getNewHomeWallHeight());
+      this.preferences.setNewWallHeight(preferencesPanel.getNewWallHeight());
       try {
         this.preferences.write();
       } catch (RecorderException ex) {

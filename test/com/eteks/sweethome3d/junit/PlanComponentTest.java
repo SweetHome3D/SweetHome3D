@@ -96,6 +96,10 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertCoordinatesEqualWallPoints(500, 20, 500, 300, wall2);
     Wall wall3 = orderedWalls.get(2);
     assertCoordinatesEqualWallPoints(500, 300, 20, 300, wall3);
+    // Check the thickness and the height of first wall
+    assertEquals("Wrong wall tickness", frame.preferences.getNewWallThickness(), wall1.getThickness());
+    assertEquals("Wrong wall height", frame.preferences.getNewWallHeight(), wall1.getHeight());
+    assertEquals("Wrong wall height at end", null, wall1.getHeightAtEnd());
     // Check they are joined to each other end point
     assertWallsAreJoined(null, wall1, wall2); 
     assertWallsAreJoined(wall1, wall2, wall3); 
@@ -308,24 +312,25 @@ public class PlanComponentTest extends ComponentTestFixture {
   }
   
   private static class PlanTestFrame extends JFrame {
-    private final Home           home;
-    private final PlanController planController;
-    private final JToggleButton  modeButton;
-    private final JButton        undoButton;
-    private final JButton        redoButton;
-    private final JButton        reverseDirectionButton;
-    private final JButton        splitButton;
+    private final UserPreferences preferences;
+    private final Home            home;
+    private final PlanController  planController;
+    private final JToggleButton   modeButton;
+    private final JButton         undoButton;
+    private final JButton         redoButton;
+    private final JButton         reverseDirectionButton;
+    private final JButton         splitButton;
 
     public PlanTestFrame() {
       super("Plan Component Test");
       // Create model objects
       this.home = new Home();
       Locale.setDefault(Locale.FRANCE);
-      UserPreferences preferences = new DefaultUserPreferences();
+      this.preferences = new DefaultUserPreferences();
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);
-      this.planController = new PlanController(this.home, preferences, null, undoSupport);
+      this.planController = new PlanController(this.home, this.preferences, null, undoSupport);
       // Add plan component to frame at its preferred size 
       add(new JScrollPane(this.planController.getView()));
       // Create a toggle button for plan component mode 

@@ -37,7 +37,7 @@ import java.util.ResourceBundle;
  */
 public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        NEW_HOME_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
   private static final String [] SUPPORTED_LANGUAGES = {"cs", "de", "en", "es", "fr", "hu", "it", "pl", "pt", "ru"}; 
   
   private PropertyChangeSupport propertyChangeSupport;
@@ -257,7 +257,7 @@ public abstract class UserPreferences {
   private boolean          rulersVisible    = true;
   private boolean          gridVisible      = true;
   private float            newWallThickness;
-  private float            newHomeWallHeight;
+  private float            newWallHeight;
   private List<String>     recentHomes;
 
   public UserPreferences() {
@@ -459,20 +459,20 @@ public abstract class UserPreferences {
   /**
    * Returns default wall height of new home walls. 
    */
-  public float getNewHomeWallHeight() {
-    return this.newHomeWallHeight;
+  public float getNewWallHeight() {
+    return this.newWallHeight;
   }
 
   /**
-   * Sets default wall height of new home walls, and notifies
+   * Sets default wall height of new walls, and notifies
    * listeners of this change. 
    */
-  public void setNewHomeWallHeight(float newHomeWallHeight) {
-    if (this.newHomeWallHeight != newHomeWallHeight) {
-      float oldHomeWallHeight = this.newHomeWallHeight;
-      this.newHomeWallHeight = newHomeWallHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_HOME_WALL_HEIGHT.toString(), 
-          oldHomeWallHeight, newHomeWallHeight);
+  public void setNewWallHeight(float newWallHeight) {
+    if (this.newWallHeight != newWallHeight) {
+      float oldWallHeight = this.newWallHeight;
+      this.newWallHeight = newWallHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.toString(), 
+          oldWallHeight, newWallHeight);
     }
   }
   

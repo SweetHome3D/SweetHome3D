@@ -61,7 +61,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String MAGNETISM_ENABLED         = "magnetismEnabled";
   private static final String RULERS_VISIBLE            = "rulersVisible";
   private static final String GRID_VISIBLE              = "gridVisible";
-  private static final String NEW_HOME_WALL_HEIGHT      = "newHomeWallHeight";
+  private static final String NEW_WALL_HEIGHT           = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS        = "newWallThickness";
   private static final String RECENT_HOMES              = "recentHomes#";
 
@@ -120,8 +120,8 @@ public class FileUserPreferences extends UserPreferences {
     setGridVisible(preferences.getBoolean(GRID_VISIBLE, true));
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
             defaultPreferences.getNewWallThickness()));
-    setNewHomeWallHeight(preferences.getFloat(NEW_HOME_WALL_HEIGHT,
-            defaultPreferences.getNewHomeWallHeight()));    
+    setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
+            defaultPreferences.getNewWallHeight()));    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= 4; i++) {
@@ -275,7 +275,7 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
-    preferences.putFloat(NEW_HOME_WALL_HEIGHT, getNewHomeWallHeight());
+    preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     // Write recent homes list
     int i = 1;
     for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {

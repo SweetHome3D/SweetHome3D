@@ -745,6 +745,8 @@ public class PlanController extends FurnitureController {
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, 
         this.preferences.getNewWallThickness());
     this.home.addWall(newWall);
+    // Ignore home default wall height, and use preferences new wall height
+    this.home.setWallHeight(newWall, this.preferences.getNewWallHeight());
     if (wallStartAtStart != null) {
       this.home.setWallAtStart(newWall, wallStartAtStart);
       this.home.setWallAtStart(wallStartAtStart, newWall);
