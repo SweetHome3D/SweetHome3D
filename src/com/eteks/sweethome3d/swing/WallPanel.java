@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -68,6 +69,8 @@ public class WallPanel extends JPanel {
   private JSpinner       xEndSpinner;
   private JLabel         yEndLabel;
   private JSpinner       yEndSpinner;
+  private JLabel         lengthLabel;
+  private JSpinner       lengthSpinner;
   private JRadioButton   leftSideColorRadioButton;
   private ColorButton    leftSideColorButton;
   private JRadioButton   leftSideTextureRadioButton;
@@ -87,6 +90,7 @@ public class WallPanel extends JPanel {
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
   private JLabel         wallOrientationLabel;
+  private ChangeListener endPointChangeListener;
 
   /**
    * Creates a panel that displays wall data according to the units set in
@@ -122,10 +126,56 @@ public class WallPanel extends JPanel {
     this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     this.xEndSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
+    final ChangeListener lengthChangeListener = new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          // Update end point spinners without their listener set to avoid useless callbacks
+          xEndSpinner.removeChangeListener(endPointChangeListener);
+          yEndSpinner.removeChangeListener(endPointChangeListener);
+          Float xStart = getWallXStart();
+          Float yStart = getWallYStart();
+          Float xEnd = getWallXEnd();
+          Float yEnd = getWallYEnd();
+          Float length = ((NullableSpinner.NullableSpinnerLengthModel)lengthSpinner.getModel()).getLength();
+          if (xStart != null && yStart != null && xEnd != null && yEnd != null && length != null) {
+            double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
+            ((NullableSpinner.NullableSpinnerLengthModel)xEndSpinner.getModel())
+                .setLength((float)(xStart + length * Math.cos(wallAngle)));
+            ((NullableSpinner.NullableSpinnerLengthModel)yEndSpinner.getModel())
+                .setLength((float)(yStart - length * Math.sin(wallAngle)));
+          } else {
+            ((NullableSpinner.NullableSpinnerLengthModel)xEndSpinner.getModel()).setLength(null);
+            ((NullableSpinner.NullableSpinnerLengthModel)yEndSpinner.getModel()).setLength(null);
+          }
+          xEndSpinner.addChangeListener(endPointChangeListener);
+          yEndSpinner.addChangeListener(endPointChangeListener);
+        }
+      };
+    this.endPointChangeListener = new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          // Update length spinner without its listener set to avoid useless callbacks
+          lengthSpinner.removeChangeListener(lengthChangeListener);
+          Float xStart = getWallXStart();
+          Float yStart = getWallYStart();
+          Float xEnd = getWallXEnd();
+          Float yEnd = getWallYEnd();
+          ((NullableSpinner.NullableSpinnerLengthModel)lengthSpinner.getModel())
+              .setLength(xStart != null && yStart != null && xEnd != null && yEnd != null
+                  ? (float)Point2D.distance(xStart, yStart, xEnd, yEnd) 
+                  : null);
+          lengthSpinner.addChangeListener(lengthChangeListener);
+        }
+      };
+    this.xEndSpinner.addChangeListener(this.endPointChangeListener);
     this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
     this.yEndSpinner = new AutoCommitSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    
+    this.yEndSpinner.addChangeListener(this.endPointChangeListener);
+
+    this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
+    this.lengthSpinner = new AutoCommitSpinner(
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
+    this.lengthSpinner.addChangeListener(lengthChangeListener);
+
     this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
     this.leftSideColorButton = new ColorButton();
     this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
@@ -228,6 +278,9 @@ public class WallPanel extends JPanel {
       this.yEndLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
+      this.lengthLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("lengthLabel.mnemonic")).getKeyCode());
+      this.lengthLabel.setLabelFor(this.lengthSpinner);
 
       this.leftSideColorRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("leftSideColorRadioButton.mnemonic")).getKeyCode());
@@ -259,7 +312,7 @@ public class WallPanel extends JPanel {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents(UserPreferences preferences) {
     int labelAlignment = OperatingSystem.isMacOSX() 
@@ -285,9 +338,17 @@ public class WallPanel extends JPanel {
         this.resource.getString("endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
+    // Add length label and spinner at the end of second row of endPointPanel
+    endPointPanel.add(this.lengthLabel, new GridBagConstraints(
+        0, 1, 3, 1, 1, 0, GridBagConstraints.LINE_END, 
+        GridBagConstraints.NONE, new Insets(2, 0, 0, 5), 0, 0));
+    endPointPanel.add(this.lengthSpinner, new GridBagConstraints(
+        3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+
     add(endPointPanel, new GridBagConstraints(
         0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
-        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
+        GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
     // Third row
     JPanel leftSidePanel = createTitledPanel(
         this.resource.getString("leftSidePanel.title"),
@@ -348,7 +409,7 @@ public class WallPanel extends JPanel {
     JPanel ticknessPanel = new JPanel(new GridBagLayout());
     ticknessPanel.add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 62, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 50, 0));
     if (OperatingSystem.isMacOSX()) {
       this.thicknessLabel.setHorizontalAlignment(JLabel.TRAILING);
     }
@@ -367,7 +428,7 @@ public class WallPanel extends JPanel {
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
     JPanel titledPanel = new JPanel(new GridBagLayout());
     Border panelBorder = BorderFactory.createTitledBorder(title);
-    // For systems different of Mac OS X 10.5, add an empty border 
+    // For systems different from Mac OS X 10.5, add an empty border 
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       panelBorder = BorderFactory.createCompoundBorder(
           panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
@@ -427,10 +488,16 @@ public class WallPanel extends JPanel {
           .setNullable(multipleSelection);
       ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel())
           .setLength(multipleSelection ? null : firstWall.getYStart());
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
+      ((NullableSpinner.NullableSpinnerLengthModel)this.lengthSpinner.getModel())
           .setNullable(multipleSelection);
       ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
+          .setNullable(multipleSelection);
+      // Remove change listener on x end spinner as long as the two coordinates x and y
+      // of the end point aren't both known
+      this.xEndSpinner.removeChangeListener(this.endPointChangeListener);
+      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
           .setLength(multipleSelection ? null : firstWall.getXEnd());
+      this.xEndSpinner.addChangeListener(this.endPointChangeListener);
       ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())
           .setNullable(multipleSelection);
       ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())

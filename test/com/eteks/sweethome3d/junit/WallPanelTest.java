@@ -19,8 +19,11 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.Locale;
+
+import javax.swing.JSpinner;
 
 import junit.framework.TestCase;
 
@@ -37,7 +40,7 @@ import com.eteks.sweethome3d.swing.WallPanel;
  * @author Emmanuel Puybaret
  */
 public class WallPanelTest extends TestCase {
-  public void testHomePieceOfFurniturePanel() {
+  public void testHomePieceOfFurniturePanel() throws NoSuchFieldException, IllegalAccessException {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
@@ -54,6 +57,8 @@ public class WallPanelTest extends TestCase {
     // Check values stored by wall panel components are equal to the ones set
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
+        (float)Point2D.distance(wall1.getXStart(), wall1.getYStart(),
+            wall1.getXEnd(), wall1.getYEnd()),
         wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
         wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
         wall1.getRightSideColor(), wall1.getRightSideTexture(), panel);
@@ -65,11 +70,21 @@ public class WallPanelTest extends TestCase {
     panel = new WallPanel(home, preferences, null);
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
+        (float)Point2D.distance(wall1.getXStart(), wall1.getYStart(),
+            wall1.getXEnd(), wall1.getYEnd()),
         wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
         wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
         null, wall1.getRightSideTexture(), panel);
     
-    // 4. Add a second selected wall to home
+    // 4. Increase length in dialog
+    JSpinner lengthSpinner = 
+        (JSpinner)TestUtilities.getField(panel, "lengthSpinner");
+    lengthSpinner.setValue((Float)lengthSpinner.getValue() + 20f);
+    // Check wall end coordinates changed accordingly
+    assertEquals("Wrong X end", wall1.getXEnd() + 20f * (float)Math.cos(Math.PI / 4), panel.getWallXEnd());
+    assertEquals("Wrong Y end", wall1.getYEnd() + 20f * (float)Math.sin(Math.PI / 4), panel.getWallYEnd());
+    
+    // 5. Add a second selected wall to home
     Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
     home.addWall(wall2);
     home.setWallHeight(wall2, 300f);
@@ -79,7 +94,7 @@ public class WallPanelTest extends TestCase {
     // Check if wall panel edits null values if walls thickness or colors are the same
     panel = new WallPanel(home, preferences, null);
     // Check values stored by furniture panel components are equal to the ones set
-    assertWallPanelEquals(null, null,
+    assertWallPanelEquals(null, null, null,
         null, null, null, null, null, 10, null, null, null, panel);
   }
   
@@ -87,7 +102,7 @@ public class WallPanelTest extends TestCase {
    * Assert values in parameter are the same as the ones 
    * stored in <code>panel</code> components.
    */
-  private void assertWallPanelEquals(Float xStart, Float yStart, Float xEnd, Float yEnd, 
+  private void assertWallPanelEquals(Float xStart, Float yStart, Float xEnd, Float yEnd, Float length,
                                      Float thickness, Float height, Float heightAtEnd,
                                      Integer leftColor, TextureImage leftTexture,
                                      Integer rightColor, TextureImage rightTexture,
@@ -96,6 +111,13 @@ public class WallPanelTest extends TestCase {
     assertEquals("Wrong Y start", yStart, panel.getWallYStart());
     assertEquals("Wrong X end", xEnd, panel.getWallXEnd());
     assertEquals("Wrong Y end", yEnd, panel.getWallYEnd());
+    if (panel.getWallXStart() != null && panel.getWallYStart() != null
+        && panel.getWallXEnd() != null && panel.getWallYEnd() != null) {
+      assertEquals("Wrong length", length, (float)Point2D.distance(panel.getWallXStart(), panel.getWallYStart(),
+          panel.getWallXEnd(), panel.getWallYEnd()));
+    } else {
+      assertEquals("Wrong length", length, null);
+    }
     assertEquals("Wrong thickness", thickness, panel.getWallThickness());
     assertEquals("Wrong height", height, panel.getWallHeight());
     assertEquals("Wrong heightAtEnd", height, panel.getWallHeightAtEnd());
