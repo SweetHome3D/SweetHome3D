@@ -24,6 +24,7 @@ import java.awt.Graphics;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
 import com.eteks.sweethome3d.model.ContentManager;
@@ -78,6 +79,10 @@ public class HomePDFPrinter {
         new HomePrintableComponent(this.home, this.controller, this.defaultFont);
       // Print each page
       for (int page = 0, pageCount = printableComponent.getPageCount(); page < pageCount; page++) {
+        // Check current thread isn't interrupted
+        if (Thread.interrupted()) {
+          throw new InterruptedIOException();
+        }
         PdfTemplate pdfTemplate = pdfContent.createTemplate((float)pageFormat.getWidth(), 
             (float)pageFormat.getHeight());
         Graphics g = pdfTemplate.createGraphicsShapes((float)pageFormat.getWidth(), 
@@ -97,6 +102,8 @@ public class HomePDFPrinter {
       IOException exception = new IOException("Couldn't print to PDF");
       exception.initCause(ex);
       throw exception;
+    } catch (InterruptedPrinterException ex) {
+      throw new InterruptedIOException("Print to PDF interrupted");
     } catch (PrinterException ex) {
       IOException exception = new IOException("Couldn't print to PDF");
       exception.initCause(ex);

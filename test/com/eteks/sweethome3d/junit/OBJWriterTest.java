@@ -31,6 +31,7 @@ import junit.framework.TestCase;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomeController3D;
@@ -75,7 +76,7 @@ public class OBJWriterTest extends TestCase {
   /**
    * Tests home export to OBJ format.
    */
-  public void testHomeExportToOBJ() {
+  public void testHomeExportToOBJ() throws RecorderException {
     // 1. Create an empty home and a 3D controller
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();

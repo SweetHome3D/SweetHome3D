@@ -63,6 +63,11 @@ public class HomePrintableComponent extends JComponent implements Printable {
    * Prints a given <code>page</code>.
    */
   public int print(Graphics g, PageFormat pageFormat, int page) throws PrinterException {
+    // Check current thread isn't interrupted
+    if (Thread.interrupted()) {
+      throw new InterruptedPrinterException();
+    }
+    
     Graphics2D g2D = (Graphics2D)g;
     g2D.setFont(this.defaultFont);
     g2D.setColor(Color.WHITE);

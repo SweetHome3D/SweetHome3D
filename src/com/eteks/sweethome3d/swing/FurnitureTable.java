@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
@@ -31,6 +32,7 @@ import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -395,20 +396,67 @@ public class FurnitureTable extends JTable implements Printable {
       // Change printable column header renderer
       printableColumn.setHeaderRenderer(printableHeaderRenderer);
       printableColumnModel.addColumn(printableColumn);
-    }
-    setColumnModel(printableColumnModel);   
-    updateTableColumnsWidth();
-    Color gridColor = getGridColor();
-    // Force grid color to black
-    setGridColor(Color.BLACK);
-    Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
-    int pageExists = printable.print(g, pageFormat, pageIndex);
-    // Restore column model and grid color to their previous values
-    setColumnModel(columnModel);
-    setGridColor(gridColor);
-    return pageExists;
+    }    
+    return print(g, pageFormat, pageIndex, printableColumnModel, Color.BLACK);
   }
-  
+
+  /**
+   * Prints this table in Event Dispatch Thread.
+  */
+  private int print(final Graphics g, 
+                    final PageFormat pageFormat, 
+                    final int pageIndex, 
+                    final TableColumnModel printableColumnModel,
+                    final Color gridColor) throws PrinterException {
+    if (EventQueue.isDispatchThread()) {
+      TableColumnModel oldColumnModel = getColumnModel();
+      Color oldGridColor = getGridColor();
+      setColumnModel(printableColumnModel);   
+      updateTableColumnsWidth();
+      setGridColor(gridColor);
+      Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
+      int pageExists = printable.print(g, pageFormat, pageIndex);
+      // Restore column model and grid color to their previous values
+      setColumnModel(oldColumnModel);
+      setGridColor(oldGridColor);
+      return pageExists;
+    } else {
+      // Print synchronously table in Event Dispatch Thread
+      // The best solution should be to be able to print out of Event Dispatch Thread
+      // a new instance of JTable customized with printableColumnModel and gridColor,
+      // but Swing refuses to print a JTable that isn't attached to a visible frame
+      class RunnableContext {
+        int pageExists;
+        PrinterException exception;
+      }
+      
+      final RunnableContext context = new RunnableContext();
+      try {
+        EventQueue.invokeAndWait(new Runnable() {
+            public void run() {
+              try {
+                 context.pageExists = print(g, pageFormat, pageIndex, printableColumnModel, gridColor);
+              } catch (PrinterException ex) {
+                context.exception = ex;
+              }
+            }
+          });
+        if (context.exception != null) {
+          throw context.exception;
+        }
+        return context.pageExists;
+      } catch (InterruptedException ex) {
+        throw new InterruptedPrinterException("Print interrupted");
+      } catch (InvocationTargetException ex) {
+        if (ex.getCause() instanceof RuntimeException) {
+          throw (RuntimeException)ex.getCause();
+        } else {
+          throw (Error)ex.getCause();
+        }
+      }
+    }
+  }
+
   /**
    * Returns a CSV formatted text describing the selected pieces of <code>furniture</code>.  
    */

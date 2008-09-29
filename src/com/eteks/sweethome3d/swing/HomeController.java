@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.swing.JComponent;
 import javax.swing.event.UndoableEditEvent;
@@ -50,6 +51,7 @@ import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -945,7 +947,7 @@ public class HomeController  {
 
   /**
    * Opens a home. This method displays an {@link HomePane#showOpenDialog() open dialog} 
-   * in view, reads the home from the choosen name and adds it to application home list.
+   * in view, reads the home from the chosen name and adds it to application home list.
    */
   public void open() {
     ((HomePane)getView()).invokeLater(new Runnable() {
@@ -1049,91 +1051,146 @@ public class HomeController  {
    * home is removed from application homes list.
    */
   public void close() {
-    boolean willClose = true;
     if (this.home.isModified()) {
       switch (((HomePane)getView()).confirmSave(this.home.getName())) {
-        case SAVE   : willClose = save();
-                      break;
-        case CANCEL : willClose = false;
-                      break;
+        case SAVE   : save(true); // Falls through
+        case CANCEL : return;
       }  
     }
-    if (willClose) {
-      this.application.deleteHome(home);
-    }
+    this.application.deleteHome(this.home);
   }
 
   /**
    * Saves the home managed by this controller. If home name doesn't exist, 
    * this method will act as {@link #saveAs() saveAs} method.
-   * @return <code>true</code> if home was saved.
    */
-  public boolean save() {
+  public void save() {
+    save(false);
+  }
+
+  /**
+   * Saves the home managed by this controller and deletes home if 
+   * <code>deleteHomeAfterSave</code> is <code>true</code>.
+   */
+  private void save(boolean deleteHomeAfterSave) {
     if (this.home.getName() == null) {
-      return saveAs();
+      saveAs(deleteHomeAfterSave);
     } else {
-      return save(this.home.getName());
+      save(this.home.getName(), deleteHomeAfterSave);
     }
+  }
+  
+  /**
+   * Saves the home managed by this controller with a different name. 
+   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in  view, 
+   * and saves home with the chosen name if any. 
+   */
+  public void saveAs() {
+    saveAs(false);
   }
 
   /**
    * Saves the home managed by this controller with a different name. 
-   * This method displays a {@link HomePane#showSaveDialog(String) save dialog} in  view, 
-   * and saves home with the choosen name if any. 
-   * @return <code>true</code> if home was saved.
    */
-  public boolean saveAs() {
+  private void saveAs(boolean deleteHomeAfterSave) {
     String newName = ((HomePane)getView()).showSaveDialog(this.home.getName());
     if (newName != null) {
-      return save(newName);
+      save(newName, deleteHomeAfterSave);
     }
-    return false;
   }
 
   /**
-   * Actually saves the home managed by this controller.
-   * @return <code>true</code> if home was saved.
+   * Actually saves the home managed by this controller and deletes home if 
+   * <code>deleteHomeAfterSave</code> is <code>true</code>.
    */
-  private boolean save(String homeName) {
+  private void save(final String homeName, final boolean deleteHomeAfterSave) {
     // If home version is older than current version
     // or if home name is changed
     // or if user confirms to save a home created with a newer version
     if (this.home.getVersion() <= Home.CURRENT_VERSION
         || !homeName.equals(this.home.getName()) 
         || ((HomePane)getView()).confirmSaveNewerHome(homeName)) {
-      try {
-        // Write home with application recorder
-        this.application.getHomeRecorder().writeHome(this.home, homeName);
-        this.home.setName(homeName);
-        this.saveUndoLevel = 0;
-        this.home.setModified(false);
-        // Update recent homes list
-        List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
-        int homeNameIndex = recentHomes.indexOf(homeName);
-        if (homeNameIndex >= 0) {
-          recentHomes.remove(homeNameIndex);
-        }
-        recentHomes.add(0, homeName);
-        updateUserPreferencesRecentHomes(recentHomes);
-        return true;
-      } catch (RecorderException ex) {
-        String message = String.format(this.resource.getString("saveError"), homeName);
-        ((HomePane)getView()).showError(message);
-      }
+      // Save home in a threaded task
+      Callable<Void> exportToObjTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              // Write home with application recorder
+              application.getHomeRecorder().writeHome(home, homeName);
+              updateSavedHome(homeName, deleteHomeAfterSave);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = String.format(resource.getString("saveError"), homeName);
+                  ((HomePane)getView()).showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToObjTask, 
+          this.resource.getString("saveMessage"), exceptionHandler);
     }
-    return false;
+  }
+  
+  /**
+   * Updates the saved home.
+   */
+  private void updateSavedHome(final String homeName,
+                               final boolean deleteHome) {
+    ((HomePane)getView()).invokeLater(new Runnable() {
+        public void run() {
+          home.setName(homeName);
+          saveUndoLevel = 0;
+          home.setModified(false);
+          // Update recent homes list
+          List<String> recentHomes = new ArrayList<String>(preferences.getRecentHomes());
+          int homeNameIndex = recentHomes.indexOf(homeName);
+          if (homeNameIndex >= 0) {
+            recentHomes.remove(homeNameIndex);
+          }
+          recentHomes.add(0, homeName);
+          updateUserPreferencesRecentHomes(recentHomes);
+          
+          if (deleteHome) {
+            application.deleteHome(home);
+          }
+        }
+      });
   }
 
   /**
    * Controls the export of the 3D view of current home to a OBJ file.
    */
   public void exportToOBJ() {
-    String objName = ((HomePane)getView()).showExportToOBJDialog(this.home.getName());    
+    final String objName = ((HomePane)getView()).showExportToOBJDialog(this.home.getName());    
     if (objName != null) {
-      if (!getHomeController3D().exportToOBJ(objName)) {
-        String message = String.format(this.resource.getString("exportToOBJError"), objName);
-        ((HomePane)getView()).showError(message);
-      }
+      // Export 3D view in a threaded task
+      Callable<Void> exportToObjTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              getHomeController3D().exportToOBJ(objName);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = String.format(resource.getString("exportToOBJError"), objName);
+                  ((HomePane)getView()).showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToObjTask, 
+          this.resource.getString("exportToOBJMessage"), exceptionHandler);
     }
   }
   
@@ -1155,9 +1212,24 @@ public class HomeController  {
    * Controls the print of this home.
    */
   public void print() {
-    if (!((HomePane)getView()).print()) {
-      String message = String.format(this.resource.getString("printError"), this.home.getName());
-      ((HomePane)getView()).showError(message);
+    final Callable<Void> printTask = ((HomePane)getView()).showPrintDialog();    
+    if (printTask != null) {
+      // Print in a threaded task
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = String.format(resource.getString("printError"), home.getName());
+                  ((HomePane)getView()).showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(printTask, 
+        this.resource.getString("printMessage"), exceptionHandler);      
     }
   }
 
@@ -1165,12 +1237,30 @@ public class HomeController  {
    * Controls the print of this home in a PDF file.
    */
   public void printToPDF() {
-    String pdfName = ((HomePane)getView()).showPrintToPDFDialog(this.home.getName());    
+    final String pdfName = ((HomePane)getView()).showPrintToPDFDialog(this.home.getName());    
     if (pdfName != null) {
-      if (!((HomePane)getView()).printToPDF(pdfName)) {
-        String message = String.format(this.resource.getString("printToPDFError"), pdfName);
-        ((HomePane)getView()).showError(message);
-      }
+      // Print to PDF in a threaded task
+      Callable<Void> printToPdfTask = new Callable<Void>() {
+          public Void call() throws RecorderException {
+            ((HomePane)getView()).printToPDF(pdfName);
+            return null;
+          }
+        };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = String.format(resource.getString("printToPDFError"), pdfName);
+                  ((HomePane)getView()).showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(printToPdfTask, 
+          this.resource.getString("printToPDFMessage"), exceptionHandler);
     }
   }
 

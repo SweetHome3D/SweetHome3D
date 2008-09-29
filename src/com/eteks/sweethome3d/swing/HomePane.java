@@ -24,7 +24,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
@@ -47,6 +46,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
@@ -55,6 +55,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.Callable;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -100,6 +101,8 @@ import javax.swing.event.MenuListener;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -1392,7 +1395,7 @@ public class HomePane extends JRootPane {
   /**
    * Displays a dialog that let user choose whether he wants to save
    * the current home or not.
-   * @return {@link SaveAnswer#SAVE} if user choosed to save home,
+   * @return {@link SaveAnswer#SAVE} if user chose to save home,
    * {@link SaveAnswer#DO_NOT_SAVE} if user don't want to save home,
    * or {@link SaveAnswer#CANCEL} if doesn't want to continue current operation.
    */
@@ -1496,69 +1499,61 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Prints the home displayed by this pane and returns <code>true</code> if print was successful.
+   * Shows a print dialog to print the home displayed by this pane.  
+   * @return a print task to execute or <code>null</code> if the user cancelled print. 
    */
-  public boolean print() {
+  public Callable<Void> showPrintDialog() {
     PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
-    PrinterJob printerJob = PrinterJob.getPrinterJob();
+    final PrinterJob printerJob = PrinterJob.getPrinterJob();
     printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller, getFont()), pageFormat);
     if (printerJob.printDialog()) {
-      Component previousGlassPane = getWaitGlassPane();
-      try {
-        printerJob.print();
-      } catch (PrinterException ex) {
-        return false;
-      } finally {
-        setGlassPane(previousGlassPane);
-      }
+      return new Callable<Void>() {
+          public Void call() throws RecorderException {
+            try {
+              printerJob.print();
+              return null;
+            } catch (InterruptedPrinterException ex) {
+              throw new InterruptedRecorderException("Print interrupted");
+            } catch (PrinterException ex) {
+              throw new RecorderException("Couldn't print", ex);
+            } 
+          }
+        };
+    } else {
+      return null;
     }
-    return true;
   }
 
-  /**
-   * Returns a waiting glass pane for lengthy operations.
-   */
-  private Component getWaitGlassPane() {
-    Component previousGlassPane = getGlassPane(); 
-    JLabel waitGlassPane = new JLabel();
-    waitGlassPane.setOpaque(true);
-    waitGlassPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    setGlassPane(waitGlassPane);
-    waitGlassPane.setVisible(true);
-    return previousGlassPane;
-  }
-  
   /**
    * Shows a content chooser save dialog to print a home in a PDF file.
    */
   public String showPrintToPDFDialog(String homeName) {
     return this.contentManager.showSaveDialog(
         this.resource.getString("printToPDFDialog.title"), 
-        ContentManager.ContentType.PDF, null);
+        ContentManager.ContentType.PDF, homeName);
   }
   
   /**
-   * Prints a home to a given PDF file. This method may be overriden
+   * Prints a home to a given PDF file. This method may be overridden
    * to write to another kind of output stream.
    */
-  public boolean printToPDF(String pdfFile) {
-    Component previousGlassPane = getWaitGlassPane();
+  public void printToPDF(String pdfFile) throws RecorderException {
     OutputStream outputStream = null;
     try {
       outputStream = new FileOutputStream(pdfFile);
       new HomePDFPrinter(this.home, this.contentManager, this.controller, getFont())
           .write(outputStream);
-      return true;
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Print interrupted");
     } catch (IOException ex) {
-      return false;
+      throw new RecorderException("Couldn't export to PDF", ex);
     } finally {
-      setGlassPane(previousGlassPane);
       try {
         if (outputStream != null) {
           outputStream.close();
         }
       } catch (IOException ex) {
-        return false;
+        throw new RecorderException("Couldn't export to PDF", ex);
       }
     }
   }
@@ -1569,7 +1564,7 @@ public class HomePane extends JRootPane {
   public String showExportToOBJDialog(String homeName) {
     return this.contentManager.showSaveDialog(
         this.resource.getString("exportToOBJDialog.title"), 
-        ContentManager.ContentType.OBJ, null);
+        ContentManager.ContentType.OBJ, homeName);
   }
   
   /**

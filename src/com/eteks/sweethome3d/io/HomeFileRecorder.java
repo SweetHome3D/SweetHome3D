@@ -26,6 +26,7 @@ import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -41,6 +42,7 @@ import java.util.zip.ZipOutputStream;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeRecorder;
+import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -63,46 +65,57 @@ public class HomeFileRecorder implements HomeRecorder {
       homeOut = new HomeOutputStream(new FileOutputStream(tempFile));
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Save " + name + " interrupted");
     } catch (IOException ex) {
       throw new RecorderException("Can't save home " + name, ex);
     } finally {
       try {
         if (homeOut != null) {
           homeOut.close();
-          // As writing succeeded, replace old file by temporary file
-          File homeFile = new File(name);
-          if (homeFile.exists()
-              && !homeFile.delete()) {
-            tempFile.delete();
-            throw new RecorderException("Can't replace file " + name);
-          }
-          if (!tempFile.renameTo(homeFile)) {
-            // If rename fails try to copy temporary file to home file
-            byte [] buffer = new byte [8096];
-            OutputStream out = null;
-            InputStream in = null;
-            try {
-              out = new FileOutputStream(homeFile);
-              in = new FileInputStream(tempFile);          
-              int size; 
-              while ((size = in.read(buffer)) != -1) {
-                out.write(buffer, 0, size);
-              }
-            } catch (IOException ex) { 
-              throw new RecorderException("Can't copy file " + tempFile + " to " + name);
-            } finally {
-              if (out != null) {          
-                out.close();
-              }
-              if (in != null) {          
-                in.close();
-                tempFile.delete();
-              }
-            }
-          }
         }
       } catch (IOException ex) {
         throw new RecorderException("Can't close file " + name, ex);
+      }
+    }
+    
+    // As writing succeeded, replace old file by temporary file
+    File homeFile = new File(name);
+    if (homeFile.exists()
+        && !homeFile.delete()) {
+      tempFile.delete();
+      throw new RecorderException("Can't replace file " + name);
+    }
+    if (!tempFile.renameTo(homeFile)) {
+      // If rename fails try to copy temporary file to home file
+      byte [] buffer = new byte [8096];
+      OutputStream out = null;
+      InputStream in = null;
+      try {
+        out = new FileOutputStream(homeFile);
+        in = new FileInputStream(tempFile);          
+        int size; 
+        while ((size = in.read(buffer)) != -1) {
+          out.write(buffer, 0, size);
+        }
+      } catch (IOException ex) { 
+        throw new RecorderException("Can't copy file " + tempFile + " to " + name);
+      } finally {
+        try {
+          if (out != null) {          
+            out.close();
+          }
+        } catch (IOException ex) {
+          throw new RecorderException("Can't close file " + name, ex);
+        }
+        try {
+          if (in != null) {          
+            in.close();
+            tempFile.delete();
+          }
+        } catch (IOException ex) {
+          // Forget exception
+        }
       }
     }
   }
@@ -120,6 +133,8 @@ public class HomeFileRecorder implements HomeRecorder {
       // Read home with HomeInputStream
       Home home = in.readHome();
       return home;
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Read " + name + " interrupted");
     } catch (IOException ex) {
       throw new RecorderException("Can't read home from " + name, ex);
     } catch (ClassNotFoundException ex) {
@@ -143,6 +158,17 @@ public class HomeFileRecorder implements HomeRecorder {
   }
 
   /**
+   * Throws an <code>InterruptedRecorderException</code> exception 
+   * if current thread is interrupted. The interrupted status of the current thread 
+   * is cleared when an exception is thrown.
+   */
+  private static void checkCurrentThreadIsntInterrupted() throws InterruptedIOException {
+    if (Thread.interrupted()) {
+      throw new InterruptedIOException();
+    }
+  }
+  
+  /**
    * <code>OutputStream</code> filter that writes a home in a stream 
    * at .sh3d file format. 
    */
@@ -162,6 +188,7 @@ public class HomeFileRecorder implements HomeRecorder {
       // Create a zip output on out stream 
       ZipOutputStream zipOut = new ZipOutputStream(this.out);
       zipOut.setLevel(0);
+      checkCurrentThreadIsntInterrupted();
       // Write home in first entry in a file "Home"
       zipOut.putNextEntry(new ZipEntry("Home"));
       // Use an ObjectOutputStream that keeps track of Content objects
@@ -308,6 +335,7 @@ public class HomeFileRecorder implements HomeRecorder {
      * contains a given <code>content</code>.
      */
     private void writeZipEntry(ZipOutputStream zipOut, String entryName, Content content) throws IOException {
+      checkCurrentThreadIsntInterrupted();
       byte [] buffer = new byte [8096];
       InputStream contentIn = null;
       try {
@@ -405,6 +433,7 @@ public class HomeFileRecorder implements HomeRecorder {
       // Copy home stream in a temporary file 
       this.tempFile = File.createTempFile("open", ".sweethome3d");
       this.tempFile.deleteOnExit();
+      checkCurrentThreadIsntInterrupted();
       OutputStream tempOut = null;
       try {
         tempOut = new FileOutputStream(this.tempFile);
@@ -425,6 +454,7 @@ public class HomeFileRecorder implements HomeRecorder {
         zipIn = new ZipInputStream(new FileInputStream(this.tempFile));
         // Read home in first entry
         zipIn.getNextEntry();
+        checkCurrentThreadIsntInterrupted();
         // Use an ObjectInputStream that replaces temporary URLs of Content objects 
         // by URLs relative to file 
         ObjectInputStream objectStream = new HomeObjectInputStream(zipIn);

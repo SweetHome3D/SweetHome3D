@@ -142,6 +142,7 @@ public class FileContentManager implements ContentManager {
          return "ZIP";
        }
      }};
+  private static final String PNG_EXTENSION = ".png";
   /**
    * Supported image file filters.
    */
@@ -192,7 +193,7 @@ public class FileContentManager implements ContentManager {
         public boolean accept(File file) {
           // Accept directories and PNG files
           return file.isDirectory()
-                 || file.getName().toLowerCase().endsWith(".png");
+                 || file.getName().toLowerCase().endsWith(PNG_EXTENSION);
         }
     
         @Override
@@ -221,6 +222,7 @@ public class FileContentManager implements ContentManager {
 
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
+  private Map<ContentType, String>        fileDefaultExtensions;
 
   public FileContentManager() {  
     // Fill file filters map
@@ -231,6 +233,14 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
+    // Fill file default extension map
+    this.fileDefaultExtensions = new HashMap<ContentType, String>();
+    this.fileDefaultExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.FURNITURE_CATALOG, FURNITURE_CATALOG_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.MODEL, OBJ_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.IMAGE, PNG_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.PDF, PDF_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }
   
   /**
@@ -301,6 +311,22 @@ public class FileContentManager implements ContentManager {
   public String showSaveDialog(String      dialogTitle,
                                ContentType contentType,
                                String      name) {
+    String defaultExtension = this.fileDefaultExtensions.get(contentType);
+    if (name != null) {
+      // If name has an extension, remove it and build a name that matches contentType
+      int extensionIndex = name.lastIndexOf('.');
+      if (extensionIndex != -1) {
+        name = name.substring(0, extensionIndex);
+        switch(contentType) {
+          case SWEET_HOME_3D :
+          case PDF :
+          case OBJ :
+            name += defaultExtension;
+            break;
+        }
+      }
+    }
+    
     String savedName;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()) {
@@ -308,24 +334,15 @@ public class FileContentManager implements ContentManager {
     } else {
       savedName = showFileChooser(dialogTitle, contentType, name, true);
     }
+    
     boolean addedExtension = false;
     if (savedName != null) {
       switch(contentType) {
         case SWEET_HOME_3D :
-          if (!savedName.toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION)) {
-            savedName += SWEET_HOME_3D_EXTENSION;
-            addedExtension = true;
-          }
-          break;
         case PDF :
-          if (!savedName.toLowerCase().endsWith(PDF_EXTENSION)) {
-            savedName += PDF_EXTENSION;
-            addedExtension = true;
-          }
-          break;
         case OBJ :
-          if (!savedName.toLowerCase().endsWith(OBJ_EXTENSION)) {
-            savedName += OBJ_EXTENSION;
+          if (!savedName.toLowerCase().endsWith(defaultExtension)) {
+            savedName += defaultExtension;
             addedExtension = true;
           }
           break;

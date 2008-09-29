@@ -32,6 +32,7 @@ import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -106,8 +107,8 @@ public class HomeController3D {
   /**
    * Controls the export of the 3D view to the given OBJ file.
    */
-  public boolean exportToOBJ(String objName) {
-    return ((HomeComponent3D)getView()).exportToOBJ(objName);
+  public void exportToOBJ(String objName) throws RecorderException {
+    ((HomeComponent3D)getView()).exportToOBJ(objName);
   }
   
   /**

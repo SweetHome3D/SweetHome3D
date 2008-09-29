@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilterWriter;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -230,6 +231,16 @@ public class OBJWriter extends FilterWriter {
   }
 
   /**
+   * Throws an <code>InterruptedRecorderException</code> exception 
+   * if current thread is interrupted.  
+   */
+  private void checkCurrentThreadIsntInterrupted() throws InterruptedIOException {
+    if (Thread.interrupted()) {
+      throw new InterruptedIOException("Current thread interrupted");
+    }
+  }
+  
+  /**
    * Writes all the 3D shapes children of <code>node</code> at OBJ format. 
    * If there are transformation groups on the path from <code>node</code> to its shapes, 
    * they'll be applied to the coordinates written on output.
@@ -237,8 +248,11 @@ public class OBJWriter extends FilterWriter {
    * capabilities to read its children, the geometries and the appearance of its shapes.
    * Only geometries which are instances of <code>GeometryArray</code> will be written.
    * @param node a Java 3D node  
+   * @throws IOException if the operation failed
+   * @throws InterruptedIOException if the current thread was interrupted during this operation.
+   *         The interrupted status of the current thread is cleared when this exception is thrown.
    */
-  public void writeNode(Node node) throws IOException {
+  public void writeNode(Node node) throws IOException, InterruptedIOException {
     writeNode(node, null);
   }
   
@@ -253,8 +267,11 @@ public class OBJWriter extends FilterWriter {
    * @param nodeName the name of the node. This is usefull to distinguish the objects 
    *                 names in output. If this name is <code>null</code> or isn't built 
    *                 with A-Z, a-z, 0-9 and underscores, it will be ignored.
+   * @throws IOException if the operation failed
+   * @throws InterruptedIOException if the current thread was interrupted during this operation
+   *         The interrupted status of the current thread is cleared when this exception is thrown.
    */
-  public void writeNode(Node node, String nodeName) throws IOException {
+  public void writeNode(Node node, String nodeName) throws IOException, InterruptedIOException {
     if (this.firstNode) {
       if (this.mtlFileName != null) {
         this.out.write("mtllib " + new File(this.mtlFileName).getName() + "\n");
@@ -376,7 +393,9 @@ public class OBJWriter extends FilterWriter {
       boolean textureCoordinatesDefined = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0;
       Map<TexCoord2f, Integer> textureCoordinatesIndices = new HashMap<TexCoord2f, Integer>();
       int [] textureCoordinatesIndexSubstitutes = new int [geometryArray.getVertexCount()];
-      
+
+      checkCurrentThreadIsntInterrupted();
+
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
           float [] vertexData = geometryArray.getInterleavedVertices();
@@ -458,6 +477,8 @@ public class OBJWriter extends FilterWriter {
         }
       }
 
+      checkCurrentThreadIsntInterrupted();
+      
       // Write triangles or quadrilaterals depending on the geometry
       if (geometryArray instanceof IndexedGeometryArray) {
         if (geometryArray instanceof IndexedTriangleArray) {
@@ -837,9 +858,13 @@ public class OBJWriter extends FilterWriter {
   /**
    * Closes this writer and writes MTL file and its texture images, 
    * if this writer was created from a file. 
+   * @throws IOException if this writer couldn't be closed 
+   *                     or couldn't write MTL and texture files couldn't be written
+   * @throws InterruptedIOException if the current thread was interrupted during this operation
+   *         The interrupted status of the current thread is cleared when this exception is thrown.
    */
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException, InterruptedIOException {
     super.close();
     if (this.mtlFileName != null) {
       writeAppearancesToMTLFile();
@@ -856,6 +881,8 @@ public class OBJWriter extends FilterWriter {
           new BufferedOutputStream(new FileOutputStream(this.mtlFileName)), "ISO-8859-1");
       writeHeader(writer);      
       for (Map.Entry<ComparableAppearance, String> appearanceEntry : this.appearances.entrySet()) {
+        checkCurrentThreadIsntInterrupted();
+        
         Appearance appearance = appearanceEntry.getKey().getAppearance();        
         String appearanceName = appearanceEntry.getValue();
         writer.write("\nnewmtl " + appearanceName + "\n");
