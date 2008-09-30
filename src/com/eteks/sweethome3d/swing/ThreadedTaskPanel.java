@@ -98,7 +98,7 @@ public class ThreadedTaskPanel extends JPanel {
       
       try {
         // Sleep 200 ms before showing dialog to avoid displaying it 
-        // in case the task don't last so long
+        // when the task doesn't last so long
         Thread.sleep(200);
       } catch (InterruptedException ex) {
       }
