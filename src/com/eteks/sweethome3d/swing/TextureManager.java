@@ -31,6 +31,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
@@ -113,6 +114,8 @@ public class TextureManager {
               texture = new TextureLoader(image).getTexture();
               texture.setMinFilter(Texture.NICEST);
               texture.setMagFilter(Texture.NICEST);
+              texture.setCapability(Texture.ALLOW_IMAGE_READ);
+              texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
             }
             EventQueue.invokeLater(new Runnable() {
                 public void run() {

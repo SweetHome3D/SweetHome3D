@@ -942,6 +942,10 @@ public class HomeComponent3D extends JComponent implements Printable {
     private static final Material DEFAULT_MATERIAL = new Material();
     private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
     
+    static {
+      DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    }
+    
     private static final int LEFT_WALL_SIDE  = 0;
     private static final int RIGHT_WALL_SIDE = 1;
     
@@ -1337,6 +1341,7 @@ public class HomeComponent3D extends JComponent implements Printable {
                                               ((color >>> 8) & 0xFF) / 256f,
                                                       (color & 0xFF) / 256f);
           material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+          material.setCapability(Material.ALLOW_COMPONENT_READ);
           // Store created materials in cache
           materials.put(color, material);
         }
@@ -1474,8 +1479,8 @@ public class HomeComponent3D extends JComponent implements Printable {
         Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
                                              ((color >>> 8) & 0xFF) / 256f,
                                                      (color & 0xFF) / 256f);
-        setMaterial(getChild(0), 
-            new Material(materialColor, new Color3f(), materialColor, materialColor, 64));
+        Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+        setMaterial(getChild(0), material);
       } else {
         // Set default material of model
         setMaterial(getChild(0), null);
