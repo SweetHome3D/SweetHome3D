@@ -33,16 +33,17 @@ import javax.swing.JComponent;
  * @author Emmanuel Puybaret
  */
 public class ThreadedTaskController {
-  private Callable<Void> threadedTask;
+  private Callable<Void>   threadedTask;
   private ExceptionHandler exceptionHandler;
-  private ExecutorService threadExecutor;
-  private JComponent view;
-  private Future<?> task;
+  private ExecutorService  threadExecutor;
+  private JComponent       view;
+  private Future<?>        task;
 
   /**
    * Creates a controller that will execute in a separated thread the given task. 
    * This task shouldn't modify any model objects and should be able to handle
-   * interruptions. 
+   * interruptions with <code>Thread</code> methods that the user may provoke 
+   * when he wants to cancel a threaded task. 
    */
   public ThreadedTaskController(Callable<Void> threadedTask,
                                 String taskMessage, 
