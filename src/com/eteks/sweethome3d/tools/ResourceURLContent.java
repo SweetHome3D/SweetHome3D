@@ -62,7 +62,7 @@ public class ResourceURLContent extends URLContent {
 
   /**
    * Creates a content for <code>resourceUrl</code> 
-   * @param resourceUrl  the URL of the resource
+   * @param url  the URL of the resource
    */
   public ResourceURLContent(URL url, boolean multiPartResource) {
     super(url);

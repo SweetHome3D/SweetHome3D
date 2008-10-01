@@ -138,7 +138,7 @@ public class OBJWriter extends FilterWriter {
 
   /**
    * Create an OBJ writer that will writes in <code>out</code> stream.
-   * @param objFile the file into which 3D nodes will be written at OBJ format
+   * @param out the stream into which 3D nodes will be written at OBJ format
    * @param header  a header written as a comment at start of the stream
    * @param maximumFractionDigits the maximum digits count used in fraction part of numbers,
    *                or -1 for default value. Using -1 may cause writing nodes to be twice faster.
@@ -158,7 +158,7 @@ public class OBJWriter extends FilterWriter {
   
   /**
    * Create an OBJ writer that will writes in <code>out</code> stream.
-   * @param objFile the file into which 3D nodes will be written at OBJ format
+   * @param out the stream into which 3D nodes will be written at OBJ format
    * @param header  a header written as a comment at start of the stream
    * @param maximumFractionDigits the maximum digits count used in fraction part of numbers,
    *                or -1 for default value. Using -1 may cause writing nodes to be twice faster.

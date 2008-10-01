@@ -1500,7 +1500,11 @@ public class HomePane extends JRootPane {
 
   /**
    * Shows a print dialog to print the home displayed by this pane.  
-   * @return a print task to execute or <code>null</code> if the user cancelled print. 
+   * @return a print task to execute or <code>null</code> if the user canceled print.
+   *    The <code>call<code> method of the returned task may throw a 
+   *    {@link RecorderException RecorderException} exception if print failed 
+   *    or an {@link InterruptedRecorderException InterruptedRecorderException}
+   *    exception if it was interrupted.
    */
   public Callable<Void> showPrintDialog() {
     PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
