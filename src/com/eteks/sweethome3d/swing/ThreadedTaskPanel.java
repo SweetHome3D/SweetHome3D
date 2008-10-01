@@ -1,5 +1,5 @@
 /*
- * ThreadedTaskView.java 29 sept. 2008
+ * ThreadedTaskPanel.java 29 sept. 2008
  *
  * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -79,6 +79,7 @@ public class ThreadedTaskPanel extends JPanel {
 
   /**
    * Sets the running status of the threaded task. 
+   * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
    */
   public void setTaskRunning(boolean taskRunning) {
     this.taskRunning = taskRunning;
