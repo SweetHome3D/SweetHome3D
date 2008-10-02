@@ -33,7 +33,7 @@ public class FurnitureEvent extends EventObject {
   private Type type;
 
   /**
-   * Creates an event with <code>home</code> as source, and an associated <code>piece</code>.
+   * Creates an event associated with <code>piece</code>.
    */
   public FurnitureEvent(Object source, PieceOfFurniture piece, int index, Type type) {
     super(source);

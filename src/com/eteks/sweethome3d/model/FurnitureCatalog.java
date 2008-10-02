@@ -70,14 +70,14 @@ public abstract class FurnitureCatalog {
   }
 
   /**
-   * Adds the furniture <code>listener</code> in parameter to this home.
+   * Adds the furniture <code>listener</code> in parameter to this catalog.
    */
   public void addFurnitureListener(FurnitureListener listener) {
     this.furnitureListeners.add(listener);
   }
 
   /**
-   * Removes the furniture <code>listener</code> in parameter from this home.
+   * Removes the furniture <code>listener</code> in parameter from this catalog.
    */
   public void removeFurnitureListener(FurnitureListener listener) {
     this.furnitureListeners.remove(listener);
@@ -125,7 +125,7 @@ public abstract class FurnitureCatalog {
   /**
    * Deletes the <code>piece</code> from this catalog.
    * If then piece category is empty, it will be removed from the categories of this catalog. 
-   * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
+   * Once the <code>piece</code> is deleted, furniture listeners added to this catalog will receive a
    * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
    * notification.
    * @param piece a piece of furniture in that category.
@@ -140,7 +140,7 @@ public abstract class FurnitureCatalog {
         deselectPieceOfFurniture(piece);
         category.delete(piece);
         
-        if (category.getFurniture().size() == 0) {
+        if (category.getFurnitureCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
           this.categories = new ArrayList<FurnitureCategory>(this.categories);
           this.categories.remove(category);

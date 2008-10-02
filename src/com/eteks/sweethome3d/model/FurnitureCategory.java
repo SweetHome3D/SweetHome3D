@@ -37,7 +37,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
 
   /**
    * Create a category.
-   * @param name the name of the cateory.
+   * @param name the name of the category.
    */
   public FurnitureCategory(String name) {
     this.name = name;
