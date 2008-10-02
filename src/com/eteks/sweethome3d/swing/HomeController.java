@@ -348,7 +348,6 @@ public class HomeController  {
     }
 
     public void textureChanged(TextureEvent ev) {
-      pieceOfFurnitureChanged(null);
       // If controller was garbage collected, remove this listener from catalog
       final HomeController controller = this.homeController.get();
       if (controller == null) {
