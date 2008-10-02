@@ -23,9 +23,7 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Composite;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -69,7 +67,6 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
-import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
@@ -92,17 +89,17 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private JLabel                          imageChoiceOrChangeLabel;
   private JButton                         imageChoiceOrChangeButton;
   private JLabel                          imageChoiceErrorLabel;
-  private ScaledImageComponent           imageChoicePreviewComponent;
+  private ScaledImageComponent            imageChoicePreviewComponent;
   private JLabel                          scaleLabel;
   private JLabel                          scaleDistanceLabel;
   private JSpinner                        scaleDistanceSpinner;
-  private ScaleImagePreviewComponent      scalePreviewComponent;
+  private ScaledImageComponent            scalePreviewComponent;
   private JLabel                          originLabel;
   private JLabel                          xOriginLabel;
   private JSpinner                        xOriginSpinner;
   private JLabel                          yOriginLabel;
   private JSpinner                        yOriginSpinner;
-  private ScaledImageComponent           originPreviewComponent;
+  private ScaledImageComponent            originPreviewComponent;
   
   private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
   private static BufferedImage            waitImage;
@@ -500,120 +497,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     return null;
   }
 
-  /**
-   * Preview component for image choice. 
-   */
-  private static class ScaledImageComponent extends JComponent {
-    private BufferedImage image;
-    
-    public ScaledImageComponent() {
-      setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      final int defaultPreferredWidth = 300; 
-      final int defaultPreferredHeight = 300; 
-      if (image == null) {
-        return new Dimension(defaultPreferredWidth, defaultPreferredHeight);
-      } else {
-        // Compute the component preferred size in such a way 
-        // its bigger dimension (width or height) is 300 pixels
-        Insets insets = getInsets();
-        int maxImagePreferredWith   = defaultPreferredWidth - insets.left - insets.right;
-        int maxImagePreferredHeight = defaultPreferredHeight - insets.top - insets.bottom;
-        float widthScale = (float)image.getWidth() / maxImagePreferredWith;
-        float heightScale = (float)image.getHeight() / maxImagePreferredHeight;
-        if (widthScale > heightScale) {
-          return new Dimension(defaultPreferredWidth, (int)(image.getHeight() / widthScale) + insets.top + insets.bottom);
-        } else {
-          return new Dimension((int)(image.getWidth() / heightScale) + insets.left + insets.right, defaultPreferredHeight);
-        }
-      }
-    }
-    
-    @Override
-    protected void paintComponent(Graphics g) {
-      paintImage(g, null);
-    }
-
-    /**
-     * Paints the image with a given <code>composite</code>. 
-     * Image is scaled to fill width of the component. 
-     */
-    protected void paintImage(Graphics g, AlphaComposite composite) {
-      if (image != null) {
-        Graphics2D g2D = (Graphics2D)g;
-        g2D.setRenderingHint(RenderingHints.KEY_RENDERING, 
-            RenderingHints.VALUE_RENDER_QUALITY);
-        AffineTransform oldTransform = g2D.getTransform();
-        Composite oldComposite = g2D.getComposite();
-        Point translation = getImageTranslation();      
-        g2D.translate(translation.x, translation.y);
-        float scale = getImageScale();
-        g2D.scale(scale, scale);    
-        
-        if (composite != null) {
-          g2D.setComposite(composite);
-        }
-        // Draw image with composite
-        g2D.drawImage(this.image, 0, 0, this);
-        g2D.setComposite(oldComposite);
-        g2D.setTransform(oldTransform);
-      }
-    }
-    
-    /**
-     * Sets the image drawn by this component.
-     */
-    public void setImage(BufferedImage image) {
-      this.image = image;
-      revalidate();
-      repaint();
-    }
-
-    /**
-     * Returns the image drawn by this component.
-     */
-    public BufferedImage getImage() {
-      return this.image;
-    }
-    
-    /**
-     * Returns the scale used to draw the image of this component.
-     */
-    protected float getImageScale() {
-      if (image != null) {
-        Insets insets = getInsets();
-        return Math.min(1, Math.min((float)(getWidth() - insets.left - insets.right) / image.getWidth(), 
-            (float)(getHeight() - insets.top - insets.bottom) / image.getHeight()));
-      } else {
-        return 1;
-      }
-    }
-    
-    /**
-     * Returns the origin point where the image of this component is drawn.
-     */
-    protected Point getImageTranslation() {
-      float scale = getImageScale();
-      Insets insets = getInsets();
-      return new Point(insets.left + (getWidth() - insets.left - insets.right - Math.round(image.getWidth() * scale)) / 2,
-          insets.top + (getHeight() - insets.top - insets.bottom - Math.round(image.getHeight() * scale)) / 2);
-    }
-
-    /**
-     * Returns <code>true</code> if point at (<code>x</code>, <code>y</code>)
-     * is in the image displayed by this component.
-     */
-    protected boolean isPointInImage(int x, int y) {
-      Point translation = getImageTranslation();
-      float scale = getImageScale();
-      return x > translation.x && x < translation.x + Math.round(getImage().getWidth() * scale)
-          && y > translation.y && y < translation.y + Math.round(getImage().getHeight() * scale);
-    }
-  }
-  
   /**
    * Preview component for image scale distance choice. 
    */
