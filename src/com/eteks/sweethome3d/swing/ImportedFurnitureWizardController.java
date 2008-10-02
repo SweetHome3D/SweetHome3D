@@ -703,7 +703,7 @@ public class ImportedFurnitureWizardController extends WizardController {
           }
         }
       };
-    PropertyChangeListener nameAndCategoryChangListener = new PropertyChangeListener() {
+    PropertyChangeListener nameAndCategoryChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           checkPieceOfFurnitureNameInCategory();
         }
@@ -715,8 +715,8 @@ public class ImportedFurnitureWizardController extends WizardController {
       ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.WIDTH, this.widthChangeListener);
       ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.DEPTH, this.depthChangeListener);
       ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.HEIGHT, this.heightChangeListener);
-      ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.NAME, this.nameAndCategoryChangListener);
-      ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.CATEGORY, this.nameAndCategoryChangListener);
+      ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.NAME, this.nameAndCategoryChangeListener);
+      ImportedFurnitureWizardController.this.addPropertyChangeListener(Property.CATEGORY, this.nameAndCategoryChangeListener);
       checkPieceOfFurnitureNameInCategory();
     }
 
@@ -744,8 +744,8 @@ public class ImportedFurnitureWizardController extends WizardController {
       ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.WIDTH, this.widthChangeListener);
       ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.DEPTH, this.depthChangeListener);
       ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.HEIGHT, this.heightChangeListener);
-      ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.NAME, this.nameAndCategoryChangListener);
-      ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.CATEGORY, this.nameAndCategoryChangListener);
+      ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.NAME, this.nameAndCategoryChangeListener);
+      ImportedFurnitureWizardController.this.removePropertyChangeListener(Property.CATEGORY, this.nameAndCategoryChangeListener);
     }
   }
 

@@ -359,7 +359,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           controller.setBackFaceShown(backFaceShownCheckBox.isSelected());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If back face shown changes update back face shown check box
@@ -389,7 +389,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       };
     this.nameTextField.getDocument().addDocumentListener(nameListener);
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.NAME,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.NAME,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If name changes update name text field
@@ -473,7 +473,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           controller.setCategory((FurnitureCategory)ev.getItem());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.CATEGORY,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.CATEGORY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If category changes update category combo box
@@ -499,7 +499,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           widthSpinnerModel.addChangeListener(this);
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.WIDTH,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.WIDTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If width changes update width spinner
@@ -520,7 +520,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           depthSpinnerModel.addChangeListener(this);
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DEPTH,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DEPTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If depth changes update depth spinner
@@ -541,7 +541,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           heightSpinnerModel.addChangeListener(this);
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.HEIGHT,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.HEIGHT,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If height changes update height spinner
@@ -555,7 +555,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           controller.setProportional(keepProportionsCheckBox.isSelected());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.PROPORTIONAL,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.PROPORTIONAL,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If proportional property changes update keep proportions check box
@@ -575,7 +575,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           widthSpinnerModel.addChangeListener(this);
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.ELEVATION,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.ELEVATION,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If elevation changes update elevation spinner
@@ -589,7 +589,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           controller.setMovable(movableCheckBox.isSelected());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MOVABLE,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MOVABLE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If movable changes update movable check box
@@ -603,7 +603,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           controller.setDoorOrWindow(doorOrWindowCheckBox.isSelected());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DOOR_OR_WINDOW,
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DOOR_OR_WINDOW,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If door or window changes update door or window check box
@@ -628,7 +628,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       });
     this.clearColorButton.setEnabled(false);
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.COLOR, 
+    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.COLOR, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If color changes update color buttons
@@ -846,7 +846,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * of the piece name.
    */
   private void updateNameTextFieldForeground(Color defaultNameTextFieldColor) {
-    nameTextField.setForeground(controller.isPieceOfFurnitureNameValid() 
+    nameTextField.setForeground(this.controller.isPieceOfFurnitureNameValid() 
         ? defaultNameTextFieldColor
         : Color.RED);
   }
@@ -855,7 +855,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Returns the transformation matching current model rotation.
    */
   private Transform3D getModelRotationTransform() {
-    float [][] modelRotation = controller.getModelRotation();
+    float [][] modelRotation = this.controller.getModelRotation();
     Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
         modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
         modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
@@ -870,9 +870,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private void updateModelRotation(Transform3D transform) {
     Matrix3f modelRotationMatrix = new Matrix3f();
     transform.getRotationScale(modelRotationMatrix);
-    controller.setModelRotation(new float [][] {{modelRotationMatrix.m00, modelRotationMatrix.m01, modelRotationMatrix.m02},
-                                                {modelRotationMatrix.m10, modelRotationMatrix.m11, modelRotationMatrix.m12},
-                                                {modelRotationMatrix.m20, modelRotationMatrix.m21, modelRotationMatrix.m22}});
+    this.controller.setModelRotation(new float [][] {{modelRotationMatrix.m00, modelRotationMatrix.m01, modelRotationMatrix.m02},
+                                                     {modelRotationMatrix.m10, modelRotationMatrix.m11, modelRotationMatrix.m12},
+                                                     {modelRotationMatrix.m20, modelRotationMatrix.m21, modelRotationMatrix.m22}});
   }
   
   /**
