@@ -67,6 +67,7 @@ public class PlanController extends FurnitureController {
   private JComponent            planView;
   private Home                  home;
   private UserPreferences       preferences;
+  private ContentManager        contentManager;
   private UndoableEditSupport   undoSupport;
   private ResourceBundle        resource;
   private SelectionListener     selectionListener;
@@ -110,6 +111,7 @@ public class PlanController extends FurnitureController {
     super(home, preferences, contentManager, undoSupport);
     this.home = home;
     this.preferences = preferences;
+    this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -424,7 +426,7 @@ public class PlanController extends FurnitureController {
    */
   public void modifySelectedWalls() {
     if (!Home.getWallsSubList(this.home.getSelectedItems()).isEmpty()) {
-      new WallController(this.home, this.preferences, this.undoSupport);
+      new WallController(this.home, this.preferences, this.contentManager, this.undoSupport);
     }
   }
   

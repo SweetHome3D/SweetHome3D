@@ -28,6 +28,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -38,20 +39,34 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class Home3DAttributesController {
-  private Home                home;
-  private UndoableEditSupport undoSupport;
-  private JComponent          wallView;
+  private Home                    home;
+  private UndoableEditSupport     undoSupport;
+  private TextureChoiceController groundTextureController;
+  private JComponent              wallView;
 
   /**
    * Creates the controller of home furniture view with undo support.
    */
   public Home3DAttributesController(Home home, 
-                        UserPreferences preferences, 
+                        UserPreferences preferences,
+                        ContentManager contentManager, 
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
+    
+    ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
+    this.groundTextureController = new TextureChoiceController(
+        resource.getString("groundTextureTitle"), preferences, contentManager);
+    
     this.wallView = new Home3DAttributesPanel(home, preferences, this); 
     ((Home3DAttributesPanel)this.wallView).displayView();
+  }
+
+  /**
+   * Returns the texture controller of the ground.
+   */
+  public TextureChoiceController getGroundTextureController() {
+    return this.groundTextureController;
   }
 
   /**

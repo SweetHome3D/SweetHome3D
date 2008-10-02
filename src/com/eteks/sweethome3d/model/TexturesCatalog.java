@@ -30,6 +30,7 @@ import java.util.List;
 public abstract class TexturesCatalog {
   private List<TexturesCategory>  categories = new ArrayList<TexturesCategory>();
   private boolean                 sorted;
+  private List<TextureListener>   textureListeners = new ArrayList<TextureListener>();
 
   /**
    * Returns the categories list sorted by name.
@@ -66,14 +67,28 @@ public abstract class TexturesCatalog {
   }
 
   /**
+   * Adds the texture <code>listener</code> in parameter to this catalog.
+   */
+  public void addTextureListener(TextureListener listener) {
+    this.textureListeners.add(listener);
+  }
+
+  /**
+   * Removes the texture <code>listener</code> in parameter from this catalog.
+   */
+  public void removeTextureListener(TextureListener listener) {
+    this.textureListeners.remove(listener);
+  }
+
+  /**
    * Adds a category to this catalog.
    * @param category the textures category to add.
-   * @throws IllegalArgumentException if a category with same name as the one in
+   * @throws IllegalHomonymException if a category with same name as the one in
    *           parameter already exists in this catalog.
    */
   private void add(TexturesCategory category) {
     if (this.categories.contains(category)) {
-      throw new IllegalArgumentException(
+      throw new IllegalHomonymException(
           category.getName() + " already exists in catalog");
     }
     this.categories.add(category);
@@ -96,5 +111,51 @@ public abstract class TexturesCatalog {
     }    
     // Add current texture to category list
     category.add(texture);
+    
+    fireTextureChanged(texture, 
+        Collections.binarySearch(category.getTextures(), texture), TextureEvent.Type.ADD);
+  }
+
+  /**
+   * Deletes the <code>texture</code> from this catalog.
+   * If then texture category is empty, it will be removed from the categories of this catalog. 
+   * Once the <code>texture</code> is deleted, texture listeners added to this catalog will receive a
+   * {@link TextureListener#textureChanged(TextureEvent) textureChanged} notification.
+   * @param texture a texture.
+   */
+  public void delete(CatalogTexture texture) {
+    TexturesCategory category = texture.getCategory();
+    // Remove texture from its category
+    if (category != null) {
+      int pieceIndex = Collections.binarySearch(category.getTextures(), texture);
+      if (pieceIndex >= 0) {
+        category.delete(texture);
+        
+        if (category.getTexturesCount() == 0) {
+          //  Make a copy of the list to avoid conflicts in the list returned by getCategories
+          this.categories = new ArrayList<TexturesCategory>(this.categories);
+          this.categories.remove(category);
+        }
+        
+        fireTextureChanged(texture, pieceIndex, TextureEvent.Type.DELETE);
+        return;
+      }
+    }
+
+    throw new IllegalArgumentException("catalog doesn't contain texture " + texture.getName());
+  }
+
+  private void fireTextureChanged(CatalogTexture texture, int index,
+                                  TextureEvent.Type eventType) {
+    if (!this.textureListeners.isEmpty()) {
+      TextureEvent textureEvent = new TextureEvent(this, texture, index, eventType);
+      // Work on a copy of furnitureListeners to ensure a listener 
+      // can modify safely listeners list
+      TextureListener [] listeners = this.textureListeners.
+        toArray(new TextureListener [this.textureListeners.size()]);
+      for (TextureListener listener : listeners) {
+        listener.textureChanged(textureEvent);
+      }
+    }
   }
 }

@@ -19,7 +19,11 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -27,12 +31,14 @@ import javax.swing.JSpinner;
 
 import junit.framework.TestCase;
 
+import com.eteks.sweethome3d.FileContentManager;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.swing.WallController;
 import com.eteks.sweethome3d.swing.WallPanel;
 
 /**
@@ -52,8 +58,19 @@ public class WallPanelTest extends TestCase {
     home.setWallRightSideColor(wall1, 20);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
+    // Add a listener that closes automatically any opened window
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("activeWindow", 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+            if (activeWindow != null) {
+              activeWindow.dispose();
+            }
+          }
+        });
+    
     // 2. Create a wall panel to edit the selected wall
-    WallPanel panel = new WallPanel(home, preferences, null);
+    WallPanel panel = (WallPanel)new WallController(home, preferences, null, null).getView();
     // Check values stored by wall panel components are equal to the ones set
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
@@ -61,13 +78,13 @@ public class WallPanelTest extends TestCase {
             wall1.getXEnd(), wall1.getYEnd()),
         wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
         wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
-        wall1.getRightSideColor(), wall1.getRightSideTexture(), panel);
+        wall1.getRightSideColor(), wall1.getRightSideTexture(), panel);    
  
     // 3. Modify wall right side texture with first available texture
     TextureImage firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
     home.setWallRightSideColor(wall1, null);
     home.setWallRightSideTexture(wall1, new HomeTexture(firstTexture));
-    panel = new WallPanel(home, preferences, null);
+    panel = (WallPanel)new WallController(home, preferences, null, null).getView();
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
         (float)Point2D.distance(wall1.getXStart(), wall1.getYStart(),
@@ -92,7 +109,7 @@ public class WallPanelTest extends TestCase {
     home.setWallRightSideColor(wall2, 50);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1, wall2}));
     // Check if wall panel edits null values if walls thickness or colors are the same
-    panel = new WallPanel(home, preferences, null);
+    panel = (WallPanel)new WallController(home, preferences, null, null).getView();
     // Check values stored by furniture panel components are equal to the ones set
     assertWallPanelEquals(null, null, null,
         null, null, null, null, null, 10, null, null, null, panel);
@@ -144,7 +161,6 @@ public class WallPanelTest extends TestCase {
     home.setWallRightSideColor(wall1, 0xFFFF00);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
-    WallPanel wallPanel = new WallPanel(home, new DefaultUserPreferences(), null);
-    wallPanel.displayView();
+    new WallController(home, new DefaultUserPreferences(), new FileContentManager(), null);
   }
 }

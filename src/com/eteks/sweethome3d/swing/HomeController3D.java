@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -44,8 +45,9 @@ import com.eteks.sweethome3d.model.WallListener;
  */
 public class HomeController3D {
   private Home                  home;
-  private UndoableEditSupport   undoSupport;
   private UserPreferences       preferences;
+  private ContentManager        contentManager;
+  private UndoableEditSupport   undoSupport;
   private JComponent            home3DView;
   // Current state
   private CameraControllerState cameraState;
@@ -58,11 +60,13 @@ public class HomeController3D {
    * @param home the home edited by this controller and its view
    */
   public HomeController3D(Home home, 
-                          UserPreferences preferences, 
+                          UserPreferences preferences,
+                          ContentManager contentManager, 
                           UndoableEditSupport undoSupport) {
     this.home = home;
-    this.undoSupport = undoSupport;
     this.preferences = preferences;
+    this.contentManager = contentManager;
+    this.undoSupport = undoSupport;
     // Create view
     this.home3DView = new HomeComponent3D(home, this);
     // Initialize states
@@ -101,7 +105,8 @@ public class HomeController3D {
    * Controls the edition of 3D attributes. 
    */
   public void modifyAttributes() {
-    new Home3DAttributesController(this.home, this.preferences, this.undoSupport);    
+    new Home3DAttributesController(this.home, this.preferences, 
+        this.contentManager, this.undoSupport);    
   }
 
   /**

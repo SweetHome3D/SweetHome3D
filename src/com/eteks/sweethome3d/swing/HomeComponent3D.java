@@ -643,9 +643,9 @@ public class HomeComponent3D extends JComponent implements Printable {
     // Compute ground texture coordinates
     if (groundTexture != null) {
       TexCoord2f [] textureCoords = {new TexCoord2f(0, 0),
-                                     new TexCoord2f(0, groundDepth / groundTexture.getHeight()),
+                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), 0),
                                      new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()),
-                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), 0)};
+                                     new TexCoord2f(0, groundDepth / groundTexture.getHeight())};
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }

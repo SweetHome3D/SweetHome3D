@@ -80,7 +80,7 @@ public class OBJWriterTest extends TestCase {
     // 1. Create an empty home and a 3D controller
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    HomeController3D homeController3D = new HomeController3D(home, preferences, null);
+    HomeController3D homeController3D = new HomeController3D(home, preferences, null, null);
     
     // 2. Add to home a wall and a piece of furniture
     home.addWall(new Wall(0, 0, 0, 1000, 10));

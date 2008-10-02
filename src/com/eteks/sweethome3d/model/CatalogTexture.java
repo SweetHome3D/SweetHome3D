@@ -28,28 +28,45 @@ import java.text.Collator;
 public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> {
   private static final long serialVersionUID = 1L;
   
-  private final String name;
-  private final Content image;
-  private final float width;
-  private final float height;
-  private TexturesCategory category;
+  private final String          name;
+  private final Content         image;
+  private final float           width;
+  private final float           height;
+  private boolean               modifiable;
+  
+  private TexturesCategory      category;
   
   private static final Collator COMPARATOR = Collator.getInstance();
   
   /**
-   * Creates a catalog texture.
+   * Creates an unmodifiable catalog texture.
    * @param name the name of this texture 
    * @param image the content of the image used for this texture
    * @param width the width of the texture in centimeters
    * @param height the height of the texture in centimeters
    */
   public CatalogTexture(String name, Content image, float width, float height) {
+    this(name, image, width, height, false);
+  }
+
+  /**
+   * Creates a catalog texture.
+   * @param name the name of this texture 
+   * @param image the content of the image used for this texture
+   * @param width the width of the texture in centimeters
+   * @param height the height of the texture in centimeters
+   * @param modifiable <code>true</code> if this texture can be modified
+   */
+  public CatalogTexture(String name, Content image, 
+                        float width, float height,
+                        boolean modifiable) {
     this.name = name;
     this.image = image;
     this.width = width;
     this.height = height;
+    this.modifiable = modifiable;
   }
-
+  
   /**
    * Returns the name of this texture.
    */
@@ -78,6 +95,13 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
     return this.height;
   }
 
+  /**
+   * Returns <code>true</code> if this texture is modifiable (not read from resources).
+   */
+  public boolean isModifiable() {
+    return this.modifiable;
+  }
+  
   /**
    * Returns the category of this texture.
    */

@@ -43,9 +43,9 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.ContentManager;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
@@ -55,6 +55,9 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.TextureEvent;
+import com.eteks.sweethome3d.model.TextureListener;
+import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -143,7 +146,7 @@ public class HomeController  {
     this.planController = new PlanController(
         home, preferences, contentManager, undoSupport);
     this.homeController3D = new HomeController3D(
-        home, preferences, this.undoSupport);
+        home, preferences, contentManager, this.undoSupport);
     helpController = new HelpController(preferences);
     
     this.homeView = new HomePane(home, preferences, contentManager, this);
@@ -278,7 +281,9 @@ public class HomeController  {
   private void addListeners() {
     createCatalogSelectionListener();
     setCatalogFurnitureSelectionSynchronized(true);
-    addCatalogFurnitureListener();
+    CatalogWriterListener catalogsListener = new CatalogWriterListener(this);
+    this.preferences.getFurnitureCatalog().addFurnitureListener(catalogsListener);
+    this.preferences.getTexturesCatalog().addTextureListener(catalogsListener);
     addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
@@ -319,25 +324,16 @@ public class HomeController  {
   }
   
   /**
-   * Adds a furniture listener to preferences catalog to write preferences 
-   * when catalog is modified.
-   */
-  private void addCatalogFurnitureListener() {
-    this.preferences.getFurnitureCatalog().addFurnitureListener(
-        new CatalogWriterFurnitureListener(this));
-  }
-
-  /**
-   * Catalog listener that writes preferences each time a piece of furniture 
-   * is deleted or added in catalog. This listener is bound to this controller 
+   * Catalog listener that writes preferences each time a piece of furniture or a texture
+   * is deleted or added in furniture or textures catalog. This listener is bound to this controller 
    * with a weak reference to avoid strong link between catalog and this controller.  
    */
-  private static class CatalogWriterFurnitureListener implements FurnitureListener {
+  private static class CatalogWriterListener implements FurnitureListener, TextureListener {
     // Stores the currently writing preferences 
     private static Set<UserPreferences> writingPreferences = new HashSet<UserPreferences>();
     private WeakReference<HomeController> homeController;
     
-    public CatalogWriterFurnitureListener(HomeController homeController) {
+    public CatalogWriterListener(HomeController homeController) {
       this.homeController = new WeakReference<HomeController>(homeController);
     }
     
@@ -347,21 +343,36 @@ public class HomeController  {
       if (controller == null) {
         ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
       } else {
-        if (!writingPreferences.contains(controller.preferences)) {
-          writingPreferences.add(controller.preferences);
-          // Write preferences later once all catalog modifications are notified 
-          ((HomePane)controller.getView()).invokeLater(new Runnable() {
-              public void run() {
-                try {
-                  controller.preferences.write();
-                  writingPreferences.remove(controller.preferences);
-                } catch (RecorderException ex) {
-                  ((HomePane)controller.getView()).showError(
-                        controller.resource.getString("savePreferencesError"));
-                }
+        writePreferences(controller);
+      }
+    }
+
+    public void textureChanged(TextureEvent ev) {
+      pieceOfFurnitureChanged(null);
+      // If controller was garbage collected, remove this listener from catalog
+      final HomeController controller = this.homeController.get();
+      if (controller == null) {
+        ((TexturesCatalog)ev.getSource()).removeTextureListener(this);
+      } else {
+        writePreferences(controller);
+      }
+    }
+    
+    private void writePreferences(final HomeController controller) {
+      if (!writingPreferences.contains(controller.preferences)) {
+        writingPreferences.add(controller.preferences);
+        // Write preferences later once all catalog modifications are notified 
+        ((HomePane)controller.getView()).invokeLater(new Runnable() {
+            public void run() {
+              try {
+                controller.preferences.write();
+                writingPreferences.remove(controller.preferences);
+              } catch (RecorderException ex) {
+                ((HomePane)controller.getView()).showError(
+                      controller.resource.getString("savePreferencesError"));
               }
-            });
-        }
+            }
+          });
       }
     }
   }

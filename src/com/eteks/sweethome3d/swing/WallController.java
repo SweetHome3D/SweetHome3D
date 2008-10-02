@@ -29,6 +29,7 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -39,20 +40,44 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class WallController {
-  private Home                home;
-  private UndoableEditSupport undoSupport;
-  private JComponent          wallView;
+  private Home                    home;
+  private UndoableEditSupport     undoSupport;
+  private TextureChoiceController leftSideTextureController;
+  private TextureChoiceController rightSideTextureController;
+  private JComponent              wallView;
 
   /**
    * Creates the controller of wall view with undo support.
    */
   public WallController(Home home, 
-                        UserPreferences preferences, 
+                        UserPreferences preferences,
+                        ContentManager contentManager, 
                         UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
+
+    ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
+    this.leftSideTextureController = new TextureChoiceController(
+        resource.getString("leftSideTextureTitle"), preferences, contentManager);
+    this.rightSideTextureController = new TextureChoiceController(
+        resource.getString("rightSideTextureTitle"), preferences, contentManager);
+    
     this.wallView = new WallPanel(home, preferences, this); 
     ((WallPanel)this.wallView).displayView();
+  }
+
+  /**
+   * Returns the texture controller of the wall left side.
+   */
+  public TextureChoiceController getLeftSideTextureController() {
+    return this.leftSideTextureController;
+  }
+
+  /**
+   * Returns the texture controller of the wall right side.
+   */
+  public TextureChoiceController getRightSideTextureController() {
+    return this.rightSideTextureController;
   }
 
   /**

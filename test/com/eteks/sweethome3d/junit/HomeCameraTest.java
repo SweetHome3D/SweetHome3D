@@ -52,13 +52,13 @@ import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.ColorButton;
+import com.eteks.sweethome3d.swing.Home3DAttributesController;
 import com.eteks.sweethome3d.swing.Home3DAttributesPanel;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
-import com.eteks.sweethome3d.swing.TextureButton;
-import com.eteks.sweethome3d.swing.TexturePanel;
+import com.eteks.sweethome3d.swing.TextureChoiceComponent;
 
 /**
  * Tests camera changes in home.
@@ -251,14 +251,14 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Retrieve Home3DAttributesPanel components
     Home3DAttributesPanel panel = (Home3DAttributesPanel)TestUtilities.findComponent(
         attributesDialog, Home3DAttributesPanel.class);
+    Home3DAttributesController panelController = 
+        (Home3DAttributesController)TestUtilities.getField(panel, "controller");
     JSpinner observerFieldOfViewSpinner = 
         (JSpinner)TestUtilities.getField(panel, "observerFieldOfViewSpinner");
     JSpinner observerHeightSpinner = 
         (JSpinner)TestUtilities.getField(panel, "observerHeightSpinner");
-    ColorButton groundColorButton = 
+    ColorButton groundColorButton =  
         (ColorButton)TestUtilities.getField(panel, "groundColorButton");
-    TextureButton groundTextureButton = 
-        (TextureButton)TestUtilities.getField(panel, "groundTextureButton");
     ColorButton skyColorButton = 
         (ColorButton)TestUtilities.getField(panel, "skyColorButton");
     JSlider brightnessSlider = 
@@ -280,7 +280,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     assertEquals("Wrong ground color", oldGroundColor, 
         groundColorButton.getColor().intValue());
     assertEquals("Wrong ground texture", oldGroundTexture, 
-        groundTextureButton.getTexture());
+        panelController.getGroundTextureController().getTexture());
     assertEquals("Wrong sky color", oldSkyColor, 
         skyColorButton.getColor().intValue());
     assertEquals("Wrong brightness", oldLightColor & 0xFF, 
@@ -316,10 +316,11 @@ public class HomeCameraTest extends ComponentTestFixture {
     attributesDialog = showHome3DAttributesPanel(controller, frame, tester);
     panel = (Home3DAttributesPanel)TestUtilities.findComponent(
         attributesDialog, Home3DAttributesPanel.class);
+    panelController = (Home3DAttributesController)TestUtilities.getField(panel, "controller");
     JRadioButton groundColorRadioButton = 
         (JRadioButton)TestUtilities.getField(panel, "groundColorRadioButton");
-    final TextureButton groundTextureButton2 = 
-        (TextureButton)TestUtilities.getField(panel, "groundTextureButton");
+    final TextureChoiceComponent groundTextureButton = 
+        (TextureChoiceComponent)panelController.getGroundTextureController().getView();
     JRadioButton groundTextureRadioButton = 
         (JRadioButton)TestUtilities.getField(panel, "groundTextureRadioButton");
     
@@ -332,20 +333,20 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display texture dialog later in Event Dispatch Thread to avoid blocking test thread
-          groundTextureButton2.doClick();
+          groundTextureButton.doClick();
         }
       });
     // Wait for 3D view to be shown
     tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        Home3DAttributesPanel.class.getName()).getString("groundTextureDialog.title"));
+        Home3DAttributesController.class.getName()).getString("groundTextureTitle"));
     // Check texture dialog box is displayed
-    TexturePanel texturePanel = (TexturePanel)new BasicFinder().find(frame, 
-        new ClassMatcher(TexturePanel.class, true));
+    TextureChoiceComponent texturePanel = (TextureChoiceComponent)new BasicFinder().find(frame, 
+        new ClassMatcher(TextureChoiceComponent.class, true));
     JDialog textureDialog = (JDialog)SwingUtilities.getAncestorOfClass(JDialog.class, texturePanel);
     assertTrue("Texture dialog not showing", textureDialog.isShowing());
     
-    JList availableTexturesList = 
-      (JList)TestUtilities.getField(texturePanel, "availableTexturesList");
+    JList availableTexturesList = (JList)new BasicFinder().find(frame, 
+        new ClassMatcher(JList.class, true));
     availableTexturesList.setSelectedIndex(0);
     CatalogTexture firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
     assertEquals("Wrong first texture in list", firstTexture, 

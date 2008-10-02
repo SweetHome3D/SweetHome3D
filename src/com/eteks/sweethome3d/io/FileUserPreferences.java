@@ -40,10 +40,14 @@ import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TexturesCatalog;
+import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -56,30 +60,36 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
-  private static final String LANGUAGE                  = "language";
-  private static final String UNIT                      = "unit";
-  private static final String MAGNETISM_ENABLED         = "magnetismEnabled";
-  private static final String RULERS_VISIBLE            = "rulersVisible";
-  private static final String GRID_VISIBLE              = "gridVisible";
-  private static final String NEW_WALL_HEIGHT           = "newHomeWallHeight";
-  private static final String NEW_WALL_THICKNESS        = "newWallThickness";
-  private static final String RECENT_HOMES              = "recentHomes#";
+  private static final String LANGUAGE                    = "language";
+  private static final String UNIT                        = "unit";
+  private static final String MAGNETISM_ENABLED           = "magnetismEnabled";
+  private static final String RULERS_VISIBLE              = "rulersVisible";
+  private static final String GRID_VISIBLE                = "gridVisible";
+  private static final String NEW_WALL_HEIGHT             = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS          = "newWallThickness";
+  private static final String RECENT_HOMES                = "recentHomes#";
 
-  private static final String FURNITURE_NAME            = "furnitureName#";
-  private static final String FURNITURE_CATEGORY        = "furnitureCategory#";
-  private static final String FURNITURE_ICON            = "furnitureIcon#";
-  private static final String FURNITURE_MODEL           = "furnitureModel#";
-  private static final String FURNITURE_WIDTH           = "furnitureWidth#";
-  private static final String FURNITURE_DEPTH           = "furnitureDepth#";
-  private static final String FURNITURE_HEIGHT          = "furnitureHeight#";
-  private static final String FURNITURE_MOVABLE         = "furnitureMovable#";
-  private static final String FURNITURE_DOOR_OR_WINDOW  = "furnitureDoorOrWindow#";
-  private static final String FURNITURE_ELEVATION       = "furnitureElevation#";
-  private static final String FURNITURE_COLOR           = "furnitureColor#";
-  private static final String FURNITURE_MODEL_ROTATION  = "furnitureModelRotation#";
-  private static final String FURNITURE_BACK_FACE_SHOWN = "furnitureBackFaceShown#";
-  private static final String FURNITURE_ICON_YAW        = "furnitureIconYaw#";
-  private static final String FURNITURE_PROPORTIONAL    = "furnitureProportional#";
+  private static final String FURNITURE_NAME              = "furnitureName#";
+  private static final String FURNITURE_CATEGORY          = "furnitureCategory#";
+  private static final String FURNITURE_ICON              = "furnitureIcon#";
+  private static final String FURNITURE_MODEL             = "furnitureModel#";
+  private static final String FURNITURE_WIDTH             = "furnitureWidth#";
+  private static final String FURNITURE_DEPTH             = "furnitureDepth#";
+  private static final String FURNITURE_HEIGHT            = "furnitureHeight#";
+  private static final String FURNITURE_MOVABLE           = "furnitureMovable#";
+  private static final String FURNITURE_DOOR_OR_WINDOW    = "furnitureDoorOrWindow#";
+  private static final String FURNITURE_ELEVATION         = "furnitureElevation#";
+  private static final String FURNITURE_COLOR             = "furnitureColor#";
+  private static final String FURNITURE_MODEL_ROTATION    = "furnitureModelRotation#";
+  private static final String FURNITURE_BACK_FACE_SHOWN   = "furnitureBackFaceShown#";
+  private static final String FURNITURE_ICON_YAW          = "furnitureIconYaw#";
+  private static final String FURNITURE_PROPORTIONAL      = "furnitureProportional#";
+
+  private static final String TEXTURE_NAME                = "textureName#";
+  private static final String TEXTURE_CATEGORY            = "textureCategory#";
+  private static final String TEXTURE_IMAGE               = "textureImage#";
+  private static final String TEXTURE_WIDTH               = "textureWidth#";
+  private static final String TEXTURE_HEIGHT              = "textureHeight#";
 
   private static final String CONTENT_PREFIX = "Content";
   
@@ -107,10 +117,12 @@ public class FileUserPreferences extends UserPreferences {
     // Fill default furniture catalog 
     setFurnitureCatalog(defaultPreferences.getFurnitureCatalog());
     // Read additional furniture
-    readCatalog(preferences);
+    readFurnitureCatalog(preferences);
     
     // Fill default textures catalog 
     setTexturesCatalog(defaultPreferences.getTexturesCatalog());
+    // Read additional textures
+    readTexturesCatalog(preferences);
     
     // Read other preferences 
     Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().toString()));
@@ -154,24 +166,46 @@ public class FileUserPreferences extends UserPreferences {
     }
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     // Read again default furniture catalog with new default locale
-    FurnitureCatalog defaultCatalog = defaultPreferences.getFurnitureCatalog();
-    for (FurnitureCategory category : defaultCatalog.getCategories()) {
+    FurnitureCatalog defaultFurnitureCatalog = defaultPreferences.getFurnitureCatalog();
+    for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
           furnitureCatalog.add(category, piece);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalHomonymException ex) {
           // Ignore pieces that have the same name as an existing piece
         }
       }
     }
+    
+    // Delete default textures of current textures catalog          
+    TexturesCatalog texturesCatalog = getTexturesCatalog();
+    for (TexturesCategory category : texturesCatalog.getCategories()) {
+      for (CatalogTexture texture : category.getTextures()) {
+        if (!texture.isModifiable()) {
+          texturesCatalog.delete(texture);
+        }
+      }
+    }
+    // Read again default textures catalog with new default locale
+    TexturesCatalog defaultTexturesCatalog = defaultPreferences.getTexturesCatalog();
+    for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
+      for (CatalogTexture texture : category.getTextures()) {
+        try {
+          texturesCatalog.add(category, texture);
+        } catch (IllegalHomonymException ex) {
+          // Ignore textures that have the same name as an existing piece
+        }
+      }
+    }
+
     // Read again default textures catalog
     setTexturesCatalog(defaultPreferences.getTexturesCatalog());
   }
 
   /**
-   * Read catalog furniture from preferences.
+   * Read furniture catalog from preferences.
    */
-  private void readCatalog(Preferences preferences) {
+  private void readFurnitureCatalog(Preferences preferences) {
     for (int i = 1; ; i++) {
       String name = preferences.get(FURNITURE_NAME + i, null);
       if (name == null) {
@@ -201,7 +235,7 @@ public class FileUserPreferences extends UserPreferences {
           color, modelRotation, backFaceShown, iconYaw, proportional);
       try {        
         getFurnitureCatalog().add(pieceCategory, piece);
-      } catch (IllegalArgumentException ex) {
+      } catch (IllegalHomonymException ex) {
         // If a piece with same name and category already exists in furniture catalog
         // replace the existing piece by the new one
         List<FurnitureCategory> categories = getFurnitureCatalog().getCategories();
@@ -260,14 +294,77 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
+   * Read textures catalog from preferences.
+   */
+  private void readTexturesCatalog(Preferences preferences) {
+    for (int i = 1; ; i++) {
+      String name = preferences.get(TEXTURE_NAME + i, null);
+      if (name == null) {
+        // Stop the loop when a key textureName# doesn't exist
+        break;
+      }
+      String category = preferences.get(TEXTURE_CATEGORY + i, "");
+      Content image = getContent(preferences, TEXTURE_IMAGE + i);
+      float width = preferences.getFloat(TEXTURE_WIDTH + i, 0.1f);
+      float height = preferences.getFloat(TEXTURE_HEIGHT + i, 0.1f);
+
+      TexturesCategory textureCategory = new TexturesCategory(category);
+      CatalogTexture texture = new CatalogTexture(name, image, width, height, true);
+      try {        
+        getTexturesCatalog().add(textureCategory, texture);
+      } catch (IllegalHomonymException ex) {
+        // If a texture with same name and category already exists in textures catalog
+        // replace the existing texture by the new one
+        List<TexturesCategory> categories = getTexturesCatalog().getCategories();
+        int categoryIndex = Collections.binarySearch(categories, textureCategory);
+        List<CatalogTexture> textures = categories.get(categoryIndex).getTextures();
+        int existingTextureIndex = Collections.binarySearch(textures, texture);        
+        getTexturesCatalog().delete(textures.get(existingTextureIndex));
+        
+        getTexturesCatalog().add(textureCategory, texture);
+      }
+    }
+  }  
+
+  /**
    * Writes user preferences in current user preferences in system.
    */
   @Override
   public void write() throws RecorderException {
     Preferences preferences = getPreferences();
 
-    writeCatalog(preferences);
+    final Set<URL> contentURLs = new HashSet<URL>();
+    contentURLs.addAll(writeFurnitureCatalog(preferences));
+    contentURLs.addAll(writeTexturesCatalog(preferences));
     
+    // Search obsolete contents
+    File applicationFolder;
+    try {
+      applicationFolder = getApplicationFolder();
+    } catch (IOException ex) {
+      throw new RecorderException("Can't access to application folder");
+    }
+    File [] obsoleteContentFiles = applicationFolder.listFiles(
+        new FileFilter() {
+          public boolean accept(File applicationFile) {
+            try {
+              URL toURL = applicationFile.toURI().toURL();
+              return applicationFile.getName().startsWith(CONTENT_PREFIX)
+                 && !contentURLs.contains(toURL);
+            } catch (MalformedURLException ex) {
+              return false;
+            }
+          }
+        });
+    if (obsoleteContentFiles != null) {
+      // Remove obsolete contents
+      for (File file : obsoleteContentFiles) {
+        if (!file.delete()) {
+          throw new RecorderException("Couldn't delete file " + file);
+        }
+      }
+    }
+
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
     preferences.put(UNIT, getUnit().toString());   
@@ -295,9 +392,10 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Writes catalog furniture in <code>preferences</code>.
+   * Writes furniture catalog in <code>preferences</code>.
+   * @return the written content URLs.
    */
-  private void writeCatalog(Preferences preferences) throws RecorderException {
+  private Set<URL> writeFurnitureCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> furnitureContentURLs = new HashSet<URL>();
     int i = 1;
     for (FurnitureCategory category : getFurnitureCatalog().getCategories()) {
@@ -348,34 +446,37 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
     }
-    
-    // Search obsolete contents
-    File applicationFolder;
-    try {
-      applicationFolder = getApplicationFolder();
-    } catch (IOException ex) {
-      throw new RecorderException("Can't access to application folder");
-    }
-    File [] obsoleteContentFiles = applicationFolder.listFiles(
-        new FileFilter() {
-          public boolean accept(File applicationFile) {
-            try {
-              URL toURL = applicationFile.toURI().toURL();
-              return applicationFile.getName().startsWith(CONTENT_PREFIX)
-                 && !furnitureContentURLs.contains(toURL);
-            } catch (MalformedURLException ex) {
-              return false;
-            }
-          }
-        });
-    if (obsoleteContentFiles != null) {
-      // Remove obsolete contents
-      for (File file : obsoleteContentFiles) {
-        if (!file.delete()) {
-          throw new RecorderException("Couldn't delete file " + file);
+    return furnitureContentURLs;
+  }
+
+  /**
+   * Writes textures catalog in <code>preferences</code>.
+   * @return the written content URLs.
+   */
+  private Set<URL> writeTexturesCatalog(Preferences preferences) throws RecorderException {
+    final Set<URL> texturesContentURLs = new HashSet<URL>();
+    int i = 1;
+    for (TexturesCategory category : getTexturesCatalog().getCategories()) {
+      for (CatalogTexture texture : category.getTextures()) {
+        if (texture.isModifiable()) {
+          preferences.put(TEXTURE_NAME + i, texture.getName());
+          preferences.put(TEXTURE_CATEGORY + i, category.getName());
+          putContent(preferences, TEXTURE_IMAGE + i, texture.getImage(), texturesContentURLs);
+          preferences.putFloat(TEXTURE_WIDTH + i, texture.getWidth());
+          preferences.putFloat(TEXTURE_HEIGHT + i, texture.getHeight());
+          i++;
         }
       }
     }
+    // Remove obsolete keys
+    for ( ; preferences.get(TEXTURE_NAME + i, null) != null; i++) {
+      preferences.remove(TEXTURE_NAME + i);
+      preferences.remove(TEXTURE_CATEGORY + i);
+      preferences.remove(TEXTURE_IMAGE + i);
+      preferences.remove(TEXTURE_WIDTH + i);
+      preferences.remove(TEXTURE_HEIGHT + i);
+    }
+    return texturesContentURLs;
   }
 
   /**

@@ -36,7 +36,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
 
   /**
    * Create a category.
-   * @param name the name of the cateory.
+   * @param name the name of the category.
    */
   public TexturesCategory(String name) {
     this.name = name;
@@ -72,7 +72,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
   /**
    * Returns the count of textures in this category.
    */
-  public int getFurnitureCount() {
+  public int getTexturesCount() {
     return this.textures.size();
   }
 
@@ -87,7 +87,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
   /**
    * Adds a texture to this category.
    * @param texture the texture to add.
-   * @throws IllegalArgumentException if a texture with same name as the one in
+   * @throws IllegalHomonymException if a texture with same name as the one in
    *           parameter already exists in this category.
    */
   void add(CatalogTexture texture) {
@@ -100,6 +100,22 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
     this.sorted = false;
   }
 
+  /**
+   * Deletes a texture from this category.
+   * @param texture the texture to remove.
+   * @throws IllegalArgumentException if the texture doesn't exist in this category.
+   */
+  public void delete(CatalogTexture texture) {
+    int textureIndex = this.textures.indexOf(texture);
+    if (textureIndex == -1) {
+      throw new IllegalArgumentException(
+          this.name + " doesn't contain texture " + texture.getName());
+    }
+    //  Make a copy of the list to avoid conflicts in the list returned by getTextures
+    this.textures = new ArrayList<CatalogTexture>(this.textures);
+    this.textures.remove(textureIndex);
+  }
+  
   /**
    * Returns true if this category and the one in parameter have the same name.
    */

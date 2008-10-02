@@ -26,6 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.ResourceBundle;
@@ -46,7 +48,6 @@ import javax.swing.SpinnerNumberModel;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
-import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -64,7 +65,7 @@ public class Home3DAttributesPanel extends JPanel {
   private JRadioButton               groundColorRadioButton;
   private ColorButton                groundColorButton;
   private JRadioButton               groundTextureRadioButton;
-  private TextureButton              groundTextureButton;
+  private JComponent                 groundTextureComponent;
   private JLabel                     skyColorLabel;
   private ColorButton                skyColorButton;
   private JLabel                     brightnessLabel;
@@ -80,12 +81,12 @@ public class Home3DAttributesPanel extends JPanel {
    * @param controller the controller of this panel
    */
   public Home3DAttributesPanel(Home home, UserPreferences preferences,
-                     Home3DAttributesController controller) {
+                               Home3DAttributesController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         Home3DAttributesPanel.class.getName());
-    createComponents(preferences);
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
     updateComponents(home);
@@ -94,7 +95,8 @@ public class Home3DAttributesPanel extends JPanel {
   /**
    * Creates and initializes components and spinners model.
    */
-  private void createComponents(UserPreferences preferences) {
+  private void createComponents(UserPreferences preferences,
+                                Home3DAttributesController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
@@ -113,13 +115,14 @@ public class Home3DAttributesPanel extends JPanel {
         }
       });
     this.groundTextureRadioButton = new JRadioButton(this.resource.getString("groundTextureRadioButton.text"));
-    this.groundTextureButton = new TextureButton(preferences);
-    this.groundTextureButton.setTextureDialogTitle(this.resource.getString("groundTextureDialog.title"));
-    this.groundTextureButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          groundTextureRadioButton.setSelected(true);
-        }
-      });
+    this.groundTextureComponent = controller.getGroundTextureController().getView();
+    controller.getGroundTextureController().addPropertyChangeListener(
+        TextureChoiceController.Property.TEXTURE,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            groundTextureRadioButton.setSelected(true);
+          }
+        });
     ButtonGroup group = new ButtonGroup();
     group.add(this.groundColorRadioButton);
     group.add(this.groundTextureRadioButton);
@@ -221,7 +224,7 @@ public class Home3DAttributesPanel extends JPanel {
     add(this.groundTextureRadioButton, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.groundTextureButton, new GridBagConstraints(
+    add(this.groundTextureComponent, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     // Fourth row
@@ -250,7 +253,7 @@ public class Home3DAttributesPanel extends JPanel {
         setLength((float)Math.round(observerCamera.getHeight() * 100) / 100);
     this.groundColorButton.setColor(home.getGroundColor());
     HomeTexture groundTexture = home.getGroundTexture();
-    this.groundTextureButton.setTexture(groundTexture);
+    this.controller.getGroundTextureController().setTexture(groundTexture);
     if (groundTexture != null) {
       this.groundTextureRadioButton.setSelected(true);
     } else {
@@ -287,13 +290,7 @@ public class Home3DAttributesPanel extends JPanel {
    */
   public HomeTexture getGroundTexture() {
     if (this.groundTextureRadioButton.isSelected()) {
-      TextureImage selectedTexture = (TextureImage)this.groundTextureButton.getTexture();
-      if (selectedTexture instanceof HomeTexture
-          || selectedTexture == null) {
-        return (HomeTexture)selectedTexture;
-      } else {
-        return new HomeTexture(selectedTexture);
-      }
+      return this.controller.getGroundTextureController().getTexture();
     } else {
       return null;
     }
