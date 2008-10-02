@@ -41,6 +41,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +72,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.TextureEvent;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TextureListener;
+import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -218,7 +220,7 @@ public class TextureChoiceComponent extends JButton {
      */
     private void createComponents(final UserPreferences preferences) {
       this.availableTexturesLabel = new JLabel(this.resource.getString("availableTexturesLabel.text"));
-      this.availableTexturesList = new JList(createListModel(preferences));
+      this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.availableTexturesList.setCellRenderer(new DefaultListCellRenderer() {
           @Override
@@ -310,19 +312,39 @@ public class TextureChoiceComponent extends JButton {
           }
         });
       
-      preferences.getTexturesCatalog().addTextureListener(new TextureListener() {
-          public void textureChanged(TextureEvent ev) {
-            availableTexturesList.setModel(createListModel(preferences));
-            switch (ev.getType()) {
-              case ADD:
-                availableTexturesList.setSelectedValue(ev.getTexture(), true);
-                break;
-              case DELETE:
-                availableTexturesList.clearSelection();
-                break;
-            }
-          }
-        });
+      preferences.getTexturesCatalog().addTextureListener(new TexturesCatalogListener(this));
+    }
+
+    /**
+     * Catalog listener that updates textures list each time a texture
+     * is deleted or added in textures catalog. This listener is bound to this component
+     * with a weak reference to avoid strong link between catalog and this component.  
+     */
+    private static class TexturesCatalogListener implements TextureListener {
+      private WeakReference<TexturePanel> texturePanel;
+      
+      public TexturesCatalogListener(TexturePanel texturePanel) {
+        this.texturePanel = new WeakReference<TexturePanel>(texturePanel);
+      }
+      
+      public void textureChanged(TextureEvent ev) {
+        // If controller was garbage collected, remove this listener from catalog
+        final TexturePanel texturePanel = this.texturePanel.get();
+        if (texturePanel == null) {
+          ((TexturesCatalog)ev.getSource()).removeTextureListener(this);
+        } else {
+          texturePanel.availableTexturesList.setModel(
+              texturePanel.createListModel((TexturesCatalog)ev.getSource()));
+          switch (ev.getType()) {
+            case ADD:
+              texturePanel.availableTexturesList.setSelectedValue(ev.getTexture(), true);
+              break;
+            case DELETE:
+              texturePanel.availableTexturesList.clearSelection();
+              break;
+          }       
+        }
+      }
     }
 
     /**
@@ -416,8 +438,8 @@ public class TextureChoiceComponent extends JButton {
     /**
      * Returns a list model from textures catalog.
      */
-    private AbstractListModel createListModel(UserPreferences preferences) {
-      final CatalogTexture [] textures = getTextures(preferences);
+    private AbstractListModel createListModel(TexturesCatalog texturesCatalog) {
+      final CatalogTexture [] textures = getTextures(texturesCatalog);
       return new AbstractListModel() {
           public Object getElementAt(int index) {
             return textures [index];
@@ -432,9 +454,9 @@ public class TextureChoiceComponent extends JButton {
     /**
      * Returns the array of textures in catalog.
      */
-    private CatalogTexture [] getTextures(UserPreferences preferences) {
+    private CatalogTexture [] getTextures(TexturesCatalog texturesCatalog) {
       List<CatalogTexture> textures = new ArrayList<CatalogTexture>();
-      for (TexturesCategory category : preferences.getTexturesCatalog().getCategories()) {
+      for (TexturesCategory category : texturesCatalog.getCategories()) {
         for (CatalogTexture texture : category.getTextures()) {
           textures.add(texture);
         }
