@@ -58,7 +58,7 @@ public class SweetHome3DBootstrap {
         "com.sun.gluegen.runtime",
         "javax.media.opengl",
         "com.microcrowd.loader.java3d"};
-    ClassLoader java3DClassLoader = new ApplicationExtensionsClassLoader(
+    ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), sweetHome3DBootstrapClass.getProtectionDomain(),
         java3DFiles, applicationPackages);  
     
