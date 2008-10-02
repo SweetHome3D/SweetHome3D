@@ -77,7 +77,7 @@ public class ImportedFurnitureWizardController extends WizardController {
   private boolean                          movable;
   private boolean                          doorOrWindow;
   private Integer                          color;
-  private FurnitureCategory                         category;
+  private FurnitureCategory                category;
   private boolean                          backFaceShown;
   private float [][]                       modelRotation;
   private float                            iconYaw;

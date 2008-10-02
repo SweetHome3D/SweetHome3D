@@ -132,7 +132,7 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
- * Wizard panel for background image choice. 
+ * Wizard panel for furniture import. 
  * @author Emmanuel Puybaret
  */
 public class ImportedFurnitureWizardStepsPanel extends JPanel {
@@ -167,7 +167,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private JSpinner                          heightSpinner;
   private JCheckBox                         keepProportionsCheckBox;
   private JLabel                            elevationLabel;
-  private NullableSpinner                   elevationSpinner;
+  private JSpinner                          elevationSpinner;
   private AttributesPreviewComponent        attributesPreviewComponent;
   private JCheckBox                         movableCheckBox;
   private JCheckBox                         doorOrWindowCheckBox;
@@ -181,7 +181,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private static Executor                   modelLoader = Executors.newSingleThreadExecutor();
 
   /**
-   * Creates a view for background image choice, scale and origin. 
+   * Creates a view for furniture import. 
    */
   public ImportedFurnitureWizardStepsPanel(CatalogPieceOfFurniture piece,
                                            String modelName,
@@ -217,8 +217,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private void createComponents(final boolean importHomePiece, 
                                 final UserPreferences preferences,
                                 final ContentManager contentManager) {
-    // Get unit text matching current unit 
-    String unitText = preferences.getUnit().getName();
+    // Get unit name matching current unit 
+    String unitName = preferences.getUnit().getName();
 
     // Model panel components
     this.modelChoiceOrChangeLabel = new JLabel(); 
@@ -487,7 +487,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.categoryComboBox.setSelectedIndex(0);
 
     this.widthLabel = new JLabel(
-        String.format(this.resource.getString("widthLabel.text"), unitText)); 
+        String.format(this.resource.getString("widthLabel.text"), unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
@@ -508,7 +508,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         });
     
     this.depthLabel = new JLabel(
-        String.format(this.resource.getString("depthLabel.text"), unitText)); 
+        String.format(this.resource.getString("depthLabel.text"), unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
@@ -529,7 +529,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         });
     
     this.heightLabel = new JLabel(
-        String.format(this.resource.getString("heightLabel.text"), unitText)); 
+        String.format(this.resource.getString("heightLabel.text"), unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
@@ -564,7 +564,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         });
     
     this.elevationLabel = new JLabel(
-        String.format(this.resource.getString("elevationLabel.text"), unitText)); 
+        String.format(this.resource.getString("elevationLabel.text"), unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 500f);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
@@ -612,7 +612,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         });
 
     this.colorLabel = new JLabel(
-        String.format(this.resource.getString("colorLabel.text"), unitText));
+        String.format(this.resource.getString("colorLabel.text"), unitName));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
     this.colorButton.addPropertyChangeListener("color", 
@@ -1090,7 +1090,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns a model content choosen for a file chooser dialog.
+   * Returns a model content chosen for a file chooser dialog.
    */
   private Content showModelChoiceDialog(ContentManager contentManager) {
     String modelName = contentManager.showOpenDialog( 
