@@ -86,7 +86,7 @@ public abstract class FurnitureCatalog {
   /**
    * Adds a category.
    * @param category the category to add.
-   * @throws IllegalArgumentException if a category with same name as the one in
+   * @throws IllegalHomonymException if a category with same name as the one in
    *           parameter already exists in this catalog.
    */
   private void add(FurnitureCategory category) {

@@ -88,7 +88,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
   /**
    * Adds a piece of furniture to this category.
    * @param piece the piece to add.
-   * @throws IllegalArgumentException if a piece with same name as the one in
+   * @throws IllegalHomonymException if a piece with same name as the one in
    *           parameter already exists in this category.
    */
   void add(CatalogPieceOfFurniture piece) {
