@@ -91,7 +91,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String TEXTURE_WIDTH               = "textureWidth#";
   private static final String TEXTURE_HEIGHT              = "textureHeight#";
 
-  private static final String CONTENT_PREFIX = "Content";
+  private static final String FURNITURE_CONTENT_PREFIX    = "Content";
+  private static final String TEXTURE_CONTENT_PREFIX      = "TextureContent";
   
   private static final Content DUMMY_CONTENT;
   
@@ -333,37 +334,8 @@ public class FileUserPreferences extends UserPreferences {
   public void write() throws RecorderException {
     Preferences preferences = getPreferences();
 
-    final Set<URL> contentURLs = new HashSet<URL>();
-    contentURLs.addAll(writeFurnitureCatalog(preferences));
-    contentURLs.addAll(writeTexturesCatalog(preferences));
-    
-    // Search obsolete contents
-    File applicationFolder;
-    try {
-      applicationFolder = getApplicationFolder();
-    } catch (IOException ex) {
-      throw new RecorderException("Can't access to application folder");
-    }
-    File [] obsoleteContentFiles = applicationFolder.listFiles(
-        new FileFilter() {
-          public boolean accept(File applicationFile) {
-            try {
-              URL toURL = applicationFile.toURI().toURL();
-              return applicationFile.getName().startsWith(CONTENT_PREFIX)
-                 && !contentURLs.contains(toURL);
-            } catch (MalformedURLException ex) {
-              return false;
-            }
-          }
-        });
-    if (obsoleteContentFiles != null) {
-      // Remove obsolete contents
-      for (File file : obsoleteContentFiles) {
-        if (!file.delete()) {
-          throw new RecorderException("Couldn't delete file " + file);
-        }
-      }
-    }
+    writeFurnitureCatalog(preferences);
+    writeTexturesCatalog(preferences);
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
@@ -393,9 +365,8 @@ public class FileUserPreferences extends UserPreferences {
 
   /**
    * Writes furniture catalog in <code>preferences</code>.
-   * @return the written content URLs.
    */
-  private Set<URL> writeFurnitureCatalog(Preferences preferences) throws RecorderException {
+  private void writeFurnitureCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> furnitureContentURLs = new HashSet<URL>();
     int i = 1;
     for (FurnitureCategory category : getFurnitureCatalog().getCategories()) {
@@ -403,8 +374,10 @@ public class FileUserPreferences extends UserPreferences {
         if (piece.isModifiable()) {
           preferences.put(FURNITURE_NAME + i, piece.getName());
           preferences.put(FURNITURE_CATEGORY + i, category.getName());
-          putContent(preferences, FURNITURE_ICON + i, piece.getIcon(), furnitureContentURLs);
-          putContent(preferences, FURNITURE_MODEL + i, piece.getModel(), furnitureContentURLs);
+          putContent(preferences, FURNITURE_ICON + i, piece.getIcon(), 
+              FURNITURE_CONTENT_PREFIX, furnitureContentURLs);
+          putContent(preferences, FURNITURE_MODEL + i, piece.getModel(), 
+              FURNITURE_CONTENT_PREFIX, furnitureContentURLs);
           preferences.putFloat(FURNITURE_WIDTH + i, piece.getWidth());
           preferences.putFloat(FURNITURE_DEPTH + i, piece.getDepth());
           preferences.putFloat(FURNITURE_HEIGHT + i, piece.getHeight());
@@ -446,14 +419,13 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_ICON_YAW + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
     }
-    return furnitureContentURLs;
+    deleteObsoleteContent(furnitureContentURLs, FURNITURE_CONTENT_PREFIX);
   }
 
   /**
    * Writes textures catalog in <code>preferences</code>.
-   * @return the written content URLs.
    */
-  private Set<URL> writeTexturesCatalog(Preferences preferences) throws RecorderException {
+  private void writeTexturesCatalog(Preferences preferences) throws RecorderException {
     final Set<URL> texturesContentURLs = new HashSet<URL>();
     int i = 1;
     for (TexturesCategory category : getTexturesCatalog().getCategories()) {
@@ -461,7 +433,8 @@ public class FileUserPreferences extends UserPreferences {
         if (texture.isModifiable()) {
           preferences.put(TEXTURE_NAME + i, texture.getName());
           preferences.put(TEXTURE_CATEGORY + i, category.getName());
-          putContent(preferences, TEXTURE_IMAGE + i, texture.getImage(), texturesContentURLs);
+          putContent(preferences, TEXTURE_IMAGE + i, texture.getImage(), 
+              TEXTURE_CONTENT_PREFIX, texturesContentURLs);
           preferences.putFloat(TEXTURE_WIDTH + i, texture.getWidth());
           preferences.putFloat(TEXTURE_HEIGHT + i, texture.getHeight());
           i++;
@@ -476,14 +449,14 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(TEXTURE_WIDTH + i);
       preferences.remove(TEXTURE_HEIGHT + i);
     }
-    return texturesContentURLs;
+    deleteObsoleteContent(texturesContentURLs, TEXTURE_CONTENT_PREFIX);
   }
 
   /**
    * Writes <code>key</code> <code>content</code> in <code>preferences</code>.
    */
   private void putContent(Preferences preferences, String key, 
-                          Content content, 
+                          Content content, String contentPrefix,
                           Set<URL> furnitureContentURLs) throws RecorderException {
     if (content instanceof TemporaryURLContent) {
       URLContent urlContent = (URLContent)content;
@@ -492,16 +465,16 @@ public class FileUserPreferences extends UserPreferences {
         try {
           // If content is a JAR entry copy the content of its URL and rebuild a new URL content from 
           // this copy and the entry name
-          copiedContent = copyToApplicationURLContent(new URLContent(urlContent.getJAREntryURL()));
+          copiedContent = copyToApplicationURLContent(new URLContent(urlContent.getJAREntryURL()), contentPrefix);
           copiedContent = new URLContent(new URL("jar:" + copiedContent.getURL() + "!/" + urlContent.getJAREntryName()));
         } catch (MalformedURLException ex) {
           // Shouldn't happen
           throw new RecorderException("Can't build URL", ex);
         }
       } else {
-        copiedContent = copyToApplicationURLContent(urlContent);
+        copiedContent = copyToApplicationURLContent(urlContent, contentPrefix);
       }
-      putContent(preferences, key, copiedContent, furnitureContentURLs);
+      putContent(preferences, key, copiedContent, contentPrefix, furnitureContentURLs);
     } else if (content instanceof URLContent) {
       URLContent urlContent = (URLContent)content;
       preferences.put(key, urlContent.getURL().toString());
@@ -512,7 +485,8 @@ public class FileUserPreferences extends UserPreferences {
         furnitureContentURLs.add(urlContent.getURL());
       }
     } else {
-      putContent(preferences, key, copyToApplicationURLContent(content), furnitureContentURLs);
+      putContent(preferences, key, copyToApplicationURLContent(content, contentPrefix), 
+          contentPrefix, furnitureContentURLs);
     }
   }
 
@@ -520,11 +494,12 @@ public class FileUserPreferences extends UserPreferences {
    * Returns a content object that references a copy of <code>content</code> in 
    * user application folder.
    */
-  private URLContent copyToApplicationURLContent(Content content) throws RecorderException {
+  private URLContent copyToApplicationURLContent(Content content, 
+                                                 String contentPrefix) throws RecorderException {
     InputStream tempIn = null;
     OutputStream tempOut = null;
     try {
-      File applicationFile = createApplicationFile();
+      File applicationFile = createApplicationFile(contentPrefix);
       tempIn = content.openStream();
       tempOut = new FileOutputStream(applicationFile);
       byte [] buffer = new byte [8096];
@@ -552,7 +527,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns a new file in user application folder.
    */
-  private File createApplicationFile() throws IOException {
+  private File createApplicationFile(String filePrefix) throws IOException {
     File applicationFolder = getApplicationFolder();
     // Create application folder if it doesn't exist
     if (!applicationFolder.exists()
@@ -560,7 +535,7 @@ public class FileUserPreferences extends UserPreferences {
       throw new IOException("Couldn't create " + applicationFolder);
     }
     // Return a new file in application folder
-    return File.createTempFile(CONTENT_PREFIX, ".pref", applicationFolder);
+    return File.createTempFile(filePrefix, ".pref", applicationFolder);
   }
 
   /**
@@ -583,6 +558,41 @@ public class FileUserPreferences extends UserPreferences {
     }
   }
 
+  /**
+   * Deletes from application folder the content files starting by <code>contentPrefix</code>
+   * that don't belong to <code>contentURLs</code>. 
+   */
+  private void deleteObsoleteContent(final Set<URL> contentURLs, 
+                                     final String contentPrefix) throws RecorderException {
+    // Search obsolete contents
+    File applicationFolder;
+    try {
+      applicationFolder = getApplicationFolder();
+    } catch (IOException ex) {
+      throw new RecorderException("Can't access to application folder");
+    }
+    File [] obsoleteContentFiles = applicationFolder.listFiles(
+        new FileFilter() {
+          public boolean accept(File applicationFile) {
+            try {
+              URL toURL = applicationFile.toURI().toURL();
+              return applicationFile.getName().startsWith(contentPrefix)
+                 && !contentURLs.contains(toURL);
+            } catch (MalformedURLException ex) {
+              return false;
+            }
+          }
+        });
+    if (obsoleteContentFiles != null) {
+      // Remove obsolete contents
+      for (File file : obsoleteContentFiles) {
+        if (!file.delete()) {
+          throw new RecorderException("Couldn't delete file " + file);
+        }
+      }
+    }
+  }
+  
   /**
    * File manager class that accesses to Mac OS X specifics.
    * Do not invoke methods of this class without checking first if 
