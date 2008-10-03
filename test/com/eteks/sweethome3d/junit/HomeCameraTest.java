@@ -33,13 +33,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
-import javax.swing.SwingUtilities;
 
 import junit.extensions.abbot.ComponentTestFixture;
 import abbot.finder.AWTHierarchy;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.matchers.ClassMatcher;
+import abbot.finder.matchers.WindowMatcher;
 import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
@@ -337,12 +337,12 @@ public class HomeCameraTest extends ComponentTestFixture {
         }
       });
     // Wait for 3D view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        Home3DAttributesController.class.getName()).getString("groundTextureTitle"));
+    String groundTextureTitle = ResourceBundle.getBundle(
+        Home3DAttributesController.class.getName()).getString("groundTextureTitle");
+    tester.waitForFrameShowing(new AWTHierarchy(), groundTextureTitle);
     // Check texture dialog box is displayed
-    TextureChoiceComponent texturePanel = (TextureChoiceComponent)new BasicFinder().find(frame, 
-        new ClassMatcher(TextureChoiceComponent.class, true));
-    JDialog textureDialog = (JDialog)SwingUtilities.getAncestorOfClass(JDialog.class, texturePanel);
+    JDialog textureDialog = (JDialog)new BasicFinder().find(attributesDialog, 
+        new WindowMatcher(groundTextureTitle));
     assertTrue("Texture dialog not showing", textureDialog.isShowing());
     
     JList availableTexturesList = (JList)new BasicFinder().find(frame, 
