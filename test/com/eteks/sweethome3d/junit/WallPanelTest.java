@@ -59,15 +59,16 @@ public class WallPanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
     // Add a listener that closes automatically any opened window
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("activeWindow", 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-            if (activeWindow != null) {
-              activeWindow.dispose();
-            }
-          }
-        });
+    PropertyChangeListener activeWindowListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+        if (activeWindow != null) {
+          activeWindow.dispose();
+        }
+      }
+    };
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(
+        "activeWindow", activeWindowListener);
     
     // 2. Create a wall panel to edit the selected wall
     WallPanel panel = (WallPanel)new WallController(home, preferences, null, null).getView();
@@ -113,6 +114,9 @@ public class WallPanelTest extends TestCase {
     // Check values stored by furniture panel components are equal to the ones set
     assertWallPanelEquals(null, null, null,
         null, null, null, null, null, 10, null, null, null, panel);
+
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(
+        "activeWindow", activeWindowListener);
   }
   
   /**
