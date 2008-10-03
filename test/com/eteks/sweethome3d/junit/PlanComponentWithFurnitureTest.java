@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
  * Tests wall and furniture management in 
@@ -361,7 +362,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     pieceX = selectedPiece.getX();
     pieceY = selectedPiece.getY();
     // Start items duplication 
-    tester.actionKeyPress(KeyEvent.VK_ALT);
+    tester.actionKeyPress(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(50, 170)));
     // Check selection changed
     assertFalse("Selection didn't change", selectedItems.equals(frame.home.getSelectedItems()));
@@ -380,14 +381,14 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, selectedPiece.getAngle(), selectedPiece);
     
     // 21. Release Alt key
-    tester.actionKeyRelease(KeyEvent.VK_ALT);
+    tester.actionKeyRelease(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     // Check original items replaced duplicated items
     assertTrue("Original items not selected", selectedItems.equals(frame.home.getSelectedItems()));
     assertLocationAndOrientationEqualPiece(pieceX + 20 / planComponent.getScale(), 
         pieceY + 30 / planComponent.getScale(), selectedPiece.getAngle(), selectedPiece);
     assertFalse("Duplicated piece still in home", frame.home.getFurniture().contains(movedPiece));
     // Press Alt key again 
-    tester.actionKeyPress(KeyEvent.VK_ALT);
+    tester.actionKeyPress(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     // Check the duplicated piece moved and the original piece moved back to its original location 
     movedPiece = Home.getFurnitureSubList(frame.home.getSelectedItems()).get(0);
     assertLocationAndOrientationEqualPiece(pieceX + 20 / planComponent.getScale(), 
@@ -407,7 +408,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(50, 170)));
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(50, 190)));
     tester.actionMouseRelease();
-    tester.actionKeyRelease(KeyEvent.VK_ALT);
+    tester.actionKeyRelease(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     // Check the duplicated piece moved and the original piece didn't move
     List<Object> movedItems = frame.home.getSelectedItems();
     assertEquals("Selection doesn't contain 4 items", 4, movedItems.size());    

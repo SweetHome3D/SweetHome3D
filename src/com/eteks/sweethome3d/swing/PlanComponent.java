@@ -43,8 +43,6 @@ import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
@@ -470,7 +468,8 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();
           controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
-              ev.getClickCount(), ev.isShiftDown(), ev.isAltDown());
+              ev.getClickCount(), ev.isShiftDown(), 
+              OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown());
         }
       }
 
@@ -518,49 +517,24 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     inputMap.put(KeyStroke.getKeyStroke("DELETE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
-    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
-    inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
     inputMap.put(KeyStroke.getKeyStroke("LEFT"), ActionType.MOVE_SELECTION_LEFT);
     inputMap.put(KeyStroke.getKeyStroke("UP"), ActionType.MOVE_SELECTION_UP);
     inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
-    
-    // Use a key listener to consume SHIFT and ALT keys only while mouse button is pressed 
-    addKeyListener(new KeyAdapter() {
-        public void keyPressed(KeyEvent ev) {
-          if ((ev.getModifiersEx() & (KeyEvent.BUTTON1_DOWN_MASK 
-                                    | KeyEvent.BUTTON2_DOWN_MASK 
-                                    | KeyEvent.BUTTON3_DOWN_MASK)) != 0) {
-            switch (ev.getKeyCode()) {
-              case KeyEvent.VK_ALT :
-                getActionMap().get(ActionType.DUPLICATION_ON).actionPerformed(null);
-                ev.consume();
-                break;
-              case KeyEvent.VK_SHIFT :
-                getActionMap().get(ActionType.TOGGLE_MAGNETISM_ON).actionPerformed(null);
-                ev.consume();
-                break;
-            }
-          }
-        }
-  
-        public void keyReleased(KeyEvent ev) {
-          if ((ev.getModifiersEx() & (KeyEvent.BUTTON1_DOWN_MASK 
-              | KeyEvent.BUTTON2_DOWN_MASK 
-              | KeyEvent.BUTTON3_DOWN_MASK)) != 0) {
-            switch (ev.getKeyCode()) {
-              case KeyEvent.VK_ALT :
-                getActionMap().get(ActionType.DUPLICATION_OFF).actionPerformed(null);
-                ev.consume();
-                break;
-              case KeyEvent.VK_SHIFT :
-                getActionMap().get(ActionType.TOGGLE_MAGNETISM_OFF).actionPerformed(null);
-                ev.consume();
-                break;
-            }
-          }
-        }
-      });
+    inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
+    inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
+    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
+    if (OperatingSystem.isMacOSX()) {
+      // Under Mac OS X, duplication with Alt key 
+      inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.DUPLICATION_ON);
+      inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DUPLICATION_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
+    } else {
+      // Under other systems, duplication with Ctrl key 
+      inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.DUPLICATION_ON);
+      inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DUPLICATION_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
+    }
   }
  
   /**
@@ -605,7 +579,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
         controller.toggleMagnetism(this.toggle);
       }
     }
-    // Duplication mapped to Alt key
+    // Duplication mapped to Ctrl or Alt key
     class DuplicationAction extends AbstractAction {
       private final boolean duplicationActivated;
       

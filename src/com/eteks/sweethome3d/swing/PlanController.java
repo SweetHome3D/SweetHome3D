@@ -95,7 +95,7 @@ public class PlanController extends FurnitureController {
   private float                 xLastMousePress;
   private float                 yLastMousePress;
   private boolean               shiftDownLastMousePress;
-  private boolean               altDownLastMousePress;
+  private boolean               duplicationActivatedLastMousePress;
   private float                 xLastMouseMove;
   private float                 yLastMouseMove;
 
@@ -239,15 +239,15 @@ public class PlanController extends FurnitureController {
    * Processes a mouse button pressed event.
    */
   public void pressMouse(float x, float y, int clickCount, 
-                         boolean shiftDown, boolean altDown) {
+                         boolean shiftDown, boolean duplicationActivated) {
     // Store the last coordinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
     this.xLastMouseMove = x;
     this.yLastMouseMove = y;
     this.shiftDownLastMousePress = shiftDown; 
-    this.altDownLastMousePress = altDown; 
-    this.state.pressMouse(x, y, clickCount, shiftDown, altDown);
+    this.duplicationActivatedLastMousePress = duplicationActivated; 
+    this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
   }
 
   /**
@@ -401,10 +401,10 @@ public class PlanController extends FurnitureController {
   }
 
   /**
-   * Returns <code>true</code> if alt key was down at last mouse press.
+   * Returns <code>true</code> if duplication was activated at last mouse press.
    */
-  protected boolean wasAltDownLastMousePress() {
-    return this.altDownLastMousePress;
+  protected boolean wasDuplicationActivatedLastMousePress() {
+    return this.duplicationActivatedLastMousePress;
   }
 
   /**
@@ -2023,7 +2023,8 @@ public class PlanController extends FurnitureController {
     public void activateDuplication(boolean duplicationActivated) {
     }
 
-    public void pressMouse(float x, float y, int clickCount, boolean shiftDown, boolean altDown) {
+    public void pressMouse(float x, float y, int clickCount, 
+                           boolean shiftDown, boolean duplicationActivated) {
     }
 
     public void releaseMouse(float x, float y) {
@@ -2105,7 +2106,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void pressMouse(float x, float y, int clickCount,
-                           boolean shiftDown, boolean altDown) {
+                           boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 1) {
         if (getYawRotatedCameraAt(x, y) != null) {
           setState(getCameraYawRotationState());
@@ -2191,7 +2192,7 @@ public class PlanController extends FurnitureController {
         this.movedItems = home.getSelectedItems();
       }
       this.duplicatedItems = null;
-      activateDuplication(wasAltDownLastMousePress());
+      activateDuplication(wasDuplicationActivatedLastMousePress());
     }
     
     @Override
@@ -2440,7 +2441,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void pressMouse(float x, float y, int clickCount,
-                           boolean shiftDown, boolean altDown) {
+                           boolean shiftDown, boolean duplicationActivated) {
       // Change state to NewWallState
       setState(getNewWallState());
     }
@@ -2597,7 +2598,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void pressMouse(float x, float y, int clickCount, 
-                           boolean shiftDown, boolean altDown) {
+                           boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 2) {
         if (this.lastWall != null) {
           // Join last wall to the selected wall at its end
@@ -3304,7 +3305,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void pressMouse(float x, float y, int clickCount,
-                           boolean shiftDown, boolean altDown) {
+                           boolean shiftDown, boolean duplicationActivated) {
       // Change state to NewWallState
       setState(getNewDimensionLineState());
     }
@@ -3401,7 +3402,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void pressMouse(float x, float y, int clickCount, 
-                           boolean shiftDown, boolean altDown) {
+                           boolean shiftDown, boolean duplicationActivated) {
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
