@@ -2106,44 +2106,49 @@ public class PlanController extends FurnitureController {
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean altDown) {
-      if (getYawRotatedCameraAt(x, y) != null) {
-        setState(getCameraYawRotationState());
-      } else if (getPitchRotatedCameraAt(x, y) != null) {
-        setState(getCameraPitchRotationState());
-      } else if (getResizedDimensionLineStartAt(x, y) != null
-          || getResizedDimensionLineEndAt(x, y) != null) {
-        setState(getDimensionLineResizeState());
-      } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null) {
-        setState(getPieceOfFurnitureResizeState());
-      } else if (getResizedWallStartAt(x, y) != null
-          || getResizedWallEndAt(x, y) != null) {
-        setState(getWallResizeState());
-      } else if (getOffsetDimensionLineAt(x, y) != null) {
-        setState(getDimensionLineOffsetState());
-      } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
-        setState(getPieceOfFurnitureHeightState());
-      } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
-        setState(getPieceOfFurnitureRotationState());
-      } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
-        setState(getPieceOfFurnitureElevationState());
-      } else {
+      if (clickCount == 1) {
+        if (getYawRotatedCameraAt(x, y) != null) {
+          setState(getCameraYawRotationState());
+        } else if (getPitchRotatedCameraAt(x, y) != null) {
+          setState(getCameraPitchRotationState());
+        } else if (getResizedDimensionLineStartAt(x, y) != null
+            || getResizedDimensionLineEndAt(x, y) != null) {
+          setState(getDimensionLineResizeState());
+        } else if (getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureResizeState());
+        } else if (getResizedWallStartAt(x, y) != null
+            || getResizedWallEndAt(x, y) != null) {
+          setState(getWallResizeState());
+        } else if (getOffsetDimensionLineAt(x, y) != null) {
+          setState(getDimensionLineOffsetState());
+        } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureHeightState());
+        } else if (getRotatedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureRotationState());
+        } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
+          setState(getPieceOfFurnitureElevationState());
+        } else {
+          Object item = getItemAt(x, y);
+          // If shift isn't pressed, and an item is under cursor position
+          if (!shiftDown && item != null) {
+            // Change state to SelectionMoveState
+            setState(getSelectionMoveState());
+          } else {
+            // Otherwise change state to RectangleSelectionState
+            setState(getRectangleSelectionState());
+          }
+          
+        }
+      } else if (clickCount == 2) {
         Object item = getItemAt(x, y);
         // If shift isn't pressed, and an item is under cursor position
         if (!shiftDown && item != null) {
-          if (clickCount == 1) {
-            // Change state to SelectionMoveState
-            setState(getSelectionMoveState());
-          } else if (clickCount == 2) {
-            // Modify selected item on a double click
-            if (item instanceof Wall) {
-              modifySelectedWalls();
-            } else if (item instanceof HomePieceOfFurniture) {
-              modifySelectedFurniture();
-            } 
-          }
-        } else {
-          // Otherwise change state to RectangleSelectionState
-          setState(getRectangleSelectionState());
+          // Modify selected item on a double click
+          if (item instanceof Wall) {
+            modifySelectedWalls();
+          } else if (item instanceof HomePieceOfFurniture) {
+            modifySelectedFurniture();
+          } 
         }
       }
     }
