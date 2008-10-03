@@ -345,10 +345,10 @@ public class WallPanel extends JPanel {
     // Add length label and spinner at the end of second row of endPointPanel
     endPointPanel.add(this.lengthLabel, new GridBagConstraints(
         0, 1, 3, 1, 1, 0, GridBagConstraints.LINE_END, 
-        GridBagConstraints.NONE, new Insets(2, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(5, 0, 0, 5), 0, 0));
     endPointPanel.add(this.lengthSpinner, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(2, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(5, 0, 0, 0), 0, 0));
 
     add(endPointPanel, new GridBagConstraints(
         0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START,
