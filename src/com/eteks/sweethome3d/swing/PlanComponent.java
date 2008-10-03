@@ -525,28 +525,39 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     inputMap.put(KeyStroke.getKeyStroke("DOWN"), ActionType.MOVE_SELECTION_DOWN);
     inputMap.put(KeyStroke.getKeyStroke("RIGHT"), ActionType.MOVE_SELECTION_RIGHT);
     
-    // Use a key listener for SHIFT and ALT keys, 
-    // to avoid component to consume the events for these keys 
+    // Use a key listener to consume SHIFT and ALT keys only while mouse button is pressed 
     addKeyListener(new KeyAdapter() {
         public void keyPressed(KeyEvent ev) {
-          switch (ev.getKeyCode()) {
-            case KeyEvent.VK_ALT :
-              getActionMap().get(ActionType.DUPLICATION_ON).actionPerformed(null);
-              break;
-            case KeyEvent.VK_SHIFT :
-              getActionMap().get(ActionType.TOGGLE_MAGNETISM_ON).actionPerformed(null);
-              break;
+          if ((ev.getModifiersEx() & (KeyEvent.BUTTON1_DOWN_MASK 
+                                    | KeyEvent.BUTTON2_DOWN_MASK 
+                                    | KeyEvent.BUTTON3_DOWN_MASK)) != 0) {
+            switch (ev.getKeyCode()) {
+              case KeyEvent.VK_ALT :
+                getActionMap().get(ActionType.DUPLICATION_ON).actionPerformed(null);
+                ev.consume();
+                break;
+              case KeyEvent.VK_SHIFT :
+                getActionMap().get(ActionType.TOGGLE_MAGNETISM_ON).actionPerformed(null);
+                ev.consume();
+                break;
+            }
           }
         }
   
         public void keyReleased(KeyEvent ev) {
-          switch (ev.getKeyCode()) {
-            case KeyEvent.VK_ALT :
-              getActionMap().get(ActionType.DUPLICATION_OFF).actionPerformed(null);
-              break;
-            case KeyEvent.VK_SHIFT :
-              getActionMap().get(ActionType.TOGGLE_MAGNETISM_OFF).actionPerformed(null);
-              break;
+          if ((ev.getModifiersEx() & (KeyEvent.BUTTON1_DOWN_MASK 
+              | KeyEvent.BUTTON2_DOWN_MASK 
+              | KeyEvent.BUTTON3_DOWN_MASK)) != 0) {
+            switch (ev.getKeyCode()) {
+              case KeyEvent.VK_ALT :
+                getActionMap().get(ActionType.DUPLICATION_OFF).actionPerformed(null);
+                ev.consume();
+                break;
+              case KeyEvent.VK_SHIFT :
+                getActionMap().get(ActionType.TOGGLE_MAGNETISM_OFF).actionPerformed(null);
+                ev.consume();
+                break;
+            }
           }
         }
       });
