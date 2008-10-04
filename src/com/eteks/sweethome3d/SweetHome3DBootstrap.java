@@ -48,7 +48,10 @@ public class SweetHome3DBootstrap {
         "libgluegen-rt.jnilib",
         "libjogl.jnilib",
         "libjogl_awt.jnilib",
-        "libjogl_cg.jnilib"};
+        "libjogl_cg.jnilib",
+        "iText-2.1.2u.jar", // Included jars in Sweet Home 3D executable jar file 
+        "Loader3DS1_2.jar",
+        "jnlp.jar"};
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
@@ -59,7 +62,8 @@ public class SweetHome3DBootstrap {
         "javax.media.opengl",
         "com.microcrowd.loader.java3d"};
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
-        sweetHome3DBootstrapClass.getClassLoader(), sweetHome3DBootstrapClass.getProtectionDomain(),
+        sweetHome3DBootstrapClass.getClassLoader(), 
+        sweetHome3DBootstrapClass.getProtectionDomain(),
         java3DFiles, applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
