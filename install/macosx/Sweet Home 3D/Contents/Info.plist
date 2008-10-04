@@ -128,6 +128,8 @@
 			<string>$JAVAROOT/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Versions/1.5/Home/lib/ext</string>
 			<key>apple.awt.graphics.UseQuartz</key>
 			<string>true</string>
+			<key>sweethome3d.bundle</key>
+			<string>true</string>
 		</dict>
 	</dict>
 </dict>
