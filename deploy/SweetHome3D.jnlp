@@ -43,6 +43,11 @@
     <description kind="short">Keszitse el lakasanak belso kialakitasat!</description>
     <offline-allowed/>    
   </information>  
+  <information locale="se">
+    <title>Sweet Home 3D</title>
+    <description kind="short">Fixa heminredningen i ditt hem</description>
+    <offline-allowed/>    
+  </information>  
 
   <security>
     <all-permissions/>
@@ -57,8 +62,7 @@
     <jar href="lib/Loader3DS1_2.jar"/>
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
-    <property name="sun.swing.enableImprovedDragGesture" 
-              value="true"/>
+    <property name="sun.swing.enableImprovedDragGesture" value="true"/>
   </resources>
  
   <resources os="Windows">
