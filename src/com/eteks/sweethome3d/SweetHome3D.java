@@ -300,10 +300,14 @@ public class SweetHome3D extends HomeApplication {
     // a tree element without selecting it before :
     // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
     System.setProperty("sun.swing.enableImprovedDragGesture", "true");
-    // Change Mac OS X application menu name
-    System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
-    // Use Mac OS X screen menu bar for frames menu bar
-    System.setProperty("apple.laf.useScreenMenuBar", "true");
+    if (OperatingSystem.isMacOSX()) {
+      // Change Mac OS X application menu name
+      System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
+      // Use Mac OS X screen menu bar for frames menu bar
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+      // Force the use of Quartz under Mac OS X for better Java 2D rendering performance
+      System.setProperty("apple.awt.graphics.UseQuartz", "true");
+    }
   }
 
   /**
