@@ -386,11 +386,11 @@ public class TextureChoiceComponent extends JButton {
       add(this.importTextureButton, new GridBagConstraints(
           1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
-      // Third row
+      // Forth row
       add(this.modifyTextureButton, new GridBagConstraints(
           1, 3, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
-      // Third row
+      // Fifth row
       add(this.deleteTextureButton, new GridBagConstraints(
           1, 4, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
