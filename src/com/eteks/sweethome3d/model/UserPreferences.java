@@ -38,7 +38,7 @@ import java.util.ResourceBundle;
 public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}
-  private static final String [] SUPPORTED_LANGUAGES = {"cs", "de", "en", "es", "fr", "hu", "it", "pl", "pt", "sv", "ru"}; 
+  private static final String [] SUPPORTED_LANGUAGES = {"cs", "de", "en", "es", "fr", "it", "hu", "pl", "pt", "sv", "ru"}; 
   
   private PropertyChangeSupport propertyChangeSupport;
 
