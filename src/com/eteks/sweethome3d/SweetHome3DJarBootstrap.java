@@ -25,14 +25,14 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 
 /**
- * This bootstrap class loads Sweet Home 3D application classes from jars in classpath 
- * or from extension jars stored as resources.
+ * This bootstrap class loads Sweet Home 3D Jar executable application classes from 
+ * extension jars stored as resources.
  * @author Emmanuel Puybaret
  */
-public class SweetHome3DBootstrap {
+public class SweetHome3DJarBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-    String [] java3DFiles = {
+    String [] extensionFiles = {
         "j3dcore.jar", // Main Java 3D jars
         "vecmath.jar",
         "j3dutils.jar",
@@ -47,32 +47,10 @@ public class SweetHome3DBootstrap {
         "libgluegen-rt.jnilib",
         "libjogl.jnilib",
         "libjogl_awt.jnilib",
-        "libjogl_cg.jnilib"};
-    run(args, java3DFiles);
-  }
-  
-  static void run(String [] args, String [] extensionFiles) throws MalformedURLException, IllegalAccessException, 
-        InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-    Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
-    String [] applicationPackages = {
-        "com.eteks.sweethome3d",
-        "javax.media.j3d",
-        "javax.vecmath",
-        "com.sun.j3d",
-        "com.sun.opengl",
-        "com.sun.gluegen.runtime",
-        "javax.media.opengl",
-        "com.microcrowd.loader.java3d"};
-    ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
-        sweetHome3DBootstrapClass.getClassLoader(), 
-        sweetHome3DBootstrapClass.getProtectionDomain(),
-        extensionFiles, applicationPackages);  
-    
-    String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
-    Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
-    Method applicationClassMain = 
-        applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
-    // Call application class main method with reflection
-    applicationClassMain.invoke(null, new Object [] {args});
+        "libjogl_cg.jnilib",
+        "iText-2.1.2u.jar", // Other jars 
+        "Loader3DS1_2.jar",
+        "jnlp.jar"};
+    SweetHome3DBootstrap.run(args, extensionFiles);
   }
 }
