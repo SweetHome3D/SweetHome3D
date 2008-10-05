@@ -369,10 +369,7 @@ public class WallPanel extends JPanel {
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
-    JPanel heightPanel = new JPanel(new GridBagLayout());
-    heightPanel.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createTitledBorder(this.resource.getString("heightPanel.title")),
-        BorderFactory.createEmptyBorder(0, 2, 2, 2)));   
+    JPanel heightPanel = createTitledPanel(this.resource.getString("heightPanel.title"));   
     // First row of height panel
     heightPanel.add(this.rectangularWallRadioButton, new GridBagConstraints(
         0, 0, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -430,14 +427,7 @@ public class WallPanel extends JPanel {
   }
   
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
-    JPanel titledPanel = new JPanel(new GridBagLayout());
-    Border panelBorder = BorderFactory.createTitledBorder(title);
-    // For systems different from Mac OS X 10.5, add an empty border 
-    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      panelBorder = BorderFactory.createCompoundBorder(
-          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
-    }    
-    titledPanel.setBorder(panelBorder);    
+    JPanel titledPanel = createTitledPanel(title);    
     
     if (horizontal) {
       int labelAlignment = OperatingSystem.isMacOSX() 
@@ -469,6 +459,18 @@ public class WallPanel extends JPanel {
             GridBagConstraints.HORIZONTAL, new Insets(0, 0, bottomInset, 0), 0, 0));
       }
     }
+    return titledPanel;
+  }
+  
+  private JPanel createTitledPanel(String title) {
+    JPanel titledPanel = new JPanel(new GridBagLayout());
+    Border panelBorder = BorderFactory.createTitledBorder(title);
+    // For systems different from Mac OS X 10.5, add an empty border 
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      panelBorder = BorderFactory.createCompoundBorder(
+          panelBorder, BorderFactory.createEmptyBorder(0, 2, 2, 2));
+    }    
+    titledPanel.setBorder(panelBorder);    
     return titledPanel;
   }
 
