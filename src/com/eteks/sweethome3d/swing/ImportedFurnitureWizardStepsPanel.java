@@ -1991,8 +1991,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
      */
     public BufferedImage getIconImage() {
       BufferedImage iconImage = null;
-      // Under Mac OS X 10.5 (build 1.5.0_13-b05-237) / Java 3D 1.5, there's a very strange bug 
-      // with 3D offscreen images that happens *only* when the user imports furniture from the menu :
+      // Under Mac OS X 10.5 (build 1.5.0_13-b05-237 or 1.5.0_16-b06-284) / Java 3D 1.5, 
+      // there's a very strange bug with 3D offscreen images that happens *only* 
+      // when the user imports furniture from the menu :
       // all screen menu bar items get disabled until an other dialog is opened   
       if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
         try {
@@ -2017,7 +2018,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         } catch (AWTException ex2) {
           throw new RuntimeException(ex2);
         }
-
       }
       
       return iconImage;
