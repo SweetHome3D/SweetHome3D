@@ -19,9 +19,7 @@
  */
 package com.eteks.sweethome3d;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 
 /**
