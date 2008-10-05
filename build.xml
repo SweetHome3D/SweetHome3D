@@ -9,7 +9,7 @@
      - textures  : Builds Textures.jar file in deploy directory
      - help      : Builds Help.jar file in deploy directory
 
-     - deploy : Builds Java Web Start signed files in deploy/lib directory
+     - deploy :           Builds Java Web Start signed files in deploy/lib directory
      - jarExecutable :    Builds SweetHome3D-version.jar file in install directory
      - windowsInstaller : Builds SweetHome3D-version-windows.exe file in install directory     
      - macosxInstaller :  Builds SweetHome3D-version-macosx.dmg file in install directory
@@ -18,7 +18,7 @@
 -->
 <project basedir="." default="deploy" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="1.3.1"/>
+  <property name="version" value="1.4"/>
 	
   <!-- Builds deploy/SweetHome3D.jar -->
   <target name="build">
@@ -79,7 +79,7 @@
   	</jar>
   </target>
 		
-  <!-- Builds deploy/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
+  <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
   <target name="deploy" depends="build,furniture,textures,help">
     <mkdir dir="deploy/lib/windows"/>
   	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
@@ -151,11 +151,10 @@
 
   <!-- Builds install/SweetHome3D-version.jar executable Jar -->
   <target name="jarExecutable" depends="build,furniture,textures,help">
-    <mkdir dir="install/jar/tmp"/>
   	<!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
   	     and other DLLs and jars -->
     <jar destfile="install/SweetHome3D-${version}.jar" 
-    	manifest="install/jar/MANIFEST.MF" index="true">
+         manifest="install/jar/MANIFEST.MF" index="true">
       <zipfileset src="deploy/SweetHome3D.jar"/>
       <zipfileset src="deploy/Furniture.jar"/>
       <zipfileset src="deploy/Textures.jar"/>
