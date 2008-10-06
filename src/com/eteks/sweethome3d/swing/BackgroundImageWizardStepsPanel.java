@@ -77,6 +77,7 @@ import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 
 /**
  * Wizard panel for background image choice. 
@@ -154,7 +155,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            updateController(contentManager.getContent(files.get(0).getAbsolutePath()));
+            updateController(TemporaryURLContent.copyToTemporaryURLContent(
+                contentManager.getContent(files.get(0).getAbsolutePath())));
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
@@ -488,11 +490,14 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
     if (imageName != null) {
       try {
-        return contentManager.getContent(imageName);
+        return TemporaryURLContent.copyToTemporaryURLContent(contentManager.getContent(imageName));
       } catch (RecorderException ex) {
-        JOptionPane.showMessageDialog(this, 
-            String.format(this.resource.getString("imageChoiceError"), imageName));
+        // Error message displayed below 
+      } catch (IOException ex) {
+        // Error message displayed below 
       }
+      JOptionPane.showMessageDialog(this, 
+          String.format(this.resource.getString("imageChoiceError"), imageName));
     }
     return null;
   }

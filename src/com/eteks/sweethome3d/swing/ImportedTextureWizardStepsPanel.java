@@ -79,6 +79,7 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.TemporaryURLContent;
 
 /**
  * Wizard panel for background image choice. 
@@ -170,7 +171,8 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String textureName = files.get(0).getAbsolutePath();
-            Content imageContent = contentManager.getContent(textureName);
+            Content imageContent = TemporaryURLContent.copyToTemporaryURLContent(
+                contentManager.getContent(textureName));
             // Store the default name for the chosen content
             setTextureName(contentManager, imageContent, textureName);
             updateController(imageContent, preferences);
@@ -617,14 +619,18 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
     if (imageName != null) {
       try {
-        Content imageContent = contentManager.getContent(imageName);
+        Content imageContent = TemporaryURLContent.copyToTemporaryURLContent(
+            contentManager.getContent(imageName));
         // Store the default name for the chosen content
         setTextureName(contentManager, imageContent, imageName);
         return imageContent;
       } catch (RecorderException ex) {
-        JOptionPane.showMessageDialog(this, 
-            String.format(this.resource.getString("imageChoiceError"), imageName));
+        // Error message displayed below 
+      } catch (IOException ex) {
+        // Error message displayed below 
       }
+      JOptionPane.showMessageDialog(this, 
+          String.format(this.resource.getString("imageChoiceError"), imageName));
     }
     return null;
   }

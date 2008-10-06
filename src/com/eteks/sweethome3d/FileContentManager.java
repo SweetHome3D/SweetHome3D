@@ -36,7 +36,6 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.tools.OperatingSystem;
-import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
 /**
@@ -244,13 +243,12 @@ public class FileContentManager implements ContentManager {
   }
   
   /**
-   * Returns a {@link URLContent URL content} object that references a temporary copy of 
+   * Returns a {@link URLContent URL content} object that references 
    * the given file path.
    */
   public Content getContent(String contentName) throws RecorderException {
     try {
-      return TemporaryURLContent.copyToTemporaryURLContent(
-          new URLContent(new File(contentName).toURI().toURL()));
+      return new URLContent(new File(contentName).toURI().toURL());
     } catch (IOException ex) {
       throw new RecorderException("Couldn't access to content " + contentName);
     }
