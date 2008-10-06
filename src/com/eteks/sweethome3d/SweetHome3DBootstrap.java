@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 public class SweetHome3DBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
+    Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
     String [] java3DFiles = {
         "j3dcore.jar", // Main Java 3D jars
         "vecmath.jar",
@@ -47,13 +48,10 @@ public class SweetHome3DBootstrap {
         "libgluegen-rt.jnilib",
         "libjogl.jnilib",
         "libjogl_awt.jnilib",
-        "libjogl_cg.jnilib"};
-    run(args, java3DFiles);
-  }
-  
-  static void run(String [] args, String [] extensionFiles) throws MalformedURLException, IllegalAccessException, 
-        InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-    Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
+        "libjogl_cg.jnilib",
+        "iText-2.1.2u.jar", // Jars included in Sweet Home 3D executable jar file 
+        "Loader3DS1_2.jar",
+        "jnlp.jar"};
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
@@ -63,15 +61,15 @@ public class SweetHome3DBootstrap {
         "com.sun.gluegen.runtime",
         "javax.media.opengl",
         "com.microcrowd.loader.java3d"};
-    ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
+    ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),
-        extensionFiles, applicationPackages);  
+        java3DFiles, applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
-    Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
+    Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
     Method applicationClassMain = 
-        applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
+      applicationClass.getMethod("main", Array.newInstance(String.class, 0).getClass());
     // Call application class main method with reflection
     applicationClassMain.invoke(null, new Object [] {args});
   }
