@@ -28,13 +28,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -65,7 +60,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.ContentManager;
@@ -196,9 +190,15 @@ public class SweetHome3D extends HomeApplication {
         // Read home file in args [1] if args [0] == "-open"
         readHome(args [1]);
       } else if (application.getContentManager().isAcceptable(args [1], 
-          ContentManager.ContentType.FURNITURE_CATALOG)) {
-        importFurnitureCatalog(args [1]); 
+          ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
+        final String furnitureLibraryName = args [1];
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Import furniture library with a dummy controller 
+              new HomeController(new Home(), application).importFurnitureLibrary(furnitureLibraryName);
+            }
+          });
       }
     } else if (application.getHomes().isEmpty()) {
       // Create a default home 
@@ -245,50 +245,6 @@ public class SweetHome3D extends HomeApplication {
       String message = String.format(resource.getString("openError"), homeFile);
       JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
           JOptionPane.ERROR_MESSAGE);
-    }
-  }
-
-  /**
-   * Imports furniture catalog file to plugin furniture catalog folder.
-   */
-  private static void importFurnitureCatalog(String furnitureCatalogFile) {
-    try {
-      String furnitureCatalogFileName = new File(furnitureCatalogFile).getName();
-      File pluginFurnitureCatalogFolder = ((DefaultFurnitureCatalog)application.
-          getUserPreferences().getFurnitureCatalog()).getPluginFurnitureCatalogFolder();
-      File destinationFile = new File(pluginFurnitureCatalogFolder, furnitureCatalogFileName);
-      
-      if (!destinationFile.exists()
-          || ((FileContentManager)application.getContentManager()).
-                confirmOverwrite(furnitureCatalogFileName)) {        
-        // Copy furnitureCatalogFile to plugin furniture catalog folder
-        InputStream tempIn = null;
-        OutputStream tempOut = null;
-        try {
-          tempIn = new FileInputStream(furnitureCatalogFile);
-          pluginFurnitureCatalogFolder.mkdirs();
-          tempOut = new FileOutputStream(destinationFile);          
-          byte [] buffer = new byte [8096];
-          int size; 
-          while ((size = tempIn.read(buffer)) != -1) {
-            tempOut.write(buffer, 0, size);
-          }
-        } finally {
-          if (tempIn != null) {
-            tempIn.close();
-          }
-          if (tempOut != null) {
-            tempOut.close();
-          }
-        }
-      }
-      ((FileUserPreferences)application.getUserPreferences()).updateDefaultCatalogs();
-    } catch (IOException ex) {
-      // Show an error message dialog if file couldn't be read
-      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-      String message = String.format(
-          resource.getString("importFurnitureCatalogFileError"), furnitureCatalogFile);
-      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
     }
   }
 

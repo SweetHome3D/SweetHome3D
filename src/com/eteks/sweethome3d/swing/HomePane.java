@@ -44,6 +44,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -67,6 +68,7 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.FocusManager;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -114,7 +116,7 @@ public class HomePane extends JRootPane {
   public enum ActionType {
       NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
       UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
-      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, 
+      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY,
       SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
       SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
       SORT_HOME_FURNITURE_BY_ANGLE, SORT_HOME_FURNITURE_BY_COLOR, 
@@ -243,6 +245,7 @@ public class HomePane extends JRootPane {
         furnitureController, "deleteSelection");
     createAction(ActionType.MODIFY_FURNITURE, controller, "modifySelectedFurniture");
     createAction(ActionType.IMPORT_FURNITURE, controller, "importFurniture");
+    createAction(ActionType.IMPORT_FURNITURE_LIBRARY, controller, "importFurnitureLibrary");
     createAction(ActionType.ALIGN_FURNITURE_ON_TOP, 
         furnitureController, "alignSelectedFurnitureOnTop");
     createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, 
@@ -565,6 +568,7 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(getMenuAction(ActionType.MODIFY_FURNITURE));
     furnitureMenu.addSeparator();
     furnitureMenu.add(getMenuAction(ActionType.IMPORT_FURNITURE));
+    furnitureMenu.add(getMenuAction(ActionType.IMPORT_FURNITURE_LIBRARY));
     furnitureMenu.addSeparator();
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_TOP));
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
@@ -1366,6 +1370,32 @@ public class HomePane extends JRootPane {
   }
 
   /**
+   * Displays a content chooser open dialog to open a .sh3f file.
+   */
+  public String showImportFurnitureLibraryDialog() {
+    return this.contentManager.showOpenDialog( 
+        this.resource.getString("importFurnitureLibraryDialog.title"), 
+        ContentManager.ContentType.FURNITURE_LIBRARY);
+  }
+
+  /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing furniture library or not. 
+   */
+  public boolean confirmReplaceFurnitureLibrary(String furnitureLibraryName) {
+    // Retrieve displayed text in buttons and message
+    String messageFormat = this.resource.getString("confirmReplaceFurnitureLibrary.message");
+    String message = String.format(messageFormat, new File(furnitureLibraryName).getName());
+    String title = this.resource.getString("confirmReplaceFurnitureLibrary.title");
+    String replace = this.resource.getString("confirmReplaceFurnitureLibrary.replace");
+    String doNotReplace = this.resource.getString("confirmReplaceFurnitureLibrary.doNotReplace");
+    
+    return JOptionPane.showOptionDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+        message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
    * Displays a content chooser save dialog to save a home in a .sh3d file.
    */
   public String showSaveDialog(String homeName) {
@@ -1393,7 +1423,7 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Displays a dialog that let user choose whether he wants to save
+   * Displays a dialog that lets user choose whether he wants to save
    * the current home or not.
    * @return {@link SaveAnswer#SAVE} if user chose to save home,
    * {@link SaveAnswer#DO_NOT_SAVE} if user don't want to save home,

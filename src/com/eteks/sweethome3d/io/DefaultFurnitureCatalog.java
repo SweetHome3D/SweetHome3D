@@ -64,8 +64,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
-    
-  private static final String PLUGIN_FURNITURE_CATALOG_SUB_FOLDER = "furniture";
   private static final String PLUGIN_FURNITURE_CATALOG_FAMILY = "PluginFurnitureCatalog";
   
   private static final String HOMONYM_FURNITURE_FORMAT = "%s -%d-";
@@ -101,7 +99,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     
     try {
       // Try to load sh3f files from plugin folder
-      File [] furnitureFiles = getPluginFurnitureCatalogFolder().listFiles(new FileFilter () {
+      File [] furnitureFiles = FileUserPreferences.getFurnitureLibrariesPluginFolder().listFiles(new FileFilter () {
         public boolean accept(File pathname) {
           return pathname.isFile();
         }
@@ -127,13 +125,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     }
   }
   
-  /**
-   * Returns the folder where plugin furniture catalog files must be placed.
-   */
-  public File getPluginFurnitureCatalogFolder() throws IOException {
-    return new File(FileUserPreferences.getApplicationFolder(), PLUGIN_FURNITURE_CATALOG_SUB_FOLDER);
-  }
-
   /**
    * Reads each piece of furniture described in <code>resource</code> bundle.
    * Resources described in piece properties will be loaded from <code>furnitureFile</code> 

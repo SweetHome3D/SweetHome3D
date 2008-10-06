@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.io;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -54,5 +55,21 @@ public class DefaultUserPreferences extends UserPreferences {
   @Override
   public void write() throws RecorderException {
     throw new RecorderException("Default user preferences can't be written");
+  }
+
+  /**
+   * Throws an exception because default user preferences can't manage furniture libraries.
+   */
+  @Override
+  public boolean furnitureLibraryExists(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage furniture libraries");
+  }
+
+  /**
+   * Throws an exception because default user preferences can't manage additional furniture libraries.
+   */
+  @Override
+  public void addFurnitureLibrary(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage furniture libraries");
   }
 }

@@ -21,8 +21,10 @@ package com.eteks.sweethome3d.io;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,6 +96,8 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_CONTENT_PREFIX    = "Content";
   private static final String TEXTURE_CONTENT_PREFIX      = "TextureContent";
   
+  private static final String PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER = "furniture";
+
   private static final Content DUMMY_CONTENT;
   
   static {
@@ -155,7 +159,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Reloads furniture and textures default catalogs.
    */
-  public void updateDefaultCatalogs() {
+  private void updateDefaultCatalogs() {
     // Delete default pieces of current furniture catalog          
     FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
     for (FurnitureCategory category : furnitureCatalog.getCategories()) {
@@ -539,9 +543,16 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
+   * Returns the folder where plugin furniture libraries files must be placed.
+   */
+  static File getFurnitureLibrariesPluginFolder() throws IOException {
+    return new File(getApplicationFolder(), PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER);
+  }
+
+  /**
    * Returns Sweet Home 3D application folder. 
    */
-  static File getApplicationFolder() throws IOException {
+  private static File getApplicationFolder() throws IOException {
     if (OperatingSystem.isMacOSX()) {
       return new File(MacOSXFileManager.getApplicationSupportFolder(), 
              "eTeks" + File.separator + "Sweet Home 3D");
@@ -612,5 +623,57 @@ public class FileUserPreferences extends UserPreferences {
    */
   private Preferences getPreferences() {
     return Preferences.userNodeForPackage(FileUserPreferences.class);
+  }
+
+  /**
+   * Returns <code>true</code> if the given furniture library file exists in plugin directory.
+   * @param name the name of the resource to check
+   */
+  @Override
+  public boolean furnitureLibraryExists(String name) throws RecorderException {
+    String libraryFileName = new File(name).getName();
+    try {
+      return new File(getFurnitureLibrariesPluginFolder(), libraryFileName).exists();
+    } catch (IOException ex) {
+      throw new RecorderException("Can't access to furniture libraries plugin folder", ex);
+    }
+  }
+
+  /**
+   * Adds the file <code>furnitureLibraryName</code> to plugin furniture libraries folder 
+   * to make the furniture library available to catalog.
+   */
+  @Override
+  public void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException {
+    try {
+      String libraryFileName = new File(furnitureLibraryName).getName();
+      File furnitureLibrariesPluginFolder = getFurnitureLibrariesPluginFolder();
+      File destinationFile = new File(furnitureLibrariesPluginFolder, libraryFileName);
+
+      // Copy furnitureCatalogFile to furniture plugin folder
+      InputStream tempIn = null;
+      OutputStream tempOut = null;
+      try {
+        tempIn = new BufferedInputStream(new FileInputStream(furnitureLibraryName));
+        furnitureLibrariesPluginFolder.mkdirs();
+        tempOut = new FileOutputStream(destinationFile);          
+        byte [] buffer = new byte [8096];
+        int size; 
+        while ((size = tempIn.read(buffer)) != -1) {
+          tempOut.write(buffer, 0, size);
+        }
+      } finally {
+        if (tempIn != null) {
+          tempIn.close();
+        }
+        if (tempOut != null) {
+          tempOut.close();
+        }
+      }
+      updateDefaultCatalogs();
+    } catch (IOException ex) {
+      throw new RecorderException(
+          "Can't write " + furnitureLibraryName +  " in furniture libraries plugin folder", ex);
+    }
   }
 }

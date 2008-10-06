@@ -494,4 +494,17 @@ public abstract class UserPreferences {
           oldRecentHomes, getRecentHomes());
     }
   }
+  
+  /**
+   * Adds <code>furnitureLibraryName</code> to furniture catalog  
+   * to make the furniture library it contains available.
+   * @param name  the name of the resource in which the library will be written. 
+   */
+  public abstract void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException;
+  
+  /**
+   * Returns <code>true</code> if the given furniture library exists.
+   * @param name the name of the resource to check
+   */
+  public abstract boolean furnitureLibraryExists(String name) throws RecorderException;
 }

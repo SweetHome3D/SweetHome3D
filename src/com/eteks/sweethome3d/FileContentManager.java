@@ -228,7 +228,7 @@ public class FileContentManager implements ContentManager {
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
-    this.fileFilters.put(ContentType.FURNITURE_CATALOG, FURNITURE_CATALOG_FILTER);
+    this.fileFilters.put(ContentType.FURNITURE_LIBRARY, FURNITURE_CATALOG_FILTER);
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
@@ -236,7 +236,7 @@ public class FileContentManager implements ContentManager {
     // Fill file default extension map
     this.fileDefaultExtensions = new HashMap<ContentType, String>();
     this.fileDefaultExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.FURNITURE_CATALOG, FURNITURE_CATALOG_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_CATALOG_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.MODEL, OBJ_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.IMAGE, PNG_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.PDF, PDF_EXTENSION);
@@ -482,7 +482,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  public boolean confirmOverwrite(String fileName) {
+  private boolean confirmOverwrite(String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");

@@ -193,6 +193,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.PREFERENCES, true);
     homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, true);
+    homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE_LIBRARY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
@@ -742,6 +743,35 @@ public class HomeController  {
         || this.focusedView == getHomeController3D().getView()) {
       getFurnitureController().importFurniture();
     }    
+  }
+
+  /**
+   * Imports a furniture library chosen by the user.  
+   */
+  public void importFurnitureLibrary() {
+    ((HomePane)getView()).invokeLater(new Runnable() {
+        public void run() {
+          final String furnitureLibraryName = ((HomePane)getView()).showImportFurnitureLibraryDialog();
+          if (furnitureLibraryName != null) {
+            importFurnitureLibrary(furnitureLibraryName);
+          }
+        }
+      });
+  }
+
+  /**
+   * Imports a given furniture library. 
+   */
+  public void importFurnitureLibrary(String furnitureLibraryName) {
+    try {
+      if (!this.preferences.furnitureLibraryExists(furnitureLibraryName) 
+          || ((HomePane)getView()).confirmReplaceFurnitureLibrary(furnitureLibraryName)) {
+        this.preferences.addFurnitureLibrary(furnitureLibraryName);
+      }
+    } catch (RecorderException ex) {
+      String message = String.format(resource.getString("importFurnitureLibraryError"), furnitureLibraryName);
+      ((HomePane)getView()).showError(message);
+    }
   }
 
   /**
