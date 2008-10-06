@@ -46,7 +46,9 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -74,6 +76,7 @@ import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
+import javax.media.j3d.DanglingReferenceException;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
@@ -128,6 +131,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.sun.j3d.utils.scenegraph.io.NamedObjectException;
+import com.sun.j3d.utils.scenegraph.io.SceneGraphStreamWriter;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
@@ -933,11 +938,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     // Read model in modelLoader executor
     modelLoader.execute(new Runnable() {
         public void run() {
-          Content content = null;
           BranchGroup model = null;
           try {
             model = readModel(modelContent);
-            content = modelContent;
           } catch (IOException ex) {
             // If content couldn't be loaded, try to load model as a zipped file
             if (modelContent instanceof URLContent) {
@@ -956,10 +959,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                       String entryFileName = entryName.substring(++slashIndex);
                       if (!entryFileName.startsWith(".")) {
                         URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
-                        content = modelContent instanceof TemporaryURLContent 
-                            ? new TemporaryURLContent(entryUrl)
-                            : new URLContent(entryUrl);
-                        model = readModel(content);
+                        model = readModel(new URLContent(entryUrl));
                         break;
                       }
                     }
@@ -982,12 +982,17 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           }
           
           final BranchGroup readModel = model;
-          final Content readContent = content;
+          // Create a temporary copy of model content at J3F format to keep 
+          // all the materials and the texture images required by the model
+          final Content j3fContent = 
+              readModel != null
+                  ? copyToTemporaryJ3FContent(readModel)
+                  : null;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
               public void run() {
-                if (readModel != null) {
-                  controller.setModel(readContent);
+                if (j3fContent != null) {
+                  controller.setModel(j3fContent);
                   setModelChangeTexts();
                   modelChoiceErrorLabel.setVisible(false);
                   controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
@@ -1033,8 +1038,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             updatePreviewComponentsModel(null);
           }
         });
-      
-      
+            
       // Load piece model 
       final BranchGroup modelNode = ModelManager.getInstance().getModel(modelContent);
       
@@ -1053,6 +1057,33 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           }
         });
     } 
+  }
+  
+  /**
+   * Returns a temporary content containing a 3D model at J3F format.
+   */
+  private Content copyToTemporaryJ3FContent(BranchGroup model) {
+    try {
+      File tempFile = File.createTempFile("j3fContent", "tmp");
+      tempFile.deleteOnExit();
+      SceneGraphStreamWriter tempOut = null;
+      try {
+        tempOut = new SceneGraphStreamWriter(
+            new BufferedOutputStream(new FileOutputStream(tempFile)));
+        tempOut.writeBranchGraph(model, null);
+      } finally {
+        if (tempOut != null) {
+          tempOut.close();
+        }
+      }
+      return new TemporaryURLContent(tempFile.toURI().toURL());
+    } catch (DanglingReferenceException ex) {
+      return null;
+    } catch (NamedObjectException ex) {
+      return null;
+    } catch (IOException ex) {
+      return null;
+    }
   }
   
   /**
