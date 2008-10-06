@@ -51,7 +51,7 @@
     
     <!-- Create SweetHome3D.jar -->
     <jar destfile="deploy/SweetHome3D.jar" 
-         basedir="deploy/classes" index="true" />
+         basedir="deploy/classes"/>
     <delete dir="deploy/classes"/>
   </target>
 
@@ -74,7 +74,7 @@
 	
   <!-- Builds deploy/Help.jar that contains the help files -->
   <target name="help">
-    <jar destfile="deploy/Help.jar" basedir="src" index="true">
+    <jar destfile="deploy/Help.jar" basedir="src">
       <include name="**/help/**"/>
   	</jar>
   </target>
@@ -154,7 +154,7 @@
   	<!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
   	     and other DLLs and jars -->
     <jar destfile="install/SweetHome3D-${version}.jar" 
-         manifest="install/jar/MANIFEST.MF" index="true">
+         manifest="install/jar/MANIFEST.MF">
       <zipfileset src="deploy/SweetHome3D.jar"/>
       <zipfileset src="deploy/Furniture.jar"/>
       <zipfileset src="deploy/Textures.jar"/>
