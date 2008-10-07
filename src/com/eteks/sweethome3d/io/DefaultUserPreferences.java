@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.io;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
-import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 
