@@ -300,12 +300,14 @@ public class TextureChoiceComponent extends JButton {
           }
         });
       this.modifyTextureButton = new JButton(this.resource.getString("modifyTextureButton.text"));
+      this.modifyTextureButton.setEnabled(false);
       this.modifyTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             controller.modifyTexture((CatalogTexture)availableTexturesList.getSelectedValue());
           }
         });    
       this.deleteTextureButton = new JButton(this.resource.getString("deleteTextureButton.text"));
+      this.deleteTextureButton.setEnabled(false);
       this.deleteTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             controller.deleteTexture((CatalogTexture)availableTexturesList.getSelectedValue());
