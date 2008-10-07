@@ -19,11 +19,11 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.swing.Action;
@@ -68,9 +68,10 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class ImportedFurnitureWizardTest extends ComponentTestFixture {
   public void testImportFurnitureWizard() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
+    String language = Locale.getDefault().getLanguage();
     final UserPreferences preferences = new FileUserPreferences();
-    // Ensure we use English and centimeter unit
-    preferences.setLanguage("fr");
+    // Ensure we use default language and centimeter unit
+    preferences.setLanguage(language);
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     final URL testedModelName = ImportedFurnitureWizardTest.class.getResource("resources/test.obj");
     // Create a dummy content manager
@@ -208,16 +209,14 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // 5. Click on next button
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
     nextFinishOptionButton.doClick();
-    // Check current step is attributes
     tester.waitForIdle();
+    // Check current step is attributes
     assertStepShowing(panel, false, false, true, false);    
         
     // 6. Check default furniture name is the presentation name proposed by content manager
-    assertEquals("Wrong default name", "test", 
-        contentManager.getPresentationName(testedModelName.toString(), ContentManager.ContentType.MODEL));
-    // Check name text field has focus
-    assertSame("Name field doesn't have focus", nameTextField,
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
+    assertEquals("Wrong default name",  
+        contentManager.getPresentationName(testedModelName.toString(), ContentManager.ContentType.MODEL),
+        nameTextField.getText());
     // Check Add to catalog check box isn't selected and category combo box 
     // is disabled when furniture is imported in home
     assertFalse("Add to catalog check box is selected", addToCatalogCheckBox.isSelected());
