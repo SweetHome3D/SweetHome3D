@@ -21,7 +21,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -301,7 +300,7 @@ public class HomeControllerTest extends TestCase {
             HomePieceOfFurniture.SortableProperty.MOVABLE,
             HomePieceOfFurniture.SortableProperty.NAME}));
     // Check displayed values in table contains piece name and visible properties
-    assertFurnitureFirstRowEquals(this.furnitureTable, piece.isVisible(), piece.getName());
+    assertFurnitureFirstRowEquals(this.furnitureTable, piece.isMovable(), piece.getName());
 
     // 6. Make visible property visible
     runAction(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE);
@@ -349,7 +348,7 @@ public class HomeControllerTest extends TestCase {
    * Asserts <code>value1</code> equals <code>value2</code> at epsilon.
    */
   private void assertEpsilonEquals(String message, float value1, float value2) {
-    assertTrue(message, Math.abs(value1 - value2) < 1E-5);
+    assertTrue(message, Math.abs(value1 - value2) < 1E-4);
   }
 
   /**
@@ -406,12 +405,12 @@ public class HomeControllerTest extends TestCase {
   private void assertFurnitureFirstRowEquals(JTable table, Object ... values) {
     assertEquals("Wrong column count", values.length, table.getColumnCount());
 
-    NumberFormat numberFormat = NumberFormat.getNumberInstance();
     for (int column = 0, n = table.getColumnCount(); column < n; column++) {
       Component cellRendererComponent = table.getCellRenderer(0, column).
           getTableCellRendererComponent(table, table.getValueAt(0, column), false, false, 0, column);
       if (values [column] instanceof Number) {
-        assertEquals("Wrong value at column " + column,  numberFormat.format(values [column]), 
+        assertEquals("Wrong value at column " + column,  
+            this.preferences.getUnit().getLengthFormat().format(values [column]), 
             ((JLabel)cellRendererComponent).getText());
       } else if (values [column] instanceof Boolean) {
         assertEquals("Wrong value at column " + column, values [column], 
