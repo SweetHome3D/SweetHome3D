@@ -133,9 +133,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Content content = showImageChoiceDialog(contentManager);
-          if (content != null) {
-            updateController(content);
+          String imageName = showImageChoiceDialog(contentManager);
+          if (imageName != null) {
+            updateController(imageName, contentManager);
           }
         }
       });
@@ -155,13 +155,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            updateController(TemporaryURLContent.copyToTemporaryURLContent(
-                contentManager.getContent(files.get(0).getAbsolutePath())));
+            updateController(files.get(0).getAbsolutePath(), contentManager);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
-            success = false;
-          } catch (RecorderException ex) {
             success = false;
           }
           if (!success) {
@@ -325,6 +322,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   public void setStep(final BackgroundImageWizardController.Step step) {
     this.cardLayout.show(this, step.name());    
     switch (step) {
+      case CHOICE:
+        this.imageChoiceOrChangeButton.requestFocusInWindow();
+        break;
       case SCALE:
         ((JSpinner.DefaultEditor)this.scaleDistanceSpinner.getEditor()).getTextField().requestFocusInWindow();
         break;
@@ -377,24 +377,47 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Updates controller values from <code>imageContent</code>.
+   * Reads image from <code>imageName</code> and updates controller values.
    */
-  private void updateController(final Content imageContent) {
+  private void updateController(final String imageName,
+                                final ContentManager contentManager) {
     // Read image in imageLoader executor
     imageLoader.execute(new Runnable() {
         public void run() {
+          Content imageContent = null;
+          try {
+            // Copy image to a temporary content to keep a safe access to it until home is saved
+            imageContent = TemporaryURLContent.copyToTemporaryURLContent(
+                contentManager.getContent(imageName));
+          } catch (RecorderException ex) {
+            // Error message displayed below 
+          } catch (IOException ex) {
+            // Error message displayed below 
+          }
+          if (imageContent == null) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
+                      String.format(resource.getString("imageChoiceError"), imageName));
+                }
+              });
+            return;
+          }
+
           BufferedImage image = null;
           try {
             image = readImage(imageContent);
           } catch (IOException ex) {
             // image is null
           }
+          
           final BufferedImage readImage = image;
+          final Content       readContent = imageContent;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 if (readImage != null) {
-                  controller.setImage(imageContent);
+                  controller.setImage(readContent);
                   setImageChangeTexts();
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize distance and origin with default values
@@ -483,23 +506,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns an image content chosen for a content chooser dialog.
+   * Returns an image chosen for a content chooser dialog.
    */
-  private Content showImageChoiceDialog(ContentManager contentManager) {
-    String imageName = contentManager.showOpenDialog( 
+  private String showImageChoiceDialog(ContentManager contentManager) {
+    return contentManager.showOpenDialog( 
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
-    if (imageName != null) {
-      try {
-        return TemporaryURLContent.copyToTemporaryURLContent(contentManager.getContent(imageName));
-      } catch (RecorderException ex) {
-        // Error message displayed below 
-      } catch (IOException ex) {
-        // Error message displayed below 
-      }
-      JOptionPane.showMessageDialog(this, 
-          String.format(this.resource.getString("imageChoiceError"), imageName));
-    }
-    return null;
   }
 
   /**

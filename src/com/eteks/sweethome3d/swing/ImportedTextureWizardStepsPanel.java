@@ -45,9 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -88,7 +86,6 @@ import com.eteks.sweethome3d.tools.TemporaryURLContent;
 public class ImportedTextureWizardStepsPanel extends JPanel {
   private ImportedTextureWizardController controller;
   private ResourceBundle                  resource;
-  private Map<Content, String>            contentNames;
   private CardLayout                      cardLayout;
   private JLabel                          imageChoiceOrChangeLabel;
   private JButton                         imageChoiceOrChangeButton;
@@ -118,20 +115,12 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
                                          ImportedTextureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedTextureWizardStepsPanel.class.getName());
-    this.contentNames = new HashMap<Content, String>();
     createComponents(preferences, contentManager);
     setMnemonics();
     layoutComponents();
     updateController(catalogTexture);
     if (textureName != null) {
-      try {
-        Content imageContent = contentManager.getContent(textureName);
-        updateController(imageContent, preferences);
-        // Store the default name for the chosen content
-        setTextureName(contentManager, imageContent, textureName);
-      } catch (RecorderException ex) {
-        // Ignore model in parameter
-      }
+      updateController(textureName, contentManager, preferences, true);
     }
   }
 
@@ -148,9 +137,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Content content = showImageChoiceDialog(contentManager);
-          if (content != null) {
-            updateController(content, preferences);
+          String imageName = showImageChoiceDialog(contentManager);
+          if (imageName != null) {
+            updateController(imageName, contentManager, preferences, false);
           }
         }
       });
@@ -171,16 +160,10 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String textureName = files.get(0).getAbsolutePath();
-            Content imageContent = TemporaryURLContent.copyToTemporaryURLContent(
-                contentManager.getContent(textureName));
-            // Store the default name for the chosen content
-            setTextureName(contentManager, imageContent, textureName);
-            updateController(imageContent, preferences);
+            updateController(textureName, contentManager, preferences, false);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
-            success = false;
-          } catch (RecorderException ex) {
             success = false;
           }
           if (!success) {
@@ -439,6 +422,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
   public void setStep(final ImportedTextureWizardController.Step step) {
     this.cardLayout.show(this, step.name());    
     switch (step) {
+      case IMAGE:
+        this.imageChoiceOrChangeButton.requestFocusInWindow();
+        break;
       case ATTRIBUTES:
         this.nameTextField.requestFocusInWindow();
         break;
@@ -497,29 +483,56 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Updates controller values from <code>imageContent</code>.
+   * Reads image from <code>imageName</code> and updates controller values.
    */
-  private void updateController(final Content imageContent, 
-                                final UserPreferences preferences) {
+  private void updateController(final String imageName,
+                                final ContentManager contentManager,
+                                final UserPreferences preferences,
+                                final boolean ignoreException) {
     // Read image in imageLoader executor
     imageLoader.execute(new Runnable() {
         public void run() {
+          Content imageContent = null;
+          try {
+            // Copy image to a temporary content to keep a safe access to it until home is saved
+            imageContent = TemporaryURLContent.copyToTemporaryURLContent(
+                contentManager.getContent(imageName));
+          } catch (RecorderException ex) {
+            // Error message displayed below 
+          } catch (IOException ex) {
+            // Error message displayed below 
+          }
+          if (imageContent == null) {
+            if (!ignoreException) {
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    JOptionPane.showMessageDialog(ImportedTextureWizardStepsPanel.this, 
+                        String.format(resource.getString("imageChoiceError"), imageName));
+                  }
+                });
+            }
+            return;
+          }
+
           BufferedImage image = null;
           try {
             image = readImage(imageContent);
           } catch (IOException ex) {
             // image is null
           }
+          
           final BufferedImage readImage = image;
+          final Content       readContent = imageContent;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
               public void run() {
                 if (readImage != null) {
-                  controller.setImage(imageContent);
+                  controller.setImage(readContent);
                   setImageChangeTexts();
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize attributes with default values
-                  controller.setName(getTextureName(imageContent));
+                  controller.setName(contentManager.getPresentationName(imageName,
+                      ContentManager.ContentType.IMAGE));
                   // Use user category as default category and create it if it doesn't exist
                   TexturesCategory userCategory = new TexturesCategory(resource.getString("userCategory"));
                   for (TexturesCategory category : preferences.getTexturesCatalog().getCategories()) {
@@ -612,51 +625,13 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns an image content chosen for a content chooser dialog.
+   * Returns an image name chosen for a content chooser dialog.
    */
-  private Content showImageChoiceDialog(ContentManager contentManager) {
-    String imageName = contentManager.showOpenDialog( 
+  private String showImageChoiceDialog(ContentManager contentManager) {
+    return contentManager.showOpenDialog( 
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
-    if (imageName != null) {
-      try {
-        Content imageContent = TemporaryURLContent.copyToTemporaryURLContent(
-            contentManager.getContent(imageName));
-        // Store the default name for the chosen content
-        setTextureName(contentManager, imageContent, imageName);
-        return imageContent;
-      } catch (RecorderException ex) {
-        // Error message displayed below 
-      } catch (IOException ex) {
-        // Error message displayed below 
-      }
-      JOptionPane.showMessageDialog(this, 
-          String.format(this.resource.getString("imageChoiceError"), imageName));
-    }
-    return null;
   }
 
-  /**
-   * Returns the default name for image <code>content</code>.
-   */
-  private String getTextureName(Content content) {
-    String name = this.contentNames.get(content);
-    if (name != null) {
-      return name;
-    } else {
-      return "";
-    }    
-  }
-  
-  /**
-   * Sets the name for texture read from <code>textureName</code>. 
-   */
-  private void setTextureName(ContentManager contentManager, 
-                              Content imageContent, 
-                              String textureName) {
-    this.contentNames.put(imageContent, contentManager.getPresentationName(
-        textureName, ContentManager.ContentType.IMAGE));
-  }
-  
   /**
    * Updates the image shown in attributes panel.
    */
