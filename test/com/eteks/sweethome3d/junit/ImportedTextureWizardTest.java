@@ -218,7 +218,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
         ((TexturesCategory)categoryComboBox.getSelectedItem()).getName());
     // Rename texture  
     String textureTestName = "#@" + System.currentTimeMillis() + "@#";
-    tester.keyString(textureTestName);    
+    nameTextField.setText(textureTestName);    
     // Check next button is enabled again
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
 
