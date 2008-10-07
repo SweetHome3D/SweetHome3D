@@ -46,19 +46,15 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -76,7 +72,6 @@ import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
-import javax.media.j3d.DanglingReferenceException;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
@@ -131,8 +126,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
-import com.sun.j3d.utils.scenegraph.io.NamedObjectException;
-import com.sun.j3d.utils.scenegraph.io.SceneGraphStreamWriter;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
@@ -143,7 +136,6 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private ImportedFurnitureWizardController controller;
   private ResourceBundle                    resource;
-  private Map<Content, String>              contentNames;
   private CardLayout                        cardLayout;
   private JLabel                            modelChoiceOrChangeLabel;
   private JButton                           modelChoiceOrChangeButton;
@@ -196,23 +188,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                                            ImportedFurnitureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
-    this.contentNames = new HashMap<Content, String>();
     createComponents(importHomePiece, preferences, contentManager);
     setMnemonics();
     layoutComponents();
     updateController(piece);
     if (modelName != null) {
-      try {
-        Content modelContent = contentManager.getContent(modelName);
-        updateController(modelContent, 
-            importHomePiece 
-                ? null 
-                : preferences.getFurnitureCatalog().getCategories().get(0));
-        // Store the default name for the chosen content
-        setModelName(contentManager, modelContent, modelName);
-      } catch (RecorderException ex) {
-        // Ignore model in parameter
-      }
+      updateController(modelName, contentManager,  
+          importHomePiece 
+              ? null 
+              : preferences.getFurnitureCatalog().getCategories().get(0), true);
     }
   }
 
@@ -233,9 +217,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         : preferences.getFurnitureCatalog().getCategories().get(0);
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          Content content = showModelChoiceDialog(contentManager);
-          if (content != null) {
-            updateController(content, defaultModelCategory);
+          String modelName = showModelChoiceDialog(contentManager);
+          if (modelName != null) {
+            updateController(modelName, contentManager, defaultModelCategory, false);
           }
         }
       });
@@ -295,15 +279,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String modelName = files.get(0).getAbsolutePath();
-            Content modelContent = contentManager.getContent(modelName);
-            // Store the default name for the chosen content
-            setModelName(contentManager, modelContent, modelName);
-            updateController(modelContent, defaultModelCategory);
+            updateController(modelName, contentManager, defaultModelCategory, false);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
-            success = false;
-          } catch (RecorderException ex) {
             success = false;
           }
           if (!success) {
@@ -840,6 +819,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   public void setStep(ImportedFurnitureWizardController.Step step) {
     this.cardLayout.show(this, step.name());
     switch (step) {
+      case MODEL:
+        this.modelChoiceOrChangeButton.requestFocusInWindow();
+        break;
       case ATTRIBUTES:
         this.nameTextField.requestFocusInWindow();
         break;
@@ -931,13 +913,37 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
 
   /**
-   * Reads <code>modelContent</code> and updates controller values.
+   * Reads model from <code>modelName</code> and updates controller values.
    */
-  private void updateController(final Content modelContent,
-                                final FurnitureCategory defaultCategory) {
+  private void updateController(final String modelName,
+                                final ContentManager contentManager,
+                                final FurnitureCategory defaultCategory,
+                                final boolean ignoreException) {
     // Read model in modelLoader executor
     modelLoader.execute(new Runnable() {
         public void run() {
+          Content modelContent = null;
+          try {
+            // Copy model content to a temporary content
+            modelContent = TemporaryURLContent.copyToTemporaryURLContent(
+                contentManager.getContent(modelName));
+          } catch (RecorderException ex) {
+            // Error message displayed below 
+          } catch (IOException ex) {
+            // Error message displayed below 
+          }
+          if (modelContent == null) {
+            if (!ignoreException) {
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+                        String.format(resource.getString("modelChoiceError"), modelName));
+                  }
+                });
+            }
+            return;
+          }
+          
           BranchGroup model = null;
           try {
             model = readModel(modelContent);
@@ -959,7 +965,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                       String entryFileName = entryName.substring(++slashIndex);
                       if (!entryFileName.startsWith(".")) {
                         URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
-                        model = readModel(new URLContent(entryUrl));
+                        modelContent = modelContent instanceof TemporaryURLContent 
+                            ? new TemporaryURLContent(entryUrl)
+                            : new URLContent(entryUrl);
+                        model = readModel(modelContent);
                         break;
                       }
                     }
@@ -982,22 +991,18 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           }
           
           final BranchGroup readModel = model;
-          // Create a temporary copy of model content at J3F format to keep 
-          // all the materials and the texture images required by the model
-          final Content j3fContent = 
-              readModel != null
-                  ? copyToTemporaryJ3FContent(readModel)
-                  : null;
+          final Content     readContent = modelContent;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
               public void run() {
-                if (j3fContent != null) {
-                  controller.setModel(j3fContent);
+                if (readModel != null) {
+                  controller.setModel(readContent);
                   setModelChangeTexts();
                   modelChoiceErrorLabel.setVisible(false);
                   controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
                   controller.setBackFaceShown(false);
-                  controller.setName(getModelName(modelContent));
+                  controller.setName(contentManager.getPresentationName(
+                      modelName, ContentManager.ContentType.MODEL));
                   controller.setCategory(defaultCategory);
                   // Initialize size with default values
                   Vector3f size = ModelManager.getInstance().getSize(readModel);
@@ -1060,33 +1065,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns a temporary content containing a 3D model at J3F format.
-   */
-  private Content copyToTemporaryJ3FContent(BranchGroup model) {
-    try {
-      File tempFile = File.createTempFile("j3fContent", "tmp");
-      tempFile.deleteOnExit();
-      SceneGraphStreamWriter tempOut = null;
-      try {
-        tempOut = new SceneGraphStreamWriter(
-            new BufferedOutputStream(new FileOutputStream(tempFile)));
-        tempOut.writeBranchGraph(model, null);
-      } finally {
-        if (tempOut != null) {
-          tempOut.close();
-        }
-      }
-      return new TemporaryURLContent(tempFile.toURI().toURL());
-    } catch (DanglingReferenceException ex) {
-      return null;
-    } catch (NamedObjectException ex) {
-      return null;
-    } catch (IOException ex) {
-      return null;
-    }
-  }
-  
-  /**
    * Updates the <code>image</code> displayed by preview components.  
    */
   private void updatePreviewComponentsModel(final BranchGroup model) {
@@ -1121,47 +1099,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns a model content chosen for a file chooser dialog.
+   * Returns the model name chosen for a file chooser dialog.
    */
-  private Content showModelChoiceDialog(ContentManager contentManager) {
-    String modelName = contentManager.showOpenDialog( 
+  private String showModelChoiceDialog(ContentManager contentManager) {
+    return contentManager.showOpenDialog( 
         this.resource.getString("modelChoiceDialog.title"), 
         ContentManager.ContentType.MODEL);
-
-    if (modelName != null) {
-      try {
-        Content modelContent = contentManager.getContent(modelName);
-        // Store the default name for the chosen content
-        setModelName(contentManager, modelContent, modelName);
-        return modelContent;
-      } catch (RecorderException ex) {
-        JOptionPane.showMessageDialog(this, 
-            String.format(this.resource.getString("modelChoiceError"), modelName));
-      }
-    }
-    return null;
-  }
-  
-  /**
-   * Returns the default name for model <code>content</code>.
-   */
-  private String getModelName(Content content) {
-    String name = this.contentNames.get(content);
-    if (name != null) {
-      return name;
-    } else {
-      return "";
-    }    
-  }
-  
-  /**
-   * Sets the name for model read from <code>modelName</code>. 
-   */
-  private void setModelName(ContentManager contentManager, 
-                            Content modelContent, 
-                            String modelName) {
-    this.contentNames.put(modelContent, contentManager.getPresentationName(
-        modelName, ContentManager.ContentType.MODEL));
   }
   
   /**

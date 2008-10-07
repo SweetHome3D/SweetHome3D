@@ -19,38 +19,28 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PushbackInputStream;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.Background;
-import javax.media.j3d.Behavior;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
-import javax.media.j3d.Fog;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
-import javax.media.j3d.Sound;
-import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3f;
@@ -66,7 +56,6 @@ import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.lw3d.Lw3dLoader;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
 import com.sun.j3d.utils.image.ImageException;
-import com.sun.j3d.utils.scenegraph.io.SceneGraphStreamReader;
 
 /**
  * Singleton managing 3D models cache.
@@ -194,7 +183,6 @@ public class ModelManager {
 
     Loader []  loaders = new Loader [] {new ObjectFile(),
                                         new ObjectFileTranslator(),
-                                        new J3FLoader(),
                                         loader3DSWithNoStackTraces,
                                         new Lw3dLoader()};
     Exception lastException = null;
@@ -394,113 +382,6 @@ public class ModelManager {
         }
       }
       return byteCount;
-    }
-  }
-
-  /**
-   * A Java 3D loader wrapper for J3F content saved with <code>SceneGraphStreamWriter</code> class.
-   */
-  public static class J3FLoader implements Loader {
-    private int flags;
-
-    public Scene load(String file) throws FileNotFoundException,
-          IncorrectFormatException, ParsingErrorException {
-      try {
-        return load(new File(file).toURI().toURL());
-      } catch (MalformedURLException ex) {
-        throw new FileNotFoundException(file);
-      }
-    }
-
-    public Scene load(URL url) throws FileNotFoundException,
-        IncorrectFormatException, ParsingErrorException {
-      try {
-        SceneGraphStreamReader sceneGraphStreamReader = null;
-        try {
-          sceneGraphStreamReader = new SceneGraphStreamReader(new BufferedInputStream(url.openStream()));
-          final HashMap map = new HashMap();
-          final BranchGroup branchGroup = sceneGraphStreamReader.readBranchGraph(map);
-          // Return a Scene wrapper
-          return new Scene() {
-              public BranchGroup getSceneGroup() {
-                return branchGroup;
-              }
-    
-              public Hashtable getNamedObjects() {
-                return new Hashtable(map);
-              }
-    
-              public Background [] getBackgroundNodes() {
-                return null;
-              }
-    
-              public Behavior [] getBehaviorNodes() {
-                return null;
-              }
-    
-              public String getDescription() {
-                return null;
-              }
-    
-              public Fog [] getFogNodes() {
-                return null;
-              }
-    
-              public float [] getHorizontalFOVs() {
-                return null;
-              }
-    
-              public Light [] getLightNodes() {
-                return null;
-              }
-    
-              public Sound [] getSoundNodes() {
-                return null;
-              }
-    
-              public TransformGroup [] getViewGroups() {
-                return null;
-              }
-            };
-        } finally {
-          if (sceneGraphStreamReader != null) {
-              sceneGraphStreamReader.close();
-          }
-        }
-      } catch (IOException ex) {
-        IncorrectFormatException ex2 = new IncorrectFormatException("Can't read model " + url);
-        ex2.initCause(ex);
-        throw ex2;
-      }
-    }
-
-    public Scene load(Reader reader) throws FileNotFoundException,
-        IncorrectFormatException, ParsingErrorException {
-      throw new UnsupportedOperationException("Requires a binary stream");
-    }
-
-    public String getBasePath() {
-      return null;
-    }
-
-    public void setBasePath(String path) {
-      // Useless : no relative paths needed
-    }
-
-    public URL getBaseUrl() {
-      return null;
-    }
-    
-    public void setBaseUrl(URL url) {
-      // Useless : no relative paths needed
-    }
-
-    public int getFlags() {
-      return this.flags;
-    }
-
-    public void setFlags(int flags) {
-      this.flags = flags;
     }
   }
 }
