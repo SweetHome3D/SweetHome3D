@@ -443,6 +443,7 @@
         <include name="install/macosx/**"/>
         <include name="install/windows/**"/>
         <include name="install/linux/**"/>
+        <include name="install/jar/**"/>
       	<!-- Eclipse project files -->
         <include name=".settings/**"/>
         <include name=".classpath"/>
