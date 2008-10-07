@@ -36,7 +36,7 @@ import abbot.finder.AWTHierarchy;
 import abbot.finder.ComponentSearchException;
 import abbot.tester.JComponentTester;
 
-import com.eteks.sweethome3d.io.FileUserPreferences;
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.ContentManager;
@@ -57,9 +57,8 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class BackgroundImageWizardTest extends ComponentTestFixture {
   public void testBackgroundImageWizard() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
-    final UserPreferences preferences = new FileUserPreferences();
-    // Ensure we use English and centimeter unit
-    preferences.setLanguage("fr");
+    final UserPreferences preferences = new DefaultUserPreferences();
+    // Ensure we use centimeter unit
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
     final URL testedImageName = BackgroundImageWizardTest.class.getResource("resources/test.png");
     // Create a dummy content manager
@@ -122,7 +121,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
 
     // Retrieve ImportedFurnitureWizardStepsPanel components
     BackgroundImageWizardStepsPanel panel = (BackgroundImageWizardStepsPanel)TestUtilities.findComponent(
-        frame, BackgroundImageWizardStepsPanel.class);
+        wizardDialog, BackgroundImageWizardStepsPanel.class);
     JButton imageChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "imageChoiceOrChangeButton");
     JSpinner scaleDistanceSpinner = (JSpinner)TestUtilities.getField(panel, "scaleDistanceSpinner");
     JSpinner xOriginSpinner = (JSpinner)TestUtilities.getField(panel, "xOriginSpinner");
@@ -141,7 +140,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertFalse("Choice button text didn't change", 
         imageChoiceOrChangeButtonText.equals(imageChoiceOrChangeButton.getText()));
     // Click on next button
-    WizardPane view = (WizardPane)TestUtilities.findComponent(frame, WizardPane.class);
+    WizardPane view = (WizardPane)TestUtilities.findComponent(wizardDialog, WizardPane.class);
     // Retrieve wizard view next button
     final JButton nextFinishOptionButton = (JButton)TestUtilities.getField(view, "nextFinishOptionButton"); 
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
@@ -206,7 +205,6 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
                                  boolean imageStepShwing,
                                  boolean scaleStepShowing,
                                  boolean originStepShowing) throws NoSuchFieldException, IllegalAccessException {
-    
     assertEquals("Wrong image step visibility", imageStepShwing,
         ((JComponent)TestUtilities.getField(panel, "imageChoicePreviewComponent")).isShowing());
     assertEquals("Wrong scale step visibility", scaleStepShowing,

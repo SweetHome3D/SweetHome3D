@@ -345,7 +345,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         new WindowMatcher(groundTextureTitle));
     assertTrue("Texture dialog not showing", textureDialog.isShowing());
     
-    JList availableTexturesList = (JList)new BasicFinder().find(frame, 
+    JList availableTexturesList = (JList)new BasicFinder().find(textureDialog, 
         new ClassMatcher(JList.class, true));
     availableTexturesList.setSelectedIndex(0);
     CatalogTexture firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
