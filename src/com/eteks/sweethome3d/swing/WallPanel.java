@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Wall editing panel.
@@ -260,7 +261,8 @@ public class WallPanel extends JPanel {
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
-            WallPanel.class.getResource("resources/wallOrientation.png")), JLabel.CENTER);
+            new ResourceURLContent(WallPanel.class, "resources/wallOrientation.png").getURL()), 
+        JLabel.CENTER);
     // Use same font for label as tooltips
     this.wallOrientationLabel.setFont(UIManager.getFont("ToolTip.font"));
   }

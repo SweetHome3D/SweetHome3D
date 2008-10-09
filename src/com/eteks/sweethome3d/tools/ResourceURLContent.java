@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.tools;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 
 
@@ -53,11 +54,43 @@ public class ResourceURLContent extends URLContent {
   public ResourceURLContent(Class<?> resourceClass,
                             String resourceName, 
                             boolean multiPartResource) {
-    super(resourceClass.getResource(resourceName));
+    super(getClassResource(resourceClass, resourceName));
     if (getURL() == null) {
       throw new IllegalArgumentException("Unknown resource " + resourceName);
     }
     this.multiPartResource = multiPartResource;
+  }
+  
+  private static final boolean isJava1dot5dot0_16 = 
+      System.getProperty("java.version").startsWith("1.5.0_16"); 
+  
+  /**
+   * Returns the URL of the given resource relative to <code>resourceClass</code>.
+   */
+  private static URL getClassResource(Class<?> resourceClass,
+                                      String resourceName) {
+    URL defaultUrl = resourceClass.getResource(resourceName);
+    // Fix for bug #6746185
+    // http://bugs.sun.com/view_bug.do?bug_id=6746185
+    if (isJava1dot5dot0_16
+        && defaultUrl != null
+        && "jar".equalsIgnoreCase(defaultUrl.getProtocol())) {
+      String defaultUrlExternalForm = defaultUrl.toExternalForm();
+      if (defaultUrl.toExternalForm().indexOf("!/") == -1) {
+        String fixedUrl = "jar:" 
+          + resourceClass.getProtectionDomain().getCodeSource().getLocation().toExternalForm() 
+          + "!/" + defaultUrl.getPath();
+        
+        if (!fixedUrl.equals(defaultUrlExternalForm)) {
+          try {
+            return new URL(fixedUrl);
+          } catch (MalformedURLException ex) {
+            // Too bad: keep defaultUrl
+          } 
+        }
+      }
+    }
+    return defaultUrl;
   }
 
   /**

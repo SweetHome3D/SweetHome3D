@@ -110,7 +110,7 @@
  
     <!-- Create java3d.jar containing Mac OS X Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/macosx"/>
-    <jar destfile="deploy/lib/macosx/java3d.jar">
+  	<jar destfile="deploy/lib/macosx/java3d.jar">
       <fileset dir="lib/macosx">
         <include name="*.jnilib"/>
         <include name="*.jar"/>
@@ -122,11 +122,20 @@
       </fileset>
     </jar>
  
-    <!-- Copy other jar files -->
-    <move file="deploy/SweetHome3D.jar" todir="deploy/lib" />
-    <move file="deploy/Furniture.jar"   todir="deploy/lib" />
-    <move file="deploy/Textures.jar"    todir="deploy/lib" />
-    <move file="deploy/Help.jar"        todir="deploy/lib" />
+    <!-- Build SweetHome3D.jar file from the content of built jars -->
+    <jar destfile="deploy/lib/SweetHome3D.jar">
+      <zipfileset src="deploy/SweetHome3D.jar"/>
+      <zipfileset src="deploy/Furniture.jar"/>
+      <zipfileset src="deploy/Textures.jar"/>
+      <zipfileset src="deploy/Help.jar"/>
+    </jar>
+  	
+  	<!-- Delete jar files included in SweetHome3D.jar -->
+    <delete file="deploy/SweetHome3D.jar"/>
+    <delete file="deploy/Furniture.jar"/>
+    <delete file="deploy/Textures.jar"/>
+    <delete file="deploy/Help.jar"/>
+  	
     <copy todir="deploy/lib">
       <fileset dir="lib">
         <include name="*.jar"/>

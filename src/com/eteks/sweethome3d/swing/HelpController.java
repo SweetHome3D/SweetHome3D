@@ -48,6 +48,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTML.Tag;
 
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * A MVC controller for Sweet Home 3D help view.
@@ -76,11 +77,10 @@ public class HelpController {
    * Displays the help view controlled by this controller. 
    */
   public void displayView() {
-    showPage(HelpController.class.getResource(
-        ResourceBundle.getBundle(HelpController.class.getName()).getString("helpIndex")));
+    showPage(getHelpIndexPageURL());
     ((HelpPane)getView()).displayView();
   }
-  
+
   /**
    * Adds a property change listener to <code>preferences</code> to update
    * displayed page when language changes.
@@ -111,8 +111,7 @@ public class HelpController {
         // Updates home page from current default locale
         helpController.history.clear();
         helpController.historyIndex = -1;
-        helpController.showPage(HelpController.class.getResource(
-            ResourceBundle.getBundle(HelpController.class.getName()).getString("helpIndex")));
+        helpController.showPage(helpController.getHelpIndexPageURL());
       }
     }
   }
@@ -157,12 +156,22 @@ public class HelpController {
   }
   
   /**
+   * Returns the URL of the help index page.
+   */
+  private URL getHelpIndexPageURL() {
+    String helpIndex = ResourceBundle.getBundle(HelpController.class.getName()).
+        getString("helpIndex");
+    // Build URL of index page with ResourceURLContent because of bug #6746185 
+    return new ResourceURLContent(HelpController.class, helpIndex).getURL();
+  }
+  
+  /**
    * Searches <code>searchedText</code> in help documents and displays 
    * the result.
    */
   public void search(String searchedText) {
     ResourceBundle resource = ResourceBundle.getBundle(HelpController.class.getName());
-    URL helpIndex = HelpController.class.getResource(resource.getString("helpIndex"));
+    URL helpIndex = getHelpIndexPageURL();
     String [] searchedWords = searchedText.split("\\s");
     for (int i = 0; i < searchedWords.length; i++) {
       searchedWords [i] = searchedWords [i].toLowerCase();
@@ -171,7 +180,7 @@ public class HelpController {
     // Build dynamically the search result page
     final StringBuilder htmlText = new StringBuilder(
         "<html><head><meta http-equiv='content-type' content='text/html;charset=UTF-8'><link href='" 
-        + HelpController.class.getResource("resources/help/help.css")
+        + new ResourceURLContent(HelpController.class, "resources/help/help.css").getURL()
         + "' rel='stylesheet'></head><body bgcolor='#ffffff'>\n"
         + "<div id='banner'><div id='helpheader'>"
         + "  <a class='bread' href='" + helpIndex + "'> " + resource.getString("helpTitle") + "</a>"
@@ -181,7 +190,7 @@ public class HelpController {
         + "    <tr valign='bottom' height='32'>"
         + "      <td width='3' height='32'>&nbsp;</td>"
         + "      <td width='32' height='32'><img src='"  
-        + HelpController.class.getResource("resources/help/images/sweethome3dIcon32.png") 
+        + new ResourceURLContent(HelpController.class, "resources/help/images/sweethome3dIcon32.png").getURL() 
         + "' height='32' width='32'></td>"
         + "      <td width='8' height='32'>&nbsp;&nbsp;</td>"
         + "      <td valign='bottom' height='32'><font id='topic'>" + resource.getString("searchResult") + "</font></td>"
@@ -197,7 +206,7 @@ public class HelpController {
       String searchFound = String.format(resource.getString("searchFound"), searchedText); 
       htmlText.append("<tr><td colspan='2'><p>" + searchFound + "</td></tr>");
       
-      URL searchRelevanceImage = HelpController.class.getResource("resources/searchRelevance.gif");
+      URL searchRelevanceImage = new ResourceURLContent(HelpController.class, "resources/searchRelevance.gif").getURL();
       for (HelpDocument helpDocument : helpDocuments) {
         // Add hyperlink to help document found
         htmlText.append("<tr><td valign='middle' nowrap><a href='" + helpDocument.getBase() + "'>" 
