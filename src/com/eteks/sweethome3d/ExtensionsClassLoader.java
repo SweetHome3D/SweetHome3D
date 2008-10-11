@@ -41,7 +41,6 @@ import java.util.jar.JarFile;
  * It's Java 1.1 compatible to be loadable by old JVMs.
  * @author Emmanuel Puybaret
  */
-@SuppressWarnings("unchecked")
 public class ExtensionsClassLoader extends ClassLoader {
   private final ProtectionDomain protectionDomain;
   private final String [] applicationPackages;
