@@ -22,6 +22,7 @@ package com.eteks.sweethome3d;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.KeyboardFocusManager;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -243,8 +244,8 @@ public class SweetHome3D extends HomeApplication {
       // Show an error message dialog if home couldn't be read
       ResourceBundle resource = ResourceBundle.getBundle(HomeController.class.getName());
       String message = String.format(resource.getString("openError"), homeFile);
-      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", 
-          JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
+          message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
     }
   }
 
@@ -468,7 +469,8 @@ public class SweetHome3D extends HomeApplication {
     ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
     String message = resource.getString("3DError.message");
     String title = resource.getString("3DError.title");
-    JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+    JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
+        message, title, JOptionPane.ERROR_MESSAGE);
   }
 
   /**
@@ -483,7 +485,8 @@ public class SweetHome3D extends HomeApplication {
     String save = resource.getString("confirmSaveAfter3DError.save");
     String doNotSave = resource.getString("confirmSaveAfter3DError.doNotSave");
     
-    return JOptionPane.showOptionDialog(null, message, title, 
+    return JOptionPane.showOptionDialog(
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title, 
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {save, doNotSave}, save) == JOptionPane.YES_OPTION;
   }
