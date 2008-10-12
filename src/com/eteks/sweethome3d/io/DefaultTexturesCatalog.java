@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -30,6 +32,7 @@ import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.tools.URLContent;
 
 /**
  * Textures default catalog read from localized resources.
@@ -45,14 +48,25 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
   
   /**
-   * Creates a default textures catalog read from resources.
+   * Creates a default textures catalog read from resources in the package of this class.
    */
   public DefaultTexturesCatalog() {
+    this(DefaultTexturesCatalog.class.getName().substring(0, DefaultTexturesCatalog.class.getName().lastIndexOf(".")));
+  }
+    
+  /**
+   * Creates a default textures catalog read from resources in <code>resourcePackage</code>.
+   */
+  public DefaultTexturesCatalog(String  resourcePackage) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
 
+    // Load DefaultTexturesCatalog property file from classpath 
+    String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
+    defaultTexturesCatalogFamily = defaultTexturesCatalogFamily.substring(
+        defaultTexturesCatalogFamily.lastIndexOf('.') + 1);
     ResourceBundle resource = ResourceBundle.getBundle(
-        DefaultTexturesCatalog.class.getName());
+        resourcePackage + "." + defaultTexturesCatalogFamily);
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -102,13 +116,19 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   }
 
   /**
-   * Returns a valid content instance from the resource file value of key.
+   * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle
-   * @param key      the key of a resource file
-   * @throws IllegalArgumentException if the file value doesn't match a valid resource.
+   * @param contentKey the key of a resource file
+   * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
-  private Content getContent(ResourceBundle resource, String key) {
-    String file = resource.getString(key);
-    return new ResourceURLContent(DefaultTexturesCatalog.class, file);
+  private Content getContent(ResourceBundle resource, String contentKey) {
+    String contentFile = resource.getString(contentKey);
+    try {
+      // Try first to interpret contentFile as a URL
+      return new URLContent(new URL(contentFile));
+    } catch (MalformedURLException ex) {
+      // Otherwise find if it's a resource
+      return new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
+    }
   }
 }
