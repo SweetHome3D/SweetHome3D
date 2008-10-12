@@ -244,8 +244,7 @@ public class SweetHome3D extends HomeApplication {
       // Show an error message dialog if home couldn't be read
       ResourceBundle resource = ResourceBundle.getBundle(HomeController.class.getName());
       String message = String.format(resource.getString("openError"), homeFile);
-      JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
-          message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
+      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
     }
   }
 
