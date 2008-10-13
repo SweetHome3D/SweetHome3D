@@ -1003,7 +1003,7 @@ public class HomeController  {
   /**
    * Opens a given <code>homeName</code>home.
    */
-  public void open(String homeName) {
+  public void open(final String homeName) {
     // Check if requested home isn't already opened
     for (Home home : this.application.getHomes()) {
       if (homeName.equals(home.getName())) {
@@ -1012,14 +1012,43 @@ public class HomeController  {
         return;
       }
     }
-    try {
-      Home openedHome = this.application.getHomeRecorder().readHome(homeName);
-      openedHome.setName(homeName); 
-      this.application.addHome(openedHome);
-    } catch (RecorderException ex) {
-      String message = String.format(this.resource.getString("openError"), homeName);
-      ((HomePane)getView()).showError(message);
-    }
+    
+    // Read home in a threaded task
+    Callable<Void> exportToObjTask = new Callable<Void>() {
+          public Void call() throws RecorderException {
+            // Read home with application recorder
+            Home openedHome = application.getHomeRecorder().readHome(homeName);
+            openedHome.setName(homeName); 
+            addHomeToApplication(openedHome);
+            return null;
+          }
+        };
+    ThreadedTaskController.ExceptionHandler exceptionHandler = 
+        new ThreadedTaskController.ExceptionHandler() {
+          public void handleException(Exception ex) {
+            if (!(ex instanceof InterruptedRecorderException)) {
+              if (ex instanceof RecorderException) {
+                String message = String.format(resource.getString("openError"), homeName);
+                ((HomePane)getView()).showError(message);
+              } else {
+                ex.printStackTrace();
+              }
+            }
+          }
+        };
+    new ThreadedTaskController(exportToObjTask, 
+        this.resource.getString("openMessage"), exceptionHandler);
+  }
+  
+  /**
+   * Adds the given home to application.
+   */
+  private void addHomeToApplication(final Home home) {
+    ((HomePane)getView()).invokeLater(new Runnable() {
+        public void run() {
+          application.addHome(home);
+        }
+      });
   }
   
   /**
@@ -1091,32 +1120,54 @@ public class HomeController  {
    * home is removed from application homes list.
    */
   public void close() {
+    close(null);
+  }
+
+  
+  /**
+   * Manages home close operation. If the home managed by this controller is modified,
+   * this method will {@link HomePane#confirmSave(String) confirm} 
+   * in view whether home should be saved. Once home is actually saved,
+   * home is removed from application homes list and postCloseTask is called if
+   * it's not <code>null</code>.
+   */
+  protected void close(final Runnable postCloseTask) {
+    // Create a task that deletes home and run postCloseTask
+    Runnable closeTask = new Runnable() {
+        public void run() {
+          application.deleteHome(home);
+          if (postCloseTask != null) {
+            postCloseTask.run();
+          }
+        }
+      };
+      
     if (this.home.isModified()) {
       switch (((HomePane)getView()).confirmSave(this.home.getName())) {
-        case SAVE   : save(true); // Falls through
+        case SAVE   : save(closeTask); // Falls through
         case CANCEL : return;
       }  
     }
-    this.application.deleteHome(this.home);
+    closeTask.run();
   }
-
+  
   /**
    * Saves the home managed by this controller. If home name doesn't exist, 
    * this method will act as {@link #saveAs() saveAs} method.
    */
   public void save() {
-    save(false);
+    save(null);
   }
 
   /**
-   * Saves the home managed by this controller and deletes home if 
-   * <code>deleteHomeAfterSave</code> is <code>true</code>.
+   * Saves the home managed by this controller and executes <code>postSaveTask</code> 
+   * if it's not <code>null</code>.
    */
-  private void save(boolean deleteHomeAfterSave) {
+  private void save(Runnable postSaveTask) {
     if (this.home.getName() == null) {
-      saveAs(deleteHomeAfterSave);
+      saveAs(postSaveTask);
     } else {
-      save(this.home.getName(), deleteHomeAfterSave);
+      save(this.home.getName(), postSaveTask);
     }
   }
   
@@ -1126,24 +1177,24 @@ public class HomeController  {
    * and saves home with the chosen name if any. 
    */
   public void saveAs() {
-    saveAs(false);
+    saveAs(null);
   }
 
   /**
    * Saves the home managed by this controller with a different name. 
    */
-  private void saveAs(boolean deleteHomeAfterSave) {
+  private void saveAs(Runnable postSaveTask) {
     String newName = ((HomePane)getView()).showSaveDialog(this.home.getName());
     if (newName != null) {
-      save(newName, deleteHomeAfterSave);
+      save(newName, postSaveTask);
     }
   }
 
   /**
-   * Actually saves the home managed by this controller and deletes home if 
-   * <code>deleteHomeAfterSave</code> is <code>true</code>.
+   * Actually saves the home managed by this controller and executes <code>postSaveTask</code> 
+   * if it's not <code>null</code>.
    */
-  private void save(final String homeName, final boolean deleteHomeAfterSave) {
+  private void save(final String homeName, final Runnable postSaveTask) {
     // If home version is older than current version
     // or if home name is changed
     // or if user confirms to save a home created with a newer version
@@ -1155,7 +1206,7 @@ public class HomeController  {
             public Void call() throws RecorderException {
               // Write home with application recorder
               application.getHomeRecorder().writeHome(home, homeName);
-              updateSavedHome(homeName, deleteHomeAfterSave);
+              updateSavedHome(homeName, postSaveTask);
               return null;
             }
           };
@@ -1178,10 +1229,11 @@ public class HomeController  {
   }
   
   /**
-   * Updates the saved home.
+   * Updates the saved home and executes <code>postSaveTask</code> 
+   * if it's not <code>null</code>.
    */
   private void updateSavedHome(final String homeName,
-                               final boolean deleteHome) {
+                               final Runnable postSaveTask) {
     ((HomePane)getView()).invokeLater(new Runnable() {
         public void run() {
           home.setName(homeName);
@@ -1196,8 +1248,8 @@ public class HomeController  {
           recentHomes.add(0, homeName);
           updateUserPreferencesRecentHomes(recentHomes);
           
-          if (deleteHome) {
-            application.deleteHome(home);
+          if (postSaveTask != null) {
+            postSaveTask.run();
           }
         }
       });
