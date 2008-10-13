@@ -215,6 +215,8 @@ public class HomePane extends JRootPane {
     }
 
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
+    // Change component orientation
+    applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));  
   }
   
   /**
@@ -1074,7 +1076,7 @@ public class HomePane extends JRootPane {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            if (isChildComponentInvisible(focusOwner)) {
+            if (focusOwner != null && isChildComponentInvisible(focusOwner)) {
               List<JComponent> splitPanesFocusableComponents = Arrays.asList(new JComponent [] {
                   controller.getCatalogController().getView(),
                   controller.getFurnitureController().getView(),
