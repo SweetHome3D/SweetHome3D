@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -100,6 +101,9 @@ public class FileUserPreferences extends UserPreferences {
 
   private static final Content DUMMY_CONTENT;
   
+  private static final String EDITOR_SUB_FOLDER; 
+  private static final String APPLICATION_SUB_FOLDER; 
+  
   static {
     Content dummyURLContent = null;
     try {
@@ -107,6 +111,19 @@ public class FileUserPreferences extends UserPreferences {
     } catch (MalformedURLException ex) {
     }
     DUMMY_CONTENT = dummyURLContent;
+
+    // Retrieve sub folders where is stored application data
+    ResourceBundle resource = ResourceBundle.getBundle(FileUserPreferences.class.getName());
+    if (OperatingSystem.isMacOSX()) {
+      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Mac OS X");
+      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Mac OS X");
+    } else if (OperatingSystem.isWindows()) {
+      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Windows");
+      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Windows");
+    } else {
+      EDITOR_SUB_FOLDER = resource.getString("editorSubFolder");
+      APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder");
+    }
   }
  
   /**
@@ -553,20 +570,21 @@ public class FileUserPreferences extends UserPreferences {
    * Returns Sweet Home 3D application folder. 
    */
   private static File getApplicationFolder() throws IOException {
+    File userApplicationFolder; 
     if (OperatingSystem.isMacOSX()) {
-      return new File(MacOSXFileManager.getApplicationSupportFolder(), 
-             "eTeks" + File.separator + "Sweet Home 3D");
+      userApplicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder());
     } else if (OperatingSystem.isWindows()) {
-      File applicationFolder = new File(System.getProperty("user.home"), "Application Data");
+      userApplicationFolder = new File(System.getProperty("user.home"), "Application Data");
       // If user Application Data directory doesn't exist, use user home
-      if (!applicationFolder.exists()) {
-        applicationFolder = new File(System.getProperty("user.home"));
+      if (!userApplicationFolder.exists()) {
+        userApplicationFolder = new File(System.getProperty("user.home"));
       }
-      return new File(applicationFolder, "eTeks" + File.separator + "Sweet Home 3D");      
     } else { 
       // Unix
-      return new File(System.getProperty("user.home"), ".eteks/sweethome3d");
+      userApplicationFolder = new File(System.getProperty("user.home"));
     }
+    return new File(userApplicationFolder, 
+        EDITOR_SUB_FOLDER + File.separator + APPLICATION_SUB_FOLDER);
   }
 
   /**
@@ -621,7 +639,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns Java preferences for current system user.
    */
-  private Preferences getPreferences() {
+  protected Preferences getPreferences() {
     return Preferences.userNodeForPackage(FileUserPreferences.class);
   }
 

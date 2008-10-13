@@ -420,7 +420,7 @@ public class HomeFramePane extends JRootPane {
         }
       }
     } else {
-      title += " - Sweet Home 3D"; 
+      title += " - " + resource.getString("applicationName"); 
       if (home.isModified()) {
         title = "* " + title;
       }

@@ -43,7 +43,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FileContentManager implements ContentManager {
-  private static final String SWEET_HOME_3D_EXTENSION = ".sh3d";
+  private static final String SWEET_HOME_3D_EXTENSION;
   /**
    * Supported Sweet Home 3D file filters.
    */
@@ -61,7 +61,7 @@ public class FileContentManager implements ContentManager {
           return "Sweet Home 3D";
         }
       }};
-  private static final String FURNITURE_CATALOG_EXTENSION = ".sh3f";
+  private static final String FURNITURE_LIBRARY_EXTENSION;
   /**
    * Supported Sweet Home 3D file filters.
    */
@@ -71,7 +71,7 @@ public class FileContentManager implements ContentManager {
         public boolean accept(File file) {
           // Accept directories and .sh3f files
           return file.isDirectory()
-              || file.getName().toLowerCase().endsWith(FURNITURE_CATALOG_EXTENSION);
+              || file.getName().toLowerCase().endsWith(FURNITURE_LIBRARY_EXTENSION);
         }
         
         @Override
@@ -219,6 +219,14 @@ public class FileContentManager implements ContentManager {
         }
       }};
 
+  
+  static {
+    // Retrieve application document file extensions
+    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
+    SWEET_HOME_3D_EXTENSION = resource.getString("homeExtension");
+    FURNITURE_LIBRARY_EXTENSION = resource.getString("furnitureLibraryExtension");
+  }
+  
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
   private Map<ContentType, String>        fileDefaultExtensions;
@@ -235,7 +243,7 @@ public class FileContentManager implements ContentManager {
     // Fill file default extension map
     this.fileDefaultExtensions = new HashMap<ContentType, String>();
     this.fileDefaultExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_CATALOG_EXTENSION);
+    this.fileDefaultExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_LIBRARY_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.MODEL, OBJ_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.IMAGE, PNG_EXTENSION);
     this.fileDefaultExtensions.put(ContentType.PDF, PDF_EXTENSION);
