@@ -50,8 +50,10 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -88,6 +90,7 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
@@ -197,11 +200,11 @@ public class HomePane extends JRootPane {
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = getHomeMenuBar(home, controller, contentManager);
+    JMenuBar homeMenuBar = createHomeMenuBar(home, controller, contentManager);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
-    contentPane.add(getToolBar(), BorderLayout.NORTH);
-    contentPane.add(getMainPane(home, preferences, controller));
+    contentPane.add(createToolBar(), BorderLayout.NORTH);
+    contentPane.add(createMainPane(home, preferences, controller));
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Under Mac OS X 10.5, add some dummy labels at left and right borders
       // to avoid the tool bar to be attached on these borders
@@ -210,7 +213,7 @@ public class HomePane extends JRootPane {
       contentPane.add(new JLabel(), BorderLayout.WEST);
       contentPane.add(new JLabel(), BorderLayout.EAST);
     }
-    
+
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
   }
   
@@ -508,9 +511,9 @@ public class HomePane extends JRootPane {
   /**
    * Returns the menu bar displayed in this pane.
    */
-  private JMenuBar getHomeMenuBar(final Home home, 
-                                  final HomeController controller,
-                                  final ContentManager contentManager) {
+  private JMenuBar createHomeMenuBar(final Home home, 
+                                     final HomeController controller,
+                                     final ContentManager contentManager) {
     // Create File menu
     JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
     fileMenu.add(getMenuAction(ActionType.NEW_HOME));
@@ -575,8 +578,8 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     furnitureMenu.addSeparator();
-    furnitureMenu.add(getFurnitureSortMenu(home));
-    furnitureMenu.add(getFurnitureDisplayPropertyMenu(home));
+    furnitureMenu.add(createFurnitureSortMenu(home));
+    furnitureMenu.add(createFurnitureDisplayPropertyMenu(home));
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
@@ -654,7 +657,7 @@ public class HomePane extends JRootPane {
   /**
    * Returns furniture sort menu.
    */
-  private JMenu getFurnitureSortMenu(final Home home) {
+  private JMenu createFurnitureSortMenu(final Home home) {
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(this.menuActionMap.get(MenuActionType.SORT_HOME_FURNITURE_MENU));
     // Map sort furniture properties to sort actions
@@ -722,7 +725,7 @@ public class HomePane extends JRootPane {
   /**
    * Returns furniture display property menu.
    */
-  private JMenu getFurnitureDisplayPropertyMenu(final Home home) {
+  private JMenu createFurnitureDisplayPropertyMenu(final Home home) {
     // Create Furniture Display property submenu
     JMenu displayPropertyMenu = new JMenu(
         this.menuActionMap.get(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU));
@@ -873,7 +876,7 @@ public class HomePane extends JRootPane {
   /**
    * Returns the tool bar displayed in this pane.
    */
-  private JToolBar getToolBar() {
+  private JToolBar createToolBar() {
     final JToolBar toolBar = new JToolBar();
     toolBar.add(getToolBarAction(ActionType.NEW_HOME));
     toolBar.add(getToolBarAction(ActionType.OPEN));
@@ -1040,11 +1043,11 @@ public class HomePane extends JRootPane {
   /**
    * Returns the main pane with catalog tree, furniture table and plan pane. 
    */
-  private JComponent getMainPane(Home home, UserPreferences preferences, 
-                                 HomeController controller) {
+  private JComponent createMainPane(Home home, UserPreferences preferences, 
+                                    HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-        getCatalogFurniturePane(home, controller), 
-        getPlanView3DPane(home, preferences, controller));
+        createCatalogFurniturePane(home, controller), 
+        createPlanView3DPane(home, preferences, controller));
     configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, controller);
     return mainPane;
   }
@@ -1054,7 +1057,7 @@ public class HomePane extends JRootPane {
    * If <code>dividerLocationProperty</code> visual property exists in <code>home</code>,
    * its value will be used, otherwise the given resize weight will be used.
    */
-  private void configureSplitPane(JSplitPane splitPane,
+  private void configureSplitPane(final JSplitPane splitPane,
                                   Home home,
                                   final String dividerLocationProperty,
                                   double defaultResizeWeight, 
@@ -1070,7 +1073,36 @@ public class HomePane extends JRootPane {
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
+            Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            if (isChildComponentInvisible(focusOwner)) {
+              List<JComponent> splitPanesFocusableComponents = Arrays.asList(new JComponent [] {
+                  controller.getCatalogController().getView(),
+                  controller.getFurnitureController().getView(),
+                  controller.getPlanController().getView(),
+                  controller.getHomeController3D().getView()});      
+              // Find the first child component that is visible among split panes
+              int focusOwnerIndex = splitPanesFocusableComponents.indexOf(focusOwner);
+              for (int i = 1; i < splitPanesFocusableComponents.size(); i++) {
+                JComponent focusableComponent = splitPanesFocusableComponents.get(
+                    (focusOwnerIndex + i) % splitPanesFocusableComponents.size());
+                if (!isChildComponentInvisible(focusableComponent)) {
+                  focusableComponent.requestFocusInWindow();
+                  break;
+                }
+              }
+            }
             controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
+          }
+
+          /**
+           * Returns <code>true</code> if the top or the bottom component is a parent 
+           * of the given child component and is too small enough to show it. 
+           */
+          private boolean isChildComponentInvisible(Component childComponent) {
+            return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
+                 && splitPane.getDividerLocation() < splitPane.getMinimumDividerLocation())
+                || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
+                    && splitPane.getDividerLocation() > splitPane.getMaximumDividerLocation());
           }
         });
   }
@@ -1078,7 +1110,7 @@ public class HomePane extends JRootPane {
   /**
    * Returns the catalog tree and furniture table pane. 
    */
-  private JComponent getCatalogFurniturePane(Home home, final HomeController controller) {
+  private JComponent createCatalogFurniturePane(Home home, final HomeController controller) {
     JComponent catalogView = controller.getCatalogController().getView();
     JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
@@ -1162,7 +1194,7 @@ public class HomePane extends JRootPane {
   /**
    * Returns the plan view and 3D view pane. 
    */
-  private JComponent getPlanView3DPane(Home home, UserPreferences preferences, 
+  private JComponent createPlanView3DPane(Home home, UserPreferences preferences, 
                                        final HomeController controller) {
     JComponent planView = controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(planView);
