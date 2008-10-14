@@ -941,27 +941,22 @@ public class HomePane extends JRootPane {
     
     toolBar.add(getToolBarAction(ActionType.HELP));
     
-    // Remove focusable property on buttons
-    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {
-      toolBar.getComponentAtIndex(i).setFocusable(false);      
-    }
-    
-    updateToolBarButtonsStyle(toolBar);
-    // Update toolBar style when component orientation changes 
+    updateToolBarButtons(toolBar);
+    // Update toolBar buttons when component orientation changes 
     // and when buttons are added or removed to it  
     toolBar.addPropertyChangeListener("componentOrientation", 
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent evt) {
-            updateToolBarButtonsStyle(toolBar);
+            updateToolBarButtons(toolBar);
           }
         });
     toolBar.addContainerListener(new ContainerListener() {
         public void componentAdded(ContainerEvent ev) {
-          updateToolBarButtonsStyle(toolBar);
+          updateToolBarButtons(toolBar);
         }
         
         public void componentRemoved(ContainerEvent ev) {
-          updateToolBarButtonsStyle(toolBar);
+          updateToolBarButtons(toolBar);
         }
       });
     
@@ -969,20 +964,24 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Under Mac OS X 10.5 use segmented buttons and group them depending
+   * Ensures that all the children of toolBar aren't focusable. 
+   * Under Mac OS X 10.5, it also uses segmented buttons and groups them depending
    * on toolbar orientation and whether a button is after or before a separator.
    */
-  private void updateToolBarButtonsStyle(final JToolBar toolBar) {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
-      ComponentOrientation orientation = toolBar.getComponentOrientation();
-      Component previousComponent = null;
-      for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {        
-        JComponent component = (JComponent)toolBar.getComponentAtIndex(i); 
-        if (!(component instanceof AbstractButton)) {
-          previousComponent = null;
-          continue;
-        }          
+  private void updateToolBarButtons(final JToolBar toolBar) {
+    // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
+    ComponentOrientation orientation = toolBar.getComponentOrientation();
+    Component previousComponent = null;
+    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {        
+      JComponent component = (JComponent)toolBar.getComponentAtIndex(i); 
+      // Remove focusable property on buttons
+      component.setFocusable(false);
+      
+      if (!(component instanceof AbstractButton)) {
+        previousComponent = null;
+        continue;
+      }          
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         Component nextComponent;
         if (i < n - 1) {
           nextComponent = toolBar.getComponentAtIndex(i + 1);
