@@ -32,6 +32,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -587,9 +589,9 @@ public class HomePane extends JRootPane {
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
     JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(false);
     planMenu.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(false);
     planMenu.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = getCreateDimensionLinesRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(false);
     planMenu.add(createDimensionLinesRadioButtonMenuItem);
     // Add Select, Create Walls and Create dimensions menu items to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -601,22 +603,7 @@ public class HomePane extends JRootPane {
     planMenu.add(getMenuAction(ActionType.REVERSE_WALL_DIRECTION));
     planMenu.add(getMenuAction(ActionType.SPLIT_WALL));
     planMenu.addSeparator();
-    final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
-        getMenuAction(home.getBackgroundImage() == null 
-            ? ActionType.IMPORT_BACKGROUND_IMAGE
-            : ActionType.MODIFY_BACKGROUND_IMAGE));
-    // Add a listener to home on backgroundImage property change to 
-    // switch action according to backgroundImage change
-    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            importModifyBackgroundImageMenuItem.setAction(
-                getMenuAction(home.getBackgroundImage() == null 
-                    ? ActionType.IMPORT_BACKGROUND_IMAGE
-                    : ActionType.MODIFY_BACKGROUND_IMAGE));
-          }
-        });    
-    planMenu.add(importModifyBackgroundImageMenuItem);
+    planMenu.add(createImportModifyBackgroundImageMenuItem(home));
     planMenu.add(getMenuAction(ActionType.DELETE_BACKGROUND_IMAGE));
     planMenu.addSeparator();
     planMenu.add(getMenuAction(ActionType.ZOOM_OUT));
@@ -624,9 +611,9 @@ public class HomePane extends JRootPane {
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(false);
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = createViewFromTopRadioButtonMenuItem(false);
     preview3DMenu.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = getViewFromObserverRadioButtonMenuItem(false);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = createViewFromObserverRadioButtonMenuItem(false);
     preview3DMenu.add(viewFromObserverRadioButtonMenuItem);
     // Add View from top and View from observer menu items to radio group 
     group = new ButtonGroup();
@@ -779,6 +766,28 @@ public class HomePane extends JRootPane {
   }
   
   /**
+   * Returns Import / Modify background image menu item.
+   */
+  private JMenuItem createImportModifyBackgroundImageMenuItem(final Home home) {
+    final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
+        getMenuAction(home.getBackgroundImage() == null 
+            ? ActionType.IMPORT_BACKGROUND_IMAGE
+            : ActionType.MODIFY_BACKGROUND_IMAGE));
+    // Add a listener to home on backgroundImage property change to 
+    // switch action according to backgroundImage change
+    home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            importModifyBackgroundImageMenuItem.setAction(
+                getMenuAction(home.getBackgroundImage() == null 
+                    ? ActionType.IMPORT_BACKGROUND_IMAGE
+                    : ActionType.MODIFY_BACKGROUND_IMAGE));
+          }
+        });    
+    return importModifyBackgroundImageMenuItem;
+  }
+  
+  /**
    * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
    */
   protected void updateOpenRecentHomeMenu(JMenu openRecentHomeMenu, 
@@ -825,43 +834,43 @@ public class HomePane extends JRootPane {
    * Returns a radio button menu item for Select action. 
    */
   private JRadioButtonMenuItem getSelectRadioButtonMenuItem(boolean popup) {
-    return getRadioButtonMenuItemFromModel(this.selectToggleModel, 
+    return createRadioButtonMenuItemFromModel(this.selectToggleModel, 
         ActionType.SELECT, popup);
   }
   
   /**
    * Returns a radio button menu item for Create walls action. 
    */
-  private JRadioButtonMenuItem getCreateWallsRadioButtonMenuItem(boolean popup) {
-    return getRadioButtonMenuItemFromModel(this.createWallsToggleModel, 
+  private JRadioButtonMenuItem createCreateWallsRadioButtonMenuItem(boolean popup) {
+    return createRadioButtonMenuItemFromModel(this.createWallsToggleModel, 
         ActionType.CREATE_WALLS, popup);
   }
   
   /**
    * Returns a radio button menu item for Create dimensions action. 
    */
-  private JRadioButtonMenuItem getCreateDimensionLinesRadioButtonMenuItem(boolean popup) {
-    return getRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, 
+  private JRadioButtonMenuItem createCreateDimensionLinesRadioButtonMenuItem(boolean popup) {
+    return createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, 
         ActionType.CREATE_DIMENSION_LINES, popup);
   }
   
   /**
    * Returns a radio button menu item for View from top action. 
    */
-  private JRadioButtonMenuItem getViewFromTopRadioButtonMenuItem(boolean popup) {
-    return getRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, 
+  private JRadioButtonMenuItem createViewFromTopRadioButtonMenuItem(boolean popup) {
+    return createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, 
         ActionType.VIEW_FROM_TOP, popup);
   }
   
   /**
    * Returns a radio button menu item for View from observer action. 
    */
-  private JRadioButtonMenuItem getViewFromObserverRadioButtonMenuItem(boolean popup) {
-    return getRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, 
+  private JRadioButtonMenuItem createViewFromObserverRadioButtonMenuItem(boolean popup) {
+    return createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, 
         ActionType.VIEW_FROM_OBSERVER, popup);
   }
   
-  private JRadioButtonMenuItem getRadioButtonMenuItemFromModel(
+  private JRadioButtonMenuItem createRadioButtonMenuItemFromModel(
                                    JToggleButton.ToggleButtonModel model,
                                    ActionType action,
                                    boolean popup) {
@@ -938,12 +947,23 @@ public class HomePane extends JRootPane {
     }
     
     updateToolBarButtonsStyle(toolBar);
+    // Update toolBar style when component orientation changes 
+    // and when buttons are added or removed to it  
     toolBar.addPropertyChangeListener("componentOrientation", 
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent evt) {
             updateToolBarButtonsStyle(toolBar);
           }
         });
+    toolBar.addContainerListener(new ContainerListener() {
+        public void componentAdded(ContainerEvent ev) {
+          updateToolBarButtonsStyle(toolBar);
+        }
+        
+        public void componentRemoved(ContainerEvent ev) {
+          updateToolBarButtonsStyle(toolBar);
+        }
+      });
     
     return toolBar;
   }
@@ -1182,6 +1202,9 @@ public class HomePane extends JRootPane {
     furnitureViewPopup.add(getPopupAction(ActionType.SELECT_ALL));
     furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
+    furnitureViewPopup.addSeparator();
+    furnitureViewPopup.add(createFurnitureSortMenu(home));
+    furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home));
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
     ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
     
@@ -1234,9 +1257,9 @@ public class HomePane extends JRootPane {
     planViewPopup.addSeparator();
     JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(true);
     planViewPopup.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = getCreateWallsRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(true);
     planViewPopup.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = getCreateDimensionLinesRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(true);
     planViewPopup.add(createDimensionLinesRadioButtonMenuItem);
     // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -1249,6 +1272,9 @@ public class HomePane extends JRootPane {
     planViewPopup.add(getPopupAction(ActionType.REVERSE_WALL_DIRECTION));
     planViewPopup.add(getPopupAction(ActionType.SPLIT_WALL));
     planViewPopup.addSeparator();
+    planViewPopup.add(createImportModifyBackgroundImageMenuItem(home));
+    planViewPopup.add(getMenuAction(ActionType.DELETE_BACKGROUND_IMAGE));
+    planViewPopup.addSeparator();
     planViewPopup.add(getPopupAction(ActionType.ZOOM_OUT));
     planViewPopup.add(getPopupAction(ActionType.ZOOM_IN));
     planView.setComponentPopupMenu(planViewPopup);
@@ -1260,9 +1286,9 @@ public class HomePane extends JRootPane {
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = getViewFromTopRadioButtonMenuItem(true);
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = createViewFromTopRadioButtonMenuItem(true);
     view3DPopup.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = getViewFromObserverRadioButtonMenuItem(true);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = createViewFromObserverRadioButtonMenuItem(true);
     view3DPopup.add(viewFromObserverRadioButtonMenuItem);
     // Add View from top and View from observer menu items to radio group 
     group = new ButtonGroup();
