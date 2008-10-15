@@ -24,6 +24,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 
+import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
+
 /**
  * This bootstrap class loads Sweet Home 3D application classes from jars in classpath 
  * or from extension jars stored as resources.
