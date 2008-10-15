@@ -49,7 +49,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import javax.swing.JSplitPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.UIManager;
