@@ -47,12 +47,12 @@ import abbot.tester.FileDialogTester;
 import abbot.tester.JComponentTester;
 import abbot.tester.JFileChooserTester;
 
-import com.eteks.sweethome3d.FileContentManager;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.HomePrintableComponent;

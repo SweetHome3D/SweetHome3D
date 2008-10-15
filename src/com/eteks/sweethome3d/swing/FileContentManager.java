@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package com.eteks.sweethome3d;
+package com.eteks.sweethome3d.swing;
 
 import java.awt.FileDialog;
 import java.io.File;
@@ -488,7 +488,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  private boolean confirmOverwrite(String fileName) {
+  protected boolean confirmOverwrite(String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");

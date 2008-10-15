@@ -31,13 +31,13 @@ import javax.swing.JSpinner;
 
 import junit.framework.TestCase;
 
-import com.eteks.sweethome3d.FileContentManager;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.WallController;
 import com.eteks.sweethome3d.swing.WallPanel;
 
