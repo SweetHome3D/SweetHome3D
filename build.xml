@@ -4,29 +4,40 @@
      Copyright (c) 2007-2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
      
      Ant build file. Available targets :
-     - build     : Builds SweetHome3D.jar file in deploy directory
-     - furniture : Builds Furniture.jar file in deploy directory
-     - textures  : Builds Textures.jar file in deploy directory
-     - help      : Builds Help.jar file in deploy directory
+     - build       : Builds SweetHome3D.jar file in build directory
+     - application : Builds SweetHome3D.jar file without applet classes in build directory
+     - furniture   : Builds Furniture.jar file in build directory
+     - textures    : Builds Textures.jar file in build directory
+     - help        : Builds Help.jar file in build directory
 
-     - deploy :           Builds Java Web Start signed files in deploy/lib directory
-     - jarExecutable :    Builds SweetHome3D-version.jar file in install directory
+     - javaWebStart     : Builds Java Web Start signed files in deploy/lib directory
+     - applet           : Builds applet signed files in deploy/lib directory
+     - jarExecutable    : Builds SweetHome3D-version.jar file in install directory
      - windowsInstaller : Builds SweetHome3D-version-windows.exe file in install directory     
-     - macosxInstaller :  Builds SweetHome3D-version-macosx.dmg file in install directory
-     - linuxInstaller :   Builds SweetHome3D-version-linux-x86.tgz file in install directory
-     - sourceArchive :    Builds SweetHome3D-version-src.zip file in install directory
+     - macosxInstaller  : Builds SweetHome3D-version-macosx.dmg file in install directory
+     - linuxInstaller   : Builds SweetHome3D-version-linux-x86.tgz file in install directory
+     - sourceArchive    : Builds SweetHome3D-version-src.zip file in install directory
 -->
-<project basedir="." default="deploy" name="SweetHome3D">
+<project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
   <property name="version" value="1.4"/>
 	
-  <!-- Builds deploy/SweetHome3D.jar -->
+  <!-- Builds build/SweetHome3D.jar with all its classes -->
   <target name="build">
     <!-- Compile Sweet Home 3D -->
-    <mkdir dir="deploy/classes"/>
-    <javac srcdir="src" destdir="deploy/classes"
-    	   encoding="ISO-8859-1"
-    	   target="1.5">
+    <mkdir dir="build/classes"/>
+  	<!-- Compile Sweet Home 3D applet first with javac 1.1 to be able to detect current Java version
+  	     during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
+    <javac srcdir="src" destdir="build/classes"
+    	   includes="com/eteks/sweethome3d/applet/SweetHome3DApplet.*"
+    	   encoding="ISO-8859-1" target="1.1" source="1.2">
+      <classpath>
+        <pathelement path="build/classes"/>
+      </classpath>
+    </javac>
+  	<!-- Compile other classes -->
+    <javac srcdir="src" destdir="build/classes"
+    	   encoding="ISO-8859-1" target="1.5">
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
@@ -38,7 +49,7 @@
     </javac>
     
     <!-- Copy resources excepted furniture, textures and help files -->
-    <copy todir="deploy/classes">
+    <copy todir="build/classes">
       <fileset dir="src">
         <include name="**"/>
         <exclude name="**/*.java"/>
@@ -50,38 +61,55 @@
     </copy>
     
     <!-- Create SweetHome3D.jar -->
-    <jar destfile="deploy/SweetHome3D.jar" 
-         basedir="deploy/classes"/>
-    <delete dir="deploy/classes"/>
+    <jar destfile="build/SweetHome3D.jar" 
+         basedir="build/classes"/>
+    <delete dir="build/classes"/>
   </target>
 
-  <!-- Builds deploy/Furniture.jar that contains the furniture files -->
+  <!-- Builds build/SweetHome3D.jar without applet classes -->
+  <target name="application" depends="build">
+    <jar destfile="build/SweetHome3DStandalone.jar">
+      <zipfileset src="build/SweetHome3D.jar" 
+      	          excludes="com/eteks/sweethome3d/applet/**"/>
+    </jar>
+  	<move file="build/SweetHome3DStandalone.jar" tofile="build/SweetHome3D.jar"/>
+  </target>
+
+  <!-- Builds build/Furniture.jar that contains the furniture files -->
   <target name="furniture">
-    <zip destfile="deploy/Furniture.jar" basedir="src">
+    <zip destfile="build/Furniture.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*FurnitureCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/**"/>
       <exclude name="com/eteks/sweethome3d/io/resources/textures/**"/>
   	</zip>
   </target>
 	
-  <!-- Builds deploy/Textures.jar that contains the textures files -->
+  <!-- Builds build/Textures.jar that contains the textures files -->
   <target name="textures">
-    <zip destfile="deploy/Textures.jar" basedir="src">
+    <zip destfile="build/Textures.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*TexturesCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/textures/**"/>
 	</zip>
   </target>
 	
-  <!-- Builds deploy/Help.jar that contains the help files -->
+  <!-- Builds build/Help.jar that contains the help files -->
   <target name="help">
-    <jar destfile="deploy/Help.jar" basedir="src">
+    <jar destfile="build/Help.jar" basedir="src">
       <include name="**/help/**"/>
   	</jar>
   </target>
 		
   <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
-  <target name="deploy" depends="build,furniture,textures,help">
-    <mkdir dir="deploy/lib/windows"/>
+  <target name="javaWebStart" depends="application,furniture,textures,help">
+    <!-- Build SweetHome3D.jar file from the content of built jars -->
+    <mkdir dir="deploy/lib"/>
+    <jar destfile="deploy/lib/SweetHome3D.jar">
+      <zipfileset src="build/SweetHome3D.jar"/>
+      <zipfileset src="build/Furniture.jar"/>
+      <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Help.jar"/>
+    </jar>
+  	
   	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows"/>
     <jar destfile="deploy/lib/windows/java3d.jar">
@@ -121,21 +149,8 @@
         <include name="vecmath.jar"/>
       </fileset>
     </jar>
- 
-    <!-- Build SweetHome3D.jar file from the content of built jars -->
-    <jar destfile="deploy/lib/SweetHome3D.jar">
-      <zipfileset src="deploy/SweetHome3D.jar"/>
-      <zipfileset src="deploy/Furniture.jar"/>
-      <zipfileset src="deploy/Textures.jar"/>
-      <zipfileset src="deploy/Help.jar"/>
-    </jar>
   	
-  	<!-- Delete jar files included in SweetHome3D.jar -->
-    <delete file="deploy/SweetHome3D.jar"/>
-    <delete file="deploy/Furniture.jar"/>
-    <delete file="deploy/Textures.jar"/>
-    <delete file="deploy/Help.jar"/>
-  	
+    <!-- Copy other jar files -->
     <copy todir="deploy/lib">
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -144,7 +159,67 @@
         <exclude name="vecmath.jar"/>
       </fileset>
     </copy>
+  	
+  	<!-- Clean build directory -->
+    <delete dir="build"/>
     
+    <input message="Enter Passphrase for keystore:" 
+           addproperty="password"/> 
+    <!-- Sign jar files in deploy/lib dir -->
+    <signjar keystore="keys.keytool" 
+             alias="SweetHome3D" storepass="${password}">
+      <fileset dir="deploy/lib">
+        <include name="*.jar"/>
+      </fileset>
+    </signjar>
+
+    <echo message="deploy dir ready for ftp"/>
+  </target>
+
+  <!-- Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet -->
+  <target name="applet" depends="build">
+    <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
+  	<mkdir dir="deploy/lib"/>
+    <jar destfile="deploy/lib/SweetHome3DApplet.jar">
+      <zipfileset src="build/SweetHome3D.jar" 
+                  excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**"/>
+    </jar>
+	 
+  	<!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X -->
+    <jar destfile="deploy/lib/java3d.jar">
+      <fileset dir="lib/windows">
+        <include name="*.dll"/>
+      </fileset>
+      <fileset dir="lib/linux/i386">
+        <include name="*.so"/>
+      </fileset>
+      <fileset dir="lib/macosx">
+        <include name="*.jnilib"/>
+        <include name="*.jar"/>
+      </fileset>
+      <fileset dir="lib">
+        <include name="j3dcore.jar"/>
+        <include name="j3dutils.jar"/>
+        <include name="vecmath.jar"/>
+      </fileset>
+    </jar>
+
+    <!-- Copy other jar files -->
+    <copy todir="deploy/lib">
+      <fileset dir="lib">
+        <include name="*.jar"/>
+        <exclude name="j3dcore.jar"/>
+        <exclude name="j3dutils.jar"/>
+        <exclude name="vecmath.jar"/>
+      	<!-- No Print to PDF in applet -->
+      	<exclude name="itext-2.0.4.jar"/>
+      </fileset>
+    </copy>
+    <copy todir="deploy/lib" file="libtest/jnlp.jar"/>
+  	
+  	<!-- Clean build directory -->
+    <delete dir="build"/>
+
     <input message="Enter Passphrase for keystore:" 
            addproperty="password"/> 
     <!-- Sign jar files in deploy/lib dir -->
@@ -159,15 +234,15 @@
   </target>
 
   <!-- Builds install/SweetHome3D-version.jar executable Jar -->
-  <target name="jarExecutable" depends="build,furniture,textures,help">
+  <target name="jarExecutable" depends="application,furniture,textures,help">
   	<!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
   	     and other DLLs and jars -->
     <jar destfile="install/SweetHome3D-${version}.jar" 
          manifest="install/jar/MANIFEST.MF">
-      <zipfileset src="deploy/SweetHome3D.jar"/>
-      <zipfileset src="deploy/Furniture.jar"/>
-      <zipfileset src="deploy/Textures.jar"/>
-      <zipfileset src="deploy/Help.jar"/>
+      <zipfileset src="build/SweetHome3D.jar"/>
+      <zipfileset src="build/Furniture.jar"/>
+      <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Help.jar"/>
       <fileset dir="lib/windows">
         <include name="*.dll"/>
       </fileset>
@@ -195,11 +270,8 @@
       </fileset>
     </jar>
  
-    <!-- Delete included Sweet Home 3D jar files -->
-    <delete file="deploy/SweetHome3D.jar"/>
-    <delete file="deploy/Furniture.jar"/>
-    <delete file="deploy/Textures.jar"/>
-    <delete file="deploy/Help.jar"/>
+  	<!-- Clean build directory -->
+    <delete dir="build"/>
 
     <echo message="install/SweetHome3D-${version}.jar ready for ftp"/>
   </target>
@@ -208,14 +280,14 @@
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows and requires a Windows JRE, launch4j and Inno Setup 
                  installed in their default location -->
-  <target name="windowsInstaller" depends="build,furniture,textures,help">
+  <target name="windowsInstaller" depends="application,furniture,textures,help">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D 
          to install/windows/tmp/lib -->
     <mkdir dir="install/windows/tmp/lib"/>
-    <move file="deploy/SweetHome3D.jar" todir="install/windows/tmp/lib" />
-    <move file="deploy/Furniture.jar"   todir="install/windows/tmp/lib" />
-    <move file="deploy/Textures.jar"    todir="install/windows/tmp/lib" />
-    <move file="deploy/Help.jar"        todir="install/windows/tmp/lib" />
+    <move file="build/SweetHome3D.jar" todir="install/windows/tmp/lib" />
+    <move file="build/Furniture.jar"   todir="install/windows/tmp/lib" />
+    <move file="build/Textures.jar"    todir="install/windows/tmp/lib" />
+    <move file="build/Help.jar"        todir="install/windows/tmp/lib" />
     <copy todir="install/windows/tmp/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -291,6 +363,8 @@
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
 
+  	<!-- Clean build directories -->
+    <delete dir="build"/>
     <delete dir="install/windows/tmp"/>
 
     <echo message="install/SweetHome3D-${version}-windows.exe ready for ftp"/>
@@ -299,7 +373,7 @@
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
        and Sweet Home 3D libraries. 
        CAUTION : May be run only under Mac OS X and requires Disk Utility -->
-  <target name="macosxInstaller" depends="build,furniture,textures,help">
+  <target name="macosxInstaller" depends="application,furniture,textures,help">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app">
@@ -312,10 +386,10 @@
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
-    <move file="deploy/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="deploy/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="deploy/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
-    <move file="deploy/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="build/SweetHome3D.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="build/Furniture.jar"   todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="build/Textures.jar"    todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
+    <move file="build/Help.jar"        todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" />
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -357,6 +431,8 @@
       <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
     </exec>
 
+  	<!-- Clean build directories -->
+    <delete dir="build"/>
     <delete dir="install/macosx/SweetHome3D-${version}"/>
 
     <echo message="install/SweetHome3D-${version}-macosx.dmg ready for ftp"/>
@@ -365,7 +441,7 @@
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux JRE installed in jre1.6.0_06 -->
-  <target name="linuxInstaller" depends="build,furniture,textures,help">
+  <target name="linuxInstaller" depends="application,furniture,textures,help">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/i386/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/i386/SweetHome3D-${version}/lib"/>
@@ -375,10 +451,10 @@
   	
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/linux/i386/SweetHome3D-version/lib -->
-    <move file="deploy/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-${version}/lib" />
-    <move file="deploy/Furniture.jar"   todir="install/linux/i386/SweetHome3D-${version}/lib" />
-    <move file="deploy/Textures.jar"    todir="install/linux/i386/SweetHome3D-${version}/lib" />
-    <move file="deploy/Help.jar"        todir="install/linux/i386/SweetHome3D-${version}/lib" />
+    <move file="build/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-${version}/lib" />
+    <move file="build/Furniture.jar"   todir="install/linux/i386/SweetHome3D-${version}/lib" />
+    <move file="build/Textures.jar"    todir="install/linux/i386/SweetHome3D-${version}/lib" />
+    <move file="build/Help.jar"        todir="install/linux/i386/SweetHome3D-${version}/lib" />
     <copy todir="install/linux/i386/SweetHome3D-${version}/lib" >
       <fileset dir="lib">
         <include name="*.jar"/>
@@ -429,6 +505,8 @@
       </tarfileset>
     </tar>
 
+  	<!-- Clean build directories -->
+    <delete dir="build"/>
     <delete dir="install/linux/i386"/>
 
     <echo message="install/SweetHome3D-${version}-linux-x86.tgz ready for ftp"/>
@@ -463,6 +541,7 @@
   	<zip destfile="install/SweetHome3D-${version}-src.zip" basedir="install/source"
   		 includes="SweetHome3D-${version}-src/**" />
 
+  	<!-- Clean build directory -->
     <delete dir="install/source"/>
 
     <echo message="install/SweetHome3D-${version}-src.zip ready for ftp"/>
