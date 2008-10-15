@@ -198,18 +198,7 @@ public class AppletApplication extends HomeApplication {
     
     toolBar.add(getToolBarAction(homeView, ActionType.ZOOM_OUT));
     toolBar.add(getToolBarAction(homeView, ActionType.ZOOM_IN));
-    
-    // Force a fixed light gray under Mac OS X to avoid blinks when applet looses focus
-    if (OperatingSystem.isMacOSX()) {
-      applet.getRootPane().putClientProperty("apple.awt.brushMetalLook", false);
-//      Color backgroundColor = Color.LIGHT_GRAY;
-//      toolBar.setBackground(backgroundColor);
-//      JSplitPane mainPane = (JSplitPane)homeView.getContentPane().getComponent(1);
-//      mainPane.setBackground(backgroundColor);
-//      mainPane.getLeftComponent().setBackground(backgroundColor);
-//      mainPane.getRightComponent().setBackground(backgroundColor);
-    }
-    
+     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
     // Change applet content pane
