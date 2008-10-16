@@ -51,6 +51,7 @@ import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
+import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.model.ContentManager;
@@ -143,7 +144,17 @@ public class AppletApplication extends HomeApplication {
   private void updateAppletView(final JApplet applet, final HomeController controller) {
     HomePane homeView = (HomePane)controller.getView();
     // Remove menu bar
-    homeView.setJMenuBar(null);    
+    homeView.setJMenuBar(null);
+    
+    // As the applet has no menu, activate accelerators directly on home view
+    for (ActionType actionType : HomePane.ActionType.values()) {
+      ResourceAction.MenuAction menuAction = new ResourceAction.MenuAction(homeView.getActionMap().get(actionType));
+      KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
+      if (accelerator != null) {
+        homeView.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(accelerator, actionType);
+      }
+    }
+    
     // Change default buttons in toolbar
     JToolBar toolBar = (JToolBar)homeView.getContentPane().getComponent(0);
     toolBar.setFloatable(false);
