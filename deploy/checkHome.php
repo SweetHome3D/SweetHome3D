@@ -20,7 +20,8 @@
    */
 
   // Returns "1" if the home in parameter "home" exists
-  $homeFile = "homes/".$_GET['home'].".sh3d";     
+  $homesDir = "../persistent/homes";
+  $homeFile = $homesDir."/".$_GET['home'].".sh3d"; 
   
   if (file_exists($homeFile)) {
     echo "1";

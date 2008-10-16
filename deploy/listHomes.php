@@ -19,8 +19,10 @@
    * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
    */
    
-  // Returns the list of available homes without their extension
-  $handler = opendir("homes");
+  // Returns the list of available homes without their extension 
+  // in homes directory 
+  $homesDir = "../persistent/homes";
+  $handler = opendir($homesDir);
   
   while ($file = readdir($handler)) {
     if (!is_dir($file) && eregi('.sh3d', $file)) {

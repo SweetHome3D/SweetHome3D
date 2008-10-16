@@ -20,8 +20,9 @@
    */
    
   // Updloads the file available in multipart file "home", saves it
-  // and returns "1" if save was successful
-  $homeFile = "homes/".$_FILES['home']['name'].".sh3d"; 
+  // in homes directory and returns "1" if save was successful
+  $homesDir = "../persistent/homes";
+  $homeFile = $homesDir."/".$_FILES['home']['name'].".sh3d"; 
   
   // Security for Sweet Home 3D hosted on sourceforge.net
   if ($_FILES['home']['size'] > 200000) {
@@ -32,10 +33,10 @@
   
   if (!file_exists($homeFile)) {
     $homes = array();
-    $handler = opendir("homes");
+    $handler = opendir($homesDir);
     while ($file = readdir($handler)) {
       if (!is_dir($file) && eregi('.sh3d', $file)) {
-        $homes[] = "homes/".$file;
+        $homes[] = $homesDir."/".$file;
       }  
     }
     closedir($handler);
