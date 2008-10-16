@@ -10,6 +10,7 @@
      - textures    : Builds Textures.jar file in build directory
      - help        : Builds Help.jar file in build directory
 
+     - java3dLibraries  : Builds JNLP Java 3D libraries in deploy/lib subdirectories
      - javaWebStart     : Builds Java Web Start signed files in deploy/lib directory
      - applet           : Builds applet signed files in deploy/lib directory
      - jarExecutable    : Builds SweetHome3D-version.jar file in install directory
@@ -98,18 +99,9 @@
       <include name="**/help/**"/>
   	</jar>
   </target>
-		
-  <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
-  <target name="javaWebStart" depends="application,furniture,textures,help">
-    <!-- Build SweetHome3D.jar file from the content of built jars -->
-    <mkdir dir="deploy/lib"/>
-    <jar destfile="deploy/lib/SweetHome3D.jar">
-      <zipfileset src="build/SweetHome3D.jar"/>
-      <zipfileset src="build/Furniture.jar"/>
-      <zipfileset src="build/Textures.jar"/>
-      <zipfileset src="build/Help.jar"/>
-    </jar>
-  	
+
+  <!-- Builds JNLP Java 3D libraries in deploy/lib subdirectories -->
+  <target name="java3dLibraries">
   	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows"/>
     <jar destfile="deploy/lib/windows/java3d.jar">
@@ -149,6 +141,18 @@
         <include name="vecmath.jar"/>
       </fileset>
     </jar>
+  </target>
+		
+  <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
+  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries">
+    <!-- Build SweetHome3D.jar file from the content of built jars -->
+    <mkdir dir="deploy/lib"/>
+    <jar destfile="deploy/lib/SweetHome3D.jar">
+      <zipfileset src="build/SweetHome3D.jar"/>
+      <zipfileset src="build/Furniture.jar"/>
+      <zipfileset src="build/Textures.jar"/>
+      <zipfileset src="build/Help.jar"/>
+    </jar>
   	
     <!-- Copy other jar files -->
     <copy todir="deploy/lib">
@@ -177,7 +181,7 @@
   </target>
 
   <!-- Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet -->
-  <target name="applet" depends="build">
+  <target name="applet" depends="build,java3dLibraries">
     <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
   	<mkdir dir="deploy/lib"/>
     <jar destfile="deploy/lib/SweetHome3DApplet.jar">
@@ -185,7 +189,8 @@
                   excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**"/>
     </jar>
 	 
-  	<!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X -->
+  	<!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
+  	     (this library is used for Java versions older than Java SE 6 update 10) -->
     <jar destfile="deploy/lib/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
@@ -310,8 +315,8 @@
   
     <!-- Copy JRE to install/windows/tmp/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/javaw.exe command excepted) -->
-    <copy todir="install/windows/tmp/jre1.6.0_06">
-      <fileset dir="C:\Program Files\Java\jre1.6.0_06">
+    <copy todir="install/windows/tmp/jre6">
+      <fileset dir="C:\Program Files\Java\jre6">
         <include name="*"/>
         <include name="bin/**"/>
         <include name="lib/**"/>
@@ -440,7 +445,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux JRE installed in jre1.6.0_06 -->
+       CAUTION : Requires a Linux JRE installed in jre1.6.0_10 -->
   <target name="linuxInstaller" depends="application,furniture,textures,help">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/i386/SweetHome3D-version/lib -->
@@ -474,8 +479,8 @@
   	
     <!-- Copy JRE to install/linux/i386/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_06">
-      <fileset dir="jre1.6.0_06">
+    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_10">
+      <fileset dir="jre1.6.0_10">
         <include name="**"/>
 
         <exclude name="lib/charsets.jar"/>
@@ -496,12 +501,12 @@
       <tarfileset dir="install/linux/i386"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
-        <exclude name="SweetHome3D-${version}/jre1.6.0_06/bin/java"/>
+        <exclude name="SweetHome3D-${version}/jre1.6.0_10/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
-        <include name="SweetHome3D-${version}/jre1.6.0_06/bin/java"/>
+        <include name="SweetHome3D-${version}/jre1.6.0_10/bin/java"/>
       </tarfileset>
     </tar>
 
