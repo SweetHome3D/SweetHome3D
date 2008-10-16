@@ -66,7 +66,7 @@ public class AppletContentManager extends FileContentManager {
   
   /**
    * Returns the name chosen by user with an open dialog.
-   * @return the name or <code>null</code> if user cancelled its choice.
+   * @return the name or <code>null</code> if user canceled its choice.
    */
   public String showOpenDialog(String      dialogTitle,
                                ContentType contentType) {
@@ -93,7 +93,7 @@ public class AppletContentManager extends FileContentManager {
    * Returns the name chosen by user with a save dialog.
    * If this name already exists, the user will be prompted whether 
    * he wants to overwrite this existing name. 
-   * @return the chosen name or <code>null</code> if user cancelled its choice.
+   * @return the chosen name or <code>null</code> if user canceled its choice.
    */
   public String showSaveDialog(String      dialogTitle,
                                ContentType contentType,
