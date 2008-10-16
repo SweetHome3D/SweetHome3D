@@ -55,21 +55,25 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * @author Emmanuel Puybaret
  */
 public class HelpController {
-  private List<URL>      history;
-  private int            historyIndex;
-  private JComponent     helpView;
+  private UserPreferences preferences;
+  private List<URL>       history;
+  private int             historyIndex;
+  private JComponent      helpView;
   
   public HelpController(UserPreferences preferences) {
+    this.preferences = preferences;
     this.history = new ArrayList<URL>();
     historyIndex = -1;
-    this.helpView = new HelpPane(preferences, this);
-    addLanguageListener(preferences);
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    if (this.helpView == null) {
+      this.helpView = new HelpPane(preferences, this);
+      addLanguageListener(preferences);
+    }
     return this.helpView;
   }
 
