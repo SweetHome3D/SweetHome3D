@@ -41,14 +41,10 @@
     }
     closedir($handler);
 
-    // If there are 5 recorded homes 
     if (sizeof($homes) >= 5) {
-      // Remove the oldest file
-      function compareFileDate($file1, $file2) {
-        return filemtime($file1) - filemtime($file2);
-      }
-      usort($homes, "compareFileDate");
-      unlink($homes [0]);
+      // Refuse more than 5 homes on server
+      echo "0";
+      return;
     }
   }
   // End of security
