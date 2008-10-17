@@ -19,7 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
 import java.awt.FileDialog;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -27,7 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-import javax.swing.FocusManager;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -300,11 +302,12 @@ public class FileContentManager implements ContentManager {
    */
   public String showOpenDialog(String      dialogTitle,
                                ContentType contentType) {
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()) {
-      return showFileDialog(dialogTitle, contentType, null, false);
+      return showFileDialog(activeWindow, dialogTitle, contentType, null, false);
     } else {
-      return showFileChooser(dialogTitle, contentType, null, false);
+      return showFileChooser(activeWindow, dialogTitle, contentType, null, false);
     }
   }
   
@@ -333,12 +336,13 @@ public class FileContentManager implements ContentManager {
       }
     }
     
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     String savedName;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()) {
-      savedName = showFileDialog(dialogTitle, contentType, name, true);
+      savedName = showFileDialog(activeWindow, dialogTitle, contentType, name, true);
     } else {
-      savedName = showFileChooser(dialogTitle, contentType, name, true);
+      savedName = showFileChooser(activeWindow, dialogTitle, contentType, name, true);
     }
     
     boolean addedExtension = false;
@@ -363,7 +367,7 @@ public class FileContentManager implements ContentManager {
       // If the file exists, prompt user if he wants to overwrite it
       File savedFile = new File(savedName);
       if (savedFile.exists()
-          && !confirmOverwrite(savedFile.getName())) {
+          && !confirmOverwrite(activeWindow, savedFile.getName())) {
         return showSaveDialog(dialogTitle, contentType, savedName);
       }
     }
@@ -373,12 +377,12 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays an AWT open file dialog.
    */
-  private String showFileDialog(String              dialogTitle,
+  private String showFileDialog(Component          parent,
+                                String              dialogTitle,
                                 final ContentType   contentType,
                                 String              name, 
                                 boolean             save) {
-    FileDialog fileDialog = new FileDialog(JOptionPane.getFrameForComponent(
-        FocusManager.getCurrentManager().getActiveWindow()));
+    FileDialog fileDialog = new FileDialog(JOptionPane.getFrameForComponent(parent));
 
     // Set selected file
     if (save && name != null) {
@@ -422,7 +426,8 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays a Swing open file chooser.
    */
-  private String showFileChooser(String        dialogTitle,
+  private String showFileChooser(Component    parent,
+                                 String        dialogTitle,
                                  ContentType   contentType,
                                  String        name,
                                  boolean       save) {
@@ -457,9 +462,9 @@ public class FileContentManager implements ContentManager {
     
     int option;
     if (save) {
-      option = fileChooser.showSaveDialog(FocusManager.getCurrentManager().getActiveWindow());
+      option = fileChooser.showSaveDialog(parent);
     } else {
-      option = fileChooser.showOpenDialog(FocusManager.getCurrentManager().getActiveWindow());
+      option = fileChooser.showOpenDialog(parent);
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve current directory for future calls
@@ -488,7 +493,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  protected boolean confirmOverwrite(String fileName) {
+  protected boolean confirmOverwrite(Component parent, String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");
@@ -497,7 +502,7 @@ public class FileContentManager implements ContentManager {
     String replace = resource.getString("confirmOverwrite.overwrite");
     String cancel = resource.getString("confirmOverwrite.cancel");
     
-    return JOptionPane.showOptionDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+    return JOptionPane.showOptionDialog(parent, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
   }

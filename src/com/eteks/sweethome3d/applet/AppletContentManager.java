@@ -19,9 +19,11 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.util.ResourceBundle;
 
-import javax.swing.FocusManager;
 import javax.swing.JOptionPane;
 
 import com.eteks.sweethome3d.model.HomeRecorder;
@@ -71,18 +73,21 @@ public class AppletContentManager extends FileContentManager {
   public String showOpenDialog(String      dialogTitle,
                                ContentType contentType) {
     if (contentType == ContentType.SWEET_HOME_3D) {
+      ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
+      Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       String [] availableHomes = null;
       if (this.recorder instanceof HomeAppletRecorder) {
         try {
           availableHomes = ((HomeAppletRecorder)this.recorder).getAvailableHomes();
         } catch (RecorderException ex) {
-          throw new RuntimeException(ex);
+          String errorMessage = resource.getString("showOpenDialog.availableHomesError");
+          showError(activeWindow, errorMessage);
+          return null;
         }
       }    
       
-      ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
       String message = resource.getString("showOpenDialog.message");
-      return (String)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+      return (String)JOptionPane.showInputDialog(activeWindow, 
           message, getDefaultDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
     } else {
       return super.showOpenDialog(dialogTitle, contentType);
@@ -100,23 +105,35 @@ public class AppletContentManager extends FileContentManager {
                                String      name) {
     if (contentType == ContentType.SWEET_HOME_3D) {
       ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
+      Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       String message = resource.getString("showSaveDialog.message");
-      String savedName = (String)JOptionPane.showInputDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+      String savedName = (String)JOptionPane.showInputDialog(activeWindow, 
           message, getDefaultDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name); 
   
       // If the name exists, prompt user if he wants to overwrite it
       try {
         if (this.recorder.exists(savedName)
-            && !confirmOverwrite(savedName)) {
+            && !confirmOverwrite(activeWindow, savedName)) {
           return showSaveDialog(dialogTitle, contentType, savedName);
         }
         return savedName;
       } catch (RecorderException ex) {
-        throw new RuntimeException(ex);
+        String errorMessage = resource.getString("showSaveDialog.checkHomeError");
+        showError(activeWindow, errorMessage);
+        return null;
       }
     } else {
       return super.showSaveDialog(dialogTitle, contentType, name);
     }
+  }
+  
+  /**
+   * Shows the given <code>message</code> in an error message dialog. 
+   */
+  private void showError(Component parent, String message) {
+    ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
+    String title = resource.getString("showError.title");
+    JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);    
   }
   
   /**
