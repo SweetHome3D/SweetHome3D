@@ -19,7 +19,9 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.applet.Applet;
 import java.applet.AppletContext;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -46,7 +48,6 @@ import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.JApplet;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JToggleButton;
@@ -79,7 +80,7 @@ public class AppletApplication extends HomeApplication {
   private UserPreferences    userPreferences;
   private AppletContentManager contentManager;
 
-  public AppletApplication(final JApplet applet) {
+  public AppletApplication(final Applet applet) {
     String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
     String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
     String checkHomeURL = getAppletParameter(applet, "checkHomeURL", "checkHome.php?home=%s");
@@ -129,7 +130,7 @@ public class AppletApplication extends HomeApplication {
    * Returns the parameter value of the given <code>parameter</code> or 
    * <code>defaultValue</code> if it doesn't exist.
    */
-  private String getAppletParameter(JApplet applet, String parameter, String defaultValue) {
+  private String getAppletParameter(Applet applet, String parameter, String defaultValue) {
     String parameterValue = applet.getParameter(parameter);
     if (parameterValue == null) {
       return defaultValue;
@@ -141,7 +142,7 @@ public class AppletApplication extends HomeApplication {
   /**
    * Updates the applet content pane with <code>controller</code> view. 
    */
-  private void updateAppletView(final JApplet applet, final HomeController controller) {
+  private void updateAppletView(final Applet applet, final HomeController controller) {
     HomePane homeView = (HomePane)controller.getView();
     // Remove menu bar
     homeView.setJMenuBar(null);
@@ -211,9 +212,10 @@ public class AppletApplication extends HomeApplication {
      
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-    // Change applet content pane
-    applet.setContentPane(homeView);
-    applet.getRootPane().revalidate();
+    // Change applet content 
+    applet.removeAll();    
+    applet.add(homeView, BorderLayout.CENTER);
+    applet.validate();
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
@@ -221,7 +223,7 @@ public class AppletApplication extends HomeApplication {
           controller.getFurnitureController().getView(),
           controller.getPlanController().getView(),
           controller.getHomeController3D().getView()});      
-      applet.getRootPane().setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
             return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());

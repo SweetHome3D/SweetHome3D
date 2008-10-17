@@ -19,10 +19,10 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.applet.Applet;
+import java.awt.BorderLayout;
+import java.awt.TextArea;
 import java.lang.reflect.Constructor;
-
-import javax.swing.JApplet;
-import javax.swing.JLabel;
 
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
@@ -32,7 +32,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  * It's Java 1.1 compatible to be loadable by old JVMs.
  * @author Emmanuel Puybaret
  */
-public class SweetHome3DApplet extends JApplet {
+public class SweetHome3DApplet extends Applet {
   static {
     initSystemProperties();
   }
@@ -50,9 +50,11 @@ public class SweetHome3DApplet extends JApplet {
   }
   
   public void init() {
+    setLayout(new BorderLayout());
     try {
       if (!isJava5OrSuperior()) {
-        showError("<html>This applet requires Java version 5 or superior.<br>" +
+        showError("This applet may be run under Windows, Mac OS X 10.4 / 10.5 and Linux.\n" +
+            "It requires Java version 5 or superior.\n" +
             "Please, update your Java Runtime to the latest version available at java.com");
       } else {
         Class sweetHome3DAppletClass = SweetHome3DApplet.class;
@@ -89,20 +91,22 @@ public class SweetHome3DApplet extends JApplet {
         String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
         Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
         Constructor applicationConstructor = 
-            applicationClass.getConstructor(new Class [] {JApplet.class});
+            applicationClass.getConstructor(new Class [] {Applet.class});
         applicationConstructor.newInstance(new Object [] {this});
-
-        getRootPane().putClientProperty("apple.awt.brushMetalLook", Boolean.FALSE);    
       }
     } catch (Throwable ex) {
-      showError("<html>Can't start applet:<br>Exception" 
-          + ex.getClass().getName() + "<br>" + ex.getMessage());
+      showError("Can't start applet:\nException" 
+          + ex.getClass().getName() + " " + ex.getMessage());
       ex.printStackTrace();
     }
   }
   
   private void showError(String text) {
-    setContentPane(new JLabel(text, JLabel.CENTER));
+    TextArea textArea = new TextArea(text, 10, 10, TextArea.SCROLLBARS_NONE);
+    textArea.setEditable(false);
+    removeAll();    
+    add(textArea, BorderLayout.CENTER);
+    validate();
   }
   
   /**
