@@ -2,7 +2,7 @@
 <jnlp spec="1.5+" 
       href="SweetHome3DApplet.jnlp">
   <information>
-    <title>Sweet Home 3D on-line</title>
+    <title>Sweet Home 3D Applet</title>
     <vendor>eTeks</vendor>
     <homepage href="http://sweethome3d.sourceforge.net/"/>
   </information>
@@ -36,5 +36,5 @@
   </resources>
   
   <applet-desc main-class="com.eteks.sweethome3d.applet.SweetHome3DApplet" 
-               name="Sweet Home 3D on-line" width="800" height="600"/>
+               name="Sweet Home 3D Applet" width="800" height="600"/>
 </jnlp>
