@@ -86,9 +86,16 @@ public class AppletContentManager extends FileContentManager {
         }
       }    
       
-      String message = resource.getString("showOpenDialog.message");
-      return (String)JOptionPane.showInputDialog(activeWindow, 
-          message, getDefaultDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
+      if (availableHomes != null && availableHomes.length == 0) {
+        String message = resource.getString("showOpenDialog.noAvailableHomes");
+        JOptionPane.showMessageDialog(activeWindow, 
+            message, getDefaultDialogTitle(false), JOptionPane.INFORMATION_MESSAGE);
+        return null;
+      } else {
+        String message = resource.getString("showOpenDialog.message");
+        return (String)JOptionPane.showInputDialog(activeWindow, 
+            message, getDefaultDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
+      }
     } else {
       return super.showOpenDialog(dialogTitle, contentType);
     }

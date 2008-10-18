@@ -204,7 +204,12 @@ public class HomeAppletRecorder implements HomeRecorder {
       for (int c; (c = reader.read()) != -1; ) {
         homes.write(c);
       }
-      return homes.toString().split("\n");
+      String [] availableHomes = homes.toString().split("\n");
+      if (availableHomes.length == 1 && availableHomes [0].length() == 0) {
+        return new String [0];
+      } else {
+        return availableHomes;
+      }
     } catch (IOException ex) {
       throw new RecorderException("Can't read homes from server", ex);
     } finally {
