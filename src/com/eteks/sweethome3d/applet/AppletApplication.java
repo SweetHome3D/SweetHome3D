@@ -75,8 +75,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class AppletApplication extends HomeApplication {
-  private HomeRecorder       homeRecorder;
-  private UserPreferences    userPreferences;
+  private HomeRecorder         homeRecorder;
+  private UserPreferences      userPreferences;
   private AppletContentManager contentManager;
 
   public AppletApplication(final JApplet applet) {
@@ -84,6 +84,7 @@ public class AppletApplication extends HomeApplication {
     String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
     String checkHomeURL = getAppletParameter(applet, "checkHomeURL", "checkHome.php?home=%s");
     String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
+    final String defaultHome = applet.getParameter("defaultHome");    
 
     this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, checkHomeURL, listHomesURL);
     this.userPreferences = new AppletUserPreferences();
@@ -101,15 +102,24 @@ public class AppletApplication extends HomeApplication {
     // Add a listener that changes the content pane of the current active applet 
     // when a home is added to application
     addHomeListener(new HomeListener() {
+        private boolean firstHome = true;
+        
         public void homeChanged(HomeEvent ev) {
           switch (ev.getType()) {
             case ADD :
               Home home = ev.getHome();
               try {
                 // Create a home controller for new home
-                HomeAppletController controller = new HomeAppletController(home, AppletApplication.this);
+                final HomeAppletController controller = new HomeAppletController(home, AppletApplication.this);                
                 // Display its view in applet
                 updateAppletView(applet, controller);
+                // Open specified home at launch time if it exits
+                if (this.firstHome) {
+                  this.firstHome = false;
+                  if (defaultHome != null && defaultHome.length() > 0) {
+                    controller.open(defaultHome);
+                  }
+                }
               } catch (IllegalRenderingStateException ex) {
                 ex.printStackTrace();
                 show3DError();
@@ -122,7 +132,7 @@ public class AppletApplication extends HomeApplication {
     addComponent3DRenderingErrorListener();
     
     // Create a home 
-    addHome(new Home());      
+    addHome(new Home());
   }
   
   /**
