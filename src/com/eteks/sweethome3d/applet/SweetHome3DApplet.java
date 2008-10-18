@@ -19,10 +19,10 @@
  */
 package com.eteks.sweethome3d.applet;
 
-import java.applet.Applet;
-import java.awt.BorderLayout;
-import java.awt.TextArea;
 import java.lang.reflect.Constructor;
+
+import javax.swing.JApplet;
+import javax.swing.JLabel;
 
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
@@ -32,7 +32,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  * It's Java 1.1 compatible to be loadable by old JVMs.
  * @author Emmanuel Puybaret
  */
-public class SweetHome3DApplet extends Applet {
+public class SweetHome3DApplet extends JApplet {
   static {
     initSystemProperties();
   }
@@ -50,12 +50,11 @@ public class SweetHome3DApplet extends Applet {
   }
   
   public void init() {
-    setLayout(new BorderLayout());
     try {
       if (!isJava5OrSuperior()) {
-        showError("This applet may be run under Windows, Mac OS X 10.4 / 10.5 and Linux.\n" +
-            "It requires Java version 5 or superior.\n" +
-            "Please, update your Java Runtime to the latest version available at java.com");
+        showError("<html>This applet may be run under Windows, Mac OS X 10.4 / 10.5 and Linux." +
+            "<br>It requires Java version 5 or superior." +
+            "<br>Please, update your Java Runtime to the latest version available at java.com.");
       } else {
         Class sweetHome3DAppletClass = SweetHome3DApplet.class;
         String [] java3DFiles = {
@@ -91,22 +90,20 @@ public class SweetHome3DApplet extends Applet {
         String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
         Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
         Constructor applicationConstructor = 
-            applicationClass.getConstructor(new Class [] {Applet.class});
+            applicationClass.getConstructor(new Class [] {JApplet.class});
         applicationConstructor.newInstance(new Object [] {this});
       }
     } catch (Throwable ex) {
-      showError("Can't start applet:\nException" 
+      showError("<html>Can't start applet:<br>Exception" 
           + ex.getClass().getName() + " " + ex.getMessage());
       ex.printStackTrace();
     }
   }
   
   private void showError(String text) {
-    TextArea textArea = new TextArea(text, 10, 10, TextArea.SCROLLBARS_NONE);
-    textArea.setEditable(false);
-    removeAll();    
-    add(textArea, BorderLayout.CENTER);
-    validate();
+    JLabel label = new JLabel(text, JLabel.CENTER);
+    getContentPane().removeAll();
+    getContentPane().add(label);
   }
   
   /**
