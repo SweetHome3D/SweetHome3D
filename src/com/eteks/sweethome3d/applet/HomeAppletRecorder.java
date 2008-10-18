@@ -161,27 +161,13 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns <code>true</code> if the home <code>name</code> exists.
    */
   public boolean exists(String name) throws RecorderException {
-    HttpURLConnection connection = null;
-    InputStream in = null;
-    try {
-      // Open a stream to server 
-      connection = (HttpURLConnection)getURL(this.checkHomeURL, name).openConnection();
-      connection.setRequestProperty("Content-Type", "charset=UTF-8");
-      connection.setUseCaches(false);
-      in = connection.getInputStream();
-      int read = in.read();
-      return read == '1';
-    } catch (IOException ex) {
-      throw new RecorderException("Can't read from server", ex);
-    } finally {
-      try {
-        if (in != null) {
-          in.close();
-        }
-      } catch (IOException ex) {
-        throw new RecorderException("Can't close coonection", ex);
+    String [] availableHomes = getAvailableHomes();
+    for (String home : availableHomes) {
+      if (home.equals(name)) {
+        return true;
       }
     }
+    return false;
   }
 
   /**

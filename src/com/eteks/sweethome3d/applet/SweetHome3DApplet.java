@@ -30,6 +30,33 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  * This applet class loads Sweet Home 3classes from jars in classpath 
  * or from extension jars stored as resources.
  * It's Java 1.1 compatible to be loadable by old JVMs.
+ * <p>This applet accepts the following parameters:
+ * 
+ * <lu><li><code>writeHomeURL</code> specifies the URL of the HTTP service able 
+ *     to write the data of a home. This data will be uploaded in the file parameter named 
+ *     <code>home</code> of a POST request encoded with multipart/form-data MIME type, with 
+ *     the name of the uploaded home being stored in its <code>filename</code> attribute.
+ *     This service must return 1 if it wrote the uploaded successfully.
+ *     <br>By default, this URL is <code>writeHome.php</code> and if it's not an absolute URL 
+ *     it will be considered as relative to applet codebase.</li>
+ *     
+ *     <li><code>readHomeURL</code> specifies the URL of the HTTP service able 
+ *     to return the data of a home written with the previous service. The home name
+ *     is specified by the parameter named <code>home</code> of a GET request.
+ *     <br>By default, this URL is <code>readHome.php?home=%s</code> (the %s sign will be 
+ *     replaced by the requested home name). If it's not an absolute URL it will be 
+ *     considered as relative to applet codebase.</li>
+ *     
+ *     <li><code>listHomesURL</code> specifies the URL of the HTTP service able 
+ *     to return the list of home names able to be read from server. It must return
+ *     these names in a string, separated from each other by a carriage return (\n).
+ *     <br>By default, this URL is <code>listHomes.php</code> and if it's not an absolute URL 
+ *     it will be considered as relative to applet codebase.</li>
+ *     
+ *     <li><code>defaultHome</code> specifies the home that will be opened at applet launch
+ *     with <code>readHomeURL</code> service. 
+ *     Omit this parameter or let its value empty, if no home should be opened.</li></lu>
+ *     
  * @author Emmanuel Puybaret
  */
 public class SweetHome3DApplet extends JApplet {
