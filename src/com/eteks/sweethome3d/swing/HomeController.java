@@ -738,9 +738,7 @@ public class HomeController  {
   public void importFurniture() {
     if (this.focusedView == getCatalogController().getView()) {
       getCatalogController().importFurniture();
-    } else if (this.focusedView == getFurnitureController().getView()
-        || this.focusedView == getPlanController().getView()
-        || this.focusedView == getHomeController3D().getView()) {
+    } else {
       getFurnitureController().importFurniture();
     }    
   }
