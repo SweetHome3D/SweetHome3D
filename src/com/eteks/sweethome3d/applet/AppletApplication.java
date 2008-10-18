@@ -216,40 +216,38 @@ public class AppletApplication extends HomeApplication {
     applet.removeAll();    
     applet.add(homeView, BorderLayout.CENTER);
     applet.validate();
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          controller.getCatalogController().getView(),
-          controller.getFurnitureController().getView(),
-          controller.getPlanController().getView(),
-          controller.getHomeController3D().getView()});      
-      applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-          @Override
-          public Component getComponentAfter(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
-          }
-    
-          @Override
-          public Component getComponentBefore(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
-          }
-    
-          @Override
-          public Component getDefaultComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getFirstComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getLastComponent(Container container) {
-            return focusableComponents.get(focusableComponents.size() - 1);
-          }
-        });
-    }
+    // Force focus traversal policy to ensure applet components get the focus 
+    final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
+        controller.getCatalogController().getView(),
+        controller.getFurnitureController().getView(),
+        controller.getPlanController().getView(),
+        controller.getHomeController3D().getView()});      
+    applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+        @Override
+        public Component getComponentAfter(Container container, Component component) {
+          return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
+        }
+  
+        @Override
+        public Component getComponentBefore(Container container, Component component) {
+          return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
+        }
+  
+        @Override
+        public Component getDefaultComponent(Container container) {
+          return focusableComponents.get(0);
+        }
+  
+        @Override
+        public Component getFirstComponent(Container container) {
+          return focusableComponents.get(0);
+        }
+  
+        @Override
+        public Component getLastComponent(Container container) {
+          return focusableComponents.get(focusableComponents.size() - 1);
+        }
+      });
   }
 
   /**
