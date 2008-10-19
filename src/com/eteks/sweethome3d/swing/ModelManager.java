@@ -55,7 +55,6 @@ import com.sun.j3d.loaders.ParsingErrorException;
 import com.sun.j3d.loaders.Scene;
 import com.sun.j3d.loaders.lw3d.Lw3dLoader;
 import com.sun.j3d.loaders.objectfile.ObjectFile;
-import com.sun.j3d.utils.image.ImageException;
 
 /**
  * Singleton managing 3D models cache.
@@ -216,8 +215,14 @@ public class ModelManager {
         lastException = ex;
       } catch (IOException ex) {
         lastException = ex;
-      } catch (ImageException ex) {
-        lastException = ex;
+      } catch (RuntimeException ex) {
+        // Take into account exceptions of Java 3D 1.5 ImageException class
+        // in such a way program can run in Java 3D 1.3.1
+        if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
+          lastException = ex;
+        } else {
+          throw ex;
+        }
       }
     }
     

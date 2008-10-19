@@ -54,8 +54,6 @@ import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.IllegalRenderingStateException;
-import javax.media.j3d.RenderingError;
-import javax.media.j3d.RenderingErrorListener;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -352,7 +350,7 @@ public class SweetHome3D extends HomeApplication {
         };
       });
     
-    application.addComponent3DRenderingErrorListener();
+    application.addComponent3DRenderingErrorObserver();
     
     if (OperatingSystem.isMacOSX()) {
       // Bind to application menu  
@@ -398,20 +396,20 @@ public class SweetHome3D extends HomeApplication {
    * Sets the rendering error listener bound to Java 3D 
    * to avoid default System exit in case of error during 3D rendering. 
    */
-  private void addComponent3DRenderingErrorListener() {
-    // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
-    // we add it through Canvas3DManager, because offscreen rendering needs to check 
-    // rendering errors with its own RenderingErrorListener
-    Component3DManager.getInstance().setRenderingErrorListener(new RenderingErrorListener() {
-        public void errorOccurred(RenderingError error) {
-          error.printVerbose();
-          EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                exitAfter3DError();
-              }
-            });
-        }
-      });
+  private void addComponent3DRenderingErrorObserver() {
+    // Add a RenderingErrorObserver to Canvas3DManager, because offscreen 
+    // rendering needs to check rendering errors with its own RenderingErrorListener
+    Component3DManager.getInstance().setRenderingErrorObserver(
+        new Component3DManager.RenderingErrorObserver() {
+          public void errorOccured(int errorCode, String errorMessage) {
+            System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  exitAfter3DError();
+                }
+              });
+          }
+        });
   }
 
   /**

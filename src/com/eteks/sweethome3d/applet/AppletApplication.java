@@ -40,8 +40,6 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.IllegalRenderingStateException;
-import javax.media.j3d.RenderingError;
-import javax.media.j3d.RenderingErrorListener;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -318,16 +316,17 @@ public class AppletApplication extends HomeApplication {
     // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
     // we add it through Canvas3DManager, because offscreen rendering needs to check 
     // rendering errors with its own RenderingErrorListener
-    Component3DManager.getInstance().setRenderingErrorListener(new RenderingErrorListener() {
-        public void errorOccurred(RenderingError error) {
-          error.printVerbose();
-          EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                show3DError();
-              }
-            });
-        }
-      });
+    Component3DManager.getInstance().setRenderingErrorObserver(
+        new Component3DManager.RenderingErrorObserver() {
+          public void errorOccured(int errorCode, String errorMessage) {
+            System.err.print("Error in Java 3D : " + errorCode + " " + errorMessage);
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  show3DError();
+                }
+              });
+          }
+        });
   }
 
   /**

@@ -46,7 +46,10 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class Component3DManager {
   private static Component3DManager instance;
   
-  private RenderingErrorListener renderingErrorListener;
+  private RenderingErrorObserver renderingErrorObserver;
+  // The Java 3D listener matching renderingErrorObserver 
+  // (use Object class to ensure Component3DManager class can run with Java 3D 1.3.1)
+  private Object                 renderingErrorListener; 
   private Boolean                offScreenImageSupported;
 
   private Component3DManager() {
@@ -65,24 +68,22 @@ public class Component3DManager {
   /**
    * Sets the current rendering error listener bound to <code>VirtualUniverse</code>.
    */
-  public void setRenderingErrorListener(RenderingErrorListener listener) {
+  public void setRenderingErrorObserver(RenderingErrorObserver observer) {
     try {
-      if (this.renderingErrorListener != null) {
-        VirtualUniverse.removeRenderingErrorListener(this.renderingErrorListener);
-      }
-      VirtualUniverse.addRenderingErrorListener(listener);
-      this.renderingErrorListener = listener;
-    } catch (NoSuchMethodError ex) {
-      // As addRenderingErrorListener is available since Java 3D 1.5, use 
-      // default rendering error reporting if Sweet Home 3D is linked to a previous version
+      this.renderingErrorListener = RenderingErrorListenerManager.setRenderingErrorObserver(
+          observer, this.renderingErrorListener);
+      this.renderingErrorObserver = observer;
+    } catch (LinkageError ex) {
+      // As RenderingErrorListener and addRenderingErrorListener are available since Java 3D 1.5, 
+      // use the default rendering error reporting if Sweet Home 3D is linked to a previous version
     }
   }
   
   /**
    * Returns the current rendering error listener bound to <code>VirtualUniverse</code>.
    */
-  public RenderingErrorListener getRenderingErrorListener() {
-    return this.renderingErrorListener;
+  public RenderingErrorObserver getRenderingErrorObserver() {
+    return this.renderingErrorObserver;
   }
   
   /**
@@ -181,14 +182,14 @@ public class Component3DManager {
    */
   public BufferedImage getOffScreenImage(View view, int width, int height)  {
     Canvas3D offScreenCanvas = null;
-    RenderingErrorListener previousRenderingErrorListener = getRenderingErrorListener();
+    RenderingErrorObserver previousRenderingErrorObserver = getRenderingErrorObserver();
     try {
-      // Replace current rendering error listener by a listener that counts down
+      // Replace current rendering error observer by a listener that counts down
       // a latch to check further if a rendering error happened during off screen rendering
       // (rendering error listener is called from a notification thread)
       final CountDownLatch latch = new CountDownLatch(1); 
-      setRenderingErrorListener(new RenderingErrorListener() {
-          public void errorOccurred(RenderingError error) {
+      setRenderingErrorObserver(new RenderingErrorObserver() {
+          public void errorOccured(int errorCode, String errorMessage) {
             latch.countDown();
           }
         });
@@ -218,7 +219,35 @@ public class Component3DManager {
         view.removeCanvas3D(offScreenCanvas);
       }
       // Reset previous rendering error listener
-      setRenderingErrorListener(previousRenderingErrorListener);
+      setRenderingErrorObserver(previousRenderingErrorObserver);
+    }
+  }
+  
+  /**
+   * An observer that receives error notifications in Java 3D.
+   */
+  public static interface RenderingErrorObserver {
+    void errorOccured(int errorCode, String errorMessage);
+  }
+  
+  /**
+   * Manages Java 3D 1.5 <code>RenderingErrorListener</code> change matching the given
+   * rendering error observer.
+   */
+  private static class RenderingErrorListenerManager {
+    public static Object setRenderingErrorObserver(final RenderingErrorObserver observer,
+                                                   Object previousRenderingErrorListener) {
+      if (previousRenderingErrorListener != null) {
+        VirtualUniverse.removeRenderingErrorListener(
+            (RenderingErrorListener)previousRenderingErrorListener);
+      }
+      RenderingErrorListener renderingErrorListener = new RenderingErrorListener() {
+        public void errorOccurred(RenderingError error) {
+          observer.errorOccured(error.getErrorCode(), error.getErrorMessage());
+        }
+      }; 
+      VirtualUniverse.addRenderingErrorListener(renderingErrorListener);
+      return renderingErrorListener;
     }
   }
 }
