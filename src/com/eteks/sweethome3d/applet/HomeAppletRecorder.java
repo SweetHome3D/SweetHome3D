@@ -48,16 +48,13 @@ import com.eteks.sweethome3d.model.RecorderException;
 public class HomeAppletRecorder implements HomeRecorder {
   private String writeHomeURL;
   private String readHomeURL;
-  private String checkHomeURL;
   private String listHomesURL;
 
   public HomeAppletRecorder(String writeHomeURL, 
                             String readHomeURL,
-                            String checkHomeURL,
                             String listHomesURL) {
     this.writeHomeURL = writeHomeURL;
     this.readHomeURL = readHomeURL;
-    this.checkHomeURL = checkHomeURL;
     this.listHomesURL = listHomesURL;
   }
   

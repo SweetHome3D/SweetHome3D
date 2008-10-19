@@ -80,11 +80,10 @@ public class AppletApplication extends HomeApplication {
   public AppletApplication(final JApplet applet) {
     String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
     String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
-    String checkHomeURL = getAppletParameter(applet, "checkHomeURL", "checkHome.php?home=%s");
     String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
     final String defaultHome = applet.getParameter("defaultHome");    
 
-    this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, checkHomeURL, listHomesURL);
+    this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, listHomesURL);
     this.userPreferences = new AppletUserPreferences();
     this.contentManager = new AppletContentManager(this.homeRecorder);
 
