@@ -77,62 +77,16 @@ public class SweetHome3DApplet extends JApplet {
   }
   
   public void init() {
-    try {
-      if (!isJava5OrSuperior()) {
-        showError("<html>This applet may be run under Windows, Mac OS X 10.4 / 10.5 and Linux." +
-            "<br>It requires Java version 5 or superior." +
-            "<br>Please, update your Java Runtime to the latest version available at java.com.");
-      } else {
-        Class sweetHome3DAppletClass = SweetHome3DApplet.class;
-        String [] java3DFiles = {
-            "j3dcore.jar", // Main Java 3D jars
-            "vecmath.jar",
-            "j3dutils.jar",
-            "j3dcore-d3d.dll", // Windows DLLs
-            "j3dcore-ogl.dll",
-            "j3dcore-ogl-cg.dll",
-            "j3dcore-ogl-chk.dll",
-            "libj3dcore-ogl.so", // Linux DLLs
-            "libj3dcore-ogl-cg.so",
-            "gluegen-rt.jar", // Mac OS X jars and DLLs
-            "jogl.jar",
-            "libgluegen-rt.jnilib",
-            "libjogl.jnilib",
-            "libjogl_awt.jnilib",
-            "libjogl_cg.jnilib"};
-        String [] applicationPackages = {
-            "com.domusventures.floorplanner",
-            "com.eteks.sweethome3d",
-            "javax.media.j3d",
-            "javax.vecmath",
-            "com.sun.j3d",
-            "com.sun.opengl",
-            "com.sun.gluegen.runtime",
-            "javax.media.opengl",
-            "com.microcrowd.loader.java3d"};
-        ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
-            sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
-            java3DFiles, applicationPackages);  
-        // Call application constructor with reflection
-        String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
-        Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
-        Constructor applicationConstructor = 
-            applicationClass.getConstructor(new Class [] {JApplet.class});
-        applicationConstructor.newInstance(new Object [] {this});
-      }
-    } catch (Throwable ex) {
-      showError("<html>Can't start applet:<br>Exception" 
-          + ex.getClass().getName() + " " + ex.getMessage());
-      ex.printStackTrace();
+    if (!isJava5OrSuperior()) {
+      showError("<html><p>This applet may be run under Windows, Mac OS X 10.4 / 10.5, Linux and Solaris." +
+          "<br>It requires Java version 5 or superior.</p>" +
+          "<p>Please, check Java version set in Java preferences under Mac OS X," +
+          "<br>or update your Java Runtime to the latest version available at java.com under the other systems.</p>");
+    } else {
+      createAppletApplication();
     }
   }
-  
-  private void showError(String text) {
-    JLabel label = new JLabel(text, JLabel.CENTER);
-    getContentPane().removeAll();
-    getContentPane().add(label);
-  }
-  
+
   /**
    * Returns <code>true</code> if current JVM version is 5+. 
    */
@@ -150,4 +104,60 @@ public class SweetHome3DApplet extends JApplet {
     }
     return false;
   }
+
+  /**
+   * Shows the given text in a label.
+   */
+  private void showError(String text) {
+    JLabel label = new JLabel(text, JLabel.CENTER);
+    setContentPane(label);
+  }
+  
+  /**
+   * Creates an <code>AppletApplication</code> instance that manages this applet content.
+   */
+  private void createAppletApplication() {
+    try {
+      Class sweetHome3DAppletClass = SweetHome3DApplet.class;
+      String [] java3DFiles = {
+          "j3dcore.jar", // Main Java 3D jars
+          "vecmath.jar",
+          "j3dutils.jar",
+          "j3dcore-d3d.dll", // Windows DLLs
+          "j3dcore-ogl.dll",
+          "j3dcore-ogl-cg.dll",
+          "j3dcore-ogl-chk.dll",
+          "libj3dcore-ogl.so", // Linux DLLs
+          "libj3dcore-ogl-cg.so",
+          "gluegen-rt.jar", // Mac OS X jars and DLLs
+          "jogl.jar",
+          "libgluegen-rt.jnilib",
+          "libjogl.jnilib",
+          "libjogl_awt.jnilib",
+          "libjogl_cg.jnilib"};
+      String [] applicationPackages = {
+          "com.domusventures.floorplanner",
+          "com.eteks.sweethome3d",
+          "javax.media.j3d",
+          "javax.vecmath",
+          "com.sun.j3d",
+          "com.sun.opengl",
+          "com.sun.gluegen.runtime",
+          "javax.media.opengl",
+          "com.microcrowd.loader.java3d"};
+      ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
+          sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
+          java3DFiles, applicationPackages);
+      // Call application constructor with reflection
+      String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
+      Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
+      Constructor applicationConstructor = 
+          applicationClass.getConstructor(new Class [] {JApplet.class});
+      applicationConstructor.newInstance(new Object [] {this});
+    } catch (Throwable ex) {
+      showError("<html>Can't start applet:<br>Exception" 
+          + ex.getClass().getName() + " " + ex.getMessage());
+      ex.printStackTrace();
+    }
+  }  
 }
