@@ -64,7 +64,6 @@ import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanController;
 import com.eteks.sweethome3d.swing.ResourceAction;
-import com.eteks.sweethome3d.swing.HomePane.ActionType;
 import com.eteks.sweethome3d.swing.PlanController.Mode;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -78,10 +77,10 @@ public class AppletApplication extends HomeApplication {
   private AppletContentManager contentManager;
 
   public AppletApplication(final JApplet applet) {
-    String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
-    String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
-    String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
-    final String defaultHome = applet.getParameter("defaultHome");    
+    final String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
+    final String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
+    final String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
+    final String defaultHome = getAppletParameter(applet, "defaultHome", "");    
 
     this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, listHomesURL);
     this.userPreferences = new AppletUserPreferences();
@@ -107,13 +106,25 @@ public class AppletApplication extends HomeApplication {
               Home home = ev.getHome();
               try {
                 // Create a home controller for new home
-                final HomeAppletController controller = new HomeAppletController(home, AppletApplication.this);                
+                boolean newHomeEnabled = 
+                    writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+                boolean openEnabled = 
+                    readHomeURL.length() != 0 && listHomesURL.length() != 0;
+                boolean saveEnabled = writeHomeURL.length() != 0 
+                    && (defaultHome.length() != 0 || listHomesURL.length() != 0);
+                boolean saveAsEnabled = 
+                    writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+                
+                final HomeAppletController controller = new HomeAppletController(
+                    home, AppletApplication.this, 
+                    newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
+                
                 // Display its view in applet
                 updateAppletView(applet, controller);
                 // Open specified home at launch time if it exits
                 if (this.firstHome) {
                   this.firstHome = false;
-                  if (defaultHome != null && defaultHome.length() > 0) {
+                  if (defaultHome.length() > 0 && readHomeURL.length() != 0) {
                     controller.open(defaultHome);
                   }
                 }
@@ -154,7 +165,7 @@ public class AppletApplication extends HomeApplication {
     homeView.setJMenuBar(null);
     
     // As the applet has no menu, activate accelerators directly on home view
-    for (ActionType actionType : HomePane.ActionType.values()) {
+    for (HomePane.ActionType actionType : HomePane.ActionType.values()) {
       ResourceAction.MenuAction menuAction = new ResourceAction.MenuAction(homeView.getActionMap().get(actionType));
       KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
       if (accelerator != null) {
@@ -166,36 +177,51 @@ public class AppletApplication extends HomeApplication {
     JToolBar toolBar = (JToolBar)homeView.getContentPane().getComponent(0);
     toolBar.setFloatable(false);
     toolBar.removeAll();
-    toolBar.add(getToolBarAction(homeView, ActionType.NEW_HOME));
-    toolBar.add(getToolBarAction(homeView, ActionType.OPEN));
-    toolBar.add(getToolBarAction(homeView, ActionType.SAVE));
-    toolBar.add(getToolBarAction(homeView, ActionType.SAVE_AS));
+    // Add New, Open, Save, Save as buttons if they are enabled
+    Action newHomeAction = getToolBarAction(homeView, HomePane.ActionType.NEW_HOME);
+    if (newHomeAction.isEnabled()) {
+      toolBar.add(newHomeAction);
+    }
+    Action openAction = getToolBarAction(homeView, HomePane.ActionType.OPEN);
+    if (openAction.isEnabled()) {
+      toolBar.add(openAction);
+    }
+    Action saveAction = getToolBarAction(homeView, HomePane.ActionType.SAVE);
+    if (saveAction.isEnabled()) {
+      toolBar.add(saveAction);
+    }
+    Action saveAsAction = getToolBarAction(homeView, HomePane.ActionType.SAVE_AS);
+    if (saveAsAction.isEnabled()) {
+      toolBar.add(saveAsAction);
+    }
+    if (toolBar.getComponentCount() > 0) {
+      toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    }
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PAGE_SETUP));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PRINT));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, ActionType.PAGE_SETUP));
-    toolBar.add(getToolBarAction(homeView, ActionType.PRINT));
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, ActionType.PREFERENCES));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PREFERENCES));
     toolBar.addSeparator();
 
-    toolBar.add(getToolBarAction(homeView, ActionType.UNDO));
-    toolBar.add(getToolBarAction(homeView, ActionType.REDO));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.UNDO));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.REDO));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, ActionType.CUT));
-    toolBar.add(getToolBarAction(homeView, ActionType.COPY));
-    toolBar.add(getToolBarAction(homeView, ActionType.PASTE));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.CUT));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.COPY));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PASTE));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, ActionType.DELETE));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.DELETE));
     toolBar.addSeparator();
 
     final JToggleButton selectToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, ActionType.SELECT));
+        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.SELECT));
     selectToggleButton.setSelected(true);
     toolBar.add(selectToggleButton);
     final JToggleButton createWallsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, ActionType.CREATE_WALLS));
+        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_WALLS));
     toolBar.add(createWallsToggleButton);
     final JToggleButton createDimensionLinesToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, ActionType.CREATE_DIMENSION_LINES));
+        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_DIMENSION_LINES));
     toolBar.add(createDimensionLinesToggleButton);
     // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -213,8 +239,8 @@ public class AppletApplication extends HomeApplication {
         });
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(getToolBarAction(homeView, ActionType.ZOOM_OUT));
-    toolBar.add(getToolBarAction(homeView, ActionType.ZOOM_IN));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_OUT));
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_IN));
      
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
@@ -260,7 +286,7 @@ public class AppletApplication extends HomeApplication {
   /**
    * Returns an action decorated for tool bar buttons.
    */
-  private Action getToolBarAction(JComponent homeView, ActionType actionType) {
+  private Action getToolBarAction(JComponent homeView, HomePane.ActionType actionType) {
     return new ResourceAction.ToolBarAction(homeView.getActionMap().get(actionType));
   }
   

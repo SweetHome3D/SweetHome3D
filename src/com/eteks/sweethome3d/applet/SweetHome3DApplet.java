@@ -37,7 +37,9 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     the name of the uploaded home being stored in its <code>filename</code> attribute.
  *     This service must return 1 if it wrote the uploaded successfully.
  *     <br>By default, this URL is <code>writeHome.php</code> and if it's not an absolute URL 
- *     it will be considered as relative to applet codebase.</li>
+ *     it will be considered as relative to applet codebase. If its value is empty,
+ *     <i>New</i>, <i>Save</i> and <i>Save as...</i> actions will be disabled and their buttons 
+ *     won't be displayed.</li>
  *     
  *     <li><code>readHomeURL</code> specifies the URL of the HTTP service able 
  *     to return the data of a home written with the previous service. The home name
@@ -50,7 +52,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     to return the list of home names able to be read from server. It must return
  *     these names in a string, separated from each other by a carriage return (\n).
  *     <br>By default, this URL is <code>listHomes.php</code> and if it's not an absolute URL 
- *     it will be considered as relative to applet codebase.</li>
+ *     it will be considered as relative to applet codebase. If its value is empty,
+ *     <i>New</i>, <i>Open</i> and <i>Save as...</i> actions will be disabled and their buttons 
+ *     won't be displayed. If <code>defaultHome</code> is empty, <i>Save</i> action
+ *     will be also disabled</li>
  *     
  *     <li><code>defaultHome</code> specifies the home that will be opened at applet launch
  *     with <code>readHomeURL</code> service. 
