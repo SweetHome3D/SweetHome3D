@@ -54,7 +54,11 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     
  *     <li><code>defaultHome</code> specifies the home that will be opened at applet launch
  *     with <code>readHomeURL</code> service. 
- *     Omit this parameter or let its value empty, if no home should be opened.</li></lu>
+ *     <br>Omit this parameter or let its value empty, if no home should be opened.
+ *     <br>If you want the applet open a home at launch without creating a <code>readHomeURL</code> 
+ *     service, set <code>%s</code> value for <code>readHomeURL</code> parameter and put the absolute 
+ *     URL of the home file or its URL relative to applet codebase in <code>defaultHome</code> 
+ *     parameter.</li></lu>
  *     
  * @author Emmanuel Puybaret
  */

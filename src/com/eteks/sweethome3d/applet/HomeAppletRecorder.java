@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -129,11 +130,11 @@ public class HomeAppletRecorder implements HomeRecorder {
    *   or if file <code>name</code> doesn't exist.
    */
   public Home readHome(String name) throws RecorderException {
-    HttpURLConnection connection = null;
+    URLConnection connection = null;
     DefaultHomeInputStream in = null;
     try {
       // Open a home input stream to server 
-      connection = (HttpURLConnection)getURL(this.readHomeURL, name).openConnection();
+      connection = getURL(this.readHomeURL, name).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
       in = new DefaultHomeInputStream(connection.getInputStream());
@@ -174,11 +175,11 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns the available homes on server.
    */
   public String [] getAvailableHomes() throws RecorderException {
-    HttpURLConnection connection = null;
+    URLConnection connection = null;
     InputStream in = null;
     try {
       // Open a stream to server 
-      connection = (HttpURLConnection)getURL(this.listHomesURL).openConnection();
+      connection = getURL(this.listHomesURL).openConnection();
       connection.setUseCaches(false);
       in = connection.getInputStream();
       String contentEncoding = connection.getContentEncoding();
