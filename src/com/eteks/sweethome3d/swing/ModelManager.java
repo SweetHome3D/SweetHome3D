@@ -255,7 +255,9 @@ public class ModelManager {
             appearance = new Appearance();
             shape.setAppearance(appearance);
           }
-          appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
+          if (appearance.getTransparencyAttributes() == null) {
+            appearance.setTransparencyAttributes(WINDOW_PANE_TRANSPARENCY_ATTRIBUTES);
+          }
         }
       }
     }
