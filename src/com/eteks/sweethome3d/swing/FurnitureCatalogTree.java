@@ -235,7 +235,7 @@ public class FurnitureCatalogTree extends JTree {
         label.setText(((FurnitureCategory)value).getName());
         label.setFont(this.defaultFont);
       } 
-      // Else if node is a piece of furntiure, change label text and icon
+      // Else if node is a piece of furniture, change label text and icon
       else if (value instanceof CatalogPieceOfFurniture) {
         CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)value;
         label.setText(piece.getName());
