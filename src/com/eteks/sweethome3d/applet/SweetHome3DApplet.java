@@ -27,9 +27,8 @@ import javax.swing.JLabel;
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
 /**
- * This applet class loads Sweet Home 3classes from jars in classpath 
- * or from extension jars stored as resources.
- * It's Java 1.1 compatible to be loadable by old JVMs.
+ * This applet class loads Sweet Home 3D classes from jars in classpath or from extension 
+ * jars stored as resources. It's Java 1.1 compatible to be loadable by old JVMs.
  * <p>This applet accepts the following parameters:
  * 
  * <lu><li><code>writeHomeURL</code> specifies the URL of the HTTP service able 
