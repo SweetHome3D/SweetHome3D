@@ -137,10 +137,14 @@ public class AppletApplication extends HomeApplication {
         }
       });
 
-    addComponent3DRenderingErrorListener();
+    addComponent3DRenderingErrorObserver();
     
-    // Create a home 
-    addHome(new Home());
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          // Create a home in Event Dispatch Thread 
+          addHome(new Home());
+        }
+      });
   }
   
   /**
@@ -337,7 +341,7 @@ public class AppletApplication extends HomeApplication {
    * Sets the rendering error listener bound to Java 3D 
    * to avoid default System exit in case of error during 3D rendering. 
    */
-  private void addComponent3DRenderingErrorListener() {
+  private void addComponent3DRenderingErrorObserver() {
     // Instead of adding a RenderingErrorListener directly to VirtualUniverse, 
     // we add it through Canvas3DManager, because offscreen rendering needs to check 
     // rendering errors with its own RenderingErrorListener

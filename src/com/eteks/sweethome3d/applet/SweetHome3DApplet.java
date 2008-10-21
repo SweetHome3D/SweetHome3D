@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.applet;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.JApplet;
 import javax.swing.JLabel;
@@ -165,6 +166,9 @@ public class SweetHome3DApplet extends JApplet {
           applicationClass.getConstructor(new Class [] {JApplet.class});
       applicationConstructor.newInstance(new Object [] {this});
     } catch (Throwable ex) {
+      if (ex instanceof InvocationTargetException) {
+        ex = ((InvocationTargetException)ex).getCause();
+      }
       showError("<html>Can't start applet:<br>Exception" 
           + ex.getClass().getName() + " " + ex.getMessage());
       ex.printStackTrace();
