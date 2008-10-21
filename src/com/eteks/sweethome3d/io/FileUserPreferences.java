@@ -186,8 +186,9 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
+    // Read again default furniture and textures catalogs with new default locale
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
-    // Read again default furniture catalog with new default locale
+    // Add default pieces that don't have homonym among user catalog
     FurnitureCatalog defaultFurnitureCatalog = defaultPreferences.getFurnitureCatalog();
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
@@ -208,7 +209,7 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-    // Read again default textures catalog with new default locale
+    // Add default textures that don't have homonym among user catalog
     TexturesCatalog defaultTexturesCatalog = defaultPreferences.getTexturesCatalog();
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
@@ -219,9 +220,6 @@ public class FileUserPreferences extends UserPreferences {
         }
       }
     }
-
-    // Read again default textures catalog
-    setTexturesCatalog(defaultPreferences.getTexturesCatalog());
   }
 
   /**
