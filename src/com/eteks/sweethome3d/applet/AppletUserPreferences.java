@@ -19,13 +19,22 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogTexture;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TexturesCatalog;
+import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -51,6 +60,61 @@ public class AppletUserPreferences extends UserPreferences {
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
+    
+    addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent evt) {
+          updateDefaultCatalogs();
+        }
+      });
+  }
+  
+  /**
+   * Reloads furniture and textures default catalogs.
+   */
+  private void updateDefaultCatalogs() {
+    // Delete default pieces of current furniture catalog          
+    FurnitureCatalog furnitureCatalog = getFurnitureCatalog();
+    for (FurnitureCategory category : furnitureCatalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        if (!piece.isModifiable()) {
+          furnitureCatalog.delete(piece);
+        }
+      }
+    }
+    // Read again default furniture and textures catalogs with new default locale
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    // Add default pieces that don't have homonym among user catalog
+    FurnitureCatalog defaultFurnitureCatalog = defaultPreferences.getFurnitureCatalog();
+    for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        try {
+          furnitureCatalog.add(category, piece);
+        } catch (IllegalHomonymException ex) {
+          // Ignore pieces that have the same name as an existing piece
+        }
+      }
+    }
+    
+    // Delete default textures of current textures catalog          
+    TexturesCatalog texturesCatalog = getTexturesCatalog();
+    for (TexturesCategory category : texturesCatalog.getCategories()) {
+      for (CatalogTexture texture : category.getTextures()) {
+        if (!texture.isModifiable()) {
+          texturesCatalog.delete(texture);
+        }
+      }
+    }
+    // Add default textures that don't have homonym among user catalog
+    TexturesCatalog defaultTexturesCatalog = defaultPreferences.getTexturesCatalog();
+    for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
+      for (CatalogTexture texture : category.getTextures()) {
+        try {
+          texturesCatalog.add(category, texture);
+        } catch (IllegalHomonymException ex) {
+          // Ignore textures that have the same name as an existing piece
+        }
+      }
+    }
   }
 
   /**
