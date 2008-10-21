@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
@@ -72,6 +73,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
@@ -157,9 +159,10 @@ public class SweetHome3D extends HomeApplication {
           // Create JNLP services required by Sweet Home 3D 
           ServiceManager.setServiceManagerStub(new StandaloneServiceManager());
         }
-      }      
-
+      }
+      
       application = createApplication();
+      
       // Init look and feel afterwards to ensure that Swing takes into account default locale change
       initLookAndFeel();
     }
@@ -277,6 +280,7 @@ public class SweetHome3D extends HomeApplication {
         UIManager.put("TitledBorder.border", 
             UIManager.getBorder("TitledBorder.aquaVariant"));
       }
+      SwingTools.updateSwingResourceLanguage();
     } catch (Exception ex) {
       // Too bad keep current look and feel
     }

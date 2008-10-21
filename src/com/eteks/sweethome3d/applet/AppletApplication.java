@@ -64,6 +64,7 @@ import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanController;
 import com.eteks.sweethome3d.swing.ResourceAction;
+import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.swing.PlanController.Mode;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -332,6 +333,7 @@ public class AppletApplication extends HomeApplication {
       }
       // Enable applets to update their content while window resizing
       Toolkit.getDefaultToolkit().setDynamicLayout(true);
+      SwingTools.updateSwingResourceLanguage();
     } catch (Exception ex) {
       // Too bad keep current look and feel
     }

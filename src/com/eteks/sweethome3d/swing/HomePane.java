@@ -53,12 +53,10 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 
@@ -194,10 +192,10 @@ public class HomePane extends JRootPane {
     this.viewFromObserverToggleModel.setSelected(home.getCamera() == home.getObserverCamera());
     
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
-    ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);
+    ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
     
     createActions(controller);
-    createMenuActions(controller);
+    createMenuActions(controller);    
     createTransferHandlers(home, preferences, contentManager, controller);
     addHomeListener(home);
     addLanguageListener(preferences);
@@ -475,23 +473,7 @@ public class HomePane extends JRootPane {
       ((ResourceAction)this.menuActionMap.get(menuActionType)).setResource(this.resource);
     }
     
-    // Read Swing localized properties because Swing doesn't update its internal strings automatically
-    // when default Locale is updated (see bug http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4884480)
-    String [] swingResources = {"com.sun.swing.internal.plaf.basic.resources.basic",
-                                "com.sun.swing.internal.plaf.metal.resources.metal"};
-    for (String swingResource : swingResources) {
-      ResourceBundle resource;
-      try {
-        resource = ResourceBundle.getBundle(swingResource);
-      } catch (MissingResourceException ex) {
-        resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
-      }
-      // Update UIManager properties
-      for (Enumeration iter = resource.getKeys(); iter.hasMoreElements(); ) {
-        String property = (String)iter.nextElement();
-        UIManager.put(property, resource.getString(property));
-      }      
-    };
+    SwingTools.updateSwingResourceLanguage();
   }
 
   /**
