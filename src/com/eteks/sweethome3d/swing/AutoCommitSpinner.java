@@ -19,17 +19,10 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.EventQueue;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
-import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultFormatter;
 
 /**
@@ -46,60 +39,7 @@ public class AutoCommitSpinner extends JSpinner {
     JComponent editor = getEditor();
     if (editor instanceof JSpinner.DefaultEditor) {
       final JFormattedTextField textField = ((JSpinner.DefaultEditor)editor).getTextField();
-      
-      // A focus and mouse listener able to select text field characters 
-      // when it gains focus after a focus transfer
-      class SelectionOnFocusManager extends MouseAdapter implements FocusListener {
-        private boolean mousePressedInTextField = false;
-        private int selectionStartBeforeFocusLost = -1;
-        private int selectionEndBeforeFocusLost = -1;
-
-        @Override
-        public void mousePressed(MouseEvent ev) {
-          this.mousePressedInTextField = true;
-          this.selectionStartBeforeFocusLost = -1;
-        }
-        
-        public void focusLost(FocusEvent ev) {
-          if (ev.getOppositeComponent() == null
-              || SwingUtilities.getWindowAncestor(ev.getOppositeComponent()) 
-                  != SwingUtilities.getWindowAncestor(AutoCommitSpinner.this)) {
-            // Keep selection indices when focus on text field is transfered 
-            // to an other window 
-            this.selectionStartBeforeFocusLost = textField.getSelectionStart();
-            this.selectionEndBeforeFocusLost = textField.getSelectionEnd();
-          } else {
-            this.selectionStartBeforeFocusLost = -1;
-          }
-        }
-
-        public void focusGained(FocusEvent ev) {
-          if (this.selectionStartBeforeFocusLost != -1) {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Reselect the same characters in text field
-                  textField.setSelectionStart(selectionStartBeforeFocusLost);
-                  textField.setSelectionEnd(selectionEndBeforeFocusLost);
-                }
-              });
-          } else if (!this.mousePressedInTextField 
-                     && ev.getOppositeComponent() != null
-                     && SwingUtilities.getWindowAncestor(ev.getOppositeComponent()) 
-                         == SwingUtilities.getWindowAncestor(AutoCommitSpinner.this)) {
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Select all characters when text field got the focus because of a transfer
-                  textField.selectAll();
-                }
-              });
-          }
-          this.mousePressedInTextField = false;
-        }
-      };
-      
-      SelectionOnFocusManager selectionOnFocusManager = new SelectionOnFocusManager();
-      textField.addFocusListener(selectionOnFocusManager);
-      textField.addMouseListener(selectionOnFocusManager);
+      SwingTools.addAutoSelectionOnFocusGain(textField);
       
       // Commit text during edition
       if (textField.getFormatter() instanceof DefaultFormatter) {

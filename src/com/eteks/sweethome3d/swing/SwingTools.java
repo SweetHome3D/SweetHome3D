@@ -19,12 +19,19 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.EventQueue;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.text.JTextComponent;
 
 /**
  * Gathers some useful tools for Swing.
@@ -56,5 +63,65 @@ public class SwingTools {
         UIManager.put(property, resource.getString(property));
       }      
     };
+  }
+  
+  /**
+   * Adds focus and mouse listeners to the given <code>textComponent</code> that will
+   * select all its text when it gains focus by transfer.
+   */
+  public static void addAutoSelectionOnFocusGain(final JTextComponent textComponent) {
+    // A focus and mouse listener able to select text field characters 
+    // when it gains focus after a focus transfer
+    class SelectionOnFocusManager extends MouseAdapter implements FocusListener {
+      private boolean mousePressedInTextField = false;
+      private int selectionStartBeforeFocusLost = -1;
+      private int selectionEndBeforeFocusLost = -1;
+
+      @Override
+      public void mousePressed(MouseEvent ev) {
+        this.mousePressedInTextField = true;
+        this.selectionStartBeforeFocusLost = -1;
+      }
+      
+      public void focusLost(FocusEvent ev) {
+        if (ev.getOppositeComponent() == null
+            || SwingUtilities.getWindowAncestor(ev.getOppositeComponent()) 
+                != SwingUtilities.getWindowAncestor(textComponent)) {
+          // Keep selection indices when focus on text field is transfered 
+          // to an other window 
+          this.selectionStartBeforeFocusLost = textComponent.getSelectionStart();
+          this.selectionEndBeforeFocusLost = textComponent.getSelectionEnd();
+        } else {
+          this.selectionStartBeforeFocusLost = -1;
+        }
+      }
+
+      public void focusGained(FocusEvent ev) {
+        if (this.selectionStartBeforeFocusLost != -1) {
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Reselect the same characters in text field
+                textComponent.setSelectionStart(selectionStartBeforeFocusLost);
+                textComponent.setSelectionEnd(selectionEndBeforeFocusLost);
+              }
+            });
+        } else if (!this.mousePressedInTextField 
+                   && ev.getOppositeComponent() != null
+                   && SwingUtilities.getWindowAncestor(ev.getOppositeComponent()) 
+                       == SwingUtilities.getWindowAncestor(textComponent)) {
+          EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Select all characters when text field got the focus because of a transfer
+                textComponent.selectAll();
+              }
+            });
+        }
+        this.mousePressedInTextField = false;
+      }
+    };
+    
+    SelectionOnFocusManager selectionOnFocusManager = new SelectionOnFocusManager();
+    textComponent.addFocusListener(selectionOnFocusManager);
+    textComponent.addMouseListener(selectionOnFocusManager);
   }
 }
