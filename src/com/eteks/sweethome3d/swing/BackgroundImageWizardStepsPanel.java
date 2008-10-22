@@ -101,8 +101,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private JLabel                          yOriginLabel;
   private JSpinner                        yOriginSpinner;
   private ScaledImageComponent            originPreviewComponent;
-  
-  private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
+  private Executor                        imageLoader;
   private static BufferedImage            waitImage;
 
   /**
@@ -114,6 +113,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                                          BackgroundImageWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
+    this.imageLoader = Executors.newSingleThreadExecutor();
     createComponents(preferences, contentManager);
     setMnemonics();
     layoutComponents();
@@ -344,7 +344,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
     } else {
       setImageChangeTexts();
       // Read image in imageLoader executor
-      imageLoader.execute(new Runnable() {
+      this.imageLoader.execute(new Runnable() {
           public void run() {
             BufferedImage image = null;
             try {
@@ -382,7 +382,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   private void updateController(final String imageName,
                                 final ContentManager contentManager) {
     // Read image in imageLoader executor
-    imageLoader.execute(new Runnable() {
+    this.imageLoader.execute(new Runnable() {
         public void run() {
           Content imageContent = null;
           try {
@@ -428,7 +428,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
                   controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
                       scaleDistanceXEnd, scaleDistanceYStart);
                   controller.setOrigin(0, 0);
-                } else {
+                } else if (isShowing()){
                   controller.setImage(null);
                   setImageChoiceTexts();
                   JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 

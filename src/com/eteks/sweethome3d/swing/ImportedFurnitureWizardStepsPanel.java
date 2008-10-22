@@ -174,8 +174,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   private JLabel                            iconLabel;
   private IconPreviewComponent              iconPreviewComponent;
   private Cursor                            defaultCursor; 
-
-  private static Executor                   modelLoader = Executors.newSingleThreadExecutor();
+  private Executor                          modelLoader;
 
   /**
    * Creates a view for furniture import. 
@@ -188,6 +187,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                                            ImportedFurnitureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
+    this.modelLoader = Executors.newSingleThreadExecutor();
     createComponents(importHomePiece, preferences, contentManager);
     setMnemonics();
     layoutComponents();
@@ -872,7 +872,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     } else {
       setModelChangeTexts();
       // Read model in modelLoader executor
-      modelLoader.execute(new Runnable() {
+      this.modelLoader.execute(new Runnable() {
           public void run() {
             BranchGroup model = null;
             try {
@@ -920,7 +920,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                                 final FurnitureCategory defaultCategory,
                                 final boolean ignoreException) {
     // Read model in modelLoader executor
-    modelLoader.execute(new Runnable() {
+    this.modelLoader.execute(new Runnable() {
         public void run() {
           Content modelContent = null;
           try {
@@ -956,7 +956,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                 // Open zipped stream
                 zipIn = new ZipInputStream(urlContent.openStream());
                 // Parse entries to see if one is readable
-                for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+                for (ZipEntry entry; isShowing() && (entry = zipIn.getNextEntry()) != null; ) {
                   try {
                     String entryName = entry.getName();
                     // Ignore directory entries and entries starting by a dot
@@ -1014,7 +1014,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                   controller.setColor(null);                  
                   controller.setIconYaw((float)Math.PI / 8);
                   controller.setProportional(true);
-                } else {
+                } else if (isShowing()) {
                   controller.setModel(null);
                   setModelChoiceTexts();
                   JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 

@@ -101,8 +101,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
   private JLabel                          heightLabel;
   private JSpinner                        heightSpinner;
   private ScaledImageComponent            attributesPreviewComponent;
-  
-  private static Executor                 imageLoader = Executors.newSingleThreadExecutor();
+  private Executor                        imageLoader;
   private static BufferedImage            waitImage;
 
   /**
@@ -115,6 +114,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
                                          ImportedTextureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedTextureWizardStepsPanel.class.getName());
+    this.imageLoader = Executors.newSingleThreadExecutor();
     createComponents(preferences, contentManager);
     setMnemonics();
     layoutComponents();
@@ -451,7 +451,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
     } else {
       setImageChangeTexts();
       // Read image in imageLoader executor
-      imageLoader.execute(new Runnable() {
+      this.imageLoader.execute(new Runnable() {
           public void run() {
             BufferedImage image = null;
             try {
@@ -490,7 +490,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
                                 final UserPreferences preferences,
                                 final boolean ignoreException) {
     // Read image in imageLoader executor
-    imageLoader.execute(new Runnable() {
+    this.imageLoader.execute(new Runnable() {
         public void run() {
           Content imageContent = null;
           try {
@@ -548,7 +548,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
                   }
                   controller.setWidth(defaultWidth);
                   controller.setHeight(defaultWidth / readImage.getWidth() * readImage.getHeight());
-                } else {
+                } else if (isShowing()) {
                   controller.setImage(null);
                   setImageChoiceTexts();
                   JOptionPane.showMessageDialog(ImportedTextureWizardStepsPanel.this, 
