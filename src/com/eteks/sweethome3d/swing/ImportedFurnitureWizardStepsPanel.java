@@ -356,6 +356,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     this.attributesLabel = new JLabel(this.resource.getString("attributesLabel.text"));
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(10);
+    if (!OperatingSystem.isMacOSX()) {
+      SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
+    }
     final Color defaultNameTextFieldColor = this.nameTextField.getForeground();
     DocumentListener nameListener = new DocumentListener() {
         public void changedUpdate(DocumentEvent ev) {

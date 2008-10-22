@@ -105,6 +105,9 @@ public class HomeFurniturePanel extends JPanel {
     
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(10);
+    if (!OperatingSystem.isMacOSX()) {
+      SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
+    }
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     this.xSpinner = new NullableSpinner(
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
