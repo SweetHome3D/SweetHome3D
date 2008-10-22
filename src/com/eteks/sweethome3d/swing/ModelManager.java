@@ -96,7 +96,7 @@ public class ModelManager {
    * sphere for a scene.
    */
   public Vector3f getSize(Node node) {
-    BoundingBox bounds = ModelManager.getInstance().getBounds(node);
+    BoundingBox bounds = getBounds(node);
     Point3d lower = new Point3d();
     bounds.getLower(lower);
     Point3d upper = new Point3d();
