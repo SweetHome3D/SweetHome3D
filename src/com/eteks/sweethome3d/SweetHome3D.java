@@ -179,12 +179,10 @@ public class SweetHome3D extends HomeApplication {
         }
       }
       
-      if (application.contentManager.isAcceptable(args [1], 
-          ContentManager.ContentType.SWEET_HOME_3D)) {
-        // Read home file in args [1] if args [0] == "-open"
-        readHome(args [1]);
-      } else if (application.contentManager.isAcceptable(args [1], 
-          ContentManager.ContentType.FURNITURE_LIBRARY)) {
+      if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
+        // Read home file in args [1] if args [0] == "-open" with a dummy controller
+        new HomeController(new Home(), application).open(args [1]);
+      } else if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
         final String furnitureLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
@@ -226,22 +224,6 @@ public class SweetHome3D extends HomeApplication {
   }
   
   /**
-   * Reads home from <code>homeFile</code>.
-   */
-  private static void readHome(String homeFile) {
-    try {
-      Home home = application.getHomeRecorder().readHome(homeFile);
-      home.setName(homeFile); 
-      application.addHome(home);
-    } catch (RecorderException ex) {
-      // Show an error message dialog if home couldn't be read
-      ResourceBundle resource = ResourceBundle.getBundle(HomeController.class.getName());
-      String message = String.format(resource.getString("openError"), homeFile);
-      JOptionPane.showMessageDialog(null, message, "Sweet Home 3D", JOptionPane.ERROR_MESSAGE);
-    }
-  }
-
-  /**
    * Sets various <code>System</code> properties.
    */
   private static void initSystemProperties() {
@@ -251,7 +233,9 @@ public class SweetHome3D extends HomeApplication {
     System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     if (OperatingSystem.isMacOSX()) {
       // Change Mac OS X application menu name
-      System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Sweet Home 3D");
+      ResourceBundle resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
+      String applicationName = resource.getString("applicationName");
+      System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
       // Use Mac OS X screen menu bar for frames menu bar
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       // Force the use of Quartz under Mac OS X for better Java 2D rendering performance

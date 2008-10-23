@@ -59,7 +59,8 @@ public class FileContentManager implements ContentManager {
         
         @Override
         public String getDescription() {
-          return "Sweet Home 3D";
+          return ResourceBundle.getBundle(FileContentManager.class.getName()).
+              getString("homeDescription");
         }
       }};
   private static final String FURNITURE_LIBRARY_EXTENSION;
@@ -77,7 +78,8 @@ public class FileContentManager implements ContentManager {
         
         @Override
         public String getDescription() {
-          return "Furniture catalog";
+          return ResourceBundle.getBundle(FileContentManager.class.getName()).
+              getString("furnitureLibraryDescription");
         }
       }};
   private static final String OBJ_EXTENSION = ".obj";

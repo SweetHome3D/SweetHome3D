@@ -26,6 +26,7 @@ import java.awt.print.PrinterException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.Home;
 import com.lowagie.text.Document;
@@ -59,19 +60,22 @@ public class HomePDFPrinter {
   public void write(OutputStream outputStream) throws IOException {
     PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
     Document pdfDocument = new Document(new Rectangle((float)pageFormat.getWidth(), (float)pageFormat.getHeight()));
-    // Set PDF document description
-    pdfDocument.addAuthor(System.getProperty("user.name", ""));
-    pdfDocument.addCreator("Sweet Home 3D");
-    pdfDocument.addCreationDate();
-    String homeName = this.home.getName();
-    if (homeName != null) {
-      pdfDocument.addTitle(this.contentManager.getPresentationName(
-          homeName, ContentManager.ContentType.PDF));
-    }
     try {
       // Get a PDF writer that will write to the given PDF output stream
       PdfWriter pdfWriter = PdfWriter.getInstance(pdfDocument, outputStream);
       pdfDocument.open();
+      
+      // Set PDF document description
+      pdfDocument.addAuthor(System.getProperty("user.name", ""));
+      String pdfDocumentCreator = ResourceBundle.getBundle(HomePDFPrinter.class.getName()).
+          getString("pdfDocument.creator");    
+      pdfDocument.addCreator(pdfDocumentCreator);
+      pdfDocument.addCreationDate();
+      String homeName = this.home.getName();
+      if (homeName != null) {
+        pdfDocument.addTitle(this.contentManager.getPresentationName(
+            homeName, ContentManager.ContentType.PDF));
+      }
       
       PdfContentByte pdfContent = pdfWriter.getDirectContent();
       HomePrintableComponent printableComponent = 
