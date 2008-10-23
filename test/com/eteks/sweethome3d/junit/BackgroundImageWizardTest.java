@@ -171,7 +171,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertSame("Origin x spinner doesn't have focus", ((JSpinner.DefaultEditor)xOriginSpinner.getEditor()).getTextField(),
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());    
     // Change origin
-    tester.actionKeyString("1");    
+    tester.actionKeyString("10");    
     assertEquals("Wrong origin x spinner value", 10f, xOriginSpinner.getValue());
 
     nextFinishOptionButton.doClick();
