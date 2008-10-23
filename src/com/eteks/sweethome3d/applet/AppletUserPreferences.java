@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.applet;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
@@ -60,6 +61,11 @@ public class AppletUserPreferences extends UserPreferences {
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
+    try {
+      setCurrency(resource.getString("currency"));
+    } catch (MissingResourceException ex) {
+      // Don't use currency and prices in program
+    }
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {

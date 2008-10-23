@@ -44,7 +44,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1300;
+  public static final long CURRENT_VERSION = 1500;
   
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
@@ -72,8 +72,11 @@ public class Home implements Serializable {
   private int                                         lightColor;
   private float                                       wallsAlpha;
   private HomePrint                                   print;
-  private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
+  private String                                      furnitureSortedPropertyName;
+  private List<String>                                furnitureVisiblePropertyNames;
   private boolean                                     furnitureDescendingSorted;
+  // The two following fields aren't transient for backward compatibility reasons 
+  private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
   private Map<String,Object>                          visualProperties;
   private transient PropertyChangeSupport             propertyChangeSupport;
@@ -124,6 +127,30 @@ public class Home implements Serializable {
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     init();
     in.defaultReadObject();
+    
+    // Restore furnitureSortedProperty from furnitureSortedPropertyName
+    if (this.furnitureSortedPropertyName != null) {
+      try {
+        this.furnitureSortedProperty = 
+            HomePieceOfFurniture.SortableProperty.valueOf(this.furnitureSortedPropertyName);
+      } catch (IllegalArgumentException ex) {
+        // Ignore malformed enum constant 
+      }
+      this.furnitureSortedPropertyName = null;
+    }
+    // Restore furnitureVisibleProperties from furnitureVisiblePropertyNames
+    if (this.furnitureVisiblePropertyNames != null) {
+      this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+      for (String furnitureVisiblePropertyName : this.furnitureVisiblePropertyNames) {
+        try {
+          this.furnitureVisibleProperties.add(
+              HomePieceOfFurniture.SortableProperty.valueOf(furnitureVisiblePropertyName));
+        } catch (IllegalArgumentException ex) {
+          // Ignore malformed enum constants 
+        }
+      }
+      this.furnitureVisiblePropertyNames = null;
+    }
   }
 
   private void init() {
@@ -170,7 +197,60 @@ public class Home implements Serializable {
    */
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     this.version = CURRENT_VERSION;
+        
+    HomePieceOfFurniture.SortableProperty currentFurnitureSortedProperty = this.furnitureSortedProperty;
+    if (this.furnitureSortedProperty != null) {
+      this.furnitureSortedPropertyName = this.furnitureSortedProperty.name();
+      // Store in furnitureSortedProperty only backward compatible property
+      if (!isFurnitureSortedPropertyBackwardCompatible(this.furnitureSortedProperty)) {
+        this.furnitureSortedProperty = null;
+      }
+    }
+    
+    this.furnitureVisiblePropertyNames = new ArrayList<String>();
+    // Store in furnitureVisibleProperties only backward compatible properties
+    List<HomePieceOfFurniture.SortableProperty> currentFurnitureVisibleProperties = this.furnitureVisibleProperties;
+    this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+    for (HomePieceOfFurniture.SortableProperty visibleProperty : currentFurnitureVisibleProperties) {
+      this.furnitureVisiblePropertyNames.add(visibleProperty.name());
+      if (isFurnitureSortedPropertyBackwardCompatible(visibleProperty)) {
+        this.furnitureVisibleProperties.add(visibleProperty);
+      }
+    }
+    
     out.defaultWriteObject();
+    
+    // Restore current values
+    this.furnitureSortedProperty = currentFurnitureSortedProperty;
+    this.furnitureVisibleProperties = currentFurnitureVisibleProperties;
+    // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
+    // (they are used only for serialization)
+    this.furnitureSortedPropertyName = null;
+    this.furnitureVisiblePropertyNames = null;
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>property</code> is compatbile 
+   * with the first set of sortable properties that existed in <code>HomePieceOfFurniture</code> class.
+   */
+  private boolean isFurnitureSortedPropertyBackwardCompatible(HomePieceOfFurniture.SortableProperty property) {
+    switch (property) {
+      case NAME : 
+      case WIDTH : 
+      case DEPTH :
+      case HEIGHT :
+      case MOVABLE :
+      case DOOR_OR_WINDOW :
+      case COLOR :
+      case VISIBLE :
+      case X :
+      case Y :
+      case ELEVATION :
+      case ANGLE :
+        return true;
+      default :
+        return false;
+    }
   }
   
   /**

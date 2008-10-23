@@ -20,6 +20,7 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.math.BigDecimal;
 import java.text.Collator;
 
 /**
@@ -31,6 +32,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
+  private String     id;
   private String     name;
   private Content    icon;
   private Content    model;
@@ -47,11 +49,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   private Integer    color;
   private float      iconYaw;
   private boolean    modifiable;
+  private boolean    resizable;
+  private BigDecimal price;
+  private BigDecimal valueAddedTaxPercentage;
 
   private FurnitureCategory  category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
-
 
   /**
    * Creates a catalog piece of furniture.
@@ -85,12 +89,13 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow) {
-    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
-        INDENTITY_ROTATION, null, false, (float)Math.PI / 8, true, false);
+    this(null, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
+        INDENTITY_ROTATION, null, false, true, null, null, (float)Math.PI / 8, true, false);
   }
          
   /**
    * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
    * @param name  the name of the new piece
    * @param icon an URL to the icon file of the new piece
    * @param model an URL to the 3D model file of the new piece
@@ -102,13 +107,18 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
    * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
    * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param price the price of the new piece of <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece of <code>null</code> 
    */
-  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
+  public CatalogPieceOfFurniture(String id, String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow, 
-                                 float [][] modelRotation, String creator) {
-    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
-        modelRotation, creator, false, (float)Math.PI / 8, true, false);
+                                 float [][] modelRotation, String creator,
+                                 boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+    this(id, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
+        modelRotation, creator, false, resizable, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
   }
          
   /**
@@ -133,15 +143,17 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean movable, boolean doorOrWindow, Integer color,
                                  float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
-    this(name, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
-        color, modelRotation, null, backFaceShown, iconYaw, proportional, true);
+    this(null, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
+        color, modelRotation, null, backFaceShown, true, null, null, iconYaw, proportional, true);
   }
   
-  private CatalogPieceOfFurniture(String name, Content icon, Content model, 
+  private CatalogPieceOfFurniture(String id, String name, Content icon, Content model, 
                                   float width, float depth, float height, float elevation, 
                                   boolean movable, boolean doorOrWindow, Integer color,
                                   float [][] modelRotation, String creator, boolean backFaceShown,
+                                  boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage,
                                   float iconYaw, boolean proportional, boolean modifiable) {
+    this.id = id;
     this.name = name;
     this.icon = icon;
     this.model = model;
@@ -151,19 +163,29 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     this.elevation = elevation;
     this.movable = movable;
     this.doorOrWindow = doorOrWindow;
+    this.color = color;
     this.creator = creator;
+    this.price = price;
+    this.valueAddedTaxPercentage = valueAddedTaxPercentage;
     if (modelRotation == null) {
       this.modelRotation = INDENTITY_ROTATION;
     } else {
       this.modelRotation = deepCopy(modelRotation);
     }
     this.backFaceShown = backFaceShown;
-    this.color = color;
+    this.resizable = resizable;
     this.iconYaw = iconYaw;
     this.proportional = proportional;
     this.modifiable = modifiable;
   }
 
+  /**
+   * Returns the ID of this piece of furniture or <code>null</code>.
+   */
+  public String getId() {
+    return this.id;
+  }
+  
   /**
    * Returns the name of this piece of furniture.
    */
@@ -285,6 +307,27 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
     return this.modifiable;
   }
   
+  /**
+   * Returns <code>true</code> if this piece is resizable.
+   */
+  public boolean isResizable() {
+    return this.resizable;    
+  }
+  
+  /**
+   * Returns the price of this piece of furniture or <code>null</code>. 
+   */
+  public BigDecimal getPrice() {
+    return this.price;
+  }
+  
+  /**
+   * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
+   */
+  public BigDecimal getValueAddedTaxPercentage() {
+    return this.valueAddedTaxPercentage;
+  }
+
   /**
    * Returns the category of this piece of furniture.
    */

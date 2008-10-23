@@ -73,8 +73,7 @@ public class FurnitureController {
     this.home = home;
     this.undoSupport = undoSupport;
     this.preferences = preferences;
-    this.contentManager = contentManager;
-    this.furnitureView = new FurnitureTable(home, preferences, this);
+    this.contentManager = contentManager;    
     
     // Add a selection listener that gets the lead selected piece in home
     this.home.addSelectionListener(new SelectionListener() {
@@ -95,6 +94,10 @@ public class FurnitureController {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.furnitureView == null) {
+      this.furnitureView = new FurnitureTable(this.home, this.preferences, this);
+    }
     return this.furnitureView;
   }
 
@@ -294,6 +297,7 @@ public class FurnitureController {
       // the following list
       List<HomePieceOfFurniture.SortableProperty> propertiesOrder = 
           Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
+              HomePieceOfFurniture.SortableProperty.CATALOG_ID, 
               HomePieceOfFurniture.SortableProperty.NAME, 
               HomePieceOfFurniture.SortableProperty.WIDTH,
               HomePieceOfFurniture.SortableProperty.DEPTH,
@@ -305,7 +309,11 @@ public class FurnitureController {
               HomePieceOfFurniture.SortableProperty.COLOR,
               HomePieceOfFurniture.SortableProperty.MOVABLE,
               HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW,
-              HomePieceOfFurniture.SortableProperty.VISIBLE}); 
+              HomePieceOfFurniture.SortableProperty.VISIBLE,
+              HomePieceOfFurniture.SortableProperty.PRICE,
+              HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE,
+              HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX,
+              HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED}); 
       int propertyIndex = propertiesOrder.indexOf(furnitureProperty) - 1;
       if (propertyIndex > 0) {      
         while (propertyIndex > 0) {

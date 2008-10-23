@@ -1279,23 +1279,25 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       g2D.draw(FURNITURE_ELEVATION_INDICATOR);
       g2D.setTransform(previousTransform);
       
-      // Draw height indicator at bottom left vertex of the piece
-      g2D.translate(piecePoints [3][0], piecePoints [3][1]);
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(pieceAngle);
-      g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
-      // Place height indicator farther but don't rotate it
-      g2D.translate(-7.5f, 7.5f);
-      g2D.rotate(-pieceAngle);
-      g2D.draw(FURNITURE_HEIGHT_INDICATOR);
-      g2D.setTransform(previousTransform);
-      
-      // Draw resize indicator at top left vertex of the piece
-      g2D.translate(piecePoints [2][0], piecePoints [2][1]);
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.rotate(pieceAngle);
-      g2D.draw(FURNITURE_RESIZE_INDICATOR);
-      g2D.setTransform(previousTransform);
+      if (piece.isResizable()) {
+        // Draw height indicator at bottom left vertex of the piece
+        g2D.translate(piecePoints [3][0], piecePoints [3][1]);
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.rotate(pieceAngle);
+        g2D.draw(FURNITURE_HEIGHT_POINT_INDICATOR);
+        // Place height indicator farther but don't rotate it
+        g2D.translate(-7.5f, 7.5f);
+        g2D.rotate(-pieceAngle);
+        g2D.draw(FURNITURE_HEIGHT_INDICATOR);
+        g2D.setTransform(previousTransform);
+        
+        // Draw resize indicator at top left vertex of the piece
+        g2D.translate(piecePoints [2][0], piecePoints [2][1]);
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.rotate(pieceAngle);
+        g2D.draw(FURNITURE_RESIZE_INDICATOR);
+        g2D.setTransform(previousTransform);
+      }
     }
   }
   

@@ -33,9 +33,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Currency;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -127,7 +131,7 @@ public class FurnitureTable extends JTable implements Printable {
             int [] selectedRows = getSelectedRows();
             // Build the list of selected furniture
             List<HomePieceOfFurniture> selectedFurniture =
-              new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+                new ArrayList<HomePieceOfFurniture>(selectedRows.length);
             FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
             for (int index : selectedRows) {
               // Add to selectedFurniture table model first column value that stores piece
@@ -147,7 +151,7 @@ public class FurnitureTable extends JTable implements Printable {
    * Updates selected furniture in table from <code>selectedItems</code>. 
    */
   private void updateTableSelectedFurniture(List<Object> selectedItems) {
-    getSelectionModel().removeListSelectionListener(tableSelectionListener);
+    getSelectionModel().removeListSelectionListener(this.tableSelectionListener);
     clearSelection();
     FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
     int minIndex = Integer.MAX_VALUE;
@@ -156,15 +160,18 @@ public class FurnitureTable extends JTable implements Printable {
       if (item instanceof HomePieceOfFurniture) {
         // Search index of piece in sorted table model
         int index = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);
-        addRowSelectionInterval(index, index);
-        minIndex = Math.min(minIndex, index);
-        maxIndex = Math.max(maxIndex, index);
-      }          
+        // If the piece was found (during the addition of a piece to home, the model may not be updated yet) 
+        if (index != -1) {
+          addRowSelectionInterval(index, index);
+          minIndex = Math.min(minIndex, index);
+          maxIndex = Math.max(maxIndex, index);
+        }
+      }
     }
     if (minIndex != Integer.MIN_VALUE) {
       makeRowsVisible(minIndex, maxIndex);
     }
-    getSelectionModel().addListSelectionListener(tableSelectionListener);
+    getSelectionModel().addListSelectionListener(this.tableSelectionListener);
   }
 
   /**
@@ -481,6 +488,10 @@ public class FurnitureTable extends JTable implements Printable {
         }
         TableColumn column = this.columnModel.getColumn(columnIndex);
         switch ((HomePieceOfFurniture.SortableProperty)column.getIdentifier()) {
+          case CATALOG_ID :
+            // Copy piece catalog id
+            csv.append(copiedPiece.getCatalogId());
+            break;
           case NAME :
             // Copy piece name
             csv.append(copiedPiece.getName());
@@ -498,6 +509,10 @@ public class FurnitureTable extends JTable implements Printable {
           case Y :
           case ELEVATION : 
           case ANGLE :
+          case PRICE : 
+          case VALUE_ADDED_TAX_PERCENTAGE : 
+          case VALUE_ADDED_TAX :
+          case PRICE_VALUE_ADDED_TAX_INCLUDED : 
             // Copy numbers as they are displayed by their renderer
             csv.append(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
                 this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
@@ -606,22 +621,22 @@ public class FurnitureTable extends JTable implements Printable {
      */
     private void updateModelColumns(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
       // Remove columns not in furnitureVisibleProperties
-      for (int i = tableColumns.size() - 1; i >= 0; i--) {
-        TableColumn tableColumn = tableColumns.get(i);
+      for (int i = this.tableColumns.size() - 1; i >= 0; i--) {
+        TableColumn tableColumn = this.tableColumns.get(i);
         if (!furnitureVisibleProperties.contains(tableColumn.getIdentifier())) {
           removeColumn(tableColumn);
         } 
       }
       // Add columns not currently displayed
       for (HomePieceOfFurniture.SortableProperty visibleProperty : furnitureVisibleProperties) {
-        TableColumn tableColumn = availableColumns.get(visibleProperty);
+        TableColumn tableColumn = this.availableColumns.get(visibleProperty);
         if (!this.tableColumns.contains(tableColumn)) {
           addColumn(tableColumn);
         }
       }
       // Reorder columns 
       for (int i = 0, n = furnitureVisibleProperties.size(); i < n; i++) {
-        TableColumn tableColumn = availableColumns.get(furnitureVisibleProperties.get(i));
+        TableColumn tableColumn = this.availableColumns.get(furnitureVisibleProperties.get(i));
         int tableColumnIndex = this.tableColumns.indexOf(tableColumn);
         if (tableColumnIndex != i) {
           moveColumn(tableColumnIndex, i);
@@ -635,6 +650,8 @@ public class FurnitureTable extends JTable implements Printable {
     private String getColumnName(HomePieceOfFurniture.SortableProperty property) {
       ResourceBundle resource = ResourceBundle.getBundle(FurnitureTable.class.getName());
       switch (property) {
+        case CATALOG_ID :
+          return resource.getString("catalogIdColumn");
         case NAME :
           return resource.getString("nameColumn");
         case WIDTH :
@@ -659,6 +676,14 @@ public class FurnitureTable extends JTable implements Printable {
           return resource.getString("doorOrWindowColumn");
         case VISIBLE :
           return resource.getString("visibleColumn");
+        case PRICE :
+          return resource.getString("priceColumn");          
+        case VALUE_ADDED_TAX_PERCENTAGE :
+          return resource.getString("valueAddedTaxPercentageColumn");          
+        case VALUE_ADDED_TAX :
+          return resource.getString("valueAddedTaxColumn");          
+        case PRICE_VALUE_ADDED_TAX_INCLUDED :
+          return resource.getString("priceValueAddedTaxIncludedColumn");          
         default :
           throw new IllegalArgumentException("Unknown column name " + property);
       }
@@ -670,6 +695,8 @@ public class FurnitureTable extends JTable implements Printable {
     private TableCellRenderer getColumnRenderer(HomePieceOfFurniture.SortableProperty property, 
                                                 UserPreferences preferences) {
       switch (property) {
+        case CATALOG_ID :
+          return getCatalogIdRenderer(); 
         case NAME :
           return getNameWithIconRenderer(); 
         case WIDTH :
@@ -694,9 +721,33 @@ public class FurnitureTable extends JTable implements Printable {
           return getBooleanRenderer(HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
         case VISIBLE :
           return getBooleanRenderer(HomePieceOfFurniture.SortableProperty.VISIBLE);
+        case PRICE :
+          return getPriceRenderer(HomePieceOfFurniture.SortableProperty.PRICE, preferences);          
+        case VALUE_ADDED_TAX_PERCENTAGE :
+          return getValueAddedTaxPercentageRenderer();          
+        case VALUE_ADDED_TAX :
+          return getPriceRenderer(HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX, preferences);          
+        case PRICE_VALUE_ADDED_TAX_INCLUDED :
+          return getPriceRenderer(HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED, preferences);          
         default :
           throw new IllegalArgumentException("Unknown column name " + property);
       }
+    }
+
+    /**
+     * Returns a renderer that displays the catalog id of a piece of furniture. 
+     */
+    private TableCellRenderer getCatalogIdRenderer() {
+      return new DefaultTableCellRenderer() { 
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
+          return super.getTableCellRendererComponent(
+              table, piece.getCatalogId(), isSelected, hasFocus, row, column); 
+        }
+      };
     }
 
     /**
@@ -798,6 +849,64 @@ public class FurnitureTable extends JTable implements Printable {
     }
 
     /**
+     * Returns a renderer that converts the displayed <code>property</code> of a piece of furniture 
+     * as a price. 
+     */
+    private TableCellRenderer getPriceRenderer(HomePieceOfFurniture.SortableProperty property,
+                                               final UserPreferences preferences) {
+      // Renderer super class used to display sizes
+      class PriceRenderer extends DefaultTableCellRenderer {
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          String currency = preferences.getCurrency();
+          if (value != null && currency != null) {
+            NumberFormat currencyFormat = DecimalFormat.getCurrencyInstance();
+            currencyFormat.setCurrency(Currency.getInstance(currency));
+            value = currencyFormat.format((BigDecimal)value);
+          } else {
+            value = "";
+          }
+          setHorizontalAlignment(JLabel.RIGHT);
+          return super.getTableCellRendererComponent(
+              table, value, isSelected, hasFocus, row, column);
+        }
+      };
+      
+      switch (property) {
+        case PRICE :
+          return new PriceRenderer() {
+              @Override
+              public Component getTableCellRendererComponent(JTable table, 
+                  Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                return super.getTableCellRendererComponent(table, 
+                    ((HomePieceOfFurniture)value).getPrice(), isSelected, hasFocus, row, column);
+              }
+            };
+        case VALUE_ADDED_TAX :
+          return new PriceRenderer() {
+              @Override
+              public Component getTableCellRendererComponent(JTable table, 
+                  Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                return super.getTableCellRendererComponent(table, 
+                    ((HomePieceOfFurniture)value).getValueAddedTax(), isSelected, hasFocus, row, column);
+              }
+            };
+        case PRICE_VALUE_ADDED_TAX_INCLUDED :
+          return new PriceRenderer() {
+              @Override
+              public Component getTableCellRendererComponent(JTable table, 
+                  Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                return super.getTableCellRendererComponent(table, 
+                    ((HomePieceOfFurniture)value).getPriceValueAddedTaxIncluded(), isSelected, hasFocus, row, column);
+              }
+            };
+        default :
+          throw new IllegalArgumentException(property + " column not a price column");
+      }
+    }
+
+    /**
      * Returns a renderer that displays the angle property of a piece of furniture. 
      */
     private TableCellRenderer getAngleRenderer() {
@@ -814,6 +923,30 @@ public class FurnitureTable extends JTable implements Printable {
           int angle = (int)(Math.round(Math.toDegrees(((HomePieceOfFurniture)value).getAngle()) + 360) % 360);
           return integerRenderer.getTableCellRendererComponent(
               table, angle, isSelected, hasFocus, row, column); 
+        }
+      };
+    }
+
+    /**
+     * Returns a renderer that displays the value added tax percentage property of a piece of furniture. 
+     */
+    private TableCellRenderer getValueAddedTaxPercentageRenderer() {
+      return new DefaultTableCellRenderer() { 
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          BigDecimal valueAddedTaxPercentage = ((HomePieceOfFurniture)value).getValueAddedTaxPercentage();
+          if (valueAddedTaxPercentage != null) {
+            NumberFormat percentInstance = DecimalFormat.getPercentInstance();
+            percentInstance.setMinimumFractionDigits(valueAddedTaxPercentage.scale() - 2);
+            value = percentInstance.format(valueAddedTaxPercentage);
+          } else {
+            value = "";
+          }
+          setHorizontalAlignment(JLabel.RIGHT);
+          return super.getTableCellRendererComponent(
+              table, value, isSelected, hasFocus, row, column);
         }
       };
     }
@@ -1035,7 +1168,7 @@ public class FurnitureTable extends JTable implements Printable {
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
-      // Always return piece itself, the real property displayed at screen is choosen by renderer
+      // Always return piece itself, the real property displayed at screen is chosen by renderer
       return this.sortedFurniture.get(rowIndex);
     }
 

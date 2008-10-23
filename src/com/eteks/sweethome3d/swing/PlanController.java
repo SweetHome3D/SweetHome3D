@@ -1012,7 +1012,8 @@ public class PlanController extends FurnitureController {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = 3 / ((PlanComponent)getView()).getScale();
-      if (piece.isBottomLeftVertexAt(x, y, margin)) {
+      if (piece.isResizable() 
+          && piece.isBottomLeftVertexAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -1030,7 +1031,8 @@ public class PlanController extends FurnitureController {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = 3 / ((PlanComponent)getView()).getScale();
-      if (piece.isBottomRightVertexAt(x, y, margin)) {
+      if (piece.isResizable() 
+          && piece.isBottomRightVertexAt(x, y, margin)) {
         return piece;
       }
     } 

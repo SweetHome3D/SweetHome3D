@@ -194,6 +194,7 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE, true);
     homeView.setEnabled(HomePane.ActionType.IMPORT_FURNITURE_LIBRARY, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, true);
@@ -206,8 +207,13 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_TYPE, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_PRICE, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, true);
+    homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED, true);
     homeView.setEnabled(HomePane.ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
         this.home.getFurnitureSortedProperty() != null);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_CATALOG_ID, true); 
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_NAME, true); 
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_WIDTH, true); 
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DEPTH, true); 
@@ -220,6 +226,10 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, true); 
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, true); 
     homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, true);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_PRICE, true);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE, true);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, true);
+    homeView.setEnabled(HomePane.ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, true);
     homeView.setEnabled(HomePane.ActionType.SELECT, true);
     homeView.setEnabled(HomePane.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomePane.ActionType.CREATE_DIMENSION_LINES, true);
@@ -705,10 +715,12 @@ public class HomeController  {
         HomePieceOfFurniture homePiece = new HomePieceOfFurniture(piece);
         // If magnetism is enabled, adjust piece size and elevation
         if (this.preferences.isMagnetismEnabled()) {
-          this.home.setPieceOfFurnitureSize(homePiece, 
-              this.preferences.getUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f),
-              this.preferences.getUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f),
-              this.preferences.getUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f)); 
+          if (homePiece.isResizable()) {
+            this.home.setPieceOfFurnitureSize(homePiece, 
+                this.preferences.getUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f),
+                this.preferences.getUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f),
+                this.preferences.getUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f));
+          }
           this.home.setPieceOfFurnitureElevation(homePiece,
               this.preferences.getUnit().getMagnetizedLength(homePiece.getElevation(), 0.1f));
         }
@@ -857,10 +869,12 @@ public class HomeController  {
       // If magnetism is enabled, adjust furniture size and elevation
       if (this.preferences.isMagnetismEnabled()) {
         for (HomePieceOfFurniture piece : addedFurniture) {
-          this.home.setPieceOfFurnitureSize(piece, 
-              this.preferences.getUnit().getMagnetizedLength(piece.getWidth(), 0.1f),
-              this.preferences.getUnit().getMagnetizedLength(piece.getDepth(), 0.1f),
-              this.preferences.getUnit().getMagnetizedLength(piece.getHeight(), 0.1f)); 
+          if (piece.isResizable()) {
+            this.home.setPieceOfFurnitureSize(piece, 
+                this.preferences.getUnit().getMagnetizedLength(piece.getWidth(), 0.1f),
+                this.preferences.getUnit().getMagnetizedLength(piece.getDepth(), 0.1f),
+                this.preferences.getUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
+          }
           this.home.setPieceOfFurnitureElevation(piece,
               this.preferences.getUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
         }

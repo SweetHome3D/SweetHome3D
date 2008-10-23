@@ -156,6 +156,7 @@ public class FileUserPreferences extends UserPreferences {
             defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
             defaultPreferences.getNewWallHeight()));    
+    setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
     for (int i = 1; i <= 4; i++) {

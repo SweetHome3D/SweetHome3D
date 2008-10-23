@@ -26,6 +26,8 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.Collator;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,8 +43,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   /** 
    * Properties on which home furniture may be sorted.  
    */
-  public enum SortableProperty {NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
-                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE};
+  public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
+                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE,
+                                PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
   
@@ -50,6 +53,17 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     final Collator collator = Collator.getInstance();
     // Init piece property comparators
     SORTABLE_PROPERTY_COMPARATORS = new HashMap<SortableProperty, Comparator<HomePieceOfFurniture>>();
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.CATALOG_ID, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.catalogId == null) {
+            return -1;
+          } else if (piece2.catalogId == null) {
+            return 1; 
+          } else {
+            return collator.compare(piece1.catalogId, piece2.catalogId);
+          }
+        }
+      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.NAME, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           return collator.compare(piece1.name, piece2.name);
@@ -116,12 +130,33 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
           return HomePieceOfFurniture.compare(piece1.angle, piece2.angle);
         }
       });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.PRICE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.price, piece2.price);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.VALUE_ADDED_TAX_PERCENTAGE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.valueAddedTaxPercentage, piece2.valueAddedTaxPercentage);
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.VALUE_ADDED_TAX, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.getValueAddedTax(), piece2.getValueAddedTax());
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          return HomePieceOfFurniture.compare(piece1.getPriceValueAddedTaxIncluded(), piece2.getPriceValueAddedTaxIncluded());
+        }
+      });
   }
   
   private static int compare(float value1, float value2) {
     return value1 < value2 
                ? -1
-               : (value1 == value2 ? 0 : 1);
+               : (value1 == value2
+                   ? 0 : 1);
   }
   
   private static int compare(boolean value1, boolean value2) {
@@ -130,6 +165,17 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
                : (value1 ? -1 : 1);
   }
   
+  private static int compare(BigDecimal value1, BigDecimal value2) {
+    if (value1 == null) {
+      return -1;
+    } else if (value2 == null) {
+      return 1; 
+    } else {
+      return value1.compareTo(value2);
+    }
+  }
+  
+  private String     catalogId;
   private String     name;
   private Content    icon;
   private Content    model;
@@ -142,6 +188,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
   private Integer    color;
   private float [][] modelRotation;
   private boolean    backFaceShown;
+  private boolean    resizable;
+  private BigDecimal price;
+  private BigDecimal valueAddedTaxPercentage;
   private boolean    visible;
   private float      x;
   private float      y;
@@ -167,15 +216,22 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
     this.color = piece.getColor();
     this.modelRotation = piece.getModelRotation();
     this.backFaceShown = piece.isBackFaceShown();
+    this.resizable = piece.isResizable();
+    this.price = piece.getPrice();
+    this.valueAddedTaxPercentage = piece.getValueAddedTaxPercentage();
     if (piece instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture homePiece = 
           (HomePieceOfFurniture)piece;
+      this.catalogId = homePiece.getCatalogId();
       this.visible = homePiece.isVisible();
       this.angle = homePiece.getAngle();
       this.x = homePiece.getX();
       this.y = homePiece.getY();
       this.modelMirrored = homePiece.isModelMirrored();
     } else {
+      if (piece instanceof CatalogPieceOfFurniture) {
+        this.catalogId = ((CatalogPieceOfFurniture)piece).getId();
+      }      
       this.visible = true;
       this.x = this.width / 2;
       this.y = this.depth / 2;
@@ -188,9 +244,17 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.modelRotation = IDENTITY;
+    this.resizable = true;
     in.defaultReadObject();
   }
 
+  /**
+   * Returns the catalog ID of this piece of furniture or <code>null</code>.
+   */
+  public String getCatalogId() {
+    return this.catalogId;
+  }
+  
   /**
    * Returns the name of this piece of furniture.
    */
@@ -218,10 +282,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Sets the depth of this piece of furniture.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
+   * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   void setDepth(float depth) {
-    this.depth = depth;
-    this.shapeCache = null;
+    if (this.resizable) {
+      this.depth = depth;
+      this.shapeCache = null;
+    } else {
+      throw new IllegalStateException("Piece isn't resizable");
+    }
   }
 
   /**
@@ -235,10 +304,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Sets the height of this piece of furniture.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
+   * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   void setHeight(float height) {
-    this.height = height;
-    this.shapeCache = null;
+    if (this.resizable) {
+      this.height = height;
+      this.shapeCache = null;
+    } else {
+      throw new IllegalStateException("Piece isn't resizable");
+    }
   }
 
   /**
@@ -252,10 +326,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Sets the width of this piece of furniture.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
+   * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   void setWidth(float width) {
-    this.width = width;
-    this.shapeCache = null;
+    if (this.resizable) {
+      this.width = width;
+      this.shapeCache = null;
+    } else {
+      throw new IllegalStateException("Piece isn't resizable");
+    }
   }
 
   /**
@@ -317,6 +396,50 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    */
   void setColor(Integer color) {
     this.color = color;
+  }
+
+  /**
+   * Returns <code>true</code> if this piece is resizable.
+   */
+  public boolean isResizable() {
+    return this.resizable;    
+  }
+  
+  /**
+   * Returns the price of this piece of furniture or <code>null</code>. 
+   */
+  public BigDecimal getPrice() {
+    return this.price;
+  }
+  
+  /**
+   * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
+   */
+  public BigDecimal getValueAddedTaxPercentage() {
+    return this.valueAddedTaxPercentage;
+  }
+
+  /**
+   * Returns the Value Added Tax applied to the price of this piece of furniture. 
+   */
+  public BigDecimal getValueAddedTax() {
+    if (this.price != null && this.valueAddedTaxPercentage != null) {
+      return this.price.multiply(this.valueAddedTaxPercentage).
+          setScale(this.price.scale(), RoundingMode.HALF_UP);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns the price of this piece of furniture, Value Added Tax included. 
+   */
+  public BigDecimal getPriceValueAddedTaxIncluded() {
+    if (this.price != null && this.valueAddedTaxPercentage != null) {
+      return this.price.add(getValueAddedTax());
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -397,9 +520,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture {
    * Sets whether the model of this piece of furniture is mirrored or not.
    * This method should be called from {@link Home}, which
    * controls notifications when a piece changed.
+   * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   void setModelMirrored(boolean modelMirrored) {
-    this.modelMirrored = modelMirrored;
+    if (this.resizable) {
+      this.modelMirrored = modelMirrored;
+    } else {
+      throw new IllegalStateException("Piece isn't resizable");
+    }
   }
 
   /**

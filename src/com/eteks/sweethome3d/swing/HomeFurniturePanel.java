@@ -377,7 +377,21 @@ public class HomeFurniturePanel extends JPanel {
         }
       }
       this.mirroredModelCheckBox.setNullable(modelMirrored == null);
-      this.mirroredModelCheckBox.setValue(modelMirrored);           
+      this.mirroredModelCheckBox.setValue(modelMirrored);     
+      
+      // Enable size components only if all pieces are resizable
+      Boolean resizable = firstPiece.isResizable();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (resizable.booleanValue() != selectedFurniture.get(i).isResizable()) {
+          resizable = null;
+          break;
+        }
+      }
+      boolean editableSize = resizable == null || resizable.booleanValue();
+      this.widthSpinner.setEnabled(editableSize);
+      this.depthSpinner.setEnabled(editableSize);
+      this.heightSpinner.setEnabled(editableSize);
+      this.mirroredModelCheckBox.setEnabled(editableSize);     
     }
   }
 

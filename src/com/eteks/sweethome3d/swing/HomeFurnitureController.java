@@ -137,9 +137,9 @@ public class HomeFurnitureController {
       this.home.setPieceOfFurnitureAngle(piece, 
           angle != null ? angle.floatValue() : piece.getAngle());
       this.home.setPieceOfFurnitureSize(piece, 
-          width != null ? width.floatValue() : piece.getWidth(), 
-          depth != null ? depth.floatValue() : piece.getDepth(), 
-          height != null ? height.floatValue() : piece.getHeight());
+          width != null && piece.isResizable() ? width.floatValue() : piece.getWidth(), 
+          depth != null && piece.isResizable() ? depth.floatValue() : piece.getDepth(), 
+          height != null && piece.isResizable() ? height.floatValue() : piece.getHeight());
       this.home.setPieceOfFurnitureElevation(piece, 
           elevation != null ? elevation.floatValue() : piece.getElevation());
       this.home.setPieceOfFurnitureColor(piece, 
@@ -147,7 +147,7 @@ public class HomeFurnitureController {
       this.home.setPieceOfFurnitureVisible(piece, 
           visible != null ? visible.booleanValue() : piece.isVisible());
       this.home.setPieceOfFurnitureModelMirrored(piece, 
-          modelMirrored != null ? modelMirrored.booleanValue() : piece.isModelMirrored());
+          modelMirrored != null && piece.isResizable() ? modelMirrored.booleanValue() : piece.isModelMirrored());
     }
   }
 
@@ -161,8 +161,10 @@ public class HomeFurnitureController {
       this.home.setPieceOfFurnitureLocation(piece, modifiedPiece.getX(), modifiedPiece.getY());
       this.home.setPieceOfFurnitureElevation(piece, modifiedPiece.getElevation());
       this.home.setPieceOfFurnitureAngle(piece, modifiedPiece.getAngle());
-      this.home.setPieceOfFurnitureSize(piece, 
-          modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
+      if (piece.isResizable()) {
+        this.home.setPieceOfFurnitureSize(piece, 
+            modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
+      }
       this.home.setPieceOfFurnitureColor(piece, modifiedPiece.getColor());
       this.home.setPieceOfFurnitureVisible(piece, modifiedPiece.isVisible());
       this.home.setPieceOfFurnitureModelMirrored(piece, modifiedPiece.isModelMirrored());

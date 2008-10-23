@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.io;
 
 import java.util.ArrayList;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.RecorderException;
@@ -45,6 +46,11 @@ public class DefaultUserPreferences extends UserPreferences {
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
+    try {
+      setCurrency(resource.getString("currency"));
+    } catch (MissingResourceException ex) {
+      // Don't use currency and prices in program
+    }
   }
 
   /**

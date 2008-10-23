@@ -257,6 +257,7 @@ public abstract class UserPreferences {
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
   private String           language;
+  private String           currency;
   private Unit             unit;
   private boolean          magnetismEnabled = true;
   private boolean          rulersVisible    = true;
@@ -361,6 +362,21 @@ public abstract class UserPreferences {
    */
   public String [] getSupportedLanguages() {
     return SUPPORTED_LANGUAGES;
+  }
+
+  /**
+   * Returns the currency in use, noted with ISO 4217 code, or <code>null</code> 
+   * if prices aren't used in application.
+   */
+  public String getCurrency() {
+    return this.currency;
+  }
+
+  /**
+   * Sets currency in use.
+   */
+  protected void setCurrency(String currency) {
+    this.currency = currency;
   }
 
   /**

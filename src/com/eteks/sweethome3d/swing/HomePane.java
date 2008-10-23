@@ -120,15 +120,21 @@ public class HomePane extends JRootPane {
       NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
       UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
       ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY,
-      SORT_HOME_FURNITURE_BY_NAME, SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
+      SORT_HOME_FURNITURE_BY_CATALOG_ID, SORT_HOME_FURNITURE_BY_NAME, 
+      SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
       SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
       SORT_HOME_FURNITURE_BY_ANGLE, SORT_HOME_FURNITURE_BY_COLOR, 
       SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
+      SORT_HOME_FURNITURE_BY_PRICE, SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, 
+      SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED,
       SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-      DISPLAY_HOME_FURNITURE_NAME, DISPLAY_HOME_FURNITURE_WIDTH, DISPLAY_HOME_FURNITURE_DEPTH, DISPLAY_HOME_FURNITURE_HEIGHT, 
+      DISPLAY_HOME_FURNITURE_CATALOG_ID, DISPLAY_HOME_FURNITURE_NAME, 
+      DISPLAY_HOME_FURNITURE_WIDTH, DISPLAY_HOME_FURNITURE_DEPTH, DISPLAY_HOME_FURNITURE_HEIGHT, 
       DISPLAY_HOME_FURNITURE_X, DISPLAY_HOME_FURNITURE_Y, DISPLAY_HOME_FURNITURE_ELEVATION, 
       DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
       DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
+      DISPLAY_HOME_FURNITURE_PRICE, DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE,
+      DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED,
       ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
       SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, REVERSE_WALL_DIRECTION, SPLIT_WALL,
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
@@ -200,7 +206,7 @@ public class HomePane extends JRootPane {
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = createHomeMenuBar(home, controller, contentManager);
+    JMenuBar homeMenuBar = createHomeMenuBar(home, preferences, controller, contentManager);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
     contentPane.add(createToolBar(), BorderLayout.NORTH);
@@ -259,6 +265,8 @@ public class HomePane extends JRootPane {
         furnitureController, "alignSelectedFurnitureOnLeft");
     createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, 
         furnitureController, "alignSelectedFurnitureOnRight");
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, furnitureController, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, furnitureController, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.NAME);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, furnitureController, "toggleFurnitureSort", 
@@ -283,7 +291,17 @@ public class HomePane extends JRootPane {
         HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, furnitureController, "toggleFurnitureSort", 
         HomePieceOfFurniture.SortableProperty.VISIBLE);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE, furnitureController, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.PRICE);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, furnitureController, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, furnitureController, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED, furnitureController, "toggleFurnitureSort", 
+        HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, furnitureController, "toggleFurnitureSortOrder");
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_CATALOG_ID, furnitureController, "toggleFurnitureVisibleProperty", 
+        HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_NAME, furnitureController, "toggleFurnitureVisibleProperty", 
         HomePieceOfFurniture.SortableProperty.NAME);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_WIDTH, furnitureController, "toggleFurnitureVisibleProperty", 
@@ -308,6 +326,14 @@ public class HomePane extends JRootPane {
         HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, furnitureController, "toggleFurnitureVisibleProperty", 
         HomePieceOfFurniture.SortableProperty.VISIBLE);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE, furnitureController, "toggleFurnitureVisibleProperty", 
+        HomePieceOfFurniture.SortableProperty.PRICE);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE, furnitureController, "toggleFurnitureVisibleProperty", 
+        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, furnitureController, "toggleFurnitureVisibleProperty", 
+        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, furnitureController, "toggleFurnitureVisibleProperty", 
+        HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
     
     createAction(ActionType.SELECT, controller.getPlanController(), "setMode", 
         PlanController.Mode.SELECTION);
@@ -498,6 +524,7 @@ public class HomePane extends JRootPane {
    * Returns the menu bar displayed in this pane.
    */
   private JMenuBar createHomeMenuBar(final Home home, 
+                                     UserPreferences preferences,
                                      final HomeController controller,
                                      final ContentManager contentManager) {
     // Create File menu
@@ -564,8 +591,8 @@ public class HomePane extends JRootPane {
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
     furnitureMenu.add(getMenuAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     furnitureMenu.addSeparator();
-    furnitureMenu.add(createFurnitureSortMenu(home));
-    furnitureMenu.add(createFurnitureDisplayPropertyMenu(home));
+    furnitureMenu.add(createFurnitureSortMenu(home, preferences));
+    furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
@@ -628,12 +655,17 @@ public class HomePane extends JRootPane {
   /**
    * Returns furniture sort menu.
    */
-  private JMenu createFurnitureSortMenu(final Home home) {
+  private JMenu createFurnitureSortMenu(final Home home, UserPreferences preferences) {
     // Create Furniture Sort submenu
     JMenu sortMenu = new JMenu(this.menuActionMap.get(MenuActionType.SORT_HOME_FURNITURE_MENU));
     // Map sort furniture properties to sort actions
     Map<HomePieceOfFurniture.SortableProperty, Action> sortActions = 
         new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
+    // Use catalog id if currency isn't null
+    if (preferences.getCurrency() != null) {
+      sortActions.put(HomePieceOfFurniture.SortableProperty.CATALOG_ID, 
+          getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID)); 
+    }
     sortActions.put(HomePieceOfFurniture.SortableProperty.NAME, 
         getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_NAME)); 
     sortActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, 
@@ -658,6 +690,17 @@ public class HomePane extends JRootPane {
         getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE));
     sortActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, 
         getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY));
+    // Use prices if currency isn't null
+    if (preferences.getCurrency() != null) {
+      sortActions.put(HomePieceOfFurniture.SortableProperty.PRICE, 
+          getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE));
+      sortActions.put(HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE, 
+          getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE));
+      sortActions.put(HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX, 
+          getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX));
+      sortActions.put(HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED, 
+          getMenuAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED));
+    }
     // Add radio button menu items to sub menu and make them share the same radio button group
     ButtonGroup sortButtonGroup = new ButtonGroup();
     for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : sortActions.entrySet()) {
@@ -696,13 +739,18 @@ public class HomePane extends JRootPane {
   /**
    * Returns furniture display property menu.
    */
-  private JMenu createFurnitureDisplayPropertyMenu(final Home home) {
+  private JMenu createFurnitureDisplayPropertyMenu(final Home home, UserPreferences preferences) {
     // Create Furniture Display property submenu
     JMenu displayPropertyMenu = new JMenu(
         this.menuActionMap.get(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU));
     // Map displayProperty furniture properties to displayProperty actions
     Map<HomePieceOfFurniture.SortableProperty, Action> displayPropertyActions = 
         new LinkedHashMap<HomePieceOfFurniture.SortableProperty, Action>(); 
+    // Use catalog id if currency isn't null
+    if (preferences.getCurrency() != null) {
+      displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.CATALOG_ID, 
+          getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_CATALOG_ID)); 
+    }
     displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.NAME, 
         getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_NAME)); 
     displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.WIDTH, 
@@ -727,6 +775,17 @@ public class HomePane extends JRootPane {
         getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW));
     displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.VISIBLE, 
         getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_VISIBLE));
+    // Use prices if currency isn't null
+    if (preferences.getCurrency() != null) {
+      displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.PRICE, 
+          getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE));
+      displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE, 
+          getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE));
+      displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX, 
+          getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX));
+      displayPropertyActions.put(HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED, 
+          getMenuAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED));
+    }
     // Add radio button menu items to sub menu 
     for (Map.Entry<HomePieceOfFurniture.SortableProperty, Action> entry : displayPropertyActions.entrySet()) {
       final HomePieceOfFurniture.SortableProperty furnitureProperty = entry.getKey();
@@ -1049,7 +1108,7 @@ public class HomePane extends JRootPane {
   private JComponent createMainPane(Home home, UserPreferences preferences, 
                                     HomeController controller) {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-        createCatalogFurniturePane(home, controller), 
+        createCatalogFurniturePane(home, preferences, controller), 
         createPlanView3DPane(home, preferences, controller));
     configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, controller);
     return mainPane;
@@ -1113,7 +1172,9 @@ public class HomePane extends JRootPane {
   /**
    * Returns the catalog tree and furniture table pane. 
    */
-  private JComponent createCatalogFurniturePane(Home home, final HomeController controller) {
+  private JComponent createCatalogFurniturePane(Home home,
+                                                UserPreferences preferences,
+                                                final HomeController controller) {
     JComponent catalogView = controller.getCatalogController().getView();
     JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
@@ -1184,8 +1245,8 @@ public class HomePane extends JRootPane {
     furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(getPopupAction(ActionType.MODIFY_FURNITURE));
     furnitureViewPopup.addSeparator();
-    furnitureViewPopup.add(createFurnitureSortMenu(home));
-    furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home));
+    furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
+    furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
     ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
     

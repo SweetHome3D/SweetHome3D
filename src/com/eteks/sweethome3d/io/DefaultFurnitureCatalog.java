@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.io;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -48,6 +49,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultFurnitureCatalog extends FurnitureCatalog {
+  private static final String ID               = "id#";
   private static final String NAME             = "name#";
   private static final String CATEGORY         = "category#";
   private static final String ICON             = "icon#";
@@ -61,7 +63,9 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String ELEVATION        = "elevation#";
   private static final String MODEL_ROTATION   = "modelRotation#";
   private static final String CREATOR          = "creator#";
-  private static final String ID               = "id#";
+  private static final String RESIZABLE        = "resizable#";
+  private static final String PRICE            = "price#";
+  private static final String VALUE_ADDED_TAX_PERCENTAGE = "valueAddedTaxPercentage#";
   
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
@@ -185,8 +189,9 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       } catch (MissingResourceException ex) {
         // By default creator is eTeks
       }
+      String id = null;
       try {
-        String id = resource.getString(ID + i);
+        id = resource.getString(ID + i);
         if (identifiedFurniture.contains(id)) {
           continue;
         } else {
@@ -198,10 +203,29 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       } catch (MissingResourceException ex) {
         // Don't take into account furniture that don't have an ID
       }
+      boolean resizable = true;
+      try {
+        resizable = Boolean.parseBoolean(resource.getString(RESIZABLE + i));
+      } catch (MissingResourceException ex) {
+        // By default piece is resizable
+      }
+      BigDecimal price = null;
+      try {
+        price = new BigDecimal(resource.getString(PRICE + i));
+      } catch (MissingResourceException ex) {
+        // By default price is null
+      }
+      BigDecimal valueAddedTaxPercentage = null;
+      try {
+        valueAddedTaxPercentage = new BigDecimal(resource.getString(VALUE_ADDED_TAX_PERCENTAGE + i));
+      } catch (MissingResourceException ex) {
+        // By default price is null
+      }
 
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
-          width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator);
+      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(id, name, icon, model,
+          width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator, 
+          resizable, price, valueAddedTaxPercentage);
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
@@ -229,10 +253,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
       categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
       // Try to add piece again to catalog with a suffix indicating its sequence
-      piece = new CatalogPieceOfFurniture(String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter), 
+      piece = new CatalogPieceOfFurniture(piece.getId(),
+          String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter), 
           piece.getIcon(), piece.getModel(),
           piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
-          piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator());
+          piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator(),
+          piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }

@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * A piece of furniture.
@@ -87,4 +88,19 @@ public interface PieceOfFurniture extends Serializable {
    * Returns the color of this piece of furniture.
    */
   public abstract Integer getColor();
+  
+  /**
+   * Returns <code>true</code> if this piece is resizable.
+   */
+  public abstract boolean isResizable();
+  
+  /**
+   * Returns the price of this piece of furniture or <code>null</code>. 
+   */
+  public abstract BigDecimal getPrice();
+  
+  /**
+   * Returns the Value Added Tax percentage applied to the price of this piece of furniture. 
+   */
+  public abstract BigDecimal getValueAddedTaxPercentage();
 }
