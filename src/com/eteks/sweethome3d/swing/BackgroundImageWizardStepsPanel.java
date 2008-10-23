@@ -73,7 +73,6 @@ import javax.swing.event.MouseInputAdapter;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;

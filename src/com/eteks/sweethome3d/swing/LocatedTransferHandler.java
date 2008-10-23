@@ -30,7 +30,6 @@ import java.util.List;
 
 import javax.swing.TransferHandler;
 
-import com.eteks.sweethome3d.model.ContentManager;
 
 /**
  * Transfer handler that stores the dropped location of mouse pointer.

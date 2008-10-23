@@ -29,6 +29,7 @@ import javax.jnlp.UnavailableServiceException;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 
@@ -39,11 +40,12 @@ import com.eteks.sweethome3d.swing.HomePane;
 public class HomeAppletController extends HomeController {
   public HomeAppletController(Home home, 
                               HomeApplication application, 
+                              ContentManager  contentManager,
                               boolean newHomeEnabled, 
                               boolean openEnabled, 
                               boolean saveEnabled, 
                               boolean saveAsEnabled) {
-    super(home, application);
+    super(home, application, contentManager);
     
     HomePane view = (HomePane)getView();
     view.setEnabled(HomePane.ActionType.EXIT, false);

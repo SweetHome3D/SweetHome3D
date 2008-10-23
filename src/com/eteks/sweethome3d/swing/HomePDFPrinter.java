@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;

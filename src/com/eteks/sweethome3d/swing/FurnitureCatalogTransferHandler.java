@@ -32,7 +32,6 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 
 /**

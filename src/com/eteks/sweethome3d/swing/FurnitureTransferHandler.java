@@ -31,7 +31,6 @@ import java.util.List;
 
 import javax.swing.JComponent;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 

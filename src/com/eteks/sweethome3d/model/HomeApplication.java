@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Application managing a list of homes diplayed at screen.
+ * Application managing a list of homes displayed at screen.
  * @author Emmanuel Puybaret
  */
 public abstract class HomeApplication {
@@ -102,11 +102,6 @@ public abstract class HomeApplication {
    */
   public abstract HomeRecorder getHomeRecorder();
   
-  /**
-   * Returns a content manager able to create contents from their name. 
-   */
-  public abstract ContentManager getContentManager();
-
   /**
    * Returns user preferences.
    */

@@ -33,7 +33,6 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.SelectionEvent;

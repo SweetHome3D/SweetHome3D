@@ -103,7 +103,6 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;

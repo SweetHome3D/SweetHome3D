@@ -42,7 +42,6 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CameraEvent;
 import com.eteks.sweethome3d.model.CameraListener;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;

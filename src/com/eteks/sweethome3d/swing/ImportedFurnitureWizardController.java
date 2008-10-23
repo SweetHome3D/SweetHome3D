@@ -39,7 +39,6 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;

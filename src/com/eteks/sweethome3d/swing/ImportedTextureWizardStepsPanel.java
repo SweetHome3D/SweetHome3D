@@ -72,7 +72,6 @@ import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;

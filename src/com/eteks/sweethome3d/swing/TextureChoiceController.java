@@ -25,7 +25,6 @@ import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.UserPreferences;
 

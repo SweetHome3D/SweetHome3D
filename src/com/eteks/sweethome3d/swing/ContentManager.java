@@ -17,7 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package com.eteks.sweethome3d.model;
+package com.eteks.sweethome3d.swing;
+
+import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.RecorderException;
 
 /**
  * Content manager.
@@ -46,7 +49,7 @@ public interface ContentManager {
 
   /**
    * Returns the content name chosen by user with an open content dialog.
-   * @return the chosen content name or <code>null</code> if user cancelled its choice.
+   * @return the chosen content name or <code>null</code> if user canceled its choice.
    */
   public abstract String showOpenDialog(String dialogTitle,
                                         ContentType contentType);
@@ -55,7 +58,7 @@ public interface ContentManager {
    * Returns the content name chosen by user with a save content dialog.
    * If the returned name already exists, this method should have confirmed 
    * if the user wants to overwrite it before return. 
-   * @return the chosen content name or <code>null</code> if user cancelled its choice.
+   * @return the chosen content name or <code>null</code> if user canceled its choice.
    */
   public abstract String showSaveDialog(String dialogTitle,
                                         ContentType contentType,

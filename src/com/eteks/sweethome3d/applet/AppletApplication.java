@@ -52,7 +52,6 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -117,7 +116,7 @@ public class AppletApplication extends HomeApplication {
                     writeHomeURL.length() != 0 && listHomesURL.length() != 0;
                 
                 final HomeAppletController controller = new HomeAppletController(
-                    home, AppletApplication.this, 
+                    home, AppletApplication.this, contentManager, 
                     newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
                 
                 // Display its view in applet
@@ -311,14 +310,6 @@ public class AppletApplication extends HomeApplication {
     return this.userPreferences;
   }
   
-  /**
-   * Returns a content manager able to manage content local and server files. 
-   */
-  @Override
-  public ContentManager getContentManager() {
-    return this.contentManager;
-  }
-
   /**
    * Sets application look and feel.
    */

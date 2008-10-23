@@ -119,7 +119,6 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;

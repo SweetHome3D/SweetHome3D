@@ -44,7 +44,6 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
@@ -90,9 +89,19 @@ public class HomeController  {
    * Creates the controller of home view.
    * @param home the home edited by this controller and its view.
    * @param application the instance of current application.
+   * @param contentManager the content manager of the application.
+   */
+  public HomeController(Home home, HomeApplication application, ContentManager contentManager) {
+    this(home, application.getUserPreferences(), contentManager, application);
+  }
+
+  /**
+   * Creates the controller of home view.
+   * @param home the home edited by this controller and its view.
+   * @param application the instance of current application.
    */
   public HomeController(Home home, HomeApplication application) {
-    this(home, application.getUserPreferences(), application.getContentManager(), application);
+    this(home, application.getUserPreferences(), null, application);
   }
 
   /**

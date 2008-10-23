@@ -28,7 +28,6 @@ import javax.swing.JComponent;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Camera;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;

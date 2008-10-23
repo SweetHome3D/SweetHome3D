@@ -40,7 +40,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
@@ -62,7 +61,6 @@ import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -71,6 +69,7 @@ import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.Component3DManager;
+import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.SwingTools;
@@ -107,14 +106,6 @@ public class SweetHome3D extends HomeApplication {
   @Override
   public UserPreferences getUserPreferences() {
     return this.userPreferences;
-  }
-  
-  /**
-   * Returns a content manager able to manage content locale files. 
-   */
-  @Override
-  public ContentManager getContentManager() {
-    return this.contentManager;
   }
   
   /**
@@ -188,11 +179,11 @@ public class SweetHome3D extends HomeApplication {
         }
       }
       
-      if (application.getContentManager().isAcceptable(args [1], 
+      if (application.contentManager.isAcceptable(args [1], 
           ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open"
         readHome(args [1]);
-      } else if (application.getContentManager().isAcceptable(args [1], 
+      } else if (application.contentManager.isAcceptable(args [1], 
           ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
         final String furnitureLibraryName = args [1];
@@ -322,7 +313,7 @@ public class SweetHome3D extends HomeApplication {
             case ADD :
               Home home = ev.getHome();
               try {
-                HomeController controller = new HomeFrameController(home, application);
+                HomeController controller = new HomeFrameController(home, application, application.contentManager);
                 if (!this.firstApplicationHomeAdded) {
                   application.addNewHomeCloseListener(home, controller);
                   this.firstApplicationHomeAdded = true;
@@ -440,7 +431,7 @@ public class SweetHome3D extends HomeApplication {
           String homeName = home.getName();                      
           if (homeName == null) {
             getHomeFrame(home).toFront();
-            homeName = getContentManager().showSaveDialog(null, 
+            homeName = contentManager.showSaveDialog(null, 
                 ContentManager.ContentType.SWEET_HOME_3D, null);
           }
           if (homeName != null) {

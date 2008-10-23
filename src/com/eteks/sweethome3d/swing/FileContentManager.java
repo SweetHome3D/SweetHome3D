@@ -35,7 +35,6 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;

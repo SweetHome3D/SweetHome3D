@@ -21,6 +21,7 @@ package com.eteks.sweethome3d;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 
 /**
@@ -28,8 +29,8 @@ import com.eteks.sweethome3d.swing.HomeController;
  * @author Emmanuel Puybaret
  */
 public class HomeFrameController extends HomeController {
-  public HomeFrameController(Home home, HomeApplication application) {
-    super(home, application);
-    new HomeFramePane(home, application, this).displayView();
+  public HomeFrameController(Home home, HomeApplication application, ContentManager contentManager) {
+    super(home, application, contentManager);
+    new HomeFramePane(home, application, contentManager, this).displayView();
   }
 }

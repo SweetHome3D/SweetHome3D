@@ -46,7 +46,6 @@ import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
@@ -55,6 +54,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -76,16 +76,19 @@ public class HomeFramePane extends JRootPane {
   private int                           newHomeNumber;
   private Home                          home;
   private HomeApplication               application;
+  private ContentManager                contentManager;
   private HomeFrameController           controller;
   private ResourceBundle                resource;
   private List<CatalogPieceOfFurniture> catalogSelectedFurniture;
   
   public HomeFramePane(Home home,
                        HomeApplication application,
+                       ContentManager contentManager, 
                        HomeFrameController controller) {
     this.home = home;
     this.controller = controller;
     this.application = application;
+    this.contentManager = contentManager;
     this.resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
     // The catalog selected furniture on a new home pane is always empty
     this.catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
@@ -397,7 +400,7 @@ public class HomeFramePane extends JRootPane {
         homeDisplayedName += " " + newHomeNumber;
       }
     } else {
-      homeDisplayedName = this.application.getContentManager().getPresentationName(
+      homeDisplayedName = this.contentManager.getPresentationName(
           homeName, ContentManager.ContentType.SWEET_HOME_3D);
     }
     

@@ -25,7 +25,6 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.ContentManager;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
