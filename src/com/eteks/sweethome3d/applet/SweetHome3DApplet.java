@@ -77,14 +77,16 @@ public class SweetHome3DApplet extends JApplet {
    * Sets various <code>System</code> properties required to be set before Applet is displayed.
    */
   private static void initSystemProperties() {
-    // Enables Java 5 bug correction about dragging directly
-    // a tree element without selecting it before :
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-    if (System.getProperty("sun.swing.enableImprovedDragGesture", "false").equals("false")) {
+    try {
+      // Enables Java 5 bug correction about dragging directly
+      // a tree element without selecting it before :
+      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
       System.setProperty("sun.swing.enableImprovedDragGesture", "true");
+      // Use Quartz renderer under Mac OS X
+      System.setProperty("apple.awt.graphics.UseQuartz", "true");
+    } catch (SecurityException ex) {
+      // Too bad Java refuses access to system properties
     }
-    // Use Quartz renderer under Mac OS X
-    System.setProperty("apple.awt.graphics.UseQuartz", "true");
   }
   
   public void init() {
