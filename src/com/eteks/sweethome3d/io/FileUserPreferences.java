@@ -562,7 +562,7 @@ public class FileUserPreferences extends UserPreferences {
    * Returns the folder where plugin furniture libraries files must be placed 
    * or <code>null</code> if that folder can't be retrieved.
    */
-  private static File getFurnitureLibrariesPluginFolder() {
+  private File getFurnitureLibrariesPluginFolder() {
     try {
       return new File(getApplicationFolder(), PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER);
     } catch (IOException ex) {
@@ -573,7 +573,7 @@ public class FileUserPreferences extends UserPreferences {
   /**
    * Returns Sweet Home 3D application folder. 
    */
-  private static File getApplicationFolder() throws IOException {
+  public File getApplicationFolder() throws IOException {
     File userApplicationFolder; 
     if (OperatingSystem.isMacOSX()) {
       userApplicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder());
