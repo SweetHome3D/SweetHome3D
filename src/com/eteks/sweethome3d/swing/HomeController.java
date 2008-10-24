@@ -148,20 +148,6 @@ public class HomeController  {
     this.resource = ResourceBundle.getBundle(
         HomeController.class.getName());
     
-    this.catalogController   = new FurnitureCatalogController(
-        preferences.getFurnitureCatalog(), preferences, contentManager);
-    this.furnitureController = new FurnitureController(
-        home, preferences, contentManager, this.undoSupport);
-    this.planController = new PlanController(
-        home, preferences, contentManager, undoSupport);
-    this.homeController3D = new HomeController3D(
-        home, preferences, contentManager, this.undoSupport);
-    helpController = new HelpController(preferences);
-    
-    this.homeView = new HomePane(home, preferences, contentManager, this);
-    addListeners();
-    enableDefaultActions((HomePane)this.homeView);
-    
     // Update recent homes list
     if (home.getName() != null) {
       List<String> recentHomes = new ArrayList<String>(this.preferences.getRecentHomes());
@@ -243,9 +229,9 @@ public class HomeController  {
     homeView.setEnabled(HomePane.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomePane.ActionType.CREATE_DIMENSION_LINES, true);
     homeView.setEnabled(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE, true);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
+    homeView.setEnabled(HomePane.ActionType.MODIFY_BACKGROUND_IMAGE, 
         this.home.getBackgroundImage() != null);
-    ((HomePane)getView()).setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
+    homeView.setEnabled(HomePane.ActionType.DELETE_BACKGROUND_IMAGE, 
         this.home.getBackgroundImage() != null);
     homeView.setEnabled(HomePane.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomePane.ActionType.ZOOM_OUT, true);
@@ -264,6 +250,11 @@ public class HomeController  {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    if (this.homeView == null) {
+      this.homeView = new HomePane(home, preferences, contentManager, this);
+      enableDefaultActions((HomePane)this.homeView);
+      addListeners();
+    }
     return this.homeView;
   }
 
@@ -271,6 +262,11 @@ public class HomeController  {
    * Returns the catalog controller managed by this controller.
    */
   public FurnitureCatalogController getCatalogController() {
+    // Create sub controller lazily only once it's needed
+    if (this.catalogController == null) {
+      this.catalogController = new FurnitureCatalogController(
+          this.preferences.getFurnitureCatalog(), this.preferences, this.contentManager);
+    }
     return this.catalogController;
   }
 
@@ -278,6 +274,11 @@ public class HomeController  {
    * Returns the furniture controller managed by this controller.
    */
   public FurnitureController getFurnitureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.furnitureController == null) {
+      this.furnitureController = new FurnitureController(
+          this.home, this.preferences, this.contentManager, this.undoSupport);
+    }
     return this.furnitureController;
   }
 
@@ -285,6 +286,11 @@ public class HomeController  {
    * Returns the controller of home plan.
    */
   public PlanController getPlanController() {
+    // Create sub controller lazily only once it's needed
+    if (this.planController == null) {
+      this.planController = new PlanController(
+          this.home, this.preferences, this.contentManager, this.undoSupport);
+    }
     return this.planController;
   }
 
@@ -292,6 +298,11 @@ public class HomeController  {
    * Returns the controller of home 3D view.
    */
   public HomeController3D getHomeController3D() {
+    // Create sub controller lazily only once it's needed
+    if (this.homeController3D == null) {
+      this.homeController3D = new HomeController3D(
+          this.home, this.preferences, this.contentManager, this.undoSupport);
+    }
     return this.homeController3D;
   }
 
@@ -1058,7 +1069,7 @@ public class HomeController  {
           }
         };
     new ThreadedTaskController(exportToObjTask, 
-        this.resource.getString("openMessage"), exceptionHandler);
+        this.resource.getString("openMessage"), exceptionHandler).executeTask(getView());
   }
   
   /**
@@ -1245,7 +1256,7 @@ public class HomeController  {
             }
           };
       new ThreadedTaskController(exportToObjTask, 
-          this.resource.getString("saveMessage"), exceptionHandler);
+          this.resource.getString("saveMessage"), exceptionHandler).executeTask(getView());
     }
   }
   
@@ -1303,7 +1314,7 @@ public class HomeController  {
             }
           };
       new ThreadedTaskController(exportToObjTask, 
-          this.resource.getString("exportToOBJMessage"), exceptionHandler);
+          this.resource.getString("exportToOBJMessage"), exceptionHandler).executeTask(getView());
     }
   }
   
@@ -1311,14 +1322,14 @@ public class HomeController  {
    * Controls page setup.
    */
   public void setupPage() {
-    new PageSetupController(this.home, this.undoSupport);
+    new PageSetupController(this.home, this.undoSupport).displayView(getView());
   }
 
   /**
    * Controls the print preview.
    */
   public void previewPrint() {
-    new PrintPreviewController(this.home, this);
+    new PrintPreviewController(this.home, this).displayView(getView());
   }
 
   /**
@@ -1342,7 +1353,7 @@ public class HomeController  {
             }
           };
       new ThreadedTaskController(printTask, 
-        this.resource.getString("printMessage"), exceptionHandler);      
+        this.resource.getString("printMessage"), exceptionHandler).executeTask(getView());      
     }
   }
 
@@ -1373,7 +1384,7 @@ public class HomeController  {
             }
           };
       new ThreadedTaskController(printToPdfTask, 
-          this.resource.getString("printToPDFMessage"), exceptionHandler);
+          this.resource.getString("printToPDFMessage"), exceptionHandler).executeTask(getView());
     }
   }
 
@@ -1405,7 +1416,7 @@ public class HomeController  {
   public void editPreferences() {
     UserPreferencesPanel preferencesPanel = new UserPreferencesPanel();
     preferencesPanel.setPreferences(this.preferences);
-    if (preferencesPanel.showDialog(getView())) {
+    if (preferencesPanel.displayView(getView())) {
       this.preferences.setLanguage(preferencesPanel.getLanguage());
       this.preferences.setUnit(preferencesPanel.getUnit());
       this.preferences.setMagnetismEnabled(preferencesPanel.isMagnetismEnabled());
@@ -1426,6 +1437,9 @@ public class HomeController  {
    * Displays help window.
    */
   public void help() {
+    if (helpController == null) {
+      helpController = new HelpController(preferences);
+    }
     helpController.displayView();
   }
 
@@ -1441,7 +1455,7 @@ public class HomeController  {
    */
   public void importBackgroundImage() {
     new BackgroundImageWizardController(this.home, this.preferences, 
-        this.contentManager, this.undoSupport);
+        this.contentManager, this.undoSupport).displayView(getView());
   }
   
   /**

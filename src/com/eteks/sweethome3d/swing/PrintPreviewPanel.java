@@ -38,7 +38,6 @@ import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.FocusManager;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -47,6 +46,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 
 import com.eteks.sweethome3d.model.Home;
@@ -234,10 +234,10 @@ public class PrintPreviewPanel extends JPanel {
   /**
    * Displays this panel in a modal resizable dialog box. 
    */
-  public void displayView() {
+  public void displayView(JComponent parent) {
     String dialogTitle = resource.getString("printPreview.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
-    JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
+    JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     dialog.setResizable(true);
     // Pack again because resize decorations may have changed dialog preferred size

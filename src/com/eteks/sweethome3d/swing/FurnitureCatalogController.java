@@ -32,10 +32,10 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogController {
-  private FurnitureCatalog         catalog;
-  private UserPreferences preferences;
-  private ContentManager  contentManager;
-  private JComponent      catalogView;
+  private FurnitureCatalog catalog;
+  private UserPreferences  preferences;
+  private ContentManager   contentManager;
+  private JComponent       catalogView;
 
   /**
    * Creates a controller of the furniture catalog view.
@@ -57,13 +57,16 @@ public class FurnitureCatalogController {
     this.catalog = catalog;
     this.preferences = preferences;
     this.contentManager = contentManager;
-    this.catalogView = new FurnitureCatalogTree(catalog, this);
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.catalogView == null) {
+      this.catalogView = new FurnitureCatalogTree(this.catalog, this);
+    }
     return this.catalogView;
   }
 
@@ -93,7 +96,8 @@ public class FurnitureCatalogController {
       if (selectedFurniture.size() > 0) {
         CatalogPieceOfFurniture piece = selectedFurniture.get(0);
         if (piece.isModifiable()) {
-          new ImportedFurnitureWizardController(piece, this.preferences, this.contentManager);
+          new ImportedFurnitureWizardController(
+              piece, this.preferences, this.contentManager).displayView(getView());
         }
       }
     }
@@ -104,7 +108,8 @@ public class FurnitureCatalogController {
    */
   public void importFurniture() {
     if (this.preferences != null) {
-      new ImportedFurnitureWizardController(this.preferences, this.contentManager);
+      new ImportedFurnitureWizardController(
+          this.preferences, this.contentManager).displayView(getView());
     }
   }
 
@@ -113,7 +118,8 @@ public class FurnitureCatalogController {
    */
   private void importFurniture(String modelName) {
     if (this.preferences != null) {
-      new ImportedFurnitureWizardController(modelName, this.preferences, this.contentManager);
+      new ImportedFurnitureWizardController(
+          modelName, this.preferences, this.contentManager).displayView(getView());
     }
   }
 

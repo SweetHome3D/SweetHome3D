@@ -55,6 +55,7 @@ import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.ContentManager;
+import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -97,7 +98,7 @@ public class HomeFramePane extends JRootPane {
       newHomeNumber = ++newHomeCount;
     }
     // Set controller view as content pane
-    setContentPane(controller.getView());
+    setContentPane(controller.getHomeController().getView());
   }
 
   /**
@@ -116,11 +117,12 @@ public class HomeFramePane extends JRootPane {
     updateFrameTitle(homeFrame, this.home);
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
+      HomeController homeController = this.controller.getHomeController();
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          this.controller.getCatalogController().getView(),
-          this.controller.getFurnitureController().getView(),
-          this.controller.getPlanController().getView(),
-          this.controller.getHomeController3D().getView()});      
+          homeController.getCatalogController().getView(),
+          homeController.getFurnitureController().getView(),
+          homeController.getPlanController().getView(),
+          homeController.getHomeController3D().getView()});      
       homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
@@ -157,11 +159,11 @@ public class HomeFramePane extends JRootPane {
     // The best solution should be to avoid the 3 following statements 
     // but Mac OS X accepts to display the menu bar of a frame in the screen 
     // menu bar only if this menu bar depends directly on its root pane  
-    HomePane homeView = (HomePane)controller.getView();
+    HomePane homeView = (HomePane)this.controller.getHomeController().getView();
     setJMenuBar(homeView.getJMenuBar());
     homeView.setJMenuBar(null);
     // Add listeners to model and frame    
-    addListeners(this.home, this.application, this.controller, homeFrame);
+    addListeners(this.home, this.application, this.controller.getHomeController(), homeFrame);
     
     // Show frame
     homeFrame.setVisible(true);
@@ -172,7 +174,7 @@ public class HomeFramePane extends JRootPane {
    */
   private void addListeners(final Home home,
                             final HomeApplication application,
-                            final HomeFrameController controller,
+                            final HomeController controller,
                             final JFrame frame) {
     // Add a listener that keeps track of window location and size
     frame.addComponentListener(new ComponentAdapter() {

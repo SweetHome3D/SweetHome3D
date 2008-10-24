@@ -28,21 +28,34 @@ import com.eteks.sweethome3d.model.Home;
  * @author Emmanuel Puybaret
  */
 public class PrintPreviewController {
-  private JComponent printPreviewView;
+  private Home           home;
+  private HomeController homeController;
+  private JComponent     printPreviewView;
 
   /**
    * Creates the controller of print preview with undo support.
    */
   public PrintPreviewController(Home home,
                                 HomeController homeController) {
-    this.printPreviewView = new PrintPreviewPanel(home, homeController, this); 
-    ((PrintPreviewPanel)this.printPreviewView).displayView();
+    this.home = home;
+    this.homeController = homeController;
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.printPreviewView == null) {
+      this.printPreviewView = new PrintPreviewPanel(this.home, this.homeController, this);
+    }
     return this.printPreviewView;
+  }
+  
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView(JComponent parentView) {
+    ((PrintPreviewPanel)getView()).displayView(parentView);
   }
 }

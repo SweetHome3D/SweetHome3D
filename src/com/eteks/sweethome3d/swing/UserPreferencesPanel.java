@@ -246,7 +246,7 @@ public class UserPreferencesPanel extends JPanel {
   /**
    * Displays this panel in a dialog box. 
    */
-  public boolean showDialog(JComponent parent) {
+  public boolean displayView(JComponent parent) {
     String dialogTitle = resource.getString("preferences.title");
     return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 

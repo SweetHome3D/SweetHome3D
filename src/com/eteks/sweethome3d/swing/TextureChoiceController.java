@@ -35,6 +35,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class TextureChoiceController {
   public enum Property {TEXTURE}
 
+  private String                title;
   private UserPreferences       preferences;
   private ContentManager        contentManager;
   
@@ -47,16 +48,20 @@ public class TextureChoiceController {
   public TextureChoiceController(String title, 
                                  UserPreferences preferences,
                                  ContentManager contentManager) {
+    this.title = title;
     this.preferences = preferences;
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    this.textureChoiceView = new TextureChoiceComponent(title, preferences, this);
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.textureChoiceView == null) {
+      this.textureChoiceView = new TextureChoiceComponent(this.title, this.preferences, this);
+    }
     return this.textureChoiceView;
   }
 
@@ -96,21 +101,21 @@ public class TextureChoiceController {
    * Controls texture import.
    */
   public void importTexture() {
-    new ImportedTextureWizardController(this.preferences, this.contentManager);
+    new ImportedTextureWizardController(this.preferences, this.contentManager).displayView(getView());
   }
 
   /**
    * Controls the import of a texture with a given name.
    */
   public void importTexture(String textureName) {
-    new ImportedTextureWizardController(textureName, this.preferences, this.contentManager);
+    new ImportedTextureWizardController(textureName, this.preferences, this.contentManager).displayView(getView());
   }
   
   /**
    * Controls the modification of a texture.
    */
   public void modifyTexture(CatalogTexture texture) {
-    new ImportedTextureWizardController(texture, this.preferences, this.contentManager);
+    new ImportedTextureWizardController(texture, this.preferences, this.contentManager).displayView(getView());
   }
 
   /**

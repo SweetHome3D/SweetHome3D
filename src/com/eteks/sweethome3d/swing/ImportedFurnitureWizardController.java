@@ -57,7 +57,9 @@ public class ImportedFurnitureWizardController extends WizardController {
   
   private Home                             home;
   private CatalogPieceOfFurniture          piece;
+  private String                           modelName;
   private UserPreferences                  preferences;
+  private ContentManager                   contentManager;
   private UndoableEditSupport              undoSupport;
   private PropertyChangeSupport            propertyChangeSupport;
 
@@ -142,12 +144,11 @@ public class ImportedFurnitureWizardController extends WizardController {
                                             UndoableEditSupport undoSupport) {
     this.home = home;
     this.piece = piece;
+    this.modelName = modelName;
     this.preferences = preferences;
     this.undoSupport = undoSupport;
+    this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    // Create view
-    this.stepsView = new ImportedFurnitureWizardStepsPanel(
-        piece, modelName, home != null, preferences, contentManager, this);
     ResourceBundle resource = ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName());
     setTitle(resource.getString(piece == null 
         ? "importFurnitureWizard.title" 
@@ -158,8 +159,6 @@ public class ImportedFurnitureWizardController extends WizardController {
     this.furnitureAttributesStepState = new FurnitureAttributesStepState();
     this.furnitureIconStepState = new FurnitureIconStepState();
     setStepState(this.furnitureModelStepState);
-    
-    displayView();
   }
 
   /**
@@ -269,6 +268,11 @@ public class ImportedFurnitureWizardController extends WizardController {
    * Returns the unique wizard view used for all steps.
    */
   protected JComponent getStepsView() {
+    // Create view lazily only once it's needed
+    if (this.stepsView == null) {
+      this.stepsView = new ImportedFurnitureWizardStepsPanel(
+          this.piece, this.modelName, this.home != null, this.preferences, this.contentManager, this);
+    }
     return this.stepsView;
   }
 

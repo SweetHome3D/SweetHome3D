@@ -19,11 +19,9 @@
  */
 package com.eteks.sweethome3d.applet;
 
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
-import java.awt.Window;
 import java.util.ResourceBundle;
 
+import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 
 import com.eteks.sweethome3d.model.HomeRecorder;
@@ -44,6 +42,7 @@ public class AppletContentManager extends FileContentManager {
   /**
    * Returns the name of the content in parameter.
    */
+  @Override
   public String getPresentationName(String contentName, 
                                     ContentType contentType) {
     if (contentType == ContentType.SWEET_HOME_3D) {
@@ -57,6 +56,7 @@ public class AppletContentManager extends FileContentManager {
    * Returns <code>true</code> if the content name in parameter is accepted
    * for <code>contentType</code>.
    */
+  @Override
   public boolean isAcceptable(String contentName, 
                               ContentType contentType) {
     if (contentType == ContentType.SWEET_HOME_3D) {
@@ -70,34 +70,35 @@ public class AppletContentManager extends FileContentManager {
    * Returns the name chosen by user with an open dialog.
    * @return the name or <code>null</code> if user canceled its choice.
    */
-  public String showOpenDialog(String      dialogTitle,
+  @Override
+  public String showOpenDialog(JComponent  parent,
+                               String      dialogTitle,
                                ContentType contentType) {
     if (contentType == ContentType.SWEET_HOME_3D) {
       ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
-      Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       String [] availableHomes = null;
       if (this.recorder instanceof HomeAppletRecorder) {
         try {
           availableHomes = ((HomeAppletRecorder)this.recorder).getAvailableHomes();
         } catch (RecorderException ex) {
           String errorMessage = resource.getString("showOpenDialog.availableHomesError");
-          showError(activeWindow, errorMessage);
+          showError(parent, errorMessage);
           return null;
         }
       }    
       
       if (availableHomes != null && availableHomes.length == 0) {
         String message = resource.getString("showOpenDialog.noAvailableHomes");
-        JOptionPane.showMessageDialog(activeWindow, 
+        JOptionPane.showMessageDialog(parent, 
             message, getDefaultDialogTitle(false), JOptionPane.INFORMATION_MESSAGE);
         return null;
       } else {
         String message = resource.getString("showOpenDialog.message");
-        return (String)JOptionPane.showInputDialog(activeWindow, 
+        return (String)JOptionPane.showInputDialog(parent, 
             message, getDefaultDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
       }
     } else {
-      return super.showOpenDialog(dialogTitle, contentType);
+      return super.showOpenDialog(parent, dialogTitle, contentType);
     }
   }
   
@@ -107,37 +108,38 @@ public class AppletContentManager extends FileContentManager {
    * he wants to overwrite this existing name. 
    * @return the chosen name or <code>null</code> if user canceled its choice.
    */
-  public String showSaveDialog(String      dialogTitle,
+  @Override
+  public String showSaveDialog(JComponent  parent,
+                               String      dialogTitle,
                                ContentType contentType,
                                String      name) {
     if (contentType == ContentType.SWEET_HOME_3D) {
       ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
-      Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       String message = resource.getString("showSaveDialog.message");
-      String savedName = (String)JOptionPane.showInputDialog(activeWindow, 
+      String savedName = (String)JOptionPane.showInputDialog(parent, 
           message, getDefaultDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name); 
   
       // If the name exists, prompt user if he wants to overwrite it
       try {
         if (this.recorder.exists(savedName)
-            && !confirmOverwrite(activeWindow, savedName)) {
-          return showSaveDialog(dialogTitle, contentType, savedName);
+            && !confirmOverwrite(parent, savedName)) {
+          return showSaveDialog(parent, dialogTitle, contentType, savedName);
         }
         return savedName;
       } catch (RecorderException ex) {
         String errorMessage = resource.getString("showSaveDialog.checkHomeError");
-        showError(activeWindow, errorMessage);
+        showError(parent, errorMessage);
         return null;
       }
     } else {
-      return super.showSaveDialog(dialogTitle, contentType, name);
+      return super.showSaveDialog(parent, dialogTitle, contentType, name);
     }
   }
   
   /**
    * Shows the given <code>message</code> in an error message dialog. 
    */
-  private void showError(Component parent, String message) {
+  private void showError(JComponent parent, String message) {
     ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
     String title = resource.getString("showError.title");
     JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);    

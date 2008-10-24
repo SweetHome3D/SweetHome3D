@@ -41,7 +41,6 @@ public abstract class WizardController {
   private PropertyChangeListener    stepStatePropertyChangeListener;
 
   public WizardController() {
-    this.wizardView = new WizardPane(this);
     // Create a listener used to track changes in current step state
     this.stepStatePropertyChangeListener = new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -65,14 +64,18 @@ public abstract class WizardController {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.wizardView == null) {
+      this.wizardView = new WizardPane(this);
+    }
     return this.wizardView;
   }
   
   /**
-   * Displays wizard view. 
+   * Displays the view controlled by this controller. 
    */
-  protected void displayView() {
-    ((WizardPane)getView()).displayView();
+  public void displayView(JComponent parentView) {
+    ((WizardPane)getView()).displayView(parentView);
   }
 
   /**

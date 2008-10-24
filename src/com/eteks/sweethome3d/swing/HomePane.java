@@ -70,7 +70,6 @@ import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.FocusManager;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
@@ -1465,7 +1464,7 @@ public class HomePane extends JRootPane {
    * Displays a content chooser open dialog to open a .sh3d file.
    */
   public String showOpenDialog() {
-    return this.contentManager.showOpenDialog( 
+    return this.contentManager.showOpenDialog(this, 
         this.resource.getString("openHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D);
   }
@@ -1474,7 +1473,7 @@ public class HomePane extends JRootPane {
    * Displays a content chooser open dialog to open a .sh3f file.
    */
   public String showImportFurnitureLibraryDialog() {
-    return this.contentManager.showOpenDialog( 
+    return this.contentManager.showOpenDialog(this, 
         this.resource.getString("importFurnitureLibraryDialog.title"), 
         ContentManager.ContentType.FURNITURE_LIBRARY);
   }
@@ -1490,8 +1489,8 @@ public class HomePane extends JRootPane {
     String title = this.resource.getString("confirmReplaceFurnitureLibrary.title");
     String replace = this.resource.getString("confirmReplaceFurnitureLibrary.replace");
     String doNotReplace = this.resource.getString("confirmReplaceFurnitureLibrary.doNotReplace");
-    
-    return JOptionPane.showOptionDialog(FocusManager.getCurrentManager().getActiveWindow(), 
+        
+    return JOptionPane.showOptionDialog(this, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
   }
@@ -1500,7 +1499,7 @@ public class HomePane extends JRootPane {
    * Displays a content chooser save dialog to save a home in a .sh3d file.
    */
   public String showSaveDialog(String homeName) {
-    return this.contentManager.showSaveDialog(
+    return this.contentManager.showSaveDialog(this,
         this.resource.getString("saveHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D, homeName);
   }
@@ -1663,7 +1662,7 @@ public class HomePane extends JRootPane {
    * Shows a content chooser save dialog to print a home in a PDF file.
    */
   public String showPrintToPDFDialog(String homeName) {
-    return this.contentManager.showSaveDialog(
+    return this.contentManager.showSaveDialog(this,
         this.resource.getString("printToPDFDialog.title"), 
         ContentManager.ContentType.PDF, homeName);
   }
@@ -1697,7 +1696,7 @@ public class HomePane extends JRootPane {
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
   public String showExportToOBJDialog(String homeName) {
-    return this.contentManager.showSaveDialog(
+    return this.contentManager.showSaveDialog(this,
         this.resource.getString("exportToOBJDialog.title"), 
         ContentManager.ContentType.OBJ, homeName);
   }

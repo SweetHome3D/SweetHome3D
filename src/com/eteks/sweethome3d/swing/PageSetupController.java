@@ -47,15 +47,24 @@ public class PageSetupController {
                              UndoableEditSupport undoSupport) {
     this.home = home;
     this.undoSupport = undoSupport;
-    this.pageSetupView = new PageSetupPanel(home, this); 
-    ((PageSetupPanel)this.pageSetupView).displayView();
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.pageSetupView == null) {
+      this.pageSetupView = new PageSetupPanel(this.home, this);
+    }
     return this.pageSetupView;
+  }
+  
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView(JComponent parentView) {
+    ((PageSetupPanel)getView()).displayView(parentView);
   }
 
   /**

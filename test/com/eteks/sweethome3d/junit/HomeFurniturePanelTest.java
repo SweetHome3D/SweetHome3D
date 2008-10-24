@@ -108,6 +108,6 @@ public class HomeFurniturePanelTest extends TestCase {
     
     HomeFurniturePanel furniturePanel = 
         new HomeFurniturePanel(home, preferences, null);
-    furniturePanel.displayView();
+    furniturePanel.displayView(null);
   }
 }

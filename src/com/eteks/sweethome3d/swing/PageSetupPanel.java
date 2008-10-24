@@ -29,12 +29,13 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
 import java.util.ResourceBundle;
 
-import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
@@ -180,9 +181,9 @@ public class PageSetupPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView() {
+  public void displayView(JComponent parent) {
     String dialogTitle = resource.getString("pageSetup.title");
-    if (JOptionPane.showConfirmDialog(FocusManager.getCurrentManager().getActiveWindow(), this, dialogTitle, 
+    if (JOptionPane.showConfirmDialog(SwingUtilities.getRootPane(parent), this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {

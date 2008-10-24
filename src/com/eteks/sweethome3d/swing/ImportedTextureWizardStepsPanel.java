@@ -630,7 +630,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
    * Returns an image name chosen for a content chooser dialog.
    */
   private String showImageChoiceDialog(ContentManager contentManager) {
-    return contentManager.showOpenDialog( 
+    return contentManager.showOpenDialog(this, 
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
   }
 

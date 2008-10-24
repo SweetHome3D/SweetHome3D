@@ -19,10 +19,7 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.Component;
 import java.awt.FileDialog;
-import java.awt.KeyboardFocusManager;
-import java.awt.Window;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -30,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
@@ -301,14 +299,14 @@ public class FileContentManager implements ContentManager {
    * Returns the file path chosen by user with an open file dialog.
    * @return the file path or <code>null</code> if user cancelled its choice.
    */
-  public String showOpenDialog(String      dialogTitle,
+  public String showOpenDialog(JComponent  parent,
+                               String      dialogTitle,
                                ContentType contentType) {
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()) {
-      return showFileDialog(activeWindow, dialogTitle, contentType, null, false);
+      return showFileDialog(parent, dialogTitle, contentType, null, false);
     } else {
-      return showFileChooser(activeWindow, dialogTitle, contentType, null, false);
+      return showFileChooser(parent, dialogTitle, contentType, null, false);
     }
   }
   
@@ -318,7 +316,8 @@ public class FileContentManager implements ContentManager {
    * he wants to overwrite this existing file. 
    * @return the chosen file path or <code>null</code> if user cancelled its choice.
    */
-  public String showSaveDialog(String      dialogTitle,
+  public String showSaveDialog(JComponent  parent,
+                               String      dialogTitle,
                                ContentType contentType,
                                String      name) {
     String defaultExtension = this.fileDefaultExtensions.get(contentType);
@@ -337,13 +336,12 @@ public class FileContentManager implements ContentManager {
       }
     }
     
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     String savedName;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()) {
-      savedName = showFileDialog(activeWindow, dialogTitle, contentType, name, true);
+      savedName = showFileDialog(parent, dialogTitle, contentType, name, true);
     } else {
-      savedName = showFileChooser(activeWindow, dialogTitle, contentType, name, true);
+      savedName = showFileChooser(parent, dialogTitle, contentType, name, true);
     }
     
     boolean addedExtension = false;
@@ -368,8 +366,8 @@ public class FileContentManager implements ContentManager {
       // If the file exists, prompt user if he wants to overwrite it
       File savedFile = new File(savedName);
       if (savedFile.exists()
-          && !confirmOverwrite(activeWindow, savedFile.getName())) {
-        return showSaveDialog(dialogTitle, contentType, savedName);
+          && !confirmOverwrite(parent, savedFile.getName())) {
+        return showSaveDialog(parent, dialogTitle, contentType, savedName);
       }
     }
     return savedName;
@@ -378,11 +376,11 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays an AWT open file dialog.
    */
-  private String showFileDialog(Component          parent,
-                                String              dialogTitle,
-                                final ContentType   contentType,
-                                String              name, 
-                                boolean             save) {
+  private String showFileDialog(JComponent         parent,
+                                String             dialogTitle,
+                                final ContentType  contentType,
+                                String             name, 
+                                boolean            save) {
     FileDialog fileDialog = new FileDialog(JOptionPane.getFrameForComponent(parent));
 
     // Set selected file
@@ -413,7 +411,7 @@ public class FileContentManager implements ContentManager {
     
     fileDialog.setVisible(true);
     String selectedFile = fileDialog.getFile();
-    // If user choosed a file
+    // If user chose a file
     if (selectedFile != null) {
       // Retrieve current directory for future calls
       this.currentDirectory = new File(fileDialog.getDirectory());
@@ -427,7 +425,7 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays a Swing open file chooser.
    */
-  private String showFileChooser(Component    parent,
+  private String showFileChooser(JComponent    parent,
                                  String        dialogTitle,
                                  ContentType   contentType,
                                  String        name,
@@ -494,7 +492,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  protected boolean confirmOverwrite(Component parent, String fileName) {
+  protected boolean confirmOverwrite(JComponent parent, String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");

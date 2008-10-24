@@ -33,7 +33,6 @@ import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.swing.FocusManager;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -42,6 +41,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
@@ -241,8 +241,8 @@ public class WizardPane extends JOptionPane {
   /**
    * Displays this wizard view in a modal dialog.
    */
-  public void displayView() {
-    this.dialog = createDialog(FocusManager.getCurrentManager().getActiveWindow(), this.title);
+  public void displayView(JComponent parent) {
+    this.dialog = createDialog(SwingUtilities.getRootPane(parent), this.title);
     this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     this.dialog.setResizable(this.resizable);
     // Pack again because resize decorations may have changed dialog preferred size

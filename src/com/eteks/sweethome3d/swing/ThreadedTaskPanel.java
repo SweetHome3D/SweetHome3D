@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -27,6 +28,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.FocusManager;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -81,7 +83,7 @@ public class ThreadedTaskPanel extends JPanel {
    * Sets the running status of the threaded task. 
    * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
    */
-  public void setTaskRunning(boolean taskRunning) {
+  public void setTaskRunning(boolean taskRunning, JComponent executingView) {
     this.taskRunning = taskRunning;
     if (taskRunning && this.dialog == null) {
       ResourceBundle resource = ResourceBundle.getBundle(ThreadedTaskPanel.class.getName());
@@ -95,7 +97,7 @@ public class ThreadedTaskPanel extends JPanel {
             optionPane.setValue(cancelButton);
           }
         });
-      this.dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
+      this.dialog = optionPane.createDialog(executingView, dialogTitle);
       
       try {
         // Sleep 200 ms before showing dialog to avoid displaying it 

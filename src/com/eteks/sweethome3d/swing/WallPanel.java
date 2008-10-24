@@ -44,6 +44,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
@@ -762,10 +763,10 @@ public class WallPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView() {
+  public void displayView(JComponent parent) {
     String dialogTitle = resource.getString("wall.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
     // Add a listener that transfer focus to thickness field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

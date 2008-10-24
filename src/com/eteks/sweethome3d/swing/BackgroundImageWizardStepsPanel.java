@@ -508,7 +508,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Returns an image chosen for a content chooser dialog.
    */
   private String showImageChoiceDialog(ContentManager contentManager) {
-    return contentManager.showOpenDialog( 
+    return contentManager.showOpenDialog(this, 
         this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
   }
 

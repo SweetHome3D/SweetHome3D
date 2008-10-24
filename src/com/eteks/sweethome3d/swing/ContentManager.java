@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import javax.swing.JComponent;
+
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 
@@ -51,7 +53,8 @@ public interface ContentManager {
    * Returns the content name chosen by user with an open content dialog.
    * @return the chosen content name or <code>null</code> if user canceled its choice.
    */
-  public abstract String showOpenDialog(String dialogTitle,
+  public abstract String showOpenDialog(JComponent parent,
+                                        String dialogTitle,
                                         ContentType contentType);
 
   /**
@@ -60,7 +63,8 @@ public interface ContentManager {
    * if the user wants to overwrite it before return. 
    * @return the chosen content name or <code>null</code> if user canceled its choice.
    */
-  public abstract String showSaveDialog(String dialogTitle,
+  public abstract String showSaveDialog(JComponent parent,
+                                        String dialogTitle,
                                         ContentType contentType,
                                         String name);
 }

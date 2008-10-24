@@ -19,11 +19,7 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.KeyboardFocusManager;
-import java.awt.Window;
 import java.awt.geom.Point2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -57,18 +53,6 @@ public class WallPanelTest extends TestCase {
     home.setWallLeftSideColor(wall1, 10);
     home.setWallRightSideColor(wall1, 20);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
-    
-    // Add a listener that closes automatically any opened window
-    PropertyChangeListener activeWindowListener = new PropertyChangeListener() {
-      public void propertyChange(PropertyChangeEvent ev) {
-        Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-        if (activeWindow != null) {
-          activeWindow.dispose();
-        }
-      }
-    };
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(
-        "activeWindow", activeWindowListener);
     
     // 2. Create a wall panel to edit the selected wall
     WallPanel panel = (WallPanel)new WallController(home, preferences, null, null).getView();
@@ -114,9 +98,6 @@ public class WallPanelTest extends TestCase {
     // Check values stored by furniture panel components are equal to the ones set
     assertWallPanelEquals(null, null, null,
         null, null, null, null, null, 10, null, null, null, panel);
-
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(
-        "activeWindow", activeWindowListener);
   }
   
   /**
@@ -165,6 +146,6 @@ public class WallPanelTest extends TestCase {
     home.setWallRightSideColor(wall1, 0xFFFF00);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
-    new WallController(home, new DefaultUserPreferences(), new FileContentManager(), null);
+    new WallController(home, new DefaultUserPreferences(), new FileContentManager(), null).displayView(null);
   }
 }

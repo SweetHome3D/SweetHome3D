@@ -66,12 +66,10 @@ public class HomeController3D {
     this.preferences = preferences;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
-    // Create view
-    this.home3DView = new HomeComponent3D(home, this);
     // Initialize states
     this.topCameraState = new TopCameraState();
     this.observerCameraState = new ObserverCameraState();
-    // Set defaut state 
+    // Set default state 
     setCameraState(home.getCamera() == home.getTopCamera() 
         ? this.topCameraState
         : this.observerCameraState);
@@ -81,6 +79,10 @@ public class HomeController3D {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.home3DView == null) {
+      this.home3DView = new HomeComponent3D(this.home, this);
+    }
     return this.home3DView;
   }
 
@@ -105,7 +107,7 @@ public class HomeController3D {
    */
   public void modifyAttributes() {
     new Home3DAttributesController(this.home, this.preferences, 
-        this.contentManager, this.undoSupport);    
+        this.contentManager, this.undoSupport).displayView(getView());    
   }
 
   /**

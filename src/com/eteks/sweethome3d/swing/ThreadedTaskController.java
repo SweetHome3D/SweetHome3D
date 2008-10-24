@@ -34,6 +34,7 @@ import javax.swing.JComponent;
  */
 public class ThreadedTaskController {
   private Callable<Void>   threadedTask;
+  private String           taskMessage;
   private ExceptionHandler exceptionHandler;
   private ExecutorService  threadExecutor;
   private JComponent       view;
@@ -49,16 +50,19 @@ public class ThreadedTaskController {
                                 String taskMessage, 
                                 ExceptionHandler exceptionHandler) {
     this.threadedTask = threadedTask;
+    this.taskMessage = taskMessage;
     this.exceptionHandler = exceptionHandler;
     this.threadExecutor = Executors.newSingleThreadExecutor();
-    this.view = new ThreadedTaskPanel(taskMessage, this);
-    executeTask();
   }
   
   /**
    * Returns the view controlled by this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.view == null) {
+      this.view = new ThreadedTaskPanel(this.taskMessage, this);
+    }
     return this.view;
   }
 
@@ -66,14 +70,14 @@ public class ThreadedTaskController {
    * Executes in a separated thread the task given in constructor. This task shouldn't
    * modify any model objects. 
    */
-  private void executeTask() {
+  public void executeTask(final JComponent executingView) {
     this.task = this.threadExecutor.submit(new FutureTask<Void>(threadedTask) {
         @Override
         public void run() {
           // Update running status in view
           ((ThreadedTaskPanel)getView()).invokeLater(new Runnable() {
               public void run() {
-                ((ThreadedTaskPanel)getView()).setTaskRunning(true);
+                ((ThreadedTaskPanel)getView()).setTaskRunning(true, executingView);
               }
             });
           super.run();
@@ -84,7 +88,7 @@ public class ThreadedTaskController {
           // Update running status in view
           ((ThreadedTaskPanel)getView()).invokeLater(new Runnable() {
               public void run() {
-                ((ThreadedTaskPanel)getView()).setTaskRunning(false);
+                ((ThreadedTaskPanel)getView()).setTaskRunning(false, executingView);
                 task = null;
               }
             });

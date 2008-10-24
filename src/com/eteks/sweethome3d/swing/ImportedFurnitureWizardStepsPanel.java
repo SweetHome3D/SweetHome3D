@@ -958,7 +958,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
                 // Open zipped stream
                 zipIn = new ZipInputStream(urlContent.openStream());
                 // Parse entries to see if one is readable
-                for (ZipEntry entry; isShowing() && (entry = zipIn.getNextEntry()) != null; ) {
+                for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
                   try {
                     String entryName = entry.getName();
                     // Ignore directory entries and entries starting by a dot
@@ -1104,7 +1104,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
    * Returns the model name chosen for a file chooser dialog.
    */
   private String showModelChoiceDialog(ContentManager contentManager) {
-    return contentManager.showOpenDialog( 
+    return contentManager.showOpenDialog(this, 
         this.resource.getString("modelChoiceDialog.title"), 
         ContentManager.ContentType.MODEL);
   }

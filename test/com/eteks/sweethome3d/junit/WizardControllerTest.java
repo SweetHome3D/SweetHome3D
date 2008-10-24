@@ -116,11 +116,7 @@ public class WizardControllerTest extends TestCase {
   
   public static void main(String [] args) {
     // Display the wizard controlled by ControllerTest
-    new ControllerTest() {
-      {
-        displayView();
-      }
-    };
+    new ControllerTest().displayView(null);
   }
 
   /**

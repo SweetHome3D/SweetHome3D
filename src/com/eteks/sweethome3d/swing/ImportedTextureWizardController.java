@@ -44,7 +44,9 @@ public class ImportedTextureWizardController extends WizardController {
   public enum Step {IMAGE, ATTRIBUTES};
   
   private CatalogTexture                 texture;
+  private String                         textureName;
   private UserPreferences                preferences;
+  private ContentManager                 contentManager;
   private PropertyChangeSupport          propertyChangeSupport;
 
   private ImportedTextureWizardStepState textureImageStepState;
@@ -89,11 +91,10 @@ public class ImportedTextureWizardController extends WizardController {
                                           UserPreferences preferences,
                                           ContentManager contentManager) {
     this.texture = texture;
+    this.textureName = textureName;
     this.preferences = preferences;
+    this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    // Create view
-    this.stepsView = new ImportedTextureWizardStepsPanel(texture, textureName, 
-        preferences, contentManager, this);
     ResourceBundle resource = ResourceBundle.getBundle(ImportedTextureWizardController.class.getName());
     setTitle(resource.getString(texture == null 
         ? "importTextureWizard.title" 
@@ -102,8 +103,6 @@ public class ImportedTextureWizardController extends WizardController {
     this.textureImageStepState = new TextureImageStepState();
     this.textureAttributesStepState = new TextureAttributesStepState();
     setStepState(this.textureImageStepState);
-    
-    displayView();
   }
 
   /**
@@ -147,6 +146,11 @@ public class ImportedTextureWizardController extends WizardController {
    * Returns the unique wizard view used for all steps.
    */
   protected JComponent getStepsView() {
+    // Create view lazily only once it's needed
+    if (this.stepsView == null) {
+      this.stepsView = new ImportedTextureWizardStepsPanel(this.texture, this.textureName, 
+          this.preferences, this.contentManager, this);
+    }
     return this.stepsView;
   }
 

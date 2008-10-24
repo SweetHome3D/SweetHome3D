@@ -39,32 +39,35 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class Home3DAttributesController {
   private Home                    home;
+  private UserPreferences         preferences;
+  private ContentManager          contentManager;
   private UndoableEditSupport     undoSupport;
   private TextureChoiceController groundTextureController;
-  private JComponent              wallView;
+  private JComponent              home3DAttributesView;
 
   /**
    * Creates the controller of home furniture view with undo support.
    */
-  public Home3DAttributesController(Home home, 
-                        UserPreferences preferences,
-                        ContentManager contentManager, 
-                        UndoableEditSupport undoSupport) {
+  public Home3DAttributesController(Home home,
+                                    UserPreferences preferences,
+                                    ContentManager contentManager,
+                                    UndoableEditSupport undoSupport) {
     this.home = home;
-    this.undoSupport = undoSupport;
-    
-    ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
-    this.groundTextureController = new TextureChoiceController(
-        resource.getString("groundTextureTitle"), preferences, contentManager);
-    
-    this.wallView = new Home3DAttributesPanel(home, preferences, this); 
-    ((Home3DAttributesPanel)this.wallView).displayView();
+    this.preferences = preferences;
+    this.contentManager = contentManager;
+    this.undoSupport = undoSupport;    
   }
 
   /**
    * Returns the texture controller of the ground.
    */
   public TextureChoiceController getGroundTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.groundTextureController == null) {
+      ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
+      this.groundTextureController = new TextureChoiceController(
+          resource.getString("groundTextureTitle"), this.preferences, this.contentManager);
+    }
     return this.groundTextureController;
   }
 
@@ -72,7 +75,18 @@ public class Home3DAttributesController {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
-    return this.wallView;
+    // Create view lazily only once it's needed
+    if (this.home3DAttributesView == null) {
+      this.home3DAttributesView = new Home3DAttributesPanel(this.home, this.preferences, this); 
+    }
+    return this.home3DAttributesView;
+  }
+  
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView(JComponent parentView) {
+    ((Home3DAttributesPanel)getView()).displayView(parentView);
   }
 
   /**

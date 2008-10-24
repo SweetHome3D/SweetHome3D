@@ -40,6 +40,8 @@ import com.eteks.sweethome3d.model.Wall;
  */
 public class WallController {
   private Home                    home;
+  private UserPreferences         preferences;
+  private ContentManager          contentManager;
   private UndoableEditSupport     undoSupport;
   private TextureChoiceController leftSideTextureController;
   private TextureChoiceController rightSideTextureController;
@@ -53,22 +55,21 @@ public class WallController {
                         ContentManager contentManager, 
                         UndoableEditSupport undoSupport) {
     this.home = home;
+    this.preferences = preferences;
+    this.contentManager = contentManager;
     this.undoSupport = undoSupport;
-
-    ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
-    this.leftSideTextureController = new TextureChoiceController(
-        resource.getString("leftSideTextureTitle"), preferences, contentManager);
-    this.rightSideTextureController = new TextureChoiceController(
-        resource.getString("rightSideTextureTitle"), preferences, contentManager);
-    
-    this.wallView = new WallPanel(home, preferences, this); 
-    ((WallPanel)this.wallView).displayView();
   }
 
   /**
    * Returns the texture controller of the wall left side.
    */
   public TextureChoiceController getLeftSideTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.leftSideTextureController == null) {
+      ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
+      this.leftSideTextureController = new TextureChoiceController(
+          resource.getString("leftSideTextureTitle"), this.preferences, this.contentManager);
+    }
     return this.leftSideTextureController;
   }
 
@@ -76,6 +77,12 @@ public class WallController {
    * Returns the texture controller of the wall right side.
    */
   public TextureChoiceController getRightSideTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.rightSideTextureController == null) {
+      ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
+      this.rightSideTextureController = new TextureChoiceController(
+          resource.getString("rightSideTextureTitle"), this.preferences, this.contentManager);
+    }
     return this.rightSideTextureController;
   }
 
@@ -83,7 +90,18 @@ public class WallController {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.wallView == null) {
+      this.wallView = new WallPanel(this.home, this.preferences, this); 
+    }
     return this.wallView;
+  }
+
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView(JComponent parentView) {
+    ((WallPanel)getView()).displayView(parentView);
   }
 
   /**
@@ -115,31 +133,33 @@ public class WallController {
       // Apply modification
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
           leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-          height, heightAtEnd, thickness); 
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          undoModifyWalls(modifiedWalls); 
-          home.setSelectedItems(oldSelection); 
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
-              leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-              height, heightAtEnd, thickness); 
-          home.setSelectedItems(oldSelection); 
-        }
-        
-        @Override
-        public String getPresentationName() {
-          return ResourceBundle.getBundle(WallController.class.getName()).
-              getString("undoModifyWallsName");
-        }
-      };
-      this.undoSupport.postEdit(undoableEdit);
+          height, heightAtEnd, thickness);       
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+          @Override
+          public void undo() throws CannotUndoException {
+            super.undo();
+            undoModifyWalls(modifiedWalls); 
+            home.setSelectedItems(oldSelection); 
+          }
+          
+          @Override
+          public void redo() throws CannotRedoException {
+            super.redo();
+            doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
+                leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
+                height, heightAtEnd, thickness); 
+            home.setSelectedItems(oldSelection); 
+          }
+          
+          @Override
+          public String getPresentationName() {
+            return ResourceBundle.getBundle(WallController.class.getName()).
+                getString("undoModifyWallsName");
+          }
+        };
+        this.undoSupport.postEdit(undoableEdit);
+      }
     }
   }
 

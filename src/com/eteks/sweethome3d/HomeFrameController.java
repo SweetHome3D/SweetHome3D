@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d;
 
+import javax.swing.JComponent;
+
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.swing.ContentManager;
@@ -28,9 +30,46 @@ import com.eteks.sweethome3d.swing.HomeController;
  * Home frame pane controller.
  * @author Emmanuel Puybaret
  */
-public class HomeFrameController extends HomeController {
+public class HomeFrameController {
+  private Home            home;
+  private ContentManager  contentManager;
+  private HomeApplication application;
+  private JComponent      homeFrameView;
+  
+  private HomeController  homeController;
+  
   public HomeFrameController(Home home, HomeApplication application, ContentManager contentManager) {
-    super(home, application, contentManager);
-    new HomeFramePane(home, application, contentManager, this).displayView();
+    this.home = home;
+    this.application = application;
+    this.contentManager = contentManager;
+  }
+
+  /**
+   * Returns the view associated with this controller.
+   */
+  public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.homeFrameView == null) {
+      this.homeFrameView = new HomeFramePane(this.home, this.application, this.contentManager, this);
+    }
+    return this.homeFrameView;
+  }
+  
+  /**
+   * Returns the home controller managed by this controller.
+   */
+  public HomeController getHomeController() {
+    // Create sub controller lazily only once it's needed
+    if (this.homeController == null) {
+      this.homeController = new HomeController(home, application, contentManager);
+    }
+    return this.homeController;
+  }
+  
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView() {
+    ((HomeFramePane)getView()).displayView();
   }
 }

@@ -33,7 +33,6 @@ import java.util.Hashtable;
 import java.util.ResourceBundle;
 
 import javax.swing.ButtonGroup;
-import javax.swing.FocusManager;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -44,6 +43,7 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -321,10 +321,10 @@ public class Home3DAttributesPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView() {
+  public void displayView(JComponent parent) {
     String dialogTitle = resource.getString("home3DAttributes.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(FocusManager.getCurrentManager().getActiveWindow(), dialogTitle);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
     // Add a listener that transfer focus to first text field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

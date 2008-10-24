@@ -114,8 +114,6 @@ public class PlanController extends FurnitureController {
     this.undoSupport = undoSupport;
     this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    // Create view
-    this.planView = new PlanComponent(home, preferences, this);
     // Initialize states
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
@@ -150,6 +148,10 @@ public class PlanController extends FurnitureController {
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.planView == null) {
+      this.planView = new PlanComponent(this.home, this.preferences, this);
+    }
     return this.planView;
   }
 
@@ -425,7 +427,8 @@ public class PlanController extends FurnitureController {
    */
   public void modifySelectedWalls() {
     if (!Home.getWallsSubList(this.home.getSelectedItems()).isEmpty()) {
-      new WallController(this.home, this.preferences, this.contentManager, this.undoSupport);
+      new WallController(this.home, this.preferences, 
+          this.contentManager, this.undoSupport).displayView(getView());
     }
   }
   

@@ -103,12 +103,12 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
         return true;
       }
 
-      public String showOpenDialog(String dialogTitle, ContentType contentType) {
+      public String showOpenDialog(JComponent parent, String dialogTitle, ContentType contentType) {
         // Return tested model name URL
         return testedImageName.toString();
       }
 
-      public String showSaveDialog(String dialogTitle, ContentType contentType, String name) {
+      public String showSaveDialog(JComponent parent, String dialogTitle, ContentType contentType, String name) {
         return null;
       }      
     };
@@ -172,7 +172,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     int textureCount = availableTexturesList.getModel().getSize();
     CatalogTexture defaultTexture = (CatalogTexture)availableTexturesList.getSelectedValue();
     // Import texture
-    JDialog textureWizardDialog = showImportTextureWizard(textureDialog, tester, false);    
+    JDialog textureWizardDialog = showImportTextureWizard(frame, tester, false);    
     // Retrieve ImportedFurnitureWizardStepsPanel components
     ImportedTextureWizardStepsPanel panel = (ImportedTextureWizardStepsPanel)TestUtilities.findComponent(
         textureWizardDialog, ImportedTextureWizardStepsPanel.class);
@@ -283,7 +283,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // Select imported texture
     availableTexturesList.setSelectedValue(importedTexture, true);
     // Modify texture
-    textureWizardDialog = showImportTextureWizard(textureDialog, tester, true);    
+    textureWizardDialog = showImportTextureWizard(frame, tester, true);    
     // Retrieve ImportedFurnitureWizardStepsPanel components
     panel = (ImportedTextureWizardStepsPanel)TestUtilities.findComponent(
         textureWizardDialog, ImportedTextureWizardStepsPanel.class);
@@ -435,15 +435,18 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     final JButton button = (JButton)new BasicFinder().find(parent, 
         new Matcher() {
           public boolean matches(Component c) {
-            return c instanceof JButton && ((JButton)c).getText().equals(ResourceBundle.getBundle(
-                TextureChoiceComponent.class.getName()).getString(
-                    modify ? "modifyTextureButton.text" : "importTextureButton.text"));
+            return c instanceof JButton 
+                && ((JButton)c).getText() != null 
+                && ((JButton)c).getText().equals(ResourceBundle.getBundle(
+                    TextureChoiceComponent.class.getName()).getString(
+                        modify ? "modifyTextureButton.text" : "importTextureButton.text"));
           }
         });
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          button.doClick();        }
+          button.doClick();        
+        }
       });
     // Wait for texture wizard to be shown
     String textureWizardTitle = ResourceBundle.getBundle(

@@ -71,7 +71,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -181,14 +180,16 @@ public class SweetHome3D extends HomeApplication {
       
       if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
-        new HomeController(new Home(), application).open(args [1]);
+        new HomeFrameController(new Home(), application, application.contentManager).
+            getHomeController().open(args [1]);
       } else if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
         final String furnitureLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               // Import furniture library with a dummy controller 
-              new HomeController(new Home(), application).importFurnitureLibrary(furnitureLibraryName);
+              new HomeFrameController(new Home(), application, application.contentManager).getHomeController().
+                 importFurnitureLibrary(furnitureLibraryName);
             }
           });
       }
@@ -297,7 +298,9 @@ public class SweetHome3D extends HomeApplication {
             case ADD :
               Home home = ev.getHome();
               try {
-                HomeController controller = new HomeFrameController(home, application, application.contentManager);
+                HomeFrameController controller = 
+                    new HomeFrameController(home, application, application.contentManager);
+                controller.displayView();
                 if (!this.firstApplicationHomeAdded) {
                   application.addNewHomeCloseListener(home, controller);
                   this.firstApplicationHomeAdded = true;
@@ -343,7 +346,7 @@ public class SweetHome3D extends HomeApplication {
    * Adds a listener to new home to close it if an other one is opened.
    */ 
   private void addNewHomeCloseListener(final Home home, 
-                                       final HomeController controller) {
+                                       final HomeFrameController controller) {
     if (home.getName() == null) {
       final HomeListener newHomeListener = new HomeListener() {
           public void homeChanged(HomeEvent ev) {
@@ -351,7 +354,7 @@ public class SweetHome3D extends HomeApplication {
             if (ev.getType() == HomeEvent.Type.ADD) { 
               if (ev.getHome().getName() != null
                   && home.getName() == null) {
-                controller.close();
+                controller.getHomeController().close();
               }
               removeHomeListener(this);
             } else if (ev.getHome() == home
@@ -414,8 +417,9 @@ public class SweetHome3D extends HomeApplication {
         if (home.isModified()) {
           String homeName = home.getName();                      
           if (homeName == null) {
-            getHomeFrame(home).toFront();
-            homeName = contentManager.showSaveDialog(null, 
+            JFrame homeFrame = getHomeFrame(home);
+            homeFrame.toFront();
+            homeName = contentManager.showSaveDialog(homeFrame.getRootPane(), null, 
                 ContentManager.ContentType.SWEET_HOME_3D, null);
           }
           if (homeName != null) {

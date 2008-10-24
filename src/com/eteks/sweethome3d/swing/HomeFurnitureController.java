@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class HomeFurnitureController {
   private Home                home;
+  private UserPreferences     preferences;
   private UndoableEditSupport undoSupport;
   private JComponent          homeFurnitureView;
 
@@ -46,19 +47,29 @@ public class HomeFurnitureController {
    * Creates the controller of home furniture view with undo support.
    */
   public HomeFurnitureController(Home home, 
-                        UserPreferences preferences, 
-                        UndoableEditSupport undoSupport) {
+                                 UserPreferences preferences, 
+                                 UndoableEditSupport undoSupport) {
     this.home = home;
+    this.preferences = preferences;
     this.undoSupport = undoSupport;
-    this.homeFurnitureView = new HomeFurniturePanel(home, preferences, this); 
-    ((HomeFurniturePanel)this.homeFurnitureView).displayView();
   }
 
   /**
    * Returns the view associated with this controller.
    */
   public JComponent getView() {
+    // Create view lazily only once it's needed
+    if (this.homeFurnitureView == null) {
+      this.homeFurnitureView = new HomeFurniturePanel(this.home, this.preferences, this); 
+    }
     return this.homeFurnitureView;
+  }
+  
+  /**
+   * Displays the view controlled by this controller.
+   */
+  public void displayView(JComponent parentView) {
+    ((HomeFurniturePanel)getView()).displayView(parentView);
   }
 
   /**

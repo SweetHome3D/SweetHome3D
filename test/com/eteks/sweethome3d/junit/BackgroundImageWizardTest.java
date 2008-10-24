@@ -81,12 +81,12 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
         return true;
       }
 
-      public String showOpenDialog(String dialogTitle, ContentType contentType) {
+      public String showOpenDialog(JComponent parent, String dialogTitle, ContentType contentType) {
         // Return tested model name URL
         return testedImageName.toString();
       }
 
-      public String showSaveDialog(String dialogTitle, ContentType contentType, String name) {
+      public String showSaveDialog(JComponent parent, String dialogTitle, ContentType contentType, String name) {
         return null;
       }      
     };

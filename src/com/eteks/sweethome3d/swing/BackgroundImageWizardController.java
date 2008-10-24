@@ -47,6 +47,8 @@ public class BackgroundImageWizardController extends WizardController {
   public enum Step {CHOICE, SCALE, ORIGIN};
   
   private Home                           home;
+  private UserPreferences                preferences;
+  private ContentManager                 contentManager;
   private UndoableEditSupport            undoSupport;
   private PropertyChangeSupport          propertyChangeSupport;
 
@@ -69,11 +71,10 @@ public class BackgroundImageWizardController extends WizardController {
                                          ContentManager contentManager,
                                          UndoableEditSupport undoSupport) {
     this.home = home;
+    this.preferences = preferences;
+    this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    // Create view
-    this.stepsView = new BackgroundImageWizardStepsPanel(
-        home.getBackgroundImage(), preferences, contentManager, this);
     ResourceBundle resource = ResourceBundle.getBundle(BackgroundImageWizardController.class.getName());
     setTitle(resource.getString("wizard.title"));    
     setResizable(true);
@@ -82,8 +83,6 @@ public class BackgroundImageWizardController extends WizardController {
     this.imageScaleStepState = new ImageScaleStepState();
     this.imageOriginStepState = new ImageOriginStepState();
     setStepState(this.imageChoiceStepState);
-    
-    displayView();
   }
 
   /**
@@ -154,6 +153,11 @@ public class BackgroundImageWizardController extends WizardController {
    * Returns the unique wizard view used for all steps.
    */
   protected JComponent getStepsView() {
+    // Create view lazily only once it's needed
+    if (this.stepsView == null) {
+      this.stepsView = new BackgroundImageWizardStepsPanel(
+          this.home.getBackgroundImage(), this.preferences, this.contentManager, this);
+    }
     return this.stepsView;
   }
 

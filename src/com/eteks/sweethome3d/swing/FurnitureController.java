@@ -338,7 +338,7 @@ public class FurnitureController {
    */
   public void modifySelectedFurniture() {
     if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
-      new HomeFurnitureController(this.home, this.preferences, this.undoSupport);
+      new HomeFurnitureController(this.home, this.preferences, this.undoSupport).displayView(getView());
     }
   }
   
@@ -346,7 +346,8 @@ public class FurnitureController {
    * Displays the wizard that helps to import furniture to home. 
    */
   public void importFurniture() {
-    new ImportedFurnitureWizardController(this.home, this.preferences, this.contentManager, this.undoSupport);
+    new ImportedFurnitureWizardController(
+        this.home, this.preferences, this.contentManager, this.undoSupport).displayView(getView());
   }
   
   /**
@@ -355,7 +356,7 @@ public class FurnitureController {
    */
   public void importFurniture(String modelName) {
     new ImportedFurnitureWizardController(
-        this.home, modelName, this.preferences, this.contentManager, this.undoSupport);
+        this.home, modelName, this.preferences, this.contentManager, this.undoSupport).displayView(getView());
   }
   
   /**
