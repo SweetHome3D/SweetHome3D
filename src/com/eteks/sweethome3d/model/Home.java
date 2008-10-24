@@ -54,9 +54,9 @@ public class Home implements Serializable {
   private transient List<FurnitureListener>           furnitureListeners;
   private transient List<Object>                      selectedItems;
   private transient List<SelectionListener>           selectionListeners;
-  private Collection<Wall>                            walls;
+  private List<Wall>                                  walls;
   private transient List<WallListener>                wallListeners;
-  private Collection<DimensionLine>                   dimensionLines;
+  private List<DimensionLine>                         dimensionLines;
   private transient List<DimensionLineListener>       dimensionLineListeners;
   private Camera                                      camera;
   private transient List<CameraListener>              cameraListeners;
@@ -154,7 +154,7 @@ public class Home implements Serializable {
   }
 
   private void init() {
-    // Init transient lists
+    // Initialize transient lists
     this.selectedItems = new ArrayList<Object>();
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectionListeners = new ArrayList<SelectionListener>();
@@ -230,7 +230,7 @@ public class Home implements Serializable {
   }
   
   /**
-   * Returns <code>true</code> if the given <code>property</code> is compatbile 
+   * Returns <code>true</code> if the given <code>property</code> is compatible 
    * with the first set of sortable properties that existed in <code>HomePieceOfFurniture</code> class.
    */
   private boolean isFurnitureSortedPropertyBackwardCompatible(HomePieceOfFurniture.SortableProperty property) {
@@ -1289,7 +1289,7 @@ public class Home implements Serializable {
    * Returns the version of this home, the last time it was serialized or 
    * or {@link #CURRENT_VERSION} if it is not serialized yet or 
    * was serialized with Sweet Home 3D 0.x.  
-   * Version is usefull to know with which Sweet Home 3D version this home was saved
+   * Version is useful to know with which Sweet Home 3D version this home was saved
    * and warn user that he may lose information if he saves with 
    * current application a home created by a more recent version.
    */
