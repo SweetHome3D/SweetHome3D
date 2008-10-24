@@ -255,7 +255,7 @@ public class FurnitureTable extends JTable implements Printable {
     PropertyChangeListener sortListener = 
       new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          ((FurnitureTableModel)getModel()).sortFurniture(home);
+          ((FurnitureTableModel)getModel()).filterAndSortFurniture();
           // Update selected rows
           updateTableSelectedFurniture(home.getSelectedItems());
           getTableHeader().repaint();
@@ -268,7 +268,7 @@ public class FurnitureTable extends JTable implements Printable {
         public void pieceOfFurnitureChanged(FurnitureEvent ev) {
           if (ev.getType() == FurnitureEvent.Type.UPDATE) {
             // As furniture properties values change may alter sort order, udpate sort and whole table
-            ((FurnitureTableModel)getModel()).sortFurniture(home);
+            ((FurnitureTableModel)getModel()).filterAndSortFurniture();
             // Update selected rows
             updateTableSelectedFurniture(home.getSelectedItems());
           }
@@ -532,6 +532,14 @@ public class FurnitureTable extends JTable implements Printable {
       csv.append(lineSeparator);
     }
     return csv.toString();
+  }
+  
+  /**
+   * Sets the filter applied to the furniture displayed in this table.
+   */
+  public void setFurnitureFilter(FurnitureTable.FurnitureFilter filter) {
+    FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+    tableModel.setFurnitureFilter(filter);
   }
   
   /**
@@ -1093,11 +1101,14 @@ public class FurnitureTable extends JTable implements Printable {
    * Model used by this table.
    */
   private static class FurnitureTableModel extends AbstractTableModel {
-    private List<HomePieceOfFurniture> sortedFurniture;
+    private Home                       home;
+    private List<HomePieceOfFurniture> filteredAndSortedFurniture;
+    private FurnitureFilter            furnitureFilter;
     
     public FurnitureTableModel(Home home) {
+      this.home = home;
       addHomeListener(home);
-      sortFurniture(home);
+      filterAndSortFurniture();
     }
 
     private void addHomeListener(final Home home) {
@@ -1108,13 +1119,17 @@ public class FurnitureTable extends JTable implements Printable {
           switch (ev.getType()) {
             case ADD :
               int insertionIndex = getPieceOfFurnitureInsertionIndex(piece, home, pieceIndex);
-              sortedFurniture.add(insertionIndex, piece);
-              fireTableRowsInserted(insertionIndex, insertionIndex);
+              if (insertionIndex != -1) {
+                filteredAndSortedFurniture.add(insertionIndex, piece);
+                fireTableRowsInserted(insertionIndex, insertionIndex);
+              }
               break;
             case DELETE :
               int deletionIndex = getPieceOfFurnitureDeletionIndex(piece, home, pieceIndex);
-              sortedFurniture.remove(deletionIndex);
-              fireTableRowsDeleted(deletionIndex, deletionIndex);
+              if (deletionIndex != -1) {
+                filteredAndSortedFurniture.remove(deletionIndex);
+                fireTableRowsDeleted(deletionIndex, deletionIndex);
+              }
               break;
           }
         }
@@ -1126,16 +1141,34 @@ public class FurnitureTable extends JTable implements Printable {
          * equals to the insertion index where piece should be added.
          */
         private int getPieceOfFurnitureInsertionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
-          if (home.getFurnitureSortedProperty() == null) {
-            return homePieceIndex;
-          } else {
-            int sortedIndex = Collections.binarySearch(sortedFurniture, piece, getFurnitureComparator(home));
-            if (sortedIndex >= 0) {
-              return sortedIndex;
+          if (furnitureFilter == null) {
+            if (home.getFurnitureSortedProperty() == null) {
+              return homePieceIndex;
+            } 
+          } else if (!furnitureFilter.include(home, piece)) {
+            return -1;
+          } else if (home.getFurnitureSortedProperty() == null) {
+            // Find the index of the previous piece included in filteredAndSortedFurniture
+            List<HomePieceOfFurniture> homeFurniture = home.getFurniture();
+            int previousIncludedPieceIndex = homePieceIndex - 1;
+            while (previousIncludedPieceIndex > 0 
+                  && !furnitureFilter.include(home, homeFurniture.get(previousIncludedPieceIndex))) {
+              previousIncludedPieceIndex--;
+            }
+            if (filteredAndSortedFurniture.size() == 0) {
+              return 0;
             } else {
-              return -(sortedIndex + 1);
-            }              
+              return getPieceOfFurnitureIndex(homeFurniture.get(previousIncludedPieceIndex)) + 1;
+            }
           }
+          
+          // Default case when piece is included and furniture is  sorted 
+          int sortedIndex = Collections.binarySearch(filteredAndSortedFurniture, piece, getFurnitureComparator(home));
+          if (sortedIndex >= 0) {
+            return sortedIndex;
+          } else {
+            return -(sortedIndex + 1);
+          }              
         }
 
         /**
@@ -1143,11 +1176,14 @@ public class FurnitureTable extends JTable implements Printable {
          * of <code>homePieceIndex</code> if <code>home</code> furniture isn't sorted.
          */
         private int getPieceOfFurnitureDeletionIndex(HomePieceOfFurniture piece, Home home, int homePieceIndex) {
-          if (home.getFurnitureSortedProperty() == null) {
-            return homePieceIndex;
-          } else {
-            return getPieceOfFurnitureIndex(piece);              
-          }
+          if (furnitureFilter == null) {
+            if (home.getFurnitureSortedProperty() == null) {
+              return homePieceIndex;
+            } 
+          } else if (!furnitureFilter.include(home, piece)) {
+            return -1;
+          } 
+          return getPieceOfFurnitureIndex(piece);              
         }
       });
     }
@@ -1164,32 +1200,51 @@ public class FurnitureTable extends JTable implements Printable {
     }
 
     public int getRowCount() {
-      return this.sortedFurniture.size();
+      return this.filteredAndSortedFurniture.size();
     }
 
     public Object getValueAt(int rowIndex, int columnIndex) {
       // Always return piece itself, the real property displayed at screen is chosen by renderer
-      return this.sortedFurniture.get(rowIndex);
+      return this.filteredAndSortedFurniture.get(rowIndex);
     }
 
     /**
-     * Returns the index of <code>piece</code> in furniture table.
+     * Returns the index of <code>piece</code> in furniture table, or -1 if it is included by filter. 
      */
     public int getPieceOfFurnitureIndex(HomePieceOfFurniture piece) {
-      return this.sortedFurniture.indexOf(piece);
+      return this.filteredAndSortedFurniture.indexOf(piece);
     }
 
     /**
      * Sorts <code>home</code> furniture.
      */
-    public void sortFurniture(Home home) {
-      this.sortedFurniture = new ArrayList<HomePieceOfFurniture>(home.getFurniture());           
-      if (home.getFurnitureSortedProperty() != null) {
-        Comparator<HomePieceOfFurniture> furnitureComparator = getFurnitureComparator(home);
-        Collections.sort(this.sortedFurniture, furnitureComparator);         
+    public void filterAndSortFurniture() {
+      int previousRowCount = this.filteredAndSortedFurniture != null 
+          ? this.filteredAndSortedFurniture.size()
+          : 0;
+      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+      if (this.furnitureFilter == null) {
+        this.filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(homeFurniture);
+      } else {
+        // Create the filtered list of home furniture
+        this.filteredAndSortedFurniture = new ArrayList<HomePieceOfFurniture>(homeFurniture.size());
+        for (HomePieceOfFurniture homePiece : homeFurniture) {
+          if (this.furnitureFilter.include(this.home, homePiece)) {
+            this.filteredAndSortedFurniture.add(homePiece);
+          }
+        }
+      }
+      // Sort it if necessary
+      if (this.home.getFurnitureSortedProperty() != null) {
+        Comparator<HomePieceOfFurniture> furnitureComparator = getFurnitureComparator(this.home);
+        Collections.sort(this.filteredAndSortedFurniture, furnitureComparator);         
       }
       
-      fireTableRowsUpdated(0, getRowCount() - 1);
+      if (previousRowCount != this.filteredAndSortedFurniture.size()) {
+        fireTableDataChanged();
+      } else {
+        fireTableRowsUpdated(0, getRowCount() - 1);
+      }
     }
 
     private Comparator<HomePieceOfFurniture> getFurnitureComparator(Home home) {
@@ -1200,5 +1255,24 @@ public class FurnitureTable extends JTable implements Printable {
       }
       return furnitureComparator;
     }
+
+    /**
+     * Sets the filter applied to the furniture listed in this model.
+     */
+    public void setFurnitureFilter(FurnitureFilter furnitureFilter) {
+      this.furnitureFilter = furnitureFilter;      
+      filterAndSortFurniture();
+    }
+  }
+  
+  /**
+   * The super type used to specify how furniture should be filtered in furniture table.
+   */
+  public static interface FurnitureFilter {
+    /**
+     * Returns <code>true</code> if the given <code>piece</code> should be shown, 
+     * otherwise returns <code>false</code> if the <code>piece</code> should be hidden.
+     */
+    public abstract boolean include(Home home, HomePieceOfFurniture piece);
   }
 }

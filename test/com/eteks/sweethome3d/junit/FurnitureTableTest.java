@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
+import com.eteks.sweethome3d.swing.FurnitureTable.FurnitureFilter;
 
 /**
  * Tests furniture table component.
@@ -164,11 +165,83 @@ public class FurnitureTableTest extends TestCase {
     for (int row = 0, n = model.getRowCount() - 1; row < n; row++) {
       Object value = model.getValueAt(row, modelColumnIndex);
       Object nextValue = model.getValueAt(row + 1, modelColumnIndex);
-      // Check alphatical order of values at a row and next row
+      // Check alphabetical order of values at a row and next row
       assertTrue("Column not sorted", 
           comparator.compare(((HomePieceOfFurniture)value).getName(), 
                              ((HomePieceOfFurniture)nextValue).getName()) <= 0);
     }
+  }
+  
+  /**
+   * Tests filter in furniture table.
+   */
+  public void testFurnitureTableFilter() {
+    // 1.  Create a home that contains furniture matching catalog furniture
+    UserPreferences preferences = new DefaultUserPreferences();
+    List<HomePieceOfFurniture> homeFurniture = 
+      createHomeFurnitureFromCatalog(preferences.getFurnitureCatalog());
+    Home home = new Home(homeFurniture);
+    // Check home furniture isn't empty
+    assertTrue("Home furniture is empty", homeFurniture.size() > 0);
+
+    // 2. Create a table that displays home furniture with its controller  
+    FurnitureController furnitureController = new FurnitureController(home, preferences);
+    FurnitureTable table = (FurnitureTable)furnitureController.getView();
+    assertEquals("Home furniture count and row count different", homeFurniture.size(), table.getRowCount());
+    // Apply a filter on furniture that refuses pieces that are windows
+    table.setFurnitureFilter(new FurnitureFilter() {
+        public boolean include(Home home, HomePieceOfFurniture piece) {          
+          return !piece.isDoorOrWindow();
+        }
+      });
+    // Count how many doors and windows are in home
+    int doorsAndWindowsCount = 0;
+    HomePieceOfFurniture doorOrWindowPiece = null;
+    HomePieceOfFurniture otherPiece = null;
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      if (piece.isDoorOrWindow()) {
+        doorsAndWindowsCount++;
+        doorOrWindowPiece = piece;
+      } else {
+        otherPiece = piece;
+      }
+    }
+    // Check there's no door or window in table
+    int homeFurnitureCount = homeFurniture.size();
+    int tableFilterRowCount = table.getRowCount();
+    assertEquals("Home furniture count and row count same", 
+        homeFurnitureCount - doorsAndWindowsCount, tableFilterRowCount);
+    
+    // 3. Add a door or window to home
+    home.addPieceOfFurniture(new HomePieceOfFurniture(doorOrWindowPiece));
+    // Check no row were added in table
+    assertEquals("Wrong furniture count in home", homeFurnitureCount + 1, home.getFurniture().size());
+    assertEquals("Wrong row count in table", tableFilterRowCount, table.getRowCount());
+    
+    // 4. Add an other kind of piece to home
+    home.addPieceOfFurniture(new HomePieceOfFurniture(otherPiece));
+    // Check one row was added in table
+    assertEquals("Wrong furniture count in home", homeFurnitureCount + 2, home.getFurniture().size());
+    assertEquals("Wrong row count in table", tableFilterRowCount + 1, table.getRowCount());
+    
+    // 5. Test sort and filter internal buffer of the table
+    furnitureController.sortFurniture(HomePieceOfFurniture.SortableProperty.NAME);
+    // Check the alphabetical order of table data
+    assertFurnitureIsSortedByName(table, true);
+    // Add a door or window and an other kind of piece to home
+    home.addPieceOfFurniture(new HomePieceOfFurniture(doorOrWindowPiece));
+    home.addPieceOfFurniture(new HomePieceOfFurniture(otherPiece));
+    // Check one row was added in sorted table
+    assertEquals("Wrong furniture count in home", homeFurnitureCount + 4, home.getFurniture().size());
+    assertEquals("Wrong row count in table", tableFilterRowCount + 2, table.getRowCount());
+    assertFurnitureIsSortedByName(table, true);
+    
+    // 6. Remove filter
+    table.setFurnitureFilter(null);
+    // Check missing rows are back
+    assertEquals("Home furniture count and row count different", 
+        home.getFurniture().size(), table.getRowCount());
+    assertFurnitureIsSortedByName(table, true);
   }
 
   public static void main(String [] args) {
