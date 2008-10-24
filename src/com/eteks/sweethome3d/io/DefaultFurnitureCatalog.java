@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.io;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -74,19 +73,27 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String HOMONYM_FURNITURE_FORMAT = "%s -%d-";
   
   /**
-   * Creates a default furniture catalog read from resources in the package of this class 
-   * and plugin furniture folder.
+   * Creates a default furniture catalog read from resources in the package of this class.
    */
   public DefaultFurnitureCatalog() {
-    this(DefaultFurnitureCatalog.class.getName().substring(0, DefaultFurnitureCatalog.class.getName().lastIndexOf(".")), true);
+    this(null);
+  }
+  
+  /**
+   * Creates a default furniture catalog read from resources in the package of this class and 
+   * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
+   */
+  public DefaultFurnitureCatalog(File furniturePluginFolder) {
+    this(DefaultFurnitureCatalog.class.getName().substring(0, DefaultFurnitureCatalog.class.getName().lastIndexOf(".")), 
+        furniturePluginFolder);
   }
   
   /**
    * Creates a default furniture catalog read from resources in <code>resourcePackage</code> and 
-   * plugin furniture folder if <code>usePluginFolder</code> is <code>true</code>.
+   * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(String  resourcePackage,
-                                 boolean usePluginFolder) {
+                                 File    furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
@@ -114,32 +121,30 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       // Ignore additional furniture catalog
     }
     
-    if (usePluginFolder) {
-      try {
-        // Try to load sh3f files from plugin folder
-        File [] furnitureFiles = FileUserPreferences.getFurnitureLibrariesPluginFolder().listFiles(new FileFilter () {
-          public boolean accept(File pathname) {
-            return pathname.isFile();
-          }
-        });
-        
-        if (furnitureFiles != null) {
-          // Treat furniture files in reverse order so file named with a date will be taken into account 
-          // from most recent to least recent
-          Arrays.sort(furnitureFiles, Collections.reverseOrder());
-          for (File furnitureFile : furnitureFiles) {
-            try {
-              // Try do load Furniture property file from current file  
-              readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                  new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
-                  furnitureFile, furnitureHomonymsCounter, identifiedFurniture);
-            } catch (MissingResourceException ex) {
-              // Ignore malformed plugin furniture catalog
-            }
+    if (furniturePluginFolder != null) {
+      // Try to load sh3f files from plugin folder
+      File [] furnitureFiles = furniturePluginFolder.listFiles(new FileFilter () {
+        public boolean accept(File pathname) {
+          return pathname.isFile();
+        }
+      });
+      
+      if (furnitureFiles != null) {
+        // Treat furniture files in reverse order so file named with a date will be taken into account 
+        // from most recent to least recent
+        Arrays.sort(furnitureFiles, Collections.reverseOrder());
+        for (File furnitureFile : furnitureFiles) {
+          try {
+            // Try do load Furniture property file from current file  
+            readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
+                new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
+                furnitureFile, furnitureHomonymsCounter, identifiedFurniture);
+          } catch (MalformedURLException ex) {
+            // Ignore file
+          } catch (MissingResourceException ex) {
+            // Ignore malformed plugin furniture catalog
           }
         }
-      } catch (IOException ex) {
-        // Ignore furniture plugin 
       }
     }
   }

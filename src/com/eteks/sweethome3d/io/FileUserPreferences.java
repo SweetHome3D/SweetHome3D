@@ -134,17 +134,17 @@ public class FileUserPreferences extends UserPreferences {
     final Preferences preferences = getPreferences();
     setLanguage(preferences.get(LANGUAGE, getLanguage()));    
 
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
-    
     // Fill default furniture catalog 
-    setFurnitureCatalog(defaultPreferences.getFurnitureCatalog());
+    setFurnitureCatalog(new DefaultFurnitureCatalog(getFurnitureLibrariesPluginFolder()));
     // Read additional furniture
     readFurnitureCatalog(preferences);
     
     // Fill default textures catalog 
-    setTexturesCatalog(defaultPreferences.getTexturesCatalog());
+    setTexturesCatalog(new DefaultTexturesCatalog());
     // Read additional textures
     readTexturesCatalog(preferences);
+    
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Read other preferences 
     Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().toString()));
@@ -188,9 +188,9 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     // Read again default furniture and textures catalogs with new default locale
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     // Add default pieces that don't have homonym among user catalog
-    FurnitureCatalog defaultFurnitureCatalog = defaultPreferences.getFurnitureCatalog();
+    FurnitureCatalog defaultFurnitureCatalog = 
+        new DefaultFurnitureCatalog(getFurnitureLibrariesPluginFolder());
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
@@ -211,7 +211,7 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = defaultPreferences.getTexturesCatalog();
+    TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog();
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         try {
@@ -559,10 +559,15 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns the folder where plugin furniture libraries files must be placed.
+   * Returns the folder where plugin furniture libraries files must be placed 
+   * or <code>null</code> if that folder can't be retrieved.
    */
-  static File getFurnitureLibrariesPluginFolder() throws IOException {
-    return new File(getApplicationFolder(), PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER);
+  private static File getFurnitureLibrariesPluginFolder() {
+    try {
+      return new File(getApplicationFolder(), PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER);
+    } catch (IOException ex) {
+      return null;
+    }
   }
 
   /**
@@ -648,11 +653,12 @@ public class FileUserPreferences extends UserPreferences {
    */
   @Override
   public boolean furnitureLibraryExists(String name) throws RecorderException {
-    String libraryFileName = new File(name).getName();
-    try {
-      return new File(getFurnitureLibrariesPluginFolder(), libraryFileName).exists();
-    } catch (IOException ex) {
-      throw new RecorderException("Can't access to furniture libraries plugin folder", ex);
+    File furnitureLibrariesPluginFolder = getFurnitureLibrariesPluginFolder();
+    if (furnitureLibrariesPluginFolder == null) {
+      throw new RecorderException("Can't access to furniture libraries plugin folder");
+    } else {
+      String libraryFileName = new File(name).getName();
+      return new File(furnitureLibrariesPluginFolder, libraryFileName).exists();
     }
   }
 
@@ -663,8 +669,11 @@ public class FileUserPreferences extends UserPreferences {
   @Override
   public void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException {
     try {
-      String libraryFileName = new File(furnitureLibraryName).getName();
       File furnitureLibrariesPluginFolder = getFurnitureLibrariesPluginFolder();
+      if (furnitureLibrariesPluginFolder == null) {
+        throw new RecorderException("Can't access to furniture libraries plugin folder");
+      }
+      String libraryFileName = new File(furnitureLibraryName).getName();
       File destinationFile = new File(furnitureLibrariesPluginFolder, libraryFileName);
 
       // Copy furnitureCatalogFile to furniture plugin folder

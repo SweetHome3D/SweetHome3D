@@ -47,10 +47,9 @@ public class AppletUserPreferences extends UserPreferences {
    * Creates default user preferences read from resource files.
    */
   public AppletUserPreferences() {
-    String appletResourcePackage = AppletUserPreferences.class.getName();
-    appletResourcePackage = appletResourcePackage.substring(0, appletResourcePackage.lastIndexOf("."));
+    String appletResourcePackage = getResourcePackage();
     // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog(appletResourcePackage, false));
+    setFurnitureCatalog(new DefaultFurnitureCatalog(appletResourcePackage, null));
     // Read default textures catalog
     setTexturesCatalog(new DefaultTexturesCatalog(appletResourcePackage));   
  
@@ -73,6 +72,11 @@ public class AppletUserPreferences extends UserPreferences {
         }
       });
   }
+
+  private String getResourcePackage() {
+    String appletResourcePackage = AppletUserPreferences.class.getName();
+    return appletResourcePackage.substring(0, appletResourcePackage.lastIndexOf("."));
+  }
   
   /**
    * Reloads furniture and textures default catalogs.
@@ -87,10 +91,8 @@ public class AppletUserPreferences extends UserPreferences {
         }
       }
     }
-    // Read again default furniture and textures catalogs with new default locale
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     // Add default pieces that don't have homonym among user catalog
-    FurnitureCatalog defaultFurnitureCatalog = defaultPreferences.getFurnitureCatalog();
+    FurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(getResourcePackage(), null);
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
@@ -111,7 +113,7 @@ public class AppletUserPreferences extends UserPreferences {
       }
     }
     // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = defaultPreferences.getTexturesCatalog();
+    TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(getResourcePackage());
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         try {
