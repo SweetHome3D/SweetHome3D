@@ -21,7 +21,9 @@ package com.eteks.sweethome3d.io;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -44,29 +46,49 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private static final String IMAGE          = "image#";
   private static final String WIDTH          = "width#";
   private static final String HEIGHT         = "height#";
+  
+  private static final String PLUGIN_TEXTURES_CATALOG_FAMILY = "PluginTexturesCatalog";
 
   private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
-  
-  /**
-   * Creates a default textures catalog read from resources in the package of this class.
-   */
-  public DefaultTexturesCatalog() {
-    this(DefaultTexturesCatalog.class.getName().substring(0, DefaultTexturesCatalog.class.getName().lastIndexOf(".")));
-  }
-    
+
   /**
    * Creates a default textures catalog read from resources in <code>resourcePackage</code>.
    */
-  public DefaultTexturesCatalog(String  resourcePackage) {
+  public DefaultTexturesCatalog() {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
-
     // Load DefaultTexturesCatalog property file from classpath 
-    String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
-    defaultTexturesCatalogFamily = defaultTexturesCatalogFamily.substring(
-        defaultTexturesCatalogFamily.lastIndexOf('.') + 1);
-    ResourceBundle resource = ResourceBundle.getBundle(
-        resourcePackage + "." + defaultTexturesCatalogFamily);
+    ResourceBundle resource = ResourceBundle.getBundle(DefaultTexturesCatalog.class.getName());
+    readTextures(resource, null, textureHomonymsCounter);
+  }
+  
+  /**
+   * Creates a default textures catalog read from resources in the given URLs.
+   */
+  public DefaultTexturesCatalog(URL [] plugInTexturesCatalogUrls) {
+    Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
+        new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
+    
+    for (URL plugInTextureCatalogUrl : plugInTexturesCatalogUrls) {
+      try {
+        // Try do load Furniture property file from current file  
+        readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
+            new URLClassLoader(new URL [] {plugInTextureCatalogUrl})), 
+            plugInTextureCatalogUrl, textureHomonymsCounter);
+      } catch (MissingResourceException ex) {
+        // Ignore malformed plugin furniture catalog
+      }
+    }
+  }
+
+  /**
+   * Reads each texture described in <code>resource</code> bundle.
+   * Resources described in texture properties will be loaded from <code>texturesUrl</code> 
+   * if it isn't <code>null</code>. 
+   */
+  private void readTextures(ResourceBundle resource, 
+                            URL texturesUrl,
+                            Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
     for (int i = 1;; i++) {
       String name = null;
       try {
@@ -76,7 +98,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         break;
       }
       String category = resource.getString(CATEGORY + i);
-      Content image  = getContent(resource, IMAGE + i);
+      Content image  = getContent(resource, IMAGE + i, texturesUrl);
       float width = Float.parseFloat(resource.getString(WIDTH + i));
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
 
@@ -121,14 +143,24 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * @param contentKey the key of a resource file
    * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
-  private Content getContent(ResourceBundle resource, String contentKey) {
+  private Content getContent(ResourceBundle resource, 
+                             String         contentKey,
+                             URL            texturesUrl) {
     String contentFile = resource.getString(contentKey);
     try {
       // Try first to interpret contentFile as a URL
       return new URLContent(new URL(contentFile));
     } catch (MalformedURLException ex) {
-      // Otherwise find if it's a resource
-      return new ResourceURLContent(DefaultTexturesCatalog.class, contentFile);
+      if (texturesUrl == null) {
+        // Otherwise find if it's a resource
+        return new ResourceURLContent(DefaultFurnitureCatalog.class, contentFile);
+      } else {
+        try {
+          return new URLContent(new URL("jar:" + texturesUrl + "!" + contentFile));
+        } catch (MalformedURLException ex2) {
+          throw new IllegalArgumentException("Invalid URL", ex2);
+        }
+      }
     }
   }
 }

@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.applet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -43,15 +44,21 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * @author Emmanuel Puybaret
  */
 public class AppletUserPreferences extends UserPreferences {
+  private URL [] pluginFurnitureCatalogUrls;
+  private URL [] pluginTexturesCatalogUrls;
+
   /**
    * Creates default user preferences read from resource files.
    */
-  public AppletUserPreferences() {
-    String appletResourcePackage = getResourcePackage();
+  public AppletUserPreferences(URL [] pluginFurnitureCatalogUrls,
+                               URL [] pluginTexturesCatalogUrls) {
+    this.pluginFurnitureCatalogUrls = pluginFurnitureCatalogUrls;
+    this.pluginTexturesCatalogUrls = pluginTexturesCatalogUrls;
+    
     // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog(appletResourcePackage, null));
+    setFurnitureCatalog(new DefaultFurnitureCatalog(pluginFurnitureCatalogUrls));
     // Read default textures catalog
-    setTexturesCatalog(new DefaultTexturesCatalog(appletResourcePackage));   
+    setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
  
     // Read other preferences from resource bundle
     ResourceBundle resource = ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
@@ -72,11 +79,6 @@ public class AppletUserPreferences extends UserPreferences {
         }
       });
   }
-
-  private String getResourcePackage() {
-    String appletResourcePackage = AppletUserPreferences.class.getName();
-    return appletResourcePackage.substring(0, appletResourcePackage.lastIndexOf("."));
-  }
   
   /**
    * Reloads furniture and textures default catalogs.
@@ -92,7 +94,8 @@ public class AppletUserPreferences extends UserPreferences {
       }
     }
     // Add default pieces that don't have homonym among user catalog
-    FurnitureCatalog defaultFurnitureCatalog = new DefaultFurnitureCatalog(getResourcePackage(), null);
+    FurnitureCatalog defaultFurnitureCatalog = 
+        new DefaultFurnitureCatalog(this.pluginFurnitureCatalogUrls);
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
@@ -113,7 +116,8 @@ public class AppletUserPreferences extends UserPreferences {
       }
     }
     // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog(getResourcePackage());
+    TexturesCatalog defaultTexturesCatalog = 
+        new DefaultTexturesCatalog(this.pluginTexturesCatalogUrls);
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         try {

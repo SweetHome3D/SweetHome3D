@@ -30,7 +30,9 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -77,13 +79,17 @@ public class AppletApplication extends HomeApplication {
   private AppletContentManager contentManager;
 
   public AppletApplication(final JApplet applet) {
+    final String furnitureCatalogURLs = getAppletParameter(applet, "furnitureCatalogURLs", "catalog.zip");
+    final String texturesCatalogURLs = getAppletParameter(applet, "texturesCatalogURLs", "catalog.zip");
     final String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
     final String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
     final String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
     final String defaultHome = getAppletParameter(applet, "defaultHome", "");    
 
     this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, listHomesURL);
-    this.userPreferences = new AppletUserPreferences();
+    this.userPreferences = new AppletUserPreferences(
+        getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
+        getURLs(applet.getCodeBase(), texturesCatalogURLs));
     this.contentManager = new AppletContentManager(this.homeRecorder);
 
     // If Sweet Home 3D applet is launched from outside of Java Web Start
@@ -145,6 +151,22 @@ public class AppletApplication extends HomeApplication {
           addHome(new Home());
         }
       });
+  }
+  
+  /**
+   * Returns the array of URL objects matching the URL list.
+   */
+  private URL [] getURLs(URL codeBase, String urlList) {
+    String [] urlStrings = urlList.split("\\s|,");
+    List<URL> urls = new ArrayList<URL>(urlStrings.length);
+    for (String urlString : urlStrings) {
+      try {
+        urls.add(new URL(codeBase, urlString));
+      } catch (MalformedURLException ex) {
+        // Ignore malformed URLs
+      }
+    }
+    return urls.toArray(new URL [urls.size()]);
   }
   
   /**

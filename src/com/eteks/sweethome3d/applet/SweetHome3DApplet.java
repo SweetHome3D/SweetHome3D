@@ -32,7 +32,24 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  * jars stored as resources. It's Java 1.1 compatible to be loadable by old JVMs.
  * <p>This applet accepts the following parameters:
  * 
- * <lu><li><code>writeHomeURL</code> specifies the URL of the HTTP service able 
+ * <lu><li><code>furnitureCatalogURLs</code> specifies the URLs of the furniture libraries available 
+ *     in Sweet Home 3D catalog. These URLs are comma or space separated, and if they are not 
+ *     absolute URLs, they will be considered as relative to applet codebase. Each URL is a ZIP file 
+ *     that must contain a file named <code>PluginFurnitureCatalog.properties</code> describing the 
+ *     properties of each piece of furniture proposed by the URL file.
+ *     <br>By default, the value of this parameter is <code>catalog.zip</code>. If this file
+ *     or one of the URLs specified by this parameter doesn't exist, it will be ignored.</li>
+ *     
+ *     <li><code>texturesCatalogURLs</code> specifies the URLs of the textures libraries available 
+ *     in Sweet Home 3D catalog. These URLs are comma or space separated, and if they are not 
+ *     absolute URLs, they will be considered as relative to applet codebase. Each URL is a ZIP file 
+ *     that must contain a file named <code>PluginTexturesCatalog.properties</code> describing the 
+ *     properties of each texture proposed by the URL file.
+ *     <br>By default, the value of this parameter is <code>catalog.zip</code>, meaning that the 
+ *     furniture and textures can be stored in the same file. If this file
+ *     or one of the URLs specified by this parameter doesn't exist, it will be ignored.</li>
+ *     
+ *     <li><code>writeHomeURL</code> specifies the URL of the HTTP service able 
  *     to write the data of a home. This data will be uploaded in the file parameter named 
  *     <code>home</code> of a POST request encoded with multipart/form-data MIME type, with 
  *     the name of the uploaded home being stored in its <code>filename</code> attribute.

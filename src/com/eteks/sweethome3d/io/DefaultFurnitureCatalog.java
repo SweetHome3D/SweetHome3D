@@ -76,46 +76,34 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Creates a default furniture catalog read from resources in the package of this class.
    */
   public DefaultFurnitureCatalog() {
-    this(null);
-  }
-  
-  /**
-   * Creates a default furniture catalog read from resources in the package of this class and 
-   * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
-   */
-  public DefaultFurnitureCatalog(File furniturePluginFolder) {
-    this(DefaultFurnitureCatalog.class.getName().substring(0, DefaultFurnitureCatalog.class.getName().lastIndexOf(".")), 
-        furniturePluginFolder);
+    this((File)null);
   }
   
   /**
    * Creates a default furniture catalog read from resources in <code>resourcePackage</code> and 
    * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
-  public DefaultFurnitureCatalog(String  resourcePackage,
-                                 File    furniturePluginFolder) {
+  public DefaultFurnitureCatalog(File furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
     
-    // Load DefaultFurnitureCatalog property file from classpath 
-    String defaultFurnitureCatalogFamily = DefaultFurnitureCatalog.class.getName();
-    defaultFurnitureCatalogFamily = defaultFurnitureCatalogFamily.substring(
-        defaultFurnitureCatalogFamily.lastIndexOf('.') + 1);
-    readFurniture(ResourceBundle.getBundle(resourcePackage + "." + defaultFurnitureCatalogFamily), 
+    readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
         null, furnitureHomonymsCounter, identifiedFurniture);
     
+    String classPackage = DefaultFurnitureCatalog.class.getName();
+    classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
     try {
-      // Try do load ContributedFurnitureCatalog property file from classpath 
-      readFurniture(ResourceBundle.getBundle(resourcePackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
+      // Try do load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
+      readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
           null, furnitureHomonymsCounter, identifiedFurniture);
     } catch (MissingResourceException ex) {
       // Ignore contributed furniture catalog
     }
     
     try {
-      // Try do load AdditionalFurnitureCatalog property file from classpath 
-      readFurniture(ResourceBundle.getBundle(resourcePackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), 
+      // Try do load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath 
+      readFurniture(ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), 
           null, furnitureHomonymsCounter, identifiedFurniture);
     } catch (MissingResourceException ex) {
       // Ignore additional furniture catalog
@@ -136,9 +124,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         for (File furnitureFile : furnitureFiles) {
           try {
             // Try do load Furniture property file from current file  
+            URL furnitureUrl = furnitureFile.toURI().toURL();
             readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                new URLClassLoader(new URL [] {furnitureFile.toURI().toURL()})), 
-                furnitureFile, furnitureHomonymsCounter, identifiedFurniture);
+                                                   new URLClassLoader(new URL [] {furnitureUrl})), 
+                furnitureUrl, furnitureHomonymsCounter, identifiedFurniture);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
@@ -150,12 +139,32 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
+   * Creates a default furniture catalog read from resources in the given URLs.
+   */
+  public DefaultFurnitureCatalog(URL [] plugInFurnitureCatalogUrls) {
+    Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
+        new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
+    List<String> identifiedFurniture = new ArrayList<String>();
+
+    for (URL plugInFurnitureCatalogUrl : plugInFurnitureCatalogUrls) {
+      try {
+        // Try do load Furniture property file from current file  
+        readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
+            new URLClassLoader(new URL [] {plugInFurnitureCatalogUrl})), 
+            plugInFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
+      } catch (MissingResourceException ex) {
+        // Ignore malformed plugin furniture catalog
+      }
+    }
+  }
+  
+  /**
    * Reads each piece of furniture described in <code>resource</code> bundle.
-   * Resources described in piece properties will be loaded from <code>furnitureFile</code> 
+   * Resources described in piece properties will be loaded from <code>furnitureUrl</code> 
    * if it isn't <code>null</code>. 
    */
   private void readFurniture(ResourceBundle resource, 
-                             File furnitureFile,
+                             URL furnitureUrl,
                              Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
     for (int i = 1;; i++) {
@@ -167,14 +176,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         break;
       }
       String category = resource.getString(CATEGORY + i);
-      Content icon  = getContent(resource, ICON + i, furnitureFile, false);
+      Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
       boolean multiPartModel = false;
       try {
         multiPartModel = Boolean.parseBoolean(resource.getString(MULTI_PART_MODEL + i));
       } catch (MissingResourceException ex) {
         // By default inDirectory is false
       }
-      Content model = getContent(resource, MODEL + i, furnitureFile, multiPartModel);
+      Content model = getContent(resource, MODEL + i, furnitureUrl, multiPartModel);
       float width = Float.parseFloat(resource.getString(WIDTH + i));
       float depth = Float.parseFloat(resource.getString(DEPTH + i));
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
@@ -272,29 +281,29 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Returns a valid content instance from the resource file or URL value of key.
    * @param resource a resource bundle
    * @param contentKey  the key of a resource content file
-   * @param furnitureFile the file containing the target resource if it's not <code>null</code> 
+   * @param furnitureUrl the URL of the file containing the target resource if it's not <code>null</code> 
    * @param multiPartModel if <code>true</code> the resource is a multi part resource stored 
    *                 in a directory with other required resources
    * @throws IllegalArgumentException if the file value doesn't match a valid resource or URL.
    */
   private Content getContent(ResourceBundle resource, 
                              String contentKey, 
-                             File furnitureFile, 
+                             URL furnitureUrl, 
                              boolean multiPartModel) {
     String contentFile = resource.getString(contentKey);
-    if (furnitureFile == null) {
-      try {
-        // Try first to interpret contentFile as a URL
-        return new URLContent(new URL(contentFile));
-      } catch (MalformedURLException ex) {
+    try {
+      // Try first to interpret contentFile as a URL
+      return new URLContent(new URL(contentFile));
+    } catch (MalformedURLException ex) {
+      if (furnitureUrl == null) {
         // Otherwise find if it's a resource
         return new ResourceURLContent(DefaultFurnitureCatalog.class, contentFile, multiPartModel);
-      }
-    } else {
-      try {
-        return new ResourceURLContent(new URL("jar:" + furnitureFile.toURI().toURL() + "!" + contentFile), multiPartModel);
-      } catch (MalformedURLException ex) {
-        throw new IllegalArgumentException("Invalid URL", ex);
+      } else {
+        try {
+          return new ResourceURLContent(new URL("jar:" + furnitureUrl + "!" + contentFile), multiPartModel);
+        } catch (MalformedURLException ex2) {
+          throw new IllegalArgumentException("Invalid URL", ex2);
+        }
       }
     }
   }
