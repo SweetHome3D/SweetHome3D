@@ -65,16 +65,16 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   /**
    * Creates a default textures catalog read from resources in the given URLs.
    */
-  public DefaultTexturesCatalog(URL [] plugInTexturesCatalogUrls) {
+  public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     
-    for (URL plugInTextureCatalogUrl : plugInTexturesCatalogUrls) {
+    for (URL pluginTextureCatalogUrl : pluginTexturesCatalogUrls) {
       try {
         // Try do load Furniture property file from current file  
         readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
-            new URLClassLoader(new URL [] {plugInTextureCatalogUrl})), 
-            plugInTextureCatalogUrl, textureHomonymsCounter);
+            new URLClassLoader(new URL [] {pluginTextureCatalogUrl})), 
+            pluginTextureCatalogUrl, textureHomonymsCounter);
       } catch (MissingResourceException ex) {
         // Ignore malformed plugin furniture catalog
       }

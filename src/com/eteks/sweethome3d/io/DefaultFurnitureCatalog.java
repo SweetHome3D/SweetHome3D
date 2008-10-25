@@ -141,17 +141,17 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   /**
    * Creates a default furniture catalog read from resources in the given URLs.
    */
-  public DefaultFurnitureCatalog(URL [] plugInFurnitureCatalogUrls) {
+  public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
 
-    for (URL plugInFurnitureCatalogUrl : plugInFurnitureCatalogUrls) {
+    for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
       try {
         // Try do load Furniture property file from current file  
         readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-            new URLClassLoader(new URL [] {plugInFurnitureCatalogUrl})), 
-            plugInFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
+            new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
+            pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
       } catch (MissingResourceException ex) {
         // Ignore malformed plugin furniture catalog
       }
