@@ -606,7 +606,7 @@ public class SweetHome3D extends HomeApplication {
     private boolean isJava6() {
       String javaVersion = System.getProperty("java.version");
       String [] javaVersionParts = javaVersion.split("\\.|_");
-      if (javaVersionParts.length >= 1) {
+      if (javaVersionParts.length >= 2) {
         try {
           // Return true for Java SE 6 and superior
           if (Integer.parseInt(javaVersionParts [1]) >= 6) {
