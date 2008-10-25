@@ -211,9 +211,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
     // Model panel components
     this.modelChoiceOrChangeLabel = new JLabel(); 
     this.modelChoiceOrChangeButton = new JButton();
-    final FurnitureCategory defaultModelCategory = importHomePiece 
-        ? null
-        : preferences.getFurnitureCatalog().getCategories().get(0);
+    final FurnitureCategory defaultModelCategory = 
+        (importHomePiece || preferences.getFurnitureCatalog().getCategories().size() == 0) 
+            ? null
+            : preferences.getFurnitureCatalog().getCategories().get(0);
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           String modelName = showModelChoiceDialog(contentManager);
@@ -414,7 +415,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
           // If category is empty, replace it by the last selected item
           if (name.length() == 0) {
             setItem(categoryComboBox.getSelectedItem());
-          }
+          } 
           FurnitureCategory category = new FurnitureCategory(name);
           // Search an existing category
           List<FurnitureCategory> categories = preferences.getFurnitureCatalog().getCategories();
@@ -427,8 +428,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
         }
       
         public void setItem(Object value) {
-          FurnitureCategory category = (FurnitureCategory)value;
-          defaultEditor.setItem(category.getName());
+          if (value != null) {
+            FurnitureCategory category = (FurnitureCategory)value;
+            defaultEditor.setItem(category.getName());
+          }
         }
 
         public void addActionListener(ActionListener l) {
@@ -470,7 +473,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
             updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
-    this.categoryComboBox.setSelectedIndex(0);
+    if (this.categoryComboBox.getItemCount() > 0) {
+      this.categoryComboBox.setSelectedIndex(0);
+    }
 
     this.widthLabel = new JLabel(
         String.format(this.resource.getString("widthLabel.text"), unitName)); 

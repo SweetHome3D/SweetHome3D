@@ -234,8 +234,10 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
         }
       
         public void setItem(Object value) {
-          TexturesCategory category = (TexturesCategory)value;
-          defaultEditor.setItem(category.getName());
+          if (value != null) {
+            TexturesCategory category = (TexturesCategory)value;          
+            defaultEditor.setItem(category.getName());
+          } 
         }
 
         public void addActionListener(ActionListener l) {
@@ -277,7 +279,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel {
             updateNameTextFieldForeground(defaultNameTextFieldColor);
           }
         });
-    this.categoryComboBox.setSelectedIndex(0);
 
     this.widthLabel = new JLabel(
         String.format(this.resource.getString("widthLabel.text"), unitName)); 
