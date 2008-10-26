@@ -23,6 +23,7 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 
@@ -35,13 +36,16 @@ public class HomeFrameController {
   private ContentManager  contentManager;
   private HomeApplication application;
   private JComponent      homeFrameView;
+  private PluginManager   pluginManager;
   
   private HomeController  homeController;
   
-  public HomeFrameController(Home home, HomeApplication application, ContentManager contentManager) {
+  public HomeFrameController(Home home, HomeApplication application, 
+                             ContentManager contentManager, PluginManager pluginManager) {
     this.home = home;
     this.application = application;
     this.contentManager = contentManager;
+    this.pluginManager = pluginManager;
   }
 
   /**
@@ -61,7 +65,8 @@ public class HomeFrameController {
   public HomeController getHomeController() {
     // Create sub controller lazily only once it's needed
     if (this.homeController == null) {
-      this.homeController = new HomeController(home, application, contentManager);
+      this.homeController = new HomeController(
+          this.home, this.application, this.contentManager, this.pluginManager);
     }
     return this.homeController;
   }
