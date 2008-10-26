@@ -593,8 +593,6 @@ public class HomePane extends JRootPane {
       fileMenu.add(getMenuItemAction(ActionType.PRINT_TO_PDF));
       fileMenu.addSeparator();
       fileMenu.add(getMenuItemAction(ActionType.PREFERENCES));
-      fileMenu.addSeparator();
-      fileMenu.add(getMenuItemAction(ActionType.EXIT));
     }
 
     // Create Edit menu
@@ -688,6 +686,7 @@ public class HomePane extends JRootPane {
         for (int i = 0; i < menuBar.getMenuCount(); i++) {
           JMenu menu = menuBar.getMenu(i);
           if (menu.getText().equals(pluginMenu)) {
+            // Add menu item to existing menu
             menu.addSeparator();
             menu.add(new ResourceAction.MenuItemAction(pluginAction));
             pluginActionAdded = true;
@@ -701,6 +700,12 @@ public class HomePane extends JRootPane {
           menuBar.add(menu, menuBar.getMenuCount() - 1);
         }
       }
+    }
+
+    // Add EXIT action at end to ensure it's the last item of file menu
+    if (!OperatingSystem.isMacOSX()) {
+      fileMenu.addSeparator();
+      fileMenu.add(getMenuItemAction(ActionType.EXIT));
     }
 
     return menuBar;
