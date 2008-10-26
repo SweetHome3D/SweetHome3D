@@ -61,6 +61,20 @@ public class ResourceURLContent extends URLContent {
     this.multiPartResource = multiPartResource;
   }
   
+  /**
+   * Creates a content for <code>resourceName</code> relative to <code>resourceClassLoader</code>.
+   * @param resourceClassLoader the class loader used to load the given resource name
+   * @param resourceName  the name of the resource
+   * @throws IllegalArgumentException if the resource doesn't match a valid resource.
+   */
+  public ResourceURLContent(ClassLoader resourceClassLoader, 
+                            String resourceName) {
+    super(resourceClassLoader.getResource(resourceName));
+    if (getURL() == null) {
+      throw new IllegalArgumentException("Unknown resource " + resourceName);
+    }
+  }
+
   private static final boolean isJava1dot5dot0_16 = 
       System.getProperty("java.version").startsWith("1.5.0_16"); 
   
@@ -94,7 +108,7 @@ public class ResourceURLContent extends URLContent {
   }
 
   /**
-   * Creates a content for <code>resourceUrl</code> 
+   * Creates a content for <code>resourceUrl</code>. 
    * @param url  the URL of the resource
    */
   public ResourceURLContent(URL url, boolean multiPartResource) {
