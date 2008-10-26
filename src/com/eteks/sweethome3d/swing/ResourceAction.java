@@ -189,8 +189,8 @@ public class ResourceAction extends AbstractAction {
   /**
    * An action decorator for menu items.  
    */
-  public static class MenuAction extends AbstractDecoratedAction {
-    public MenuAction(Action action) {
+  public static class MenuItemAction extends AbstractDecoratedAction {
+    public MenuItemAction(Action action) {
       super(action);
     }
 
@@ -209,8 +209,8 @@ public class ResourceAction extends AbstractAction {
   /**
    * An action decorator for popup menu items.  
    */
-  public static class PopupAction extends MenuAction {
-    public PopupAction(Action action) {
+  public static class PopupMenuItemAction extends MenuItemAction {
+    public PopupMenuItemAction(Action action) {
       super(action);
     }
 
