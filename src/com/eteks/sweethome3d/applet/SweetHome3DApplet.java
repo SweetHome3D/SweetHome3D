@@ -49,6 +49,12 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     furniture and textures can be stored in the same file. If this file
  *     or one of the URLs specified by this parameter doesn't exist, it will be ignored.</li>
  *     
+ *     <li><code>pluginURLs</code> specifies the URLs of the actions available to users through 
+ *     {@link com.eteks.sweethome3d.plugin.Plugin plugins}.These URLs are comma or space separated, 
+ *     and if they are not absolute URLs, they will be considered as relative to applet codebase. 
+ *     <br>By default, the value of this parameter is empty. If one of the URLs specified by 
+ *     this parameter doesn't exist, it will be ignored.</li>
+ *     
  *     <li><code>writeHomeURL</code> specifies the URL of the HTTP service able 
  *     to write the data of a home. This data will be uploaded in the file parameter named 
  *     <code>home</code> of a POST request encoded with multipart/form-data MIME type, with 

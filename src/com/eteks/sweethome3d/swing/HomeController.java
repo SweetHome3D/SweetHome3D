@@ -61,6 +61,8 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
 import com.eteks.sweethome3d.model.WallListener;
+import com.eteks.sweethome3d.plugin.Plugin;
+import com.eteks.sweethome3d.plugin.PluginManager;
 
 /**
  * A MVC controller for the home view.
@@ -71,6 +73,7 @@ public class HomeController  {
   private UserPreferences            preferences;
   private ContentManager             contentManager;
   private HomeApplication            application;
+  private PluginManager              pluginManager;
   private JComponent                 homeView;
   private FurnitureCatalogController catalogController;
   private FurnitureController        furnitureController;
@@ -90,9 +93,11 @@ public class HomeController  {
    * @param home the home edited by this controller and its view.
    * @param application the instance of current application.
    * @param contentManager the content manager of the application.
+   * @param pluginManager  the plug-in manager of the application.
    */
-  public HomeController(Home home, HomeApplication application, ContentManager contentManager) {
-    this(home, application.getUserPreferences(), contentManager, application);
+  public HomeController(Home home, HomeApplication application, 
+                        ContentManager contentManager, PluginManager pluginManager) {
+    this(home, application.getUserPreferences(), contentManager, application, pluginManager);
   }
 
   /**
@@ -101,7 +106,7 @@ public class HomeController  {
    * @param application the instance of current application.
    */
   public HomeController(Home home, HomeApplication application) {
-    this(home, application.getUserPreferences(), null, application);
+    this(home, application.getUserPreferences(), null, application, null);
   }
 
   /**
@@ -110,7 +115,7 @@ public class HomeController  {
    * @param preferences the preferences of the application.
    */
   public HomeController(Home home, UserPreferences preferences) {
-    this(home, preferences, null, null);
+    this(home, preferences, null, null, null);
   }
 
   /**
@@ -122,17 +127,19 @@ public class HomeController  {
   public HomeController(Home home, 
                         UserPreferences preferences,
                         ContentManager contentManager) {
-    this(home, preferences, contentManager, null);
+    this(home, preferences, contentManager, null, null);
   }
 
   private HomeController(final Home home, 
                          UserPreferences preferences,
                          ContentManager contentManager,
-                         HomeApplication application) {
+                         HomeApplication application,
+                         PluginManager pluginManager) {
     this.home = home;
     this.preferences = preferences;
     this.contentManager = contentManager;
     this.application = application;
+    this.pluginManager = pluginManager;
     this.undoSupport = new UndoableEditSupport() {
         @Override
         protected void _postEdit(UndoableEdit edit) {
@@ -251,7 +258,14 @@ public class HomeController  {
    */
   public JComponent getView() {
     if (this.homeView == null) {
-      this.homeView = new HomePane(home, preferences, contentManager, this);
+      // Retrieve home plug-ins
+      List<Plugin> plugins = Collections.emptyList();
+      if (this.application != null && this.pluginManager != null) {
+        plugins = this.pluginManager.getPlugins(
+            this.application, this.home, this.preferences, this.undoSupport);
+      }
+      this.homeView = new HomePane(this.home, this.preferences, 
+          this.contentManager, plugins, this);
       enableDefaultActions((HomePane)this.homeView);
       addListeners();
     }

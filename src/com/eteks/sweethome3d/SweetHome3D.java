@@ -29,6 +29,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -68,6 +69,7 @@ import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
@@ -79,10 +81,12 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  * @author Emmanuel Puybaret
  */
 public class SweetHome3D extends HomeApplication {
-  private HomeRecorder       homeRecorder;
-  private UserPreferences    userPreferences;
-  private FileContentManager contentManager;
-  private Map<Home, JFrame>  homeFrames;
+  private static final String APPLICATION_PLUGINS_SUB_FOLDER = "plugins";
+  
+  private HomeRecorder        homeRecorder;
+  private FileUserPreferences userPreferences;
+  private ContentManager      contentManager;
+  private Map<Home, JFrame>   homeFrames;
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
@@ -180,7 +184,7 @@ public class SweetHome3D extends HomeApplication {
       
       if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
-        new HomeFrameController(new Home(), application, application.contentManager).
+        new HomeFrameController(new Home(), application, application.contentManager, null).
             getHomeController().open(args [1]);
       } else if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
@@ -188,8 +192,8 @@ public class SweetHome3D extends HomeApplication {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               // Import furniture library with a dummy controller 
-              new HomeFrameController(new Home(), application, application.contentManager).getHomeController().
-                 importFurnitureLibrary(furnitureLibraryName);
+              new HomeFrameController(new Home(), application, application.contentManager, null).
+                  getHomeController().importFurnitureLibrary(furnitureLibraryName);
             }
           });
       }
@@ -288,7 +292,14 @@ public class SweetHome3D extends HomeApplication {
     final SingleInstanceService singleInstanceService = service;
           
     // Create the application that manages homes 
-    final SweetHome3D application = new SweetHome3D();
+    final SweetHome3D application = new SweetHome3D();    
+    
+    // Create the plug-in manager that will search plug-in files in plugins folder
+    File applicationPluginsFolder = application.getApplicationPluginsFolder();
+    final PluginManager pluginManager = applicationPluginsFolder != null 
+        ? new PluginManager(applicationPluginsFolder)
+        : null;
+    
     // Add a listener that opens a frame when a home is added to application
     application.addHomeListener(new HomeListener() {
         private boolean firstApplicationHomeAdded;
@@ -299,7 +310,7 @@ public class SweetHome3D extends HomeApplication {
               Home home = ev.getHome();
               try {
                 HomeFrameController controller = 
-                    new HomeFrameController(home, application, application.contentManager);
+                    new HomeFrameController(home, application, application.contentManager, pluginManager);
                 controller.displayView();
                 if (!this.firstApplicationHomeAdded) {
                   application.addNewHomeCloseListener(home, controller);
@@ -342,6 +353,17 @@ public class SweetHome3D extends HomeApplication {
     return application;
   }
   
+  /**
+   * Returns the application folder where application plugins are stored.
+   */
+  private File getApplicationPluginsFolder() {
+    try {
+      return new File(userPreferences.getApplicationFolder(), APPLICATION_PLUGINS_SUB_FOLDER);
+    } catch (IOException ex) {
+      return null;
+    }
+  }
+
   /**
    * Adds a listener to new home to close it if an other one is opened.
    */ 

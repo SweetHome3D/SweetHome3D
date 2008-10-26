@@ -42,6 +42,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.ServiceManagerStub;
 import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.IllegalRenderingStateException;
+import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -60,7 +61,10 @@ import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.plugin.PluginAction;
+import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.Component3DManager;
+import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanController;
@@ -76,11 +80,11 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class AppletApplication extends HomeApplication {
   private HomeRecorder         homeRecorder;
   private UserPreferences      userPreferences;
-  private AppletContentManager contentManager;
 
   public AppletApplication(final JApplet applet) {
     final String furnitureCatalogURLs = getAppletParameter(applet, "furnitureCatalogURLs", "catalog.zip");
     final String texturesCatalogURLs = getAppletParameter(applet, "texturesCatalogURLs", "catalog.zip");
+    final String pluginURLs = getAppletParameter(applet, "pluginURLs", "");
     final String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
     final String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
     final String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
@@ -90,7 +94,10 @@ public class AppletApplication extends HomeApplication {
     this.userPreferences = new AppletUserPreferences(
         getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
         getURLs(applet.getCodeBase(), texturesCatalogURLs));
-    this.contentManager = new AppletContentManager(this.homeRecorder);
+    
+    final ContentManager contentManager = new AppletContentManager(this.homeRecorder);
+    final PluginManager  pluginManager  = new PluginManager(
+        getURLs(applet.getCodeBase(), pluginURLs));
 
     // If Sweet Home 3D applet is launched from outside of Java Web Start
     if (ServiceManager.getServiceNames() == null) {
@@ -122,7 +129,7 @@ public class AppletApplication extends HomeApplication {
                     writeHomeURL.length() != 0 && listHomesURL.length() != 0;
                 
                 final HomeAppletController controller = new HomeAppletController(
-                    home, AppletApplication.this, contentManager, 
+                    home, AppletApplication.this, contentManager, pluginManager,
                     newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
                 
                 // Display its view in applet
@@ -192,7 +199,7 @@ public class AppletApplication extends HomeApplication {
     
     // As the applet has no menu, activate accelerators directly on home view
     for (HomePane.ActionType actionType : HomePane.ActionType.values()) {
-      ResourceAction.MenuAction menuAction = new ResourceAction.MenuAction(homeView.getActionMap().get(actionType));
+      ResourceAction.MenuItemAction menuAction = new ResourceAction.MenuItemAction(homeView.getActionMap().get(actionType));
       KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
       if (accelerator != null) {
         homeView.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(accelerator, actionType);
@@ -201,7 +208,17 @@ public class AppletApplication extends HomeApplication {
     
     // Change default buttons in toolbar
     JToolBar toolBar = (JToolBar)homeView.getContentPane().getComponent(0);
-    toolBar.setFloatable(false);
+    toolBar.setFloatable(false);    
+    // Retrieve all buttons that are plug-in actions
+    List<JComponent> pluginButtons = new ArrayList<JComponent>();
+    for (int i = 0; i < toolBar.getComponentCount(); i++) {
+      JComponent component = (JComponent)toolBar.getComponent(i);
+      if (component instanceof AbstractButton
+          && ((AbstractButton)component).getAction().
+                getValue(PluginAction.Property.IN_TOOL_BAR.toString()) == Boolean.TRUE) {
+        pluginButtons.add(component);
+      }
+    }
     toolBar.removeAll();
     // Add New, Open, Save, Save as buttons if they are enabled
     Action newHomeAction = getToolBarAction(homeView, HomePane.ActionType.NEW_HOME);
@@ -267,7 +284,15 @@ public class AppletApplication extends HomeApplication {
     
     toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_OUT));
     toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_IN));
-     
+    
+    // Add plug-in buttons
+    if (pluginButtons.size() > 0) {
+      toolBar.addSeparator();
+      for (JComponent pluginButton : pluginButtons) {
+        toolBar.add(pluginButton);
+      }
+    }
+    
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
     // Change applet content 
