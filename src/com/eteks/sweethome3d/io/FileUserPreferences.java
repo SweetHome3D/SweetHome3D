@@ -135,7 +135,7 @@ public class FileUserPreferences extends UserPreferences {
     setLanguage(preferences.get(LANGUAGE, getLanguage()));    
 
     // Fill default furniture catalog 
-    setFurnitureCatalog(new DefaultFurnitureCatalog(getFurnitureLibrariesPluginFolder()));
+    setFurnitureCatalog(new DefaultFurnitureCatalog(getPluginFurnitureLibrariesFolder()));
     // Read additional furniture
     readFurnitureCatalog(preferences);
     
@@ -190,7 +190,7 @@ public class FileUserPreferences extends UserPreferences {
     // Read again default furniture and textures catalogs with new default locale
     // Add default pieces that don't have homonym among user catalog
     FurnitureCatalog defaultFurnitureCatalog = 
-        new DefaultFurnitureCatalog(getFurnitureLibrariesPluginFolder());
+        new DefaultFurnitureCatalog(getPluginFurnitureLibrariesFolder());
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
@@ -562,7 +562,7 @@ public class FileUserPreferences extends UserPreferences {
    * Returns the folder where plugin furniture libraries files must be placed 
    * or <code>null</code> if that folder can't be retrieved.
    */
-  private File getFurnitureLibrariesPluginFolder() {
+  private File getPluginFurnitureLibrariesFolder() {
     try {
       return new File(getApplicationFolder(), PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER);
     } catch (IOException ex) {
@@ -653,7 +653,7 @@ public class FileUserPreferences extends UserPreferences {
    */
   @Override
   public boolean furnitureLibraryExists(String name) throws RecorderException {
-    File furnitureLibrariesPluginFolder = getFurnitureLibrariesPluginFolder();
+    File furnitureLibrariesPluginFolder = getPluginFurnitureLibrariesFolder();
     if (furnitureLibrariesPluginFolder == null) {
       throw new RecorderException("Can't access to furniture libraries plugin folder");
     } else {
@@ -669,7 +669,7 @@ public class FileUserPreferences extends UserPreferences {
   @Override
   public void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException {
     try {
-      File furnitureLibrariesPluginFolder = getFurnitureLibrariesPluginFolder();
+      File furnitureLibrariesPluginFolder = getPluginFurnitureLibrariesFolder();
       if (furnitureLibrariesPluginFolder == null) {
         throw new RecorderException("Can't access to furniture libraries plugin folder");
       }
