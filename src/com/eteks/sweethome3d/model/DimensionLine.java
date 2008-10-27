@@ -29,7 +29,7 @@ import java.io.Serializable;
  * A dimension line in plan.
  * @author Emmanuel Puybaret
  */
-public class DimensionLine implements Serializable {
+public class DimensionLine implements Serializable, Selectable {
   private static final long serialVersionUID = 1L;
   
   private float xStart;

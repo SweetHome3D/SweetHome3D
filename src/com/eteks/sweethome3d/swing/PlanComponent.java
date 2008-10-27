@@ -98,6 +98,7 @@ import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -806,7 +807,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       // Use a scale of 1
       float clipboardScale = 1f;
       float extraMargin = 0;
-      List<Object> selectedItems = this.home.getSelectedItems();
+      List<Selectable> selectedItems = this.home.getSelectedItems();
       if (Home.getWallsSubList(selectedItems).size() > 0) {
         extraMargin = WALL_STROKE_WIDTH / 2;
       }
@@ -948,7 +949,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    */
   private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     Color selectionColor = getSelectioncolor(); 
     Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
         selectionColor.getBlue(), 128);
@@ -999,7 +1000,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints walls. 
    */
-  private void paintWalls(Graphics2D g2D, List<Object> selectedItems,   
+  private void paintWalls(Graphics2D g2D, List<Selectable> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, float planScale, 
                           Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
@@ -1010,7 +1011,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       wallsArea = getWallsArea();
     } else {
       paintedWalls = new ArrayList<Wall>();
-      for (Object item : selectedItems) {
+      for (Selectable item : selectedItems) {
         // In clipboard paint mode, paint wall only if it is selected
         if (item instanceof Wall) {
           paintedWalls.add((Wall)item);
@@ -1027,7 +1028,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     
     if (paintMode == PaintMode.PAINT) {
       Stroke indicatorStroke = new BasicStroke(2f);  
-      for (Object item : selectedItems) {
+      for (Selectable item : selectedItems) {
         if (item instanceof Wall) {
           Wall wall = (Wall)item;
           // Draw selection border
@@ -1157,7 +1158,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints home furniture.
    */
-  private void paintFurniture(Graphics2D g2D, List<Object> selectedItems,  
+  private void paintFurniture(Graphics2D g2D, List<Selectable> selectedItems,  
                               Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                               Paint indicatorPaint, float planScale, 
                               Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
@@ -1304,7 +1305,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints dimension lines. 
    */
-  private void paintDimensionLines(Graphics2D g2D, List<Object> selectedItems,   
+  private void paintDimensionLines(Graphics2D g2D, List<Selectable> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, Stroke extensionLineStroke, float planScale, 
                           Color foregroundColor, PaintMode paintMode) {
@@ -1313,7 +1314,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
       paintedDimensionLines = this.home.getDimensionLines();
     } else {
       paintedDimensionLines = new ArrayList<DimensionLine>();
-      for (Object item : selectedItems) {
+      for (Selectable item : selectedItems) {
         // In clipboard paint mode, paint dimension line only if it is selected
         if (item instanceof DimensionLine) {
           paintedDimensionLines.add((DimensionLine)item);
@@ -1546,7 +1547,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     // Paint dimension line location feedback
     if (this.dimensionLineLocationFeeback != null) {
       float margin = 1f / planScale;
-      // Seach which dimension line start or end point is at dimensionLineLocationFeeback abcissa or ordinate
+      // Search which dimension line start or end point is at dimensionLineLocationFeeback abcissa or ordinate
       // ignoring the start and end point of dimensionLineFeeback
       float x = (float)this.dimensionLineLocationFeeback.getX(); 
       float y = (float)this.dimensionLineLocationFeeback.getY();
@@ -1652,7 +1653,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Paints the observer camera at its current location, if home camera is the observer camera.
    */
-  private void paintCamera(Graphics2D g2D, List<Object> selectedItems,
+  private void paintCamera(Graphics2D g2D, List<Selectable> selectedItems,
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                            Paint indicatorPaint, float planScale, 
                            Color backgroundColor, Color foregroundColor) {
@@ -1818,43 +1819,14 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private Rectangle2D getSelectionBounds(boolean includeCamera) {
     // Compute bounds that include selected walls and furniture
     Rectangle2D selectionBounds = null;
-    for (Object item : this.home.getSelectedItems()) {
-      if (item instanceof Wall) {
-        for (float [] point : ((Wall)item).getPoints()) {
-          if (selectionBounds == null) {
-            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            selectionBounds.add(point [0], point [1]);
-          }
+    for (Selectable item : this.home.getSelectedItems()) {
+      for (float [] point : item.getPoints()) {
+        if (selectionBounds == null) {
+          selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        } else {
+          selectionBounds.add(point [0], point [1]);
         }
-      } else if (item instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        if (piece.isVisible()) {
-          for (float [] point : piece.getPoints()) {
-            if (selectionBounds == null) {
-              selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-            } else {
-              selectionBounds.add(point [0], point [1]);
-            }
-          }
-        }
-      } else if (item instanceof DimensionLine) {
-        for (float [] point : ((DimensionLine)item).getPoints()) {
-          if (selectionBounds == null) {
-            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            selectionBounds.add(point [0], point [1]);
-          }
-        }
-      } else if (item instanceof ObserverCamera) {
-        for (float [] point : ((ObserverCamera)item).getPoints()) {
-          if (selectionBounds == null) {
-            selectionBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            selectionBounds.add(point [0], point [1]);
-          }
-        }
-      } 
+      }
     }
     return selectionBounds;
   }

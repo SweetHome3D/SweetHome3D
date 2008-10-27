@@ -32,7 +32,7 @@ import java.util.List;
  * A wall of a home plan.
  * @author Emmanuel Puybaret
  */
-public class Wall implements Serializable  {
+public class Wall implements Serializable, Selectable {
   private static final long serialVersionUID = 1L;
   
   private float   xStart;

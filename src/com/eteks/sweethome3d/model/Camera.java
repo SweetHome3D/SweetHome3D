@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.io.Serializable;
 
 /**
- * Camera characteritics in home.
+ * Camera characteristics in home.
  * @author Emmanuel Puybaret
  */
 public class Camera implements Serializable {

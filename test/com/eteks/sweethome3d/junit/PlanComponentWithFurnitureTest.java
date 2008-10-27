@@ -46,6 +46,7 @@ import com.eteks.sweethome3d.model.DimensionLineEvent;
 import com.eteks.sweethome3d.model.DimensionLineListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomeController;
@@ -160,8 +161,8 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionClick(planComponent, 30, 160); 
     tester.actionKeyRelease(KeyEvent.VK_SHIFT);
     // Check selected items contains the piece of furniture and the fifth wall
-    List<Object> selectedItems = 
-      new ArrayList<Object>(frame.home.getSelectedItems());
+    List<Selectable> selectedItems = 
+        new ArrayList<Selectable>(frame.home.getSelectedItems());
     assertEquals("Wrong selected items count", 2, selectedItems.size());
     assertTrue("Piece of furniture not selected", selectedItems.contains(piece));
     // Remove piece form list to get the selected wall
@@ -410,7 +411,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     tester.actionMouseRelease();
     tester.actionKeyRelease(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     // Check the duplicated piece moved and the original piece didn't move
-    List<Object> movedItems = frame.home.getSelectedItems();
+    List<Selectable> movedItems = frame.home.getSelectedItems();
     assertEquals("Selection doesn't contain 4 items", 4, movedItems.size());    
     movedPiece = Home.getFurnitureSubList(movedItems).get(0);
     assertLocationAndOrientationEqualPiece(pieceX, 

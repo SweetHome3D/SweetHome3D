@@ -37,7 +37,7 @@ import java.util.Map;
  * A piece of furniture in {@link Home home}.
  * @author Emmanuel Puybaret
  */
-public class HomePieceOfFurniture implements PieceOfFurniture {
+public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   private static final long serialVersionUID = 1L;
   
   /** 

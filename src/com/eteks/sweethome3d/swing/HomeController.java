@@ -52,6 +52,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TextureEvent;
@@ -522,7 +523,7 @@ public class HomeController  {
         && catalogSelectedItems.get(0).isModifiable();
     
     // Search if home selection contains at least one piece, one wall or one dimension line
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     boolean homeSelectionContainsFurniture = false;
     boolean homeSelectionContainsOneCopiableObjectOrMore = false;
     boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
@@ -859,7 +860,7 @@ public class HomeController  {
   /**
    * Deletes items and post a cut operation to undo support.
    */
-  public void cut(List<? extends Object> items) {
+  public void cut(List<? extends Selectable> items) {
     // Start a compound edit that deletes items and changes presentation name
     this.undoSupport.beginUpdate();
     getPlanController().deleteItems(items);
@@ -877,7 +878,7 @@ public class HomeController  {
   /**
    * Adds items to home and post a paste operation to undo support.
    */
-  public void paste(final List<? extends Object> items) {
+  public void paste(final List<? extends Selectable> items) {
     addItems(items, 20, 20, "undoPasteName");
   }
 
@@ -885,7 +886,7 @@ public class HomeController  {
    * Adds items to home, moves them of (dx, dy) 
    * and post a drop operation to undo support.
    */
-  public void drop(final List<? extends Object> items, float dx, float dy) {
+  public void drop(final List<? extends Selectable> items, float dx, float dy) {
     // Always use selection mode after a drop operation
     getPlanController().setMode(PlanController.Mode.SELECTION);
     addItems(items, dx, dy, "undoDropName");
@@ -894,7 +895,7 @@ public class HomeController  {
   /**
    * Adds items to home.
    */
-  private void addItems(final List<? extends Object> items, 
+  private void addItems(final List<? extends Selectable> items, 
                         float dx, float dy, final String presentationNameKey) {
     if (!items.isEmpty()) {
       // Start a compound edit that adds walls, furniture and dimension lines to home

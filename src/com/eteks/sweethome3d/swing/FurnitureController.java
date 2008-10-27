@@ -35,6 +35,7 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -65,7 +66,7 @@ public class FurnitureController {
   /**
    * Creates the controller of home furniture view with undo support.
    */
-  public FurnitureController(Home home, 
+  public FurnitureController(final Home home, 
                              UserPreferences preferences, 
                              ContentManager contentManager,
                              UndoableEditSupport undoSupport) {
@@ -78,7 +79,7 @@ public class FurnitureController {
     this.home.addSelectionListener(new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
           List<HomePieceOfFurniture> selectedFurniture = 
-              Home.getFurnitureSubList(ev.getSelectedItems());
+              Home.getFurnitureSubList(home.getSelectedItems());
           if (selectedFurniture.isEmpty()) {
             leadSelectedPieceOfFurniture = null;
           } else if (leadSelectedPieceOfFurniture == null ||
@@ -107,7 +108,7 @@ public class FurnitureController {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
-    final List<Object> oldSelection = this.home.getSelectedItems(); 
+    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     final HomePieceOfFurniture [] newFurniture = furniture.
         toArray(new HomePieceOfFurniture [furniture.size()]);
     // Get indices of furniture add to home

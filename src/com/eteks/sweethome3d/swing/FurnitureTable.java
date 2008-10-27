@@ -70,6 +70,7 @@ import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -120,7 +121,7 @@ public class FurnitureTable extends JTable implements Printable {
     final SelectionListener homeSelectionListener  = 
       new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          updateTableSelectedFurniture(ev.getSelectedItems());        
+          updateTableSelectedFurniture(home.getSelectedItems());        
         }
       };
     this.tableSelectionListener = 
@@ -150,13 +151,13 @@ public class FurnitureTable extends JTable implements Printable {
   /**
    * Updates selected furniture in table from <code>selectedItems</code>. 
    */
-  private void updateTableSelectedFurniture(List<Object> selectedItems) {
+  private void updateTableSelectedFurniture(List<Selectable> selectedItems) {
     getSelectionModel().removeListSelectionListener(this.tableSelectionListener);
     clearSelection();
     FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
     int minIndex = Integer.MAX_VALUE;
     int maxIndex = Integer.MIN_VALUE;
-    for (Object item : selectedItems) {
+    for (Selectable item : selectedItems) {
       if (item instanceof HomePieceOfFurniture) {
         // Search index of piece in sorted table model
         int index = tableModel.getPieceOfFurnitureIndex((HomePieceOfFurniture)item);

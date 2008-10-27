@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.ColorButton;
 import com.eteks.sweethome3d.swing.ContentManager;
@@ -320,7 +321,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertTrue("Catalog piece isn't modifiable", catalogPiece.isModifiable());
     
     // Check a new home piece of furniture was created and it's the selected piece in home
-    List<Object> homeSelectedItems = home.getSelectedItems();
+    List<Selectable> homeSelectedItems = home.getSelectedItems();
     assertEquals("Wrong selected furniture count in home", 1, homeSelectedItems.size());
     HomePieceOfFurniture homePiece = (HomePieceOfFurniture)homeSelectedItems.get(0);
     assertEquals("Wrong home piece name", pieceTestName, homePiece.getName());

@@ -31,6 +31,7 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -76,7 +77,7 @@ public class HomeFurnitureController {
    * Controls the modification of selected furniture.
    */
   public void modifySelection() {
-    final List<Object> oldSelection = this.home.getSelectedItems(); 
+    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<HomePieceOfFurniture> selectedFurniture = 
         Home.getFurnitureSubList(oldSelection);
     if (!selectedFurniture.isEmpty()) {

@@ -36,6 +36,7 @@ import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Selectable;
 
 /**
  * Plan transfer handler.
@@ -45,7 +46,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private Home             home;
   private ContentManager   contentManager;
   private HomeController   homeController;
-  private List<Object>     copiedItems;
+  private List<Selectable> copiedItems;
   private BufferedImage    copiedImage;
 
   /**
@@ -139,7 +140,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
         List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
         if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {
           return importHomeTransferableList(destination, 
-              (List<Object>)transferable.getTransferData(HomeTransferableList.HOME_FLAVOR));
+              (List<Selectable>)transferable.getTransferData(HomeTransferableList.HOME_FLAVOR));
         } else {
           return importFileList(destination, 
               (List<File>)transferable.getTransferData(DataFlavor.javaFileListFlavor));
@@ -154,8 +155,8 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     }
   }
 
-  private boolean importHomeTransferableList(JComponent destination, 
-                                             List<Object> transferedItems) {
+  private boolean importHomeTransferableList(JComponent       destination, 
+                                             List<Selectable> transferedItems) {
     if (isDrop()) {
       Point2D dropLocation = getDropModelLocation(destination);
       this.homeController.drop(transferedItems, 

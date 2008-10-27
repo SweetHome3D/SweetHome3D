@@ -46,6 +46,7 @@ import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -298,7 +299,7 @@ public class PlanComponentTest extends ComponentTestFixture {
    */
   private void assertSelectionContains(Home home, 
                                        Wall ... walls) {
-    List<Object> selectedItems = home.getSelectedItems();
+    List<Selectable> selectedItems = home.getSelectedItems();
     assertEquals(walls.length, selectedItems.size());
     for (Wall wall : walls) {
       assertTrue("Wall not selected", selectedItems.contains(wall));

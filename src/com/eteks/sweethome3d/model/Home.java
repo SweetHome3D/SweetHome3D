@@ -52,7 +52,7 @@ public class Home implements Serializable {
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient List<FurnitureListener>           furnitureListeners;
-  private transient List<Object>                      selectedItems;
+  private transient List<Selectable>                  selectedItems;
   private transient List<SelectionListener>           selectionListeners;
   private List<Wall>                                  walls;
   private transient List<WallListener>                wallListeners;
@@ -78,7 +78,7 @@ public class Home implements Serializable {
   // The two following fields aren't transient for backward compatibility reasons 
   private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
-  private Map<String,Object>                          visualProperties;
+  private Map<String, Object>                         visualProperties;
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
 
@@ -155,7 +155,7 @@ public class Home implements Serializable {
 
   private void init() {
     // Initialize transient lists
-    this.selectedItems = new ArrayList<Object>();
+    this.selectedItems = new ArrayList<Selectable>();
     this.furnitureListeners = new ArrayList<FurnitureListener>();
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.wallListeners = new ArrayList<WallListener>();
@@ -469,16 +469,16 @@ public class Home implements Serializable {
   /**
    * Returns an unmodifiable list of the selected items in home.
    */
-  public List<Object> getSelectedItems() {
+  public List<Selectable> getSelectedItems() {
     return Collections.unmodifiableList(this.selectedItems);
   }
   
   /**
    * Sets the selected items in home and notifies listeners selection change.
    */
-  public void setSelectedItems(List<? extends Object> selectedItems) {
+  public void setSelectedItems(List<? extends Selectable> selectedItems) {
     // Make a copy of the list to avoid conflicts in the list returned by getSelectedItems
-    this.selectedItems = new ArrayList<Object>(selectedItems);
+    this.selectedItems = new ArrayList<Selectable>(selectedItems);
     if (!this.selectionListeners.isEmpty()) {
       SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedItems());
       // Work on a copy of selectionListeners to ensure a listener 
@@ -494,10 +494,10 @@ public class Home implements Serializable {
   /**
    * Deselects <code>item</code> if it's selected.
    */
-  private void deselectItem(Object item) {
+  private void deselectItem(Selectable item) {
     int pieceSelectionIndex = this.selectedItems.indexOf(item);
     if (pieceSelectionIndex != -1) {
-      List<Object> selectedItems = new ArrayList<Object>(getSelectedItems());
+      List<Selectable> selectedItems = new ArrayList<Selectable>(getSelectedItems());
       selectedItems.remove(pieceSelectionIndex);
       setSelectedItems(selectedItems);
     }
@@ -1300,29 +1300,29 @@ public class Home implements Serializable {
   /**
    * Returns a sub list of <code>items</code> that contains only home furniture.
    */
-  public static List<HomePieceOfFurniture> getFurnitureSubList(List<? extends Object> items) {
+  public static List<HomePieceOfFurniture> getFurnitureSubList(List<? extends Selectable> items) {
     return getSubList(items, HomePieceOfFurniture.class);
   }
 
   /**
    * Returns a sub list of <code>items</code> that contains only walls.
    */
-  public static List<Wall> getWallsSubList(List<? extends Object> items) {
+  public static List<Wall> getWallsSubList(List<? extends Selectable> items) {
     return getSubList(items, Wall.class);
   }
 
   /**
    * Returns a sub list of <code>items</code> that contains only dimension lines.
    */
-  public static List<DimensionLine> getDimensionLinesSubList(List<? extends Object> items) {
+  public static List<DimensionLine> getDimensionLinesSubList(List<? extends Selectable> items) {
     return getSubList(items, DimensionLine.class);
   }
   
   @SuppressWarnings("unchecked")
-  private static <T> List<T> getSubList(List<? extends Object> items, 
+  private static <T> List<T> getSubList(List<? extends Selectable> items, 
                                         Class<T> subListClass) {
     List<T> subList = new ArrayList<T>();
-    for (Object item : items) {
+    for (Selectable item : items) {
       if (subListClass.isInstance(item)) {
         subList.add((T)item);
       }

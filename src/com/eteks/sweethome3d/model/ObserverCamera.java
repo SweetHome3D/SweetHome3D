@@ -27,10 +27,10 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 
 /**
- * Observer camera characteritics in home.
+ * Observer camera characteristics in home.
  * @author Emmanuel Puybaret
  */
-public class ObserverCamera extends Camera {
+public class ObserverCamera extends Camera implements Selectable {
   private static final long serialVersionUID = 1L;
 
   private transient Shape    shape;
@@ -66,7 +66,7 @@ public class ObserverCamera extends Camera {
   }
   
   /**
-   * Sets the abcissa of this camera.
+   * Sets the ordinate of this camera.
    * This method should be called only from {@link Home}, which
    * controls notifications when a camera changed.
    */

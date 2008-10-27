@@ -30,6 +30,7 @@ import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
 
 /**
@@ -51,23 +52,23 @@ public class HomeTransferableList implements Transferable {
     }
   }
   
-  // Stores a copy of the tranfered items
-  private List<Object> transferedItems;
+  // Stores a copy of the transfered items
+  private List<Selectable> transferedItems;
 
   /**
    * Creates a transferable list of a copy of <code>items</code>.
    */
-  public HomeTransferableList(List<? extends Object> items) {
+  public HomeTransferableList(List<? extends Selectable> items) {
     this.transferedItems = deepCopy(items);
   }
 
   /**
    * Performs a deep copy of home <code>objects</code>.
    */
-  public static List<Object> deepCopy(List<? extends Object> objects) {
-    List<Object> list = new ArrayList<Object>();
-    for (Object obj : objects) {
-      if (obj instanceof PieceOfFurniture) {
+  public static List<Selectable> deepCopy(List<? extends Selectable> objects) {
+    List<Selectable> list = new ArrayList<Selectable>();
+    for (Selectable obj : objects) {
+      if (obj instanceof HomePieceOfFurniture) {
         list.add(new HomePieceOfFurniture((PieceOfFurniture)obj));
       } else if (obj instanceof DimensionLine) {
         list.add(new DimensionLine((DimensionLine)obj));

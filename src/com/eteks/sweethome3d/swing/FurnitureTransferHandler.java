@@ -33,6 +33,7 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 
 /**
  * Home furniture transfer handler.
@@ -135,7 +136,7 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
       try {
         List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
         if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {
-          List<Object> items = (List<Object>)transferable.
+          List<Selectable> items = (List<Selectable>)transferable.
               getTransferData(HomeTransferableList.HOME_FLAVOR);
           List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
           if (isDrop()) {

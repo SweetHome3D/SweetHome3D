@@ -32,7 +32,9 @@ import com.eteks.sweethome3d.model.FurnitureEvent;
 import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.model.WallEvent;
@@ -327,13 +329,13 @@ public class HomeController3D {
    * Observer camera controller state. 
    */
   private class ObserverCameraState extends CameraControllerState {
-    private Camera observerCamera;
+    private ObserverCamera observerCamera;
 
     @Override
     public void enter() {
-      this.observerCamera = home.getCamera();
+      this.observerCamera = (ObserverCamera)home.getCamera();
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Object [] {this.observerCamera}));
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -343,7 +345,7 @@ public class HomeController3D {
           this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta,
           this.observerCamera.getZ());
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Object [] {this.observerCamera}));
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
 
     @Override
@@ -351,7 +353,7 @@ public class HomeController3D {
       home.setCameraAngles(this.observerCamera, 
           this.observerCamera.getYaw() + delta, this.observerCamera.getPitch()); 
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Object [] {this.observerCamera}));
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -362,15 +364,15 @@ public class HomeController3D {
       newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
       home.setCameraAngles(this.observerCamera, this.observerCamera.getYaw(), newPitch); 
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Object [] {this.observerCamera}));
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
     public void exit() {
       // Remove observer camera from selection
-      List<Object> selectedItems = home.getSelectedItems();
+      List<Selectable> selectedItems = home.getSelectedItems();
       if (selectedItems.contains(this.observerCamera)) {
-        selectedItems = new ArrayList<Object>(selectedItems);
+        selectedItems = new ArrayList<Selectable>(selectedItems);
         selectedItems.remove(this.observerCamera);
         home.setSelectedItems(selectedItems);
       }

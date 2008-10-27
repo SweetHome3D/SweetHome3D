@@ -38,6 +38,7 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FurnitureCatalogController;
@@ -53,12 +54,12 @@ import com.eteks.sweethome3d.swing.PlanController;
  * @author Emmanuel Puybaret
  */
 public class HomeControllerTest extends TestCase {
-  private UserPreferences     preferences;
-  private Home                home;
-  private HomeController      homeController;
-  private FurnitureCatalogTree         catalogTree;
-  private FurnitureController furnitureController;
-  private FurnitureTable      furnitureTable;
+  private UserPreferences      preferences;
+  private Home                 home;
+  private HomeController       homeController;
+  private FurnitureCatalogTree catalogTree;
+  private FurnitureController  furnitureController;
+  private FurnitureTable       furnitureTable;
 
   @Override
   protected void setUp() {
@@ -210,7 +211,7 @@ public class HomeControllerTest extends TestCase {
         3, this.home.getSelectedItems().size());
     
     // 5. Select the first two pieces 
-    this.home.setSelectedItems(Arrays.asList(new Object [] {firstPiece, secondPiece}));
+    this.home.setSelectedItems(Arrays.asList(new Selectable [] {firstPiece, secondPiece}));
     float secondPieceX = secondPiece.getX();
     float secondPieceY = secondPiece.getY();
     // Align on bottom

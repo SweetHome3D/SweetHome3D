@@ -23,16 +23,16 @@ import java.util.EventObject;
 import java.util.List;
 
 /**
- * Type of event notified when {@link Home home} selection changes.
+ * Type of event notified when selection changes in home or furniture catalog.
  * @author Emmanuel Puybaret
  */
 public class SelectionEvent extends EventObject {
-  private List selectedItems;
+  private List<? extends Object> selectedItems;
 
   /**
    * Creates an event with an associated list of selected items.
    */
-  public SelectionEvent(Object source, List selectedItems) {
+  public SelectionEvent(Object source, List<? extends Object> selectedItems) {
     super(source);
     this.selectedItems = selectedItems;
   }
@@ -40,7 +40,7 @@ public class SelectionEvent extends EventObject {
   /**
    * Returns the selected items.
    */
-  public List getSelectedItems() {
+  public List<? extends Object> getSelectedItems() {
     return this.selectedItems;
   }
 }

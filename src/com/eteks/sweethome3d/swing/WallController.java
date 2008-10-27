@@ -31,6 +31,7 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -108,7 +109,7 @@ public class WallController {
    * Controls the modification of selected walls.
    */
   public void modifySelection() {
-    final List<Object> oldSelection = this.home.getSelectedItems(); 
+    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<Wall> selectedWalls = Home.getWallsSubList(oldSelection);
     if (!selectedWalls.isEmpty()) {
       WallPanel wallPanel = (WallPanel)getView();

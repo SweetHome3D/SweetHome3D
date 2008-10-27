@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -448,9 +449,9 @@ public class PlanController extends FurnitureController {
    * Posts an undoable reverse wall operation, about <code>walls</code>.
    */
   private void postReverseSelectedWallsDirection(final Wall [] walls, 
-                                                 List<Object> oldSelection) {
-    final Object [] oldSelectedItems = 
-        oldSelection.toArray(new Object [oldSelection.size()]);
+                                                 List<Selectable> oldSelection) {
+    final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -538,7 +539,7 @@ public class PlanController extends FurnitureController {
    * Controls the split of the selected wall in two joined walls of equal length.
    */
   public void splitSelectedWall() {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
     if (selectedWalls.size() == 1) {
       Wall splitWall = selectedWalls.get(0);
@@ -612,9 +613,9 @@ public class PlanController extends FurnitureController {
   private void postSplitSelectedWalls(final JoinedWall splitJoinedWall, 
                                       final JoinedWall firstJoinedWall, 
                                       final JoinedWall secondJoinedWall,
-                                      List<Object> oldSelection) {
-    final Object [] oldSelectedItems = 
-        oldSelection.toArray(new Object [oldSelection.size()]);
+                                      List<Selectable> oldSelection) {
+    final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -660,7 +661,7 @@ public class PlanController extends FurnitureController {
    */
   @Override
   public void selectAll() {
-    List<Object> all = new ArrayList<Object>(this.home.getWalls());
+    List<Selectable> all = new ArrayList<Selectable>(this.home.getWalls());
     all.addAll(this.home.getDimensionLines());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
@@ -817,7 +818,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>).
    */
   private Wall getResizedWallStartAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall) {
       Wall wall = (Wall)selectedItems.get(0);
@@ -834,7 +835,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>).
    */
   private Wall getResizedWallEndAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall) {
       Wall wall = (Wall)selectedItems.get(0);
@@ -851,7 +852,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>).
    */
   private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
@@ -868,7 +869,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>).
    */
   private DimensionLine getResizedDimensionLineEndAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
@@ -885,7 +886,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>) at its middle.
    */
   private DimensionLine getOffsetDimensionLineAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
@@ -900,7 +901,7 @@ public class PlanController extends FurnitureController {
   /**
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
-  private Object getItemAt(float x, float y) {
+  private Selectable getItemAt(float x, float y) {
     float margin = 3 / ((PlanComponent)getView()).getScale();
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null
@@ -945,8 +946,8 @@ public class PlanController extends FurnitureController {
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite
    * corners.
    */
-  private List<Object> getRectangleItems(float x0, float y0, float x1, float y1) {
-    List<Object> items = new ArrayList<Object>();
+  private List<Selectable> getRectangleItems(float x0, float y0, float x1, float y1) {
+    List<Selectable> items = new ArrayList<Selectable>();
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
@@ -974,7 +975,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
@@ -991,7 +992,7 @@ public class PlanController extends FurnitureController {
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
   private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
@@ -1009,7 +1010,7 @@ public class PlanController extends FurnitureController {
    * of the piece.
    */
   private HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
@@ -1028,7 +1029,7 @@ public class PlanController extends FurnitureController {
    * the width and the depth of the piece.
    */
   private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
@@ -1046,7 +1047,7 @@ public class PlanController extends FurnitureController {
    * that can be used to change the camera yaw angle.
    */
   private Camera getYawRotatedCameraAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
@@ -1069,7 +1070,7 @@ public class PlanController extends FurnitureController {
    * that can be used to change the camera pitch angle.
    */
   private Camera getPitchRotatedCameraAt(float x, float y) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
@@ -1090,12 +1091,12 @@ public class PlanController extends FurnitureController {
   /**
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
-  public void deleteItems(List<? extends Object> items) {
+  public void deleteItems(List<? extends Selectable> items) {
     if (!items.isEmpty()) {
       // Start a compound edit that deletes walls, furniture and dimension lines from home
       this.undoSupport.beginUpdate();
       
-      final List<Object> deletedItems = new ArrayList<Object>(items);      
+      final List<Selectable> deletedItems = new ArrayList<Selectable>(items);      
       // Add a undoable edit that will select the undeleted items at undo
       this.undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
@@ -1107,8 +1108,8 @@ public class PlanController extends FurnitureController {
 
       deleteFurniture(Home.getFurnitureSubList(items));      
 
-      List<Object> deletedWallsAndDimensionLines = 
-          new ArrayList<Object>(Home.getWallsSubList(items));
+      List<Selectable> deletedWallsAndDimensionLines = 
+          new ArrayList<Selectable>(Home.getWallsSubList(items));
       deletedWallsAndDimensionLines.addAll(Home.getDimensionLinesSubList(items));
       // First post to undo support that walls and dimension lines are deleted, 
       // otherwise data about joined walls can't be stored       
@@ -1124,10 +1125,10 @@ public class PlanController extends FurnitureController {
   /**
    * Posts an undoable delete items operation about <code>deletedItems</code>.
    */
-  private void postDeleteWallsAndDimensionLines(final List<? extends Object> deletedItems) {
+  private void postDeleteWallsAndDimensionLines(final List<? extends Selectable> deletedItems) {
     // Manage walls
     List<Wall> deletedWalls = new ArrayList<Wall>();
-    for (Object item : deletedItems) {
+    for (Selectable item : deletedItems) {
       if (item instanceof Wall) {
         deletedWalls.add((Wall)item);
       }
@@ -1138,7 +1139,7 @@ public class PlanController extends FurnitureController {
 
     // Manage dimension lines
     List<DimensionLine> deletedDimensionLines = new ArrayList<DimensionLine>();
-    for (Object item : deletedItems) {
+    for (Selectable item : deletedItems) {
       if (item instanceof DimensionLine) {
         deletedDimensionLines.add((DimensionLine)item);
       }
@@ -1174,8 +1175,8 @@ public class PlanController extends FurnitureController {
   /**
    * Deletes <code>items</code> from home.
    */
-  private void doDeleteItems(List<Object> items) {
-    for (Object item : items) {
+  private void doDeleteItems(List<Selectable> items) {
+    for (Selectable item : items) {
       if (item instanceof Wall) {
         home.deleteWall((Wall)item);
       } else if (item instanceof DimensionLine) {
@@ -1191,7 +1192,7 @@ public class PlanController extends FurnitureController {
    * <code>dy</code>) units and record it as undoable operation.
    */
   private void moveAndShowSelectedItems(float dx, float dy) {
-    List<Object> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     if (!selectedItems.isEmpty()) {
       moveItems(selectedItems, dx, dy);
       ((PlanComponent)getView()).makeSelectionVisible();
@@ -1202,8 +1203,8 @@ public class PlanController extends FurnitureController {
   /**
    * Moves <code>items</code> of (<code>dx</code>, <code>dy</code>) units.
    */
-  public void moveItems(List<? extends Object> items, float dx, float dy) {
-    for (Object item : items) {
+  public void moveItems(List<? extends Selectable> items, float dx, float dy) {
+    for (Selectable item : items) {
       if (item instanceof Wall) {
         Wall wall = (Wall)item;
         moveWallStartPoint(wall, 
@@ -1301,7 +1302,7 @@ public class PlanController extends FurnitureController {
   /**
    * Selects <code>items</code> and make them visible at screen.
    */
-  private void selectAndShowItems(List<? extends Object> items) {
+  private void selectAndShowItems(List<? extends Selectable> items) {
     selectItems(items);
     ((PlanComponent)getView()).makeSelectionVisible();
   }
@@ -1309,7 +1310,7 @@ public class PlanController extends FurnitureController {
   /**
    * Selects <code>items</code>.
    */
-  private void selectItems(List<? extends Object> items) {
+  private void selectItems(List<? extends Selectable> items) {
     // Remove selectionListener when selection is done from this controller
     // to control when selection should be made visible
     this.home.removeSelectionListener(this.selectionListener);
@@ -1320,15 +1321,16 @@ public class PlanController extends FurnitureController {
   /**
    * Selects only a given <code>item</code>.
    */
-  private void selectItem(Object item) {
-    selectItems(Arrays.asList(new Object [] {item}));
+  private void selectItem(Selectable item) {
+    selectItems(Arrays.asList(new Selectable [] {item}));
   }
 
   /**
    * Deselects all walls in plan. 
    */
   private void deselectAll() {
-    selectItems(Collections.emptyList());
+    List<Selectable> emptyList = Collections.emptyList(); 
+    selectItems(emptyList);
   }
 
   /**
@@ -1344,15 +1346,15 @@ public class PlanController extends FurnitureController {
   /**
    * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
-  private void postAddWalls(List<Wall> newWalls, List<Object> oldSelection) {
+  private void postAddWalls(List<Wall> newWalls, List<Selectable> oldSelection) {
     if (newWalls.size() > 0) {
       // Retrieve data about joined walls to newWalls
       final JoinedWall [] joinedNewWalls = new JoinedWall [newWalls.size()];
       for (int i = 0; i < joinedNewWalls.length; i++) {
          joinedNewWalls [i] = new JoinedWall(newWalls.get(i));
       }
-      final Object [] oldSelectedItems = 
-        oldSelection.toArray(new Object [oldSelection.size()]);
+      final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -1432,12 +1434,13 @@ public class PlanController extends FurnitureController {
   /**
    * Posts an undoable new dimension line operation, about <code>newDimensionLines</code>.
    */
-  private void postAddDimensionLines(List<DimensionLine> newDimensionLines, List<Object> oldSelection) {
+  private void postAddDimensionLines(List<DimensionLine> newDimensionLines, 
+                                     List<Selectable> oldSelection) {
     if (newDimensionLines.size() > 0) {
       final DimensionLine [] dimensionLines = newDimensionLines.toArray(
           new DimensionLine [newDimensionLines.size()]);
-      final Object [] oldSelectedItems = 
-          oldSelection.toArray(new Object [oldSelection.size()]);
+      final Selectable [] oldSelectedItems = 
+          oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -1484,12 +1487,12 @@ public class PlanController extends FurnitureController {
    * Posts an undoable operation of a (<code>dx</code>, <code>dy</code>) move 
    * of <code>movedItems</code>.
    */
-  private void postItemsMove(List<? extends Object> movedItems, 
+  private void postItemsMove(List<? extends Selectable> movedItems, 
                              final float dx, final float dy) {
     if (dx != 0 || dy != 0) {
       // Store the moved walls in an array
-      final Object [] itemsArray = 
-        movedItems.toArray(new Object [movedItems.size()]);
+      final Selectable [] itemsArray = 
+        movedItems.toArray(new Selectable [movedItems.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
@@ -1516,9 +1519,9 @@ public class PlanController extends FurnitureController {
    * Moves <code>movedItems</code> of (<code>dx</code>, <code>dy</code>) pixels, 
    * selects them and make them visible.
    */
-  private void doMoveAndShowItems(Object [] movedItems, 
+  private void doMoveAndShowItems(Selectable [] movedItems, 
                                   float dx, float dy) {
-    List<Object> itemsList = Arrays.asList(movedItems);
+    List<Selectable> itemsList = Arrays.asList(movedItems);
     moveItems(itemsList, dx, dy);   
     selectAndShowItems(itemsList);
   }
@@ -1526,8 +1529,8 @@ public class PlanController extends FurnitureController {
   /**
    * Posts an undoable operation about duplication <code>items</code>.
    */
-  public void postItemsDuplication(final List<Object> items,
-                                   final List<Object> oldSelectedItems) {
+  public void postItemsDuplication(final List<Selectable> items,
+                                   final List<Selectable> oldSelectedItems) {
     // Delete furniture and add it again in a compound edit
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
     deleteFurniture(furniture);
@@ -1544,8 +1547,10 @@ public class PlanController extends FurnitureController {
       });
 
     addFurniture(furniture);
-    postAddWalls(Home.getWallsSubList(items), Collections.emptyList());
-    postAddDimensionLines(Home.getDimensionLinesSubList(items), Collections.emptyList());
+    List<Selectable> emptyWallList = Collections.emptyList();
+    postAddWalls(Home.getWallsSubList(items), emptyWallList);
+    List<Selectable> emptyDimensionLineList = Collections.emptyList();
+    postAddDimensionLines(Home.getDimensionLinesSubList(items), emptyDimensionLineList);
 
     // Add a undoable edit that will select all the items at redo
     this.undoSupport.postEdit(new AbstractUndoableEdit() {      
@@ -2133,7 +2138,7 @@ public class PlanController extends FurnitureController {
         } else if (getElevatedPieceOfFurnitureAt(x, y) != null) {
           setState(getPieceOfFurnitureElevationState());
         } else {
-          Object item = getItemAt(x, y);
+          Selectable item = getItemAt(x, y);
           // If shift isn't pressed, and an item is under cursor position
           if (!shiftDown && item != null) {
             // Change state to SelectionMoveState
@@ -2145,7 +2150,7 @@ public class PlanController extends FurnitureController {
           
         }
       } else if (clickCount == 2) {
-        Object item = getItemAt(x, y);
+        Selectable item = getItemAt(x, y);
         // If shift isn't pressed, and an item is under cursor position
         if (!shiftDown && item != null) {
           // Modify selected item on a double click
@@ -2170,11 +2175,11 @@ public class PlanController extends FurnitureController {
    * is depressed.
    */
   private class SelectionMoveState extends ControllerState {
-    private float        xLastMouseMove;
-    private float        yLastMouseMove;
-    private boolean      mouseMoved;
-    private List<Object> movedItems;
-    private List<Object> duplicatedItems;
+    private float            xLastMouseMove;
+    private float            yLastMouseMove;
+    private boolean          mouseMoved;
+    private List<Selectable> movedItems;
+    private List<Selectable> duplicatedItems;
   
     @Override
     public Mode getMode() {
@@ -2186,7 +2191,7 @@ public class PlanController extends FurnitureController {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
-      Object itemUnderCursor = getItemAt(getXLastMousePress(),
+      Selectable itemUnderCursor = getItemAt(getXLastMousePress(),
           getYLastMousePress());
       this.movedItems = home.getSelectedItems();
       // If the item under the cursor doesn't belong to selection
@@ -2224,7 +2229,7 @@ public class PlanController extends FurnitureController {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        Object itemUnderCursor = getItemAt(x, y);
+        Selectable itemUnderCursor = getItemAt(x, y);
         if (itemUnderCursor != null) {
           // Select only the item under cursor position
           selectItem(itemUnderCursor);
@@ -2257,7 +2262,7 @@ public class PlanController extends FurnitureController {
           // Duplicate original items and add them to home
           this.duplicatedItems = this.movedItems;          
           this.movedItems = HomeTransferableList.deepCopy(this.movedItems);          
-          for (Object item : this.movedItems) {
+          for (Selectable item : this.movedItems) {
             if (item instanceof Wall) {
               home.addWall((Wall)item);
             } else if (item instanceof DimensionLine) {
@@ -2296,8 +2301,8 @@ public class PlanController extends FurnitureController {
    * down.
    */
   private class RectangleSelectionState extends ControllerState {
-    private List<Object> selectedItemsMousePressed;  
-    private boolean      mouseMoved;
+    private List<Selectable> selectedItemsMousePressed;  
+    private boolean          mouseMoved;
   
     @Override
     public Mode getMode() {
@@ -2306,7 +2311,7 @@ public class PlanController extends FurnitureController {
 
     @Override
     public void enter() {
-      Object itemUnderCursor = 
+      Selectable itemUnderCursor = 
           getItemAt(getXLastMousePress(), getYLastMousePress());
       // If no item under cursor and shift wasn't down, deselect all
       if (itemUnderCursor == null && !wasShiftDownLastMousePress()) {
@@ -2314,7 +2319,7 @@ public class PlanController extends FurnitureController {
       } 
       // Store current selection
       this.selectedItemsMousePressed = 
-        new ArrayList<Object>(home.getSelectedItems());
+        new ArrayList<Selectable>(home.getSelectedItems());
       this.mouseMoved = false;
     }
 
@@ -2334,14 +2339,14 @@ public class PlanController extends FurnitureController {
     public void releaseMouse(float x, float y) {
       // If cursor didn't move
       if (!this.mouseMoved) {
-        Object itemUnderCursor = getItemAt(x, y);
+        Selectable itemUnderCursor = getItemAt(x, y);
         // Toggle selection of the item under cursor 
         if (itemUnderCursor != null) {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
             this.selectedItemsMousePressed.remove(itemUnderCursor);
           } else {
             // Remove any camera from current selection 
-            for (Iterator<Object> iter = this.selectedItemsMousePressed.iterator(); iter.hasNext();) {
+            for (Iterator<Selectable> iter = this.selectedItemsMousePressed.iterator(); iter.hasNext();) {
               if (iter.next() instanceof Camera) {
                 iter.remove();
               }
@@ -2377,17 +2382,17 @@ public class PlanController extends FurnitureController {
      */
     private void updateSelectedItems(float x0, float y0, 
                                      float x1, float y1,
-                                     List<Object> selectedItemsMousePressed) {
-      List<Object> selectedItems;
+                                     List<Selectable> selectedItemsMousePressed) {
+      List<Selectable> selectedItems;
       boolean shiftDown = wasShiftDownLastMousePress();
       if (shiftDown) {
-        selectedItems = new ArrayList<Object>(selectedItemsMousePressed);
+        selectedItems = new ArrayList<Selectable>(selectedItemsMousePressed);
       } else {
-        selectedItems = new ArrayList<Object>();
+        selectedItems = new ArrayList<Selectable>();
       }
       
       // For all the items that intersects with rectangle
-      for (Object item : getRectangleItems(x0, y0, x1, y1)) {
+      for (Selectable item : getRectangleItems(x0, y0, x1, y1)) {
         // Don't let the camera be able to be selected with a rectangle
         if (!(item instanceof Camera)) {
           // If shift was down at mouse press
@@ -2479,19 +2484,19 @@ public class PlanController extends FurnitureController {
    * New wall state. This state manages wall creation at each mouse press. 
    */
   private class NewWallState extends AbstractWallState {
-    private float        xStart;
-    private float        yStart;
-    private float        xLastEnd;
-    private float        yLastEnd;
-    private Wall         wallStartAtStart;
-    private Wall         wallEndAtStart;
-    private Wall         newWall;
-    private Wall         wallStartAtEnd;
-    private Wall         wallEndAtEnd;
-    private Wall         lastWall;
-    private List<Object> oldSelection;
-    private List<Wall>   newWalls;
-    private boolean      magnetismEnabled;
+    private float            xStart;
+    private float            yStart;
+    private float            xLastEnd;
+    private float            yLastEnd;
+    private Wall             wallStartAtStart;
+    private Wall             wallEndAtStart;
+    private Wall             newWall;
+    private Wall             wallStartAtEnd;
+    private Wall             wallEndAtEnd;
+    private Wall             lastWall;
+    private List<Selectable> oldSelection;
+    private List<Wall>       newWalls;
+    private boolean          magnetismEnabled;
     
     @Override
     public Mode getMode() {
@@ -3324,12 +3329,12 @@ public class PlanController extends FurnitureController {
    * New dimension line state. This state manages dimension line creation at mouse press. 
    */
   private class NewDimensionLineState extends ControllerState {
-    private float         xStart;
-    private float         yStart;
-    private DimensionLine newDimensionLine;
-    private List<Object>  oldSelection;
-    private boolean       magnetismEnabled;
-    private boolean       offsetChoice;
+    private float            xStart;
+    private float            yStart;
+    private DimensionLine    newDimensionLine;
+    private List<Selectable> oldSelection;
+    private boolean          magnetismEnabled;
+    private boolean          offsetChoice;
     
     @Override
     public Mode getMode() {

@@ -32,7 +32,9 @@ import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 
 /**
  * Catalog transfer handler.
@@ -75,7 +77,13 @@ public class FurnitureCatalogTransferHandler extends TransferHandler {
    */
   @Override
   protected Transferable createTransferable(JComponent source) {
-    return new HomeTransferableList(catalog.getSelectedFurniture());
+    List<CatalogPieceOfFurniture> selectedCatalogFurniture = this.catalog.getSelectedFurniture();
+    List<HomePieceOfFurniture> transferedFurniture = 
+        new ArrayList<HomePieceOfFurniture>(selectedCatalogFurniture.size());
+    for (CatalogPieceOfFurniture piece : selectedCatalogFurniture) {
+      transferedFurniture.add(new HomePieceOfFurniture(piece));
+    }
+    return new HomeTransferableList(transferedFurniture);
   }
 
   /**

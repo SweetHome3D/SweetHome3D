@@ -41,6 +41,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 
@@ -196,7 +197,7 @@ public class ImportedFurnitureWizardController extends WizardController {
    * @param piece the piece of furniture to add.
    */
   public void addPieceOfFurniture(final HomePieceOfFurniture piece) {
-    final List<Object> oldSelection = this.home.getSelectedItems(); 
+    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     // Get index of the piece added to home
     final int pieceIndex = home.getFurniture().size();
     
