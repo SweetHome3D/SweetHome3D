@@ -141,25 +141,27 @@ public class HomeFurnitureController {
                                  Boolean visible, Boolean modelMirrored) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
-      this.home.setPieceOfFurnitureName(piece, 
-          name != null ? name : piece.getName());
-      this.home.setPieceOfFurnitureLocation(piece, 
-          x != null ? x.floatValue() : piece.getX(), 
-          y != null ? y.floatValue() : piece.getY());
-      this.home.setPieceOfFurnitureAngle(piece, 
-          angle != null ? angle.floatValue() : piece.getAngle());
-      this.home.setPieceOfFurnitureSize(piece, 
-          width != null && piece.isResizable() ? width.floatValue() : piece.getWidth(), 
-          depth != null && piece.isResizable() ? depth.floatValue() : piece.getDepth(), 
-          height != null && piece.isResizable() ? height.floatValue() : piece.getHeight());
-      this.home.setPieceOfFurnitureElevation(piece, 
-          elevation != null ? elevation.floatValue() : piece.getElevation());
-      this.home.setPieceOfFurnitureColor(piece, 
-          color != null ? color : piece.getColor());
-      this.home.setPieceOfFurnitureVisible(piece, 
-          visible != null ? visible.booleanValue() : piece.isVisible());
-      this.home.setPieceOfFurnitureModelMirrored(piece, 
-          modelMirrored != null && piece.isResizable() ? modelMirrored.booleanValue() : piece.isModelMirrored());
+      piece.setName(name != null 
+          ? name : piece.getName());
+      piece.setX(x != null 
+          ? x.floatValue() : piece.getX());
+      piece.setY(y != null 
+          ? y.floatValue() : piece.getY());
+      piece.setAngle(angle != null ? angle.floatValue() : piece.getAngle());
+      piece.setWidth(width != null && piece.isResizable() 
+          ? width.floatValue() : piece.getWidth());
+      piece.setDepth(depth != null && piece.isResizable() 
+          ? depth.floatValue() : piece.getDepth());
+      piece.setHeight(height != null && piece.isResizable() 
+          ? height.floatValue() : piece.getHeight());
+      piece.setElevation(elevation != null 
+          ? elevation.floatValue() : piece.getElevation());
+      piece.setColor(color != null 
+          ? color : piece.getColor());
+      piece.setVisible(visible != null 
+          ? visible.booleanValue() : piece.isVisible());
+      piece.setModelMirrored(modelMirrored != null && piece.isResizable() 
+          ? modelMirrored.booleanValue() : piece.isModelMirrored());
     }
   }
 
@@ -169,17 +171,19 @@ public class HomeFurnitureController {
   private void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
-      this.home.setPieceOfFurnitureName(piece, modifiedPiece.getName());
-      this.home.setPieceOfFurnitureLocation(piece, modifiedPiece.getX(), modifiedPiece.getY());
-      this.home.setPieceOfFurnitureElevation(piece, modifiedPiece.getElevation());
-      this.home.setPieceOfFurnitureAngle(piece, modifiedPiece.getAngle());
+      piece.setName(modifiedPiece.getName());
+      piece.setX(modifiedPiece.getX());
+      piece.setY(modifiedPiece.getY());
+      piece.setElevation(modifiedPiece.getElevation());
+      piece.setAngle(modifiedPiece.getAngle());
       if (piece.isResizable()) {
-        this.home.setPieceOfFurnitureSize(piece, 
-            modifiedPiece.getWidth(), modifiedPiece.getDepth(), modifiedPiece.getHeight());
+        piece.setWidth(modifiedPiece.getWidth());
+        piece.setDepth(modifiedPiece.getDepth());
+        piece.setHeight(modifiedPiece.getHeight());
       }
-      this.home.setPieceOfFurnitureColor(piece, modifiedPiece.getColor());
-      this.home.setPieceOfFurnitureVisible(piece, modifiedPiece.isVisible());
-      this.home.setPieceOfFurnitureModelMirrored(piece, modifiedPiece.isModelMirrored());
+      piece.setColor(modifiedPiece.getColor());
+      piece.setVisible(modifiedPiece.isVisible());
+      piece.setModelMirrored(modifiedPiece.isModelMirrored());
     }
   }
 

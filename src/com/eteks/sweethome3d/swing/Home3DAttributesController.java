@@ -147,8 +147,8 @@ public class Home3DAttributesController {
                             int groundColor, HomeTexture groundTexture, int skyColor, 
                             int lightColor, float wallsAlpha) {
     ObserverCamera observerCamera = this.home.getObserverCamera();
-    this.home.setCameraFieldOfView(observerCamera, observerCameraFieldOfView);
-    this.home.setCameraLocation(observerCamera, observerCamera.getX(), observerCamera.getY(), observerCameraZ);
+    observerCamera.setFieldOfView(observerCameraFieldOfView);
+    observerCamera.setZ(observerCameraZ);
     this.home.setGroundColor(groundColor);
     this.home.setGroundTexture(groundTexture);
     this.home.setSkyColor(skyColor);

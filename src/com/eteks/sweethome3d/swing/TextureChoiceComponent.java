@@ -68,10 +68,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.HomeTexture;
-import com.eteks.sweethome3d.model.TextureEvent;
 import com.eteks.sweethome3d.model.TextureImage;
-import com.eteks.sweethome3d.model.TextureListener;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -314,7 +314,7 @@ public class TextureChoiceComponent extends JButton {
           }
         });
       
-      preferences.getTexturesCatalog().addTextureListener(new TexturesCatalogListener(this));
+      preferences.getTexturesCatalog().addTexturesListener(new TexturesCatalogListener(this));
     }
 
     /**
@@ -322,24 +322,24 @@ public class TextureChoiceComponent extends JButton {
      * is deleted or added in textures catalog. This listener is bound to this component
      * with a weak reference to avoid strong link between catalog and this component.  
      */
-    private static class TexturesCatalogListener implements TextureListener {
+    private static class TexturesCatalogListener implements CollectionListener<CatalogTexture> {
       private WeakReference<TexturePanel> texturePanel;
       
       public TexturesCatalogListener(TexturePanel texturePanel) {
         this.texturePanel = new WeakReference<TexturePanel>(texturePanel);
       }
       
-      public void textureChanged(TextureEvent ev) {
+      public void collectionChanged(CollectionEvent<CatalogTexture> ev) {
         // If controller was garbage collected, remove this listener from catalog
         final TexturePanel texturePanel = this.texturePanel.get();
         if (texturePanel == null) {
-          ((TexturesCatalog)ev.getSource()).removeTextureListener(this);
+          ((TexturesCatalog)ev.getSource()).removeTexturesListener(this);
         } else {
           texturePanel.availableTexturesList.setModel(
               texturePanel.createListModel((TexturesCatalog)ev.getSource()));
           switch (ev.getType()) {
             case ADD:
-              texturePanel.availableTexturesList.setSelectedValue(ev.getTexture(), true);
+              texturePanel.availableTexturesList.setSelectedValue(ev.getItem(), true);
               break;
             case DELETE:
               texturePanel.availableTexturesList.clearSelection();

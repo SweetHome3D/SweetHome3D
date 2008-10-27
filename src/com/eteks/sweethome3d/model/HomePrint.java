@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.io.Serializable;
 
 /**
- * The print attibutes for a home.
+ * The print attributes for a home.
  * @author Emmanuel Puybaret
  */
 public class HomePrint implements Serializable {

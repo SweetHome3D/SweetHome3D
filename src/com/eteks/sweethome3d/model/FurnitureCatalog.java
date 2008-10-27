@@ -33,7 +33,8 @@ public abstract class FurnitureCatalog {
   private boolean                       sorted;
   private List<CatalogPieceOfFurniture> selectedFurniture  = Collections.emptyList();
   private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
-  private List<FurnitureListener>       furnitureListeners = new ArrayList<FurnitureListener>();
+  private List<CollectionListener<CatalogPieceOfFurniture>> furnitureListeners = 
+                             new ArrayList<CollectionListener<CatalogPieceOfFurniture>>();
 
   /**
    * Returns the categories list sorted by name.
@@ -72,14 +73,14 @@ public abstract class FurnitureCatalog {
   /**
    * Adds the furniture <code>listener</code> in parameter to this catalog.
    */
-  public void addFurnitureListener(FurnitureListener listener) {
+  public void addFurnitureListener(CollectionListener<CatalogPieceOfFurniture> listener) {
     this.furnitureListeners.add(listener);
   }
 
   /**
    * Removes the furniture <code>listener</code> in parameter from this catalog.
    */
-  public void removeFurnitureListener(FurnitureListener listener) {
+  public void removeFurnitureListener(CollectionListener<CatalogPieceOfFurniture> listener) {
     this.furnitureListeners.remove(listener);
   }
 
@@ -119,7 +120,7 @@ public abstract class FurnitureCatalog {
     category.add(piece);
     
     firePieceOfFurnitureChanged(piece, 
-        Collections.binarySearch(category.getFurniture(), piece), FurnitureEvent.Type.ADD);
+        Collections.binarySearch(category.getFurniture(), piece), CollectionEvent.Type.ADD);
   }
 
   /**
@@ -146,7 +147,7 @@ public abstract class FurnitureCatalog {
           this.categories.remove(category);
         }
         
-        firePieceOfFurnitureChanged(piece, pieceIndex, FurnitureEvent.Type.DELETE);
+        firePieceOfFurnitureChanged(piece, pieceIndex, CollectionEvent.Type.DELETE);
         return;
       }
     }
@@ -155,17 +156,18 @@ public abstract class FurnitureCatalog {
         "catalog doesn't contain piece " + piece.getName());
   }
 
+  @SuppressWarnings("unchecked")
   private void firePieceOfFurnitureChanged(CatalogPieceOfFurniture piece, int index,
-                                           FurnitureEvent.Type eventType) {
+                                           CollectionEvent.Type eventType) {
     if (!this.furnitureListeners.isEmpty()) {
-      FurnitureEvent furnitureEvent = 
-          new FurnitureEvent(this, piece, index, eventType);
+      CollectionEvent<CatalogPieceOfFurniture> furnitureEvent = 
+          new CollectionEvent<CatalogPieceOfFurniture>(this, piece, index, eventType);
       // Work on a copy of furnitureListeners to ensure a listener 
       // can modify safely listeners list
-      FurnitureListener [] listeners = this.furnitureListeners.
-        toArray(new FurnitureListener [this.furnitureListeners.size()]);
-      for (FurnitureListener listener : listeners) {
-        listener.pieceOfFurnitureChanged(furnitureEvent);
+      CollectionListener<CatalogPieceOfFurniture> [] listeners = this.furnitureListeners.
+          toArray(new CollectionListener [this.furnitureListeners.size()]);
+      for (CollectionListener<CatalogPieceOfFurniture> listener : listeners) {
+        listener.collectionChanged(furnitureEvent);
       }
     }
   }

@@ -1,7 +1,7 @@
 /*
- * CameraEvent.java 17 juin 2007
+ * CollectionListener.java 27 oct. 2008
  *
- * Copyright (c) 2007 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
+ * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,28 +19,16 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.util.EventObject;
+import java.util.EventListener;
 
 /**
- * Type of event notified when {@link Home home} cameras are modified.
+ * A listener notified when items are added or removed from a collection.
+ * <code>T</code> is the type of item stored in the collection.
  * @author Emmanuel Puybaret
  */
-public class CameraEvent extends EventObject {
-  private Camera camera;
-  
+public interface CollectionListener<T> extends EventListener {
   /**
-   * Creates an event emitted by <code>source</code> for a notification
-   * about a <code>camera</code>. 
+   * Called when an item is added or deleted from a collection.
    */
-  public CameraEvent(Object source, Camera camera) {
-    super(source);
-    this.camera = camera;
-  }
-
-  /**
-   * Returns the camera associated to this event.
-   */
-  public Camera getCamera() {
-    return this.camera;
-  }
+  public void collectionChanged(CollectionEvent<T> ev);
 }

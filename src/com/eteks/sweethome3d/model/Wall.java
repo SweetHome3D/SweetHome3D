@@ -24,6 +24,10 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,22 +37,31 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public class Wall implements Serializable, Selectable {
+  /**
+   * The properties of a wall that may change. <code>PropertyChangeListener</code>s added 
+   * to a wall will be notified under a property name equal to the string value of one these properties.
+   */
+  public enum Property {X_START, Y_START, X_END, Y_END, WALL_AT_START, WALL_AT_END, 
+                        THICKNESS, HEIGHT, HEIGHT_AT_END, 
+                        LEFT_SIDE_COLOR, LEFT_SIDE_TEXTURE, RIGHT_SIDE_COLOR, RIGHT_SIDE_TEXTURE}
+  
   private static final long serialVersionUID = 1L;
   
-  private float   xStart;
-  private float   yStart;
-  private float   xEnd;
-  private float   yEnd; 
-  private Wall    wallAtStart;
-  private Wall    wallAtEnd;
-  private float   thickness;
-  private Float   height;
-  private Float   heightAtEnd;
+  private float       xStart;
+  private float       yStart;
+  private float       xEnd;
+  private float       yEnd; 
+  private Wall        wallAtStart;
+  private Wall        wallAtEnd;
+  private float       thickness;
+  private Float       height;
+  private Float       heightAtEnd;
   private Integer     leftSideColor;
   private HomeTexture leftSideTexture;
   private Integer     rightSideColor;
   private HomeTexture rightSideTexture;
   
+  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient float [][] pointsCache;
 
   /**
@@ -78,7 +91,30 @@ public class Wall implements Serializable, Selectable {
     this.rightSideColor = wall.getRightSideColor();
     this.rightSideTexture = wall.getRightSideTexture();
   }
-  
+
+  /**
+   * Initializes new wall transient fields  
+   * and reads wall from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    in.defaultReadObject();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this wall.
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this wall.
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
   /**
    * Returns the start point abscissa of this wall.
    */
@@ -87,13 +123,16 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the start point abscissa of this wall.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the start point abscissa of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setXStart(float xStart) {
-    this.xStart = xStart;
-    clearPointsCache();
+  public void setXStart(float xStart) {
+    if (xStart != this.xStart) {
+      float oldXStart = this.xStart;
+      this.xStart = xStart;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.X_START.toString(), oldXStart, xStart);
+    }
   }
 
   /**
@@ -104,13 +143,16 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the start point ordinate of this wall.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the start point ordinate of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setYStart(float yStart) {
-    this.yStart = yStart;
-    clearPointsCache();
+  public void setYStart(float yStart) {
+    if (yStart != this.yStart) {
+      float oldYStart = this.yStart;
+      this.yStart = yStart;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.Y_START.toString(), oldYStart, yStart);
+    }
   }
 
   /**
@@ -121,13 +163,16 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the end point abscissa of this wall.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the end point abscissa of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setXEnd(float xEnd) {
-    this.xEnd = xEnd;
-    clearPointsCache();
+  public void setXEnd(float xEnd) {
+    if (xEnd != this.xEnd) {
+      float oldXEnd = this.xEnd;
+      this.xEnd = xEnd;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.X_END.toString(), oldXEnd, xEnd);
+    }
   }
 
   /**
@@ -138,13 +183,16 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the end point ordinate of this wall.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the end point ordinate of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setYEnd(float yEnd) {
-    this.yEnd = yEnd;
-    clearPointsCache();
+  public void setYEnd(float yEnd) {
+    if (yEnd != this.yEnd) {
+      float oldYEnd = this.yEnd;
+      this.yEnd = yEnd;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.toString(), oldYEnd, yEnd);
+    }
   }
 
   /**
@@ -155,13 +203,33 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the wall joined to this wall at start point.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the wall joined to this wall at start point. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
+   * If the start point of this wall is attached to an other wall, it will be detached 
+   * from this wall, and wall listeners will receive a change notification.
+   * @param wallAtStart a wall or <code>null</code> to detach this wall
+   *          from any wall it was attached to before.
    */
-  void setWallAtStart(Wall wallAtStart) {
-    this.wallAtStart = wallAtStart;
-    clearPointsCache();
+  public void setWallAtStart(Wall wallAtStart) {
+    setWallAtStart(wallAtStart, true);
+  }
+
+  /**
+   * Sets the wall joined to this wall at start point and detachs the wall at start
+   * from this wall if <code>detachJoinedWallAtStart</code> is true. 
+   */
+  private void setWallAtStart(Wall wallAtStart, boolean detachJoinedWallAtStart) {
+    if (wallAtStart != this.wallAtStart) {
+      Wall oldWallAtStart = this.wallAtStart;
+      this.wallAtStart = wallAtStart;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_START.toString(), 
+          oldWallAtStart, wallAtStart);
+      
+      if (detachJoinedWallAtStart) {
+        detachJoinedWall(oldWallAtStart);
+      }
+    }
   }
 
   /**
@@ -173,13 +241,47 @@ public class Wall implements Serializable, Selectable {
  
  
   /**
-   * Sets the wall joined to this wall at end point.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the wall joined to this wall at end point. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification. 
+   * If the end point of this wall is attached to an other wall, it will be detached 
+   * from this wall, and wall listeners will receive a change notification.
+   * @param wallAtStart a wall or <code>null</code> to detach this wall
+   *          from any wall it was attached to before.
    */
-  void setWallAtEnd(Wall wallAtEnd) {
-    this.wallAtEnd = wallAtEnd;
-    clearPointsCache();
+  public void setWallAtEnd(Wall wallAtEnd) {
+    setWallAtEnd(wallAtEnd, true);
+  }
+
+  /**
+   * Sets the wall joined to this wall at end point and detachs the wall at end
+   * from this wall if <code>detachJoinedWallAtEnd</code> is true. 
+   */
+  private void setWallAtEnd(Wall wallAtEnd, boolean detachJoinedWallAtEnd) {
+    if (wallAtEnd != this.wallAtEnd) {
+      Wall oldWallAtEnd = this.wallAtEnd;
+      this.wallAtEnd = wallAtEnd;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_END.toString(), 
+          oldWallAtEnd, wallAtEnd);
+      
+      if (detachJoinedWallAtEnd) {
+        detachJoinedWall(oldWallAtEnd);
+      }
+    }
+  }
+
+  /**
+   * Detaches <code>joinedWall</code> from this wall.
+   */
+  private void detachJoinedWall(Wall joinedWall) {
+    // Detach the previously attached wall 
+    if (joinedWall != null) {
+      if (joinedWall.getWallAtStart() == this) {
+        joinedWall.setWallAtStart(null, false);
+      } else if (joinedWall.getWallAtEnd() == this) {
+        joinedWall.setWallAtEnd(null, false);
+      } 
+    }
   }
 
   /**
@@ -190,13 +292,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets wall thickness.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets wall thickness. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setThickness(float thickness) {
-    this.thickness = thickness;
-    clearPointsCache();
+  public void setThickness(float thickness) {
+    if (thickness != this.thickness) {
+      float oldThickness = this.thickness;
+      this.thickness = thickness;
+      clearPointsCache();
+      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.toString(), 
+          oldThickness, thickness);
+    }
   }
 
   /**
@@ -209,12 +315,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the height of this wall.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the height of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setHeight(Float height) {
-    this.height = height;
+  public void setHeight(Float height) {
+    if (height != this.height
+        || (height != null && !height.equals(this.height))) {
+      Float oldHeight = this.height;
+      this.height = height;
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), 
+          oldHeight, height);
+    }
   }
 
   /**
@@ -225,12 +336,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the height of this wall at its end point.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets the height of this wall at its end point. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setHeightAtEnd(Float heightAtEnd) {
-    this.heightAtEnd = heightAtEnd;
+  public void setHeightAtEnd(Float heightAtEnd) {
+    if (heightAtEnd != this.heightAtEnd
+        || (heightAtEnd != null && !heightAtEnd.equals(this.heightAtEnd))) {
+      Float oldHeightAtEnd = this.heightAtEnd;
+      this.heightAtEnd = heightAtEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_AT_END.toString(), 
+          oldHeightAtEnd, heightAtEnd);
+    }
   }
 
   /**
@@ -252,12 +368,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets left side color of this wall. 
-   * This method should be called from {@link Home}, which
-   * controls notifications when a wall changed.
+   * Sets left side color of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setLeftSideColor(Integer leftColor) {
-    this.leftSideColor = leftColor;
+  public void setLeftSideColor(Integer leftSideColor) {
+    if (leftSideColor != this.leftSideColor
+        || (leftSideColor != null && !leftSideColor.equals(this.leftSideColor))) {
+      Integer oldLeftSideColor = this.leftSideColor;
+      this.leftSideColor = leftSideColor;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.toString(), 
+          oldLeftSideColor, leftSideColor);
+    }
   }
 
   /**
@@ -269,10 +390,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets right side color of this wall. 
+   * Sets right side color of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setRightSideColor(Integer rightColor) {
-    this.rightSideColor = rightColor;
+  public void setRightSideColor(Integer rightSideColor) {
+    if (rightSideColor != this.rightSideColor
+        || (rightSideColor != null && !rightSideColor.equals(this.rightSideColor))) {
+      Integer oldLeftSideColor = this.rightSideColor;
+      this.rightSideColor = rightSideColor;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.toString(), 
+          oldLeftSideColor, rightSideColor);
+    }
   }
 
   
@@ -284,10 +412,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the left side texture of this wall.
+   * Sets the left side texture of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setLeftSideTexture(HomeTexture leftSideTexture) {
-    this.leftSideTexture = leftSideTexture;
+  public void setLeftSideTexture(HomeTexture leftSideTexture) {
+    if (leftSideTexture != this.leftSideTexture
+        || (leftSideTexture != null && !leftSideTexture.equals(this.leftSideTexture))) {
+      HomeTexture oldLeftSideTexture = this.leftSideTexture;
+      this.leftSideTexture = leftSideTexture;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_TEXTURE.toString(), 
+          oldLeftSideTexture, leftSideTexture);
+    }
   }
 
   /**
@@ -298,10 +433,17 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
-   * Sets the right side texture of this wall.
+   * Sets the right side texture of this wall. Once this wall is updated, 
+   * listeners added to this wall will receive a change notification.
    */
-  void setRightSideTexture(HomeTexture rightSideTexture) {
-    this.rightSideTexture = rightSideTexture;
+  public void setRightSideTexture(HomeTexture rightSideTexture) {
+    if (rightSideTexture != this.rightSideTexture
+        || (rightSideTexture != null && !rightSideTexture.equals(this.rightSideTexture))) {
+      HomeTexture oldLeftSideTexture = this.rightSideTexture;
+      this.rightSideTexture = rightSideTexture;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.toString(), 
+          oldLeftSideTexture, rightSideTexture);
+    }
   }
 
   /**

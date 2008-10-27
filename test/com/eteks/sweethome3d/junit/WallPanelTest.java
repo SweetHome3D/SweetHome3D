@@ -50,8 +50,8 @@ public class WallPanelTest extends TestCase {
     Home home = new Home();
     Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f);
     home.addWall(wall1);
-    home.setWallLeftSideColor(wall1, 10);
-    home.setWallRightSideColor(wall1, 20);
+    wall1.setLeftSideColor(10);
+    wall1.setRightSideColor(20);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
     // 2. Create a wall panel to edit the selected wall
@@ -67,8 +67,8 @@ public class WallPanelTest extends TestCase {
  
     // 3. Modify wall right side texture with first available texture
     TextureImage firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
-    home.setWallRightSideColor(wall1, null);
-    home.setWallRightSideTexture(wall1, new HomeTexture(firstTexture));
+    wall1.setRightSideColor(null);
+    wall1.setRightSideTexture(new HomeTexture(firstTexture));
     panel = (WallPanel)new WallController(home, preferences, null, null).getView();
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
@@ -89,9 +89,9 @@ public class WallPanelTest extends TestCase {
     // 5. Add a second selected wall to home
     Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
     home.addWall(wall2);
-    home.setWallHeight(wall2, 300f);
-    home.setWallLeftSideColor(wall2, 10);
-    home.setWallRightSideColor(wall2, 50);
+    wall2.setHeight(300f);
+    wall2.setLeftSideColor(10);
+    wall2.setRightSideColor(50);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1, wall2}));
     // Check if wall panel edits null values if walls thickness or colors are the same
     panel = (WallPanel)new WallController(home, preferences, null, null).getView();
@@ -142,8 +142,8 @@ public class WallPanelTest extends TestCase {
     Home home = new Home();
     Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f);
     home.addWall(wall1);
-    home.setWallLeftSideColor(wall1, null);
-    home.setWallRightSideColor(wall1, 0xFFFF00);
+    wall1.setLeftSideColor(null);
+    wall1.setRightSideColor(0xFFFF00);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
     new WallController(home, new DefaultUserPreferences(), new FileContentManager(), null).displayView(null);

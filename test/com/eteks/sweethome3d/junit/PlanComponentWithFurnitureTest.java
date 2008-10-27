@@ -41,9 +41,9 @@ import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
-import com.eteks.sweethome3d.model.DimensionLineEvent;
-import com.eteks.sweethome3d.model.DimensionLineListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
@@ -273,10 +273,10 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     
     // Build an ordered list of dimensions added to home
     final ArrayList<DimensionLine> orderedDimensionLines = new ArrayList<DimensionLine>();
-    frame.home.addDimensionLineListener(new DimensionLineListener () {
-      public void dimensionLineChanged(DimensionLineEvent ev) {
-        if (ev.getType() == DimensionLineEvent.Type.ADD) {
-          orderedDimensionLines.add(ev.getDimensionLine());
+    frame.home.addDimensionLinesListener(new CollectionListener<DimensionLine>() {
+      public void collectionChanged(CollectionEvent<DimensionLine> ev) {
+        if (ev.getType() == CollectionEvent.Type.ADD) {
+          orderedDimensionLines.add(ev.getItem());
         }
       }
     });

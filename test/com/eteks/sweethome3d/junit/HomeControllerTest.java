@@ -178,7 +178,7 @@ public class HomeControllerTest extends TestCase {
     HomePieceOfFurniture firstPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
     this.home.addPieceOfFurniture(firstPiece);
     HomePieceOfFurniture secondPiece = new HomePieceOfFurniture(firstCategory.getFurniture().get(1));
-    this.home.setPieceOfFurnitureAngle(secondPiece, 15);
+    secondPiece.setAngle(15);
     this.home.addPieceOfFurniture(secondPiece);
     // Add a wall to home
     this.home.addWall(new Wall(0, 0, 100, 0, 7));

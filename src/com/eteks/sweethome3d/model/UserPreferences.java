@@ -36,6 +36,10 @@ import java.util.ResourceBundle;
  * @author Emmanuel Puybaret
  */
 public abstract class UserPreferences {
+  /**
+   * The properties of user preferences that may change. <code>PropertyChangeListener</code>s added 
+   * to user preferences will be notified under a property name equal to the string value of one these properties.
+   */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}  
   private static final String [] SUPPORTED_LANGUAGES; 

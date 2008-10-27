@@ -19,6 +19,10 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -26,6 +30,12 @@ import java.io.Serializable;
  * @author Emmanuel Puybaret
  */
 public class Camera implements Serializable {
+  /**
+   * The properties of a camera that may change. <code>PropertyChangeListener</code>s added 
+   * to a camera will be notified under a property name equal to the string value of one these properties.
+   */
+  public enum Property {X, Y, Z, YAW, PITCH, FIELD_OF_VIEW}
+  
   private static final long serialVersionUID = 1L;
   
   private float       x;
@@ -35,6 +45,8 @@ public class Camera implements Serializable {
   private float       pitch;
   private float       fieldOfView;
   
+  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
   /**
    * Creates a camera at given location and angles.
    */
@@ -48,6 +60,29 @@ public class Camera implements Serializable {
   }
 
   /**
+   * Initializes new camera transient fields  
+   * and reads its properties from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    in.defaultReadObject();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this camera.
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this camera.
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
    * Returns the yaw angle in radians of this camera.
    */
   public float getYaw() {
@@ -56,11 +91,13 @@ public class Camera implements Serializable {
 
   /**
    * Sets the yaw angle in radians of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setYaw(float yaw) {
-    this.yaw = yaw;
+  public void setYaw(float yaw) {
+    if (yaw != this.yaw) {
+      float oldYaw = this.yaw;
+      this.yaw = yaw;
+      this.propertyChangeSupport.firePropertyChange(Property.YAW.toString(), oldYaw, yaw);
+    }
   }
   
   /**
@@ -72,11 +109,13 @@ public class Camera implements Serializable {
 
   /**
    * Sets the pitch angle in radians of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setPitch(float pitch) {
-    this.pitch = pitch;
+  public void setPitch(float pitch) {
+    if (pitch != this.pitch) {
+      float oldPitch = this.pitch;
+      this.pitch = pitch;
+      this.propertyChangeSupport.firePropertyChange(Property.PITCH.toString(), oldPitch, pitch);
+    }
   }
 
   /**
@@ -88,11 +127,13 @@ public class Camera implements Serializable {
 
   /**
    * Sets the field of view in radians of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setFieldOfView(float fieldOfView) {
-    this.fieldOfView = fieldOfView;
+  public void setFieldOfView(float fieldOfView) {
+    if (fieldOfView != this.fieldOfView) {
+      float oldFieldOfView = this.fieldOfView;
+      this.fieldOfView = fieldOfView;
+      this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.toString(), oldFieldOfView, fieldOfView);
+    }
   }
 
   /**
@@ -104,11 +145,13 @@ public class Camera implements Serializable {
 
   /**
    * Sets the abcissa of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setX(float x) {
-    this.x = x;
+  public void setX(float x) {
+    if (x != this.x) {
+      float oldX = this.x;
+      this.x = x;
+      this.propertyChangeSupport.firePropertyChange(Property.X.toString(), oldX, x);
+    }
   }
   
   /**
@@ -119,12 +162,16 @@ public class Camera implements Serializable {
   }
 
   /**
-   * Sets the abcissa of this camera.
+   * Sets the ordinate of this camera.
    * This method should be called only from {@link Home}, which
    * controls notifications when a camera changed.
    */
-  void setY(float y) {
-    this.y = y;
+  public void setY(float y) {
+    if (y != this.y) {
+      float oldY = this.y;
+      this.y = y;
+      this.propertyChangeSupport.firePropertyChange(Property.Y.toString(), oldY, y);
+    }
   }
   
   /**
@@ -139,7 +186,11 @@ public class Camera implements Serializable {
    * This method should be called only from {@link Home}, which
    * controls notifications when a camera changed.
    */
-  void setZ(float z) {
-    this.z = z;
+  public void setZ(float z) {
+    if (z != this.z) {
+      float oldZ = this.z;
+      this.z = z;
+      this.propertyChangeSupport.firePropertyChange(Property.Z.toString(), oldZ, z);
+    }
   }
 }

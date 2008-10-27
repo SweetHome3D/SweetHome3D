@@ -44,9 +44,10 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CatalogTexture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -55,13 +56,9 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
-import com.eteks.sweethome3d.model.TextureEvent;
-import com.eteks.sweethome3d.model.TextureListener;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginManager;
 
@@ -327,9 +324,10 @@ public class HomeController  {
   private void addListeners() {
     createCatalogSelectionListener();
     setCatalogFurnitureSelectionSynchronized(true);
-    CatalogWriterListener catalogsListener = new CatalogWriterListener(this);
-    this.preferences.getFurnitureCatalog().addFurnitureListener(catalogsListener);
-    this.preferences.getTexturesCatalog().addTextureListener(catalogsListener);
+    this.preferences.getFurnitureCatalog().addFurnitureListener(
+        new FurnitureCatalogWriterListener(this));
+    this.preferences.getTexturesCatalog().addTexturesListener(
+        new TexturesCatalogWriterListener(this));
     addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
@@ -370,40 +368,14 @@ public class HomeController  {
   }
   
   /**
-   * Catalog listener that writes preferences each time a piece of furniture or a texture
-   * is deleted or added in furniture or textures catalog. This listener is bound to this controller 
-   * with a weak reference to avoid strong link between catalog and this controller.  
+   * Super class of catalog listeners that writes preferences each time a piece of furniture or a texture
+   * is deleted or added in furniture or textures catalog.
    */
-  private static class CatalogWriterListener implements FurnitureListener, TextureListener {
+  private static abstract class CatalogWriterListener {
     // Stores the currently writing preferences 
     private static Set<UserPreferences> writingPreferences = new HashSet<UserPreferences>();
-    private WeakReference<HomeController> homeController;
     
-    public CatalogWriterListener(HomeController homeController) {
-      this.homeController = new WeakReference<HomeController>(homeController);
-    }
-    
-    public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-      // If controller was garbage collected, remove this listener from catalog
-      final HomeController controller = this.homeController.get();
-      if (controller == null) {
-        ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
-      } else {
-        writePreferences(controller);
-      }
-    }
-
-    public void textureChanged(TextureEvent ev) {
-      // If controller was garbage collected, remove this listener from catalog
-      final HomeController controller = this.homeController.get();
-      if (controller == null) {
-        ((TexturesCatalog)ev.getSource()).removeTextureListener(this);
-      } else {
-        writePreferences(controller);
-      }
-    }
-    
-    private void writePreferences(final HomeController controller) {
+    protected void writePreferences(final HomeController controller) {
       if (!writingPreferences.contains(controller.preferences)) {
         writingPreferences.add(controller.preferences);
         // Write preferences later once all catalog modifications are notified 
@@ -418,6 +390,54 @@ public class HomeController  {
               }
             }
           });
+      }
+    }
+  }
+
+  /**
+   * Furniture catalog listeners that writes preferences each time a piece of furniture 
+   * is deleted or added in furniture catalog. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between catalog and this controller.  
+   */
+  private static class FurnitureCatalogWriterListener extends CatalogWriterListener 
+                                                      implements CollectionListener<CatalogPieceOfFurniture> {
+    private WeakReference<HomeController> homeController;
+    
+    public FurnitureCatalogWriterListener(HomeController homeController) {
+      this.homeController = new WeakReference<HomeController>(homeController);
+    }
+    
+    public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
+      // If controller was garbage collected, remove this listener from catalog
+      final HomeController controller = this.homeController.get();
+      if (controller == null) {
+        ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
+      } else {
+        writePreferences(controller);
+      }
+    }
+  }
+
+  /**
+   * Textures catalog listeners that writes preferences each time a texture 
+   * is deleted or added in textures catalog. This listener is bound to this controller 
+   * with a weak reference to avoid strong link between catalog and this controller.  
+   */
+  private static class TexturesCatalogWriterListener extends CatalogWriterListener
+                                                     implements CollectionListener<CatalogTexture> { 
+    private WeakReference<HomeController> homeController;
+    
+    public TexturesCatalogWriterListener(HomeController homeController) {
+      this.homeController = new WeakReference<HomeController>(homeController);
+    }
+    
+    public void collectionChanged(CollectionEvent<CatalogTexture> ev) {
+      // If controller was garbage collected, remove this listener from catalog
+      final HomeController controller = this.homeController.get();
+      if (controller == null) {
+        ((TexturesCatalog)ev.getSource()).removeTexturesListener(this);
+      } else {
+        writePreferences(controller);
       }
     }
   }
@@ -685,10 +705,10 @@ public class HomeController  {
    * Adds a furniture listener to home that enables / disables actions on furniture list change.
    */
   private void addHomeFurnitureListener() {
-    this.home.addFurnitureListener(new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-          if (ev.getType() == FurnitureEvent.Type.ADD 
-              || ev.getType() == FurnitureEvent.Type.DELETE) {
+    this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD 
+              || ev.getType() == CollectionEvent.Type.DELETE) {
             enableSelectAllAction();
             enableExportActions();
           }
@@ -700,10 +720,10 @@ public class HomeController  {
    * Adds a wall listener to home that enables / disables actions on walls list change.
    */
   private void addHomeWallListener() {
-    this.home.addWallListener(new WallListener() {
-      public void wallChanged(WallEvent ev) {
-        if (ev.getType() == WallEvent.Type.ADD 
-            || ev.getType() == WallEvent.Type.DELETE) {
+    this.home.addWallsListener(new CollectionListener<Wall>() {
+      public void collectionChanged(CollectionEvent<Wall> ev) {
+        if (ev.getType() == CollectionEvent.Type.ADD 
+            || ev.getType() == CollectionEvent.Type.DELETE) {
           enableSelectAllAction();
           enableExportActions();
         }
@@ -751,13 +771,11 @@ public class HomeController  {
         // If magnetism is enabled, adjust piece size and elevation
         if (this.preferences.isMagnetismEnabled()) {
           if (homePiece.isResizable()) {
-            this.home.setPieceOfFurnitureSize(homePiece, 
-                this.preferences.getUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f),
-                this.preferences.getUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f),
-                this.preferences.getUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f));
+            homePiece.setWidth(this.preferences.getUnit().getMagnetizedLength(homePiece.getWidth(), 0.1f));
+            homePiece.setDepth(this.preferences.getUnit().getMagnetizedLength(homePiece.getDepth(), 0.1f));
+            homePiece.setHeight(this.preferences.getUnit().getMagnetizedLength(homePiece.getHeight(), 0.1f));
           }
-          this.home.setPieceOfFurnitureElevation(homePiece,
-              this.preferences.getUnit().getMagnetizedLength(homePiece.getElevation(), 0.1f));
+          homePiece.setElevation(this.preferences.getUnit().getMagnetizedLength(homePiece.getElevation(), 0.1f));
         }
         newFurniture.add(homePiece);
       }
@@ -905,13 +923,11 @@ public class HomeController  {
       if (this.preferences.isMagnetismEnabled()) {
         for (HomePieceOfFurniture piece : addedFurniture) {
           if (piece.isResizable()) {
-            this.home.setPieceOfFurnitureSize(piece, 
-                this.preferences.getUnit().getMagnetizedLength(piece.getWidth(), 0.1f),
-                this.preferences.getUnit().getMagnetizedLength(piece.getDepth(), 0.1f),
-                this.preferences.getUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
+            piece.setWidth(this.preferences.getUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
+            piece.setDepth(this.preferences.getUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
+            piece.setHeight(this.preferences.getUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
           }
-          this.home.setPieceOfFurnitureElevation(piece,
-              this.preferences.getUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
+          piece.setElevation(this.preferences.getUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
         }
       }
       getPlanController().addFurniture(addedFurniture);
@@ -949,11 +965,12 @@ public class HomeController  {
     // Add to home a listener to track imported furniture 
     final List<HomePieceOfFurniture> importedFurniture = 
         new ArrayList<HomePieceOfFurniture>(importableModels.size());
-    FurnitureListener addedFurnitureListener = new FurnitureListener () {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-          importedFurniture.add((HomePieceOfFurniture)ev.getPieceOfFurniture());
-        }
-      };
+    CollectionListener<HomePieceOfFurniture> addedFurnitureListener = 
+        new CollectionListener<HomePieceOfFurniture>() {
+          public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+            importedFurniture.add(ev.getItem());
+          }
+        };
     this.home.addFurnitureListener(addedFurnitureListener);
     
     // Start a compound edit that adds furniture to home

@@ -19,16 +19,18 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 
 /**
  * Tests {@link com.eteks.sweethome3d.model.Home Home} class.
@@ -41,17 +43,21 @@ public class HomeTest extends TestCase {
     final List<Wall> addedWalls = new ArrayList<Wall>();
     final List<Wall> deletedWalls = new ArrayList<Wall>();
     final List<Wall> updatedWalls = new ArrayList<Wall>();
-    home.addWallListener(new WallListener () {
-      public void wallChanged(WallEvent ev) {
+    final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updatedWalls.add((Wall)ev.getSource());
+        }
+      };
+    home.addWallsListener(new CollectionListener<Wall> () {
+      public void collectionChanged(CollectionEvent<Wall> ev) {
         switch (ev.getType()) {
           case ADD :
-            addedWalls.add(ev.getWall());
+            addedWalls.add(ev.getItem());
+            ev.getItem().addPropertyChangeListener(wallChangeListener);
             break;
           case DELETE :
-            deletedWalls.add(ev.getWall());
-            break;
-          case UPDATE :
-            updatedWalls.add(ev.getWall());
+            deletedWalls.add(ev.getItem());
+            ev.getItem().removePropertyChangeListener(wallChangeListener);
             break;
         }
       }
@@ -68,21 +74,22 @@ public class HomeTest extends TestCase {
     assertWallCollectionContains(addedWalls, wall1, wall2);
     
     // Join end point of first wall to start point of second wall
-    home.setWallAtEnd(wall1, wall2);
+    wall1.setWallAtEnd(wall2);
     // Check wall1 end wall is wall2 and that wall listener received 1 notification
     assertSame("Wall not joined", wall2, wall1.getWallAtEnd());
     assertWallCollectionContains(updatedWalls, wall1);
 
     // Join start point of second wall to end point of first wall
     updatedWalls.clear();
-    home.setWallAtStart(wall2, wall1);
+    wall2.setWallAtStart(wall1);
     // Check wall2 start wall is wall1 and that wall listener received 1 notification
     assertSame("Wall not joined", wall1, wall2.getWallAtStart());
     assertWallCollectionContains(updatedWalls, wall2);
     
     // Move end point of second wall
     updatedWalls.clear();
-    home.moveWallEndPointTo(wall2, 60, 100);
+    wall2.setXEnd(60);
+    wall2.setYEnd(100);
     // Check wall2 end position and that wall listener received 1 notifications
     assertEquals("Incorrect abscissa", 60f, wall2.getXEnd());
     assertEquals("Incorrect ordinate", 100f, wall2.getYEnd());
@@ -90,7 +97,8 @@ public class HomeTest extends TestCase {
 
     // Move point shared by the two walls
     updatedWalls.clear();
-    home.moveWallStartPointTo(wall2, 60, 0);
+    wall2.setXStart(60);
+    wall2.setYStart(0);
     // Check wall2 start point position
     assertEquals("Incorrect abscissa", 60f, wall2.getXStart());
     assertEquals("Incorrect ordinate", 0f, wall2.getYStart());
@@ -98,7 +106,8 @@ public class HomeTest extends TestCase {
     assertWallCollectionContains(updatedWalls, wall2);
 
     updatedWalls.clear();
-    home.moveWallEndPointTo(wall1, 60, 0);
+    wall1.setXEnd(60);
+    wall1.setYEnd(0);
     // Check wall1 end point position
     assertEquals("Incorrect abscissa", 60f, wall1.getXEnd());
     assertEquals("Incorrect ordinate", 0f, wall1.getYEnd());
@@ -107,7 +116,7 @@ public class HomeTest extends TestCase {
     
     // Detach second wall from first wall
     updatedWalls.clear();
-    home.setWallAtStart(wall2, null);
+    wall2.setWallAtStart(null);
     // Check wall2 and wall1 are not joined and that wall listener received 2 notifications
     assertSame("Wall joined", null, wall1.getWallAtEnd());
     assertSame("Wall joined", null, wall2.getWallAtStart());

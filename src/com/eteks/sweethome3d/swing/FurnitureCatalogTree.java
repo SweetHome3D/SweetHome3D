@@ -45,11 +45,11 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -59,7 +59,7 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogTree extends JTree {
-  private FurnitureCatalog               catalog;
+  private FurnitureCatalog      catalog;
   private TreeSelectionListener treeSelectionListener;
   private SelectionListener     modelSelectionListener;
   private boolean               furnitureSelectionSynchronized;
@@ -348,21 +348,21 @@ public class FurnitureCatalogTree extends JTree {
      * Catalog furniture listener bound to this tree model with a weak reference to avoid
      * strong link between catalog and this tree.  
      */
-    private static class CatalogFurnitureListener implements FurnitureListener {
+    private static class CatalogFurnitureListener implements CollectionListener<CatalogPieceOfFurniture> {
       private WeakReference<CatalogTreeModel>  catalogTreeModel;
 
       public CatalogFurnitureListener(CatalogTreeModel catalogTreeModel) {
         this.catalogTreeModel = new WeakReference<CatalogTreeModel>(catalogTreeModel);
       }
       
-      public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+      public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
         // If catalog tree model was garbage collected, remove this listener from catalog
         CatalogTreeModel catalogTreeModel = this.catalogTreeModel.get();
         FurnitureCatalog catalog = (FurnitureCatalog)ev.getSource();
         if (catalogTreeModel == null) {
-          (catalog).removeFurnitureListener(this);
+          catalog.removeFurnitureListener(this);
         } else {
-          CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)ev.getPieceOfFurniture();
+          CatalogPieceOfFurniture piece = ev.getItem();
           switch (ev.getType()) {
             case ADD :
               if (piece.getCategory().getFurnitureCount() == 1) {

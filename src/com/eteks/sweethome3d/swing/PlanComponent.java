@@ -88,13 +88,10 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
-import com.eteks.sweethome3d.model.CameraEvent;
-import com.eteks.sweethome3d.model.CameraListener;
+import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
-import com.eteks.sweethome3d.model.DimensionLineEvent;
-import com.eteks.sweethome3d.model.DimensionLineListener;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -103,8 +100,6 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
@@ -113,9 +108,9 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  */
 public class PlanComponent extends JComponent implements Scrollable, Printable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
-    MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
-    TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
-    DUPLICATION_ON, DUPLICATION_OFF}
+      MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
+      TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
+      DUPLICATION_ON, DUPLICATION_OFF}
   private enum PaintMode {PAINT, PRINT, CLIPBOARD}
   
   private static final float MARGIN = 40;
@@ -315,31 +310,97 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * changes notifications from home. 
    */
   private void addModelListeners(Home home, UserPreferences preferences) {
-    home.addFurnitureListener(new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+    // Add listener to update plan when furniture changes
+    final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME)) {
+            sortedHomeFurniture = null;
+            invalidatePlanBoundsAndRevalidate();
+          }
+        }
+      };
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      piece.addPropertyChangeListener(furnitureChangeListener);
+    }
+    home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
+          }
           sortedHomeFurniture = null;
           invalidatePlanBoundsAndRevalidate();
         }
       });
-    home.addWallListener(new WallListener () {
-        public void wallChanged(WallEvent ev) {
+    
+    // Add listener to update plan when walls change
+    final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          switch (Wall.Property.valueOf(ev.getPropertyName())) {
+            case X_START :
+            case X_END :
+            case Y_START :
+            case Y_END :
+            case WALL_AT_START :
+            case WALL_AT_END :
+            case THICKNESS :
+              wallsAreaCache = null;
+              invalidatePlanBoundsAndRevalidate();
+              break;
+          }
+        }
+      };
+    for (Wall wall : home.getWalls()) {
+      wall.addPropertyChangeListener(wallChangeListener);
+    }
+    home.addWallsListener(new CollectionListener<Wall> () {
+        public void collectionChanged(CollectionEvent<Wall> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(wallChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(wallChangeListener);
+          }
           wallsAreaCache = null;
           invalidatePlanBoundsAndRevalidate();
         }
       });
-    home.addDimensionLineListener(new DimensionLineListener () {
-        public void dimensionLineChanged(DimensionLineEvent ev) {
+    
+    // Add listener to update plan when dimension lines change
+    final PropertyChangeListener dimensionLineChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          invalidatePlanBoundsAndRevalidate();
+        }
+      };
+    for (DimensionLine dimensionLine : home.getDimensionLines()) {
+      dimensionLine.addPropertyChangeListener(dimensionLineChangeListener);
+    }
+    home.addDimensionLinesListener(new CollectionListener<DimensionLine> () {
+        public void collectionChanged(CollectionEvent<DimensionLine> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(dimensionLineChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(dimensionLineChangeListener);
+          }
           invalidatePlanBoundsAndRevalidate();
         }
       });
+
+    home.getObserverCamera().addPropertyChangeListener(new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          switch (Camera.Property.valueOf(ev.getPropertyName())) {
+            case X :
+            case Y :
+            case YAW :
+              invalidatePlanBoundsAndRevalidate();
+              break;
+          }
+        }
+      });
+
     home.addSelectionListener(new SelectionListener () {
         public void selectionChanged(SelectionEvent ev) {
           repaint();
-        }
-      });
-    home.addCameraListener(new CameraListener() {
-        public void cameraChanged(CameraEvent ev) {
-          invalidatePlanBoundsAndRevalidate();
         }
       });
     home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
@@ -429,32 +490,34 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
    * updates viewport position if this component is displayed in a scrolled pane.
    */
   private void invalidatePlanBoundsAndRevalidate() {
-    Point viewPosition = null;
-    float planBoundsMinX = (float)getPlanBounds().getMinX();
-    float planBoundsMinY = (float)getPlanBounds().getMinY();
-    JViewport parent = (JViewport)getParent();
-    if (parent instanceof JViewport) {
-      viewPosition = parent.getViewPosition();
-    }
-    
-    planBoundsCacheValid = false;
-    // Revalidate and repaint
-    revalidate();
-    
-    float planBoundsNewMinX = (float)getPlanBounds().getMinX();
-    float planBoundsNewMinY = (float)getPlanBounds().getMinY();
-    // If plan bounds upper left corner diminished
-    if (parent instanceof JViewport
-        && (planBoundsNewMinX < planBoundsMinX
-            || planBoundsNewMinY < planBoundsMinY)) {
-      Dimension extentSize = parent.getExtentSize();
-      Dimension viewSize = parent.getViewSize();
-      // Update view position when scroll bars are visible
-      if (extentSize.width < viewSize.width
-          || extentSize.height < viewSize.height) {
-        int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
-        int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
-        parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+    if (this.planBoundsCacheValid) {      
+      final float planBoundsMinX = (float)getPlanBounds().getMinX();
+      final float planBoundsMinY = (float)getPlanBounds().getMinY();
+      final Point viewPosition = getParent() instanceof JViewport
+          ? ((JViewport)getParent()).getViewPosition()
+          : null;
+      
+      this.planBoundsCacheValid = false;
+      
+      // Revalidate and repaint
+      revalidate();
+      
+      float planBoundsNewMinX = (float)getPlanBounds().getMinX();
+      float planBoundsNewMinY = (float)getPlanBounds().getMinY();
+      // If plan bounds upper left corner diminished
+      if (getParent() instanceof JViewport
+          && (planBoundsNewMinX < planBoundsMinX
+              || planBoundsNewMinY < planBoundsMinY)) {
+        JViewport parent = (JViewport)getParent();
+        Dimension extentSize = parent.getExtentSize();
+        Dimension viewSize = parent.getViewSize();
+        // Update view position when scroll bars are visible
+        if (extentSize.width < viewSize.width
+            || extentSize.height < viewSize.height) {
+          int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
+          int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
+          parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+        }
       }
     }
   }

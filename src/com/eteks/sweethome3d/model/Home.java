@@ -46,20 +46,23 @@ public class Home implements Serializable {
    */
   public static final long CURRENT_VERSION = 1500;
   
+  /**
+   * The properties of a home that may change. <code>PropertyChangeListener</code>s added 
+   * to a home will be notified under a property name equal to the string value of one these properties.
+   */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
     BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
-  private transient List<FurnitureListener>           furnitureListeners;
+  private transient List<CollectionListener<HomePieceOfFurniture>> furnitureListeners;
   private transient List<Selectable>                  selectedItems;
   private transient List<SelectionListener>           selectionListeners;
   private List<Wall>                                  walls;
-  private transient List<WallListener>                wallListeners;
+  private transient List<CollectionListener<Wall>>    wallListeners;
   private List<DimensionLine>                         dimensionLines;
-  private transient List<DimensionLineListener>       dimensionLineListeners;
+  private transient List<CollectionListener<DimensionLine>> dimensionLineListeners;
   private Camera                                      camera;
-  private transient List<CameraListener>              cameraListeners;
   private String                                      name;
   private float                                       wallHeight;
   private transient boolean                           modified;
@@ -81,7 +84,6 @@ public class Home implements Serializable {
   private Map<String, Object>                         visualProperties;
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
-
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -156,11 +158,10 @@ public class Home implements Serializable {
   private void init() {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
-    this.furnitureListeners = new ArrayList<FurnitureListener>();
+    this.furnitureListeners = new ArrayList<CollectionListener<HomePieceOfFurniture>>();
     this.selectionListeners = new ArrayList<SelectionListener>();
-    this.wallListeners = new ArrayList<WallListener>();
-    this.dimensionLineListeners = new ArrayList<DimensionLineListener>();
-    this.cameraListeners = new ArrayList<CameraListener>();
+    this.wallListeners = new ArrayList<CollectionListener<Wall>>();
+    this.dimensionLineListeners = new ArrayList<CollectionListener<DimensionLine>>();
     this.propertyChangeSupport = new PropertyChangeSupport(this);
 
     if (this.furnitureVisibleProperties == null) {
@@ -256,14 +257,14 @@ public class Home implements Serializable {
   /**
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
-  public void addFurnitureListener(FurnitureListener listener) {
+  public void addFurnitureListener(CollectionListener<HomePieceOfFurniture> listener) {
     this.furnitureListeners.add(listener);
   }
 
   /**
    * Removes the furniture <code>listener</code> in parameter from this home.
    */
-  public void removeFurnitureListener(FurnitureListener listener) {
+  public void removeFurnitureListener(CollectionListener<HomePieceOfFurniture> listener) {
     this.furnitureListeners.remove(listener);
   }
 
@@ -295,7 +296,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
     this.furniture.add(index, piece);
-    firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.ADD);
+    firePieceOfFurnitureChanged(piece, index, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -312,142 +313,22 @@ public class Home implements Serializable {
       // Make a copy of the list to avoid conflicts in the list returned by getFurniture
       this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
       this.furniture.remove(index);
-      firePieceOfFurnitureChanged(piece, index, FurnitureEvent.Type.DELETE);
+      firePieceOfFurnitureChanged(piece, index, CollectionEvent.Type.DELETE);
     }
   }
 
-  /**
-   * Updates the name of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureName(HomePieceOfFurniture piece, 
-                                      String name) {
-    if ((piece.getName() == null && name != null)
-        || (piece.getName() != null && !piece.getName().equals(name))) {
-      piece.setName(name);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Updates the location of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureLocation(HomePieceOfFurniture piece, 
-                                          float x, float y) {
-    if (piece.getX() != x
-        || piece.getY() != y) {
-      piece.setX(x);
-      piece.setY(y);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-  
-  /**
-   * Updates the elevation of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureElevation(HomePieceOfFurniture piece, 
-                                           float elevation) {
-    if (piece.getElevation() != elevation) {
-      piece.setElevation(elevation);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Updates the angle of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureAngle(HomePieceOfFurniture piece, 
-                                       float angle) {
-    if (piece.getAngle() != angle) {
-      piece.setAngle(angle);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Updates the size of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureSize(HomePieceOfFurniture piece, 
-                                      float width, float depth, float height) {
-    if (piece.getWidth() != width
-        || piece.getDepth() != depth
-        || piece.getHeight() != height) {
-      piece.setWidth(width);
-      piece.setDepth(depth);
-      piece.setHeight(height);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-  
-  /**
-   * Updates the color of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureColor(HomePieceOfFurniture piece, 
-                                       Integer color) {
-    Integer pieceColor = piece.getColor(); 
-    if ((pieceColor == null && color != null)
-        || (pieceColor != null && !pieceColor.equals(color))) {
-      piece.setColor(color);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Updates the visibility of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureVisible(HomePieceOfFurniture piece, 
-                                         boolean visible) {
-    if (piece.isVisible() != visible) {
-      piece.setVisible(visible);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Updates the mirrored model state of <code>piece</code>. 
-   * Once the <code>piece</code> is updated, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
-   * notification.
-   */
-  public void setPieceOfFurnitureModelMirrored(HomePieceOfFurniture piece, 
-                                               boolean modelMirrored) {
-    if (piece.isModelMirrored() != modelMirrored) {
-      piece.setModelMirrored(modelMirrored);
-      firePieceOfFurnitureChanged(piece, this.furniture.indexOf(piece), FurnitureEvent.Type.UPDATE);
-    }
-  }
-
+  @SuppressWarnings("unchecked")
   private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
-                                           FurnitureEvent.Type eventType) {
+                                           CollectionEvent.Type eventType) {
     if (!this.furnitureListeners.isEmpty()) {
-      FurnitureEvent furnitureEvent = 
-          new FurnitureEvent(this, piece, index, eventType);
+      CollectionEvent<HomePieceOfFurniture> furnitureEvent = 
+          new CollectionEvent<HomePieceOfFurniture>(this, piece, index, eventType);
       // Work on a copy of furnitureListeners to ensure a listener 
       // can modify safely listeners list
-      FurnitureListener [] listeners = this.furnitureListeners.
-        toArray(new FurnitureListener [this.furnitureListeners.size()]);
-      for (FurnitureListener listener : listeners) {
-        listener.pieceOfFurnitureChanged(furnitureEvent);
+      CollectionListener<HomePieceOfFurniture> [] listeners = this.furnitureListeners.
+        toArray(new CollectionListener [this.furnitureListeners.size()]);
+      for (CollectionListener<HomePieceOfFurniture> listener : listeners) {
+        listener.collectionChanged(furnitureEvent);
       }
     }
   }
@@ -506,14 +387,14 @@ public class Home implements Serializable {
   /**
    * Adds the wall <code>listener</code> in parameter to this home.
    */
-  public void addWallListener(WallListener listener) {
+  public void addWallsListener(CollectionListener<Wall> listener) {
     this.wallListeners.add(listener);
   }
   
   /**
    * Removes the wall <code>listener</code> in parameter from this home.
    */
-  public void removeWallListener(WallListener listener) {
+  public void removeWallsListener(CollectionListener<Wall> listener) {
     this.wallListeners.remove(listener);
   } 
 
@@ -535,7 +416,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getWalls
     this.walls = new ArrayList<Wall>(this.walls);
     this.walls.add(wall);
-    fireWallEvent(wall, WallEvent.Type.ADD);
+    fireWallEvent(wall, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -556,231 +437,31 @@ public class Home implements Serializable {
     // Detach any other wall attached to wall
     for (Wall otherWall : getWalls()) {
       if (wall.equals(otherWall.getWallAtStart())) {
-        setWallAtStart(otherWall, null);
+        otherWall.setWallAtStart(null);
       } else if (wall.equals(otherWall.getWallAtEnd())) {
-        setWallAtEnd(otherWall, null);
+        otherWall.setWallAtEnd(null);
       }
     }
     // Make a copy of the list to avoid conflicts in the list returned by getWalls
     this.walls = new ArrayList<Wall>(this.walls);
     this.walls.remove(wall);
-    fireWallEvent(wall, WallEvent.Type.DELETE);
-  }
-
-  /**
-   * Moves <code>wall</code> start point to (<code>x</code>, <code>y</code>).
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * No change is made on walls attached to <code>wall</code>.
-   */
-  public void moveWallStartPointTo(Wall wall, float x, float y) {
-    if (x != wall.getXStart() || y != wall.getYStart()) {
-      wall.setXStart(x);
-      wall.setYStart(y);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Moves <code>wall</code> end point to (<code>x</code>, <code>y</code>) pixels.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * No change is made on walls attached to <code>wall</code>.
-   */
-  public void moveWallEndPointTo(Wall wall, float x, float y) {
-    if (x != wall.getXEnd() || y != wall.getYEnd()) {
-      wall.setXEnd(x);
-      wall.setYEnd(y);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the <code>thickness</code> of <code>wall</code>.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallThickness(Wall wall, float thickness) {
-    if (thickness != wall.getThickness()) {
-      wall.setThickness(thickness);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }    
-  }
-
-  /**
-   * Sets the left side <code>color</code> of <code>wall</code>.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallLeftSideColor(Wall wall, Integer color) {
-    Integer wallColor = wall.getLeftSideColor(); 
-    if ((wallColor == null && color != null)
-        || (wallColor != null && !wallColor.equals(color))) {
-      wall.setLeftSideColor(color);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the left side <code>texture</code> of <code>wall</code>.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallLeftSideTexture(Wall wall, HomeTexture texture) {
-    HomeTexture wallTexture = wall.getLeftSideTexture(); 
-    if ((wallTexture == null && texture != null)
-        || (wallTexture != null && !wallTexture.equals(texture))) {
-      wall.setLeftSideTexture(texture);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the right side <code>color</code> of <code>wall</code>.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallRightSideColor(Wall wall, Integer color) {
-    Integer wallColor = wall.getRightSideColor(); 
-    if ((wallColor == null && color != null)
-        || (wallColor != null && !wallColor.equals(color))) {
-      wall.setRightSideColor(color);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the right side <code>texture</code> of <code>wall</code>.
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallRightSideTexture(Wall wall, HomeTexture texture) {
-    HomeTexture wallTexture = wall.getRightSideTexture(); 
-    if ((wallTexture == null && texture != null)
-        || (wallTexture != null && !wallTexture.equals(texture))) {
-      wall.setRightSideTexture(texture);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the wall at start of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> start point is attached itself
-   * to <code>wall</code>, this wall will be detached from <code>wall</code>, 
-   * and wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * @param wallAtStart a wall or <code>null</code> to detach <code>wall</code>
-   *          from any wall it was attached to before.
-   */
-  public void setWallAtStart(Wall wall, Wall wallAtStart) {
-    detachJoinedWall(wall, wall.getWallAtStart());    
-    wall.setWallAtStart(wallAtStart);
-    fireWallEvent(wall, WallEvent.Type.UPDATE);
-  }
-
-  /**
-   * Sets the wall at end of <code>wall</code> as <code>wallAtEnd</code>. 
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   * If the wall attached to <code>wall</code> end point is attached itself
-   * to <code>wall</code>, this wall will be detached from <code>wall</code>, 
-   * and wall listeners will receive
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification about this wall, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
-   * @param wallAtEnd a wall or <code>null</code> to detach <code>wall</code>
-   *          from any wall it was attached to before.
-   */
-  public void setWallAtEnd(Wall wall, Wall wallAtEnd) {
-    detachJoinedWall(wall, wall.getWallAtEnd());    
-    wall.setWallAtEnd(wallAtEnd);
-    fireWallEvent(wall, WallEvent.Type.UPDATE);
-  }
-
-  /**
-   * Detaches <code>joinedWall</code> from <code>wall</code>.
-   */
-  private void detachJoinedWall(Wall wall, Wall joinedWall) {
-    // Detach the previously attached wall to wall in parameter
-    if (joinedWall != null) {
-      if (wall.equals(joinedWall.getWallAtStart())) {
-        joinedWall.setWallAtStart(null);
-        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
-      } else if (wall.equals(joinedWall.getWallAtEnd())) {
-        joinedWall.setWallAtEnd(null);
-        fireWallEvent(joinedWall, WallEvent.Type.UPDATE);
-      } 
-    }
-  }
-
-  /**
-   * Sets the <code>height</code> of the given <code>wall</code>. If <code>height</code> is
-   * <code>null</code>, {@link #getWallHeight() home wall height} should be used.  
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallHeight(Wall wall, Float height) {
-    Float wallHeight = wall.getHeight(); 
-    if ((wallHeight == null && height != null)
-        || (wallHeight != null && !wallHeight.equals(height))) {
-      wall.setHeight(height);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the <code>heightAtEnd</code> at the end of the given <code>wall</code>. 
-   * Once the <code>wall</code> is updated, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged} notification, with
-   * an {@link WallEvent#getType() event type} equal to
-   * {@link WallEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setWallHeightAtEnd(Wall wall, Float heightAtEnd) {
-    Float wallHeightAtEnd = wall.getHeightAtEnd(); 
-    if ((wallHeightAtEnd == null && heightAtEnd != null)
-        || (wallHeightAtEnd != null && !wallHeightAtEnd.equals(heightAtEnd))) {
-      wall.setHeightAtEnd(heightAtEnd);
-      fireWallEvent(wall, WallEvent.Type.UPDATE);
-    }
+    fireWallEvent(wall, CollectionEvent.Type.DELETE);
   }
 
   /**
    * Notifies all wall listeners added to this home an event of 
    * a given type.
    */
-  private void fireWallEvent(Wall wall, WallEvent.Type eventType) {
+  @SuppressWarnings("unchecked")
+  private void fireWallEvent(Wall wall, CollectionEvent.Type eventType) {
     if (!this.wallListeners.isEmpty()) {
-      WallEvent wallEvent = new WallEvent(this, wall, eventType);
+      CollectionEvent<Wall> wallEvent = new CollectionEvent<Wall>(this, wall, eventType);
       // Work on a copy of wallListeners to ensure a listener 
       // can modify safely listeners list
-      WallListener [] listeners = this.wallListeners.
-        toArray(new WallListener [this.wallListeners.size()]);
-      for (WallListener listener : listeners) {
-        listener.wallChanged(wallEvent);
+      CollectionListener<Wall> [] listeners = this.wallListeners.
+        toArray(new CollectionListener [this.wallListeners.size()]);
+      for (CollectionListener<Wall> listener : listeners) {
+        listener.collectionChanged(wallEvent);
       }
     }
   }
@@ -788,14 +469,14 @@ public class Home implements Serializable {
   /**
    * Adds the dimension line <code>listener</code> in parameter to this home.
    */
-  public void addDimensionLineListener(DimensionLineListener listener) {
+  public void addDimensionLinesListener(CollectionListener<DimensionLine> listener) {
     this.dimensionLineListeners.add(listener);
   }
   
   /**
    * Removes the dimension line <code>listener</code> in parameter from this home.
    */
-  public void removeDimensionLineListener(DimensionLineListener listener) {
+  public void removeDimensionLinesListener(CollectionListener<DimensionLine> listener) {
     this.dimensionLineListeners.remove(listener);
   } 
 
@@ -818,7 +499,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.add(dimensionLine);
-    fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.ADD);
+    fireDimensionLineEvent(dimensionLine, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -835,69 +516,24 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.remove(dimensionLine);
-    fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.DELETE);
-  }
-
-  /**
-   * Moves <code>dimensionLine</code> start point to (<code>x</code>, <code>y</code>).
-   * Once <code>dimensionLine</code> is updated, dimension line listeners added 
-   * to this home will receive a
-   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
-   * notification, with an {@link DimensionLineEvent#getType() event type} 
-   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
-   */
-  public void moveDimensionLineStartPointTo(DimensionLine dimensionLine, float x, float y) {
-    if (x != dimensionLine.getXStart() || y != dimensionLine.getYStart()) {
-      dimensionLine.setXStart(x);
-      dimensionLine.setYStart(y);
-      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Moves <code>dimensionLine</code> end point to (<code>x</code>, <code>y</code>) pixels.
-   * Once the <code>dimensionLine</code> is updated, dimension line listeners added 
-   * to this home will receive a
-   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
-   * notification, with an {@link DimensionLineEvent#getType() event type} 
-   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
-   */
-  public void moveDimensionLineEndPointTo(DimensionLine dimensionLine, float x, float y) {
-    if (x != dimensionLine.getXEnd() || y != dimensionLine.getYEnd()) {
-      dimensionLine.setXEnd(x);
-      dimensionLine.setYEnd(y);
-      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
-    }
-  }
-
-  /**
-   * Sets the <code>offset</code> of a given dimension line.
-   * Once the <code>dimensionLine</code> is updated, dimension line listeners added 
-   * to this home will receive a
-   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
-   * notification, with an {@link DimensionLineEvent#getType() event type} 
-   * equal to {@link DimensionLineEvent.Type#UPDATE UPDATE}. 
-   */
-  public void setDimensionLineOffset(DimensionLine dimensionLine, float offset) {
-    if (offset != dimensionLine.getOffset()) {
-      dimensionLine.setOffset(offset);
-      fireDimensionLineEvent(dimensionLine, DimensionLineEvent.Type.UPDATE);
-    }    
+    fireDimensionLineEvent(dimensionLine, CollectionEvent.Type.DELETE);
   }
 
   /**
    * Notifies all dimension line listeners added to this home an event of 
    * a given type.
    */
-  private void fireDimensionLineEvent(DimensionLine dimensionLine, DimensionLineEvent.Type eventType) {
+  @SuppressWarnings("unchecked")
+  private void fireDimensionLineEvent(DimensionLine dimensionLine, CollectionEvent.Type eventType) {
     if (!this.dimensionLineListeners.isEmpty()) {
-      DimensionLineEvent dimensionLineEvent = new DimensionLineEvent(this, dimensionLine, eventType);
+      CollectionEvent<DimensionLine> dimensionLineEvent = 
+          new CollectionEvent<DimensionLine>(this, dimensionLine, eventType);
       // Work on a copy of dimensionLineListeners to ensure a listener 
       // can modify safely listeners list
-      DimensionLineListener [] listeners = this.dimensionLineListeners.
-        toArray(new DimensionLineListener [this.dimensionLineListeners.size()]);
-      for (DimensionLineListener listener : listeners) {
-        listener.dimensionLineChanged(dimensionLineEvent);
+      CollectionListener<DimensionLine> [] listeners = this.dimensionLineListeners.
+        toArray(new CollectionListener [this.dimensionLineListeners.size()]);
+      for (CollectionListener<DimensionLine> listener : listeners) {
+        listener.collectionChanged(dimensionLineEvent);
       }
     }
   }
@@ -1046,20 +682,6 @@ public class Home implements Serializable {
   }
 
   /**
-   * Adds the camera <code>listener</code> in parameter to this home.
-   */
-  public void addCameraListener(CameraListener listener) {
-    this.cameraListeners.add(listener);
-  }
-  
-  /**
-   * Removes the camera <code>listener</code> in parameter from this home.
-   */
-  public void removeCameraListener(CameraListener listener) {
-    this.cameraListeners.remove(listener);
-  } 
-
-  /**
    * Returns the camera used to display this home from a top point of view.
    */
   public Camera getTopCamera() {
@@ -1094,65 +716,6 @@ public class Home implements Serializable {
       this.camera = getTopCamera();
     }
     return this.camera;
-  }
-
-  /**
-   * Updates the location of <code>camera</code>. 
-   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
-   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
-   * notification.
-   */
-  public void setCameraLocation(Camera camera, 
-                                float x, float y, float z) {
-    if (camera.getX() != x
-        || camera.getY() != y
-        || camera.getZ() != z) {
-      camera.setX(x);
-      camera.setY(y);
-      camera.setZ(z);
-      fireCameraChanged(camera);
-    }
-  }
-  
-  /**
-   * Updates the yaw and pitch angles of <code>camera</code>. 
-   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
-   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
-   * notification.
-   */
-  public void setCameraAngles(Camera camera, float yaw, float pitch) {
-    if (camera.getYaw() != yaw
-        || camera.getPitch() != pitch) {
-      camera.setYaw(yaw);
-      camera.setPitch(pitch);
-      fireCameraChanged(camera);
-    }
-  }
-
-  /**
-   * Updates the field of view angle of <code>camera</code>. 
-   * Once the <code>camera</code> is updated, camera listeners added to this home will receive a
-   * {@link CameraListener#cameraChanged(CameraEvent) cameraChanged}
-   * notification.
-   */
-  public void setCameraFieldOfView(Camera camera, float fieldOfView) {
-    if (camera.getFieldOfView() != fieldOfView) {
-      camera.setFieldOfView(fieldOfView);
-      fireCameraChanged(camera);
-    }
-  }
-
-  private void fireCameraChanged(Camera piece) {
-    if (!this.cameraListeners.isEmpty()) {
-      CameraEvent cameraEvent = new CameraEvent(this, piece);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      CameraListener [] listeners = this.cameraListeners.
-        toArray(new CameraListener [this.cameraListeners.size()]);
-      for (CameraListener listener : listeners) {
-        listener.cameraChanged(cameraEvent);
-      }
-    }
   }
 
   /**

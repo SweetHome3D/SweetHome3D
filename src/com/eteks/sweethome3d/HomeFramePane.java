@@ -46,9 +46,9 @@ import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
@@ -293,14 +293,14 @@ public class HomeFramePane extends JRootPane {
    * is deleted from catalog. This listener is bound to this controller 
    * with a weak reference to avoid strong link between catalog and this controller.  
    */
-  private static class CatalogChangeFurnitureListener implements FurnitureListener {
+  private static class CatalogChangeFurnitureListener implements CollectionListener<CatalogPieceOfFurniture> {
     private WeakReference<HomeFramePane> homeFramePane;
     
     public CatalogChangeFurnitureListener(HomeFramePane homeFramePane) {
       this.homeFramePane = new WeakReference<HomeFramePane>(homeFramePane);
     }
     
-    public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+    public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
       // If controller was garbage collected, remove this listener from catalog
       final HomeFramePane homeFramePane = this.homeFramePane.get();
       if (homeFramePane == null) {
@@ -308,7 +308,7 @@ public class HomeFramePane extends JRootPane {
       } else {
         switch (ev.getType()) {
           case DELETE :
-            homeFramePane.catalogSelectedFurniture.remove(ev.getPieceOfFurniture());
+            homeFramePane.catalogSelectedFurniture.remove(ev.getItem());
             break;
         }
       }

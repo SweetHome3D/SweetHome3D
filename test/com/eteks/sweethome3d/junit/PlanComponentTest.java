@@ -45,12 +45,12 @@ import abbot.tester.ComponentLocation;
 import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.PlanController;
 
@@ -72,10 +72,10 @@ public class PlanComponentTest extends ComponentTestFixture {
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
-    frame.home.addWallListener(new WallListener () {
-      public void wallChanged(WallEvent ev) {
-        if (ev.getType() == WallEvent.Type.ADD) {
-          orderedWalls.add(ev.getWall());
+    frame.home.addWallsListener(new CollectionListener<Wall>() {
+      public void collectionChanged(CollectionEvent<Wall> ev) {
+        if (ev.getType() == CollectionEvent.Type.ADD) {
+          orderedWalls.add(ev.getItem());
         }
       }
     });

@@ -96,11 +96,9 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Camera;
-import com.eteks.sweethome3d.model.CameraEvent;
-import com.eteks.sweethome3d.model.CameraListener;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -108,8 +106,6 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -131,14 +127,16 @@ public class HomeComponent3D extends JComponent implements Printable {
   private Map<Object, ObjectBranch> homeObjects = new HashMap<Object, ObjectBranch>();
   private Collection<Object>        homeObjectsToUpdate;
   // Listeners bound to home that updates 3D scene objects
-  private CameraListener            cameraListener;
+  private PropertyChangeListener    cameraChangeListener;
   private PropertyChangeListener    homeCameraListener;
   private PropertyChangeListener    skyColorListener;
   private PropertyChangeListener    groundColorAndTextureListener;
   private PropertyChangeListener    lightColorListener;
-  private WallListener              wallListener;
   private PropertyChangeListener    wallsAlphaListener;
-  private FurnitureListener         furnitureListener;
+  private CollectionListener<Wall>  wallListener;
+  private PropertyChangeListener    wallChangeListener;
+  private CollectionListener<HomePieceOfFurniture> furnitureListener;
+  private PropertyChangeListener    furnitureChangeListener;
   // Offscreen printed image cache 
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
@@ -232,15 +230,21 @@ public class HomeComponent3D extends JComponent implements Printable {
    * Remove all listeners bound to home that updates 3D scene objects.
    */
   private void removeHomeListeners(Home home) {
-    home.removeCameraListener(this.cameraListener);
     home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
     home.removePropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
     home.removePropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener);
     home.removePropertyChangeListener(Home.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
     home.removePropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener);
-    home.removeWallListener(this.wallListener);
     home.removePropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener);
+    home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
+    home.removeWallsListener(this.wallListener);
+    for (Wall wall : home.getWalls()) {
+      wall.removePropertyChangeListener(this.wallChangeListener);
+    }
     home.removeFurnitureListener(this.furnitureListener);
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      piece.removePropertyChangeListener(this.furnitureChangeListener);
+    }
   }
 
   /**
@@ -297,22 +301,25 @@ public class HomeComponent3D extends JComponent implements Printable {
    */
   private void addCameraListeners(final Home home, final View view, 
                                   final TransformGroup viewPlatformTransform) {
-    this.cameraListener = new CameraListener() {
-        public void cameraChanged(CameraEvent ev) {
-          // Update view transform later to avoid flickering in case of mulitple camera changes 
+    this.cameraChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          // Update view transform later to avoid flickering in case of multiple camera changes 
           EventQueue.invokeLater(new Runnable() {
-              public void run() {
-                updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
-                updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
-              }
-            });
+            public void run() {
+              updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
+              updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+            }
+          });
         }
       };
-    home.addCameraListener(this.cameraListener);
+    home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
     this.homeCameraListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
           updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+          // Add camera change listener to new active camera
+          ((Camera)ev.getOldValue()).removePropertyChangeListener(cameraChangeListener);
+          home.getCamera().addPropertyChangeListener(cameraChangeListener);
         }
       };
     home.addPropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
@@ -799,23 +806,30 @@ public class HomeComponent3D extends JComponent implements Printable {
    * that updates the scene <code>homeRoot</code>, each time a wall is added, updated or deleted. 
    */
   private void addWallListener(final Home home, final Group homeRoot) {
-    this.wallListener = new WallListener() {
-        public void wallChanged(WallEvent ev) {
-          Wall wall = ev.getWall();
+    this.wallChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateWall((Wall)ev.getSource());
+        }
+      };
+    for (Wall wall : home.getWalls()) {
+      wall.addPropertyChangeListener(this.wallChangeListener);
+    }      
+    this.wallListener = new CollectionListener<Wall>() {
+        public void collectionChanged(CollectionEvent<Wall> ev) {
+          Wall wall = ev.getItem();
           switch (ev.getType()) {
             case ADD :
               addWall(homeRoot, wall, home);
-              break;
-            case UPDATE :
-              updateWall(wall);
+              wall.addPropertyChangeListener(wallChangeListener);
               break;
             case DELETE :
               deleteObject(wall);
+              wall.removePropertyChangeListener(wallChangeListener);
               break;
           }
         }
       };
-    home.addWallListener(this.wallListener);
+    home.addWallsListener(this.wallListener);
     this.wallsAlphaListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
@@ -829,18 +843,27 @@ public class HomeComponent3D extends JComponent implements Printable {
    * each time a piece of furniture is added, updated or deleted. 
    */
   private void addFurnitureListener(final Home home, final Group homeRoot) {
-    this.furnitureListener = new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
+    this.furnitureChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME)) {
+            updatePieceOfFurniture((HomePieceOfFurniture)ev.getSource());
+          }
+        }
+      };
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      piece.addPropertyChangeListener(this.furnitureChangeListener);
+    }      
+    this.furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getItem();
           switch (ev.getType()) {
             case ADD :
               addPieceOfFurniture(homeRoot, piece);
-              break;
-            case UPDATE :
-              updatePieceOfFurniture(piece);
+              piece.addPropertyChangeListener(furnitureChangeListener);
               break;
             case DELETE :
               deleteObject(piece);
+              piece.removePropertyChangeListener(furnitureChangeListener);
               break;
           }
           // If piece is a door or a window, update walls that intersect with piece

@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,8 +30,8 @@ import javax.swing.JComponent;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Camera;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -37,8 +39,6 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.model.WallEvent;
-import com.eteks.sweethome3d.model.WallListener;
 
 /**
  * A MVC controller for the home 3D view.
@@ -195,13 +195,28 @@ public class HomeController3D {
     
     private Camera topCamera;
     private Rectangle2D homeBounds;
-    private WallListener wallListener = new WallListener () {
-        public void wallChanged(WallEvent ev) {
+    private PropertyChangeListener wallOrFurnitureChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent evt) {
           updateCameraFromHomeBounds();
         }
       };
-    private FurnitureListener furnitureListener = new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+    private CollectionListener<Wall> wallListener = new CollectionListener<Wall>() {
+        public void collectionChanged(CollectionEvent<Wall> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(wallOrFurnitureChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(wallOrFurnitureChangeListener);
+          } 
+          updateCameraFromHomeBounds();
+        }
+      };
+    private CollectionListener<HomePieceOfFurniture> furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(wallOrFurnitureChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(wallOrFurnitureChangeListener);
+          } 
           updateCameraFromHomeBounds();
         }
       };
@@ -214,8 +229,14 @@ public class HomeController3D {
     public void enter() {
       this.topCamera = home.getCamera();
       updateCameraFromHomeBounds();
-      home.addWallListener(wallListener);
-      home.addFurnitureListener(furnitureListener);
+      home.addWallsListener(this.wallListener);
+      for (Wall wall : home.getWalls()) {
+        wall.addPropertyChangeListener(this.wallOrFurnitureChangeListener);
+      }
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
+        piece.addPropertyChangeListener(this.wallOrFurnitureChangeListener);
+      }
+      home.addFurnitureListener(this.furnitureListener);
     }
     
     /**
@@ -279,10 +300,11 @@ public class HomeController3D {
       newZ = Math.max(newZ, home.getWallHeight() * 1.5f);
       newZ = Math.min(newZ, (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3 * Math.sin(this.topCamera.getPitch())));
       double distanceToCenterAtGroundLevel = newZ / Math.tan(this.topCamera.getPitch());
-      home.setCameraLocation(this.topCamera, 
-          (float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel), 
-          (float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel),
-          newZ);
+      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
+          * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
+          * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ(newZ);
     }
 
     @Override
@@ -290,11 +312,9 @@ public class HomeController3D {
       float  newYaw = this.topCamera.getYaw() + delta;
       double distanceToCenterAtGroundLevel = this.topCamera.getZ() / Math.tan(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
-      home.setCameraAngles(this.topCamera, newYaw, this.topCamera.getPitch()); 
-      home.setCameraLocation(this.topCamera, 
-          (float)this.homeBounds.getCenterX() + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel), 
-          (float)this.homeBounds.getCenterY() - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel),
-          this.topCamera.getZ());
+      this.topCamera.setYaw(newYaw); 
+      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
     }
     
     @Override
@@ -310,18 +330,25 @@ public class HomeController3D {
       float newZ = (float)(cameraToBoundsCenterDistance * Math.sin(newPitch));
       double distanceToCenterAtGroundLevel = newZ / Math.tan(newPitch);
       // Change camera pitch 
-      home.setCameraAngles(this.topCamera, this.topCamera.getYaw(), newPitch); 
-      home.setCameraLocation(this.topCamera, 
-          (float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel), 
-          (float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel),
-          newZ);
+      this.topCamera.setPitch(newPitch); 
+      this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
+          * distanceToCenterAtGroundLevel));
+      this.topCamera.setY((float)this.homeBounds.getCenterY() - (float)(Math.cos(this.topCamera.getYaw()) 
+          * distanceToCenterAtGroundLevel));
+      this.topCamera.setZ(newZ);
     }
     
     @Override
     public void exit() {
       this.topCamera = null;
-      home.removeWallListener(wallListener);
-      home.removeFurnitureListener(furnitureListener);
+      home.removeWallsListener(wallListener);
+      for (Wall wall : home.getWalls()) {
+        wall.removePropertyChangeListener(this.wallOrFurnitureChangeListener);
+      }
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
+        piece.removePropertyChangeListener(this.wallOrFurnitureChangeListener);
+      }
+      home.removeFurnitureListener(this.furnitureListener);
     }
   }
   
@@ -340,18 +367,15 @@ public class HomeController3D {
     
     @Override
     public void moveCamera(float delta) {
-      home.setCameraLocation(this.observerCamera, 
-          this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta, 
-          this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta,
-          this.observerCamera.getZ());
+      this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
+      this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
 
     @Override
     public void rotateCameraYaw(float delta) {
-      home.setCameraAngles(this.observerCamera, 
-          this.observerCamera.getYaw() + delta, this.observerCamera.getPitch()); 
+      this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
@@ -362,7 +386,7 @@ public class HomeController3D {
       // Check new angle is between -60° and 75°  
       newPitch = Math.max(newPitch, -(float)Math.PI / 3);
       newPitch = Math.min(newPitch, (float)Math.PI / 36 * 15);
-      home.setCameraAngles(this.observerCamera, this.observerCamera.getYaw(), newPitch); 
+      this.observerCamera.setPitch(newPitch); 
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }

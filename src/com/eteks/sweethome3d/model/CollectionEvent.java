@@ -1,5 +1,5 @@
 /*
- * TextureEvent.java 02 oct. 2008
+ * CollectionEvent.java 27 oct. 2008
  *
  * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -22,35 +22,46 @@ package com.eteks.sweethome3d.model;
 import java.util.EventObject;
 
 /**
- * Type of event notified when texture is added or deleted.
+ * Type of event notified when an item is added or deleted from a list.
+ * <code>T</code> is the type of item stored in the collection.
  * @author Emmanuel Puybaret
  */
-public class TextureEvent extends EventObject {
+public class CollectionEvent<T> extends EventObject {
+  /**
+   * The type of change in the collection.
+   */
   public enum Type {ADD, DELETE}
 
-  private TextureImage texture;
-  private int index;
+  private T    item;
+  private int  index;
   private Type type;
 
   /**
-   * Creates an event associated with <code>texture</code>.
+   * Creates an event for an item that has no index. 
    */
-  public TextureEvent(Object source, TextureImage texture, int index, Type type) {
-    super(source);
-    this.texture = texture;
-    this.index = index;
-    this.type =  type;
+  public CollectionEvent(Object source, T item, Type type) {
+    this(source, item, -1, type);
   }
 
   /**
-   * Returns the texture added or deleted.
+   * Creates an event for an item with its index. 
    */
-  public TextureImage getTexture() {
-    return this.texture;
+  public CollectionEvent(Object source, T item, int index, Type type) {
+    super(source);
+    this.item = item;
+    this.index = index;
+    this.type =  type;
   }
   
   /**
-   * Returns the index of the piece of furniture in home.
+   * Returns the added or deleted item.
+   */
+  public T getItem() {
+    return this.item;
+  }
+
+  /**
+   * Returns the index of the item in collection or -1 if this index is unknown.
    */
   public int getIndex() {
     return this.index;

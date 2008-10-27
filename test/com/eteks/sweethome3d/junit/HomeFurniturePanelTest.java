@@ -59,13 +59,15 @@ public class HomeFurniturePanelTest extends TestCase {
     // 3. Add a second selected piece to home
     HomePieceOfFurniture piece2 = new HomePieceOfFurniture(firstPiece); 
     home.addPieceOfFurniture(piece2);
-    home.setPieceOfFurnitureLocation(piece2, piece1.getX(), piece1.getY() + 10);
-    home.setPieceOfFurnitureElevation(piece2, piece1.getElevation() + 10);
-    home.setPieceOfFurnitureSize(piece2, 
-        piece1.getWidth(), piece1.getDepth() + 10, piece1.getHeight() + 10);
-    home.setPieceOfFurnitureColor(piece2, 0xFF00FF);
-    home.setPieceOfFurnitureVisible(piece2, !piece1.isVisible());
-    home.setPieceOfFurnitureModelMirrored(piece2, !piece1.isModelMirrored());
+    piece2.setX(piece1.getX());
+    piece2.setY(piece1.getY() + 10);
+    piece2.setElevation(piece1.getElevation() + 10);
+    piece2.setWidth(piece1.getWidth());
+    piece2.setDepth(piece1.getDepth() + 10);
+    piece2.setHeight(piece1.getHeight() + 10);
+    piece2.setColor(0xFF00FF);
+    piece2.setVisible(!piece1.isVisible());
+    piece2.setModelMirrored(!piece1.isModelMirrored());
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1, piece2}));
     // Check if furniture panel edits null values 
     // if some furniture properties are the same

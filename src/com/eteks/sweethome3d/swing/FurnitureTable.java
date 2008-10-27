@@ -65,9 +65,9 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.FurnitureEvent;
-import com.eteks.sweethome3d.model.FurnitureListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
@@ -265,13 +265,24 @@ public class FurnitureTable extends JTable implements Printable {
     home.addPropertyChangeListener(Home.Property.FURNITURE_SORTED_PROPERTY, sortListener);
     home.addPropertyChangeListener(Home.Property.FURNITURE_DESCENDING_SORTED, sortListener);
     
-    home.addFurnitureListener(new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
-          if (ev.getType() == FurnitureEvent.Type.UPDATE) {
-            // As furniture properties values change may alter sort order, udpate sort and whole table
-            ((FurnitureTableModel)getModel()).filterAndSortFurniture();
-            // Update selected rows
-            updateTableSelectedFurniture(home.getSelectedItems());
+    final PropertyChangeListener furnitureChangeListener = 
+      new PropertyChangeListener () {
+        public void propertyChange(PropertyChangeEvent ev) {
+          // As furniture properties values change may alter sort order, udpate sort and whole table
+          ((FurnitureTableModel)getModel()).filterAndSortFurniture();
+          // Update selected rows
+          updateTableSelectedFurniture(home.getSelectedItems());
+        }
+      };
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      piece.addPropertyChangeListener(furnitureChangeListener);
+    }
+    home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(furnitureChangeListener);
+          } else {
+            ev.getItem().removePropertyChangeListener(furnitureChangeListener);
           }
         }
       });
@@ -1113,10 +1124,10 @@ public class FurnitureTable extends JTable implements Printable {
     }
 
     private void addHomeListener(final Home home) {
-      home.addFurnitureListener(new FurnitureListener() {
-        public void pieceOfFurnitureChanged(FurnitureEvent ev) {
+      home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
+          HomePieceOfFurniture piece = ev.getItem();
           int pieceIndex = ev.getIndex();
-          HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getPieceOfFurniture();
           switch (ev.getType()) {
             case ADD :
               int insertionIndex = getPieceOfFurnitureInsertionIndex(piece, home, pieceIndex);

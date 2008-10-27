@@ -23,6 +23,10 @@ import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -30,6 +34,12 @@ import java.io.Serializable;
  * @author Emmanuel Puybaret
  */
 public class DimensionLine implements Serializable, Selectable {
+  /**
+   * The properties of a dimension line that may change. <code>PropertyChangeListener</code>s added 
+   * to a dimension line will be notified under a property name equal to the string value of one these properties.
+   */
+  public enum ModifiableProperty {X_START, Y_START, X_END, Y_END, OFFSET} 
+   
   private static final long serialVersionUID = 1L;
   
   private float xStart;
@@ -38,6 +48,7 @@ public class DimensionLine implements Serializable, Selectable {
   private float yEnd;
   private float offset;
 
+  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
   /**
@@ -61,6 +72,29 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
+   * Initializes new dimension line transient fields  
+   * and reads its properties from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    in.defaultReadObject();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this dimension line.
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this dimension line.
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
    * Returns the start point abscissa of this dimension line.
    */
   public float getXStart() {
@@ -68,13 +102,16 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
-   * Sets the start point abscissa of this dimension line.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a dimension line changed.
+   * Sets the start point abscissa of this dimension line. Once this dimension line 
+   * is updated, listeners added to this dimension line will receive a change notification.
    */
-  void setXStart(float xStart) {
-    this.xStart = xStart;
-    this.shapeCache = null;
+  public void setXStart(float xStart) {
+    if (xStart != this.xStart) {
+      float oldXStart = this.xStart;
+      this.xStart = xStart;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_START.toString(), oldXStart, xStart);
+    }
   }
 
   /**
@@ -85,13 +122,16 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
-   * Sets the start point ordinate of this dimension line.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a dimension line changed.
+   * Sets the start point ordinate of this dimension line. Once this dimension line 
+   * is updated, listeners added to this dimension line will receive a change notification.
    */
-  void setYStart(float yStart) {
-    this.yStart = yStart;
-    this.shapeCache = null;
+  public void setYStart(float yStart) {
+    if (yStart != this.yStart) {
+      float oldYStart = this.yStart;
+      this.yStart = yStart;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_START.toString(), oldYStart, yStart);
+    }
   }
 
   /**
@@ -102,13 +142,16 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
-   * Sets the end point abscissa of this dimension line.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a dimension line changed.
+   * Sets the end point abscissa of this dimension line. Once this dimension line 
+   * is updated, listeners added to this dimension line will receive a change notification.
    */
-  void setXEnd(float xEnd) {
-    this.xEnd = xEnd;
-    this.shapeCache = null;
+  public void setXEnd(float xEnd) {
+    if (xEnd != this.xEnd) {
+      float oldXEnd = this.xEnd;
+      this.xEnd = xEnd;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_END.toString(), oldXEnd, xEnd);
+    }
   }
 
   /**
@@ -119,13 +162,16 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
-   * Sets the end point ordinate of this dimension line.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a dimension line changed.
+   * Sets the end point ordinate of this dimension line. Once this dimension line 
+   * is updated, listeners added to this dimension line will receive a change notification.
    */
-  void setYEnd(float yEnd) {
-    this.yEnd = yEnd;
-    this.shapeCache = null;
+  public void setYEnd(float yEnd) {
+    if (yEnd != this.yEnd) {
+      float oldYEnd = this.yEnd;
+      this.yEnd = yEnd;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.toString(), oldYEnd, yEnd);
+    }
   }
 
   /**
@@ -136,13 +182,16 @@ public class DimensionLine implements Serializable, Selectable {
   }
 
   /**
-   * Sets the offset of this dimension line.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a dimension line changed.
+   * Sets the offset of this dimension line.  Once this dimension line 
+   * is updated, listeners added to this dimension line will receive a change notification.
    */
-  void setOffset(float offset) {
-    this.offset = offset;
-    this.shapeCache = null;
+  public void setOffset(float offset) {
+    if (offset != this.offset) {
+      float oldOffset = this.offset;
+      this.offset = offset;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.toString(), oldOffset, offset);
+    }
   }
 
   /**

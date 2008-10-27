@@ -179,31 +179,32 @@ public class WallController {
         moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
       }
       if (leftSideTexture != null) {
-        this.home.setWallLeftSideTexture(wall, leftSideTexture);
-        this.home.setWallLeftSideColor(wall, null);
+        wall.setLeftSideTexture(leftSideTexture);
+        wall.setLeftSideColor(null);
       } else if (leftSideColor != null) {
-        this.home.setWallLeftSideColor(wall, leftSideColor);
-        this.home.setWallLeftSideTexture(wall, null);
+        wall.setLeftSideColor(leftSideColor);
+        wall.setLeftSideTexture(null);
       }
       if (rightSideTexture != null) {
-        this.home.setWallRightSideTexture(wall, rightSideTexture);
-        this.home.setWallRightSideColor(wall, null);
+        wall.setRightSideTexture(rightSideTexture);
+        wall.setRightSideColor(null);
       } else if (rightSideColor != null) {
-        this.home.setWallRightSideColor(wall, rightSideColor);
-        this.home.setWallRightSideTexture(wall, null);
+        wall.setRightSideColor(rightSideColor);
+        wall.setRightSideTexture(null);
       }
       if (height != null) {
-        this.home.setWallHeight(wall, height);
+        wall.setHeight(height);
         if (heightAtEnd != null) {
           if (heightAtEnd.equals(height)) {
-            this.home.setWallHeightAtEnd(wall, null);
+            wall.setHeightAtEnd(null);
           } else {
-            this.home.setWallHeightAtEnd(wall, heightAtEnd);
+            wall.setHeightAtEnd(heightAtEnd);
           }
         }
       }
-      this.home.setWallThickness(wall, 
-          thickness != null ? thickness.floatValue() : wall.getThickness());
+      wall.setThickness(thickness != null 
+          ? thickness.floatValue() 
+          : wall.getThickness());
     }
   }
 
@@ -218,37 +219,43 @@ public class WallController {
         moveWallPoints(wall, modifiedWall.getXStart(), modifiedWall.getYStart(),
             modifiedWall.getXEnd(), modifiedWall.getYEnd());
       }
-      this.home.setWallLeftSideColor(wall, modifiedWall.getLeftSideColor());
-      this.home.setWallLeftSideTexture(wall, modifiedWall.getLeftSideTexture());
-      this.home.setWallRightSideColor(wall, modifiedWall.getRightSideColor());
-      this.home.setWallRightSideTexture(wall, modifiedWall.getRightSideTexture());
-      this.home.setWallThickness(wall, modifiedWall.getThickness());
-      this.home.setWallHeight(wall, modifiedWall.getHeight());
-      this.home.setWallHeightAtEnd(wall, modifiedWall.getHeightAtEnd());
+      wall.setLeftSideColor(modifiedWall.getLeftSideColor());
+      wall.setLeftSideTexture(modifiedWall.getLeftSideTexture());
+      wall.setRightSideColor(modifiedWall.getRightSideColor());
+      wall.setRightSideTexture(modifiedWall.getRightSideTexture());
+      wall.setThickness(modifiedWall.getThickness());
+      wall.setHeight(modifiedWall.getHeight());
+      wall.setHeightAtEnd(modifiedWall.getHeightAtEnd());
     }
   }
   
   private void moveWallPoints(Wall wall, float xStart, float yStart, float xEnd, float yEnd) {
-    this.home.moveWallStartPointTo(wall, xStart, yStart);
+    wall.setXStart(xStart);
+    wall.setYStart(yStart);
     Wall wallAtStart = wall.getWallAtStart();
     // If wall is joined to a wall at its start 
     if (wallAtStart != null) {
       // Move the wall start point or end point
       if (wallAtStart.getWallAtStart() == wall) {
-        this.home.moveWallStartPointTo(wallAtStart, xStart, yStart);
+        wallAtStart.setXStart(xStart);
+        wallAtStart.setYStart(yStart);
       } else if (wallAtStart.getWallAtEnd() == wall) {
-        this.home.moveWallEndPointTo(wallAtStart, xStart, yStart);
+        wallAtStart.setXEnd(xStart);
+        wallAtStart.setYEnd(yStart);
       }
     }
-    this.home.moveWallEndPointTo(wall, xEnd, yEnd);
+    wall.setXEnd(xEnd);
+    wall.setYEnd(yEnd);
     Wall wallAtEnd = wall.getWallAtEnd();
     // If wall is joined to a wall at its end  
     if (wallAtEnd != null) {
       // Move the wall start point or end point
       if (wallAtEnd.getWallAtStart() == wall) {
-        this.home.moveWallStartPointTo(wallAtEnd, xEnd, yEnd);
+        wallAtEnd.setXStart(xEnd);
+        wallAtEnd.setYStart(yEnd);
       } else if (wallAtEnd.getWallAtEnd() == wall) {
-        this.home.moveWallEndPointTo(wallAtEnd, xEnd, yEnd);
+        wallAtEnd.setXEnd(xEnd);
+        wallAtEnd.setYEnd(yEnd);
       }
     }
   }

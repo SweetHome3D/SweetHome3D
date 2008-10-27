@@ -149,7 +149,7 @@ public class FurnitureTableTest extends TestCase {
     
     // 5. Change first furniture name
     HomePieceOfFurniture firstPiece = home.getFurniture().get(0);
-    home.setPieceOfFurnitureName(firstPiece, "Aaaa");
+    firstPiece.setName("Aaaa");
     // Check table data is sorted in alphabetical descending order
     assertFurnitureIsSortedByName(table, false);
   }

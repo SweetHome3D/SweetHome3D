@@ -45,10 +45,8 @@ public class ObserverCamera extends Camera implements Selectable {
 
   /**
    * Sets the yaw angle in radians of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setYaw(float yaw) {
+  public void setYaw(float yaw) {
     super.setYaw(yaw);
     this.shape = null;
     this.rectangleShape = null;
@@ -56,8 +54,6 @@ public class ObserverCamera extends Camera implements Selectable {
   
   /**
    * Sets the abcissa of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
   public void setX(float x) {
     super.setX(x);
@@ -67,26 +63,13 @@ public class ObserverCamera extends Camera implements Selectable {
   
   /**
    * Sets the ordinate of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
    */
-  void setY(float y) {
+  public void setY(float y) {
     super.setY(y);
     this.shape = null;
     this.rectangleShape = null;
   }
   
-  /**
-   * Sets the elevation of this camera.
-   * This method should be called only from {@link Home}, which
-   * controls notifications when a camera changed.
-   */
-  void setZ(float z) {
-    super.setZ(z);
-    this.shape = null;
-    this.rectangleShape = null;
-  }
-
   /**
    * Returns the width of this observer camera according to
    * human proportions with an eyes elevation at z. 

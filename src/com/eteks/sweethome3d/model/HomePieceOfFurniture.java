@@ -24,6 +24,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.math.BigDecimal;
@@ -39,6 +41,12 @@ import java.util.Map;
  */
 public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   private static final long serialVersionUID = 1L;
+  
+  /**
+   * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
+   * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
+   */
+  public enum Property {NAME, WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
   
   /** 
    * Properties on which home furniture may be sorted.  
@@ -197,6 +205,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   private float      angle;
   private boolean    modelMirrored;
 
+  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
   /**
@@ -240,16 +249,31 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
 
   /**
    * Initializes new piece fields to their default values 
-   * and reads home from <code>in</code> stream with default reading method.
+   * and reads piece from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.modelRotation = IDENTITY;
     this.resizable = true;
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
     in.defaultReadObject();
   }
 
   /**
-   * Returns the catalog ID of this piece of furniture or <code>null</code>.
+   * Adds the property change <code>listener</code> in parameter to this piece.
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this piece.
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
+   * Returns the catalog ID of this piece of furniture or <code>null</code> if it doesn't exist.
    */
   public String getCatalogId() {
     return this.catalogId;
@@ -263,12 +287,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the name of this piece of furniture.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the name of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setName(String name) {
-    this.name = name;
+  public void setName(String name) {
+    if (name != this.name
+        || (name != null && !name.equals(this.name))) {
+      String oldName = this.name;
+      this.name = name;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+    }
   }
    
   /**
@@ -279,15 +307,18 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the depth of this piece of furniture.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the depth of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
-  void setDepth(float depth) {
+  public void setDepth(float depth) {
     if (this.resizable) {
-      this.depth = depth;
-      this.shapeCache = null;
+      if (depth != this.depth) {
+        float oldDepth = this.depth;
+        this.depth = depth;
+        this.shapeCache = null;
+        this.propertyChangeSupport.firePropertyChange(Property.DEPTH.toString(), oldDepth, depth);
+      }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
     }
@@ -301,15 +332,18 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the height of this piece of furniture.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the height of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
-  void setHeight(float height) {
+  public void setHeight(float height) {
     if (this.resizable) {
-      this.height = height;
-      this.shapeCache = null;
+      if (height != this.height) {
+        float oldHeight = this.height;
+        this.height = height;
+        this.shapeCache = null;
+        this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), oldHeight, height);
+      }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
     }
@@ -323,15 +357,18 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the width of this piece of furniture.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the width of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
-  void setWidth(float width) {
+  public void setWidth(float width) {
     if (this.resizable) {
-      this.width = width;
-      this.shapeCache = null;
+      if (width != this.width) {
+        float oldWidth = this.width;
+        this.width = width;
+        this.shapeCache = null;
+        this.propertyChangeSupport.firePropertyChange(Property.WIDTH.toString(), oldWidth, width);
+      }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
     }
@@ -345,12 +382,15 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the elevation of this piece of furniture.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the elevation of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setElevation(float elevation) {
-    this.elevation = elevation;
+  public void setElevation(float elevation) {
+    if (elevation != this.elevation) {
+      float oldElevation = this.elevation;
+      this.elevation = elevation;
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.toString(), oldElevation, elevation);
+    }
   }
 
   /**
@@ -390,12 +430,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
   
   /**
-   * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the color of this piece of furniture or <code>null</code> if piece color is unchanged. 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
    */
-  void setColor(Integer color) {
-    this.color = color;
+  public void setColor(Integer color) {
+    if (color != this.color
+        || (color != null && !color.equals(this.color))) {
+      Integer oldColor = this.color;
+      this.color = color;
+      this.propertyChangeSupport.firePropertyChange(Property.COLOR.toString(), oldColor, color);
+    }
   }
 
   /**
@@ -450,12 +494,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
   
   /**
-   * Sets whether this piece of furniture is visible or not.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets whether this piece of furniture is visible or not. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setVisible(boolean visible) {
-    this.visible = visible;
+  public void setVisible(boolean visible) {
+    if (visible != this.visible) {
+      this.visible = visible;
+      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.toString(), !visible, visible);
+    }
   }
 
   /**
@@ -466,13 +512,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the abscissa of the center of this piece.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the abscissa of the center of this piece. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setX(float x) {
-    this.x = x;
-    this.shapeCache = null;
+  public void setX(float x) {
+    if (x != this.x) {
+      float oldX = this.x;
+      this.x = x;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.X.toString(), oldX, x);
+    }
   }
   
   /**
@@ -483,13 +532,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the ordinate of the center of this piece.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the ordinate of the center of this piece. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setY(float y) {
-    this.y = y;
-    this.shapeCache = null;
+  public void setY(float y) {
+    if (y != this.y) {
+      float oldY = this.y;
+      this.y = y;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.Y.toString(), oldY, y);
+    }
   }
 
   /**
@@ -500,13 +552,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets the angle of this piece.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets the angle of this piece. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    */
-  void setAngle(float angle) {
-    this.angle = angle;
-    this.shapeCache = null;
+  public void setAngle(float angle) {
+    if (angle != this.angle) {
+      float oldAngle = this.angle;
+      this.angle = angle;
+      this.shapeCache = null;
+      this.propertyChangeSupport.firePropertyChange(Property.ANGLE.toString(), oldAngle, angle);
+    }
   }
 
   /**
@@ -517,14 +572,17 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
   }
 
   /**
-   * Sets whether the model of this piece of furniture is mirrored or not.
-   * This method should be called from {@link Home}, which
-   * controls notifications when a piece changed.
+   * Sets whether the model of this piece of furniture is mirrored or not. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
-  void setModelMirrored(boolean modelMirrored) {
+  public void setModelMirrored(boolean modelMirrored) {
     if (this.resizable) {
-      this.modelMirrored = modelMirrored;
+      if (modelMirrored != this.modelMirrored) {
+        this.modelMirrored = modelMirrored;
+        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.toString(), 
+            !modelMirrored, modelMirrored);
+      }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
     }

@@ -87,7 +87,8 @@ public class OBJWriterTest extends TestCase {
     HomePieceOfFurniture piece = new HomePieceOfFurniture(
         preferences.getFurnitureCatalog().getCategory(0).getPieceOfFurniture(0));
     home.addPieceOfFurniture(piece);
-    home.setPieceOfFurnitureLocation(piece, 500, 500);
+    piece.setX(500);
+    piece.setY(500);
     assertEquals("Incorrect wall count", 1, home.getWalls().size());
     assertEquals("Incorrect furniture count", 1, home.getFurniture().size());
 
