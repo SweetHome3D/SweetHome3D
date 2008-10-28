@@ -106,7 +106,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    * @param texture the texture to remove.
    * @throws IllegalArgumentException if the texture doesn't exist in this category.
    */
-  public void delete(CatalogTexture texture) {
+  void delete(CatalogTexture texture) {
     int textureIndex = this.textures.indexOf(texture);
     if (textureIndex == -1) {
       throw new IllegalArgumentException(
