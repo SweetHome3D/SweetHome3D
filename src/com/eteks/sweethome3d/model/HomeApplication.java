@@ -57,7 +57,7 @@ public abstract class HomeApplication {
    * Adds a given <code>home</code> to the homes list of this application.
    * Once the <code>home</code> is added, home listeners added 
    * to this application will receive a
-   * {@link CollectionListener#collectionChanged(HomeEvent) collectionChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
    * equal to {@link CollectionEvent.Type#ADD ADD}. 
    */
@@ -71,7 +71,7 @@ public abstract class HomeApplication {
    * Removes a given <code>home</code> from the homes list  of this application.
    * Once the <code>home</code> is removed, home listeners added 
    * to this application will receive a
-   * {@link CollectionListener#collectionChanged(HomeEvent) collectionChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
    * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    */

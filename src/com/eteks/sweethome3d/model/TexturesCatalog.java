@@ -98,6 +98,8 @@ public abstract class TexturesCatalog {
 
   /**
    * Adds <code>texture</code> of a given <code>category</code> to this catalog.
+   * Once the <code>texture</code> is added, texture listeners added to this catalog will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged} notification.
    * @param category the category of the texture.
    * @param texture  a texture.
    */
@@ -121,7 +123,7 @@ public abstract class TexturesCatalog {
    * Deletes the <code>texture</code> from this catalog.
    * If then texture category is empty, it will be removed from the categories of this catalog. 
    * Once the <code>texture</code> is deleted, texture listeners added to this catalog will receive a
-   * {@link TextureListener#textureChanged(TextureEvent) textureChanged} notification.
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged} notification.
    * @param texture a texture.
    */
   public void delete(CatalogTexture texture) {

@@ -102,7 +102,7 @@ public abstract class FurnitureCatalog {
   /**
    * Adds <code>piece</code> of a given <code>category</code> to this catalog.
    * Once the <code>piece</code> is added, furniture listeners added to this catalog will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
@@ -127,7 +127,7 @@ public abstract class FurnitureCatalog {
    * Deletes the <code>piece</code> from this catalog.
    * If then piece category is empty, it will be removed from the categories of this catalog. 
    * Once the <code>piece</code> is deleted, furniture listeners added to this catalog will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
    * @param piece a piece of furniture in that category.
    */

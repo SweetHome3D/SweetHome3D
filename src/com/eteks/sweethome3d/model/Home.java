@@ -279,7 +279,7 @@ public class Home implements Serializable {
   /**
    * Adds a <code>piece</code> in parameter.
    * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
@@ -289,7 +289,7 @@ public class Home implements Serializable {
   /**
    * Adds the <code>piece</code> in parameter at a given <code>index</code>.
    * Once the <code>piece</code> is added, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
    */
   public void addPieceOfFurniture(HomePieceOfFurniture piece, int index) {
@@ -302,7 +302,7 @@ public class Home implements Serializable {
   /**
    * Deletes the <code>piece</code> in parameter from this home.
    * Once the <code>piece</code> is deleted, furniture listeners added to this home will receive a
-   * {@link FurnitureListener#pieceOfFurnitureChanged(FurnitureEvent) pieceOfFurnitureChanged}
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification.
    */
   public void deletePieceOfFurniture(HomePieceOfFurniture piece) {
@@ -392,9 +392,9 @@ public class Home implements Serializable {
   /**
    * Adds a given <code>wall</code> to the set of walls of this home.
    * Once the <code>wall</code> is added, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#ADD ADD}. 
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
    */
   public void addWall(Wall wall) {
     // Make a copy of the list to avoid conflicts in the list returned by getWalls
@@ -406,14 +406,10 @@ public class Home implements Serializable {
   /**
    * Removes a given <code>wall</code> from the set of walls of this home.
    * Once the <code>wall</code> is removed, wall listeners added to this home will receive a
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#DELETE DELETE}.
-   * If any wall is attached to <code>wall</code> they will be detached from it ;
-   * therefore wall listeners will receive a 
-   * {@link WallListener#wallChanged(WallEvent) wallChanged}
-   * notification, with an {@link WallEvent#getType() event type} 
-   * equal to {@link WallEvent.Type#UPDATE UPDATE}. 
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   * If any wall is attached to <code>wall</code> they will be detached from it.
    */
   public void deleteWall(Wall wall) {
     //  Ensure selectedItems don't keep a reference to wall
@@ -457,9 +453,9 @@ public class Home implements Serializable {
    * Adds a given dimension line to the set of dimension lines of this home.
    * Once <code>dimensionLine</code> is added, dimension line listeners added 
    * to this home will receive a
-   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
-   * notification, with an {@link DimensionLineEvent#getType() event type} 
-   * equal to {@link DimensionLineEvent.Type#ADD ADD}. 
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
    */
   public void addDimensionLine(DimensionLine dimensionLine) {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
@@ -472,9 +468,9 @@ public class Home implements Serializable {
    * Removes a given dimension line from the set of dimension lines of this home.
    * Once <code>dimensionLine</code> is removed, dimension line listeners added 
    * to this home will receive a
-   * {@link DimensionLineListener#dimensionLineChanged(DimensionLineEvent) dimensionLineChanged}
-   * notification, with an {@link DimensionLineEvent#getType() event type} 
-   * equal to {@link DimensionLineEvent.Type#DELETE DELETE}.
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    */
   public void deleteDimensionLine(DimensionLine dimensionLine) {
     //  Ensure selectedItems don't keep a reference to dimension line

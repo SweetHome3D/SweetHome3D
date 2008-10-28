@@ -1584,9 +1584,12 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Displays a dialog that lets user choose whether he wants to save
    * the current home or not.
-   * @return {@link SaveAnswer#SAVE} if user chose to save home,
-   * {@link SaveAnswer#DO_NOT_SAVE} if user don't want to save home,
-   * or {@link SaveAnswer#CANCEL} if doesn't want to continue current operation.
+   * @return {@link com.eteks.sweethome3d.viewcontroller.HomeView.SaveAnswer#SAVE} 
+   * if the user chose to save home,
+   * {@link com.eteks.sweethome3d.viewcontroller.HomeView.SaveAnswer#DO_NOT_SAVE} 
+   * if he doesn't want to save home,
+   * or {@link com.eteks.sweethome3d.viewcontroller.HomeView.SaveAnswer#CANCEL} 
+   * if he doesn't want to continue current operation.
    */
   public SaveAnswer confirmSave(String homeName) {
     // Retrieve displayed text in buttons and message
