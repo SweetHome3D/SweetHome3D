@@ -808,6 +808,27 @@ public class Home implements Serializable {
   }
   
   /**
+   * Performs a deep copy of home selectable <code>objects</code>.
+   */
+  public static List<Selectable> deepCopy(List<? extends Selectable> objects) {
+    List<Selectable> list = new ArrayList<Selectable>();
+    for (Selectable obj : objects) {
+      if (obj instanceof HomePieceOfFurniture) {
+        list.add(new HomePieceOfFurniture((HomePieceOfFurniture)obj));
+      } else if (obj instanceof DimensionLine) {
+        list.add(new DimensionLine((DimensionLine)obj));
+      } else if (!(obj instanceof Wall)
+                 && !(obj instanceof Camera)) { // Camera isn't copiable
+        throw new RuntimeException(
+            "Don't kwon how to copy " + obj.getClass().getName() + " instances");
+      }
+    }
+    // Add to list a deep copy of walls with their walls at start and end point set
+    list.addAll(Wall.deepCopy(getWallsSubList(objects)));
+    return list;
+  }
+
+  /**
    * Returns a sub list of <code>items</code> that contains only home furniture.
    */
   public static List<HomePieceOfFurniture> getFurnitureSubList(List<? extends Selectable> items) {
