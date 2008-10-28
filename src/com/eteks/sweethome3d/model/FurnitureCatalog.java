@@ -32,8 +32,8 @@ public abstract class FurnitureCatalog {
   private List<FurnitureCategory>       categories         = new ArrayList<FurnitureCategory>();
   private boolean                       sorted;
   private List<CatalogPieceOfFurniture> selectedFurniture  = Collections.emptyList();
-  private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
-  private CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
+  private final List<SelectionListener> selectionListeners = new ArrayList<SelectionListener>();
+  private final CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
                              new CollectionChangeSupport<CatalogPieceOfFurniture>(this);
 
   /**

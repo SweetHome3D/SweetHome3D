@@ -32,26 +32,26 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-  private String     id;
-  private String     name;
-  private Content    icon;
-  private Content    model;
-  private float      width;
-  private float      depth;
-  private float      height;
-  private boolean    proportional;
-  private float      elevation;
-  private boolean    movable;
-  private boolean    doorOrWindow;
-  private float [][] modelRotation;
-  private String     creator;
-  private boolean    backFaceShown;
-  private Integer    color;
-  private float      iconYaw;
-  private boolean    modifiable;
-  private boolean    resizable;
-  private BigDecimal price;
-  private BigDecimal valueAddedTaxPercentage;
+  private final String     id;
+  private final String     name;
+  private final Content    icon;
+  private final Content    model;
+  private final float      width;
+  private final float      depth;
+  private final float      height;
+  private final boolean    proportional;
+  private final float      elevation;
+  private final boolean    movable;
+  private final boolean    doorOrWindow;
+  private final float [][] modelRotation;
+  private final String     creator;
+  private final boolean    backFaceShown;
+  private final Integer    color;
+  private final float      iconYaw;
+  private final boolean    modifiable;
+  private final boolean    resizable;
+  private final BigDecimal price;
+  private final BigDecimal valueAddedTaxPercentage;
 
   private FurnitureCategory  category;
 

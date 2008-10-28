@@ -49,7 +49,7 @@ public abstract class UserPreferences {
     SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
   }
   
-  private PropertyChangeSupport propertyChangeSupport;
+  private final PropertyChangeSupport propertyChangeSupport;
 
   /**
    * Unit used for sizes.

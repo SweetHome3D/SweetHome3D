@@ -75,8 +75,8 @@ public abstract class PluginAction {
     ENABLED,
   }
   
-  private Map<Property, Object> propertyValues        = new HashMap<Property, Object>();
-  private PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+  private final Map<Property, Object> propertyValues        = new HashMap<Property, Object>();
+  private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   
   /**
    * Creates a disabled plug-in action.

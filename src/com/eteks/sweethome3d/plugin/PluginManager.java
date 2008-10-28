@@ -60,10 +60,10 @@ public class PluginManager {
 
   private static final String APPLICATION_PLUGIN_FAMILY   = "ApplicationPlugin";
 
-  private Map<String, PluginDefinition> pluginDefinitions = 
+  private final Map<String, PluginDefinition> pluginDefinitions = 
       new HashMap<String, PluginDefinition>();
   
-  private Map<Home, List<Plugin>> homePlugins = new HashMap<Home, List<Plugin>>();
+  private final Map<Home, List<Plugin>> homePlugins = new HashMap<Home, List<Plugin>>();
   
   /**
    * Reads application plug-ins from resources in the given plug-in folder.

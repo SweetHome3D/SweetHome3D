@@ -32,9 +32,9 @@ public class CollectionEvent<T> extends EventObject {
    */
   public enum Type {ADD, DELETE}
 
-  private T    item;
-  private int  index;
-  private Type type;
+  private final T    item;
+  private final int  index;
+  private final Type type;
 
   /**
    * Creates an event for an item that has no index. 

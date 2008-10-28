@@ -28,8 +28,8 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 class CollectionChangeSupport<T> {
-  private Object                      source;
-  private List<CollectionListener<T>> collectionListeners;
+  private final Object                      source;
+  private final List<CollectionListener<T>> collectionListeners;
   
   public CollectionChangeSupport(Object source) {
     this.source = source;

@@ -32,7 +32,7 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
   private final Content         image;
   private final float           width;
   private final float           height;
-  private boolean               modifiable;
+  private final boolean         modifiable;
   
   private TexturesCategory      category;
   

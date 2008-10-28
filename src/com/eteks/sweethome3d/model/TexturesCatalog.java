@@ -30,7 +30,8 @@ import java.util.List;
 public abstract class TexturesCatalog {
   private List<TexturesCategory>  categories = new ArrayList<TexturesCategory>();
   private boolean                 sorted;
-  private CollectionChangeSupport<CatalogTexture> texturesChangeSupport = new CollectionChangeSupport<CatalogTexture>(this);
+  private final CollectionChangeSupport<CatalogTexture> texturesChangeSupport = 
+                                      new CollectionChangeSupport<CatalogTexture>(this);
 
   /**
    * Returns the categories list sorted by name.

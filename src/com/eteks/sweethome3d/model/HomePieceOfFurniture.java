@@ -28,6 +28,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Collator;
@@ -39,7 +40,7 @@ import java.util.Map;
  * A piece of furniture in {@link Home home}.
  * @author Emmanuel Puybaret
  */
-public class HomePieceOfFurniture implements PieceOfFurniture, Selectable {
+public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable {
   private static final long serialVersionUID = 1L;
   
   /**

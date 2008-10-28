@@ -30,9 +30,10 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCategory implements Comparable<FurnitureCategory> {
-  private String                 name;
+  private final String                  name;
   private List<CatalogPieceOfFurniture> furniture;
-  private boolean                sorted;
+  private boolean                       sorted;
+  
   private static final Collator  COMPARATOR = Collator.getInstance();
 
   /**

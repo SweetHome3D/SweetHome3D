@@ -29,9 +29,10 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public class TexturesCategory implements Comparable<TexturesCategory> {
-  private String                 name;
+  private final String         name;
   private List<CatalogTexture> textures;
-  private boolean                sorted;
+  private boolean              sorted;
+  
   private static final Collator  COMPARATOR = Collator.getInstance();
 
   /**
