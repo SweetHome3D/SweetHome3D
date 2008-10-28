@@ -47,13 +47,16 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
+import com.eteks.sweethome3d.viewcontroller.HomeFurnitureView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home furniture editing panel.
  * @author Emmanuel Puybaret
  */
-public class HomeFurniturePanel extends JPanel {
-  private HomeFurnitureController controller;
+public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
+  private final HomeFurnitureController controller;
   private ResourceBundle          resource;
   private JLabel                  nameLabel;
   private JTextField              nameTextField;
@@ -443,14 +446,14 @@ public class HomeFurniturePanel extends JPanel {
   }
 
   /**
-   * Returns whether the furniture model is mirrored or not.
+   * Returns whether the furniture is mirrored or not.
    */
   public Boolean isFurnitureModelMirrored() {
     return this.mirroredModelCheckBox.getValue();
   }
 
   /**
-   * Returns the edited abscissa of the furniture or <code>null</code>.
+   * Returns the edited abcissa of the furniture or <code>null</code>.
    */
   public Float getFurnitureX() {
     return ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).getLength();
@@ -485,10 +488,10 @@ public class HomeFurniturePanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("homeFurniture.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     // Add a listener that transfer focus to first text field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

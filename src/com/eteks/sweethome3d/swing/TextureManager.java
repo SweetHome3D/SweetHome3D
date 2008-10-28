@@ -42,15 +42,15 @@ import com.sun.j3d.utils.image.TextureLoader;
  * @author Emmanuel Puybaret
  */
 public class TextureManager {
-  private static TextureManager    instance;
+  private static TextureManager       instance;
   // Image used if an image content couldn't be loaded
-  private Texture                  errorTexture;
+  private final Texture               errorTexture;
   // Image used while an image content is loaded
-  private Texture                  waitTexture;
+  private final Texture               waitTexture;
   // Executor used to load images
-  private Executor                 texturesLoader;
+  private final Executor              texturesLoader;
   // Map storing loaded images
-  private Map<Content, Texture>    textures;
+  private final Map<Content, Texture> textures;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);

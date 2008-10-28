@@ -30,9 +30,9 @@ import java.util.ResourceBundle;
  * @author Emmanuel Puybaret
  */
 public class ControllerAction extends ResourceAction {
-  private Object    controller;
-  private Method    controllerMethod;
-  private Object [] parameters;
+  private final Object    controller;
+  private final Method    controllerMethod;
+  private final Object [] parameters;
 
   /**
    * Creates an action with properties retrieved from a resource bundle 
@@ -47,7 +47,9 @@ public class ControllerAction extends ResourceAction {
    *           matching <code>parameters</code> list doesn't exist
    */
   public ControllerAction(ResourceBundle resource, String actionPrefix, 
-               Object controller, String method, Object ... parameters)
+                          Object controller, 
+                          String method, 
+                          Object ... parameters)
                      throws NoSuchMethodException {
     super(resource, actionPrefix);
     this.controller = controller;

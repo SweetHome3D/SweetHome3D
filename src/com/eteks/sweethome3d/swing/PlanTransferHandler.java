@@ -37,17 +37,19 @@ import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * Plan transfer handler.
  * @author Emmanuel Puybaret
  */
 public class PlanTransferHandler extends LocatedTransferHandler {
-  private Home             home;
-  private ContentManager   contentManager;
-  private HomeController   homeController;
-  private List<Selectable> copiedItems;
-  private BufferedImage    copiedImage;
+  private final Home           home;
+  private final ContentManager contentManager;
+  private final HomeController homeController;
+  private List<Selectable>     copiedItems;
+  private BufferedImage        copiedImage;
 
   /**
    * Creates a handler able to transfer furniture and walls in plan.

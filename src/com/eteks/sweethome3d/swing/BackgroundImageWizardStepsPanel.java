@@ -77,31 +77,35 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
+import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
+import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardStepsView;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
-public class BackgroundImageWizardStepsPanel extends JPanel {
-  private BackgroundImageWizardController controller;
-  private ResourceBundle                  resource;
-  private CardLayout                      cardLayout;
-  private JLabel                          imageChoiceOrChangeLabel;
-  private JButton                         imageChoiceOrChangeButton;
-  private JLabel                          imageChoiceErrorLabel;
-  private ScaledImageComponent            imageChoicePreviewComponent;
-  private JLabel                          scaleLabel;
-  private JLabel                          scaleDistanceLabel;
-  private JSpinner                        scaleDistanceSpinner;
-  private ScaledImageComponent            scalePreviewComponent;
-  private JLabel                          originLabel;
-  private JLabel                          xOriginLabel;
-  private JSpinner                        xOriginSpinner;
-  private JLabel                          yOriginLabel;
-  private JSpinner                        yOriginSpinner;
-  private ScaledImageComponent            originPreviewComponent;
-  private Executor                        imageLoader;
-  private static BufferedImage            waitImage;
+public class BackgroundImageWizardStepsPanel extends JPanel 
+                                             implements BackgroundImageWizardStepsView {
+  private final BackgroundImageWizardController controller;
+  private final Executor                        imageLoader;
+  private ResourceBundle                        resource;
+  private CardLayout                            cardLayout;
+  private JLabel                                imageChoiceOrChangeLabel;
+  private JButton                               imageChoiceOrChangeButton;
+  private JLabel                                imageChoiceErrorLabel;
+  private ScaledImageComponent                  imageChoicePreviewComponent;
+  private JLabel                                scaleLabel;
+  private JLabel                                scaleDistanceLabel;
+  private JSpinner                              scaleDistanceSpinner;
+  private ScaledImageComponent                  scalePreviewComponent;
+  private JLabel                                originLabel;
+  private JLabel                                xOriginLabel;
+  private JSpinner                              xOriginSpinner;
+  private JLabel                                yOriginLabel;
+  private JSpinner                              yOriginSpinner;
+  private ScaledImageComponent                  originPreviewComponent;
+  private static BufferedImage                  waitImage;
 
   /**
    * Creates a view for background image choice, scale and origin. 
@@ -316,7 +320,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Switches to the component card matching <code>step</code>.   
+   * Switches to the view card matching <code>step</code>.   
    */
   public void setStep(final BackgroundImageWizardController.Step step) {
     this.cardLayout.show(this, step.name());    
@@ -516,7 +520,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Preview component for image scale distance choice. 
    */
   private static class ScaleImagePreviewComponent extends ScaledImageComponent {
-    private BackgroundImageWizardController controller;
+    private final BackgroundImageWizardController controller;
 
     public ScaleImagePreviewComponent(BackgroundImageWizardController controller) {
       this.controller = controller;
@@ -683,7 +687,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel {
    * Preview component for image scale distance choice. 
    */
   private static class OriginImagePreviewComponent extends ScaledImageComponent {
-    private BackgroundImageWizardController controller;
+    private final BackgroundImageWizardController controller;
 
     public OriginImagePreviewComponent(BackgroundImageWizardController controller) {
       this.controller = controller;

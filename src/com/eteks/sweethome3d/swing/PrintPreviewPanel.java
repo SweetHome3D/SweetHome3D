@@ -51,12 +51,16 @@ import javax.swing.border.AbstractBorder;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
+import com.eteks.sweethome3d.viewcontroller.PrintPreviewView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home print preview editing panel.
  * @author Emmanuel Puybaret
  */
-public class PrintPreviewPanel extends JPanel {
+public class PrintPreviewPanel extends JPanel implements PrintPreviewView {
   private enum ActionType {SHOW_PREVIOUS_PAGE, SHOW_NEXT_PAGE}
 
   private ResourceBundle         resource;
@@ -234,10 +238,10 @@ public class PrintPreviewPanel extends JPanel {
   /**
    * Displays this panel in a modal resizable dialog box. 
    */
-  public void displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("printPreview.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
-    JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
+    JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     dialog.setResizable(true);
     // Pack again because resize decorations may have changed dialog preferred size

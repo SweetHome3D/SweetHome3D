@@ -34,15 +34,17 @@ import javax.swing.JComponent;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * Home furniture transfer handler.
  * @author Emmanuel Puybaret
  */
 public class FurnitureTransferHandler extends LocatedTransferHandler {
-  private Home                       home;
-  private ContentManager             contentManager;
-  private HomeController             homeController;
+  private final Home                 home;
+  private final ContentManager       contentManager;
+  private final HomeController       homeController;
   private List<HomePieceOfFurniture> copiedFurniture;
   private String                     copiedCSV;
 

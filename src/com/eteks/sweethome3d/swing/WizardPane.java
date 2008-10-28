@@ -46,13 +46,16 @@ import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.WizardController;
+import com.eteks.sweethome3d.viewcontroller.WizardView;
 
 /**
  * Wizard pane. 
  * @author Emmanuel Puybaret
  */
-public class WizardPane extends JOptionPane {
-  private WizardController controller;
+public class WizardPane extends JOptionPane implements WizardView {
+  private final WizardController controller;
   private ResourceBundle   resource;
   private JButton          backOptionButton;
   private JButton          nextFinishOptionButton;
@@ -152,7 +155,7 @@ public class WizardPane extends JOptionPane {
   /**
    * Sets the step view displayed by this wizard view.
    */
-  public void setStepMessage(JComponent stepView) {
+  public void setStepMessage(View stepView) {
     JPanel messagePanel = (JPanel)getMessage();
     // Clean previous step message
     Component previousStepView = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
@@ -161,7 +164,7 @@ public class WizardPane extends JOptionPane {
     }
     // Add new message
     if (stepView != null) {
-      messagePanel.add(stepView, BorderLayout.CENTER);
+      messagePanel.add((JComponent)stepView, BorderLayout.CENTER);
     } 
     if (this.dialog != null && !this.resizable) {
       this.dialog.pack();
@@ -241,8 +244,8 @@ public class WizardPane extends JOptionPane {
   /**
    * Displays this wizard view in a modal dialog.
    */
-  public void displayView(JComponent parent) {
-    this.dialog = createDialog(SwingUtilities.getRootPane(parent), this.title);
+  public void displayView(View parentView) {
+    this.dialog = createDialog(SwingUtilities.getRootPane((JComponent)parentView), this.title);
     this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     this.dialog.setResizable(this.resizable);
     // Pack again because resize decorations may have changed dialog preferred size

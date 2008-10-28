@@ -29,6 +29,8 @@ import java.io.OutputStream;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Rectangle;
@@ -41,10 +43,10 @@ import com.lowagie.text.pdf.PdfWriter;
  * @author Emmanuel Puybaret
  */
 public class HomePDFPrinter {
-  private Home           home;
-  private ContentManager contentManager;
-  private HomeController controller;
-  private Font           defaultFont;
+  private final Home           home;
+  private final ContentManager contentManager;
+  private final HomeController controller;
+  private final Font           defaultFont;
 
   public HomePDFPrinter(Home home, ContentManager contentManager, 
                         HomeController controller, Font defaultFont) {

@@ -39,15 +39,16 @@ import javax.swing.table.TableModel;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.FurnitureTable.FurnitureFilter;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 
 /**
  * Tests furniture table component.
@@ -134,7 +135,8 @@ public class FurnitureTableTest extends TestCase {
     assertTrue("Home furniture is empty", homeFurniture.size() > 0);
 
     // 2. Create a table that displays home furniture with its controller  
-    FurnitureController furnitureController = new FurnitureController(home, preferences);
+    FurnitureController furnitureController = 
+        new FurnitureController(home, preferences, new SwingViewFactory());
     FurnitureTable table = (FurnitureTable)furnitureController.getView();
     
     // 3. Sort furniture table in alphabetical order of furniture name
@@ -185,7 +187,8 @@ public class FurnitureTableTest extends TestCase {
     assertTrue("Home furniture is empty", homeFurniture.size() > 0);
 
     // 2. Create a table that displays home furniture with its controller  
-    FurnitureController furnitureController = new FurnitureController(home, preferences);
+    FurnitureController furnitureController = 
+        new FurnitureController(home, preferences, new SwingViewFactory());
     FurnitureTable table = (FurnitureTable)furnitureController.getView();
     assertEquals("Home furniture count and row count different", homeFurniture.size(), table.getRowCount());
     // Apply a filter on furniture that refuses pieces that are windows

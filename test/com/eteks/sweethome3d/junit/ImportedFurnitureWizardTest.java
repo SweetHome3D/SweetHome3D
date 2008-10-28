@@ -54,13 +54,16 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.ColorButton;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
-import com.eteks.sweethome3d.swing.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.swing.ImportedFurnitureWizardStepsPanel;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WizardPane;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests imported furniture wizard.
@@ -74,6 +77,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     // Ensure we use default language and centimeter unit
     preferences.setLanguage(language);
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    final ViewFactory viewFactory = new SwingViewFactory();
     final URL testedModelName = ImportedFurnitureWizardTest.class.getResource("resources/test.obj");
     // Create a dummy content manager
     final ContentManager contentManager = new ContentManager() {
@@ -95,21 +99,23 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         return true;
       }
 
-      public String showOpenDialog(JComponent parent, String dialogTitle, ContentType contentType) {
+      public String showOpenDialog(View parentView, String dialogTitle, ContentType contentType) {
         // Return tested model name URL
         return testedModelName.toString();
       }
 
-      public String showSaveDialog(JComponent parent, String dialogTitle, ContentType contentType, String name) {
+      public String showSaveDialog(View parentView, String dialogTitle, ContentType contentType, String name) {
         return null;
       }      
     };
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences, contentManager);
+    final HomeController controller = 
+        new HomeController(home, preferences, viewFactory, contentManager);
+    final JComponent homeView = (JComponent)controller.getView();
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Imported Furniture Wizard Test");    
-    frame.add(controller.getView());
+    frame.add(homeView);
     frame.pack();
 
     // Show home plan frame
@@ -118,17 +124,17 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     tester.waitForIdle();    
 
     // 2. Transfer focus to plan view 
-    controller.getPlanController().getView().requestFocusInWindow();      
+    ((JComponent)controller.getPlanController().getView()).requestFocusInWindow();      
     tester.waitForIdle();    
 
     // Check plan view has focus
     assertTrue("Plan component doesn't have the focus", 
-        controller.getPlanController().getView().isFocusOwner());
+        ((JComponent)controller.getPlanController().getView()).isFocusOwner());
     // Open wizard to import a test object (1 width x 2 depth x 3 height) in plan
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          controller.getView().getActionMap().get(HomePane.ActionType.IMPORT_FURNITURE).actionPerformed(null);
+          homeView.getActionMap().get(HomePane.ActionType.IMPORT_FURNITURE).actionPerformed(null);
         }
       });
     // Wait for import furniture view to be shown
@@ -327,12 +333,12 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertEquals("Wrong home piece name", pieceTestName, homePiece.getName());
     
     // 11. Transfer focus to tree 
-    tester.focus(controller.getCatalogController().getView());        
+    JComponent catalogView = (JComponent)controller.getCatalogController().getView();
+    tester.focus(catalogView);        
     // Check plan view has focus
-    assertTrue("Catalog tree doesn't have the focus", 
-        controller.getCatalogController().getView().isFocusOwner());
+    assertTrue("Catalog tree doesn't have the focus", catalogView.isFocusOwner());
     // Delete new catalog piece of furniture
-    final Action deleteAction = controller.getView().getActionMap().get(HomePane.ActionType.DELETE);
+    final Action deleteAction = homeView.getActionMap().get(HomePane.ActionType.DELETE);
     assertTrue("Delete action isn't enable", deleteAction.isEnabled());
     tester.invokeLater(new Runnable() { 
         public void run() {
@@ -366,11 +372,11 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertTrue("Home piece isn't selected", home.getSelectedItems().contains(homePiece));
     
     // 12. Undo furniture creation in home
-    controller.getView().getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
+    homeView.getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
     // Check home is empty
     assertTrue("Home isn't empty", home.getFurniture().isEmpty());
     // Redo
-    controller.getView().getActionMap().get(HomePane.ActionType.REDO).actionPerformed(null);
+    homeView.getActionMap().get(HomePane.ActionType.REDO).actionPerformed(null);
     // Check home piece of furniture is in home and selected
     assertTrue("Home piece isn't in home", home.getFurniture().contains(homePiece));
     assertTrue("Home piece isn't selecteed", home.getSelectedItems().contains(homePiece));

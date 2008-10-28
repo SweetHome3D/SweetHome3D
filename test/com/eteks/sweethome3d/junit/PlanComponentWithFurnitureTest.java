@@ -21,6 +21,7 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -31,6 +32,7 @@ import java.util.List;
 import javax.swing.ActionMap;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -49,15 +51,17 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests wall and furniture management in 
  * {@link com.eteks.sweethome3d.swing.PlanComponent plan} component and 
- * its {@link com.eteks.sweethome3d.swing.PlanController controller}.
+ * its {@link com.eteks.sweethome3d.viewcontroller.PlanController controller}.
  * @author Emmanuel Puybaret
  */
 public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
@@ -528,9 +532,11 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     public TestFrame() {
       super("Home Plan Component Test");
       this.home = new Home();
-      UserPreferences preferences = new DefaultUserPreferences();
-      this.homeController = new HomeController(home, preferences);
-      ActionMap actions = this.homeController.getView().getActionMap();
+      UserPreferences preferences = new DefaultUserPreferences();      
+      ViewFactory viewFactory = new SwingViewFactory();
+      this.homeController = new HomeController(home, preferences, viewFactory);
+      JComponent homeView = (JComponent)this.homeController.getView();
+      ActionMap actions = homeView.getActionMap();
       // Create buttons from HomePane actions map
       this.selectButton = new JToggleButton(actions.get(HomePane.ActionType.SELECT));
       this.createWallsButton = new JToggleButton(actions.get(HomePane.ActionType.CREATE_WALLS));
@@ -551,7 +557,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
       toolBar.add(this.redoButton);
       // Display the tool bar and main view in this pane
       add(toolBar, BorderLayout.NORTH);
-      add(homeController.getView(), BorderLayout.CENTER);
+      add(homeView, BorderLayout.CENTER);
       pack();
     }
   }

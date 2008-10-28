@@ -43,15 +43,15 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * @author Emmanuel Puybaret
  */
 public class IconManager {
-  private static IconManager               instance;
+  private static IconManager                     instance;
   // Icon used if an image content couldn't be loaded
-  private Content                          errorIconContent;
+  private final Content                          errorIconContent;
   // Icon used while an image content is loaded
-  private Content                          waitIconContent;
+  private final Content                          waitIconContent;
   // Executor used by IconProxy to load images
-  private Executor                         iconsLoader;
+  private final Executor                         iconsLoader;
   // Map storing loaded icons
-  private Map<Content, Map<Integer, Icon>> icons;
+  private final Map<Content, Map<Integer, Icon>> icons;
 
   private IconManager() {
     this.errorIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-missing.png");

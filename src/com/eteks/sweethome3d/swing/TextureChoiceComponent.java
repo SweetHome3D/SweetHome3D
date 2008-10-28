@@ -76,18 +76,20 @@ import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
+import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
 
 /**
  * Button displaying a texture as an icon. When the user clicks
  * on this button a dialog appears to let him choose an other texture.
  */
-public class TextureChoiceComponent extends JButton {
+public class TextureChoiceComponent extends JButton implements TextureChoiceView {
   /**
    * Creates a texture button.
    */
   public TextureChoiceComponent(final String title, 
-                       final UserPreferences preferences,
-                       final TextureChoiceController controller) {
+                                final UserPreferences preferences,
+                                final TextureChoiceController controller) {
     JLabel dummyLabel = new JLabel("Text");
     Dimension iconDimension = dummyLabel.getPreferredSize();
     final int iconHeight = iconDimension.height;

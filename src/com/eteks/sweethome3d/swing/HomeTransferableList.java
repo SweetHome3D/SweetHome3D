@@ -22,16 +22,10 @@ package com.eteks.sweethome3d.swing;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.eteks.sweethome3d.model.Camera;
-import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
-import com.eteks.sweethome3d.model.Wall;
 
 /**
  * A transferable class that manages the transfer of a list of objects in a home.
@@ -53,34 +47,13 @@ public class HomeTransferableList implements Transferable {
   }
   
   // Stores a copy of the transfered items
-  private List<Selectable> transferedItems;
+  private final List<Selectable> transferedItems;
 
   /**
    * Creates a transferable list of a copy of <code>items</code>.
    */
   public HomeTransferableList(List<? extends Selectable> items) {
-    this.transferedItems = deepCopy(items);
-  }
-
-  /**
-   * Performs a deep copy of home <code>objects</code>.
-   */
-  public static List<Selectable> deepCopy(List<? extends Selectable> objects) {
-    List<Selectable> list = new ArrayList<Selectable>();
-    for (Selectable obj : objects) {
-      if (obj instanceof HomePieceOfFurniture) {
-        list.add(new HomePieceOfFurniture((PieceOfFurniture)obj));
-      } else if (obj instanceof DimensionLine) {
-        list.add(new DimensionLine((DimensionLine)obj));
-      } else if (!(obj instanceof Wall)
-                 && !(obj instanceof Camera)) { // Camera isn't copiable
-        throw new RuntimeException(
-            "HomeTransferableList can't contain " + obj.getClass().getName());
-      }
-    }
-    // Add to list a deep copy of walls with their walls at start and end point set
-    list.addAll(Wall.deepCopy(Home.getWallsSubList(objects)));
-    return list;
+    this.transferedItems = Home.deepCopy(items);
   }
 
   /**
@@ -88,7 +61,7 @@ public class HomeTransferableList implements Transferable {
    */
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
     if (flavor.equals(HOME_FLAVOR)) {
-      return deepCopy(this.transferedItems);
+      return Home.deepCopy(this.transferedItems);
     } else {
       throw new UnsupportedFlavorException(flavor);
     }

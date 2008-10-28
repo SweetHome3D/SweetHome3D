@@ -50,28 +50,33 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
+import com.eteks.sweethome3d.viewcontroller.Home3DAttributesView;
+import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home 3D attributes editing panel.
  * @author Emmanuel Puybaret
  */
-public class Home3DAttributesPanel extends JPanel {
-  private Home3DAttributesController controller;
-  private JLabel                     observerFieldOfViewLabel;
-  private JSpinner                   observerFieldOfViewSpinner;
-  private JLabel                     observerHeightLabel;
-  private JSpinner                   observerHeightSpinner;
-  private ResourceBundle             resource;
-  private JRadioButton               groundColorRadioButton;
-  private ColorButton                groundColorButton;
-  private JRadioButton               groundTextureRadioButton;
-  private JComponent                 groundTextureComponent;
-  private JLabel                     skyColorLabel;
-  private ColorButton                skyColorButton;
-  private JLabel                     brightnessLabel;
-  private JSlider                    brightnessSlider;
-  private JLabel                     wallsTransparencyLabel;
-  private JSlider                    wallsTransparencySlider;
+public class Home3DAttributesPanel extends JPanel 
+                                   implements Home3DAttributesView {
+  private final Home3DAttributesController controller;
+  private JLabel                           observerFieldOfViewLabel;
+  private JSpinner                         observerFieldOfViewSpinner;
+  private JLabel                           observerHeightLabel;
+  private JSpinner                         observerHeightSpinner;
+  private ResourceBundle                   resource;
+  private JRadioButton                     groundColorRadioButton;
+  private ColorButton                      groundColorButton;
+  private JRadioButton                     groundTextureRadioButton;
+  private JComponent                       groundTextureComponent;
+  private JLabel                           skyColorLabel;
+  private ColorButton                      skyColorButton;
+  private JLabel                           brightnessLabel;
+  private JSlider                          brightnessSlider;
+  private JLabel                           wallsTransparencyLabel;
+  private JSlider                          wallsTransparencySlider;
 
   /**
    * Creates a panel that displays home 3D attributes data according to the units 
@@ -115,7 +120,7 @@ public class Home3DAttributesPanel extends JPanel {
         }
       });
     this.groundTextureRadioButton = new JRadioButton(this.resource.getString("groundTextureRadioButton.text"));
-    this.groundTextureComponent = controller.getGroundTextureController().getView();
+    this.groundTextureComponent = (JComponent)controller.getGroundTextureController().getView();
     controller.getGroundTextureController().addPropertyChangeListener(
         TextureChoiceController.Property.TEXTURE,
         new PropertyChangeListener() {
@@ -321,10 +326,10 @@ public class Home3DAttributesPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("home3DAttributes.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     // Add a listener that transfer focus to first text field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

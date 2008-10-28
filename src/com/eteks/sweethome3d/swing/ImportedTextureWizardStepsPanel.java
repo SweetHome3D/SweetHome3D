@@ -77,13 +77,17 @@ import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
+import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardStepsView;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
-public class ImportedTextureWizardStepsPanel extends JPanel {
-  private ImportedTextureWizardController controller;
+public class ImportedTextureWizardStepsPanel extends JPanel 
+                                             implements ImportedTextureWizardStepsView {
+  private final ImportedTextureWizardController controller;
   private ResourceBundle                  resource;
   private CardLayout                      cardLayout;
   private JLabel                          imageChoiceOrChangeLabel;

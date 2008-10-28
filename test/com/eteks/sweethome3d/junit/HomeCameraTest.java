@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -52,13 +53,14 @@ import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.ColorButton;
-import com.eteks.sweethome3d.swing.Home3DAttributesController;
 import com.eteks.sweethome3d.swing.Home3DAttributesPanel;
 import com.eteks.sweethome3d.swing.HomeComponent3D;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.TextureChoiceComponent;
+import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * Tests camera changes in home.
@@ -70,15 +72,17 @@ public class HomeCameraTest extends ComponentTestFixture {
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences);
+    final HomeController controller = 
+        new HomeController(home, preferences, new SwingViewFactory());
+    JComponent homeView = (JComponent)controller.getView();
     PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
-         controller.getView(), PlanComponent.class);
+        homeView, PlanComponent.class);
     HomeComponent3D component3D = (HomeComponent3D)TestUtilities.findComponent(
-        controller.getView(), HomeComponent3D.class);
+        homeView, HomeComponent3D.class);
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home Camera Test");    
-    frame.add(controller.getView());
+    frame.add(homeView);
     frame.pack();
 
     // Show home plan frame
@@ -412,7 +416,7 @@ public class HomeCameraTest extends ComponentTestFixture {
    */
   private void runAction(HomeController controller,
                          HomePane.ActionType actionType) {
-    controller.getView().getActionMap().get(actionType).actionPerformed(null);
+    ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
   }
 
   /**

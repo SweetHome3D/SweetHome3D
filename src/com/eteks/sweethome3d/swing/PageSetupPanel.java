@@ -40,14 +40,16 @@ import javax.swing.SwingUtilities;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.PageSetupController;
+import com.eteks.sweethome3d.viewcontroller.PageSetupView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home page setup editing panel.
  * @author Emmanuel Puybaret
  */
-public class PageSetupPanel extends JPanel {
-
-  private PageSetupController controller;
+public class PageSetupPanel extends JPanel implements PageSetupView {
+  private final PageSetupController controller;
   private ResourceBundle      resource;
   private PageFormat          pageFormat;
   private JButton             pageFormatButton;
@@ -181,9 +183,9 @@ public class PageSetupPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("pageSetup.title");
-    if (JOptionPane.showConfirmDialog(SwingUtilities.getRootPane(parent), this, dialogTitle, 
+    if (JOptionPane.showConfirmDialog(SwingUtilities.getRootPane((JComponent)parentView), this, dialogTitle, 
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {

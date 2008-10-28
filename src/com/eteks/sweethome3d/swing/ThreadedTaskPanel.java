@@ -20,13 +20,11 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ResourceBundle;
 
-import javax.swing.FocusManager;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -35,12 +33,16 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
+import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
+import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
+import com.eteks.sweethome3d.viewcontroller.View;
+
 /**
  * A MVC view of a threaded task.
  * @author Emmanuel Puybaret
  */
-public class ThreadedTaskPanel extends JPanel {
-  private ThreadedTaskController controller;
+public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
+  private final ThreadedTaskController controller;
   private JLabel                 taskLabel;
   private JProgressBar           taskProgressBar;
   private JDialog                dialog;
@@ -83,7 +85,7 @@ public class ThreadedTaskPanel extends JPanel {
    * Sets the running status of the threaded task. 
    * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
    */
-  public void setTaskRunning(boolean taskRunning, JComponent executingView) {
+  public void setTaskRunning(boolean taskRunning, View executingView) {
     this.taskRunning = taskRunning;
     if (taskRunning && this.dialog == null) {
       ResourceBundle resource = ResourceBundle.getBundle(ThreadedTaskPanel.class.getName());
@@ -97,7 +99,7 @@ public class ThreadedTaskPanel extends JPanel {
             optionPane.setValue(cancelButton);
           }
         });
-      this.dialog = optionPane.createDialog(executingView, dialogTitle);
+      this.dialog = optionPane.createDialog((JComponent)executingView, dialogTitle);
       
       try {
         // Sleep 200 ms before showing dialog to avoid displaying it 

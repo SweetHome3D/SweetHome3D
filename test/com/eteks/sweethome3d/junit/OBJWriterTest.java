@@ -34,8 +34,10 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.HomeController3D;
 import com.eteks.sweethome3d.swing.OBJWriter;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.HomeController3D;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Sphere;
 
@@ -78,9 +80,11 @@ public class OBJWriterTest extends TestCase {
    */
   public void testHomeExportToOBJ() throws RecorderException {
     // 1. Create an empty home and a 3D controller
+    ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    HomeController3D homeController3D = new HomeController3D(home, preferences, null, null);
+    HomeController3D homeController3D = 
+        new HomeController3D(home, preferences, viewFactory, null, null);
     
     // 2. Add to home a wall and a piece of furniture
     home.addWall(new Wall(0, 0, 0, 1000, 10));

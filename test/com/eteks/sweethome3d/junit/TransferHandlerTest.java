@@ -50,12 +50,14 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
 import com.eteks.sweethome3d.swing.FurnitureTable;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.HomeTransferableList;
 import com.eteks.sweethome3d.swing.PlanComponent;
-import com.eteks.sweethome3d.swing.PlanController;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests drag and drop, and cut / copy / paste.
@@ -64,24 +66,26 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class TransferHandlerTest extends ComponentTestFixture {
   public void testTransferHandler() throws ComponentSearchException, UnsupportedFlavorException, IOException {
     UserPreferences preferences = new DefaultUserPreferences();
+    ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
-    HomeController controller = new HomeController(home, preferences);
+    HomeController controller = new HomeController(home, preferences, viewFactory);
+    JComponent homeView = (JComponent)controller.getView();
     FurnitureCatalogTree catalogTree = (FurnitureCatalogTree)TestUtilities.findComponent(
-         controller.getView(), FurnitureCatalogTree.class);
+         homeView, FurnitureCatalogTree.class);
     FurnitureTable furnitureTable = (FurnitureTable)TestUtilities.findComponent(
-        controller.getView(), FurnitureTable.class);
+        homeView, FurnitureTable.class);
     PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
-         controller.getView(), PlanComponent.class);
+         homeView, PlanComponent.class);
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home TransferHandler Test");    
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          controller.getCatalogController().getView(),
-          controller.getFurnitureController().getView(),
-          controller.getPlanController().getView(),
-          controller.getHomeController3D().getView()});      
+          (JComponent)controller.getCatalogController().getView(),
+          (JComponent)controller.getFurnitureController().getView(),
+          (JComponent)controller.getPlanController().getView(),
+          (JComponent)controller.getHomeController3D().getView()});      
       frame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
@@ -109,7 +113,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
           }
         });
     }
-    frame.add(controller.getView());
+    frame.add(homeView);
     frame.pack();
 
     // Show home plan frame
@@ -242,7 +246,7 @@ public class TransferHandlerTest extends ComponentTestFixture {
    */
   private Action getAction(HomeController controller,
                            HomePane.ActionType actionType) {
-    return controller.getView().getActionMap().get(actionType);
+    return ((JComponent)controller.getView()).getActionMap().get(actionType);
   }
   
   /**

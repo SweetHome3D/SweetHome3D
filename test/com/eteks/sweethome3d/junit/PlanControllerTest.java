@@ -39,10 +39,12 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.PlanController;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
- * Tests {@link com.eteks.sweethome3d.swing.PlanController plan controller}.
+ * Tests {@link com.eteks.sweethome3d.viewcontroller.PlanController plan controller}.
  * @author Emmanuel Puybaret
  */
 public class PlanControllerTest extends TestCase {
@@ -65,10 +67,12 @@ public class PlanControllerTest extends TestCase {
     Home home = new Home();
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
+    ViewFactory viewFactory = new SwingViewFactory();
     UndoableEditSupport undoSupport = new UndoableEditSupport();
     UndoManager undoManager = new UndoManager();
     undoSupport.addUndoableEditListener(undoManager);
-    PlanController planController = new PlanController(home, preferences, null, undoSupport);
+    PlanController planController = 
+        new PlanController(home, preferences, viewFactory, null, undoSupport);
     
     // Build an ordered list of walls added to home
     final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();

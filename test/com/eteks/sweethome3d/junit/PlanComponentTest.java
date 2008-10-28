@@ -33,6 +33,7 @@ import java.util.Locale;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
@@ -52,11 +53,13 @@ import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.PlanComponent;
-import com.eteks.sweethome3d.swing.PlanController;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests {@link com.eteks.sweethome3d.swing.PlanComponent plan} component and 
- * its {@link com.eteks.sweethome3d.swing.PlanController controller}.
+ * its {@link com.eteks.sweethome3d.viewcontroller.PlanController controller}.
  * @author Emmanuel Puybaret
  */
 public class PlanComponentTest extends ComponentTestFixture {
@@ -328,12 +331,13 @@ public class PlanComponentTest extends ComponentTestFixture {
       this.home = new Home();
       Locale.setDefault(Locale.FRANCE);
       this.preferences = new DefaultUserPreferences();
+      ViewFactory viewFactory = new SwingViewFactory();
       UndoableEditSupport undoSupport = new UndoableEditSupport();
       final UndoManager undoManager = new UndoManager();
       undoSupport.addUndoableEditListener(undoManager);
-      this.planController = new PlanController(this.home, this.preferences, null, undoSupport);
+      this.planController = new PlanController(this.home, this.preferences, viewFactory, null, undoSupport);
       // Add plan component to frame at its preferred size 
-      add(new JScrollPane(this.planController.getView()));
+      add(new JScrollPane((JComponent)this.planController.getView()));
       // Create a toggle button for plan component mode 
       this.modeButton = new JToggleButton(new ImageIcon(
           getClass().getResource("resources/Add16.gif")));

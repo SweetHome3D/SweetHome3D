@@ -61,12 +61,14 @@ import javax.swing.event.HyperlinkListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.HelpController;
+import com.eteks.sweethome3d.viewcontroller.HelpView;
 
 /**
  * A pane displaying Sweet Home 3D help.
  * @author Emmanuel Puybaret
  */
-public class HelpPane extends JRootPane {
+public class HelpPane extends JRootPane implements HelpView {
   private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, SEARCH, CLOSE}
 
   private JFrame      frame;

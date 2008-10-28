@@ -61,8 +61,7 @@ public class UserPreferencesPanelTest extends TestCase {
         defaultPreferences.getNewWallHeight());
     
     // 2. Create a user preferences panel 
-    UserPreferencesPanel panel = new UserPreferencesPanel();
-    panel.setPreferences(preferences);
+    UserPreferencesPanel panel = new UserPreferencesPanel(preferences, null);
     JRadioButton centimeterRadioButton = 
         (JRadioButton)TestUtilities.getField(panel, "centimeterRadioButton");
     JRadioButton inchRadioButton = 

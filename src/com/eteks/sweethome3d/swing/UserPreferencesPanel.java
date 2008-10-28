@@ -46,12 +46,16 @@ import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
+import com.eteks.sweethome3d.viewcontroller.UserPreferencesView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * User preferences panel.
  * @author Emmanuel Puybaret
  */
-public class UserPreferencesPanel extends JPanel {
+public class UserPreferencesPanel extends JPanel implements UserPreferencesView {
+  private final UserPreferencesController controller;
   private ResourceBundle resource;
   private JLabel         languageLabel;
   private JComboBox      languageComboBox;
@@ -73,13 +77,16 @@ public class UserPreferencesPanel extends JPanel {
    * Creates a preferences panel that layouts the mutable properties
    * of <code>preferences</code>. 
    */
-  public UserPreferencesPanel() {
+  public UserPreferencesPanel(UserPreferences preferences,
+                              UserPreferencesController userPreferencesController) {
     super(new GridBagLayout());
+    this.controller = userPreferencesController;
     this.resource = ResourceBundle.getBundle(
             UserPreferencesPanel.class.getName());
     createComponents();
     setMnemonics();
     layoutComponents();
+    setUserPreferences(preferences);
   }
   
   /**
@@ -222,7 +229,7 @@ public class UserPreferencesPanel extends JPanel {
   /**
    * Sets components value from <code>preferences</code>.
    */
-  public void setPreferences(UserPreferences preferences) {
+  private void setUserPreferences(UserPreferences preferences) {
     this.languageComboBox.setModel(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
     this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
     this.languageComboBox.setSelectedItem(preferences.getLanguage());
@@ -246,11 +253,14 @@ public class UserPreferencesPanel extends JPanel {
   /**
    * Displays this panel in a dialog box. 
    */
-  public boolean displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("preferences.title");
-    return JOptionPane.showConfirmDialog(parent, this, dialogTitle, 
-        JOptionPane.OK_CANCEL_OPTION, 
-        JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION;
+    if (JOptionPane.showConfirmDialog((JComponent)parentView, this, dialogTitle, 
+            JOptionPane.OK_CANCEL_OPTION, 
+            JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+        && this.controller != null) {
+      this.controller.modifyUserPreferences();
+    }
   }
 
   /**
@@ -316,7 +326,7 @@ public class UserPreferencesPanel extends JPanel {
       // Invoke constructor that take objects in parameter to avoid any ambiguity
       super(new Float(1f), new Float(0f), new Float(100000f), new Float(centimeterStepSize));
       // Add a listener to convert value and step 
-      // to cemtimeter when button model is selected 
+      // to centimeter when button model is selected 
       centimeterButton.addChangeListener(
         new ChangeListener () {
           public void stateChanged(ChangeEvent ev) {
@@ -340,7 +350,7 @@ public class UserPreferencesPanel extends JPanel {
     }
 
     /**
-     * Returns the diplayed value in centimeter.
+     * Returns the displayed value in centimeter.
      */
     public float getLength() {
       if (unit == UserPreferences.Unit.INCH) {

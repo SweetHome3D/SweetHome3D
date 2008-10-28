@@ -40,7 +40,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class ResourceAction extends AbstractAction {
   public static final String POPUP = "Popup";
   
-  private String actionPrefix;
+  private final String actionPrefix;
   
   /**
    * Creates a disabled action with properties retrieved from a resource bundle 

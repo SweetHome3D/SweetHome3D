@@ -125,6 +125,9 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
+import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
@@ -132,8 +135,9 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * Wizard panel for furniture import. 
  * @author Emmanuel Puybaret
  */
-public class ImportedFurnitureWizardStepsPanel extends JPanel {
-  private ImportedFurnitureWizardController controller;
+public class ImportedFurnitureWizardStepsPanel extends JPanel 
+                                               implements ImportedFurnitureWizardStepsView {
+  private final ImportedFurnitureWizardController controller;
   private ResourceBundle                    resource;
   private CardLayout                        cardLayout;
   private JLabel                            modelChoiceOrChangeLabel;
@@ -821,7 +825,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Switches to the component card matching <code>step</code>.   
+   * Switches to the view card matching <code>step</code>.   
    */
   public void setStep(ImportedFurnitureWizardController.Step step) {
     this.cardLayout.show(this, step.name());
@@ -1115,7 +1119,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel {
   }
   
   /**
-   * Returns the icon content of the piece.
+   * Returns the icon content of the chosen piece.
    */
   public Content getIcon() {
     try {

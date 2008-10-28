@@ -106,6 +106,8 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.viewcontroller.HomeController3D;
+import com.eteks.sweethome3d.viewcontroller.HomeView3D;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -117,30 +119,30 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * A component that displays home walls and furniture with Java 3D. 
  * @author Emmanuel Puybaret
  */
-public class HomeComponent3D extends JComponent implements Printable {
+public class HomeComponent3D extends JComponent implements HomeView3D, Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
   
-  private Home                      home;
-  private SimpleUniverse            universe;
-  private Map<Object, ObjectBranch> homeObjects = new HashMap<Object, ObjectBranch>();
-  private Collection<Object>        homeObjectsToUpdate;
+  private final Home                               home;
+  private final Map<Object, ObjectBranch>          homeObjects = new HashMap<Object, ObjectBranch>();
+  private Collection<Object>                       homeObjectsToUpdate;
+  private SimpleUniverse                           universe;
   // Listeners bound to home that updates 3D scene objects
-  private PropertyChangeListener    cameraChangeListener;
-  private PropertyChangeListener    homeCameraListener;
-  private PropertyChangeListener    skyColorListener;
-  private PropertyChangeListener    groundColorAndTextureListener;
-  private PropertyChangeListener    lightColorListener;
-  private PropertyChangeListener    wallsAlphaListener;
-  private CollectionListener<Wall>  wallListener;
-  private PropertyChangeListener    wallChangeListener;
+  private PropertyChangeListener                   cameraChangeListener;
+  private PropertyChangeListener                   homeCameraListener;
+  private PropertyChangeListener                   skyColorListener;
+  private PropertyChangeListener                   groundColorAndTextureListener;
+  private PropertyChangeListener                   lightColorListener;
+  private PropertyChangeListener                   wallsAlphaListener;
+  private CollectionListener<Wall>                 wallListener;
+  private PropertyChangeListener                   wallChangeListener;
   private CollectionListener<HomePieceOfFurniture> furnitureListener;
-  private PropertyChangeListener    furnitureChangeListener;
-  // Offscreen printed image cache 
+  private PropertyChangeListener                   furnitureChangeListener;
+  // Offscreen printed image cache
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
-  private BufferedImage             printedImage;
+  private BufferedImage                            printedImage;
 
   /**
    * Creates a 3D component that displays <code>home</code> walls and furniture, 

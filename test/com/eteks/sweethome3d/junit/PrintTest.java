@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -53,11 +54,13 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FileContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.HomePrintableComponent;
 import com.eteks.sweethome3d.swing.PageSetupPanel;
 import com.eteks.sweethome3d.swing.PrintPreviewPanel;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests page setup and print preview panes in home.
@@ -67,12 +70,14 @@ public class PrintTest extends ComponentTestFixture {
   public void testPageSetupAndPrintPreview() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException, IOException {
     UserPreferences preferences = new DefaultUserPreferences();
+    ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences, new FileContentManager());
+    final HomeController controller = 
+        new HomeController(home, preferences, viewFactory, new FileContentManager());
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home Print Test");    
-    frame.add(controller.getView());
+    frame.add((JComponent)controller.getView());
     frame.pack();
 
     // Show home frame
@@ -239,7 +244,7 @@ public class PrintTest extends ComponentTestFixture {
    */
   private void runAction(HomeController controller,
                          HomePane.ActionType actionType) {
-    controller.getView().getActionMap().get(actionType).actionPerformed(null);
+    ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
   }
 
   /**

@@ -35,18 +35,19 @@ import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
  * A printable component used to print or preview the furniture, the plan 
  * and the 3D view of a home.
  */
 public class HomePrintableComponent extends JComponent implements Printable {
-  private Home           home;
-  private HomeController controller;
-  private Font           defaultFont;
-  private int            page;
-  private int            pageCount = -1;
-  private int            planViewIndex;
+  private final Home           home;
+  private final HomeController controller;
+  private final Font           defaultFont;
+  private int                  page;
+  private int                  pageCount = -1;
+  private int                  planViewIndex;
   
   /**
    * Creates a printable component that will print or display the

@@ -36,6 +36,8 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Content manager for files with Swing file choosers.
@@ -299,14 +301,14 @@ public class FileContentManager implements ContentManager {
    * Returns the file path chosen by user with an open file dialog.
    * @return the file path or <code>null</code> if user cancelled its choice.
    */
-  public String showOpenDialog(JComponent  parent,
+  public String showOpenDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
     if (OperatingSystem.isMacOSX()) {
-      return showFileDialog(parent, dialogTitle, contentType, null, false);
+      return showFileDialog(parentView, dialogTitle, contentType, null, false);
     } else {
-      return showFileChooser(parent, dialogTitle, contentType, null, false);
+      return showFileChooser(parentView, dialogTitle, contentType, null, false);
     }
   }
   
@@ -316,7 +318,7 @@ public class FileContentManager implements ContentManager {
    * he wants to overwrite this existing file. 
    * @return the chosen file path or <code>null</code> if user cancelled its choice.
    */
-  public String showSaveDialog(JComponent  parent,
+  public String showSaveDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType,
                                String      name) {
@@ -339,9 +341,9 @@ public class FileContentManager implements ContentManager {
     String savedName;
     // Use native file dialog under Mac OS X    
     if (OperatingSystem.isMacOSX()) {
-      savedName = showFileDialog(parent, dialogTitle, contentType, name, true);
+      savedName = showFileDialog(parentView, dialogTitle, contentType, name, true);
     } else {
-      savedName = showFileChooser(parent, dialogTitle, contentType, name, true);
+      savedName = showFileChooser(parentView, dialogTitle, contentType, name, true);
     }
     
     boolean addedExtension = false;
@@ -366,8 +368,8 @@ public class FileContentManager implements ContentManager {
       // If the file exists, prompt user if he wants to overwrite it
       File savedFile = new File(savedName);
       if (savedFile.exists()
-          && !confirmOverwrite(parent, savedFile.getName())) {
-        return showSaveDialog(parent, dialogTitle, contentType, savedName);
+          && !confirmOverwrite(parentView, savedFile.getName())) {
+        return showSaveDialog(parentView, dialogTitle, contentType, savedName);
       }
     }
     return savedName;
@@ -376,12 +378,13 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays an AWT open file dialog.
    */
-  private String showFileDialog(JComponent         parent,
+  private String showFileDialog(View               parentView,
                                 String             dialogTitle,
                                 final ContentType  contentType,
                                 String             name, 
                                 boolean            save) {
-    FileDialog fileDialog = new FileDialog(JOptionPane.getFrameForComponent(parent));
+    FileDialog fileDialog = new FileDialog(
+        JOptionPane.getFrameForComponent((JComponent)parentView));
 
     // Set selected file
     if (save && name != null) {
@@ -425,7 +428,7 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays a Swing open file chooser.
    */
-  private String showFileChooser(JComponent    parent,
+  private String showFileChooser(View          parentView,
                                  String        dialogTitle,
                                  ContentType   contentType,
                                  String        name,
@@ -461,9 +464,9 @@ public class FileContentManager implements ContentManager {
     
     int option;
     if (save) {
-      option = fileChooser.showSaveDialog(parent);
+      option = fileChooser.showSaveDialog((JComponent)parentView);
     } else {
-      option = fileChooser.showOpenDialog(parent);
+      option = fileChooser.showOpenDialog((JComponent)parentView);
     }    
     if (option == JFileChooser.APPROVE_OPTION) {
       // Retrieve current directory for future calls
@@ -492,7 +495,7 @@ public class FileContentManager implements ContentManager {
    * file <code>fileName</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  protected boolean confirmOverwrite(JComponent parent, String fileName) {
+  protected boolean confirmOverwrite(View parentView, String fileName) {
     // Retrieve displayed text in buttons and message
     ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
     String messageFormat = resource.getString("confirmOverwrite.message");
@@ -501,7 +504,7 @@ public class FileContentManager implements ContentManager {
     String replace = resource.getString("confirmOverwrite.overwrite");
     String cancel = resource.getString("confirmOverwrite.cancel");
     
-    return JOptionPane.showOptionDialog(parent, 
+    return JOptionPane.showOptionDialog((JComponent)parentView, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
   }

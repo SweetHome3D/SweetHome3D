@@ -34,8 +34,10 @@ import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FileContentManager;
-import com.eteks.sweethome3d.swing.WallController;
-import com.eteks.sweethome3d.swing.WallPanel;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
+import com.eteks.sweethome3d.viewcontroller.WallController;
+import com.eteks.sweethome3d.viewcontroller.WallView;
 
 /**
  * Tests {@link com.eteks.sweethome3d.swing.HomeFurniturePanel home piece of furniture panel}.
@@ -46,6 +48,7 @@ public class WallPanelTest extends TestCase {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
+    ViewFactory viewFactory = new SwingViewFactory();
     // Create a home and add a selected wall to it
     Home home = new Home();
     Wall wall1 = new Wall(0.1f, 0.2f, 100.1f, 100.2f, 7.5f);
@@ -55,7 +58,7 @@ public class WallPanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
     // 2. Create a wall panel to edit the selected wall
-    WallPanel panel = (WallPanel)new WallController(home, preferences, null, null).getView();
+    WallView wallView = new WallController(home, preferences, viewFactory, null, null).getView();
     // Check values stored by wall panel components are equal to the ones set
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
@@ -63,28 +66,28 @@ public class WallPanelTest extends TestCase {
             wall1.getXEnd(), wall1.getYEnd()),
         wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
         wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
-        wall1.getRightSideColor(), wall1.getRightSideTexture(), panel);    
+        wall1.getRightSideColor(), wall1.getRightSideTexture(), wallView);    
  
     // 3. Modify wall right side texture with first available texture
     TextureImage firstTexture = preferences.getTexturesCatalog().getCategories().get(0).getTexture(0);
     wall1.setRightSideColor(null);
     wall1.setRightSideTexture(new HomeTexture(firstTexture));
-    panel = (WallPanel)new WallController(home, preferences, null, null).getView();
+    wallView = new WallController(home, preferences, viewFactory, null, null).getView();
     assertWallPanelEquals(wall1.getXStart(), wall1.getYStart(),
         wall1.getXEnd(), wall1.getYEnd(),
         (float)Point2D.distance(wall1.getXStart(), wall1.getYStart(),
             wall1.getXEnd(), wall1.getYEnd()),
         wall1.getThickness(), home.getWallHeight(), wall1.getHeightAtEnd(),
         wall1.getLeftSideColor(), wall1.getLeftSideTexture(), 
-        null, wall1.getRightSideTexture(), panel);
+        null, wall1.getRightSideTexture(), wallView);
     
     // 4. Increase length in dialog
     JSpinner lengthSpinner = 
-        (JSpinner)TestUtilities.getField(panel, "lengthSpinner");
+        (JSpinner)TestUtilities.getField(wallView, "lengthSpinner");
     lengthSpinner.setValue((Float)lengthSpinner.getValue() + 20f);
     // Check wall end coordinates changed accordingly
-    assertEquals("Wrong X end", wall1.getXEnd() + 20f * (float)Math.cos(Math.PI / 4), panel.getWallXEnd());
-    assertEquals("Wrong Y end", wall1.getYEnd() + 20f * (float)Math.sin(Math.PI / 4), panel.getWallYEnd());
+    assertEquals("Wrong X end", wall1.getXEnd() + 20f * (float)Math.cos(Math.PI / 4), wallView.getWallXEnd());
+    assertEquals("Wrong Y end", wall1.getYEnd() + 20f * (float)Math.sin(Math.PI / 4), wallView.getWallYEnd());
     
     // 5. Add a second selected wall to home
     Wall wall2 = new Wall(0.1f, 0.3f, 200.1f, 200.2f, 5f);
@@ -94,10 +97,10 @@ public class WallPanelTest extends TestCase {
     wall2.setRightSideColor(50);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1, wall2}));
     // Check if wall panel edits null values if walls thickness or colors are the same
-    panel = (WallPanel)new WallController(home, preferences, null, null).getView();
+    wallView = new WallController(home, preferences, viewFactory, null, null).getView();
     // Check values stored by furniture panel components are equal to the ones set
     assertWallPanelEquals(null, null, null,
-        null, null, null, null, null, 10, null, null, null, panel);
+        null, null, null, null, null, 10, null, null, null, wallView);
   }
   
   /**
@@ -108,32 +111,32 @@ public class WallPanelTest extends TestCase {
                                      Float thickness, Float height, Float heightAtEnd,
                                      Integer leftColor, TextureImage leftTexture,
                                      Integer rightColor, TextureImage rightTexture,
-                                     WallPanel panel) {
-    assertEquals("Wrong X start", xStart, panel.getWallXStart());
-    assertEquals("Wrong Y start", yStart, panel.getWallYStart());
-    assertEquals("Wrong X end", xEnd, panel.getWallXEnd());
-    assertEquals("Wrong Y end", yEnd, panel.getWallYEnd());
-    if (panel.getWallXStart() != null && panel.getWallYStart() != null
-        && panel.getWallXEnd() != null && panel.getWallYEnd() != null) {
-      assertEquals("Wrong length", length, (float)Point2D.distance(panel.getWallXStart(), panel.getWallYStart(),
-          panel.getWallXEnd(), panel.getWallYEnd()));
+                                     WallView wallView) {
+    assertEquals("Wrong X start", xStart, wallView.getWallXStart());
+    assertEquals("Wrong Y start", yStart, wallView.getWallYStart());
+    assertEquals("Wrong X end", xEnd, wallView.getWallXEnd());
+    assertEquals("Wrong Y end", yEnd, wallView.getWallYEnd());
+    if (wallView.getWallXStart() != null && wallView.getWallYStart() != null
+        && wallView.getWallXEnd() != null && wallView.getWallYEnd() != null) {
+      assertEquals("Wrong length", length, (float)Point2D.distance(wallView.getWallXStart(), wallView.getWallYStart(),
+          wallView.getWallXEnd(), wallView.getWallYEnd()));
     } else {
       assertEquals("Wrong length", length, null);
     }
-    assertEquals("Wrong thickness", thickness, panel.getWallThickness());
-    assertEquals("Wrong height", height, panel.getWallHeight());
-    assertEquals("Wrong heightAtEnd", height, panel.getWallHeightAtEnd());
-    assertEquals("Wrong left side color", leftColor, panel.getWallLeftSideColor());
+    assertEquals("Wrong thickness", thickness, wallView.getWallThickness());
+    assertEquals("Wrong height", height, wallView.getWallHeight());
+    assertEquals("Wrong heightAtEnd", height, wallView.getWallHeightAtEnd());
+    assertEquals("Wrong left side color", leftColor, wallView.getWallLeftSideColor());
     if (leftTexture == null) {
-      assertEquals("Wrong left side texture", leftTexture, panel.getWallLeftSideTexture());
+      assertEquals("Wrong left side texture", leftTexture, wallView.getWallLeftSideTexture());
     } else {
-      assertEquals("Wrong left side texture", leftTexture.getName(), panel.getWallLeftSideTexture().getName());
+      assertEquals("Wrong left side texture", leftTexture.getName(), wallView.getWallLeftSideTexture().getName());
     }
-    assertEquals("Wrong right side color", rightColor, panel.getWallRightSideColor());
+    assertEquals("Wrong right side color", rightColor, wallView.getWallRightSideColor());
     if (leftTexture == null) {
-      assertEquals("Wrong right side texture", rightTexture, panel.getWallRightSideTexture());
+      assertEquals("Wrong right side texture", rightTexture, wallView.getWallRightSideTexture());
     } else {
-      assertEquals("Wrong right side texture", rightTexture.getName(), panel.getWallRightSideTexture().getName());
+      assertEquals("Wrong right side texture", rightTexture.getName(), wallView.getWallRightSideTexture().getName());
     }
   }
 
@@ -146,6 +149,7 @@ public class WallPanelTest extends TestCase {
     wall1.setRightSideColor(0xFFFF00);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
-    new WallController(home, new DefaultUserPreferences(), new FileContentManager(), null).displayView(null);
+    new WallController(home, new DefaultUserPreferences(), 
+          new SwingViewFactory(), new FileContentManager(), null).displayView(null);
   }
 }

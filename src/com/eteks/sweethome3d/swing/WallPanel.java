@@ -55,13 +55,17 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.WallController;
+import com.eteks.sweethome3d.viewcontroller.WallView;
 
 /**
  * Wall editing panel.
  * @author Emmanuel Puybaret
  */
-public class WallPanel extends JPanel {
-  private WallController controller;
+public class WallPanel extends JPanel implements WallView {
+  private final WallController controller;
   private ResourceBundle resource;
   private JLabel         xStartLabel;
   private JSpinner       xStartSpinner;
@@ -188,7 +192,7 @@ public class WallPanel extends JPanel {
         }
       });
     this.leftSideTextureRadioButton = new JRadioButton(this.resource.getString("leftSideTextureRadioButton.text"));
-    this.leftSideTextureComponent = controller.getLeftSideTextureController().getView();
+    this.leftSideTextureComponent = (JComponent)controller.getLeftSideTextureController().getView();
     controller.getLeftSideTextureController().addPropertyChangeListener(
         TextureChoiceController.Property.TEXTURE,
         new PropertyChangeListener() {
@@ -209,7 +213,7 @@ public class WallPanel extends JPanel {
         }
       });
     this.rightSideTextureRadioButton = new JRadioButton(this.resource.getString("rightSideTextureRadioButton.text"));
-    this.rightSideTextureComponent = controller.getRightSideTextureController().getView();
+    this.rightSideTextureComponent = (JComponent)controller.getRightSideTextureController().getView();
     controller.getRightSideTextureController().addPropertyChangeListener(
         TextureChoiceController.Property.TEXTURE,
         new PropertyChangeListener() {
@@ -762,10 +766,10 @@ public class WallPanel extends JPanel {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(JComponent parent) {
+  public void displayView(View parentView) {
     String dialogTitle = resource.getString("wall.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parent), dialogTitle);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     // Add a listener that transfer focus to thickness field when dialog is shown
     dialog.addComponentListener(new ComponentAdapter() {
         @Override

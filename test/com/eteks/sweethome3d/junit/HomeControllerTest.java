@@ -41,19 +41,22 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.FurnitureCatalogController;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
-import com.eteks.sweethome3d.swing.FurnitureController;
 import com.eteks.sweethome3d.swing.FurnitureTable;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
-import com.eteks.sweethome3d.swing.PlanController;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests home controller.
  * @author Emmanuel Puybaret
  */
 public class HomeControllerTest extends TestCase {
+  private ViewFactory          viewFactory;
   private UserPreferences      preferences;
   private Home                 home;
   private HomeController       homeController;
@@ -63,9 +66,11 @@ public class HomeControllerTest extends TestCase {
 
   @Override
   protected void setUp() {
+    this.viewFactory = new SwingViewFactory();
     this.preferences = new DefaultUserPreferences();
     this.home = new Home();
-    this.homeController = new HomeController(this.home, this.preferences);
+    this.homeController = 
+        new HomeController(this.home, this.preferences, viewFactory);
     FurnitureCatalogController catalogController = 
         homeController.getCatalogController();
     this.catalogTree = (FurnitureCatalogTree)catalogController.getView();
@@ -322,7 +327,7 @@ public class HomeControllerTest extends TestCase {
    * Returns the action matching <code>actionType</code> in <code>HomePane</code>. 
    */
   private Action getAction(HomePane.ActionType actionType) {
-    JComponent homeView = this.homeController.getView();
+    JComponent homeView = (JComponent)this.homeController.getView();
     return homeView.getActionMap().get(actionType);
   }
   
@@ -424,14 +429,17 @@ public class HomeControllerTest extends TestCase {
   }
 
   public static void main(String [] args) {
+    ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    new ControllerTest(home, preferences);
+    new ControllerTest(home, preferences, viewFactory);
   }
 
   private static class ControllerTest extends HomeController {
-    public ControllerTest(Home home, UserPreferences preferences) {
-      super(home, preferences);
+    public ControllerTest(Home home, 
+                          UserPreferences preferences,
+                          ViewFactory viewFactory) {
+      super(home, preferences, viewFactory);
       new ViewTest(this).displayView();
     }
   }
@@ -439,7 +447,7 @@ public class HomeControllerTest extends TestCase {
   private static class ViewTest extends JRootPane {
     public ViewTest(final HomeController controller) {
       // Display main view in this pane
-      getContentPane().add(controller.getView());
+      getContentPane().add((JComponent)controller.getView());
     }
 
     public void displayView() {

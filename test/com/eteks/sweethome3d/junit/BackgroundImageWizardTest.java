@@ -42,13 +42,16 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.BackgroundImageWizardController;
 import com.eteks.sweethome3d.swing.BackgroundImageWizardStepsPanel;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WizardPane;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Tests background image wizard.
@@ -81,21 +84,23 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
         return true;
       }
 
-      public String showOpenDialog(JComponent parent, String dialogTitle, ContentType contentType) {
+      public String showOpenDialog(View parentView, String dialogTitle, ContentType contentType) {
         // Return tested model name URL
         return testedImageName.toString();
       }
 
-      public String showSaveDialog(JComponent parent, String dialogTitle, ContentType contentType, String name) {
+      public String showSaveDialog(View parentView, String dialogTitle, ContentType contentType, String name) {
         return null;
       }      
     };
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences, contentManager);
+    ViewFactory viewFactory = new SwingViewFactory();    
+    final HomeController controller = new HomeController(home, preferences, viewFactory, contentManager);
+    final JComponent homeView = (JComponent)controller.getView();
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Background Image Wizard Test");    
-    frame.add(controller.getView());
+    frame.add(homeView);
     frame.pack();
 
     // Show home plan frame
@@ -109,7 +114,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     tester.invokeLater(new Runnable() { 
         public void run() {
           // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
-          controller.getView().getActionMap().get(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE).actionPerformed(null);
+          homeView.getActionMap().get(HomePane.ActionType.IMPORT_BACKGROUND_IMAGE).actionPerformed(null);
         }
       });
     // Wait for import furniture view to be shown
@@ -184,16 +189,16 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
     assertEquals("Background image wrong y origin", 0f, backgroundImage.getYOrigin());
         
     // 6. Undo background image choice in home
-    controller.getView().getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
+    homeView.getActionMap().get(HomePane.ActionType.UNDO).actionPerformed(null);
     // Check home background image is empty
     assertEquals("Home background image isn't empty", null, home.getBackgroundImage());
     // Redo
-    controller.getView().getActionMap().get(HomePane.ActionType.REDO).actionPerformed(null);
+    homeView.getActionMap().get(HomePane.ActionType.REDO).actionPerformed(null);
     // Check home background image is back
     assertSame("No background image in home", backgroundImage, home.getBackgroundImage());
     
     // 7. Delete background image
-    controller.getView().getActionMap().get(HomePane.ActionType.DELETE_BACKGROUND_IMAGE).actionPerformed(null);
+    homeView.getActionMap().get(HomePane.ActionType.DELETE_BACKGROUND_IMAGE).actionPerformed(null);
     // Check home background image is empty
     assertEquals("Home background image isn't empty", null, home.getBackgroundImage());
   }

@@ -58,17 +58,20 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
-import com.eteks.sweethome3d.swing.ImportedTextureWizardController;
 import com.eteks.sweethome3d.swing.ImportedTextureWizardStepsPanel;
 import com.eteks.sweethome3d.swing.PlanComponent;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.TextureChoiceComponent;
-import com.eteks.sweethome3d.swing.WallController;
 import com.eteks.sweethome3d.swing.WallPanel;
 import com.eteks.sweethome3d.swing.WizardPane;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
+import com.eteks.sweethome3d.viewcontroller.WallController;
 
 /**
  * Tests imported texture wizard.
@@ -82,6 +85,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // Ensure we use default language and centimeter unit
     preferences.setLanguage(language);
     preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    ViewFactory viewFactory = new SwingViewFactory();
     // Create a dummy content manager
     final URL testedImageName = BackgroundImageWizardTest.class.getResource("resources/test.png");
     final ContentManager contentManager = new ContentManager() {
@@ -103,23 +107,25 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
         return true;
       }
 
-      public String showOpenDialog(JComponent parent, String dialogTitle, ContentType contentType) {
+      public String showOpenDialog(View parentView, String dialogTitle, ContentType contentType) {
         // Return tested model name URL
         return testedImageName.toString();
       }
 
-      public String showSaveDialog(JComponent parent, String dialogTitle, ContentType contentType, String name) {
+      public String showSaveDialog(View parentView, String dialogTitle, ContentType contentType, String name) {
         return null;
       }      
     };
     Home home = new Home();
-    final HomeController controller = new HomeController(home, preferences, contentManager);
+    final HomeController controller = 
+        new HomeController(home, preferences, viewFactory, contentManager);
+    JComponent homeView = (JComponent)controller.getView();
     PlanComponent planComponent = (PlanComponent)TestUtilities.findComponent(
-         controller.getView(), PlanComponent.class);
+         homeView, PlanComponent.class);
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Imported Texture Wizard Test");    
-    frame.add(controller.getView());
+    frame.add(homeView);
     frame.pack();
 
     // Show home plan frame
@@ -486,7 +492,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
    */
   private void runAction(HomeController controller,
                          HomePane.ActionType actionType) {
-    controller.getView().getActionMap().get(actionType).actionPerformed(null);
+    ((JComponent)controller.getView()).getActionMap().get(actionType).actionPerformed(null);
   }
 
   /**

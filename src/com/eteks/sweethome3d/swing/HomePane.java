@@ -113,37 +113,18 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.FurnitureController;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * The MVC view that edits a home. 
  * @author Emmanuel Puybaret
  */
-public class HomePane extends JRootPane {
-  public enum ActionType {
-      NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
-      UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
-      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY,
-      SORT_HOME_FURNITURE_BY_CATALOG_ID, SORT_HOME_FURNITURE_BY_NAME, 
-      SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
-      SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
-      SORT_HOME_FURNITURE_BY_ANGLE, SORT_HOME_FURNITURE_BY_COLOR, 
-      SORT_HOME_FURNITURE_BY_MOVABILITY, SORT_HOME_FURNITURE_BY_TYPE, SORT_HOME_FURNITURE_BY_VISIBILITY, 
-      SORT_HOME_FURNITURE_BY_PRICE, SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, 
-      SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED,
-      SORT_HOME_FURNITURE_BY_DESCENDING_ORDER,
-      DISPLAY_HOME_FURNITURE_CATALOG_ID, DISPLAY_HOME_FURNITURE_NAME, 
-      DISPLAY_HOME_FURNITURE_WIDTH, DISPLAY_HOME_FURNITURE_DEPTH, DISPLAY_HOME_FURNITURE_HEIGHT, 
-      DISPLAY_HOME_FURNITURE_X, DISPLAY_HOME_FURNITURE_Y, DISPLAY_HOME_FURNITURE_ELEVATION, 
-      DISPLAY_HOME_FURNITURE_ANGLE, DISPLAY_HOME_FURNITURE_COLOR, 
-      DISPLAY_HOME_FURNITURE_MOVABLE, DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, DISPLAY_HOME_FURNITURE_VISIBLE,
-      DISPLAY_HOME_FURNITURE_PRICE, DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE,
-      DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED,
-      ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
-      SELECT, CREATE_WALLS, CREATE_DIMENSION_LINES, DELETE_SELECTION, MODIFY_WALL, REVERSE_WALL_DIRECTION, SPLIT_WALL,
-      IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
-      VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES, EXPORT_TO_OBJ,
-      HELP, ABOUT}
-  public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
+public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
     OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU}
   
@@ -156,23 +137,25 @@ public class HomePane extends JRootPane {
 
   private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
   
-  private ContentManager                  contentManager;
-  private Home                            home;
-  private HomeController                  controller;
-  private ResourceBundle                  resource;
-  // Button models shared by Select, Create walls and Create dimensions menu items and the matching tool bar buttons
-  private JToggleButton.ToggleButtonModel selectToggleModel;
-  private JToggleButton.ToggleButtonModel createWallsToggleModel;
-  private JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
-  // Button models shared by View from top and View from observer menu items and the matching tool bar buttons
-  private JToggleButton.ToggleButtonModel viewFromTopToggleModel;
-  private JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
-  private JComponent                      focusedComponent;
-  private TransferHandler                 catalogTransferHandler;
-  private TransferHandler                 furnitureTransferHandler;
-  private TransferHandler                 planTransferHandler;
-  private ActionMap                       menuActionMap;
-  private List<Action>                    pluginActions;
+  private final Home                            home;
+  private final ContentManager                  contentManager;
+  private final HomeController                  controller;
+  private ResourceBundle                        resource;
+  // Button models shared by Select, Create walls and Create dimensions menu items
+  // and the matching tool bar buttons
+  private final JToggleButton.ToggleButtonModel selectToggleModel;
+  private final JToggleButton.ToggleButtonModel createWallsToggleModel;
+  private final JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
+  // Button models shared by View from top and View from observer menu items and
+  // the matching tool bar buttons
+  private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
+  private final JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
+  private JComponent                            focusedComponent;
+  private TransferHandler                       catalogTransferHandler;
+  private TransferHandler                       furnitureTransferHandler;
+  private TransferHandler                       planTransferHandler;
+  private ActionMap                             menuActionMap;
+  private List<Action>                          pluginActions;
   
   /**
    * Creates this view associated with its controller.
@@ -1159,16 +1142,19 @@ public class HomePane extends JRootPane {
    */
   public void setTransferEnabled(boolean enabled) {
     if (enabled) {
-      this.controller.getCatalogController().getView().setTransferHandler(this.catalogTransferHandler);
-      this.controller.getFurnitureController().getView().setTransferHandler(this.furnitureTransferHandler);
-      this.controller.getPlanController().getView().setTransferHandler(this.planTransferHandler);
-      ((JViewport)this.controller.getFurnitureController().getView().getParent()).
+      ((JComponent)this.controller.getCatalogController().getView()).
+          setTransferHandler(this.catalogTransferHandler);
+      ((JComponent)this.controller.getFurnitureController().getView()).
+          setTransferHandler(this.furnitureTransferHandler);
+      ((JComponent)this.controller.getPlanController().getView()).
+          setTransferHandler(this.planTransferHandler);
+      ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
           setTransferHandler(this.furnitureTransferHandler);
     } else {
-      this.controller.getCatalogController().getView().setTransferHandler(null);
-      this.controller.getFurnitureController().getView().setTransferHandler(null);
-      this.controller.getPlanController().getView().setTransferHandler(null);
-      ((JViewport)this.controller.getFurnitureController().getView().getParent()).
+      ((JComponent)this.controller.getCatalogController().getView()).setTransferHandler(null);
+      ((JComponent)this.controller.getFurnitureController().getView()).setTransferHandler(null);
+      ((JComponent)this.controller.getPlanController().getView()).setTransferHandler(null);
+      ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
           setTransferHandler(null);
     }
   }
@@ -1208,18 +1194,18 @@ public class HomePane extends JRootPane {
           public void propertyChange(PropertyChangeEvent ev) {
             Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
             if (focusOwner != null && isChildComponentInvisible(focusOwner)) {
-              List<JComponent> splitPanesFocusableComponents = Arrays.asList(new JComponent [] {
+              List<View> splitPanesFocusableViews = Arrays.asList(new View [] {
                   controller.getCatalogController().getView(),
                   controller.getFurnitureController().getView(),
                   controller.getPlanController().getView(),
                   controller.getHomeController3D().getView()});      
               // Find the first child component that is visible among split panes
-              int focusOwnerIndex = splitPanesFocusableComponents.indexOf(focusOwner);
-              for (int i = 1; i < splitPanesFocusableComponents.size(); i++) {
-                JComponent focusableComponent = splitPanesFocusableComponents.get(
-                    (focusOwnerIndex + i) % splitPanesFocusableComponents.size());
-                if (!isChildComponentInvisible(focusableComponent)) {
-                  focusableComponent.requestFocusInWindow();
+              int focusOwnerIndex = splitPanesFocusableViews.indexOf(focusOwner);
+              for (int i = 1; i < splitPanesFocusableViews.size(); i++) {
+                View focusableView = splitPanesFocusableViews.get(
+                    (focusOwnerIndex + i) % splitPanesFocusableViews.size());
+                if (!isChildComponentInvisible((JComponent)focusableView)) {
+                  ((JComponent)focusableView).requestFocusInWindow();
                   break;
                 }
               }
@@ -1246,7 +1232,7 @@ public class HomePane extends JRootPane {
   private JComponent createCatalogFurniturePane(Home home,
                                                 UserPreferences preferences,
                                                 final HomeController controller) {
-    JComponent catalogView = controller.getCatalogController().getView();
+    JComponent catalogView = (JComponent)controller.getCatalogController().getView();
     JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
     catalogView.addFocusListener(new FocusableViewListener(
@@ -1265,7 +1251,7 @@ public class HomePane extends JRootPane {
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
     // Configure furniture view
-    final JComponent furnitureView = controller.getFurnitureController().getView();
+    final JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();
     JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
     // Set default traversal keys of furniture view
     KeyboardFocusManager focusManager =
@@ -1334,7 +1320,7 @@ public class HomePane extends JRootPane {
    */
   private JComponent createPlanView3DPane(Home home, UserPreferences preferences, 
                                        final HomeController controller) {
-    JComponent planView = controller.getPlanController().getView();
+    JComponent planView = (JComponent)controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(planView);
     setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
     // Add a listener to update rulers visibility in preferences
@@ -1393,7 +1379,7 @@ public class HomePane extends JRootPane {
     planView.setComponentPopupMenu(planViewPopup);
     
     // Configure 3D view
-    JComponent view3D = controller.getHomeController3D().getView();
+    JComponent view3D = (JComponent)controller.getHomeController3D().getView();
     view3D.setPreferredSize(planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
@@ -1462,9 +1448,9 @@ public class HomePane extends JRootPane {
     if (visible) {
       // Change column and row header views
       planScrollPane.setColumnHeaderView(
-          controller.getPlanController().getHorizontalRulerView());
+          (JComponent)controller.getPlanController().getHorizontalRulerView());
       planScrollPane.setRowHeaderView(
-          controller.getPlanController().getVerticalRulerView());
+          (JComponent)controller.getPlanController().getVerticalRulerView());
     } else {
       planScrollPane.setColumnHeaderView(null);
       planScrollPane.setRowHeaderView(null);
@@ -1475,7 +1461,7 @@ public class HomePane extends JRootPane {
    * Adds to <code>view</code> a mouse listener that disables all menu items of
    * <code>menuBar</code> during a drag and drop operation in <code>view</code>.
    */
-  private void disableMenuItemsDuringDragAndDrop(JComponent view, 
+  private void disableMenuItemsDuringDragAndDrop(View view, 
                                                  final JMenuBar menuBar) {
     class MouseAndFocusListener extends MouseAdapter implements FocusListener {      
       @Override
@@ -1529,12 +1515,12 @@ public class HomePane extends JRootPane {
     };
     
     MouseAndFocusListener listener = new MouseAndFocusListener();
-    view.addMouseListener(listener);
-    view.addFocusListener(listener);
+    ((JComponent)view).addMouseListener(listener);
+    ((JComponent)view).addFocusListener(listener);
   }
   
   /**
-   * Displays a content chooser open dialog to open a .sh3d file.
+   * Displays a content chooser open dialog to choose the name of a home.
    */
   public String showOpenDialog() {
     return this.contentManager.showOpenDialog(this, 
@@ -1543,7 +1529,7 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Displays a content chooser open dialog to open a .sh3f file.
+   * Displays a content chooser open dialog to choose a furniture library.
    */
   public String showImportFurnitureLibraryDialog() {
     return this.contentManager.showOpenDialog(this, 
@@ -1569,7 +1555,7 @@ public class HomePane extends JRootPane {
   }
   
   /**
-   * Displays a content chooser save dialog to save a home in a .sh3d file.
+   * Displays a content chooser save dialog to choose the name of a home.
    */
   public String showSaveDialog(String homeName) {
     return this.contentManager.showSaveDialog(this,
@@ -1801,7 +1787,8 @@ public class HomePane extends JRootPane {
   }
 
   /**
-   * Execute <code>runnable</code> asynchronously in the Event Dispatch Thread.  
+   * Execute <code>runnable</code> asynchronously in the thread 
+   * that manages toolkit events.  
    */
   public void invokeLater(Runnable runnable) {
     EventQueue.invokeLater(runnable);
@@ -2029,7 +2016,7 @@ public class HomePane extends JRootPane {
       // Update the component used by clipboard actions
       focusedComponent = (JComponent)ev.getComponent();
       // Notify controller that active view changed
-      this.controller.focusedViewChanged(focusedComponent);
+      this.controller.focusedViewChanged((View)focusedComponent);
       focusedComponent.addKeyListener(specialKeysListener);
     }
     

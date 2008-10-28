@@ -27,7 +27,6 @@ import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -35,11 +34,14 @@ import javax.swing.JPanel;
 import junit.framework.TestCase;
 import abbot.finder.ComponentSearchException;
 
-import com.eteks.sweethome3d.swing.WizardController;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WizardPane;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
+import com.eteks.sweethome3d.viewcontroller.WizardController;
 
 /**
- * Tests {@link com.eteks.sweethome3d.swing.WizardController wizard controller}.
+ * Tests {@link com.eteks.sweethome3d.viewcontroller.WizardController wizard controller}.
  * @author Emmanuel Puybaret
  */
 public class WizardControllerTest extends TestCase {
@@ -47,7 +49,7 @@ public class WizardControllerTest extends TestCase {
       throws NoSuchFieldException, IllegalAccessException, ComponentSearchException {
     // 1. Create a wizard controller test waiting for finish call
     final boolean [] finished = {false};
-    WizardController controller = new ControllerTest() {
+    WizardController controller = new ControllerTest(new SwingViewFactory()) {
       @Override
       public void finish() {
         finished [0] = true;
@@ -116,7 +118,7 @@ public class WizardControllerTest extends TestCase {
   
   public static void main(String [] args) {
     // Display the wizard controlled by ControllerTest
-    new ControllerTest().displayView(null);
+    new ControllerTest(new SwingViewFactory()).displayView(null);
   }
 
   /**
@@ -125,7 +127,8 @@ public class WizardControllerTest extends TestCase {
   private static class ControllerTest extends WizardController {
     private static URL stepIcon = WizardController.class.getResource("resources/backgroundImageWizard.png");
     
-    public ControllerTest() {
+    public ControllerTest(ViewFactory viewFactory) {
+      super(viewFactory);
       // Choose step to display
       setStepState(new FirstStep());            
     }
@@ -143,7 +146,7 @@ public class WizardControllerTest extends TestCase {
       }
       
       @Override
-      public JComponent getView() {
+      public View getView() {
         return new FirstStepView();
       }
       
@@ -164,7 +167,7 @@ public class WizardControllerTest extends TestCase {
     }
     
     // First step view is a simple label
-    private static class FirstStepView extends JLabel {
+    private static class FirstStepView extends JLabel implements View {
       public FirstStepView() {
         super("First step");
       }
@@ -173,7 +176,7 @@ public class WizardControllerTest extends TestCase {
     // Second step of wizard
     private class SecondStep extends WizardControllerStepState {
       @Override
-      public JComponent getView() {        
+      public View getView() {        
         return new SecondStepView(this);
       }
       
@@ -199,7 +202,7 @@ public class WizardControllerTest extends TestCase {
     }
     
     // Second step view is a panel displaying a check box that enables next step
-    private static class SecondStepView extends JPanel {
+    private static class SecondStepView extends JPanel implements View {
       public SecondStepView(final SecondStep secondStepController) {
         add(new JLabel("Finish ?"));
         add(new JCheckBox(new AbstractAction("Yes") {

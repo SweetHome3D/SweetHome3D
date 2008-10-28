@@ -35,15 +35,17 @@ import javax.swing.TransferHandler;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 
 /**
  * Catalog transfer handler.
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogTransferHandler extends TransferHandler {
-  private FurnitureCatalog           catalog;
-  private ContentManager             contentManager;
-  private FurnitureCatalogController catalogController;
+  private final FurnitureCatalog           catalog;
+  private final ContentManager             contentManager;
+  private final FurnitureCatalogController catalogController;
 
   /**
    * Creates a handler able to transfer catalog selected furniture.

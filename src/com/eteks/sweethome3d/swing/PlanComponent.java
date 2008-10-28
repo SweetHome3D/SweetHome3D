@@ -101,12 +101,15 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A component displaying the plan of a home.
  * @author Emmanuel Puybaret
  */
-public class PlanComponent extends JComponent implements Scrollable, Printable {
+public class PlanComponent extends JComponent implements PlanView, Scrollable, Printable {
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
@@ -114,24 +117,25 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   private enum PaintMode {PAINT, PRINT, CLIPBOARD}
   
   private static final float MARGIN = 40;
-  private Home               home;
-  private UserPreferences    preferences;
-  private float              scale  = 0.5f;
-
-  private JComponent         horizontalRuler;
-  private JComponent         verticalRuler;
   
+  private final Home            home;
+  private final UserPreferences preferences;
+  private float                 scale  = 0.5f;
+
+  private PlanRulerComponent horizontalRuler;
+  private PlanRulerComponent verticalRuler;
+  
+  private final Cursor       rotationCursor;
+  private final Cursor       elevationCursor;
+  private final Cursor       heightCursor;
+  private final Cursor       resizeCursor;
+  private final Cursor       duplicationCursor;
   private Rectangle2D        rectangleFeedback;
   private Wall               wallAlignmentFeedback;
   private Point2D            wallLocationFeeback;
   private DimensionLine      dimensionLineAlignmentFeedback;
   private Point2D            dimensionLineLocationFeeback;
   private boolean            selectionScrollUpdated;
-  private Cursor             rotationCursor;
-  private Cursor             elevationCursor;
-  private Cursor             heightCursor;
-  private Cursor             resizeCursor;
-  private Cursor             duplicationCursor;
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
@@ -275,6 +279,9 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     DIMENSION_LINE_END.lineTo(0, -5);
   }
 
+  /**
+   * Creates a new plan that displays <code>home</code>.
+   */
   public PlanComponent(Home home, UserPreferences preferences,
                        PlanController controller) {
     this.home = home;
@@ -1936,17 +1943,6 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   }
 
   /**
-   * Sets mouse cursor, depending on mode.
-   */
-  public void setCursor(PlanController.Mode mode) {
-    if (mode == PlanController.Mode.WALL_CREATION) {
-      setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-    } else {
-      setCursor(Cursor.getDefaultCursor());
-    }
-  }
-
-  /**
    * Returns <code>x</code> converted in model coordinates space.
    */
   public float convertXPixelToModel(int x) {
@@ -2004,38 +2000,32 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * Sets the cursor of this component as rotation cursor. 
    */
-  public void setRotationCursor() {
-    setCursor(this.rotationCursor);
+  public void setCursor(CursorType cursorType) {
+    switch (cursorType) {
+      case SELECTION :
+        setCursor(Cursor.getDefaultCursor());
+        break;
+      case WALL_CREATION :
+        setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+        break;
+      case ROTATION :
+        setCursor(this.rotationCursor);
+        break;
+      case HEIGHT :
+        setCursor(this.heightCursor);
+        break;
+      case ELEVATION :
+        setCursor(this.elevationCursor);
+        break;
+      case RESIZE :
+        setCursor(this.resizeCursor);
+        break;
+      case DUPLICATION :
+        setCursor(this.duplicationCursor);
+        break;
+    }
   }
 
-  /**
-   * Sets the cursor of this component as height cursor. 
-   */
-  public void setHeightCursor() {
-    setCursor(this.heightCursor);
-  }
-
-  /**
-   * Sets the cursor of this component as elevation cursor. 
-   */
-  public void setElevationCursor() {
-    setCursor(this.elevationCursor);
-  }
-
-  /**
-   * Sets the cursor of this component as resize cursor. 
-   */
-  public void setResizeCursor() {
-    setCursor(this.resizeCursor);
-  }
-  
-  /**
-   * Sets the cursor of this component as duplication cursor. 
-   */
-  public void setDuplicationCursor() {
-    setCursor(this.duplicationCursor);
-  }
-  
   /**
    * Sets tool tip text displayed as feeback. 
    * @param toolTipFeedback the text displayed in the tool tip 
@@ -2200,14 +2190,20 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
     }
   }
   
-  public JComponent getHorizontalRuler() {
+  /**
+   * Returns the component used as an horizontal ruler for this plan.
+   */
+  public View getHorizontalRuler() {
     if (this.horizontalRuler == null) {
       this.horizontalRuler = new PlanRulerComponent(SwingConstants.HORIZONTAL);
     } 
     return this.horizontalRuler;
   }
   
-  public JComponent getVerticalRuler() {
+  /**
+   * Returns the component used as a vertical ruler for this plan.
+   */
+  public View getVerticalRuler() {
     if (this.verticalRuler == null) {
       this.verticalRuler = new PlanRulerComponent(SwingConstants.VERTICAL);
     } 
@@ -2217,7 +2213,7 @@ public class PlanComponent extends JComponent implements Scrollable, Printable {
   /**
    * A component displaying the plan horizontal or vertical ruler associated to this plan.
    */
-  private class PlanRulerComponent extends JComponent {
+  public class PlanRulerComponent extends JComponent implements View {
     private int   orientation;
     private Point mouseLocation;
 
