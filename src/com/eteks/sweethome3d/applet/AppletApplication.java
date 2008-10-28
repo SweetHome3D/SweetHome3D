@@ -64,22 +64,24 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.Component3DManager;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
-import com.eteks.sweethome3d.swing.PlanController;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
-import com.eteks.sweethome3d.swing.PlanController.Mode;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
+import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
  * An application wrapper working in applet. 
  * @author Emmanuel Puybaret
  */
 public class AppletApplication extends HomeApplication {
-  private HomeRecorder         homeRecorder;
-  private UserPreferences      userPreferences;
+  private final HomeRecorder         homeRecorder;
+  private final UserPreferences      userPreferences;
 
   public AppletApplication(final JApplet applet) {
     final String furnitureCatalogURLs = getAppletParameter(applet, "furnitureCatalogURLs", "catalog.zip");
@@ -95,6 +97,7 @@ public class AppletApplication extends HomeApplication {
         getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
         getURLs(applet.getCodeBase(), texturesCatalogURLs));
     
+    final ViewFactory viewFactory = new SwingViewFactory();
     final ContentManager contentManager = new AppletContentManager(this.homeRecorder);
     final PluginManager  pluginManager  = new PluginManager(
         getURLs(applet.getCodeBase(), pluginURLs));
@@ -129,7 +132,7 @@ public class AppletApplication extends HomeApplication {
                     writeHomeURL.length() != 0 && listHomesURL.length() != 0;
                 
                 final HomeAppletController controller = new HomeAppletController(
-                    home, AppletApplication.this, contentManager, pluginManager,
+                    home, AppletApplication.this, viewFactory, contentManager, pluginManager,
                     newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
                 
                 // Display its view in applet
@@ -301,10 +304,10 @@ public class AppletApplication extends HomeApplication {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          controller.getCatalogController().getView(),
-          controller.getFurnitureController().getView(),
-          controller.getPlanController().getView(),
-          controller.getHomeController3D().getView()});      
+          (JComponent)controller.getCatalogController().getView(),
+          (JComponent)controller.getFurnitureController().getView(),
+          (JComponent)controller.getPlanController().getView(),
+          (JComponent)controller.getHomeController3D().getView()});      
       applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {

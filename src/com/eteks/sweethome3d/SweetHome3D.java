@@ -55,6 +55,7 @@ import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
 import javax.media.j3d.IllegalRenderingStateException;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -71,10 +72,12 @@ import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.Component3DManager;
-import com.eteks.sweethome3d.swing.ContentManager;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingTools;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Sweet Home 3D main class.
@@ -83,16 +86,19 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 public class SweetHome3D extends HomeApplication {
   private static final String APPLICATION_PLUGINS_SUB_FOLDER = "plugins";
   
-  private HomeRecorder        homeRecorder;
-  private FileUserPreferences userPreferences;
-  private ContentManager      contentManager;
-  private Map<Home, JFrame>   homeFrames;
+  private final HomeRecorder        homeRecorder;
+  private final FileUserPreferences userPreferences;
+  private final ContentManager      contentManager;
+  private final SwingViewFactory    viewFactory;
+  private final Map<Home, JFrame>   homeFrames;
+
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
     this.userPreferences = new FileUserPreferences();
     this.contentManager = new FileContentManager();
-    this.homeFrames = new HashMap<Home, JFrame>();
+    this.viewFactory = new SwingViewFactory();
+    this.homeFrames = new HashMap<Home, JFrame>();    
   }
 
   /**
@@ -184,7 +190,7 @@ public class SweetHome3D extends HomeApplication {
       
       if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
-        new HomeFrameController(new Home(), application, application.contentManager, null).
+        new HomeFrameController(new Home(), application, application.viewFactory, application.contentManager, null).
             getHomeController().open(args [1]);
       } else if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         runApplication(new String [0]);
@@ -192,7 +198,7 @@ public class SweetHome3D extends HomeApplication {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               // Import furniture library with a dummy controller 
-              new HomeFrameController(new Home(), application, application.contentManager, null).
+              new HomeFrameController(new Home(), application, application.viewFactory, application.contentManager, null).
                   getHomeController().importFurnitureLibrary(furnitureLibraryName);
             }
           });
@@ -310,14 +316,15 @@ public class SweetHome3D extends HomeApplication {
               Home home = ev.getHome();
               try {
                 HomeFrameController controller = 
-                    new HomeFrameController(home, application, application.contentManager, pluginManager);
+                    new HomeFrameController(home, application, application.viewFactory, 
+                        application.contentManager, pluginManager);
                 controller.displayView();
                 if (!this.firstApplicationHomeAdded) {
                   application.addNewHomeCloseListener(home, controller);
                   this.firstApplicationHomeAdded = true;
                 }          
                 
-                JFrame homeFrame = (JFrame)SwingUtilities.getRoot(controller.getView());
+                JFrame homeFrame = (JFrame)SwingUtilities.getRoot((JComponent)controller.getView());
                 application.homeFrames.put(home, homeFrame); 
               } catch (IllegalRenderingStateException ex) {
                 ex.printStackTrace();
@@ -347,7 +354,7 @@ public class SweetHome3D extends HomeApplication {
     
     if (OperatingSystem.isMacOSX()) {
       // Bind to application menu  
-      MacOSXConfiguration.bindToApplicationMenu(application);
+      MacOSXConfiguration.bindToApplicationMenu(application, application.viewFactory);
     }
 
     return application;
@@ -441,7 +448,7 @@ public class SweetHome3D extends HomeApplication {
           if (homeName == null) {
             JFrame homeFrame = getHomeFrame(home);
             homeFrame.toFront();
-            homeName = contentManager.showSaveDialog(homeFrame.getRootPane(), null, 
+            homeName = contentManager.showSaveDialog((View)homeFrame.getRootPane(), null, 
                 ContentManager.ContentType.SWEET_HOME_3D, null);
           }
           if (homeName != null) {

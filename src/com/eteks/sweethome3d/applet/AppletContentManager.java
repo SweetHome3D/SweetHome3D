@@ -27,6 +27,7 @@ import javax.swing.JOptionPane;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.swing.FileContentManager;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Content manager for Sweet Home 3D files stored on server.
@@ -71,7 +72,7 @@ public class AppletContentManager extends FileContentManager {
    * @return the name or <code>null</code> if user canceled its choice.
    */
   @Override
-  public String showOpenDialog(JComponent  parent,
+  public String showOpenDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType) {
     if (contentType == ContentType.SWEET_HOME_3D) {
@@ -82,23 +83,23 @@ public class AppletContentManager extends FileContentManager {
           availableHomes = ((HomeAppletRecorder)this.recorder).getAvailableHomes();
         } catch (RecorderException ex) {
           String errorMessage = resource.getString("showOpenDialog.availableHomesError");
-          showError(parent, errorMessage);
+          showError(parentView, errorMessage);
           return null;
         }
       }    
       
       if (availableHomes != null && availableHomes.length == 0) {
         String message = resource.getString("showOpenDialog.noAvailableHomes");
-        JOptionPane.showMessageDialog(parent, 
+        JOptionPane.showMessageDialog((JComponent)parentView, 
             message, getDefaultDialogTitle(false), JOptionPane.INFORMATION_MESSAGE);
         return null;
       } else {
         String message = resource.getString("showOpenDialog.message");
-        return (String)JOptionPane.showInputDialog(parent, 
+        return (String)JOptionPane.showInputDialog((JComponent)parentView, 
             message, getDefaultDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
       }
     } else {
-      return super.showOpenDialog(parent, dialogTitle, contentType);
+      return super.showOpenDialog(parentView, dialogTitle, contentType);
     }
   }
   
@@ -109,40 +110,40 @@ public class AppletContentManager extends FileContentManager {
    * @return the chosen name or <code>null</code> if user canceled its choice.
    */
   @Override
-  public String showSaveDialog(JComponent  parent,
+  public String showSaveDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType,
                                String      name) {
     if (contentType == ContentType.SWEET_HOME_3D) {
       ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
       String message = resource.getString("showSaveDialog.message");
-      String savedName = (String)JOptionPane.showInputDialog(parent, 
+      String savedName = (String)JOptionPane.showInputDialog((JComponent)parentView, 
           message, getDefaultDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name); 
   
       // If the name exists, prompt user if he wants to overwrite it
       try {
         if (this.recorder.exists(savedName)
-            && !confirmOverwrite(parent, savedName)) {
-          return showSaveDialog(parent, dialogTitle, contentType, savedName);
+            && !confirmOverwrite(parentView, savedName)) {
+          return showSaveDialog(parentView, dialogTitle, contentType, savedName);
         }
         return savedName;
       } catch (RecorderException ex) {
         String errorMessage = resource.getString("showSaveDialog.checkHomeError");
-        showError(parent, errorMessage);
+        showError(parentView, errorMessage);
         return null;
       }
     } else {
-      return super.showSaveDialog(parent, dialogTitle, contentType, name);
+      return super.showSaveDialog(parentView, dialogTitle, contentType, name);
     }
   }
   
   /**
    * Shows the given <code>message</code> in an error message dialog. 
    */
-  private void showError(JComponent parent, String message) {
+  private void showError(View parentView, String message) {
     ResourceBundle resource = ResourceBundle.getBundle(AppletContentManager.class.getName());
     String title = resource.getString("showError.title");
-    JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE);    
+    JOptionPane.showMessageDialog((JComponent)parentView, message, title, JOptionPane.ERROR_MESSAGE);    
   }
   
   /**

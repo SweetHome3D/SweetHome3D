@@ -19,31 +19,36 @@
  */
 package com.eteks.sweethome3d;
 
-import javax.swing.JComponent;
-
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.plugin.PluginManager;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.Controller;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Home frame pane controller.
  * @author Emmanuel Puybaret
  */
-public class HomeFrameController {
-  private Home            home;
-  private ContentManager  contentManager;
-  private HomeApplication application;
-  private JComponent      homeFrameView;
-  private PluginManager   pluginManager;
-  
-  private HomeController  homeController;
+public class HomeFrameController implements Controller {
+  private final Home            home;
+  private final HomeApplication application;
+  private final ViewFactory     viewFactory;
+  private final ContentManager  contentManager;
+  private final PluginManager   pluginManager;
+  private View                  homeFrameView;
+
+  private HomeController        homeController;
   
   public HomeFrameController(Home home, HomeApplication application, 
-                             ContentManager contentManager, PluginManager pluginManager) {
+                             ViewFactory viewFactory,
+                             ContentManager contentManager, 
+                             PluginManager pluginManager) {
     this.home = home;
     this.application = application;
+    this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.pluginManager = pluginManager;
   }
@@ -51,7 +56,7 @@ public class HomeFrameController {
   /**
    * Returns the view associated with this controller.
    */
-  public JComponent getView() {
+  public View getView() {
     // Create view lazily only once it's needed
     if (this.homeFrameView == null) {
       this.homeFrameView = new HomeFramePane(this.home, this.application, this.contentManager, this);
@@ -66,7 +71,7 @@ public class HomeFrameController {
     // Create sub controller lazily only once it's needed
     if (this.homeController == null) {
       this.homeController = new HomeController(
-          this.home, this.application, this.contentManager, this.pluginManager);
+          this.home, this.application, this.viewFactory, this.contentManager, this.pluginManager);
     }
     return this.homeController;
   }

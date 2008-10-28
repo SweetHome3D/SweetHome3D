@@ -54,17 +54,18 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeEvent;
 import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.ContentManager;
-import com.eteks.sweethome3d.swing.HomeController;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A pane that displays a 
  * {@link com.eteks.sweethome3d.swing.HomePane home pane} in a frame.
  * @author Emmanuel Puybaret
  */
-public class HomeFramePane extends JRootPane {
+public class HomeFramePane extends JRootPane implements View {
   private static final String FRAME_X_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameX";
   private static final String FRAME_Y_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameY";
   private static final String FRAME_WIDTH_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.FrameWidth";
@@ -73,12 +74,12 @@ public class HomeFramePane extends JRootPane {
   private static final String SCREEN_WIDTH_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.ScreenWidth";
   private static final String SCREEN_HEIGHT_VISUAL_PROPERTY   = "com.eteks.sweethome3d.SweetHome3D.ScreenHeight";
   
+  private final Home                    home;
+  private final HomeApplication         application;
+  private final ContentManager          contentManager;
+  private final HomeFrameController     controller;
   private static int                    newHomeCount;
   private int                           newHomeNumber;
-  private Home                          home;
-  private HomeApplication               application;
-  private ContentManager                contentManager;
-  private HomeFrameController           controller;
   private ResourceBundle                resource;
   private List<CatalogPieceOfFurniture> catalogSelectedFurniture;
   
@@ -95,10 +96,10 @@ public class HomeFramePane extends JRootPane {
     this.catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
     // If home is unnamed, give it a number
     if (home.getName() == null) {
-      newHomeNumber = ++newHomeCount;
+      this.newHomeNumber = ++newHomeCount;
     }
     // Set controller view as content pane
-    setContentPane(controller.getHomeController().getView());
+    setContentPane((JComponent)controller.getHomeController().getView());
   }
 
   /**
@@ -119,10 +120,10 @@ public class HomeFramePane extends JRootPane {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       HomeController homeController = this.controller.getHomeController();
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          homeController.getCatalogController().getView(),
-          homeController.getFurnitureController().getView(),
-          homeController.getPlanController().getView(),
-          homeController.getHomeController3D().getView()});      
+          (JComponent)homeController.getCatalogController().getView(),
+          (JComponent)homeController.getFurnitureController().getView(),
+          (JComponent)homeController.getPlanController().getView(),
+          (JComponent)homeController.getHomeController3D().getView()});      
       homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
