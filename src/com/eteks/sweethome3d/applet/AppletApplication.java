@@ -55,10 +55,10 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.model.HomeEvent;
-import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginAction;
@@ -113,13 +113,13 @@ public class AppletApplication extends HomeApplication {
    
     // Add a listener that changes the content pane of the current active applet 
     // when a home is added to application
-    addHomeListener(new HomeListener() {
+    addHomesListener(new CollectionListener<Home>() {
         private boolean firstHome = true;
         
-        public void homeChanged(HomeEvent ev) {
+        public void collectionChanged(CollectionEvent<Home> ev) {
           switch (ev.getType()) {
             case ADD :
-              Home home = ev.getHome();
+              Home home = ev.getItem();
               try {
                 // Create a home controller for new home
                 boolean newHomeEnabled = 

@@ -63,10 +63,10 @@ import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.model.HomeEvent;
-import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -307,13 +307,13 @@ public class SweetHome3D extends HomeApplication {
         : null;
     
     // Add a listener that opens a frame when a home is added to application
-    application.addHomeListener(new HomeListener() {
+    application.addHomesListener(new CollectionListener<Home>() {
         private boolean firstApplicationHomeAdded;
         
-        public void homeChanged(HomeEvent ev) {
+        public void collectionChanged(CollectionEvent<Home> ev) {
           switch (ev.getType()) {
             case ADD :
-              Home home = ev.getHome();
+              Home home = ev.getItem();
               try {
                 HomeFrameController controller = 
                     new HomeFrameController(home, application, application.viewFactory, 
@@ -333,7 +333,7 @@ public class SweetHome3D extends HomeApplication {
               }
               break;
             case DELETE :
-              application.homeFrames.remove(ev.getHome());
+              application.homeFrames.remove(ev.getItem());
               
               // If application has no more home 
               if (application.getHomes().isEmpty()
@@ -377,26 +377,26 @@ public class SweetHome3D extends HomeApplication {
   private void addNewHomeCloseListener(final Home home, 
                                        final HomeFrameController controller) {
     if (home.getName() == null) {
-      final HomeListener newHomeListener = new HomeListener() {
-          public void homeChanged(HomeEvent ev) {
+      final CollectionListener<Home> newHomeListener = new CollectionListener<Home>() {
+          public void collectionChanged(CollectionEvent<Home> ev) {
             // Close new home for any named home added to application
-            if (ev.getType() == HomeEvent.Type.ADD) { 
-              if (ev.getHome().getName() != null
+            if (ev.getType() == CollectionEvent.Type.ADD) { 
+              if (ev.getItem().getName() != null
                   && home.getName() == null) {
                 controller.getHomeController().close();
               }
-              removeHomeListener(this);
-            } else if (ev.getHome() == home
-                       && ev.getType() == HomeEvent.Type.DELETE) {
-              removeHomeListener(this);
+              removeHomesListener(this);
+            } else if (ev.getItem() == home
+                       && ev.getType() == CollectionEvent.Type.DELETE) {
+              removeHomesListener(this);
             }
           }
         };
-      addHomeListener(newHomeListener);
+      addHomesListener(newHomeListener);
       // Disable this listener at first home change
       home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
-            removeHomeListener(newHomeListener);
+            removeHomesListener(newHomeListener);
             home.removePropertyChangeListener(Home.Property.MODIFIED, this);
           }
         });

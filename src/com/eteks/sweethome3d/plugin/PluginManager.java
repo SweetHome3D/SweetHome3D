@@ -38,10 +38,10 @@ import java.util.ResourceBundle;
 
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.model.HomeEvent;
-import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -279,15 +279,15 @@ public class PluginManager {
         this.homePlugins.put(home, plugins);
         
         // Add a listener that will destroy all plug-ins when home is deleted
-        application.addHomeListener(new HomeListener() {
-            public void homeChanged(HomeEvent ev) {
-              if (ev.getType() == HomeEvent.Type.DELETE
-                  && ev.getHome() == home) {
+        application.addHomesListener(new CollectionListener<Home>() {
+            public void collectionChanged(CollectionEvent<Home> ev) {
+              if (ev.getType() == CollectionEvent.Type.DELETE
+                  && ev.getItem() == home) {
                 for (Plugin plugin : homePlugins.get(home)) {
                   plugin.destroy();
                 }                
                 homePlugins.remove(home);
-                application.removeHomeListener(this);
+                application.removeHomesListener(this);
               }
             }
           });

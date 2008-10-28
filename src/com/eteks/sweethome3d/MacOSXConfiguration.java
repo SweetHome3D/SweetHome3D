@@ -44,9 +44,9 @@ import javax.swing.event.MenuListener;
 import com.apple.eawt.Application;
 import com.apple.eawt.ApplicationAdapter;
 import com.apple.eawt.ApplicationEvent;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomeEvent;
-import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
@@ -138,12 +138,12 @@ class MacOSXConfiguration {
     application.setEnabledAboutMenu(true);
     application.setEnabledPreferencesMenu(true);
     
-    homeApplication.addHomeListener(new HomeListener() {
-      public void homeChanged(HomeEvent ev) {
-        if (ev.getType() == HomeEvent.Type.ADD) {
+    homeApplication.addHomesListener(new CollectionListener<Home>() {
+      public void collectionChanged(CollectionEvent<Home> ev) {
+        if (ev.getType() == CollectionEvent.Type.ADD) {
           // Add Mac OS X Window menu on new homes
           MacOSXConfiguration.addWindowMenuToFrame(
-              homeApplication.getHomeFrame(ev.getHome()), homeApplication, false);
+              homeApplication.getHomeFrame(ev.getItem()), homeApplication, false);
         }
       };
     });

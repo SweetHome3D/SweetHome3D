@@ -51,8 +51,6 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
-import com.eteks.sweethome3d.model.HomeEvent;
-import com.eteks.sweethome3d.model.HomeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -267,11 +265,11 @@ public class HomeFramePane extends JRootPane implements View {
     application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
         new LanguageChangeListener(frame));
     // Dispose window when a home is deleted 
-    application.addHomeListener(new HomeListener() {
-        public void homeChanged(HomeEvent ev) {
-          if (ev.getHome() == home
-              && ev.getType() == HomeEvent.Type.DELETE) {
-            application.removeHomeListener(this);
+    application.addHomesListener(new CollectionListener<Home>() {
+        public void collectionChanged(CollectionEvent<Home> ev) {
+          if (ev.getItem() == home
+              && ev.getType() == CollectionEvent.Type.DELETE) {
+            application.removeHomesListener(this);
             frame.dispose();
           }
         };

@@ -29,20 +29,21 @@ import java.util.List;
  */
 public abstract class HomeApplication {
   private List<Home> homes = new ArrayList<Home>();
-  private List<HomeListener> homeListeners = new ArrayList<HomeListener>();
+  private final CollectionChangeSupport<Home> homesChangeSupport = 
+                             new CollectionChangeSupport<Home>(this);
 
   /**
    * Adds the home <code>listener</code> in parameter to this application.
    */
-  public void addHomeListener(HomeListener listener) {
-    this.homeListeners.add(listener);
+  public void addHomesListener(CollectionListener<Home> listener) {
+    this.homesChangeSupport.addCollectionListener(listener);
   }
   
   /**
    * Removes the home <code>listener</code> in parameter from this application.
    */
-  public void removeHomeListener(HomeListener listener) {
-    this.homeListeners.remove(listener);
+  public void removeHomesListener(CollectionListener<Home> listener) {
+    this.homesChangeSupport.removeCollectionListener(listener);
   } 
 
   /**
@@ -56,45 +57,28 @@ public abstract class HomeApplication {
    * Adds a given <code>home</code> to the homes list of this application.
    * Once the <code>home</code> is added, home listeners added 
    * to this application will receive a
-   * {@link HomeListener#homeChanged(HomeEvent) homeChanged}
-   * notification, with an {@link HomeEvent#getType() event type} 
-   * equal to {@link HomeEvent.Type#ADD ADD}. 
+   * {@link CollectionListener#collectionChanged(HomeEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
    */
   public void addHome(Home home) {
     this.homes = new ArrayList<Home>(this.homes);
     this.homes.add(home);
-    fireHomeEvent(home, HomeEvent.Type.ADD);
+    this.homesChangeSupport.fireCollectionChanged(home, CollectionEvent.Type.ADD);
   }
 
   /**
    * Removes a given <code>home</code> from the homes list  of this application.
    * Once the <code>home</code> is removed, home listeners added 
    * to this application will receive a
-   * {@link HomeListener#homeChanged(HomeEvent) homeChanged}
-   * notification, with an {@link HomeEvent#getType() event type} 
-   * equal to {@link HomeEvent.Type#DELETE DELETE}.
+   * {@link CollectionListener#collectionChanged(HomeEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
    */
   public void deleteHome(Home home) {
     this.homes = new ArrayList<Home>(this.homes);
     this.homes.remove(home);
-    fireHomeEvent(home, HomeEvent.Type.DELETE);
-  }
-  
-  /**
-   * Notifies all home listeners added to this application an event of 
-   * a given type.
-   */
-  private void fireHomeEvent(Home home, HomeEvent.Type eventType) {
-    if (!this.homeListeners.isEmpty()) {
-      HomeEvent homeEvent = new HomeEvent(this, home, eventType);
-      // Work on a copy of homeListeners to ensure a listener 
-      // can modify safely listeners list
-      HomeListener [] listeners = this.homeListeners.
-        toArray(new HomeListener [this.homeListeners.size()]);
-      for (HomeListener listener : listeners) {
-        listener.homeChanged(homeEvent);
-      }
-    }
+    this.homesChangeSupport.fireCollectionChanged(home, CollectionEvent.Type.DELETE);
   }
 
   /**
