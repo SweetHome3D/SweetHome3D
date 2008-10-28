@@ -55,13 +55,13 @@ public class Home implements Serializable {
     BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
-  private transient List<CollectionListener<HomePieceOfFurniture>> furnitureListeners;
+  private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
   private transient List<Selectable>                  selectedItems;
   private transient List<SelectionListener>           selectionListeners;
   private List<Wall>                                  walls;
-  private transient List<CollectionListener<Wall>>    wallListeners;
+  private transient CollectionChangeSupport<Wall>     wallsChangeSupport;
   private List<DimensionLine>                         dimensionLines;
-  private transient List<CollectionListener<DimensionLine>> dimensionLineListeners;
+  private transient CollectionChangeSupport<DimensionLine> dimensionLinesChangeSupport;
   private Camera                                      camera;
   private String                                      name;
   private float                                       wallHeight;
@@ -158,10 +158,10 @@ public class Home implements Serializable {
   private void init() {
     // Initialize transient lists
     this.selectedItems = new ArrayList<Selectable>();
-    this.furnitureListeners = new ArrayList<CollectionListener<HomePieceOfFurniture>>();
+    this.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(this);
     this.selectionListeners = new ArrayList<SelectionListener>();
-    this.wallListeners = new ArrayList<CollectionListener<Wall>>();
-    this.dimensionLineListeners = new ArrayList<CollectionListener<DimensionLine>>();
+    this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
+    this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
     this.propertyChangeSupport = new PropertyChangeSupport(this);
 
     if (this.furnitureVisibleProperties == null) {
@@ -258,14 +258,14 @@ public class Home implements Serializable {
    * Adds the furniture <code>listener</code> in parameter to this home.
    */
   public void addFurnitureListener(CollectionListener<HomePieceOfFurniture> listener) {
-    this.furnitureListeners.add(listener);
+    this.furnitureChangeSupport.addCollectionListener(listener);
   }
 
   /**
    * Removes the furniture <code>listener</code> in parameter from this home.
    */
   public void removeFurnitureListener(CollectionListener<HomePieceOfFurniture> listener) {
-    this.furnitureListeners.remove(listener);
+    this.furnitureChangeSupport.removeCollectionListener(listener);
   }
 
   /**
@@ -296,7 +296,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getFurniture
     this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
     this.furniture.add(index, piece);
-    firePieceOfFurnitureChanged(piece, index, CollectionEvent.Type.ADD);
+    this.furnitureChangeSupport.fireCollectionChanged(piece, index, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -313,23 +313,7 @@ public class Home implements Serializable {
       // Make a copy of the list to avoid conflicts in the list returned by getFurniture
       this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture);
       this.furniture.remove(index);
-      firePieceOfFurnitureChanged(piece, index, CollectionEvent.Type.DELETE);
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void firePieceOfFurnitureChanged(HomePieceOfFurniture piece, int index, 
-                                           CollectionEvent.Type eventType) {
-    if (!this.furnitureListeners.isEmpty()) {
-      CollectionEvent<HomePieceOfFurniture> furnitureEvent = 
-          new CollectionEvent<HomePieceOfFurniture>(this, piece, index, eventType);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      CollectionListener<HomePieceOfFurniture> [] listeners = this.furnitureListeners.
-        toArray(new CollectionListener [this.furnitureListeners.size()]);
-      for (CollectionListener<HomePieceOfFurniture> listener : listeners) {
-        listener.collectionChanged(furnitureEvent);
-      }
+      this.furnitureChangeSupport.fireCollectionChanged(piece, index, CollectionEvent.Type.DELETE);
     }
   }
 
@@ -388,14 +372,14 @@ public class Home implements Serializable {
    * Adds the wall <code>listener</code> in parameter to this home.
    */
   public void addWallsListener(CollectionListener<Wall> listener) {
-    this.wallListeners.add(listener);
+    this.wallsChangeSupport.addCollectionListener(listener);
   }
   
   /**
    * Removes the wall <code>listener</code> in parameter from this home.
    */
   public void removeWallsListener(CollectionListener<Wall> listener) {
-    this.wallListeners.remove(listener);
+    this.wallsChangeSupport.removeCollectionListener(listener);
   } 
 
   /**
@@ -416,7 +400,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getWalls
     this.walls = new ArrayList<Wall>(this.walls);
     this.walls.add(wall);
-    fireWallEvent(wall, CollectionEvent.Type.ADD);
+    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -445,39 +429,21 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getWalls
     this.walls = new ArrayList<Wall>(this.walls);
     this.walls.remove(wall);
-    fireWallEvent(wall, CollectionEvent.Type.DELETE);
-  }
-
-  /**
-   * Notifies all wall listeners added to this home an event of 
-   * a given type.
-   */
-  @SuppressWarnings("unchecked")
-  private void fireWallEvent(Wall wall, CollectionEvent.Type eventType) {
-    if (!this.wallListeners.isEmpty()) {
-      CollectionEvent<Wall> wallEvent = new CollectionEvent<Wall>(this, wall, eventType);
-      // Work on a copy of wallListeners to ensure a listener 
-      // can modify safely listeners list
-      CollectionListener<Wall> [] listeners = this.wallListeners.
-        toArray(new CollectionListener [this.wallListeners.size()]);
-      for (CollectionListener<Wall> listener : listeners) {
-        listener.collectionChanged(wallEvent);
-      }
-    }
+    this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
   }
 
   /**
    * Adds the dimension line <code>listener</code> in parameter to this home.
    */
   public void addDimensionLinesListener(CollectionListener<DimensionLine> listener) {
-    this.dimensionLineListeners.add(listener);
+    this.dimensionLinesChangeSupport.addCollectionListener(listener);
   }
   
   /**
    * Removes the dimension line <code>listener</code> in parameter from this home.
    */
   public void removeDimensionLinesListener(CollectionListener<DimensionLine> listener) {
-    this.dimensionLineListeners.remove(listener);
+    this.dimensionLinesChangeSupport.removeCollectionListener(listener);
   } 
 
   /**
@@ -499,7 +465,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.add(dimensionLine);
-    fireDimensionLineEvent(dimensionLine, CollectionEvent.Type.ADD);
+    this.dimensionLinesChangeSupport.fireCollectionChanged(dimensionLine, CollectionEvent.Type.ADD);
   }
 
   /**
@@ -516,26 +482,7 @@ public class Home implements Serializable {
     // Make a copy of the list to avoid conflicts in the list returned by getDimensionLines
     this.dimensionLines = new ArrayList<DimensionLine>(this.dimensionLines);
     this.dimensionLines.remove(dimensionLine);
-    fireDimensionLineEvent(dimensionLine, CollectionEvent.Type.DELETE);
-  }
-
-  /**
-   * Notifies all dimension line listeners added to this home an event of 
-   * a given type.
-   */
-  @SuppressWarnings("unchecked")
-  private void fireDimensionLineEvent(DimensionLine dimensionLine, CollectionEvent.Type eventType) {
-    if (!this.dimensionLineListeners.isEmpty()) {
-      CollectionEvent<DimensionLine> dimensionLineEvent = 
-          new CollectionEvent<DimensionLine>(this, dimensionLine, eventType);
-      // Work on a copy of dimensionLineListeners to ensure a listener 
-      // can modify safely listeners list
-      CollectionListener<DimensionLine> [] listeners = this.dimensionLineListeners.
-        toArray(new CollectionListener [this.dimensionLineListeners.size()]);
-      for (CollectionListener<DimensionLine> listener : listeners) {
-        listener.collectionChanged(dimensionLineEvent);
-      }
-    }
+    this.dimensionLinesChangeSupport.fireCollectionChanged(dimensionLine, CollectionEvent.Type.DELETE);
   }
 
   /**
@@ -893,4 +840,3 @@ public class Home implements Serializable {
     return subList;
   }
 }
-

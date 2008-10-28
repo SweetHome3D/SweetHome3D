@@ -30,8 +30,7 @@ import java.util.List;
 public abstract class TexturesCatalog {
   private List<TexturesCategory>  categories = new ArrayList<TexturesCategory>();
   private boolean                 sorted;
-  private List<CollectionListener<CatalogTexture>> textureListeners = 
-                      new ArrayList<CollectionListener<CatalogTexture>>();
+  private CollectionChangeSupport<CatalogTexture> texturesChangeSupport = new CollectionChangeSupport<CatalogTexture>(this);
 
   /**
    * Returns the categories list sorted by name.
@@ -71,14 +70,14 @@ public abstract class TexturesCatalog {
    * Adds the texture <code>listener</code> in parameter to this catalog.
    */
   public void addTexturesListener(CollectionListener<CatalogTexture> listener) {
-    this.textureListeners.add(listener);
+    this.texturesChangeSupport.addCollectionListener(listener);
   }
 
   /**
    * Removes the texture <code>listener</code> in parameter from this catalog.
    */
   public void removeTexturesListener(CollectionListener<CatalogTexture> listener) {
-    this.textureListeners.remove(listener);
+    this.texturesChangeSupport.removeCollectionListener(listener);
   }
 
   /**
@@ -113,7 +112,7 @@ public abstract class TexturesCatalog {
     // Add current texture to category list
     category.add(texture);
     
-    fireTextureChanged(texture, 
+    this.texturesChangeSupport.fireCollectionChanged(texture, 
         Collections.binarySearch(category.getTextures(), texture), CollectionEvent.Type.ADD);
   }
 
@@ -138,27 +137,11 @@ public abstract class TexturesCatalog {
           this.categories.remove(category);
         }
         
-        fireTextureChanged(texture, pieceIndex, CollectionEvent.Type.DELETE);
+        this.texturesChangeSupport.fireCollectionChanged(texture, pieceIndex, CollectionEvent.Type.DELETE);
         return;
       }
     }
 
     throw new IllegalArgumentException("catalog doesn't contain texture " + texture.getName());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void fireTextureChanged(CatalogTexture texture, int index,
-                                  CollectionEvent.Type eventType) {
-    if (!this.textureListeners.isEmpty()) {
-      CollectionEvent<CatalogTexture> textureEvent = 
-          new CollectionEvent<CatalogTexture>(this, texture, index, eventType);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      CollectionListener<CatalogTexture> [] listeners = this.textureListeners.
-        toArray(new CollectionListener [this.textureListeners.size()]);
-      for (CollectionListener<CatalogTexture> listener : listeners) {
-        listener.collectionChanged(textureEvent);
-      }
-    }
   }
 }

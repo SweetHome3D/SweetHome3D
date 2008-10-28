@@ -33,8 +33,8 @@ public abstract class FurnitureCatalog {
   private boolean                       sorted;
   private List<CatalogPieceOfFurniture> selectedFurniture  = Collections.emptyList();
   private List<SelectionListener>       selectionListeners = new ArrayList<SelectionListener>();
-  private List<CollectionListener<CatalogPieceOfFurniture>> furnitureListeners = 
-                             new ArrayList<CollectionListener<CatalogPieceOfFurniture>>();
+  private CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
+                             new CollectionChangeSupport<CatalogPieceOfFurniture>(this);
 
   /**
    * Returns the categories list sorted by name.
@@ -74,14 +74,14 @@ public abstract class FurnitureCatalog {
    * Adds the furniture <code>listener</code> in parameter to this catalog.
    */
   public void addFurnitureListener(CollectionListener<CatalogPieceOfFurniture> listener) {
-    this.furnitureListeners.add(listener);
+    this.furnitureChangeSupport.addCollectionListener(listener);
   }
 
   /**
    * Removes the furniture <code>listener</code> in parameter from this catalog.
    */
   public void removeFurnitureListener(CollectionListener<CatalogPieceOfFurniture> listener) {
-    this.furnitureListeners.remove(listener);
+    this.furnitureChangeSupport.removeCollectionListener(listener);
   }
 
   /**
@@ -119,7 +119,7 @@ public abstract class FurnitureCatalog {
     // Add current piece of furniture to category list
     category.add(piece);
     
-    firePieceOfFurnitureChanged(piece, 
+    this.furnitureChangeSupport.fireCollectionChanged(piece, 
         Collections.binarySearch(category.getFurniture(), piece), CollectionEvent.Type.ADD);
   }
 
@@ -147,29 +147,13 @@ public abstract class FurnitureCatalog {
           this.categories.remove(category);
         }
         
-        firePieceOfFurnitureChanged(piece, pieceIndex, CollectionEvent.Type.DELETE);
+        this.furnitureChangeSupport.fireCollectionChanged(piece, pieceIndex, CollectionEvent.Type.DELETE);
         return;
       }
     }
 
     throw new IllegalArgumentException(
         "catalog doesn't contain piece " + piece.getName());
-  }
-
-  @SuppressWarnings("unchecked")
-  private void firePieceOfFurnitureChanged(CatalogPieceOfFurniture piece, int index,
-                                           CollectionEvent.Type eventType) {
-    if (!this.furnitureListeners.isEmpty()) {
-      CollectionEvent<CatalogPieceOfFurniture> furnitureEvent = 
-          new CollectionEvent<CatalogPieceOfFurniture>(this, piece, index, eventType);
-      // Work on a copy of furnitureListeners to ensure a listener 
-      // can modify safely listeners list
-      CollectionListener<CatalogPieceOfFurniture> [] listeners = this.furnitureListeners.
-          toArray(new CollectionListener [this.furnitureListeners.size()]);
-      for (CollectionListener<CatalogPieceOfFurniture> listener : listeners) {
-        listener.collectionChanged(furnitureEvent);
-      }
-    }
   }
 
   /**
