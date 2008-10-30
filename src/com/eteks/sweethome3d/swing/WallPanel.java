@@ -126,6 +126,7 @@ public class WallPanel extends JPanel implements WallView {
           xStartSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.X_START, xStartChangeListener);
     xStartSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.X_START, xStartChangeListener);
@@ -147,6 +148,7 @@ public class WallPanel extends JPanel implements WallView {
           yStartSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
     yStartSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
@@ -154,7 +156,6 @@ public class WallPanel extends JPanel implements WallView {
           controller.addPropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.Y_START, yStartChangeListener);
     
     // Create X end label and its spinner
     this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
@@ -169,6 +170,7 @@ public class WallPanel extends JPanel implements WallView {
           xEndSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
     xEndSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
@@ -176,7 +178,6 @@ public class WallPanel extends JPanel implements WallView {
           controller.addPropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.X_END, xEndChangeListener);
     
     // Create Y end label and its spinner
     this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
@@ -191,6 +192,7 @@ public class WallPanel extends JPanel implements WallView {
           yEndSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
     yEndSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
@@ -198,7 +200,6 @@ public class WallPanel extends JPanel implements WallView {
           controller.addPropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.Y_END, yEndChangeListener);
 
     // Create length label and its spinner
     this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
@@ -213,6 +214,8 @@ public class WallPanel extends JPanel implements WallView {
           lengthSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.LENGTH, 
+        lengthChangeListener);
     lengthSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.LENGTH, 
@@ -222,8 +225,6 @@ public class WallPanel extends JPanel implements WallView {
               lengthChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.LENGTH, 
-        lengthChangeListener);
 
     // Left side color and texture buttons
     this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
@@ -351,6 +352,8 @@ public class WallPanel extends JPanel implements WallView {
           rectangularWallHeightSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT, 
+        rectangularWallHeightChangeListener);
     rectangularWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT, 
@@ -360,8 +363,6 @@ public class WallPanel extends JPanel implements WallView {
               rectangularWallHeightChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT, 
-        rectangularWallHeightChangeListener);
    
     this.slopingWallRadioButton = new JRadioButton(
         this.resource.getString("slopingWallRadioButton.text"));
@@ -390,6 +391,8 @@ public class WallPanel extends JPanel implements WallView {
           slopingWallHeightAtStartSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START, 
+        slopingWallHeightAtStartChangeListener);
     slopingWallHeightAtStartSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START, 
@@ -399,8 +402,6 @@ public class WallPanel extends JPanel implements WallView {
               slopingWallHeightAtStartChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START, 
-        slopingWallHeightAtStartChangeListener);
     
     // Create height at end label and its spinner
     this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
@@ -415,6 +416,8 @@ public class WallPanel extends JPanel implements WallView {
           slopingWallHeightAtEndSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END, 
+        slopingWallHeightAtEndChangeListener);
     slopingWallHeightAtEndSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END, 
@@ -424,8 +427,6 @@ public class WallPanel extends JPanel implements WallView {
               slopingWallHeightAtEndChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END, 
-        slopingWallHeightAtEndChangeListener);
 
     // Create thickness label and its spinner
     this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitName));
@@ -440,6 +441,8 @@ public class WallPanel extends JPanel implements WallView {
           thicknessSpinnerModel.setLength((Float)ev.getNewValue());
         }
       };
+    controller.addPropertyChangeListener(WallController.Property.THICKNESS, 
+        thicknessChangeListener);
     thicknessSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           controller.removePropertyChangeListener(WallController.Property.THICKNESS, 
@@ -449,8 +452,6 @@ public class WallPanel extends JPanel implements WallView {
               thicknessChangeListener);
         }
       });
-    controller.addPropertyChangeListener(WallController.Property.THICKNESS, 
-        thicknessChangeListener);
     
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
