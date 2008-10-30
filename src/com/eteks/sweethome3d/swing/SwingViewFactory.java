@@ -183,11 +183,11 @@ public class SwingViewFactory implements ViewFactory {
   }
 
   /**
-   * Returns a new view that edits the selected walls in <code>home</code>.
+   * Returns a new view that edits wall values.
    */
-  public WallView createWallView(Home home, UserPreferences preferences,
+  public WallView createWallView(UserPreferences preferences,
                                  WallController wallController) {
-    return new WallPanel(home, preferences, wallController);
+    return new WallPanel(preferences, wallController);
   }
   
   /**

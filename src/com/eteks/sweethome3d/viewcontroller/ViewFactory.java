@@ -117,9 +117,9 @@ public interface ViewFactory {
                                          HomeFurnitureController homeFurnitureController);
 
   /**
-   * Returns a new view that edits the selected walls in <code>home</code>.
+   * Returns a new view that edits wall values.
    */
-  public abstract WallView createWallView(Home home, UserPreferences preferences,
+  public abstract WallView createWallView(UserPreferences preferences,
                                           WallController wallController);
 
   /**

@@ -19,68 +19,11 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.HomeTexture;
-
 /**
  * Wall editing view.
  * @author Emmanuel Puybaret
  */
 public interface WallView extends View {
-  /**
-   * Returns the abscissa of the start point of the wall.
-   */
-  public abstract Float getWallXStart();
-
-  /**
-   * Returns the ordinate of the start point of the wall.
-   */
-  public abstract Float getWallYStart();
-
-  /**
-   * Returns the abscissa of the end point of the wall.
-   */
-  public abstract Float getWallXEnd();
-
-  /**
-   * Returns the ordinate of the end point of the wall.
-   */
-  public abstract Float getWallYEnd();
-
-  /**
-   * Returns the edited color of the wall(s) left side or <code>null</code>.
-   */
-  public abstract Integer getWallLeftSideColor();
-
-  /**
-   * Returns the edited texture of the wall(s) left side or <code>null</code>.
-   */
-  public abstract HomeTexture getWallLeftSideTexture();
-
-  /**
-   * Returns the edited color of the wall(s) right side or <code>null</code>.
-   */
-  public abstract Integer getWallRightSideColor();
-  
-  /**
-   * Returns the edited texture of the wall(s) right side or <code>null</code>.
-   */
-  public abstract HomeTexture getWallRightSideTexture();
-
-  /**
-   * Returns the edited thickness of the wall(s) or <code>null</code>.
-   */
-  public abstract Float getWallThickness();
-
-  /**
-   * Returns the edited height of the wall(s) or <code>null</code>.
-   */
-  public abstract Float getWallHeight();
-
-  /**
-   * Returns the edited height at end of the wall(s) or <code>null</code>.
-   */
-  public abstract Float getWallHeightAtEnd();
-
   /**
    * Displays this panel in a modal dialog box. 
    */

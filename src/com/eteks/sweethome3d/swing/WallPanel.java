@@ -22,14 +22,10 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
@@ -49,13 +45,9 @@ import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
-import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.WallController;
 import com.eteks.sweethome3d.viewcontroller.WallView;
@@ -96,172 +88,338 @@ public class WallPanel extends JPanel implements WallView {
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
   private JLabel         wallOrientationLabel;
-  private ChangeListener endPointChangeListener;
 
   /**
    * Creates a panel that displays wall data according to the units set in
    * <code>preferences</code>.
-   * @param home home from which selected walls are edited by this panel
    * @param preferences user preferences
    * @param controller the controller of this panel
    */
-  public WallPanel(Home home, UserPreferences preferences,
+  public WallPanel(UserPreferences preferences,
                    WallController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(WallPanel.class.getName());
     createComponents(preferences, controller);
     setMnemonics();
-    layoutComponents(preferences);
-    updateComponents(home);
+    layoutComponents(preferences, controller);
   }
 
   /**
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences, 
-                                WallController controller) {
+                                final WallController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
+    // Create X start label and its spinner
     this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
-    this.xStartSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
-    this.yStartSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
-    this.xEndSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    final ChangeListener lengthChangeListener = new ChangeListener() {
+    final NullableSpinner.NullableSpinnerLengthModel xStartSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.xStartSpinner = new AutoCommitSpinner(xStartSpinnerModel);
+    xStartSpinnerModel.setNullable(controller.getXStart() == null);
+    xStartSpinnerModel.setLength(controller.getXStart());
+    xStartSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
-          // Update end point spinners without their listener set to avoid useless callbacks
-          xEndSpinner.removeChangeListener(endPointChangeListener);
-          yEndSpinner.removeChangeListener(endPointChangeListener);
-          Float xStart = getWallXStart();
-          Float yStart = getWallYStart();
-          Float xEnd = getWallXEnd();
-          Float yEnd = getWallYEnd();
-          Float length = ((NullableSpinner.NullableSpinnerLengthModel)lengthSpinner.getModel()).getLength();
-          if (xStart != null && yStart != null && xEnd != null && yEnd != null && length != null) {
-            double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
-            ((NullableSpinner.NullableSpinnerLengthModel)xEndSpinner.getModel())
-                .setLength((float)(xStart + length * Math.cos(wallAngle)));
-            ((NullableSpinner.NullableSpinnerLengthModel)yEndSpinner.getModel())
-                .setLength((float)(yStart - length * Math.sin(wallAngle)));
-          } else {
-            ((NullableSpinner.NullableSpinnerLengthModel)xEndSpinner.getModel()).setLength(null);
-            ((NullableSpinner.NullableSpinnerLengthModel)yEndSpinner.getModel()).setLength(null);
-          }
-          xEndSpinner.addChangeListener(endPointChangeListener);
-          yEndSpinner.addChangeListener(endPointChangeListener);
-        }
-      };
-    this.endPointChangeListener = new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          // Update length spinner without its listener set to avoid useless callbacks
-          lengthSpinner.removeChangeListener(lengthChangeListener);
-          Float xStart = getWallXStart();
-          Float yStart = getWallYStart();
-          Float xEnd = getWallXEnd();
-          Float yEnd = getWallYEnd();
-          ((NullableSpinner.NullableSpinnerLengthModel)lengthSpinner.getModel())
-              .setLength(xStart != null && yStart != null && xEnd != null && yEnd != null
-                  ? (float)Point2D.distance(xStart, yStart, xEnd, yEnd) 
-                  : null);
-          lengthSpinner.addChangeListener(lengthChangeListener);
-        }
-      };
-    this.xEndSpinner.addChangeListener(this.endPointChangeListener);
-    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
-    this.yEndSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
-    this.yEndSpinner.addChangeListener(this.endPointChangeListener);
-
-    this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
-    this.lengthSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
-    this.lengthSpinner.addChangeListener(lengthChangeListener);
-
-    this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
-    this.leftSideColorButton = new ColorButton();
-    this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
-    this.leftSideColorButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          leftSideColorRadioButton.setSelected(true);
+          controller.setXStart(xStartSpinnerModel.getLength());
         }
       });
-    this.leftSideTextureRadioButton = new JRadioButton(this.resource.getString("leftSideTextureRadioButton.text"));
-    this.leftSideTextureComponent = (JComponent)controller.getLeftSideTextureController().getView();
-    controller.getLeftSideTextureController().addPropertyChangeListener(
-        TextureChoiceController.Property.TEXTURE,
+    controller.addPropertyChangeListener(WallController.Property.X_START, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            leftSideTextureRadioButton.setSelected(true);
+            xStartSpinnerModel.setNullable(controller.getXStart() == null);
+            xStartSpinnerModel.setLength(controller.getXStart());
           }
         });
+    
+    // Create Y start label and its spinner
+    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel yStartSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.yStartSpinner = new AutoCommitSpinner(yStartSpinnerModel);
+    yStartSpinnerModel.setNullable(controller.getYStart() == null);
+    yStartSpinnerModel.setLength(controller.getYStart());
+    yStartSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setYStart(yStartSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.Y_START, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            yStartSpinnerModel.setNullable(controller.getYStart() == null);
+            yStartSpinnerModel.setLength(controller.getYStart());
+          }
+        });
+    
+    // Create X end label and its spinner
+    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel xEndSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.xEndSpinner = new AutoCommitSpinner(xEndSpinnerModel);
+    xEndSpinnerModel.setNullable(controller.getXEnd() == null);
+    xEndSpinnerModel.setLength(controller.getXEnd());
+    xEndSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setXEnd(xEndSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.X_END, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            xEndSpinnerModel.setNullable(controller.getXEnd() == null);
+            xEndSpinnerModel.setLength(controller.getXEnd());
+          }
+        });
+    
+    // Create Y end label and its spinner
+    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel yEndSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.yEndSpinner = new AutoCommitSpinner(yEndSpinnerModel);
+    yEndSpinnerModel.setNullable(controller.getYEnd() == null);
+    yEndSpinnerModel.setLength(controller.getYEnd());
+    yEndSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setYEnd(yEndSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.Y_END, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            yEndSpinnerModel.setNullable(controller.getYEnd() == null);
+            yEndSpinnerModel.setLength(controller.getYEnd());
+          }
+        });
+
+    // Create length label and its spinner
+    this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel lengthSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+    this.lengthSpinner = new AutoCommitSpinner(lengthSpinnerModel);
+    lengthSpinnerModel.setNullable(controller.getLength() == null);
+    lengthSpinnerModel.setLength(controller.getLength());
+    lengthSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setLength(lengthSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.LENGTH, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            lengthSpinnerModel.setNullable(controller.getLength() == null);
+            lengthSpinnerModel.setLength(controller.getLength());
+          }
+        });
+
+    // Left side color and texture buttons
+    this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
+    this.leftSideColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (leftSideColorRadioButton.isSelected()) {
+            controller.setLeftSidePaint(WallController.WallPaint.COLORED);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_PAINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateLeftSideRadioButtons(controller);
+          }
+        });
+    
+    this.leftSideColorButton = new ColorButton();
+    this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
+    this.leftSideColorButton.setColor(controller.getLeftSideColor());
+    this.leftSideColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setLeftSideColor(leftSideColorButton.getColor());
+          }
+        });
+    controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            leftSideColorButton.setColor(controller.getLeftSideColor());
+          }
+        });
+
+    this.leftSideTextureRadioButton = new JRadioButton(this.resource.getString("leftSideTextureRadioButton.text"));
+    this.leftSideTextureRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (leftSideTextureRadioButton.isSelected()) {
+            controller.setLeftSidePaint(WallController.WallPaint.TEXTURED);
+          }
+        }
+      });
+    
+    this.leftSideTextureComponent = (JComponent)controller.getLeftSideTextureController().getView();
+    
     ButtonGroup leftSideButtonGroup = new ButtonGroup();
     leftSideButtonGroup.add(this.leftSideColorRadioButton);
     leftSideButtonGroup.add(this.leftSideTextureRadioButton);
+    updateLeftSideRadioButtons(controller);
     
+    // Right side color and texture buttons
     this.rightSideColorRadioButton = new JRadioButton(this.resource.getString("rightSideColorRadioButton.text"));
-    this.rightSideColorButton = new ColorButton();
-    this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
-    this.rightSideColorButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          rightSideColorRadioButton.setSelected(true);
+    this.rightSideColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          if (rightSideColorRadioButton.isSelected()) {
+            controller.setRightSidePaint(WallController.WallPaint.COLORED);
+          }
         }
       });
-    this.rightSideTextureRadioButton = new JRadioButton(this.resource.getString("rightSideTextureRadioButton.text"));
-    this.rightSideTextureComponent = (JComponent)controller.getRightSideTextureController().getView();
-    controller.getRightSideTextureController().addPropertyChangeListener(
-        TextureChoiceController.Property.TEXTURE,
+    controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_PAINT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            rightSideTextureRadioButton.setSelected(true);
+            updateRightSideRadioButtons(controller);
           }
         });
+
+    this.rightSideColorButton = new ColorButton();
+    this.rightSideColorButton.setColor(controller.getRightSideColor());
+    this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
+    this.rightSideColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setRightSideColor(rightSideColorButton.getColor());
+          }
+        });
+    controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            rightSideColorButton.setColor(controller.getRightSideColor());
+          }
+        });
+    
+    this.rightSideTextureRadioButton = new JRadioButton(this.resource.getString("rightSideTextureRadioButton.text"));
+    this.rightSideTextureRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent e) {
+          if (rightSideTextureRadioButton.isSelected()) {
+            controller.setRightSidePaint(WallController.WallPaint.TEXTURED);
+          }
+        }
+      });
+  
+    this.rightSideTextureComponent = (JComponent)controller.getRightSideTextureController().getView();
+
     ButtonGroup rightSideButtonGroup = new ButtonGroup();
     rightSideButtonGroup.add(this.rightSideColorRadioButton);
     rightSideButtonGroup.add(this.rightSideTextureRadioButton);
+    updateRightSideRadioButtons(controller);
 
     this.rectangularWallRadioButton = new JRadioButton(
         this.resource.getString("rectangularWallRadioButton.text"));
+    this.rectangularWallRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (rectangularWallRadioButton.isSelected()) {
+            controller.setShape(WallController.WallShape.RECTANGULAR_WALL);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.SHAPE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateWallShapeRadioButtons(controller);
+          }
+        });
+
+    // Create height label and its spinner
     this.rectangularWallHeightLabel = new JLabel(
         String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitName));
-    this.rectangularWallHeightSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
-    this.rectangularWallHeightSpinner.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          rectangularWallRadioButton.setSelected(true);
+    final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+    this.rectangularWallHeightSpinner = new NullableSpinner(rectangularWallHeightSpinnerModel);
+    rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
+    rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
+    rectangularWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setRectangularWallHeight(rectangularWallHeightSpinnerModel.getLength());
         }
       });
+    controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
+            rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
+          }
+        });
+   
     this.slopingWallRadioButton = new JRadioButton(
         this.resource.getString("slopingWallRadioButton.text"));
-    this.slopingWallHeightAtStartLabel = new JLabel(this.resource.getString("slopingWallHeightAtStartLabel.text"));
-    this.slopingWallHeightAtStartSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
-    this.slopingWallHeightAtStartSpinner.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          slopingWallRadioButton.setSelected(true);
+    this.slopingWallRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (slopingWallRadioButton.isSelected()) {
+            controller.setShape(WallController.WallShape.SLOPING_WALL);
+          }
         }
       });
-    this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
-    this.slopingWallHeightAtEndSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f));
-    this.slopingWallHeightAtEndSpinner.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent e) {
-          slopingWallRadioButton.setSelected(true);
-        }
-      });
-
     ButtonGroup wallHeightButtonGroup = new ButtonGroup();
     wallHeightButtonGroup.add(this.rectangularWallRadioButton);
     wallHeightButtonGroup.add(this.slopingWallRadioButton);
+    updateWallShapeRadioButtons(controller);
 
+    // Create height at start label and its spinner
+    this.slopingWallHeightAtStartLabel = new JLabel(this.resource.getString("slopingWallHeightAtStartLabel.text"));
+    final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+    this.slopingWallHeightAtStartSpinner = new NullableSpinner(slopingWallHeightAtStartSpinnerModel);
+    slopingWallHeightAtStartSpinnerModel.setNullable(controller.getSlopingWallHeightAtStart() == null);
+    slopingWallHeightAtStartSpinnerModel.setLength(controller.getSlopingWallHeightAtStart());
+    slopingWallHeightAtStartSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setSlopingWallHeightAtStart(slopingWallHeightAtStartSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            slopingWallHeightAtStartSpinnerModel.setNullable(controller.getSlopingWallHeightAtStart() == null);
+            slopingWallHeightAtStartSpinnerModel.setLength(controller.getSlopingWallHeightAtStart());
+          }
+        });
+    
+    // Create height at end label and its spinner
+    this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
+    final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+    this.slopingWallHeightAtEndSpinner = new NullableSpinner(slopingWallHeightAtEndSpinnerModel);
+    slopingWallHeightAtEndSpinnerModel.setNullable(controller.getSlopingWallHeightAtEnd() == null);
+    slopingWallHeightAtEndSpinnerModel.setLength(controller.getSlopingWallHeightAtEnd());
+    slopingWallHeightAtEndSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setSlopingWallHeightAtEnd(slopingWallHeightAtEndSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            slopingWallHeightAtEndSpinnerModel.setNullable(controller.getSlopingWallHeightAtEnd() == null);
+            slopingWallHeightAtEndSpinnerModel.setLength(controller.getSlopingWallHeightAtEnd());
+          }
+        });
+
+    // Create thickness label and its spinner
     this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitName));
-    this.thicknessSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f));
+    final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f);
+    this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
+    thicknessSpinnerModel.setNullable(controller.getThickness() == null);
+    thicknessSpinnerModel.setLength(controller.getThickness());
+    thicknessSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setThickness(thicknessSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(WallController.Property.THICKNESS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            thicknessSpinnerModel.setNullable(controller.getThickness() == null);
+            thicknessSpinnerModel.setLength(controller.getThickness());
+          }
+        });
+    
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
     this.wallOrientationLabel = new JLabel(
         String.format(this.resource.getString("wallOrientationLabel.text"), 
@@ -269,6 +427,57 @@ public class WallPanel extends JPanel implements WallView {
         JLabel.CENTER);
     // Use same font for label as tooltips
     this.wallOrientationLabel.setFont(UIManager.getFont("ToolTip.font"));
+  }
+
+  /**
+   * Updates left side radio buttons. 
+   */
+  private void updateLeftSideRadioButtons(WallController controller) {
+    if (controller.getLeftSidePaint() == WallController.WallPaint.COLORED) {
+      this.leftSideColorRadioButton.setSelected(true);
+    } else if (controller.getLeftSidePaint() == WallController.WallPaint.TEXTURED) {
+      this.leftSideTextureRadioButton.setSelected(true);
+    } else { // null
+      deselectAllRadioButtons(this.leftSideColorRadioButton, this.leftSideTextureRadioButton);
+    }
+  }
+
+  /**
+   * Updates right side radio buttons. 
+   */
+  private void updateRightSideRadioButtons(WallController controller) {
+    if (controller.getRightSidePaint() == WallController.WallPaint.COLORED) {
+      this.rightSideColorRadioButton.setSelected(true);
+    } else if (controller.getRightSidePaint() == WallController.WallPaint.TEXTURED) {
+      this.rightSideTextureRadioButton.setSelected(true);
+    } else { // null
+      deselectAllRadioButtons(this.rightSideColorRadioButton, this.rightSideTextureRadioButton);
+    }
+  }
+
+  /**
+   * Updates rectangular and sloping wall radio buttons. 
+   */
+  private void updateWallShapeRadioButtons(WallController controller) {
+    if (controller.getShape() == WallController.WallShape.SLOPING_WALL) {
+      this.slopingWallRadioButton.setSelected(true);
+    } else if (controller.getShape() == WallController.WallShape.RECTANGULAR_WALL) {
+      this.rectangularWallRadioButton.setSelected(true);
+    } else { // null
+      deselectAllRadioButtons(this.slopingWallRadioButton, this.rectangularWallRadioButton);
+    }
+  }
+
+  /**
+   * Forces radio buttons to be deselected even if thay belong to a button group. 
+   */
+  private void deselectAllRadioButtons(JRadioButton ... radioButtons) {
+    for (JRadioButton radioButton : radioButtons) {
+      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
+      group.remove(radioButton);
+      radioButton.setSelected(false);
+      group.add(radioButton);
+    }    
   }
   
   /**
@@ -324,12 +533,13 @@ public class WallPanel extends JPanel implements WallView {
   /**
    * Layouts panel components in panel with their labels. 
    */
-  private void layoutComponents(UserPreferences preferences) {
+  private void layoutComponents(UserPreferences preferences, 
+                                final WallController controller) {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     // First row
-    JPanel startPointPanel = createTitledPanel(
+    final JPanel startPointPanel = createTitledPanel(
         this.resource.getString("startPointPanel.title"),
         new JComponent [] {this.xStartLabel, this.xStartSpinner, 
                            this.yStartLabel, this.yStartSpinner}, true);
@@ -344,7 +554,7 @@ public class WallPanel extends JPanel implements WallView {
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
-    JPanel endPointPanel = createTitledPanel(
+    final JPanel endPointPanel = createTitledPanel(
         this.resource.getString("endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
@@ -430,6 +640,17 @@ public class WallPanel extends JPanel implements WallView {
     add(this.wallOrientationLabel, new GridBagConstraints(
         0, 5, 2, 1, 0, 0, GridBagConstraints.CENTER,
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    
+    // Make startPointPanel and endPointPanel visible depending on editable points property
+    controller.addPropertyChangeListener(WallController.Property.EDITABLE_POINTS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            startPointPanel.setVisible(controller.isEditablePoints());
+            endPointPanel.setVisible(controller.isEditablePoints());
+          }
+        });
+    startPointPanel.setVisible(controller.isEditablePoints());
+    endPointPanel.setVisible(controller.isEditablePoints());
   }
   
   private JPanel createTitledPanel(String title, JComponent [] components, boolean horizontal) {
@@ -481,289 +702,6 @@ public class WallPanel extends JPanel implements WallView {
   }
 
   /**
-   * Updates components values from selected walls in <code>home</code>.
-   */
-  private void updateComponents(Home home) {
-    List<Wall> selectedWalls = Home.getWallsSubList(home.getSelectedItems());
-    if (selectedWalls.isEmpty()) {
-      setVisible(false); // Nothing to edit
-    } else {
-      setVisible(true);
-      // Search the common properties among selected walls
-      Wall firstWall = selectedWalls.get(0);
-      boolean multipleSelection = selectedWalls.size() > 1;
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel())
-          .setNullable(multipleSelection);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel())
-          .setLength(multipleSelection ? null : firstWall.getXStart());
-      ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel())
-          .setNullable(multipleSelection);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel())
-          .setLength(multipleSelection ? null : firstWall.getYStart());
-      ((NullableSpinner.NullableSpinnerLengthModel)this.lengthSpinner.getModel())
-          .setNullable(multipleSelection);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
-          .setNullable(multipleSelection);
-      // Remove change listener on x end spinner as long as the two coordinates x and y
-      // of the end point aren't both known
-      this.xEndSpinner.removeChangeListener(this.endPointChangeListener);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel())
-          .setLength(multipleSelection ? null : firstWall.getXEnd());
-      this.xEndSpinner.addChangeListener(this.endPointChangeListener);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())
-          .setNullable(multipleSelection);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel())
-          .setLength(multipleSelection ? null : firstWall.getYEnd());
-      
-      // Make start and end points panels visible only if one wall is selected
-      this.xStartLabel.getParent().setVisible(!multipleSelection);
-      this.xEndLabel.getParent().setVisible(!multipleSelection);
-
-      Integer leftSideColor = firstWall.getLeftSideColor();
-      if (leftSideColor != null) {
-        for (int i = 1; i < selectedWalls.size(); i++) {
-          if (!leftSideColor.equals(selectedWalls.get(i).getLeftSideColor())) {
-            leftSideColor = null;
-            break;
-          }
-        }
-      }
-      this.leftSideColorButton.setColor(leftSideColor);
-      HomeTexture leftSideTexture = firstWall.getLeftSideTexture();
-      if (leftSideTexture != null) {
-        for (int i = 1; i < selectedWalls.size(); i++) {
-          if (!leftSideTexture.equals(selectedWalls.get(i).getLeftSideTexture())) {
-            leftSideTexture = null;
-            break;
-          }
-        }
-      }
-      this.controller.getLeftSideTextureController().setTexture(leftSideTexture);
-
-      if (leftSideColor != null && leftSideTexture != null) {
-        deselectAllRadioButtons(this.leftSideTextureRadioButton, this.leftSideColorRadioButton);
-      } else if (leftSideTexture != null) {
-        this.leftSideTextureRadioButton.setSelected(true);
-      } else if (leftSideColor != null){
-        this.leftSideColorRadioButton.setSelected(true);
-      } 
-      
-      Integer rightSideColor = firstWall.getRightSideColor();
-      if (rightSideColor != null) {
-        for (int i = 1; i < selectedWalls.size(); i++) {
-          if (!rightSideColor.equals(selectedWalls.get(i).getRightSideColor())) {
-            rightSideColor = null;
-            break;
-          }
-        }
-      }
-      this.rightSideColorButton.setColor(rightSideColor);
-      HomeTexture rightSideTexture = firstWall.getRightSideTexture();
-      if (rightSideTexture != null) {
-        for (int i = 1; i < selectedWalls.size(); i++) {
-          if (!rightSideTexture.equals(selectedWalls.get(i).getRightSideTexture())) {
-            rightSideTexture = null;
-            break;
-          }
-        }
-      }
-      this.controller.getRightSideTextureController().setTexture(rightSideTexture);
-      
-      if (rightSideColor != null && rightSideTexture != null) {
-        deselectAllRadioButtons(this.rightSideTextureRadioButton, this.rightSideColorRadioButton);
-      } else if (rightSideTexture != null) {
-        this.rightSideTextureRadioButton.setSelected(true);
-      } else if (rightSideColor != null) {
-        this.rightSideColorRadioButton.setSelected(true);
-      } 
-      
-      Float height = firstWall.getHeight();
-      // If wall height was never set, use home wall height
-      if (height == null && firstWall.getHeight() == null) {
-        height = home.getWallHeight(); 
-      }
-      for (int i = 1; i < selectedWalls.size(); i++) {
-        Wall wall = selectedWalls.get(i);
-        float wallHeight = wall.getHeight() == null 
-            ? home.getWallHeight()
-            : wall.getHeight();  
-        if (height != wallHeight) {
-          height = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel())
-          .setNullable(height == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel())
-          .setLength(height);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel())
-          .setNullable(height == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel())
-          .setLength(height);
-
-      Float heightAtEnd = firstWall.getHeightAtEnd();
-      if (heightAtEnd != null) {
-        for (int i = 1; i < selectedWalls.size(); i++) {
-          if (!heightAtEnd.equals(selectedWalls.get(i).getHeightAtEnd())) {
-            heightAtEnd = null;
-            break;
-          }
-        }
-      }
-      boolean allWallsTrapezoidal = firstWall.isTrapezoidal();
-      boolean allWallsRectangular = !firstWall.isTrapezoidal();
-      for (int i = 1; i < selectedWalls.size(); i++) {
-        if (!selectedWalls.get(i).isTrapezoidal()) {
-          allWallsTrapezoidal = false;
-        } else {
-          allWallsRectangular = false;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
-          .setNullable(heightAtEnd == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel())
-          .setLength(heightAtEnd == null && selectedWalls.size() == 1 ? height : heightAtEnd);
-
-      if (allWallsTrapezoidal) {
-        this.slopingWallRadioButton.setSelected(true);
-      } else if (allWallsRectangular) {
-        this.rectangularWallRadioButton.setSelected(true);
-      } else {
-        deselectAllRadioButtons(this.slopingWallRadioButton, this.rectangularWallRadioButton);
-      }
-
-      Float thickness = firstWall.getThickness();
-      for (int i = 1; i < selectedWalls.size(); i++) {
-        if (thickness != selectedWalls.get(i).getThickness()) {
-          thickness = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
-          .setNullable(thickness == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel())
-          .setLength(thickness);
-    }
-  }
-
-  /**
-   * Forces radio buttons to be deselected even if thay belong to a button group. 
-   */
-  private void deselectAllRadioButtons(JRadioButton ... radioButtons) {
-    for (JRadioButton radioButton : radioButtons) {
-      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
-      group.remove(radioButton);
-      radioButton.setSelected(false);
-      group.add(radioButton);
-    }    
-  }
-  
-  /**
-   * Returns the abscissa of the start point of the wall.
-   */
-  public Float getWallXStart() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.xStartSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the ordinate of the start point of the wall.
-   */
-  public Float getWallYStart() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.yStartSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the abscissa of the end point of the wall.
-   */
-  public Float getWallXEnd() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.xEndSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the ordinate of the end point of the wall.
-   */
-  public Float getWallYEnd() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.yEndSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited color of the wall(s) left side or <code>null</code>.
-   */
-  public Integer getWallLeftSideColor() {
-    if (this.leftSideColorRadioButton.isSelected()) {
-      return this.leftSideColorButton.getColor();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the edited texture of the wall(s) left side or <code>null</code>.
-   */
-  public HomeTexture getWallLeftSideTexture() {
-    if (this.leftSideTextureRadioButton.isSelected()) {
-      return this.controller.getLeftSideTextureController().getTexture();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the edited color of the wall(s) right side or <code>null</code>.
-   */
-  public Integer getWallRightSideColor() {
-    if (this.rightSideColorRadioButton.isSelected()) {
-      return this.rightSideColorButton.getColor();
-    } else {
-      return null;
-    }
-  }
-  
-  /**
-   * Returns the edited texture of the wall(s) right side or <code>null</code>.
-   */
-  public HomeTexture getWallRightSideTexture() {
-    if (this.rightSideTextureRadioButton.isSelected()) {
-      return this.controller.getRightSideTextureController().getTexture();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the edited thickness of the wall(s) or <code>null</code>.
-   */
-  public Float getWallThickness() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.thicknessSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited height of the wall(s) or <code>null</code>.
-   */
-  public Float getWallHeight() {
-    if (this.slopingWallRadioButton.isSelected()) {
-      return ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtStartSpinner.getModel()).getLength();
-    } else if (this.rectangularWallRadioButton.isSelected()) {
-      return ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel()).getLength();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the edited height at end of the wall(s) or <code>null</code>.
-   */
-  public Float getWallHeightAtEnd() {
-    if (this.slopingWallRadioButton.isSelected()) {
-      return ((NullableSpinner.NullableSpinnerLengthModel)this.slopingWallHeightAtEndSpinner.getModel()).getLength();
-    } else if (this.rectangularWallRadioButton.isSelected()) {
-      return ((NullableSpinner.NullableSpinnerLengthModel)this.rectangularWallHeightSpinner.getModel()).getLength();
-    } else {
-      return null;
-    }
-  }
-
-  /**
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
@@ -783,7 +721,7 @@ public class WallPanel extends JPanel implements WallView {
     dialog.dispose();
     if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue()) 
         && this.controller != null) {
-      this.controller.modifySelection();
+      this.controller.modify();
     }
   }
 }

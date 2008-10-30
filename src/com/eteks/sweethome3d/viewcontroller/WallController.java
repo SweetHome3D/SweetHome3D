@@ -19,6 +19,10 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -39,19 +43,44 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class WallController implements Controller {
-  private final Home                home;
-  private final UserPreferences     preferences;
-  private final ViewFactory         viewFactory;
-  private final ContentManager      contentManager;
-  private final UndoableEditSupport undoSupport;
-  private TextureChoiceController   leftSideTextureController;
-  private TextureChoiceController   rightSideTextureController;
-  private WallView                  wallView;
+  public enum WallShape {RECTANGULAR_WALL, SLOPING_WALL}
+  public enum WallPaint {COLORED, TEXTURED} 
+  
+  public enum Property {X_START, Y_START, X_END, Y_END, LENGTH, EDITABLE_POINTS, 
+      LEFT_SIDE_COLOR, LEFT_SIDE_PAINT,  RIGHT_SIDE_COLOR, RIGHT_SIDE_PAINT,
+      SHAPE, RECTANGULAR_WALL_HEIGHT, SLOPING_WALL_HEIGHT_AT_START, SLOPING_WALL_HEIGHT_AT_END, 
+      THICKNESS}
+
+  private final Home                  home;
+  private final UserPreferences       preferences;
+  private final ViewFactory           viewFactory;
+  private final ContentManager        contentManager;
+  private final UndoableEditSupport   undoSupport;
+  private TextureChoiceController     leftSideTextureController;
+  private TextureChoiceController     rightSideTextureController;
+  private final PropertyChangeSupport propertyChangeSupport;
+  private WallView                    wallView;
+
+  private boolean   editablePoints;
+  private Float     xStart;
+  private Float     yStart;
+  private Float     xEnd;
+  private Float     yEnd;
+  private Float     length;
+  private Integer   leftSideColor;
+  private WallPaint leftSidePaint;
+  private Integer   rightSideColor;
+  private WallPaint rightSidePaint;
+  private WallShape shape;
+  private Float     rectangularWallHeight;
+  private Float     slopingWallHeightAtStart;
+  private Float     sloppingWallHeightAtEnd;
+  private Float     thickness;
 
   /**
    * Creates the controller of wall view with undo support.
    */
-  public WallController(Home home, 
+  public WallController(final Home home, 
                         UserPreferences preferences,
                         ViewFactory viewFactory, 
                         ContentManager contentManager, 
@@ -61,6 +90,9 @@ public class WallController implements Controller {
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    
+    updateProperties(home);
   }
 
   /**
@@ -72,6 +104,12 @@ public class WallController implements Controller {
       ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
       this.leftSideTextureController = new TextureChoiceController(
           resource.getString("leftSideTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+      this.leftSideTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setLeftSidePaint(WallPaint.TEXTURED);
+            }
+          });
     }
     return this.leftSideTextureController;
   }
@@ -85,6 +123,12 @@ public class WallController implements Controller {
       ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
       this.rightSideTextureController = new TextureChoiceController(
           resource.getString("rightSideTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+      this.rightSideTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setRightSidePaint(WallPaint.TEXTURED);
+            }
+          });
     }
     return this.rightSideTextureController;
   }
@@ -95,7 +139,7 @@ public class WallController implements Controller {
   public WallView getView() {
     // Create view lazily only once it's needed
     if (this.wallView == null) {
-      this.wallView = this.viewFactory.createWallView(this.home, this.preferences, this); 
+      this.wallView = this.viewFactory.createWallView(this.preferences, this); 
     }
     return this.wallView;
   }
@@ -108,24 +152,572 @@ public class WallController implements Controller {
   }
 
   /**
+   * Adds the property change <code>listener</code> in parameter to this home.
+   */
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this home.
+   */
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Updates controller edited properties from selected walls in <code>home</code>.
+   */
+  private void updateProperties(Home home) {
+    List<Wall> selectedWalls = Home.getWallsSubList(home.getSelectedItems());
+    if (selectedWalls.isEmpty()) {
+      setXStart(null); // Nothing to edit
+      setYStart(null); 
+      setXEnd(null); 
+      setYEnd(null);
+      setEditablePoints(false);
+      setLeftSideColor(null);
+      getLeftSideTextureController().setTexture(null);
+      setLeftSidePaint(null);
+      setRightSideColor(null);
+      getRightSideTextureController().setTexture(null);
+      setRightSidePaint(null);
+      setRectangularWallHeight(null);
+      setSlopingWallHeightAtStart(null);
+      setSlopingWallHeightAtEnd(null);
+      setShape(null);
+      setThickness(null);
+    } else {
+      // Search the common properties among selected walls
+      Wall firstWall = selectedWalls.get(0);
+      boolean multipleSelection = selectedWalls.size() > 1;
+      
+      setEditablePoints(!multipleSelection);
+      
+      // Search the common xStart value among walls
+      Float xStart = firstWall.getXStart();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!xStart.equals(selectedWalls.get(i).getXStart())) {
+          xStart = null;
+          break;
+        }
+      }
+      setXStart(xStart);      
+      
+      // Search the common yStart value among walls
+      Float yStart = firstWall.getYStart();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!yStart.equals(selectedWalls.get(i).getYStart())) {
+          yStart = null;
+          break;
+        }
+      }
+      setYStart(yStart);      
+
+      // Search the common xEnd value among walls
+      Float xEnd = firstWall.getXEnd();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!xEnd.equals(selectedWalls.get(i).getXEnd())) {
+          xEnd = null;
+          break;
+        }
+      }
+      setXEnd(xEnd);      
+
+      // Search the common yEnd value among walls
+      Float yEnd = firstWall.getYEnd();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!yEnd.equals(selectedWalls.get(i).getYEnd())) {
+          yEnd = null;
+          break;
+        }
+      }
+      setYEnd(yEnd);      
+
+      // Search the common left side color among walls
+      Integer leftSideColor = firstWall.getLeftSideColor();
+      if (leftSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!leftSideColor.equals(selectedWalls.get(i).getLeftSideColor())) {
+            leftSideColor = null;
+            break;
+          }
+        }
+      }
+      setLeftSideColor(leftSideColor);
+      
+      // Search the common left side texture among walls
+      HomeTexture leftSideTexture = firstWall.getLeftSideTexture();
+      if (leftSideTexture != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!leftSideTexture.equals(selectedWalls.get(i).getLeftSideTexture())) {
+            leftSideTexture = null;
+            break;
+          }
+        }
+      }
+      getLeftSideTextureController().setTexture(leftSideTexture);
+      
+      if (leftSideColor != null) {
+        setLeftSidePaint(WallPaint.COLORED);
+      } else if (leftSideTexture != null) {
+        setLeftSidePaint(WallPaint.TEXTURED);
+      } else {
+        setLeftSidePaint(null);
+      }
+      
+      // Search the common right side color among walls
+      Integer rightSideColor = firstWall.getRightSideColor();
+      if (rightSideColor != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!rightSideColor.equals(selectedWalls.get(i).getRightSideColor())) {
+            rightSideColor = null;
+            break;
+          }
+        }
+      }
+      setRightSideColor(rightSideColor);
+      
+      // Search the common right side texture among walls
+      HomeTexture rightSideTexture = firstWall.getRightSideTexture();
+      if (rightSideTexture != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!rightSideTexture.equals(selectedWalls.get(i).getRightSideTexture())) {
+            rightSideTexture = null;
+            break;
+          }
+        }
+      }
+      getRightSideTextureController().setTexture(rightSideTexture);
+      
+      if (rightSideColor != null) {
+        setRightSidePaint(WallPaint.COLORED);
+      } else if (rightSideTexture != null) {
+        setRightSidePaint(WallPaint.TEXTURED);
+      } else {
+        setRightSidePaint(null);
+      }
+      
+      // Search the common height among walls
+      Float height = firstWall.getHeight();
+      // If wall height was never set, use home wall height
+      if (height == null && firstWall.getHeight() == null) {
+        height = home.getWallHeight(); 
+      }
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        Wall wall = selectedWalls.get(i);
+        float wallHeight = wall.getHeight() == null 
+            ? home.getWallHeight()
+            : wall.getHeight();  
+        if (height != wallHeight) {
+          height = null;
+          break;
+        }
+      }
+      setRectangularWallHeight(height);
+      setSlopingWallHeightAtStart(height);
+      
+      // Search the common height at end among walls
+      Float heightAtEnd = firstWall.getHeightAtEnd();
+      if (heightAtEnd != null) {
+        for (int i = 1; i < selectedWalls.size(); i++) {
+          if (!heightAtEnd.equals(selectedWalls.get(i).getHeightAtEnd())) {
+            heightAtEnd = null;
+            break;
+          }
+        }
+      }
+      setSlopingWallHeightAtEnd(heightAtEnd == null && selectedWalls.size() == 1 ? height : heightAtEnd);
+      
+      boolean allWallsRectangular = !firstWall.isTrapezoidal();
+      boolean allWallsTrapezoidal = firstWall.isTrapezoidal();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (!selectedWalls.get(i).isTrapezoidal()) {
+          allWallsTrapezoidal = false;
+        } else {
+          allWallsRectangular = false;
+        }
+      }
+      if (allWallsRectangular) {
+        setShape(WallShape.RECTANGULAR_WALL);
+      } else if (allWallsTrapezoidal) {
+        setShape(WallShape.SLOPING_WALL);
+      } else {
+        setShape(null);
+      }
+
+      // Search the common thickness among walls
+      Float thickness = firstWall.getThickness();
+      for (int i = 1; i < selectedWalls.size(); i++) {
+        if (thickness != selectedWalls.get(i).getThickness()) {
+          thickness = null;
+          break;
+        }
+      }
+      setThickness(thickness);
+    }
+  }
+  
+  /**
+   * Sets the edited abscissa of the start point.
+   */
+  public void setXStart(Float xStart) {
+    if (xStart != this.xStart) {
+      Float oldXStart = this.xStart;
+      this.xStart = xStart;
+      this.propertyChangeSupport.firePropertyChange(Property.X_START.toString(), oldXStart, xStart);
+      updateLength();
+    }
+  }
+  
+  /**
+   * Returns the edited abscissa of the start point.
+   */
+  public Float getXStart() {
+    return this.xStart;
+  }
+  
+  /**
+   * Sets the edited ordinate of the start point.
+   */
+  public void setYStart(Float yStart) {
+    if (yStart != this.yStart) {
+      Float oldYStart = this.yStart;
+      this.yStart = yStart;
+      this.propertyChangeSupport.firePropertyChange(Property.Y_START.toString(), oldYStart, yStart);
+      updateLength();
+    }
+  }
+  
+  /**
+   * Returns the edited ordinate of the start point.
+   */
+  public Float getYStart() {
+    return this.yStart;
+  }
+  
+  /**
+   * Sets the edited abscissa of the end point.
+   */
+  public void setXEnd(Float xEnd) {
+    if (xEnd != this.xEnd) {
+      Float oldXEnd = this.xEnd;
+      this.xEnd = xEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.X_END.toString(), oldXEnd, xEnd);
+      updateLength();
+    }
+  }
+  
+  /**
+   * Returns the edited abscissa of the end point.
+   */
+  public Float getXEnd() {
+    return this.xEnd;
+  }
+  
+  /**
+   * Sets the edited ordinate of the end point.
+   */
+  public void setYEnd(Float yEnd) {
+    if (yEnd != this.yEnd) {
+      Float oldYEnd = this.yEnd;
+      this.yEnd = yEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.toString(), oldYEnd, yEnd);
+      updateLength();
+    }
+  }
+  
+  /**
+   * Returns the edited ordinate of the end point.
+   */
+  public Float getYEnd() {
+    return this.yEnd;
+  }
+  
+  /**
+   * Updates the edited length after its coordinates change.
+   */
+  private void updateLength() {
+    Float xStart = getXStart();
+    Float yStart = getYStart();
+    Float xEnd = getXEnd();
+    Float yEnd = getYEnd();    
+    if (xStart != null && yStart != null && xEnd != null && yEnd != null) {
+      setLength((float)Point2D.distance(xStart, yStart, xEnd, yEnd), false);
+    } else {
+      setLength(null, false);
+    }
+  }
+  
+  /**
+   * Sets the edited length.
+   */
+  public void setLength(Float length) {
+    setLength(length, true);
+  }
+
+  /**
+   * Sets the edited length and updates the coordinates of the end point if 
+   * <code>updateEndPoint</code> is <code>true</code>.
+   */
+  private void setLength(Float length, boolean updateEndPoint) {
+    if (length != this.length) {
+      Float oldLength = this.length;
+      this.length = length;
+      this.propertyChangeSupport.firePropertyChange(Property.LENGTH.toString(), oldLength, length);
+      
+      if (updateEndPoint) {
+        Float xStart = getXStart();
+        Float yStart = getYStart();
+        Float xEnd = getXEnd();
+        Float yEnd = getYEnd();
+        if (xStart != null && yStart != null && xEnd != null && yEnd != null && length != null) {
+          double wallAngle = Math.atan2(yStart - yEnd, xEnd - xStart);
+          setXEnd((float)(xStart + length * Math.cos(wallAngle)));
+          setYEnd((float)(yStart - length * Math.sin(wallAngle)));
+        } else {
+          setXEnd(null);
+          setYEnd(null);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the edited length.
+   */
+  public Float getLength() {
+    return this.length;
+  }
+  
+  /**
+   * Sets whether the point coordinates can be be edited or not.
+   */
+  public void setEditablePoints(boolean editablePoints) {
+    if (editablePoints != this.editablePoints) {
+      this.editablePoints = editablePoints;
+      this.propertyChangeSupport.firePropertyChange(Property.EDITABLE_POINTS.toString(), !editablePoints, editablePoints);
+    }
+  }
+  
+  /**
+   * Returns whether the edited wall is rectangular or not.
+   */
+  public boolean isEditablePoints() {
+    return this.editablePoints;
+  }
+  
+  /**
+   * Sets the edited color of the left side.
+   */
+  public void setLeftSideColor(Integer leftSideColor) {
+    if (leftSideColor != this.leftSideColor) {
+      Integer oldLeftSideColor = this.leftSideColor;
+      this.leftSideColor = leftSideColor;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.toString(), oldLeftSideColor, leftSideColor);
+      
+      setLeftSidePaint(WallPaint.COLORED);
+    }
+  }
+  
+  /**
+   * Returns the edited color of the left side.
+   */
+  public Integer getLeftSideColor() {
+    return this.leftSideColor;
+  }
+
+  /**
+   * Sets whether the left side is colored, textured or unknown painted.
+   */
+  public void setLeftSidePaint(WallPaint leftSidePaint) {
+    if (leftSidePaint != this.leftSidePaint) {
+      WallPaint oldLeftSidePaint = this.leftSidePaint;
+      this.leftSidePaint = leftSidePaint;
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_PAINT.toString(), oldLeftSidePaint, leftSidePaint);
+    }
+  }
+  
+  /**
+   * Returns whether the left side is colored, textured or unknown painted.
+   */
+  public WallPaint getLeftSidePaint() {
+    return this.leftSidePaint;
+  }
+
+  /**
+   * Sets the edited color of the right side.
+   */
+  public void setRightSideColor(Integer rightSideColor) {
+    if (rightSideColor != this.rightSideColor) {
+      Integer oldRightSideColor = this.rightSideColor;
+      this.rightSideColor = rightSideColor;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.toString(), oldRightSideColor, rightSideColor);
+      
+      setRightSidePaint(WallPaint.COLORED);
+    }
+  }
+  
+  /**
+   * Returns the edited color of the right side.
+   */
+  public Integer getRightSideColor() {
+    return this.rightSideColor;
+  }
+
+  /**
+   * Sets whether the right side is colored, textured or unknown painted.
+   */
+  public void setRightSidePaint(WallPaint rightSidePaint) {
+    if (rightSidePaint != this.rightSidePaint) {
+      WallPaint oldRightSidePaint = this.rightSidePaint;
+      this.rightSidePaint = rightSidePaint;
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_PAINT.toString(), oldRightSidePaint, rightSidePaint);
+    }
+  }
+  
+  /**
+   * Returns whether the right side is colored, textured or unknown painted.
+   */
+  public WallPaint getRightSidePaint() {
+    return this.rightSidePaint;
+  }
+
+  /**
+   * Sets whether the edited wall is a rectangular wall, a sloping wall or unknown.
+   */
+  public void setShape(WallShape shape) {
+    if (shape != this.shape) {
+      WallShape oldShape = this.shape;
+      this.shape = shape;
+      this.propertyChangeSupport.firePropertyChange(Property.SHAPE.toString(), oldShape, shape);
+    }
+  }
+  
+  /**
+   * Returns whether the edited wall is a rectangular wall, a sloping wall or unknown.
+   */
+  public WallShape getShape() {
+    return this.shape;
+  }
+  
+  /**
+   * Sets the edited height of a rectangular wall.
+   */
+  public void setRectangularWallHeight(Float rectangularWallHeight) {
+    if (rectangularWallHeight != this.rectangularWallHeight) {
+      Float oldRectangularWallHeight = this.rectangularWallHeight;
+      this.rectangularWallHeight = rectangularWallHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.RECTANGULAR_WALL_HEIGHT.toString(), 
+          oldRectangularWallHeight, rectangularWallHeight);
+      
+      setShape(WallShape.RECTANGULAR_WALL);
+    }
+  }
+  
+  /**
+   * Returns the edited height of a rectangular wall.
+   */
+  public Float getRectangularWallHeight() {
+    return this.rectangularWallHeight;
+  }
+  
+  /**
+   * Sets the edited height at start of a sloping wall.
+   */
+  public void setSlopingWallHeightAtStart(Float slopingWallHeightAtStart) {
+    if (slopingWallHeightAtStart != this.slopingWallHeightAtStart) {
+      Float oldSlopingHeightHeightAtStart = this.slopingWallHeightAtStart;
+      this.slopingWallHeightAtStart = slopingWallHeightAtStart;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_START.toString(), 
+          oldSlopingHeightHeightAtStart, slopingWallHeightAtStart);
+      
+      setShape(WallShape.SLOPING_WALL);
+    }
+  }
+  
+  /**
+   * Returns the edited height at start of a sloping wall.
+   */
+  public Float getSlopingWallHeightAtStart() {
+    return this.slopingWallHeightAtStart;
+  }
+  
+  /**
+   * Sets the edited height at end of a sloping wall.
+   */
+  public void setSlopingWallHeightAtEnd(Float sloppingWallHeightAtEnd) {
+    if (sloppingWallHeightAtEnd != this.sloppingWallHeightAtEnd) {
+      Float oldSlopingWallHeightAtEnd = this.sloppingWallHeightAtEnd;
+      this.sloppingWallHeightAtEnd = sloppingWallHeightAtEnd;
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_END.toString(), 
+          oldSlopingWallHeightAtEnd, sloppingWallHeightAtEnd);
+      
+      setShape(WallShape.SLOPING_WALL);
+    }
+  }
+  
+  /**
+   * Returns the edited height at end of a sloping wall.
+   */
+  public Float getSlopingWallHeightAtEnd() {
+    return this.sloppingWallHeightAtEnd;
+  }
+  
+  /**
+   * Sets the edited thickness.
+   */
+  public void setThickness(Float thickness) {
+    if (thickness != this.thickness) {
+      Float oldThickness = this.thickness;
+      this.thickness = thickness;
+      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.toString(), oldThickness, thickness);
+    }
+  }
+  
+  /**
+   * Returns the edited thickness.
+   */
+  public Float getThickness() {
+    return this.thickness;
+  }
+  
+  /**
    * Controls the modification of selected walls.
    */
-  public void modifySelection() {
+  public void modify() {
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<Wall> selectedWalls = Home.getWallsSubList(oldSelection);
     if (!selectedWalls.isEmpty()) {
-      WallView wallView = getView();
-      final Float xStart = wallView.getWallXStart();
-      final Float yStart = wallView.getWallYStart();
-      final Float xEnd = wallView.getWallXEnd();
-      final Float yEnd = wallView.getWallYEnd();
-      final Integer leftSideColor = wallView.getWallLeftSideColor();
-      final HomeTexture leftSideTexture = wallView.getWallLeftSideTexture();
-      final Integer rightSideColor = wallView.getWallRightSideColor();
-      final HomeTexture rightSideTexture = wallView.getWallRightSideTexture();
-      final Float thickness = wallView.getWallThickness();
-      final Float height = wallView.getWallHeight();
-      final Float heightAtEnd = wallView.getWallHeightAtEnd();
+      final Float xStart = getXStart();
+      final Float yStart = getYStart();
+      final Float xEnd = getXEnd();
+      final Float yEnd = getYEnd();
+      final Integer leftSideColor = getLeftSidePaint() == WallPaint.COLORED 
+          ? getLeftSideColor() : null;
+      final HomeTexture leftSideTexture = getLeftSidePaint() == WallPaint.TEXTURED
+          ? getLeftSideTextureController().getTexture() : null;
+      final Integer rightSideColor = getRightSidePaint() == WallPaint.COLORED
+          ? getRightSideColor() : null;
+      final HomeTexture rightSideTexture = getRightSidePaint() == WallPaint.TEXTURED
+          ? getRightSideTextureController().getTexture() : null;
+      final Float thickness = getThickness();
+      final Float height;
+      if (getShape() == WallShape.SLOPING_WALL) {
+        height = getSlopingWallHeightAtStart();
+      } else if (getShape() == WallShape.RECTANGULAR_WALL) {
+        height = getRectangularWallHeight();
+      } else {
+        height = null;
+      }
+      final Float heightAtEnd;
+      if (getShape() == WallShape.SLOPING_WALL) {
+        heightAtEnd = getSlopingWallHeightAtEnd();
+      } else if (getShape() == WallShape.RECTANGULAR_WALL) {
+        heightAtEnd = getRectangularWallHeight();
+      } else {
+        heightAtEnd = null;
+      }
       
       // Create an array of modified walls with their current properties values
       final ModifiedWall [] modifiedWalls = 
