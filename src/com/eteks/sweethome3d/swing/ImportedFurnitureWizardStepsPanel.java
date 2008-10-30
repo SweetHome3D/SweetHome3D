@@ -610,7 +610,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         String.format(this.resource.getString("colorLabel.text"), unitName));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
-    this.colorButton.addPropertyChangeListener("color", 
+    this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setColor(colorButton.getColor());

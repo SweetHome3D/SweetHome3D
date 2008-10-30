@@ -41,6 +41,9 @@ import javax.swing.UIManager;
  * Button displaying a color as an icon.
  */
 public class ColorButton extends JButton {
+  public static final String COLOR_PROPERTY = "color";
+  public static final String COLOR_DIALOG_TITLE_PROPERTY = "colorDialogTitle";
+  
   // Share color chooser between ColorButton instances to keep recent colors
   private static JColorChooser colorChooser;
   private static Locale        colorChooserLocale;
@@ -133,7 +136,7 @@ public class ColorButton extends JButton {
         || (color != null && !color.equals(this.color))) {
       Integer oldColor = this.color;
       this.color = color;
-      firePropertyChange("color", oldColor, color);
+      firePropertyChange(COLOR_PROPERTY, oldColor, color);
       repaint();
     }
   }
@@ -153,7 +156,7 @@ public class ColorButton extends JButton {
         || (colorDialogTitle != null && !colorDialogTitle.equals(this.colorDialogTitle))) {
       String oldColorDialogTitle = this.colorDialogTitle;
       this.colorDialogTitle = colorDialogTitle;
-      firePropertyChange("colorDialogTitle", oldColorDialogTitle, colorDialogTitle);
+      firePropertyChange(COLOR_DIALOG_TITLE_PROPERTY, oldColorDialogTitle, colorDialogTitle);
       repaint();
     }
   }
