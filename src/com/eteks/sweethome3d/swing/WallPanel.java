@@ -128,8 +128,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.X_START, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            xStartSpinnerModel.setNullable(controller.getXStart() == null);
-            xStartSpinnerModel.setLength(controller.getXStart());
+            xStartSpinnerModel.setNullable(ev.getNewValue() == null);
+            xStartSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
     
@@ -148,8 +148,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.Y_START, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            yStartSpinnerModel.setNullable(controller.getYStart() == null);
-            yStartSpinnerModel.setLength(controller.getYStart());
+            yStartSpinnerModel.setNullable(ev.getNewValue() == null);
+            yStartSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
     
@@ -168,8 +168,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.X_END, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            xEndSpinnerModel.setNullable(controller.getXEnd() == null);
-            xEndSpinnerModel.setLength(controller.getXEnd());
+            xEndSpinnerModel.setNullable(ev.getNewValue() == null);
+            xEndSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
     
@@ -188,8 +188,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.Y_END, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            yEndSpinnerModel.setNullable(controller.getYEnd() == null);
-            yEndSpinnerModel.setLength(controller.getYEnd());
+            yEndSpinnerModel.setNullable(ev.getNewValue() == null);
+            yEndSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
 
@@ -208,8 +208,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.LENGTH, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            lengthSpinnerModel.setNullable(controller.getLength() == null);
-            lengthSpinnerModel.setLength(controller.getLength());
+            lengthSpinnerModel.setNullable(ev.getNewValue() == null);
+            lengthSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
 
@@ -341,8 +341,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.RECTANGULAR_WALL_HEIGHT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
-            rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
+            rectangularWallHeightSpinnerModel.setNullable(ev.getNewValue() == null);
+            rectangularWallHeightSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
    
@@ -375,8 +375,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_START, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            slopingWallHeightAtStartSpinnerModel.setNullable(controller.getSlopingWallHeightAtStart() == null);
-            slopingWallHeightAtStartSpinnerModel.setLength(controller.getSlopingWallHeightAtStart());
+            slopingWallHeightAtStartSpinnerModel.setNullable(ev.getNewValue() == null);
+            slopingWallHeightAtStartSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
     
@@ -395,8 +395,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.SLOPING_WALL_HEIGHT_AT_END, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            slopingWallHeightAtEndSpinnerModel.setNullable(controller.getSlopingWallHeightAtEnd() == null);
-            slopingWallHeightAtEndSpinnerModel.setLength(controller.getSlopingWallHeightAtEnd());
+            slopingWallHeightAtEndSpinnerModel.setNullable(ev.getNewValue() == null);
+            slopingWallHeightAtEndSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
 
@@ -415,8 +415,8 @@ public class WallPanel extends JPanel implements WallView {
     controller.addPropertyChangeListener(WallController.Property.THICKNESS, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            thicknessSpinnerModel.setNullable(controller.getThickness() == null);
-            thicknessSpinnerModel.setLength(controller.getThickness());
+            thicknessSpinnerModel.setNullable(ev.getNewValue() == null);
+            thicknessSpinnerModel.setLength((Float)ev.getNewValue());
           }
         });
     
