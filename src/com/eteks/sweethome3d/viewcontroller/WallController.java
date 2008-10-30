@@ -43,13 +43,21 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class WallController implements Controller {
-  public enum WallShape {RECTANGULAR_WALL, SLOPING_WALL}
-  public enum WallPaint {COLORED, TEXTURED} 
-  
+  /**
+   * The properties that may be edited by the view associated to this controller. 
+   */
   public enum Property {X_START, Y_START, X_END, Y_END, LENGTH, EDITABLE_POINTS, 
       LEFT_SIDE_COLOR, LEFT_SIDE_PAINT,  RIGHT_SIDE_COLOR, RIGHT_SIDE_PAINT,
       SHAPE, RECTANGULAR_WALL_HEIGHT, SLOPING_WALL_HEIGHT_AT_START, SLOPING_WALL_HEIGHT_AT_END, 
       THICKNESS}
+  /**
+   * The possible values for {@linkplain #getShape() wall shape}.
+   */
+  public enum WallShape {RECTANGULAR_WALL, SLOPING_WALL}
+  /**
+   * The possible values for {@linkplain #getLeftSidePaint() wall paint type}.
+   */
+  public enum WallPaint {COLORED, TEXTURED} 
 
   private final Home                  home;
   private final UserPreferences       preferences;
