@@ -29,7 +29,6 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
-import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
@@ -47,7 +46,6 @@ import com.eteks.sweethome3d.viewcontroller.HomeView3D;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
-import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -57,6 +55,7 @@ import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.eteks.sweethome3d.viewcontroller.WallController;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
@@ -118,7 +117,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps user to choose a background image. 
    */
-  public BackgroundImageWizardStepsView createBackgroundImageWizardStepsView(
+  public View createBackgroundImageWizardStepsView(
                       BackgroundImage backgroundImage,
                       UserPreferences preferences, ContentManager contentManager,
                       BackgroundImageWizardController backgroundImageWizardController) {
@@ -141,7 +140,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to import a texture. 
    */
-  public ImportedTextureWizardStepsView createImportedTextureWizardStepsView(
+  public View createImportedTextureWizardStepsView(
                       CatalogTexture texture, String textureName,
                       UserPreferences preferences,
                       ContentManager contentManager,
