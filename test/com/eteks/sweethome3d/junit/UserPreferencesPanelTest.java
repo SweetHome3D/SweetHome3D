@@ -31,7 +31,9 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.UserPreferencesPanel;
+import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
 
 /**
  * Tests {@link com.eteks.sweethome3d.swing.UserPreferencesPanel user preferences panel}.
@@ -60,8 +62,10 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setNewWallHeight(
         defaultPreferences.getNewWallHeight());
     
-    // 2. Create a user preferences panel 
-    UserPreferencesPanel panel = new UserPreferencesPanel(preferences, null);
+    // 2. Create a user preferences panel
+    UserPreferencesController controller = 
+        new UserPreferencesController(preferences, new SwingViewFactory(), null);
+    UserPreferencesPanel panel = (UserPreferencesPanel)controller.getView();
     JRadioButton centimeterRadioButton = 
         (JRadioButton)TestUtilities.getField(panel, "centimeterRadioButton");
     JRadioButton inchRadioButton = 
@@ -98,12 +102,12 @@ public class UserPreferencesPanelTest extends TestCase {
     newHomeWallHeightSpinner.setValue(100);
     
     // 4. Retrieve panel values into preferences 
-    preferences.setUnit(panel.getUnit());
-    preferences.setMagnetismEnabled(panel.isMagnetismEnabled());
-    preferences.setRulersVisible(panel.isRulersVisible());
-    preferences.setGridVisible(panel.isGridVisible());
-    preferences.setNewWallThickness(panel.getNewWallThickness());
-    preferences.setNewWallHeight(panel.getNewWallHeight());
+    preferences.setUnit(controller.getUnit());
+    preferences.setMagnetismEnabled(controller.isMagnetismEnabled());
+    preferences.setRulersVisible(controller.isRulersVisible());
+    preferences.setGridVisible(controller.isGridVisible());
+    preferences.setNewWallThickness(controller.getNewWallThickness());
+    preferences.setNewWallHeight(controller.getNewWallHeight());
     // Check preferences value
     assertPreferencesEqual(UserPreferences.Unit.INCH, false, false, false,
         UserPreferences.Unit.inchToCentimeter(1), 

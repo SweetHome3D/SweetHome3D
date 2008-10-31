@@ -23,6 +23,10 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -74,27 +78,28 @@ public class UserPreferencesPanel extends JPanel implements UserPreferencesView 
   private JSpinner       newWallHeightSpinner;
   
   /**
-   * Creates a preferences panel that layouts the mutable properties
-   * of <code>preferences</code>. 
+   * Creates a preferences panel that layouts the editable properties
+   * of its <code>controller</code>. 
    */
   public UserPreferencesPanel(UserPreferences preferences,
-                              UserPreferencesController userPreferencesController) {
+                              UserPreferencesController controller) {
     super(new GridBagLayout());
-    this.controller = userPreferencesController;
+    this.controller = controller;
     this.resource = ResourceBundle.getBundle(
             UserPreferencesPanel.class.getName());
-    createComponents();
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
-    setUserPreferences(preferences);
   }
   
   /**
    * Creates and initializes components and spinners model.
    */
-  private void createComponents() {
+  private void createComponents(UserPreferences preferences,
+                                final UserPreferencesController controller) {
+    // Create language label and combo box bound to controller LANGUAGE property
     this.languageLabel = new JLabel(this.resource.getString("languageLabel.text"));    
-    this.languageComboBox = new JComboBox();
+    this.languageComboBox = new JComboBox(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
     this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, 
@@ -106,34 +111,130 @@ public class UserPreferencesPanel extends JPanel implements UserPreferencesView 
               cellHasFocus);
         }
       });
-    this.unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
-    this.centimeterRadioButton = new JRadioButton(
-        this.resource.getString("centimeterRadioButton.text"), true);
-    this.inchRadioButton = new JRadioButton(
-        this.resource.getString("inchRadioButton.text"));    
+    this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
+    this.languageComboBox.setSelectedItem(controller.getLanguage());
+    this.languageComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setLanguage((String)languageComboBox.getSelectedItem());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.LANGUAGE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            languageComboBox.setSelectedItem(controller.getLanguage());
+          }
+        });
     
+    // Create unit label and radio buttons bound to controller UNIT property
+    this.unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
+    this.centimeterRadioButton = new JRadioButton(this.resource.getString("centimeterRadioButton.text"), 
+        controller.getUnit() == UserPreferences.Unit.CENTIMETER);
+    this.inchRadioButton = new JRadioButton(this.resource.getString("inchRadioButton.text"), 
+        controller.getUnit() == UserPreferences.Unit.INCH);
     ButtonGroup unitButtonGroup = new ButtonGroup();
     unitButtonGroup.add(this.centimeterRadioButton);
     unitButtonGroup.add(this.inchRadioButton);
-  
+
+    ItemListener unitChangeListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setUnit(centimeterRadioButton.isSelected() 
+              ? UserPreferences.Unit.CENTIMETER
+              : UserPreferences.Unit.INCH);
+        }
+      };
+    this.centimeterRadioButton.addItemListener(unitChangeListener);
+    this.inchRadioButton.addItemListener(unitChangeListener);
+    controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            centimeterRadioButton.setSelected(controller.getUnit() == UserPreferences.Unit.CENTIMETER);
+          }
+        });
+
+    // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
     this.magnetismEnabledLabel = new JLabel(this.resource.getString("magnetismLabel.text"));
-    this.magnetismCheckBox = new JCheckBox(
-        this.resource.getString("magnetismCheckBox.text"));
-    
+    this.magnetismCheckBox = new JCheckBox(this.resource.getString("magnetismCheckBox.text"), 
+        controller.isMagnetismEnabled());
+    this.magnetismCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setMagnetismEnabled(magnetismCheckBox.isSelected());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.MAGNETISM_ENABLED, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            magnetismCheckBox.setSelected(controller.isMagnetismEnabled());
+          }
+        });
+
+    // Create rulers label and check box bound to controller RULERS_VISIBLE property
     this.rulersVisibleLabel = new JLabel(this.resource.getString("rulersLabel.text"));
-    this.rulersCheckBox = new JCheckBox(
-        this.resource.getString("rulersCheckBox.text"));
+    this.rulersCheckBox = new JCheckBox(this.resource.getString("rulersCheckBox.text"),
+        controller.isRulersVisible());
+    this.rulersCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setRulersVisible(rulersCheckBox.isSelected());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.RULERS_VISIBLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            rulersCheckBox.setSelected(controller.isRulersVisible());
+          }
+        });
     
+    // Create grid label and check box bound to controller GRID_VISIBLE property
     this.gridVisibleLabel = new JLabel(this.resource.getString("gridLabel.text"));
-    this.gridCheckBox = new JCheckBox(
-        this.resource.getString("gridCheckBox.text"));
+    this.gridCheckBox = new JCheckBox(this.resource.getString("gridCheckBox.text"),
+        controller.isGridVisible());
+    this.gridCheckBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setGridVisible(gridCheckBox.isSelected());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.GRID_VISIBLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            gridCheckBox.setSelected(controller.isGridVisible());
+          }
+        });
     
+    // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
     this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
-    this.newWallThicknessSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
-        0.5f, 0.125f, this.centimeterRadioButton));
+    final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
+        0.5f, 0.125f, this.centimeterRadioButton);
+    this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
+    newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+    newWallThicknessSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setNewWallThickness(newWallThicknessSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_THICKNESS, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+          }
+        });
+    
+    
+    // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
     this.newWallHeightLabel = new JLabel(this.resource.getString("newWallHeightLabel.text"));
-    this.newWallHeightSpinner = new AutoCommitSpinner(new SpinnerLengthModel(
-        10f, 2f, this.centimeterRadioButton));
+    final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
+        10f, 2f, this.centimeterRadioButton);
+    this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
+    newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+    newWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setNewWallHeight(newWallHeightSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_HEIGHT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+          }
+        });
   }
   
   /**
@@ -227,30 +328,6 @@ public class UserPreferencesPanel extends JPanel implements UserPreferencesView 
   }
 
   /**
-   * Sets components value from <code>preferences</code>.
-   */
-  private void setUserPreferences(UserPreferences preferences) {
-    this.languageComboBox.setModel(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
-    this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
-    this.languageComboBox.setSelectedItem(preferences.getLanguage());
-    if (preferences.getUnit() == UserPreferences.Unit.INCH) {
-      this.inchRadioButton.setSelected(true);
-    } else {
-      this.centimeterRadioButton.setSelected(true);
-    }
-    this.magnetismCheckBox.setSelected(
-        preferences.isMagnetismEnabled());    
-    this.rulersCheckBox.setSelected(
-        preferences.isRulersVisible());    
-    this.gridCheckBox.setSelected(
-        preferences.isGridVisible());    
-    ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).
-        setLength(preferences.getNewWallThickness());
-    ((SpinnerLengthModel)this.newWallHeightSpinner.getModel()).
-        setLength(preferences.getNewWallHeight());
-  }
-  
-  /**
    * Displays this panel in a dialog box. 
    */
   public void displayView(View parentView) {
@@ -259,61 +336,8 @@ public class UserPreferencesPanel extends JPanel implements UserPreferencesView 
             JOptionPane.OK_CANCEL_OPTION, 
             JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {
-      this.controller.modifyUserPreferences();
+      this.controller.modify();
     }
-  }
-
-  /**
-   * Returns the chosen language in panel.
-   */
-  public String getLanguage() {
-    return (String)this.languageComboBox.getSelectedItem();
-  }
-
-  /**
-   * Returns the chosen unit in panel.
-   */
-  public UserPreferences.Unit getUnit() {
-    if (this.inchRadioButton.isSelected()) {
-      return UserPreferences.Unit.INCH;
-    } else {
-      return UserPreferences.Unit.CENTIMETER;
-    }
-  }
-
-  /**
-   * Returns <code>true</code> if magnetism is enabled in panel.
-   */
-  public boolean isMagnetismEnabled() {
-    return this.magnetismCheckBox.isSelected();
-  } 
-  
-  /**
-   * Returns <code>true</code> if rulers are visible in panel.
-   */
-  public boolean isRulersVisible() {
-    return this.rulersCheckBox.isSelected();
-  } 
-  
-  /**
-   * Returns <code>true</code> if grid is visible in panel.
-   */
-  public boolean isGridVisible() {
-    return this.gridCheckBox.isSelected();
-  } 
-  
-  /**
-   * Returns the new wall thickness in panel.
-   */
-  public float getNewWallThickness() {
-    return ((SpinnerLengthModel)this.newWallThicknessSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the new wall height in panel.
-   */
-  public float getNewWallHeight() {
-    return ((SpinnerLengthModel)this.newWallHeightSpinner.getModel()).getLength();
   }
 
   private static class SpinnerLengthModel extends SpinnerNumberModel {

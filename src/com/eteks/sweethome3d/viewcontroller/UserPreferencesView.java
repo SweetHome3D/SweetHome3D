@@ -19,48 +19,11 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.UserPreferences;
-
 /**
  * A MVC view that edits user preferences. 
  * @author Emmanuel Puybaret
  */
 public interface UserPreferencesView extends View {
-  /**
-   * Returns the chosen language in panel.
-   */
-  public abstract String getLanguage();
-
-  /**
-   * Returns the chosen unit in panel.
-   */
-  public abstract UserPreferences.Unit getUnit();
-
-  /**
-   * Returns <code>true</code> if magnetism is enabled in panel.
-   */
-  public abstract boolean isMagnetismEnabled();
-
-  /**
-   * Returns <code>true</code> if rulers are visible in panel.
-   */
-  public abstract boolean isRulersVisible();
-
-  /**
-   * Returns <code>true</code> if grid is visible in panel.
-   */
-  public abstract boolean isGridVisible();
-
-  /**
-   * Returns the new wall thickness in panel.
-   */
-  public abstract float getNewWallThickness();
-
-  /**
-   * Returns the new wall height in panel.
-   */
-  public abstract float getNewWallHeight();
-
   /**
    * Displays this panel in a dialog box. 
    */

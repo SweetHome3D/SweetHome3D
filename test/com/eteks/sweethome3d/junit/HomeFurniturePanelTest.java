@@ -42,6 +42,7 @@ public class HomeFurniturePanelTest extends TestCase {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
+    SwingViewFactory viewFactory = new SwingViewFactory();
     // Create a home and add a selected piece of furniture to it
     Home home = new Home();
     PieceOfFurniture firstPiece = preferences.getFurnitureCatalog().
@@ -51,8 +52,8 @@ public class HomeFurniturePanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
 
     // 2. Create a home piece of furniture panel to edit piece
-    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
-    HomeFurniturePanel panel = new HomeFurniturePanel(preferences, controller);
+    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, viewFactory, null);
+    HomeFurniturePanel panel = (HomeFurniturePanel)controller.getView();
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(),
         piece1.getY(), piece1.getElevation(), (int)Math.toDegrees(piece1.getAngle()), piece1.getWidth(),
@@ -74,8 +75,8 @@ public class HomeFurniturePanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1, piece2}));
     // Check if furniture panel edits null values 
     // if some furniture properties are the same
-    controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
-    panel = new HomeFurniturePanel(preferences, controller);
+    controller = new HomeFurnitureController(home, preferences, viewFactory, null);
+    panel = (HomeFurniturePanel)controller.getView();
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, (int)Math.toDegrees(piece1.getAngle()), 
         piece1.getWidth(), null, null, null, null, null, controller);
