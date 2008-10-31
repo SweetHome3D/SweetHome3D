@@ -109,7 +109,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
-    // Create name label and its text field
+    // Create name label and its text field bound to NAME controller property
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
     if (!OperatingSystem.isMacOSX()) {
@@ -140,7 +140,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
           }
         });
         
-    // Create X label and its spinner
+    // Create X label and its spinner bound to X controller property
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -162,7 +162,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create Y label and its spinner
+    // Create Y label and its spinner bound to Y controller property
     this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -184,7 +184,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create elevation label and its spinner
+    // Create elevation label and its spinner bound to ELEVATION controller property
     this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000f);
@@ -209,7 +209,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create angle label and its spinner
+    // Create angle label and its spinner bound to ANGLE_IN_DEGREES controller property
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
     final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = 
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1);
@@ -238,7 +238,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
    
-    // Create width label and its spinner
+    // Create width label and its spinner bound to WIDTH controller property
     this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
@@ -260,7 +260,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create depth label and its spinner
+    // Create depth label and its spinner bound to DEPTH controller property
     this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
@@ -282,7 +282,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create height label and its spinner
+    // Create height label and its spinner bound to HEIGHT controller property
     this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
@@ -304,7 +304,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create color label and its button
+    // Create color label and its button bound to COLOR controller property
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
@@ -322,7 +322,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
           }
         });
 
-    // Create visible check box
+    // Create visible check box bound to VISIBLE controller property
     this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleCheckBox.text"));
     this.visibleCheckBox.setNullable(controller.getVisible() == null);
     this.visibleCheckBox.setValue(controller.getVisible());
@@ -341,7 +341,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         }
       });
     
-    // Create mirror check box
+    // Create mirror check box bound to MODEL_MIRRORED controller property
     this.mirroredModelCheckBox = new NullableCheckBox(this.resource.getString("mirroredModelCheckBox.text"));
     this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
     this.mirroredModelCheckBox.setValue(controller.getModelMirrored());

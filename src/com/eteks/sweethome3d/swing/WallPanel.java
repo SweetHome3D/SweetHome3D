@@ -113,7 +113,7 @@ public class WallPanel extends JPanel implements WallView {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
-    // Create X start label and its spinner
+    // Create X start label and its spinner bound to X_START controller property
     this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel xStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -135,7 +135,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
     
-    // Create Y start label and its spinner
+    // Create Y start label and its spinner bound to Y_START controller property
     this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel yStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -157,7 +157,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
     
-    // Create X end label and its spinner
+    // Create X end label and its spinner bound to X_END controller property
     this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel xEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -179,7 +179,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
     
-    // Create Y end label and its spinner
+    // Create Y end label and its spinner bound to Y_END controller property
     this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel yEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -201,7 +201,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
 
-    // Create length label and its spinner
+    // Create length label and its spinner bound to LENGTH controller property
     this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel lengthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
@@ -226,7 +226,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
 
-    // Left side color and texture buttons
+    // Left side color and texture buttons bound to left side controller properties
     this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
     this.leftSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -274,7 +274,7 @@ public class WallPanel extends JPanel implements WallView {
     leftSideButtonGroup.add(this.leftSideTextureRadioButton);
     updateLeftSideRadioButtons(controller);
     
-    // Right side color and texture buttons
+    // Right side color and texture buttons bound to right side controller properties
     this.rightSideColorRadioButton = new JRadioButton(this.resource.getString("rightSideColorRadioButton.text"));
     this.rightSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -338,7 +338,7 @@ public class WallPanel extends JPanel implements WallView {
           }
         });
 
-    // Create height label and its spinner
+    // Create height label and its spinner bound to RECTANGULAR_WALL_HEIGHT controller property
     this.rectangularWallHeightLabel = new JLabel(
         String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
@@ -378,7 +378,7 @@ public class WallPanel extends JPanel implements WallView {
     wallHeightButtonGroup.add(this.slopingWallRadioButton);
     updateWallShapeRadioButtons(controller);
 
-    // Create height at start label and its spinner
+    // Create height at start label and its spinner bound to SLOPING_WALL_HEIGHT_AT_START controller property
     this.slopingWallHeightAtStartLabel = new JLabel(this.resource.getString("slopingWallHeightAtStartLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
@@ -403,7 +403,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
     
-    // Create height at end label and its spinner
+    // Create height at end label and its spinner bound to SLOPING_WALL_HEIGHT_AT_END controller property
     this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
@@ -428,7 +428,7 @@ public class WallPanel extends JPanel implements WallView {
         }
       });
 
-    // Create thickness label and its spinner
+    // Create thickness label and its spinner bound to THICKNESS controller property
     this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f);
