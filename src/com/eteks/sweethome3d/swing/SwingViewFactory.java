@@ -167,8 +167,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits user preferences.
    */
-  public UserPreferencesView createUserPreferencesView(
-                                          UserPreferences preferences,
+  public UserPreferencesView createUserPreferencesView(UserPreferences preferences,
                                           UserPreferencesController userPreferencesController) {
     return new UserPreferencesPanel(preferences, userPreferencesController);
   }
@@ -176,10 +175,9 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits the selected furniture in <code>home</code>.
    */
-  public HomeFurnitureView createHomeFurnitureView(Home home,
-                               UserPreferences preferences,
+  public HomeFurnitureView createHomeFurnitureView(UserPreferences preferences,
                                HomeFurnitureController homeFurnitureController) {
-    return new HomeFurniturePanel(home, preferences, homeFurnitureController);
+    return new HomeFurniturePanel(preferences, homeFurnitureController);
   }
 
   /**

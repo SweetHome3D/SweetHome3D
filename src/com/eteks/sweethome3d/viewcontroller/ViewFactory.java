@@ -110,10 +110,9 @@ public interface ViewFactory {
                                           UserPreferences preferences,
                                           UserPreferencesController userPreferencesController);
   /**
-   * Returns a new view that edits the selected furniture in <code>home</code>.
+   * Returns a new view that edits furniture values.
    */
-  public abstract HomeFurnitureView createHomeFurnitureView(Home home,
-                                         UserPreferences preferences,
+  public abstract HomeFurnitureView createHomeFurnitureView(UserPreferences preferences,
                                          HomeFurnitureController homeFurnitureController);
 
   /**

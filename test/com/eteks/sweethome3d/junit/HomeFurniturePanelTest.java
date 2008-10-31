@@ -30,6 +30,8 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomeFurniturePanel;
+import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
 
 /**
  * Tests {@link com.eteks.sweethome3d.swing.HomeFurniturePanel home piece of furniture panel}.
@@ -49,12 +51,13 @@ public class HomeFurniturePanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
 
     // 2. Create a home piece of furniture panel to edit piece
-    HomeFurniturePanel panel = new HomeFurniturePanel(home, preferences, null);
+    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
+    HomeFurniturePanel panel = new HomeFurniturePanel(preferences, controller);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(piece1.getName(), piece1.getX(),
+    assertFurnitureControllerEquals(piece1.getName(), piece1.getX(),
         piece1.getY(), piece1.getElevation(), piece1.getAngle(), piece1.getWidth(),
         piece1.getDepth(), piece1.getHeight(), piece1.getColor(),
-        piece1.isVisible(), piece1.isModelMirrored(), panel);
+        piece1.isVisible(), piece1.isModelMirrored(), controller);
 
     // 3. Add a second selected piece to home
     HomePieceOfFurniture piece2 = new HomePieceOfFurniture(firstPiece); 
@@ -71,31 +74,32 @@ public class HomeFurniturePanelTest extends TestCase {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1, piece2}));
     // Check if furniture panel edits null values 
     // if some furniture properties are the same
-    panel = new HomeFurniturePanel(home, preferences, null);
+    controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
+    panel = new HomeFurniturePanel(preferences, controller);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurniturePanelEquals(piece1.getName(), piece1.getX(), null, null, piece1.getAngle(), 
-        piece1.getWidth(), null, null, null, null, null, panel);
+    assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, piece1.getAngle(), 
+        piece1.getWidth(), null, null, null, null, null, controller);
   }
   
   /**
    * Assert values in parameter are the same as the ones 
-   * stored in <code>panel</code> components.
+   * stored in <code>controller</code>.
    */
-  private void assertFurniturePanelEquals(String name, Float x, Float y, Float elevation, Float angle, 
+  private void assertFurnitureControllerEquals(String name, Float x, Float y, Float elevation, Float angle, 
                                           Float width, Float depth, Float height, Integer color, 
                                           Boolean visible, Boolean modelMirrored, 
-                                          HomeFurniturePanel panel) {
-    assertEquals("Wrong name", name, panel.getFurnitureName());
-    assertEquals("Wrong X", x, panel.getFurnitureX());
-    assertEquals("Wrong Y", y, panel.getFurnitureY());
-    assertEquals("Wrong elevation", elevation, panel.getFurnitureElevation());
-    assertEquals("Wrong angle", angle, panel.getFurnitureAngle());
-    assertEquals("Wrong width", width, panel.getFurnitureWidth());
-    assertEquals("Wrong depth", depth, panel.getFurnitureDepth());
-    assertEquals("Wrong height", height, panel.getFurnitureHeight());
-    assertEquals("Wrong color", color, panel.getFurnitureColor());
-    assertEquals("Wrong visibility", visible, panel.isFurnitureVisible());
-    assertEquals("Wrong model mirrored", modelMirrored, panel.isFurnitureModelMirrored());
+                                          HomeFurnitureController controller) {
+    assertEquals("Wrong name", name, controller.getName());
+    assertEquals("Wrong X", x, controller.getX());
+    assertEquals("Wrong Y", y, controller.getY());
+    assertEquals("Wrong elevation", elevation, controller.getElevation());
+    assertEquals("Wrong angle", angle, controller.getAngleInDegrees());
+    assertEquals("Wrong width", width, controller.getWidth());
+    assertEquals("Wrong depth", depth, controller.getDepth());
+    assertEquals("Wrong height", height, controller.getHeight());
+    assertEquals("Wrong color", color, controller.getColor());
+    assertEquals("Wrong visibility", visible, controller.getVisible());
+    assertEquals("Wrong model mirrored", modelMirrored, controller.getModelMirrored());
   }
 
   public static void main(String [] args) {
@@ -108,8 +112,9 @@ public class HomeFurniturePanelTest extends TestCase {
     home.addPieceOfFurniture(piece1);
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
     
+    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
     HomeFurniturePanel furniturePanel = 
-        new HomeFurniturePanel(home, preferences, null);
+        new HomeFurniturePanel(preferences, controller);
     furniturePanel.displayView(null);
   }
 }

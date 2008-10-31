@@ -29,6 +29,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -42,9 +45,11 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
@@ -82,61 +87,301 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
   /**
    * Creates a panel that displays home furniture data according to the units 
    * set in <code>preferences</code>.
-   * @param home home from which selected furniture is edited by this panel
    * @param preferences user preferences
    * @param controller the controller of this panel
    */
-  public HomeFurniturePanel(Home home,
-                            UserPreferences preferences,
+  public HomeFurniturePanel(UserPreferences preferences,
                             HomeFurnitureController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         HomeFurniturePanel.class.getName());
-    createComponents(preferences);
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
-    updateComponents(home);
   }
 
   /**
    * Creates and initializes components and spinners model.
    */
-  private void createComponents(UserPreferences preferences) {
+  private void createComponents(UserPreferences preferences, 
+                                final HomeFurnitureController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
+    // Create name label and its text field
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
-    this.nameTextField = new JTextField(10);
+    this.nameTextField = new JTextField(controller.getName(), 10);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
+    this.nameTextField.getDocument().addDocumentListener(new DocumentListener() {
+        public void changedUpdate(DocumentEvent ev) {
+          String name = nameTextField.getText(); 
+          if (name == null || name.trim().length() == 0) {
+            controller.setName(null);
+          } else {
+            controller.setName(name);
+          }
+        }
+  
+        public void insertUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+  
+        public void removeUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+      });
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            nameTextField.setText(controller.getName());
+          }
+        });
+        
+    // Create X label and its spinner
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
-    this.xSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
+    final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.xSpinner = new NullableSpinner(xSpinnerModel);
+    xSpinnerModel.setNullable(controller.getX() == null);
+    xSpinnerModel.setLength(controller.getX());
+    final PropertyChangeListener xChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          xSpinnerModel.setNullable(ev.getNewValue() == null);
+          xSpinnerModel.setLength((Float)ev.getNewValue());
+        }
+      };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.X, xChangeListener);
+    xSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.X, xChangeListener);
+          controller.setX(xSpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.X, xChangeListener);
+        }
+      });
+    
+    // Create Y label and its spinner
     this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
-    this.ySpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f));
+    final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
+    this.ySpinner = new NullableSpinner(ySpinnerModel);
+    ySpinnerModel.setNullable(controller.getY() == null);
+    ySpinnerModel.setLength(controller.getY());
+    final PropertyChangeListener yChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          ySpinnerModel.setNullable(ev.getNewValue() == null);
+          ySpinnerModel.setLength((Float)ev.getNewValue());
+        }
+      };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.Y, yChangeListener);
+    ySpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.Y, yChangeListener);
+          controller.setY(ySpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.Y, yChangeListener);
+        }
+      });
+    
+    // Create elevation label and its spinner
     this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitName));
-    this.elevationSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0, 1000f));
+    final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000f);
+    this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
+    elevationSpinnerModel.setNullable(controller.getElevation() == null);
+    elevationSpinnerModel.setLength(controller.getElevation());
+    final PropertyChangeListener elevationChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          elevationSpinnerModel.setNullable(ev.getNewValue() == null);
+          elevationSpinnerModel.setLength((Float)ev.getNewValue());
+        }
+      };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.ELEVATION, 
+        elevationChangeListener);
+    elevationSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.ELEVATION, 
+              elevationChangeListener);
+          controller.setElevation(elevationSpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.ELEVATION, 
+              elevationChangeListener);
+        }
+      });
+    
+    // Create angle label and its spinner
     this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
-    this.angleSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1));
+    final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = 
+        new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1);
+    this.angleSpinner = new NullableSpinner(angleSpinnerModel);
+    Integer angle = controller.getAngleInDegrees();
+    angleSpinnerModel.setNullable(angle == null);
+    angleSpinnerModel.setValue(angle);
+    final PropertyChangeListener angleChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        Float newAngle = (Float)ev.getNewValue();
+        angleSpinnerModel.setNullable(newAngle == null);
+        angleSpinnerModel.setValue(newAngle);
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES, angleChangeListener);
+    angleSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES, angleChangeListener);
+          Number value = (Number)angleSpinnerModel.getValue();
+          if (value == null) {
+            controller.setAngleInDegrees(null);
+          } else {
+            controller.setAngleInDegrees(value.intValue());
+          }
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.ANGLE_IN_DEGREES, angleChangeListener);
+        }
+      });
+   
+    // Create width label and its spinner
     this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitName));
-    this.widthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
+    final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+    this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
+    widthSpinnerModel.setNullable(controller.getWidth() == null);
+    widthSpinnerModel.setLength(controller.getWidth());
+    final PropertyChangeListener widthChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        widthSpinnerModel.setNullable(ev.getNewValue() == null);
+        widthSpinnerModel.setLength((Float)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.WIDTH, widthChangeListener);
+    widthSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.WIDTH, widthChangeListener);
+          controller.setWidth(widthSpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.WIDTH, widthChangeListener);
+        }
+      });
+    
+    // Create depth label and its spinner
     this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitName));
-    this.depthSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
+    final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+    this.depthSpinner = new NullableSpinner(depthSpinnerModel);
+    depthSpinnerModel.setNullable(controller.getDepth() == null);
+    depthSpinnerModel.setLength(controller.getDepth());
+    final PropertyChangeListener depthChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        depthSpinnerModel.setNullable(ev.getNewValue() == null);
+        depthSpinnerModel.setLength((Float)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.DEPTH, depthChangeListener);
+    depthSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.DEPTH, depthChangeListener);
+          controller.setDepth(depthSpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.DEPTH, depthChangeListener);
+        }
+      });
+    
+    // Create height label and its spinner
     this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitName));
-    this.heightSpinner = new NullableSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f));
+    final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
+    this.heightSpinner = new NullableSpinner(heightSpinnerModel);
+    heightSpinnerModel.setNullable(controller.getHeight() == null);
+    heightSpinnerModel.setLength(controller.getHeight());
+    final PropertyChangeListener heightChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        heightSpinnerModel.setNullable(ev.getNewValue() == null);
+        heightSpinnerModel.setLength((Float)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
+    heightSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
+          controller.setHeight(heightSpinnerModel.getLength());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.HEIGHT, heightChangeListener);
+        }
+      });
+    
+    // Create color label and its button
     this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
+    this.colorButton.setColor(controller.getColor());
+    this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setColor(colorButton.getColor());
+          }
+        });
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            colorButton.setColor(controller.getColor());
+          }
+        });
+
+    // Create visible check box
     this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleCheckBox.text"));
+    this.visibleCheckBox.setNullable(controller.getVisible() == null);
+    this.visibleCheckBox.setValue(controller.getVisible());
+    final PropertyChangeListener visibleChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        visibleCheckBox.setNullable(ev.getNewValue() == null);
+        visibleCheckBox.setValue((Boolean)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
+    this.visibleCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
+          controller.setVisible(visibleCheckBox.getValue());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.VISIBLE, visibleChangeListener);
+        }
+      });
+    
+    // Create mirror check box
     this.mirroredModelCheckBox = new NullableCheckBox(this.resource.getString("mirroredModelCheckBox.text"));
+    this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
+    this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
+    final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        mirroredModelCheckBox.setNullable(ev.getNewValue() == null);
+        mirroredModelCheckBox.setValue((Boolean)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
+    this.mirroredModelCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
+          controller.setModelMirrored(mirroredModelCheckBox.getValue());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.MODEL_MIRRORED, mirroredModelChangeListener);
+        }
+      });
+    
+    updateSizeComponents(controller);     
+    // Add a listener that enables / disables size fields depending on furniture resizable
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.RESIZABLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateSizeComponents(controller);     
+          }
+        });
+  }
+  
+  /**
+   * Updates size components depending on the fact that furniture is resizable or not.
+   */
+  private void updateSizeComponents(final HomeFurnitureController controller) {
+    boolean editableSize = controller.isResizable();
+    this.widthLabel.setEnabled(editableSize);
+    this.widthSpinner.setEnabled(editableSize);
+    this.depthLabel.setEnabled(editableSize);
+    this.depthSpinner.setEnabled(editableSize);
+    this.heightLabel.setEnabled(editableSize);
+    this.heightSpinner.setEnabled(editableSize);
+    this.mirroredModelCheckBox.setEnabled(editableSize);
   }
   
   /**
@@ -256,236 +501,6 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
   }
 
   /**
-   * Updates components values from selected furniture in <code>home</code>.
-   */
-  private void updateComponents(Home home) {
-    List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(home.getSelectedItems());
-    if (selectedFurniture.isEmpty()) {
-      setVisible(false); // Nothing to edit
-    } else {
-      setVisible(true);
-      // Search the common properties among selected furniture
-      HomePieceOfFurniture firstPiece = selectedFurniture.get(0);
-      String name = firstPiece.getName();
-      if (name != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          if (!name.equals(selectedFurniture.get(i).getName())) {
-            name = null;
-            break;
-          }
-        }
-      }
-      this.nameTextField.setText(name);
-      
-      Float angle = firstPiece.getAngle();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (angle.floatValue() != selectedFurniture.get(i).getAngle()) {
-          angle = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerNumberModel)this.angleSpinner.getModel()).setNullable(angle == null);
-      if (angle == null) {
-        this.angleSpinner.setValue(null);
-      } else {
-        this.angleSpinner.setValue((int)(Math.round(Math.toDegrees(angle)) + 360) % 360);
-      }
-
-      Float x = firstPiece.getX();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (x.floatValue() != selectedFurniture.get(i).getX()) {
-          x = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setNullable(x == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).setLength(x);
-
-      Float y = firstPiece.getY();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (y.floatValue() != selectedFurniture.get(i).getY()) {
-          y = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setNullable(y == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).setLength(y);
-
-      Float elevation = firstPiece.getElevation();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (elevation.floatValue() != selectedFurniture.get(i).getElevation()) {
-          elevation = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).setNullable(elevation == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).setLength(elevation);
-
-      Float width = firstPiece.getWidth();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (width.floatValue() != selectedFurniture.get(i).getWidth()) {
-          width = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setNullable(width == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).setLength(width);
-
-      Float depth = firstPiece.getDepth();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (depth.floatValue() != selectedFurniture.get(i).getDepth()) {
-          depth = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setNullable(depth == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).setLength(depth);
-
-      Float height = firstPiece.getHeight();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (height.floatValue() != selectedFurniture.get(i).getHeight()) {
-          height = null;
-          break;
-        }
-      }
-      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setNullable(height == null);
-      ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).setLength(height);
-
-      Integer color = firstPiece.getColor();
-      if (color != null) {
-        for (int i = 1; i < selectedFurniture.size(); i++) {
-          if (!color.equals(selectedFurniture.get(i).getColor())) {
-            color = null;
-            break;
-          }
-        }
-      }
-      this.colorButton.setColor(color);
-
-      Boolean visible = firstPiece.isVisible();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (visible != selectedFurniture.get(i).isVisible()) {
-          visible = null;
-          break;
-        }
-      }
-      this.visibleCheckBox.setNullable(visible == null);
-      this.visibleCheckBox.setValue(visible);           
-
-      Boolean modelMirrored = firstPiece.isModelMirrored();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (modelMirrored != selectedFurniture.get(i).isModelMirrored()) {
-          modelMirrored = null;
-          break;
-        }
-      }
-      this.mirroredModelCheckBox.setNullable(modelMirrored == null);
-      this.mirroredModelCheckBox.setValue(modelMirrored);     
-      
-      // Enable size components only if all pieces are resizable
-      Boolean resizable = firstPiece.isResizable();
-      for (int i = 1; i < selectedFurniture.size(); i++) {
-        if (resizable.booleanValue() != selectedFurniture.get(i).isResizable()) {
-          resizable = null;
-          break;
-        }
-      }
-      boolean editableSize = resizable == null || resizable.booleanValue();
-      this.widthSpinner.setEnabled(editableSize);
-      this.depthSpinner.setEnabled(editableSize);
-      this.heightSpinner.setEnabled(editableSize);
-      this.mirroredModelCheckBox.setEnabled(editableSize);     
-    }
-  }
-
-  /**
-   * Returns the edited name of the furniture or <code>null</code>.
-   */
-  public String getFurnitureName() {
-    String name = this.nameTextField.getText();
-    if (name == null || name.trim().length() == 0) {
-      return null;
-    } else {
-      return name;
-    }
-  }
-  
-  /**
-   * Returns the edited width of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureWidth() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.widthSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited depth of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureDepth() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.depthSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited height of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureHeight() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.heightSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited color of the furniture or <code>null</code>.
-   */
-  public Integer getFurnitureColor() {
-    return this.colorButton.getColor();
-  }
-
-  /**
-   * Returns whether the furniture is visible or not.
-   */
-  public Boolean isFurnitureVisible() {
-    return this.visibleCheckBox.getValue();
-  }
-
-  /**
-   * Returns whether the furniture is mirrored or not.
-   */
-  public Boolean isFurnitureModelMirrored() {
-    return this.mirroredModelCheckBox.getValue();
-  }
-
-  /**
-   * Returns the edited abcissa of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureX() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.xSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited ordinate of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureY() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.ySpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited elevation of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureElevation() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.elevationSpinner.getModel()).getLength();
-  }
-
-  /**
-   * Returns the edited angle of the furniture or <code>null</code>.
-   */
-  public Float getFurnitureAngle() {
-    Number angle = (Number)this.angleSpinner.getValue();
-    if (angle == null) {
-      return null;
-    } else {
-      return (float)Math.toRadians(angle.doubleValue());
-    }
-  }
-
-  /**
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
@@ -518,6 +533,7 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
     private Boolean      value = Boolean.FALSE;
     private boolean      nullable;
     private ItemListener checkBoxListener;
+    private List<ChangeListener> changeListeners = new ArrayList<ChangeListener>(1);
     
     /**
      * Creates a nullable check box.
@@ -580,9 +596,11 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
         } else if (isNullable()) {
           // Unselect check box to display a dash in its middle
           this.checkBox.setSelected(false);
+          this.checkBox.repaint();
         } else {
           throw new IllegalArgumentException("Check box isn't nullable");
         }
+        fireStateChanged();
       } finally {
         this.checkBox.addItemListener(this.checkBoxListener);
       }      
@@ -628,6 +646,33 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
     @Override
     public boolean isEnabled() {
       return this.checkBox.isEnabled();
+    }
+    
+    /**
+     * Adds a listener to this component.
+     */
+    public void addChangeListener(final ChangeListener l) {
+      this.changeListeners.add(l);
+    }
+
+    /**
+     * Removes a listener from this component.
+     */
+    public void removeChangeListener(final ChangeListener l) {
+      this.changeListeners.remove(l);
+    }
+
+    public void fireStateChanged() {
+      if (!this.changeListeners.isEmpty()) {
+        ChangeEvent changeEvent = new ChangeEvent(this);
+        // Work on a copy of changeListeners to ensure a listener 
+        // can modify safely listeners list
+        ChangeListener [] listeners = this.changeListeners.
+          toArray(new ChangeListener [this.changeListeners.size()]);
+        for (ChangeListener listener : listeners) {
+          listener.stateChanged(changeEvent);
+        }
+      }
     }
   }
 }

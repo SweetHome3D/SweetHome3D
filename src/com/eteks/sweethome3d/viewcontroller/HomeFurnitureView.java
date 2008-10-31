@@ -25,61 +25,6 @@ package com.eteks.sweethome3d.viewcontroller;
  */
 public interface HomeFurnitureView extends View {
   /**
-   * Returns the edited name of the furniture or <code>null</code>.
-   */
-  public abstract String getFurnitureName();
-
-  /**
-   * Returns the edited width of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureWidth();
-
-  /**
-   * Returns the edited depth of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureDepth();
-
-  /**
-   * Returns the edited height of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureHeight();
-
-  /**
-   * Returns the edited color of the furniture or <code>null</code>.
-   */
-  public abstract Integer getFurnitureColor();
-
-  /**
-   * Returns whether the furniture is visible or not.
-   */
-  public abstract Boolean isFurnitureVisible();
-
-  /**
-   * Returns whether the furniture model is mirrored or not.
-   */
-  public abstract Boolean isFurnitureModelMirrored();
-
-  /**
-   * Returns the edited abscissa of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureX();
-
-  /**
-   * Returns the edited ordinate of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureY();
-
-  /**
-   * Returns the edited elevation of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureElevation();
-
-  /**
-   * Returns the edited angle of the furniture or <code>null</code>.
-   */
-  public abstract Float getFurnitureAngle();
-
-  /**
    * Displays this view in a modal dialog box. 
    */
   public abstract void displayView(View parentView);
