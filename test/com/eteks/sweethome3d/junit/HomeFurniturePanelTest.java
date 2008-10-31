@@ -55,7 +55,7 @@ public class HomeFurniturePanelTest extends TestCase {
     HomeFurniturePanel panel = new HomeFurniturePanel(preferences, controller);
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(),
-        piece1.getY(), piece1.getElevation(), piece1.getAngle(), piece1.getWidth(),
+        piece1.getY(), piece1.getElevation(), (int)Math.toDegrees(piece1.getAngle()), piece1.getWidth(),
         piece1.getDepth(), piece1.getHeight(), piece1.getColor(),
         piece1.isVisible(), piece1.isModelMirrored(), controller);
 
@@ -77,7 +77,7 @@ public class HomeFurniturePanelTest extends TestCase {
     controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
     panel = new HomeFurniturePanel(preferences, controller);
     // Check values stored by furniture panel components are equal to the ones set
-    assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, piece1.getAngle(), 
+    assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, (int)Math.toDegrees(piece1.getAngle()), 
         piece1.getWidth(), null, null, null, null, null, controller);
   }
   
@@ -85,7 +85,7 @@ public class HomeFurniturePanelTest extends TestCase {
    * Assert values in parameter are the same as the ones 
    * stored in <code>controller</code>.
    */
-  private void assertFurnitureControllerEquals(String name, Float x, Float y, Float elevation, Float angle, 
+  private void assertFurnitureControllerEquals(String name, Float x, Float y, Float elevation, Integer angle, 
                                           Float width, Float depth, Float height, Integer color, 
                                           Boolean visible, Boolean modelMirrored, 
                                           HomeFurnitureController controller) {
