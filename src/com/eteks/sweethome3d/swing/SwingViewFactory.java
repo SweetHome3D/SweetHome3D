@@ -208,9 +208,9 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Creates a new view that edits page setup.
    */
-  public PageSetupView createPageSetupView(Home home,
+  public PageSetupView createPageSetupView(UserPreferences preferences,
                                            PageSetupController pageSetupController) {
-    return new PageSetupPanel(home, pageSetupController);
+    return new PageSetupPanel(pageSetupController);
   }
 
   /**

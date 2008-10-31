@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -29,26 +31,41 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for home page setup view.
  * @author Emmanuel Puybaret
  */
 public class PageSetupController implements Controller {
-  private final Home                home;
-  private final ViewFactory         viewFactory;
-  private final UndoableEditSupport undoSupport;
-  private PageSetupView             pageSetupView;
+  /**
+   * The property that may be edited by the view associated to this controller. 
+   */
+  public enum Property {PRINT}
+  
+  private final Home                  home;
+  private final UserPreferences       preferences;
+  private final ViewFactory           viewFactory;
+  private final UndoableEditSupport   undoSupport;
+  private final PropertyChangeSupport propertyChangeSupport;
+  private PageSetupView               pageSetupView;
 
+  private HomePrint print;
+  
   /**
    * Creates the controller of page setup with undo support.
    */
   public PageSetupController(Home home,
+                             UserPreferences preferences,
                              ViewFactory viewFactory, 
                              UndoableEditSupport undoSupport) {
     this.home = home;
+    this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.undoSupport = undoSupport;
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    
+    setPrint(home.getPrint());
   }
 
   /**
@@ -57,7 +74,7 @@ public class PageSetupController implements Controller {
   public PageSetupView getView() {
     // Create view lazily only once it's needed
     if (this.pageSetupView == null) {
-      this.pageSetupView = this.viewFactory.createPageSetupView(this.home, this);
+      this.pageSetupView = this.viewFactory.createPageSetupView(this.preferences, this);
     }
     return this.pageSetupView;
   }
@@ -70,11 +87,43 @@ public class PageSetupController implements Controller {
   }
 
   /**
+   * Adds the property change <code>listener</code> in parameter to this controller.
+   */
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this controller.
+   */
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Sets the edited print attributes.
+   */
+  public void setPrint(HomePrint print) {
+    if (print != this.print) {
+      HomePrint oldPrint = this.print;
+      this.print = print;
+      this.propertyChangeSupport.firePropertyChange(Property.PRINT.toString(), oldPrint, print);
+    }
+  }
+
+  /**
+   * Returns the edited print attributes.
+   */
+  public HomePrint getPrint() {
+    return this.print;
+  }
+
+  /**
    * Controls the modification of home print attributes.
    */
-  public void modifyHomePrint() {
+  public void modify() {
     final HomePrint oldHomePrint = this.home.getPrint();
-    final HomePrint homePrint = getView().getHomePrint();
+    final HomePrint homePrint = getPrint();
     this.home.setPrint(homePrint);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {
       @Override

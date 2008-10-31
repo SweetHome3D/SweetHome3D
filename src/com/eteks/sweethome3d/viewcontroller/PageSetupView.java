@@ -19,18 +19,12 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.HomePrint;
 
 /**
  * A view for page setup.
  * @author Emmanuel Puybaret
  */
 public interface PageSetupView extends View {
-  /**
-   * Returns the print attributes matching user choice.
-   */
-  public abstract HomePrint getHomePrint();
-
   /**
    * Displays this view in a modal dialog box. 
    */

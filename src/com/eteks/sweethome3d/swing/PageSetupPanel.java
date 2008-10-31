@@ -24,9 +24,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ResourceBundle;
 
 import javax.swing.JButton;
@@ -37,7 +41,6 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
@@ -62,38 +65,100 @@ public class PageSetupPanel extends JPanel implements PageSetupView {
    * @param home home with print attributes edited by this panel
    * @param controller the controller of this panel
    */
-  public PageSetupPanel(Home home,
-                        PageSetupController controller) {
+  public PageSetupPanel(PageSetupController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         PageSetupPanel.class.getName());
-    createComponents();
+    createComponents(controller);
     setMnemonics();
     layoutComponents();
-    updateComponents(home);
   }
 
   /**
    * Creates and initializes components.
    */
-  private void createComponents() {
+  private void createComponents(final PageSetupController controller) {
     this.pageFormatButton = new JButton(this.resource.getString("pageFormatButton.text"));
     this.pageFormatButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           // Show the page setup dialog
           PrinterJob printerJob = PrinterJob.getPrinterJob();
           pageFormat = printerJob.pageDialog(pageFormat);
+          updateController(controller);
         }
       });
     this.furniturePrintedCheckBox = new JCheckBox(
-        this.resource.getString("furniturePrintedCheckBox.text")); 
+        this.resource.getString("furniturePrintedCheckBox.text"));
+    ItemListener checkBoxListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          updateController(controller);
+        }
+      };
+    this.furniturePrintedCheckBox.addItemListener(checkBoxListener);
     this.planPrintedCheckBox = new JCheckBox(
         this.resource.getString("planPrintedCheckBox.text")); 
+    this.planPrintedCheckBox.addItemListener(checkBoxListener);
     this.view3DPrintedCheckBox = new JCheckBox(
         this.resource.getString("view3DPrintedCheckBox.text")); 
+    this.view3DPrintedCheckBox.addItemListener(checkBoxListener);
+    
+    controller.addPropertyChangeListener(PageSetupController.Property.PRINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateComponents(controller.getPrint());
+          }
+        });
+    updateComponents(controller.getPrint());
   }
   
+  /**
+   * Updates components from <code>homePrint</code> attributes.
+   */
+  private void updateComponents(HomePrint homePrint) {
+    this.pageFormat = PageSetupPanel.getPageFormat(homePrint);
+    // Check if off screen image is supported 
+    boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
+    if (homePrint != null) {
+      this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
+      this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
+      this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
+    } else {
+      this.furniturePrintedCheckBox.setSelected(true);
+      this.planPrintedCheckBox.setSelected(true);
+      this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
+    }
+    this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
+  }
+
+  /**
+   * Updates controller print attributes.
+   */
+  public void updateController(PageSetupController controller) {
+    // Return an HomePrint instance matching returnedPageFormat
+    HomePrint.PaperOrientation paperOrientation; 
+    switch (this.pageFormat.getOrientation()) {
+      case PageFormat.LANDSCAPE :
+        paperOrientation = HomePrint.PaperOrientation.LANDSCAPE;
+        break;
+      case PageFormat.REVERSE_LANDSCAPE :
+        paperOrientation = HomePrint.PaperOrientation.REVERSE_LANDSCAPE;
+        break;
+      default :
+        paperOrientation = HomePrint.PaperOrientation.PORTRAIT;
+        break;
+    }
+    Paper paper = this.pageFormat.getPaper();
+    HomePrint homePrint = new HomePrint(paperOrientation, (float)paper.getWidth(), (float)paper.getHeight(),
+        (float)paper.getImageableY(), (float)paper.getImageableX(),
+        (float)(paper.getHeight() - paper.getImageableHeight() - paper.getImageableY()),
+        (float)(paper.getWidth() - paper.getImageableWidth() - paper.getImageableX()),
+        this.furniturePrintedCheckBox.isSelected(),
+        this.planPrintedCheckBox.isSelected(),
+        this.view3DPrintedCheckBox.isSelected());
+    controller.setPrint(homePrint);
+  }
+
   /**
    * Sets components mnemonics and label / component associations.
    */
@@ -134,53 +199,6 @@ public class PageSetupPanel extends JPanel implements PageSetupView {
   }
 
   /**
-   * Updates components.
-   */
-  private void updateComponents(Home home) {
-    HomePrint homePrint = home.getPrint();
-    this.pageFormat = PageSetupPanel.getPageFormat(homePrint);
-    // Check if off screen image is supported 
-    boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
-    if (homePrint != null) {
-      this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
-      this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
-      this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
-    } else {
-      this.furniturePrintedCheckBox.setSelected(true);
-      this.planPrintedCheckBox.setSelected(true);
-      this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
-    }
-    this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
-  }
-  
-  /**
-   * Returns the print attributes matching user choice.
-   */
-  public HomePrint getHomePrint() {
-    // Return an HomePrint instance matching returnedPageFormat
-    HomePrint.PaperOrientation paperOrientation; 
-    switch (this.pageFormat.getOrientation()) {
-      case PageFormat.LANDSCAPE :
-        paperOrientation = HomePrint.PaperOrientation.LANDSCAPE;
-        break;
-      case PageFormat.REVERSE_LANDSCAPE :
-        paperOrientation = HomePrint.PaperOrientation.REVERSE_LANDSCAPE;
-        break;
-      default :
-        paperOrientation = HomePrint.PaperOrientation.PORTRAIT;
-        break;
-    }
-    Paper paper = this.pageFormat.getPaper();
-    return new HomePrint(paperOrientation, (float)paper.getWidth(), (float)paper.getHeight(),
-        (float)paper.getImageableY(), (float)paper.getImageableX(),
-        (float)(paper.getHeight() - paper.getImageableHeight() - paper.getImageableY()),
-        (float)(paper.getWidth() - paper.getImageableWidth() - paper.getImageableX()),
-        this.furniturePrintedCheckBox.isSelected(),
-        this.planPrintedCheckBox.isSelected(),
-        this.view3DPrintedCheckBox.isSelected());
-  }
-
-  /**
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
@@ -189,7 +207,7 @@ public class PageSetupPanel extends JPanel implements PageSetupView {
         JOptionPane.OK_CANCEL_OPTION, 
         JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {
-      this.controller.modifyHomePrint();
+      this.controller.modify();
     }
   }
 

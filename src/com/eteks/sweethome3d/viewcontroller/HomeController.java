@@ -1392,7 +1392,8 @@ public class HomeController implements Controller {
    * Controls page setup.
    */
   public void setupPage() {
-    new PageSetupController(this.home, this.viewFactory, this.undoSupport).displayView(getView());
+    new PageSetupController(this.home, this.preferences, 
+        this.viewFactory, this.undoSupport).displayView(getView());
   }
 
   /**

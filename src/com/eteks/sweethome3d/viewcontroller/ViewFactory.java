@@ -137,7 +137,7 @@ public interface ViewFactory {
   /**
    * Creates a new view that edits page setup.
    */
-  public abstract PageSetupView createPageSetupView(Home home,
+  public abstract PageSetupView createPageSetupView(UserPreferences preferences,
                                                     PageSetupController pageSetupController);
 
   /**
