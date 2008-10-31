@@ -48,15 +48,15 @@ import javax.swing.event.ChangeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.WallController;
-import com.eteks.sweethome3d.viewcontroller.WallView;
 
 /**
  * Wall editing panel.
  * @author Emmanuel Puybaret
  */
-public class WallPanel extends JPanel implements WallView {
+public class WallPanel extends JPanel implements DialogView {
   private final WallController controller;
   private ResourceBundle resource;
   private JLabel         xStartLabel;

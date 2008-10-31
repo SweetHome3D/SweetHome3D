@@ -52,15 +52,15 @@ import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
-import com.eteks.sweethome3d.viewcontroller.HomeFurnitureView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home furniture editing panel.
  * @author Emmanuel Puybaret
  */
-public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
+public class HomeFurniturePanel extends JPanel implements DialogView {
   private final HomeFurnitureController controller;
   private ResourceBundle          resource;
   private JLabel                  nameLabel;

@@ -51,7 +51,7 @@ public class HomeFurnitureController implements Controller {
   private final ViewFactory           viewFactory;
   private final UndoableEditSupport   undoSupport;
   private final PropertyChangeSupport propertyChangeSupport;
-  private HomeFurnitureView           homeFurnitureView;
+  private DialogView                  homeFurnitureView;
 
   private String name;
   private Float x;
@@ -85,7 +85,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public HomeFurnitureView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.homeFurnitureView == null) {
       this.homeFurnitureView = this.viewFactory.createHomeFurnitureView(

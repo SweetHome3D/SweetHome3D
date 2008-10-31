@@ -1,5 +1,5 @@
 /*
- * HomeView.java 28 oct 2008
+ * WizardView.java 28 oct. 2008
  *
  * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -20,13 +20,12 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 /**
- * A view that edits home furniture attributes. 
+ * The view that displays a wizard.
  * @author Emmanuel Puybaret
  */
-public interface HomeFurnitureView extends View {
+public interface DialogView extends View {
   /**
-   * Displays this view in a modal dialog box. 
+   * Displays this wizard view in a modal dialog.
    */
   public abstract void displayView(View parentView);
-
 }

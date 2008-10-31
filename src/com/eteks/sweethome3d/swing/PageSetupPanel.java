@@ -43,15 +43,15 @@ import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
-import com.eteks.sweethome3d.viewcontroller.PageSetupView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home page setup editing panel.
  * @author Emmanuel Puybaret
  */
-public class PageSetupPanel extends JPanel implements PageSetupView {
+public class PageSetupPanel extends JPanel implements DialogView {
   private final PageSetupController controller;
   private ResourceBundle      resource;
   private PageFormat          pageFormat;

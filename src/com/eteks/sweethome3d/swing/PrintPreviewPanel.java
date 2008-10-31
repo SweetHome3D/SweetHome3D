@@ -51,16 +51,16 @@ import javax.swing.border.AbstractBorder;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
-import com.eteks.sweethome3d.viewcontroller.PrintPreviewView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home print preview editing panel.
  * @author Emmanuel Puybaret
  */
-public class PrintPreviewPanel extends JPanel implements PrintPreviewView {
+public class PrintPreviewPanel extends JPanel implements DialogView {
   private enum ActionType {SHOW_PREVIOUS_PAGE, SHOW_NEXT_PAGE}
 
   private ResourceBundle         resource;

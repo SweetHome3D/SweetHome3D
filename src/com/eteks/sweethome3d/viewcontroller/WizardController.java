@@ -43,7 +43,7 @@ public abstract class WizardController implements Controller {
   private final PropertyChangeSupport  propertyChangeSupport;
   private final PropertyChangeListener stepStatePropertyChangeListener;
   
-  private WizardView                   wizardView;
+  private DialogView                   wizardView;
   // Current step state
   private WizardControllerStepState    stepState;
 
@@ -81,7 +81,7 @@ public abstract class WizardController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public WizardView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.wizardView == null) {
       this.wizardView = this.viewFactory.createWizardView(this);

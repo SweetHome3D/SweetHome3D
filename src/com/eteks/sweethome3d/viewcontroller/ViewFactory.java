@@ -69,7 +69,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays a wizard. 
    */
-  public abstract WizardView createWizardView(WizardController wizardController);
+  public abstract DialogView createWizardView(WizardController wizardController);
 
   /**
    * Returns a new view that displays the different steps that helps the user to choose a background image. 
@@ -106,25 +106,25 @@ public interface ViewFactory {
   /**
    * Returns a new view that edits user preferences.
    */
-  public abstract UserPreferencesView createUserPreferencesView(
+  public abstract DialogView createUserPreferencesView(
                                           UserPreferences preferences,
                                           UserPreferencesController userPreferencesController);
   /**
    * Returns a new view that edits furniture values.
    */
-  public abstract HomeFurnitureView createHomeFurnitureView(UserPreferences preferences,
+  public abstract DialogView createHomeFurnitureView(UserPreferences preferences,
                                          HomeFurnitureController homeFurnitureController);
 
   /**
    * Returns a new view that edits wall values.
    */
-  public abstract WallView createWallView(UserPreferences preferences,
+  public abstract DialogView createWallView(UserPreferences preferences,
                                           WallController wallController);
 
   /**
    * Returns a new view that edits 3D attributes.
    */
-  public abstract Home3DAttributesView createHome3DAttributesView(UserPreferences preferences,
+  public abstract DialogView createHome3DAttributesView(UserPreferences preferences,
                                            Home3DAttributesController home3DAttributesController);
 
   /**
@@ -137,13 +137,13 @@ public interface ViewFactory {
   /**
    * Creates a new view that edits page setup.
    */
-  public abstract PageSetupView createPageSetupView(UserPreferences preferences,
+  public abstract DialogView createPageSetupView(UserPreferences preferences,
                                                     PageSetupController pageSetupController);
 
   /**
    * Returns a new view that displays home print preview. 
    */
-  public abstract PrintPreviewView createPrintPreviewView(Home home,
+  public abstract DialogView createPrintPreviewView(Home home,
                                                  HomeController homeController,
                                                  PrintPreviewController printPreviewController);
 

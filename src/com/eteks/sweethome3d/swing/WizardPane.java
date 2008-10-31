@@ -50,13 +50,13 @@ import javax.swing.border.BevelBorder;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
-import com.eteks.sweethome3d.viewcontroller.WizardView;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 
 /**
  * Wizard pane. 
  * @author Emmanuel Puybaret
  */
-public class WizardPane extends JOptionPane implements WizardView {
+public class WizardPane extends JOptionPane implements DialogView {
   private final WizardController controller;
   private ResourceBundle   resource;
   private JButton          backOptionButton;

@@ -58,7 +58,7 @@ public class Home3DAttributesController implements Controller {
   private final UndoableEditSupport   undoSupport;
   private TextureChoiceController     groundTextureController;
   private final PropertyChangeSupport propertyChangeSupport;
-  private Home3DAttributesView        home3DAttributesView;
+  private DialogView                  home3DAttributesView;
 
   private int   observerFieldOfViewInDegrees;
   private float observerHeight;
@@ -108,7 +108,7 @@ public class Home3DAttributesController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public Home3DAttributesView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.home3DAttributesView == null) {
       this.home3DAttributesView = this.viewFactory.createHome3DAttributesView(

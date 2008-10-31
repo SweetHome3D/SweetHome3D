@@ -29,7 +29,7 @@ public class PrintPreviewController implements Controller {
   private final Home           home;
   private final HomeController homeController;
   private final ViewFactory    viewFactory;
-  private PrintPreviewView     printPreviewView;
+  private DialogView           printPreviewView;
 
   /**
    * Creates the controller of print preview with undo support.
@@ -45,7 +45,7 @@ public class PrintPreviewController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public PrintPreviewView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.printPreviewView == null) {
       this.printPreviewView = this.viewFactory.createPrintPreviewView(this.home, this.homeController, this);

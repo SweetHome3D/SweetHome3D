@@ -67,7 +67,7 @@ public class WallController implements Controller {
   private TextureChoiceController     leftSideTextureController;
   private TextureChoiceController     rightSideTextureController;
   private final PropertyChangeSupport propertyChangeSupport;
-  private WallView                    wallView;
+  private DialogView                  wallView;
 
   private boolean   editablePoints;
   private Float     xStart;
@@ -144,7 +144,7 @@ public class WallController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public WallView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.wallView == null) {
       this.wallView = this.viewFactory.createWallView(this.preferences, this); 

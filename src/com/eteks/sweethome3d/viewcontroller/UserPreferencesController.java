@@ -38,7 +38,7 @@ public class UserPreferencesController implements Controller {
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
   private final PropertyChangeSupport propertyChangeSupport;
-  private UserPreferencesView         userPreferencesView;
+  private DialogView                  userPreferencesView;
 
   private String                language;
   private UserPreferences.Unit  unit;
@@ -64,7 +64,7 @@ public class UserPreferencesController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public UserPreferencesView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.userPreferencesView == null) {
       this.userPreferencesView = this.viewFactory.createUserPreferencesView(this.preferences, this); 

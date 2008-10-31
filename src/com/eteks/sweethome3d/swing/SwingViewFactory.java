@@ -31,6 +31,7 @@ import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
@@ -38,11 +39,9 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HelpController;
 import com.eteks.sweethome3d.viewcontroller.HelpView;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
-import com.eteks.sweethome3d.viewcontroller.Home3DAttributesView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
-import com.eteks.sweethome3d.viewcontroller.HomeFurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.HomeView3D;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
@@ -50,22 +49,17 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
-import com.eteks.sweethome3d.viewcontroller.PageSetupView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
-import com.eteks.sweethome3d.viewcontroller.PrintPreviewView;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
-import com.eteks.sweethome3d.viewcontroller.UserPreferencesView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.eteks.sweethome3d.viewcontroller.WallController;
-import com.eteks.sweethome3d.viewcontroller.WallView;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
-import com.eteks.sweethome3d.viewcontroller.WizardView;
 
 /**
  * View factory working with Swing components.
@@ -117,7 +111,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays a wizard. 
    */
-  public WizardView createWizardView(WizardController wizardController) {
+  public DialogView createWizardView(WizardController wizardController) {
     return new WizardPane(wizardController);
   }
 
@@ -167,7 +161,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits user preferences.
    */
-  public UserPreferencesView createUserPreferencesView(UserPreferences preferences,
+  public DialogView createUserPreferencesView(UserPreferences preferences,
                                           UserPreferencesController userPreferencesController) {
     return new UserPreferencesPanel(preferences, userPreferencesController);
   }
@@ -175,7 +169,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits the selected furniture in <code>home</code>.
    */
-  public HomeFurnitureView createHomeFurnitureView(UserPreferences preferences,
+  public DialogView createHomeFurnitureView(UserPreferences preferences,
                                HomeFurnitureController homeFurnitureController) {
     return new HomeFurniturePanel(preferences, homeFurnitureController);
   }
@@ -183,7 +177,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits wall values.
    */
-  public WallView createWallView(UserPreferences preferences,
+  public DialogView createWallView(UserPreferences preferences,
                                  WallController wallController) {
     return new WallPanel(preferences, wallController);
   }
@@ -191,7 +185,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits 3D attributes.
    */
-  public Home3DAttributesView createHome3DAttributesView(UserPreferences preferences,
+  public DialogView createHome3DAttributesView(UserPreferences preferences,
                                   Home3DAttributesController home3DAttributesController) {
     return new Home3DAttributesPanel(preferences, home3DAttributesController);    
   }
@@ -208,7 +202,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Creates a new view that edits page setup.
    */
-  public PageSetupView createPageSetupView(UserPreferences preferences,
+  public DialogView createPageSetupView(UserPreferences preferences,
                                            PageSetupController pageSetupController) {
     return new PageSetupPanel(pageSetupController);
   }
@@ -216,7 +210,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays <code>home</code> print preview. 
    */
-  public PrintPreviewView createPrintPreviewView(Home home,
+  public DialogView createPrintPreviewView(Home home,
                                                  HomeController homeController,
                                                  PrintPreviewController printPreviewController) {
     return new PrintPreviewPanel(home, homeController, printPreviewController);

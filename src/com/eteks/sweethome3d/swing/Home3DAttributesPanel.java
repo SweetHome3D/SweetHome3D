@@ -47,16 +47,15 @@ import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
-import com.eteks.sweethome3d.viewcontroller.Home3DAttributesView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home 3D attributes editing panel.
  * @author Emmanuel Puybaret
  */
-public class Home3DAttributesPanel extends JPanel 
-                                   implements Home3DAttributesView {
+public class Home3DAttributesPanel extends JPanel implements DialogView {
   private final Home3DAttributesController controller;
   private JLabel                           observerFieldOfViewLabel;
   private JSpinner                         observerFieldOfViewSpinner;

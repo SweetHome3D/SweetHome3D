@@ -48,7 +48,7 @@ public class PageSetupController implements Controller {
   private final ViewFactory           viewFactory;
   private final UndoableEditSupport   undoSupport;
   private final PropertyChangeSupport propertyChangeSupport;
-  private PageSetupView               pageSetupView;
+  private DialogView                  pageSetupView;
 
   private HomePrint print;
   
@@ -71,7 +71,7 @@ public class PageSetupController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public PageSetupView getView() {
+  public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.pageSetupView == null) {
       this.pageSetupView = this.viewFactory.createPageSetupView(this.preferences, this);

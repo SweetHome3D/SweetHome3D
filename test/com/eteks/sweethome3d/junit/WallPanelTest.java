@@ -35,9 +35,9 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.eteks.sweethome3d.viewcontroller.WallController;
-import com.eteks.sweethome3d.viewcontroller.WallView;
 
 /**
  * Tests {@linkplain com.eteks.sweethome3d.swing.HomeFurniturePanel home piece of furniture panel}.
@@ -82,7 +82,7 @@ public class WallPanelTest extends TestCase {
         null, wall1.getRightSideTexture(), wallController);
     
     // 4. Increase length in dialog
-    WallView wallView = wallController.getView();
+    DialogView wallView = wallController.getView();
     JSpinner lengthSpinner = 
         (JSpinner)TestUtilities.getField(wallView, "lengthSpinner");
     lengthSpinner.setValue((Float)lengthSpinner.getValue() + 20f);
