@@ -42,7 +42,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class BackgroundImageWizardController extends WizardController 
                                              implements Controller {
-  public enum Property {IMAGE, SCALE_DISTANCE, SCALE_DISTANCE_POINTS, X_ORIGIN, Y_ORIGIN}
+  public enum Property {STEP, IMAGE, SCALE_DISTANCE, SCALE_DISTANCE_POINTS, X_ORIGIN, Y_ORIGIN}
 
   public enum Step {CHOICE, SCALE, ORIGIN};
   
@@ -56,16 +56,17 @@ public class BackgroundImageWizardController extends WizardController
   private final BackgroundImageWizardStepState imageChoiceStepState;
   private final BackgroundImageWizardStepState imageScaleStepState;
   private final BackgroundImageWizardStepState imageOriginStepState;
-  private BackgroundImageWizardStepsView       stepsView;
+  private View                                 stepsView;
   
-  private Content                        image;
-  private Float                          scaleDistance;
-  private float                          scaleDistanceXStart;
-  private float                          scaleDistanceYStart;
-  private float                          scaleDistanceXEnd;
-  private float                          scaleDistanceYEnd;
-  private float                          xOrigin;
-  private float                          yOrigin;
+  private Step    step;
+  private Content image;
+  private Float   scaleDistance;
+  private float   scaleDistanceXStart;
+  private float   scaleDistanceYStart;
+  private float   scaleDistanceXEnd;
+  private float   scaleDistanceYEnd;
+  private float   xOrigin;
+  private float   yOrigin;
   
   public BackgroundImageWizardController(Home home, 
                                          UserPreferences preferences,
@@ -95,10 +96,11 @@ public class BackgroundImageWizardController extends WizardController
   @Override
   public void finish() {
     final BackgroundImage oldImage = this.home.getBackgroundImage();
-    final BackgroundImage image = new BackgroundImage(this.image,
-        this.scaleDistance, this.scaleDistanceXStart, this.scaleDistanceYStart,
-        this.scaleDistanceXEnd, this.scaleDistanceYEnd, 
-        this.xOrigin, this.yOrigin);
+    float [][] scaleDistancePoints = getScaleDistancePoints();
+    final BackgroundImage image = new BackgroundImage(getImage(),
+        getScaleDistance(), scaleDistancePoints [0][0], scaleDistancePoints [0][1],
+        scaleDistancePoints [1][0], scaleDistancePoints [1][1], 
+        getXOrigin(), getYOrigin());
     this.home.setBackgroundImage(image);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {
       @Override
@@ -156,7 +158,7 @@ public class BackgroundImageWizardController extends WizardController
   /**
    * Returns the unique wizard view used for all steps.
    */
-  protected BackgroundImageWizardStepsView getStepsView() {
+  protected View getStepsView() {
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       this.stepsView = this.viewFactory.createBackgroundImageWizardStepsView(
@@ -168,8 +170,19 @@ public class BackgroundImageWizardController extends WizardController
   /**
    * Switch in the wizard view to the given <code>step</code>.
    */
-  protected void setStepView(Step step) {
-    getStepsView().setStep(step);
+  protected void setStep(Step step) {
+    if (step != this.step) {
+      Step oldStep = this.step;
+      this.step = step;
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+    }
+  }
+  
+  /**
+   * Returns the current step in wizard view.
+   */
+  public Step getStep() {
+    return this.step;
   }
 
   /**
@@ -296,7 +309,7 @@ public class BackgroundImageWizardController extends WizardController
 
     @Override
     public void enter() {
-      setStepView(getStep());
+      setStep(getStep());
     }
     
     @Override

@@ -78,15 +78,14 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
-import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
-public class BackgroundImageWizardStepsPanel extends JPanel 
-                                             implements BackgroundImageWizardStepsView {
+public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   private final BackgroundImageWizardController controller;
   private final Executor                        imageLoader;
   private ResourceBundle                        resource;
@@ -112,22 +111,30 @@ public class BackgroundImageWizardStepsPanel extends JPanel
    */
   public BackgroundImageWizardStepsPanel(BackgroundImage backgroundImage, 
                                          UserPreferences preferences, 
-                                         ContentManager contentManager,
-                                         BackgroundImageWizardController controller) {
+                                         ContentManager  contentManager,
+                                         final BackgroundImageWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
     this.imageLoader = Executors.newSingleThreadExecutor();
-    createComponents(preferences, contentManager);
+    createComponents(preferences, contentManager, controller);
     setMnemonics();
     layoutComponents();
     updateController(backgroundImage);
+
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.STEP, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateStep(controller);
+          }
+        });
   }
 
   /**
    * Creates components displayed by this panel.
    */
   private void createComponents(UserPreferences preferences, 
-                                final ContentManager contentManager) {
+                                final ContentManager contentManager,
+                                final BackgroundImageWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
 
@@ -187,7 +194,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel
               ((NullableSpinner.NullableSpinnerLengthModel)scaleDistanceSpinner.getModel()).getLength());
         }
       });
-    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE,
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If scale distance changes updates scale spinner
@@ -195,7 +202,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel
             scaleDistanceSpinnerModel.setLength(controller.getScaleDistance());
           }
         });
-    this.scalePreviewComponent = new ScaleImagePreviewComponent(this.controller);
+    this.scalePreviewComponent = new ScaleImagePreviewComponent(controller);
     
     // Image origin panel components
     this.originLabel = new JLabel(this.resource.getString("originLabel.text"));
@@ -217,14 +224,14 @@ public class BackgroundImageWizardStepsPanel extends JPanel
       };
     xOriginSpinnerModel.addChangeListener(originSpinnersListener);
     yOriginSpinnerModel.addChangeListener(originSpinnersListener);
-    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, 
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.X_ORIGIN, 
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
             // If origin values changes update x origin spinner
             xOriginSpinnerModel.setLength(controller.getXOrigin());
           }
         });
-    this.controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, 
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.Y_ORIGIN, 
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
             // If origin values changes update y origin spinner
@@ -232,7 +239,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel
           }
         });
     
-    this.originPreviewComponent = new OriginImagePreviewComponent(this.controller);
+    this.originPreviewComponent = new OriginImagePreviewComponent(controller);
   }
 
   /**
@@ -320,9 +327,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel
   }
   
   /**
-   * Switches to the view card matching <code>step</code>.   
+   * Switches to the view card matching current step.   
    */
-  public void setStep(final BackgroundImageWizardController.Step step) {
+  public void updateStep(BackgroundImageWizardController controller) {
+    BackgroundImageWizardController.Step step = controller.getStep();
     this.cardLayout.show(this, step.name());    
     switch (step) {
       case CHOICE:

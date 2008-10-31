@@ -27,11 +27,6 @@ import com.eteks.sweethome3d.model.Content;
  */
 public interface ImportedFurnitureWizardStepsView extends View {
   /**
-   * Switches to the view card matching <code>step</code>.   
-   */
-  public abstract void setStep(ImportedFurnitureWizardController.Step step);
-
-  /**
    * Returns the icon content of the chosen piece.
    */
   public abstract Content getIcon();

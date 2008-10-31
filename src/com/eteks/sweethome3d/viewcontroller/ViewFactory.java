@@ -74,7 +74,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to choose a background image. 
    */
-  public abstract BackgroundImageWizardStepsView createBackgroundImageWizardStepsView(
+  public abstract View createBackgroundImageWizardStepsView(
                                  BackgroundImage backgroundImage,
                                  UserPreferences preferences, ContentManager contentManager,
                                  BackgroundImageWizardController backgroundImageWizardController);
@@ -91,7 +91,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to import a texture. 
    */
-  public abstract ImportedTextureWizardStepsView createImportedTextureWizardStepsView(
+  public abstract View createImportedTextureWizardStepsView(
                                  CatalogTexture texture, String textureName,
                                  UserPreferences preferences,
                                  ContentManager contentManager,

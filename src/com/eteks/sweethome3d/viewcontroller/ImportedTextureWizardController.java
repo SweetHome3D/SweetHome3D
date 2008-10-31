@@ -38,7 +38,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class ImportedTextureWizardController extends WizardController 
                                              implements Controller {
-  public enum Property {IMAGE, NAME, CATEGORY, WIDTH, HEIGHT}
+  public enum Property {STEP, IMAGE, NAME, CATEGORY, WIDTH, HEIGHT}
 
   public enum Step {IMAGE, ATTRIBUTES};
   
@@ -51,13 +51,14 @@ public class ImportedTextureWizardController extends WizardController
 
   private final ImportedTextureWizardStepState textureImageStepState;
   private final ImportedTextureWizardStepState textureAttributesStepState;
-  private ImportedTextureWizardStepsView       stepsView;
+  private View                                 stepsView;
 
-  private Content                              image;
-  private String                               name;
-  private TexturesCategory                     category;
-  private float                                width;
-  private float                                height;
+  private Step              step;
+  private Content           image;
+  private String            name;
+  private TexturesCategory  category;
+  private float             width;
+  private float             height;
 
   /**
    * Creates a controller that edits a new catalog texture.
@@ -116,8 +117,8 @@ public class ImportedTextureWizardController extends WizardController
    */
   @Override
   public void finish() {
-    CatalogTexture newTexture = new CatalogTexture(this.name, this.image, 
-        this.width, this.height, true);
+    CatalogTexture newTexture = new CatalogTexture(getName(), getImage(), 
+        getWidth(), getHeight(), true);
     // Remove the edited texture from catalog
     TexturesCatalog catalog = this.preferences.getTexturesCatalog();
     if (this.texture != null) {
@@ -151,7 +152,7 @@ public class ImportedTextureWizardController extends WizardController
   /**
    * Returns the unique wizard view used for all steps.
    */
-  protected ImportedTextureWizardStepsView getStepsView() {
+  protected View getStepsView() {
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       this.stepsView = this.viewFactory.createImportedTextureWizardStepsView(this.texture, this.textureName, 
@@ -163,8 +164,19 @@ public class ImportedTextureWizardController extends WizardController
   /**
    * Switch in the wizard view to the given <code>step</code>.
    */
-  protected void setStepView(Step step) {
-    getStepsView().setStep(step);
+  protected void setStep(Step step) {
+    if (step != this.step) {
+      Step oldStep = this.step;
+      this.step = step;
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+    }
+  }
+  
+  /**
+   * Returns the current step in wizard view.
+   */
+  public Step getStep() {
+    return this.step;
   }
 
   /**
@@ -304,7 +316,7 @@ public class ImportedTextureWizardController extends WizardController
 
     @Override
     public void enter() {
-      setStepView(getStep());
+      setStep(getStep());
     }
     
     @Override

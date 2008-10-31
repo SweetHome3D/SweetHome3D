@@ -79,14 +79,13 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
-import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardStepsView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
-public class ImportedTextureWizardStepsPanel extends JPanel 
-                                             implements ImportedTextureWizardStepsView {
+public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private final ImportedTextureWizardController controller;
   private ResourceBundle                  resource;
   private CardLayout                      cardLayout;
@@ -114,24 +113,32 @@ public class ImportedTextureWizardStepsPanel extends JPanel
                                          String textureName, 
                                          UserPreferences preferences, 
                                          ContentManager contentManager,
-                                         ImportedTextureWizardController controller) {
+                                         final ImportedTextureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedTextureWizardStepsPanel.class.getName());
     this.imageLoader = Executors.newSingleThreadExecutor();
-    createComponents(preferences, contentManager);
+    createComponents(preferences, contentManager, controller);
     setMnemonics();
     layoutComponents();
     updateController(catalogTexture);
     if (textureName != null) {
       updateController(textureName, contentManager, preferences, true);
     }
+    
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.STEP, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateStep(controller);
+          }
+        });
   }
 
   /**
    * Creates components displayed by this panel.
    */
   private void createComponents(final UserPreferences preferences, 
-                                final ContentManager contentManager) {
+                                final ContentManager contentManager, 
+                                final ImportedTextureWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
 
@@ -202,7 +209,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel
         }
       };
     this.nameTextField.getDocument().addDocumentListener(nameListener);
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.NAME,
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.NAME,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If name changes update name text field
@@ -272,7 +279,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel
           controller.setCategory((TexturesCategory)ev.getItem());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.CATEGORY,
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.CATEGORY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If category changes update category combo box
@@ -297,7 +304,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel
           widthSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.WIDTH,
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.WIDTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If width changes update width spinner
@@ -318,7 +325,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel
           heightSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.HEIGHT,
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.HEIGHT,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If height changes update height spinner
@@ -333,9 +340,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel
           updateAttributesPreviewImage();
         }
       };
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.IMAGE, imageAttributesListener);
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.WIDTH, imageAttributesListener);
-    this.controller.addPropertyChangeListener(ImportedTextureWizardController.Property.HEIGHT, imageAttributesListener);
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.IMAGE, imageAttributesListener);
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.WIDTH, imageAttributesListener);
+    controller.addPropertyChangeListener(ImportedTextureWizardController.Property.HEIGHT, imageAttributesListener);
   }
 
   /**
@@ -424,9 +431,10 @@ public class ImportedTextureWizardStepsPanel extends JPanel
   }
   
   /**
-   * Switches to the component card matching <code>step</code>.   
+   * Switches to the component card matching current step.   
    */
-  public void setStep(final ImportedTextureWizardController.Step step) {
+  public void updateStep(ImportedTextureWizardController controller) {
+    ImportedTextureWizardController.Step step = controller.getStep();
     this.cardLayout.show(this, step.name());    
     switch (step) {
       case IMAGE:

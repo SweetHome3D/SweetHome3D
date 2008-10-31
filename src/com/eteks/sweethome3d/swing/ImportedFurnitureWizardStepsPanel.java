@@ -187,11 +187,11 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                            boolean importHomePiece,
                                            UserPreferences preferences, 
                                            ContentManager contentManager,
-                                           ImportedFurnitureWizardController controller) {
+                                           final ImportedFurnitureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
     this.modelLoader = Executors.newSingleThreadExecutor();
-    createComponents(importHomePiece, preferences, contentManager);
+    createComponents(importHomePiece, preferences, contentManager, controller);
     setMnemonics();
     layoutComponents();
     updateController(piece);
@@ -201,6 +201,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               ? null 
               : preferences.getFurnitureCatalog().getCategories().get(0), true);
     }
+
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.STEP, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent evt) {
+            updateStep(controller);
+          }
+        });
   }
 
   /**
@@ -208,7 +215,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   private void createComponents(final boolean importHomePiece, 
                                 final UserPreferences preferences,
-                                final ContentManager contentManager) {
+                                final ContentManager contentManager,
+                                final ImportedFurnitureWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
 
@@ -347,14 +355,14 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setBackFaceShown(backFaceShownCheckBox.isSelected());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If back face shown changes update back face shown check box
             backFaceShownCheckBox.setSelected(controller.isBackFaceShown());
           }
         });
-    this.rotationPreviewComponent = new RotationPreviewComponent(this.controller);
+    this.rotationPreviewComponent = new RotationPreviewComponent(controller);
     
     // Attributes panel components
     this.attributesLabel = new JLabel(this.resource.getString("attributesLabel.text"));
@@ -380,7 +388,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         }
       };
     this.nameTextField.getDocument().addDocumentListener(nameListener);
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.NAME,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.NAME,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If name changes update name text field
@@ -466,7 +474,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setCategory((FurnitureCategory)ev.getItem());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.CATEGORY,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.CATEGORY,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If category changes update category combo box
@@ -494,7 +502,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           widthSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.WIDTH,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.WIDTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If width changes update width spinner
@@ -515,7 +523,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           depthSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DEPTH,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DEPTH,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If depth changes update depth spinner
@@ -536,7 +544,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           heightSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.HEIGHT,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.HEIGHT,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If height changes update height spinner
@@ -550,7 +558,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setProportional(keepProportionsCheckBox.isSelected());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.PROPORTIONAL,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.PROPORTIONAL,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If proportional property changes update keep proportions check box
@@ -570,7 +578,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           widthSpinnerModel.addChangeListener(this);
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.ELEVATION,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.ELEVATION,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If elevation changes update elevation spinner
@@ -584,7 +592,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setMovable(movableCheckBox.isSelected());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MOVABLE,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.MOVABLE,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If movable changes update movable check box
@@ -598,7 +606,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setDoorOrWindow(doorOrWindowCheckBox.isSelected());
         }
       });
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DOOR_OR_WINDOW,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.DOOR_OR_WINDOW,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If door or window changes update door or window check box
@@ -623,7 +631,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         }
       });
     this.clearColorButton.setEnabled(false);
-    this.controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.COLOR, 
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.COLOR, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If color changes update color buttons
@@ -632,7 +640,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.attributesPreviewComponent = new AttributesPreviewComponent(this.controller);
+    this.attributesPreviewComponent = new AttributesPreviewComponent(controller);
 
     // Icon panel components
     this.iconLabel = new JLabel(this.resource.getString("iconLabel.text"));
@@ -825,9 +833,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   }
   
   /**
-   * Switches to the view card matching <code>step</code>.   
+   * Switches to the component card matching current step.   
    */
-  public void setStep(ImportedFurnitureWizardController.Step step) {
+  public void updateStep(ImportedFurnitureWizardController controller) {
+    ImportedFurnitureWizardController.Step step = controller.getStep();
     this.cardLayout.show(this, step.name());
     switch (step) {
       case MODEL:
@@ -1120,6 +1129,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   
   /**
    * Returns the icon content of the chosen piece.
+   * Icon is created once on demand of view's controller, because it demands either  
+   * icon panel being displayed, or an offscreen 3D buffer that costs too much to create at each yaw change.
    */
   public Content getIcon() {
     try {
@@ -1974,7 +1985,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     /**
      * Returns the icon image matching the displayed view.  
      */
-    public BufferedImage getIconImage() {
+    private BufferedImage getIconImage() {
       BufferedImage iconImage = null;
       // Under Mac OS X 10.5 (build 1.5.0_13-b05-237 or 1.5.0_16-b06-284) / Java 3D 1.5, 
       // there's a very strange bug with 3D offscreen images that happens *only* 

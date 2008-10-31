@@ -49,7 +49,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
  */
 public class ImportedFurnitureWizardController extends WizardController 
                                                implements Controller {
-  public enum Property {NAME, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
+  public enum Property {STEP, NAME, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
       DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHWON, MODEL_ROTATION,  
       ICON_YAW, PROPORTIONAL}
 
@@ -69,6 +69,7 @@ public class ImportedFurnitureWizardController extends WizardController
   private final ImportedFurnitureWizardStepState furnitureIconStepState;
   private ImportedFurnitureWizardStepsView       stepsView;
   
+  private Step                             step;
   private String                           name;
   private Content                          model;
   private float                            width;
@@ -175,12 +176,11 @@ public class ImportedFurnitureWizardController extends WizardController
    */
   @Override
   public void finish() {
-    Content icon = getStepsView().getIcon();
-    CatalogPieceOfFurniture newPiece = new CatalogPieceOfFurniture(this.name, icon, this.model, 
-        this.width, this.depth, this.height, this.elevation, 
-        this.movable, this.doorOrWindow, this.color, 
-        this.modelRotation, this.backFaceShown, 
-        this.iconYaw, this.proportional);
+    CatalogPieceOfFurniture newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), 
+        getWidth(), getDepth(), getHeight(), getElevation(), 
+        isMovable(), isDoorOrWindow(), getColor(), 
+        getModelRotation(), isBackFaceShown(), 
+        getIconYaw(), isProportional());
     
     if (this.home != null) {
       // Add new piece to home
@@ -288,8 +288,19 @@ public class ImportedFurnitureWizardController extends WizardController
   /**
    * Switch in the wizard view to the given <code>step</code>.
    */
-  protected void setStepView(Step step) {
-    getStepsView().setStep(step);
+  protected void setStep(Step step) {
+    if (step != this.step) {
+      Step oldStep = this.step;
+      this.step = step;
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+    }
+  }
+  
+  /**
+   * Returns the current step in wizard view.
+   */
+  public Step getStep() {
+    return this.step;
   }
 
   /**
@@ -523,6 +534,13 @@ public class ImportedFurnitureWizardController extends WizardController
   }
   
   /**
+   * Returns the icon of the imported piece.
+   */
+  private Content getIcon() {
+    return getStepsView().getIcon();
+  }
+  
+  /**
    * Returns the yaw of the piece icon.
    */
   public float getIconYaw() {
@@ -590,7 +608,7 @@ public class ImportedFurnitureWizardController extends WizardController
 
     @Override
     public void enter() {
-      setStepView(getStep());
+      setStep(getStep());
     }
     
     @Override
