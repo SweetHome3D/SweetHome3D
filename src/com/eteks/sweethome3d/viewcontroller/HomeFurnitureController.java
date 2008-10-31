@@ -473,7 +473,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * Controls the modification of selected furniture.
    */
-  public void modifySelection() {
+  public void modify() {
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<HomePieceOfFurniture> selectedFurniture = 
         Home.getFurnitureSubList(oldSelection);

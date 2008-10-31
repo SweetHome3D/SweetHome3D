@@ -518,9 +518,8 @@ public class HomeFurniturePanel extends JPanel implements HomeFurnitureView {
     dialog.setVisible(true);
     
     dialog.dispose();
-    if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue()) 
-        && this.controller != null) {
-      this.controller.modifySelection();
+    if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
+      this.controller.modify();
     }
   }
 
