@@ -19,48 +19,11 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.HomeTexture;
-
 /**
  * Home 3D attributes editing view.
  * @author Emmanuel Puybaret
  */
 public interface Home3DAttributesView extends View {
-  /**
-   * Returns the edited field of view of the observer camera in radians.
-   */
-  public abstract float getObserverCameraFieldOfView();
-  
-  /**
-   * Returns the edited height of the observer camera.
-   */
-  public abstract float getObserverCameraHeight();
-  
-  /**
-   * Returns the edited ground color.
-   */
-  public abstract int getGroundColor();
-
-  /**
-   * Returns the edited ground texture.
-   */
-  public abstract HomeTexture getGroundTexture();
-
-  /**
-   * Returns the edited sky color.
-   */
-  public abstract int getSkyColor();
-
-  /**
-   * Returns the edited light color.
-   */
-  public abstract int getLightColor();
-
-  /**
-   * Returns the edited walls alpha.
-   */
-  public abstract float getWallsAlpha();
-
   /**
    * Displays this view in a modal dialog box. 
    */

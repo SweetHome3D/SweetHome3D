@@ -189,12 +189,11 @@ public class SwingViewFactory implements ViewFactory {
   }
   
   /**
-   * Returns a new view that edits the 3D attributes of <code>home</code>.
+   * Returns a new view that edits 3D attributes.
    */
-  public Home3DAttributesView createHome3DAttributesView(Home home,
-                                  UserPreferences preferences,
+  public Home3DAttributesView createHome3DAttributesView(UserPreferences preferences,
                                   Home3DAttributesController home3DAttributesController) {
-    return new Home3DAttributesPanel(home, preferences, home3DAttributesController);    
+    return new Home3DAttributesPanel(preferences, home3DAttributesController);    
   }
   
   /**

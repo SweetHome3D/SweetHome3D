@@ -22,8 +22,6 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
@@ -44,15 +42,13 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.HomeTexture;
-import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesView;
-import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -81,11 +77,10 @@ public class Home3DAttributesPanel extends JPanel
   /**
    * Creates a panel that displays home 3D attributes data according to the units 
    * set in <code>preferences</code>.
-   * @param home home from which 3D parameters are edited by this panel
    * @param preferences user preferences
    * @param controller the controller of this panel
    */
-  public Home3DAttributesPanel(Home home, UserPreferences preferences,
+  public Home3DAttributesPanel(UserPreferences preferences,
                                Home3DAttributesController controller) {
     super(new GridBagLayout());
     this.controller = controller;
@@ -94,48 +89,119 @@ public class Home3DAttributesPanel extends JPanel
     createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
-    updateComponents(home);
   }
 
   /**
    * Creates and initializes components and spinners model.
    */
   private void createComponents(UserPreferences preferences,
-                                Home3DAttributesController controller) {
+                                final Home3DAttributesController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getUnit().getName();
     
+    // Create observer field of view label and spinner bound to OBSERVER_FIELD_OF_VIEW_IN_DEGREES controller property
     this.observerFieldOfViewLabel = new JLabel(this.resource.getString("observerFieldOfViewLabel.text"));
-    this.observerFieldOfViewSpinner = new AutoCommitSpinner(new SpinnerNumberModel(10, 10, 120, 1));
-    this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitName));
-    this.observerHeightSpinner = new AutoCommitSpinner(
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f));
-    
-    this.groundColorRadioButton = new JRadioButton(this.resource.getString("groundColorRadioButton.text"));
-    this.groundColorButton = new ColorButton();
-    this.groundColorButton.setColorDialogTitle(this.resource.getString("groundColorDialog.title"));
-    this.groundColorButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent ev) {
-          groundColorRadioButton.setSelected(true);
+    final SpinnerNumberModel observerFieldOfViewSpinnerModel = new SpinnerNumberModel(10, 10, 120, 1);
+    this.observerFieldOfViewSpinner = new AutoCommitSpinner(observerFieldOfViewSpinnerModel);
+    observerFieldOfViewSpinnerModel.setValue(controller.getObserverFieldOfViewInDegrees());
+    observerFieldOfViewSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setObserverFieldOfViewInDegrees(
+              ((Number)observerFieldOfViewSpinnerModel.getValue()).intValue());
         }
       });
-    this.groundTextureRadioButton = new JRadioButton(this.resource.getString("groundTextureRadioButton.text"));
-    this.groundTextureComponent = (JComponent)controller.getGroundTextureController().getView();
-    controller.getGroundTextureController().addPropertyChangeListener(
-        TextureChoiceController.Property.TEXTURE,
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.OBSERVER_FIELD_OF_VIEW_IN_DEGREES, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            groundTextureRadioButton.setSelected(true);
+            observerFieldOfViewSpinnerModel.setValue(controller.getObserverFieldOfViewInDegrees());
           }
         });
+    
+    // Create observer height label and spinner bound to OBSERVER_HEIGHT controller property
+    this.observerHeightLabel = new JLabel(String.format(this.resource.getString("observerHeightLabel.text"), unitName));
+    final NullableSpinner.NullableSpinnerLengthModel observerHeightSpinnerModel = 
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f);
+    this.observerHeightSpinner = new AutoCommitSpinner(observerHeightSpinnerModel);
+    observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
+    observerHeightSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setObserverHeight(observerHeightSpinnerModel.getLength());
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.OBSERVER_HEIGHT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
+          }
+        });
+    
+    // Ground color and texture buttons bound to ground controller properties
+    this.groundColorRadioButton = new JRadioButton(this.resource.getString("groundColorRadioButton.text"));
+    this.groundColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (groundColorRadioButton.isSelected()) {
+            controller.setGroundPaint(Home3DAttributesController.EnvironmentPaint.COLORED);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.GROUND_PAINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateGroundRadioButtons(controller);
+          }
+        });
+  
+    this.groundColorButton = new ColorButton();
+    this.groundColorButton.setColorDialogTitle(this.resource.getString("groundColorDialog.title"));
+    this.groundColorButton.setColor(controller.getGroundColor());
+    this.groundColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setGroundColor(groundColorButton.getColor());
+          }
+        });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.GROUND_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            groundColorButton.setColor(controller.getGroundColor());
+          }
+        });
+    
+    this.groundTextureRadioButton = new JRadioButton(this.resource.getString("groundTextureRadioButton.text"));
+    this.groundTextureRadioButton.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent ev) {
+        if (groundTextureRadioButton.isSelected()) {
+          controller.setGroundPaint(Home3DAttributesController.EnvironmentPaint.TEXTURED);
+        }
+      }
+    });
+    
+    this.groundTextureComponent = (JComponent)controller.getGroundTextureController().getView();
+
     ButtonGroup group = new ButtonGroup();
     group.add(this.groundColorRadioButton);
     group.add(this.groundTextureRadioButton);
+    updateGroundRadioButtons(controller);
     
+    // Ground sky color label and button bound to SKY_COLOR controller property
     this.skyColorLabel = new JLabel(this.resource.getString("skyColorLabel.text"));
     this.skyColorButton = new ColorButton();
     this.skyColorButton.setColorDialogTitle(this.resource.getString("skyColorDialog.title"));
+    this.skyColorButton.setColor(controller.getSkyColor());
+    this.skyColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            controller.setSkyColor(skyColorButton.getColor());
+          }
+        });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.SKY_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            skyColorButton.setColor(controller.getSkyColor());
+          }
+        });
     
+    // Brightness label and slider bound to LIGHT_COLOR controller property
     this.brightnessLabel = new JLabel(this.resource.getString("brightnessLabel.text"));
     this.brightnessSlider = new JSlider(0, 255);
     JLabel darkLabel = new JLabel(this.resource.getString("darkLabel.text"));
@@ -147,7 +213,21 @@ public class Home3DAttributesPanel extends JPanel
     this.brightnessSlider.setPaintLabels(true);
     this.brightnessSlider.setPaintTicks(true);
     this.brightnessSlider.setMajorTickSpacing(16);
+    this.brightnessSlider.setValue(controller.getLightColor() & 0xFF);
+    this.brightnessSlider.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          int brightness = brightnessSlider.getValue();
+          controller.setLightColor((brightness << 16) + (brightness << 8) + brightness);
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.LIGHT_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            brightnessSlider.setValue(controller.getLightColor() & 0xFF);
+          }
+        });
     
+    // Walls transparency label and slider bound to WALLS_ALPHA controller property
     this.wallsTransparencyLabel = new JLabel(this.resource.getString("wallsTransparencyLabel.text"));
     this.wallsTransparencySlider = new JSlider(0, 255);
     JLabel opaqueLabel = new JLabel(this.resource.getString("opaqueLabel.text"));
@@ -159,8 +239,31 @@ public class Home3DAttributesPanel extends JPanel
     this.wallsTransparencySlider.setPaintLabels(true);
     this.wallsTransparencySlider.setPaintTicks(true);
     this.wallsTransparencySlider.setMajorTickSpacing(16);
+    this.wallsTransparencySlider.setValue((int)(controller.getWallsAlpha() * 255));
+    this.wallsTransparencySlider.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setWallsAlpha(wallsTransparencySlider.getValue() / 255f);
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.LIGHT_COLOR, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            wallsTransparencySlider.setValue((int)(controller.getWallsAlpha() * 255));
+          }
+        });
   }
-  
+
+  /**
+   * Updates ground radio buttons. 
+   */
+  private void updateGroundRadioButtons(Home3DAttributesController controller) {
+    if (controller.getGroundPaint() == Home3DAttributesController.EnvironmentPaint.COLORED) {
+      this.groundColorRadioButton.setSelected(true);
+    } else {
+      this.groundTextureRadioButton.setSelected(true);
+    } 
+  }
+
   /**
    * Sets components mnemonics and label / component associations.
    */
@@ -249,81 +352,6 @@ public class Home3DAttributesPanel extends JPanel
   }
 
   /**
-   * Updates components values from selected walls in <code>home</code>.
-   */
-  private void updateComponents(Home home) {
-    ObserverCamera observerCamera = home.getObserverCamera();
-    this.observerFieldOfViewSpinner.setValue((int)Math.round(Math.toDegrees(observerCamera.getFieldOfView())));
-    ((NullableSpinner.NullableSpinnerLengthModel)this.observerHeightSpinner.getModel()).
-        setLength((float)Math.round(observerCamera.getHeight() * 100) / 100);
-    this.groundColorButton.setColor(home.getGroundColor());
-    HomeTexture groundTexture = home.getGroundTexture();
-    this.controller.getGroundTextureController().setTexture(groundTexture);
-    if (groundTexture != null) {
-      this.groundTextureRadioButton.setSelected(true);
-    } else {
-      this.groundColorRadioButton.setSelected(true);
-    }
-    this.skyColorButton.setColor(home.getSkyColor());
-    this.brightnessSlider.setValue(home.getLightColor() & 0xFF);
-    this.wallsTransparencySlider.setValue((int)(home.getWallsAlpha() * 255));
-  }
-
-  /**
-   * Returns the edited field of view of the observer camera in radians.
-   */
-  public float getObserverCameraFieldOfView() {
-    return (float)Math.toRadians(((Number)this.observerFieldOfViewSpinner.getValue()).doubleValue());
-  }
-  
-  /**
-   * Returns the edited height of the observer camera.
-   */
-  public float getObserverCameraHeight() {
-    return ((NullableSpinner.NullableSpinnerLengthModel)this.observerHeightSpinner.getModel()).getLength();
-  }
-  
-  /**
-   * Returns the edited ground color.
-   */
-  public int getGroundColor() {
-    return this.groundColorButton.getColor();
-  }
-
-  /**
-   * Returns the edited ground texture.
-   */
-  public HomeTexture getGroundTexture() {
-    if (this.groundTextureRadioButton.isSelected()) {
-      return this.controller.getGroundTextureController().getTexture();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Returns the edited sky color.
-   */
-  public int getSkyColor() {
-    return this.skyColorButton.getColor();
-  }
-
-  /**
-   * Returns the edited light color.
-   */
-  public int getLightColor() {
-    int brightness = this.brightnessSlider.getValue();
-    return (brightness << 16) + (brightness << 8) + brightness;
-  }
-
-  /**
-   * Returns the edited walls alpha.
-   */
-  public float getWallsAlpha() {
-    return this.wallsTransparencySlider.getValue() / 255f;
-  }
-
-  /**
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
@@ -343,7 +371,7 @@ public class Home3DAttributesPanel extends JPanel
     dialog.dispose();
     if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue()) 
         && this.controller != null) {
-      this.controller.modifyHome();
+      this.controller.modify();
     }
   }
 }

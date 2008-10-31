@@ -122,10 +122,9 @@ public interface ViewFactory {
                                           WallController wallController);
 
   /**
-   * Returns a new view that edits the 3D attributes of <code>home</code>.
+   * Returns a new view that edits 3D attributes.
    */
-  public abstract Home3DAttributesView createHome3DAttributesView(Home home,
-                                           UserPreferences preferences,
+  public abstract Home3DAttributesView createHome3DAttributesView(UserPreferences preferences,
                                            Home3DAttributesController home3DAttributesController);
 
   /**
