@@ -76,7 +76,8 @@ public class HelpPane extends JRootPane implements HelpView {
   private JTextField  searchTextField;
   private JEditorPane helpEditorPane;
   
-  public HelpPane(UserPreferences preferences, HelpController controller) {
+  public HelpPane(UserPreferences preferences, 
+                  final HelpController controller) {
     createActions(controller);
     createComponents();
     setMnemonics();
@@ -86,6 +87,20 @@ public class HelpPane extends JRootPane implements HelpView {
       addHyperlinkListener(controller);
       installKeyboardActions();
     }
+    
+    setPage(controller.getHelpPage());
+    controller.addPropertyChangeListener(HelpController.Property.HELP_PAGE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            setPage(controller.getHelpPage());
+          }
+        });
+    controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            setBrowserPage(controller.getBrowserPage());
+          }
+        });
   }
 
   /** 
@@ -95,10 +110,28 @@ public class HelpPane extends JRootPane implements HelpView {
     ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());    
     ActionMap actions = getActionMap();    
     try {
-      actions.put(ActionType.SHOW_PREVIOUS, new ControllerAction(
-          resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious"));
-      actions.put(ActionType.SHOW_NEXT, new ControllerAction(
-          resource, ActionType.SHOW_NEXT.toString(), controller, "showNext"));
+      final ControllerAction showPreviousAction = new ControllerAction(
+          resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious");
+      showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
+      controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
+            }
+          });
+      actions.put(ActionType.SHOW_PREVIOUS, showPreviousAction);
+      
+      final ControllerAction showNextAction = new ControllerAction(
+          resource, ActionType.SHOW_NEXT.toString(), controller, "showNext");
+      showNextAction.setEnabled(controller.isNextPageEnabled());
+      controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              showNextAction.setEnabled(controller.isNextPageEnabled());
+            }
+          });
+      actions.put(ActionType.SHOW_NEXT, showNextAction);
+      
       actions.put(ActionType.SEARCH, new ResourceAction(resource, ActionType.SEARCH.toString()) {
           @Override
           public void actionPerformed(ActionEvent ev) {
@@ -367,7 +400,7 @@ public class HelpPane extends JRootPane implements HelpView {
   /**
    * Displays <code>url</code> in this pane.
    */
-  public void setPage(URL url) {
+  private void setPage(URL url) {
     try {
       this.helpEditorPane.setPage(url);
     } catch (IOException ex) {
@@ -378,7 +411,7 @@ public class HelpPane extends JRootPane implements HelpView {
   /**
    * Displays <code>url</code> in standard browser.
    */
-  public void setBrowserPage(URL url) {
+  private void setBrowserPage(URL url) {
     try { 
       // Lookup the javax.jnlp.BasicService object 
       BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService"); 
@@ -386,19 +419,5 @@ public class HelpPane extends JRootPane implements HelpView {
     } catch (UnavailableServiceException ex) {
       // Too bad : service is unavailable 
     }
-  }
-
-  /**
-   * Sets whether previous button should be enabled or not.
-   */
-  public void setPreviousEnabled(boolean enabled) {
-    getActionMap().get(ActionType.SHOW_PREVIOUS).setEnabled(enabled);
-  }
-
-  /**
-   * Sets whether next button should be enabled or not.
-   */
-  public void setNextEnabled(boolean enabled) {
-    getActionMap().get(ActionType.SHOW_NEXT).setEnabled(enabled);
   }
 }

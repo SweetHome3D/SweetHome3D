@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.net.URL;
 
 /**
  * A view that displays Sweet Home 3D help.
@@ -30,25 +29,4 @@ public interface HelpView extends View {
    * Displays this pane in a frame.
    */
   public abstract void displayView();
-
-  /**
-   * Displays <code>url</code> in this pane.
-   */
-  public abstract void setPage(URL url);
-
-  /**
-   * Displays <code>url</code> in standard browser.
-   */
-  public abstract void setBrowserPage(URL url);
-
-  /**
-   * Sets whether previous button should be enabled or not.
-   */
-  public abstract void setPreviousEnabled(boolean enabled);
-
-  /**
-   * Sets whether next button should be enabled or not.
-   */
-  public abstract void setNextEnabled(boolean enabled);
-
 }

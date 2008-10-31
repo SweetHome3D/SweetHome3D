@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,18 +55,33 @@ import com.eteks.sweethome3d.tools.ResourceURLContent;
  * @author Emmanuel Puybaret
  */
 public class HelpController implements Controller {
-  private final UserPreferences preferences;
-  private final ViewFactory     viewFactory;
-  private final List<URL>       history;
-  private int                   historyIndex;
-  private HelpView              helpView;
+  /**
+   * The properties that may be edited by the view associated to this controller. 
+   */
+  public enum Property {HELP_PAGE, BROWSER_PAGE, 
+      PREVIOUS_PAGE_ENABLED, NEXT_PAGE_ENABLED}
+  
+  private final UserPreferences       preferences;
+  private final ViewFactory           viewFactory;
+  private final PropertyChangeSupport propertyChangeSupport;
+  private final List<URL>             history;
+  private int                         historyIndex;
+  private HelpView                    helpView;
+  
+  private URL helpPage;
+  private URL browserPage;
+  private boolean previousPageEnabled;
+  private boolean nextPageEnabled;
+
   
   public HelpController(UserPreferences preferences, 
                         ViewFactory viewFactory) {
     this.preferences = preferences;
     this.viewFactory = viewFactory;    
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.history = new ArrayList<URL>();
     this.historyIndex = -1;
+    showPage(getHelpIndexPageURL());
   }
 
   /**
@@ -73,8 +89,8 @@ public class HelpController implements Controller {
    */
   public HelpView getView() {
     if (this.helpView == null) {
-      this.helpView = this.viewFactory.createHelpView(preferences, this);
-      addLanguageListener(preferences);
+      this.helpView = this.viewFactory.createHelpView(this.preferences, this);
+      addLanguageListener(this.preferences);
     }
     return this.helpView;
   }
@@ -83,8 +99,93 @@ public class HelpController implements Controller {
    * Displays the help view controlled by this controller. 
    */
   public void displayView() {
-    showPage(getHelpIndexPageURL());
     getView().displayView();
+  }
+
+  /**
+   * Adds the property change <code>listener</code> in parameter to this controller.
+   */
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this controller.
+   */
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Sets the current page.
+   */
+  private void setHelpPage(URL helpPage) {
+    if (helpPage != this.helpPage) {
+      URL oldHelpPage = this.helpPage;
+      this.helpPage = helpPage;
+      this.propertyChangeSupport.firePropertyChange(Property.HELP_PAGE.toString(), oldHelpPage, helpPage);
+    }
+  }
+  
+  /**
+   * Returns the current page.
+   */
+  public URL getHelpPage() {
+    return this.helpPage;
+  }
+
+  /**
+   * Sets the browser page.
+   */
+  private void setBrowserPage(URL browserPage) {
+    if (browserPage != this.browserPage) {
+      URL oldBrowserPage = this.browserPage;
+      this.browserPage = browserPage;
+      this.propertyChangeSupport.firePropertyChange(Property.BROWSER_PAGE.toString(), oldBrowserPage, browserPage);
+    }
+  }
+  
+  /**
+   * Returns the browser page.
+   */
+  public URL getBrowserPage() {
+    return this.browserPage;
+  }
+
+  /**
+   * Sets whether a previous page is available or not.
+   */
+  private void setPreviousPageEnabled(boolean previousPageEnabled) {
+    if (previousPageEnabled != this.previousPageEnabled) {
+      this.previousPageEnabled = previousPageEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.PREVIOUS_PAGE_ENABLED.toString(), 
+          !previousPageEnabled, previousPageEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether a previous page is available or not.
+   */
+  public boolean isPreviousPageEnabled() {
+    return this.previousPageEnabled;
+  }
+
+  /**
+   * Sets whether a next page is available or not.
+   */
+  private void setNextPageEnabled(boolean nextPageEnabled) {
+    if (nextPageEnabled != this.nextPageEnabled) {
+      this.nextPageEnabled = nextPageEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.NEXT_PAGE_ENABLED.toString(), 
+          !nextPageEnabled, nextPageEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether a next page is available or not.
+   */
+  public boolean isNextPageEnabled() {
+    return this.nextPageEnabled;
   }
 
   /**
@@ -126,38 +227,35 @@ public class HelpController implements Controller {
    * Controls the display of previous page.
    */
   public void showPrevious() {
-    HelpView helpView = getView();
-    helpView.setPage(this.history.get(--this.historyIndex));
-    helpView.setPreviousEnabled(this.historyIndex > 0);
-    helpView.setNextEnabled(true);
+    setHelpPage(this.history.get(--this.historyIndex));
+    setPreviousPageEnabled(this.historyIndex > 0);
+    setNextPageEnabled(true);
   }
 
   /**
    * Controls the display of next page.
    */
   public void showNext() {
-    HelpView helpView = getView();
-    helpView.setPage(this.history.get(++this.historyIndex));
-    helpView.setPreviousEnabled(true);
-    helpView.setNextEnabled(this.historyIndex < this.history.size() - 1);
+    setHelpPage(this.history.get(++this.historyIndex));
+    setPreviousPageEnabled(true);
+    setNextPageEnabled(this.historyIndex < this.history.size() - 1);
   }
 
   /**
    * Controls the display of the given <code>page</code>.
    */
   public void showPage(URL page) {
-    HelpView helpView = getView();
     if (page.getProtocol().equals("http")) {
-      helpView.setBrowserPage(page);
+      setBrowserPage(page);
     } else if (this.historyIndex == -1
             || !this.history.get(this.historyIndex).equals(page)) {
-      helpView.setPage(page);
+      setHelpPage(page);
       for (int i = this.history.size() - 1; i > this.historyIndex; i--) {
         this.history.remove(i);
       }
       this.history.add(page);
-      helpView.setPreviousEnabled(++this.historyIndex > 0);
-      helpView.setNextEnabled(false);
+      setPreviousPageEnabled(++this.historyIndex > 0);
+      setNextPageEnabled(false);
     }
   }
   
