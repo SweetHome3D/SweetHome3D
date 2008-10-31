@@ -106,7 +106,7 @@ public class WallPanelTest extends TestCase {
   
   /**
    * Assert values in parameter are the same as the ones 
-   * stored in <code>panel</code> components.
+   * stored in <code>controller</code>.
    */
   private void assertWallControllerEquals(Float xStart, Float yStart, Float xEnd, Float yEnd, Float length,
                                      Float thickness, Float height, Float heightAtEnd,
