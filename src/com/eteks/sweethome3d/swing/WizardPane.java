@@ -29,6 +29,8 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -59,23 +61,20 @@ public class WizardPane extends JOptionPane implements WizardView {
   private ResourceBundle   resource;
   private JButton          backOptionButton;
   private JButton          nextFinishOptionButton;
-  private boolean          lastStep;
-  private String           title;
+  private String           defaultTitle;
   private JDialog          dialog;
-  private boolean          resizable;
 
   /**
    * Creates a wizard view controlled by <code>controller</code>.
    */
-  public WizardPane(WizardController controller) {
-    super();
+  public WizardPane(final WizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(WizardPane.class.getName());
-    this.title = resource.getString("wizard.title");
+    this.defaultTitle = resource.getString("wizard.title");
     
     setMessage(new JPanel(new BorderLayout(10, 0)));
     
-    createOptionButtons();    
+    createOptionButtons(controller);    
     setOptionType(DEFAULT_OPTION);
     String cancelOption = resource.getString("cancelOption");
     // Make backOptionButton appear at left of nextFinishOptionButton
@@ -86,20 +85,56 @@ public class WizardPane extends JOptionPane implements WizardView {
       setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
     }
     setInitialValue(this.nextFinishOptionButton);
-  }
+    
+    // Update wizard pane content and icon
+    updateStepView(controller);
+    controller.addPropertyChangeListener(WizardController.Property.STEP_VIEW, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateStepView(controller);
+          }
+        });
+    
+    updateStepIcon(controller);
+    controller.addPropertyChangeListener(WizardController.Property.STEP_ICON, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateStepIcon(controller);
+          }
+        });
+ }
 
-  private void createOptionButtons() {
+  private void createOptionButtons(final WizardController controller) {
     this.backOptionButton = new JButton(resource.getString("backOptionButton.text"));
-    this.backOptionButton.setEnabled(false);
+    this.backOptionButton.setEnabled(controller.isBackStepEnabled());
+    controller.addPropertyChangeListener(WizardController.Property.BACK_STEP_ENABLED, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            backOptionButton.setEnabled(controller.isBackStepEnabled());
+          }
+        });
     if (!OperatingSystem.isMacOSX()) {
       this.backOptionButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("backOptionButton.mnemonic")).getKeyCode());
     }
 
     this.nextFinishOptionButton = new JButton();
-    this.nextFinishOptionButton.setEnabled(false);
+    this.nextFinishOptionButton.setEnabled(controller.isNextStepEnabled());
+    controller.addPropertyChangeListener(WizardController.Property.NEXT_STEP_ENABLED, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            nextFinishOptionButton.setEnabled(controller.isNextStepEnabled());
+          }
+        });
+    
     // Update nextFinishButton text and mnemonic
-    setLastStep(false);
+    updateNextFinishOptionButton(controller);
+    controller.addPropertyChangeListener(WizardController.Property.LAST_STEP, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateNextFinishOptionButton(controller);
+          }
+        });
     
     // Add action listeners
     this.backOptionButton.addActionListener(new ActionListener() {
@@ -107,9 +142,10 @@ public class WizardPane extends JOptionPane implements WizardView {
           controller.goBackToPreviousStep();
         }
       });
+    
     this.nextFinishOptionButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          if (lastStep) {
+          if (controller.isLastStep()) {
             controller.finish();
             setValue(nextFinishOptionButton);
             if (dialog != null) {
@@ -123,58 +159,44 @@ public class WizardPane extends JOptionPane implements WizardView {
   }
 
   /**
-   * Sets whether the back step button is <code>enabled</code> or not.
-   */
-  public void setBackStepEnabled(boolean enabled) {
-    this.backOptionButton.setEnabled(enabled);
-  }
-
-  /**
-   * Sets whether the next step button is <code>enabled</code> or not.
-   */
-  public void setNextStepEnabled(boolean enabled) {
-    this.nextFinishOptionButton.setEnabled(enabled);
-  }
-
-  /**
    * Sets whether this wizard view is displaying the last step or not.
    */
-  public void setLastStep(boolean lastStep) {
-    this.lastStep = lastStep;
-    this.nextFinishOptionButton.setText(resource.getString(lastStep 
+  private void updateNextFinishOptionButton(WizardController controller) {
+    this.nextFinishOptionButton.setText(resource.getString(controller.isLastStep() 
         ? "finishOptionButton.text" 
         : "nextOptionButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.nextFinishOptionButton.setMnemonic(KeyStroke.getKeyStroke(this.resource.getString(
-          lastStep 
+          controller.isLastStep() 
               ? "finishOptionButton.mnemonic" 
               : "nextOptionButton.mnemonic")).getKeyCode());
     }
   }
   
   /**
-   * Sets the step view displayed by this wizard view.
+   * Updates the step view displayed by this wizard view.
    */
-  public void setStepMessage(View stepView) {
+  private void updateStepView(WizardController controller) {
     JPanel messagePanel = (JPanel)getMessage();
-    // Clean previous step message
+    // Clean previous step view
     Component previousStepView = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.CENTER);
     if (previousStepView != null) {
       messagePanel.remove(previousStepView);
     }
-    // Add new message
-    if (stepView != null) {
+    // Add new step view
+    View stepView = controller.getStepView();
+    if (stepView  != null) {
       messagePanel.add((JComponent)stepView, BorderLayout.CENTER);
     } 
-    if (this.dialog != null && !this.resizable) {
+    if (this.dialog != null && !this.controller.isResizable()) {
       this.dialog.pack();
     }
   }
 
   /**
-   * Sets the step icon displayed by this wizard view.
+   * Updates the step icon displayed by this wizard view.
    */
-  public void setStepIcon(URL stepIcon) {
+  private void updateStepIcon(WizardController controller) {
     JPanel messagePanel = (JPanel)getMessage();
     Component previousStepIconLabel = ((BorderLayout)messagePanel.getLayout()).getLayoutComponent(BorderLayout.WEST);
     if (previousStepIconLabel != null) {
@@ -182,6 +204,7 @@ public class WizardPane extends JOptionPane implements WizardView {
       messagePanel.remove(previousStepIconLabel);
     }
     // Add new icon
+    URL stepIcon = controller.getStepIcon();
     if (stepIcon != null) {
       JLabel iconLabel = new JLabel(new ImageIcon(stepIcon)) {
           @Override
@@ -223,31 +246,33 @@ public class WizardPane extends JOptionPane implements WizardView {
       messagePanel.add(iconLabel, BorderLayout.LINE_START);
     } 
   }
-
-  /**
-   * Sets the title of this wizard view.
-   */
-  public void setTitle(String title) {
-    this.title = title;
-  }
-
-  /**
-   * Sets whether this wizard view is <code>resizable</code> or not.
-   */
-  public void setResizable(boolean resizable) {
-    this.resizable = resizable;
-    if (this.dialog != null) {
-      this.dialog.setResizable(resizable);
-    }
-  }
   
   /**
    * Displays this wizard view in a modal dialog.
    */
   public void displayView(View parentView) {
-    this.dialog = createDialog(SwingUtilities.getRootPane((JComponent)parentView), this.title);
+    this.dialog = createDialog(SwingUtilities.getRootPane((JComponent)parentView), 
+        this.controller.getTitle() != null 
+            ? this.controller.getTitle() 
+            : this.defaultTitle);
+    this.controller.addPropertyChangeListener(WizardController.Property.TITLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            dialog.setTitle(controller.getTitle() != null 
+                                ? controller.getTitle() 
+                                : defaultTitle);
+          }
+        });
+    
     this.dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
-    this.dialog.setResizable(this.resizable);
+    this.dialog.setResizable(this.controller.isResizable());
+    this.controller.addPropertyChangeListener(WizardController.Property.RESIZABLE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            dialog.setResizable(controller.isResizable());
+          }
+        });
+    
     // Pack again because resize decorations may have changed dialog preferred size
     this.dialog.pack();
     this.dialog.setMinimumSize(getSize());

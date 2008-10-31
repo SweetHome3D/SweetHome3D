@@ -33,31 +33,49 @@ import java.net.URL;
  * @author Emmanuel Puybaret
  */
 public abstract class WizardController implements Controller {
+  /**
+   * The properties that the view associated to this controller needs. 
+   */
+  public enum Property {BACK_STEP_ENABLED, NEXT_STEP_ENABLED, LAST_STEP, 
+      STEP_VIEW, STEP_ICON, TITLE, RESIZABLE}
+  
   private final ViewFactory            viewFactory;
-  private WizardView                   wizardView;
+  private final PropertyChangeSupport  propertyChangeSupport;
   private final PropertyChangeListener stepStatePropertyChangeListener;
+  
+  private WizardView                   wizardView;
   // Current step state
   private WizardControllerStepState    stepState;
 
+  private boolean backStepEnabled;
+  private boolean nextStepEnabled;
+  private boolean lastStep;
+  private View    stepView;
+  private URL     stepIcon;
+  private String  title;
+  private boolean resizable;
+
+  
   public WizardController(ViewFactory viewFactory) {
     this.viewFactory = viewFactory;
     // Create a listener used to track changes in current step state
     this.stepStatePropertyChangeListener = new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          WizardView wizardView = getView();
           switch (WizardControllerStepState.Property.valueOf(ev.getPropertyName())) {
             case FIRST_STEP :
-              wizardView.setBackStepEnabled(!stepState.isFirstStep());
+              setBackStepEnabled(!stepState.isFirstStep());
               break;
             case LAST_STEP :
-              wizardView.setLastStep(stepState.isLastStep());
+              setLastStep(stepState.isLastStep());
               break;
             case NEXT_STEP_ENABLED :
-              wizardView.setNextStepEnabled(stepState.isNextStepEnabled());
+              setNextStepEnabled(stepState.isNextStepEnabled());
               break;
           }
         }
       };
+      
+    this.propertyChangeSupport = new PropertyChangeSupport(this);
   }
   
   /**
@@ -79,6 +97,144 @@ public abstract class WizardController implements Controller {
   }
 
   /**
+   * Adds the property change <code>listener</code> in parameter to this controller.
+   */
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from this controller.
+   */
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+  }
+
+  /**
+   * Sets whether back step is enabled or not.
+   */
+  private void setBackStepEnabled(boolean backStepEnabled) {
+    if (backStepEnabled != this.backStepEnabled) {
+      this.backStepEnabled = backStepEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.BACK_STEP_ENABLED.toString(), 
+          !backStepEnabled, backStepEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether back step is enabled or not.
+   */
+  public boolean isBackStepEnabled() {
+    return this.backStepEnabled;
+  }
+  
+  /**
+   * Sets whether next step is enabled or not.
+   */
+  private void setNextStepEnabled(boolean nextStepEnabled) {
+    if (nextStepEnabled != this.nextStepEnabled) {
+      this.nextStepEnabled = nextStepEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.NEXT_STEP_ENABLED.toString(), 
+          !nextStepEnabled, nextStepEnabled);
+    }
+  }
+  
+  /**
+   * Returns whether next step is enabled or not.
+   */
+  public boolean isNextStepEnabled() {
+    return this.nextStepEnabled;
+  }
+  
+  /**
+   * Sets whether this is the last step or not.
+   */
+  private void setLastStep(boolean lastStep) {
+    if (lastStep != this.lastStep) {
+      this.lastStep = lastStep;
+      this.propertyChangeSupport.firePropertyChange(Property.LAST_STEP.toString(), !lastStep, lastStep);
+    }
+  }
+  
+  /**
+   * Returns whether this is the last step or not.
+   */
+  public boolean isLastStep() {
+    return this.lastStep;
+  }
+  
+  /**
+   * Sets the step view.
+   */
+  private void setStepView(View stepView) {
+    if (stepView != this.stepView) {
+      View oldStepView = this.stepView;
+      this.stepView = stepView;
+      this.propertyChangeSupport.firePropertyChange(Property.STEP_VIEW.toString(), oldStepView, stepView);
+    }
+  }
+  
+  /**
+   * Returns the current step view.
+   */
+  public View getStepView() {
+    return this.stepView;
+  }
+  
+  /**
+   * Sets the step icon.
+   */
+  private void setStepIcon(URL stepIcon) {
+    if (stepIcon != this.stepIcon) {
+      URL oldStepIcon = this.stepIcon;
+      this.stepIcon = stepIcon;
+      this.propertyChangeSupport.firePropertyChange(Property.STEP_ICON.toString(), oldStepIcon, stepIcon);
+    }
+  }
+  
+  /**
+   * Returns the current step icon.
+   */
+  public URL getStepIcon() {
+    return this.stepIcon;
+  }
+  
+  /**
+   * Sets the wizard title.
+   */
+  public void setTitle(String title) {
+    if (title != this.title) {
+      String oldTitle = this.title;
+      this.title = title;
+      this.propertyChangeSupport.firePropertyChange(Property.TITLE.toString(), oldTitle, title);
+    }
+  }
+  
+  /**
+   * Returns the wizard title.
+   */
+  public String getTitle() {
+    return this.title;
+  }
+  
+  /**
+   * Sets whether the wizard is resizable or not.
+   */
+  public void setResizable(boolean resizable) {
+    if (resizable != this.resizable) {
+      this.resizable = resizable;
+      this.propertyChangeSupport.firePropertyChange(Property.RESIZABLE.toString(), !resizable, resizable);
+    }
+  }
+  
+  /**
+   * Returns whether the wizard is resizable or not.
+   */
+  public boolean isResizable() {
+    return this.resizable;
+  }
+  
+  /**
    * Changes current state of controller.
    */
   protected void setStepState(WizardControllerStepState stepState) {
@@ -88,12 +244,11 @@ public abstract class WizardController implements Controller {
     } 
     this.stepState = stepState;
     
-    WizardView wizardView = getView();
-    wizardView.setBackStepEnabled(!stepState.isFirstStep());
-    wizardView.setNextStepEnabled(stepState.isNextStepEnabled());
-    wizardView.setStepMessage(stepState.getView());
-    wizardView.setStepIcon(stepState.getIcon());
-    wizardView.setLastStep(stepState.isLastStep());
+    setBackStepEnabled(!stepState.isFirstStep());
+    setNextStepEnabled(stepState.isNextStepEnabled());
+    setStepView(stepState.getView());
+    setStepIcon(stepState.getIcon());
+    setLastStep(stepState.isLastStep());
     
     this.stepState.addPropertyChangeListener(this.stepStatePropertyChangeListener);
     this.stepState.enter();
@@ -121,20 +276,6 @@ public abstract class WizardController implements Controller {
    * Requires the wizard to finish. 
    */
   public abstract void finish();
-  
-  /**
-   * Set the title of the view. 
-   */
-  protected void setTitle(String title) {
-    getView().setTitle(title);
-  }  
-  
-  /**
-   * Sets whether the view is resizable.
-   */
-  protected void setResizable(boolean resizable) {
-    getView().setResizable(resizable);
-  }
   
   /**
    * State of a step in wizard. 

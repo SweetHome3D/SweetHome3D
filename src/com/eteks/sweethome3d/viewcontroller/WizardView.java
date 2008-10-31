@@ -19,48 +19,11 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.net.URL;
-
 /**
  * The view that displays a wizard.
  * @author Emmanuel Puybaret
  */
 public interface WizardView extends View {
-  /**
-   * Sets whether the back step button is <code>enabled</code> or not.
-   */
-  public abstract void setBackStepEnabled(boolean enabled);
-
-  /**
-   * Sets whether the next step button is <code>enabled</code> or not.
-   */
-  public abstract void setNextStepEnabled(boolean enabled);
-
-  /**
-   * Sets whether this wizard view is displaying the last step or not.
-   */
-  public abstract void setLastStep(boolean lastStep);
-
-  /**
-   * Sets the step view displayed by this wizard view.
-   */
-  public abstract void setStepMessage(View stepView);
-
-  /**
-   * Sets the step icon displayed by this wizard view.
-   */
-  public abstract void setStepIcon(URL stepIcon);
-
-  /**
-   * Sets the title of this wizard view.
-   */
-  public abstract void setTitle(String title);
-
-  /**
-   * Sets whether this wizard view is <code>resizable</code> or not.
-   */
-  public abstract void setResizable(boolean resizable);
-
   /**
    * Displays this wizard view in a modal dialog.
    */
