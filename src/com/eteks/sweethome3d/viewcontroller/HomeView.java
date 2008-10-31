@@ -98,16 +98,6 @@ public interface HomeView extends View {
   public abstract String showSaveDialog(String homeName);
 
   /**
-   * Displays <code>message</code> in an error message box.
-   */
-  public abstract void showError(String message);
-
-  /**
-   * Displays <code>message</code> in a message box.
-   */
-  public abstract void showMessage(String message);
-
-  /**
    * Displays a dialog that lets user choose whether he wants to save
    * the current home or not.
    * @return {@link SaveAnswer#SAVE} if user chose to save home,
@@ -124,11 +114,28 @@ public interface HomeView extends View {
   public abstract boolean confirmSaveNewerHome(String homeName);
 
   /**
+   * Displays a dialog that let user choose whether he wants to delete 
+   * the selected furniture from catalog or not.
+   * @return <code>true</code> if user confirmed to delete.
+   */
+  public abstract boolean confirmDeleteCatalogSelection();
+  
+  /**
    * Displays a dialog that let user choose whether he wants to exit 
    * application or not.
    * @return <code>true</code> if user confirmed to exit.
    */
   public abstract boolean confirmExit();
+  
+  /**
+   * Displays <code>message</code> in an error message box.
+   */
+  public abstract void showError(String message);
+
+  /**
+   * Displays <code>message</code> in a message box.
+   */
+  public abstract void showMessage(String message);
 
   /**
    * Displays an about dialog.
@@ -160,13 +167,6 @@ public interface HomeView extends View {
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
   public abstract String showExportToOBJDialog(String homeName);
-
-  /**
-   * Displays a dialog that let user choose whether he wants to delete 
-   * the selected furniture from catalog or not.
-   * @return <code>true</code> if user confirmed to delete.
-   */
-  public abstract boolean confirmDeleteCatalogSelection();
 
   /**
    * Returns <code>true</code> if clipboard contains data that
