@@ -32,9 +32,7 @@ import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
 import com.eteks.sweethome3d.viewcontroller.HelpController;
 import com.eteks.sweethome3d.viewcontroller.HelpView;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
@@ -68,16 +66,16 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays furniture <code>catalog</code>.
    */
-  public FurnitureCatalogView createFurnitureCatalogView(FurnitureCatalog catalog,
+  public View createFurnitureCatalogView(FurnitureCatalog catalog,
                                   UserPreferences preferences,
                                   FurnitureCatalogController furnitureCatalogController) {
-    return new FurnitureCatalogTree(catalog, furnitureCatalogController);
+    return new FurnitureCatalogTree(catalog, furnitureCatalogController, true);
   }
   
   /**
    * Returns a new table that displays <code>home</code> furniture.
    */
-  public FurnitureView createFurnitureView(Home home, UserPreferences preferences,
+  public View createFurnitureView(Home home, UserPreferences preferences,
                                   FurnitureController furnitureController) {
     return new FurnitureTable(home, preferences, furnitureController);
   }

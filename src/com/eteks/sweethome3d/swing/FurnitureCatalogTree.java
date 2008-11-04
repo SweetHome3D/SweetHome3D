@@ -23,9 +23,12 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.KeyboardFocusManager;
 import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +38,7 @@ import java.util.ResourceBundle;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -54,18 +58,18 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogView;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A tree displaying furniture catalog by category.
  * @author Emmanuel Puybaret
  */
-public class FurnitureCatalogTree extends JTree implements View, FurnitureCatalogView {
-  private final FurnitureCatalog catalog;
-  private TreeSelectionListener  treeSelectionListener;
-  private SelectionListener      modelSelectionListener;
-  private boolean                furnitureSelectionSynchronized;
+public class FurnitureCatalogTree extends JTree implements View {
+  private final FurnitureCatalog           catalog;
+  private final FurnitureCatalogController controller;
+  private TreeSelectionListener            treeSelectionListener;
+  private SelectionListener                modelSelectionListener;
+  private boolean                          selectionSynchronized;
 
   /**
    * Creates a tree that displays <code>catalog</code> content.
@@ -75,19 +79,34 @@ public class FurnitureCatalogTree extends JTree implements View, FurnitureCatalo
   }
 
   /**
-   * Creates a tree controlled by <code>controller</code>
-   * that displays <code>catalog</code> content.
+   * Creates a tree controlled by <code>controller</code> that displays 
+   * <code>catalog</code> content and its selection.
    */
-  public FurnitureCatalogTree(FurnitureCatalog catalog, FurnitureCatalogController controller) {
+  public FurnitureCatalogTree(FurnitureCatalog catalog, 
+                              FurnitureCatalogController controller) {
+    this(catalog, controller, false);
+  }
+  
+  /**
+   * Creates a tree controlled by <code>controller</code> that displays 
+   * <code>catalog</code> content. If <code>synchronizeSelectionOnlyWhenInFocusedRoot</code> 
+   * is <code>true</code>, selected items in catalog and selected items in this tree will be 
+   * synchronized only when this tree belongs to the same hierarchy as the focused component. 
+   */
+  public FurnitureCatalogTree(FurnitureCatalog catalog, 
+                              FurnitureCatalogController controller,
+                              boolean synchronizeSelectionOnlyWhenInFocusedRoot) {
     this.catalog = catalog;
+    this.controller = controller;
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
-    updateTreeSelectedFurniture(catalog); 
+    if (!synchronizeSelectionOnlyWhenInFocusedRoot) {
+      updateTreeSelectedFurniture();
+    }
     if (controller != null) {
-      createSelectionListeners(catalog, controller);
-      setFurnitureSelectionSynchronized(true);
+      addSelectionListeners(catalog, controller, synchronizeSelectionOnlyWhenInFocusedRoot);
       addMouseListener(controller);
     }
     setDragEnabled(true);
@@ -95,58 +114,130 @@ public class FurnitureCatalogTree extends JTree implements View, FurnitureCatalo
   }
   
   /** 
-   * Creates the listeners that manage selection synchronization in this tree. 
+   * Adds the listeners that manage selection synchronization in this tree. 
    */
-  private void createSelectionListeners(final FurnitureCatalog catalog, 
-                                        final FurnitureCatalogController controller) {
-    this.treeSelectionListener = 
-      new TreeSelectionListener () {
+  private void addSelectionListeners(final FurnitureCatalog catalog, 
+                                     final FurnitureCatalogController controller, 
+                                     final boolean synchronizeSelectionOnlyWhenInFocusedRoot) {
+    this.modelSelectionListener = new FurnitureCatalogSelectionListener(
+        this, synchronizeSelectionOnlyWhenInFocusedRoot);
+    this.treeSelectionListener = new TreeSelectionListener () {
         public void valueChanged(TreeSelectionEvent ev) {
-          catalog.removeSelectionListener(modelSelectionListener);
-          // Set the new selection in catalog with controller
-          controller.setSelectedFurniture(getSelectedFurniture());
-          catalog.addSelectionListener(modelSelectionListener);
+          updateCatalogSelectedFurniture();
         }
       };
-    this.modelSelectionListener = 
-      new SelectionListener() {
-        public void selectionChanged(SelectionEvent ev) {
-          getSelectionModel().removeTreeSelectionListener(treeSelectionListener);
-          updateTreeSelectedFurniture(catalog);        
-          getSelectionModel().addTreeSelectionListener(treeSelectionListener);
-        }
-      };
+      
+    catalog.addSelectionListener(this.modelSelectionListener);
+    getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
+
+    if (synchronizeSelectionOnlyWhenInFocusedRoot) {
+      updateSelectionSynchronizationFromFocusOwner(); 
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", 
+          new FocusListener(this));
+    } else {
+      this.selectionSynchronized = true;
+    }
   }
 
   /**
-   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
-   * furniture in the catalog model will be synchronized with be the selection displayed 
-   * by this view. By default, selection is synchronized. 
+   * Selection listener bound to this tree with a weak reference to avoid
+   * strong link between keyboard catalog and this tree.
    */
-  public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
-    if (this.furnitureSelectionSynchronized ^ furnitureSelectionSynchronized) {
-      if (furnitureSelectionSynchronized) {
-        updateTreeSelectedFurniture(this.catalog); 
-        this.catalog.addSelectionListener(this.modelSelectionListener);
-        getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
+  private static final class FurnitureCatalogSelectionListener implements SelectionListener {
+    private final WeakReference<FurnitureCatalogTree> catalogTree;
+    private final boolean synchronizeSelectionOnlyWhenInFocusedRoot;
+
+    private FurnitureCatalogSelectionListener(FurnitureCatalogTree catalogTree, 
+                                              boolean synchronizeSelectionOnlyWhenInFocusedRoot) {
+      this.synchronizeSelectionOnlyWhenInFocusedRoot = synchronizeSelectionOnlyWhenInFocusedRoot;
+      this.catalogTree = new WeakReference<FurnitureCatalogTree>(catalogTree);
+    }
+
+    public void selectionChanged(SelectionEvent ev) {
+      FurnitureCatalogTree catalogTree = this.catalogTree.get();
+      FurnitureCatalog catalog = (FurnitureCatalog)ev.getSource(); 
+      if (catalogTree == null) {
+        catalog.removeSelectionListener(this);
       } else {
-        this.catalog.removeSelectionListener(this.modelSelectionListener);
-        getSelectionModel().removeTreeSelectionListener(this.treeSelectionListener);
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        // Update the selection in tree if there's no condition on synchronization
+        // or if this tree belongs to the same hierarchy as the focused component
+        if (!this.synchronizeSelectionOnlyWhenInFocusedRoot 
+            || (focusOwner != null 
+                && SwingUtilities.isDescendingFrom(focusOwner, SwingUtilities.getRoot(catalogTree)))) {
+          catalogTree.updateTreeSelectedFurniture();        
+        }
       }
-      this.furnitureSelectionSynchronized = furnitureSelectionSynchronized;
+    }
+  }
+
+  /**
+   * Focus listener bound to this tree with a weak reference to avoid
+   * strong link between keyboard focus manager and this tree.  
+   */
+  private static final class FocusListener implements PropertyChangeListener {
+    private final WeakReference<FurnitureCatalogTree> catalogTree;
+
+    private FocusListener(FurnitureCatalogTree catalogTree) {
+      this.catalogTree = new WeakReference<FurnitureCatalogTree>(catalogTree);
+    }
+
+    public void propertyChange(PropertyChangeEvent ev) {
+      FurnitureCatalogTree catalogTree = this.catalogTree.get();
+      if (catalogTree == null) {
+        ((KeyboardFocusManager)ev.getSource()).removePropertyChangeListener("focusOwner", this);
+      } else {
+        catalogTree.updateSelectionSynchronizationFromFocusOwner();
+      }
+    }
+  }
+
+  /**
+   * Updates selection synchronization by adding or removing selection listeners on this tree
+   * depending on whether this tree belongs to the same hierarchy as the focused component or not. 
+   */
+  private void updateSelectionSynchronizationFromFocusOwner() {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner != null
+        && (SwingUtilities.isDescendingFrom(focusOwner, SwingUtilities.getRoot(this))
+            ^ this.selectionSynchronized)) {
+      // If the component that gained focus belongs to the same hierarchy as the tree
+      // select furniture matching selected nodes
+      if (!this.selectionSynchronized) {        
+        updateCatalogSelectedFurniture();
+      }              
+      this.selectionSynchronized = !this.selectionSynchronized; 
     }
   }
   
   /**
    * Updates selected nodes in tree from <code>catalog</code> selected furniture. 
    */
-  private void updateTreeSelectedFurniture(FurnitureCatalog catalog) {
+  private void updateTreeSelectedFurniture() {
+    if (this.treeSelectionListener != null) {
+      getSelectionModel().removeTreeSelectionListener(this.treeSelectionListener);
+    }
+    
     clearSelection();
-    for (CatalogPieceOfFurniture piece : catalog.getSelectedFurniture()) {
-      TreePath path = new TreePath(new Object [] {catalog, piece.getCategory(), piece});
+    for (CatalogPieceOfFurniture piece : this.catalog.getSelectedFurniture()) {
+      TreePath path = new TreePath(new Object [] {this.catalog, piece.getCategory(), piece});
       addSelectionPath(path);
       scrollRowToVisible(getRowForPath(path));
     }
+    
+    if (this.treeSelectionListener != null) {
+      getSelectionModel().addTreeSelectionListener(this.treeSelectionListener);
+    }
+  }
+
+  /**
+   * Updates selected furniture in <code>catalog</code> from selected nodes in tree. 
+   */
+  private void updateCatalogSelectedFurniture() {
+    this.catalog.removeSelectionListener(this.modelSelectionListener);
+    // Set the new selection in catalog with controller
+    this.controller.setSelectedFurniture(getSelectedFurniture());
+    this.catalog.addSelectionListener(this.modelSelectionListener);
   }
 
   /**
@@ -154,8 +245,7 @@ public class FurnitureCatalogTree extends JTree implements View, FurnitureCatalo
    */
   private List<CatalogPieceOfFurniture> getSelectedFurniture() {
     // Build the list of selected furniture
-    List<CatalogPieceOfFurniture> selectedFurniture =
-        new ArrayList<CatalogPieceOfFurniture>();
+    List<CatalogPieceOfFurniture> selectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
     TreePath [] selectionPaths = getSelectionPaths(); 
     if (selectionPaths != null) {
       for (TreePath path : selectionPaths) {

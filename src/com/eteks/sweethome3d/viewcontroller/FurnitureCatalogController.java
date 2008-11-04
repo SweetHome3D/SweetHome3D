@@ -34,7 +34,7 @@ public class FurnitureCatalogController implements Controller {
   private final UserPreferences  preferences;
   private final ViewFactory      viewFactory;
   private final ContentManager   contentManager;
-  private FurnitureCatalogView   catalogView;
+  private View                   catalogView;
 
   /**
    * Creates a controller of the furniture catalog view.
@@ -66,7 +66,7 @@ public class FurnitureCatalogController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public FurnitureCatalogView getView() {
+  public View getView() {
     // Create view lazily only once it's needed
     if (this.catalogView == null) {
       this.catalogView = viewFactory.createFurnitureCatalogView(this.catalog, this.preferences, this);
@@ -81,16 +81,6 @@ public class FurnitureCatalogController implements Controller {
     this.catalog.setSelectedFurniture(selectedFurniture);
   }
   
-  /**
-   * If <code>furnitureSelectionSynchronized</code> is <code>true</code>, the selected 
-   * furniture in the catalog model will be synchronized with be the selection displayed 
-   * by the catalog view managed by this controller.
-   * By default, selection is synchronized. 
-   */
-  public void setFurnitureSelectionSynchronized(boolean furnitureSelectionSynchronized) {
-    getView().setFurnitureSelectionSynchronized(furnitureSelectionSynchronized);
-  }
-
   /**
    * Displays the wizard that helps to change the selected piece of furniture. 
    */

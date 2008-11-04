@@ -50,7 +50,7 @@ public class FurnitureController implements Controller {
   private final ViewFactory         viewFactory;
   private final ContentManager      contentManager;
   private final UndoableEditSupport undoSupport;
-  private FurnitureView             furnitureView;
+  private View                      furnitureView;
   private HomePieceOfFurniture      leadSelectedPieceOfFurniture;
 
   /**

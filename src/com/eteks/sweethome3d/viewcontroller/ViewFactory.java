@@ -37,14 +37,14 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays furniture <code>catalog</code>.
    */
-  public abstract FurnitureCatalogView createFurnitureCatalogView(FurnitureCatalog catalog,
+  public abstract View createFurnitureCatalogView(FurnitureCatalog catalog,
                                            UserPreferences preferences,
                                            FurnitureCatalogController furnitureCatalogController);
   
   /**
    * Returns a new view that displays <code>home</code> furniture list.
    */
-  public abstract FurnitureView createFurnitureView(Home home, UserPreferences preferences,
+  public abstract View createFurnitureView(Home home, UserPreferences preferences,
                                            FurnitureController furnitureController);
 
   /**

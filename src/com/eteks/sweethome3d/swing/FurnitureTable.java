@@ -75,13 +75,13 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.FurnitureView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable implements FurnitureView, Printable {
+public class FurnitureTable extends JTable implements View, Printable {
   private ListSelectionListener  tableSelectionListener;
 
   /**

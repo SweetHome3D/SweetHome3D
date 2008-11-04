@@ -34,7 +34,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -45,10 +44,8 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
 
-import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -79,7 +76,6 @@ public class HomeFramePane extends JRootPane implements View {
   private static int                    newHomeCount;
   private int                           newHomeNumber;
   private ResourceBundle                resource;
-  private List<CatalogPieceOfFurniture> catalogSelectedFurniture;
   
   public HomeFramePane(Home home,
                        HomeApplication application,
@@ -90,8 +86,6 @@ public class HomeFramePane extends JRootPane implements View {
     this.application = application;
     this.contentManager = contentManager;
     this.resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
-    // The catalog selected furniture on a new home pane is always empty
-    this.catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>();
     // If home is unnamed, give it a number
     if (home.getName() == null) {
       this.newHomeNumber = ++newHomeCount;
@@ -216,11 +210,6 @@ public class HomeFramePane extends JRootPane implements View {
         
         @Override
         public void windowDeactivated(WindowEvent ev) {
-          // Store current selected furniture in catalog for future activation
-          controller.setCatalogFurnitureSelectionSynchronized(false);
-          catalogSelectedFurniture = new ArrayList<CatalogPieceOfFurniture>(
-              application.getUserPreferences().getFurnitureCatalog().getSelectedFurniture());
-          
           // Java 3D 1.5 bug : windowDeactivated notifications should not be sent to this frame
           // while canvases 3D are created in a child modal dialog like the one managing 
           // ImportedFurnitureWizardStepsPanel. As this makes Swing loose the most recent focus owner
@@ -234,16 +223,6 @@ public class HomeFramePane extends JRootPane implements View {
         
         @Override
         public void windowActivated(WindowEvent ev) {                    
-          // Let the catalog view of each frame manage its own selection :
-          // Restore stored selected furniture when the frame is activated from outside of Sweet Home 3D
-          // or from an other shown frame of Sweet Home 3D (don't rely on opposite window parent, because 
-          // Java 3D creates some hidden dummy frames to manage its canvases 3D)
-          // Note : Linux seems to always return null as an opposite window
-          if (ev.getOppositeWindow() == null || ev.getOppositeWindow().isShowing()) {
-            application.getUserPreferences().getFurnitureCatalog().setSelectedFurniture(catalogSelectedFurniture);
-          } 
-          controller.setCatalogFurnitureSelectionSynchronized(true);
-          
           // Java 3D 1.5 bug : let's request focus in window for the most recent focus owner when
           // this frame is reactivated
           if (this.mostRecentFocusOwner != null) {
@@ -258,9 +237,6 @@ public class HomeFramePane extends JRootPane implements View {
       };
     frame.addWindowListener(windowListener);    
     frame.addWindowStateListener(windowListener);    
-    // Add a listener to catalog to update the catalog selected furniture displayed by this pane
-    application.getUserPreferences().getFurnitureCatalog().addFurnitureListener(
-        new CatalogChangeFurnitureListener(this));
     // Add a listener to preferences to apply component orientation to frame matching current language
     application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
         new LanguageChangeListener(frame));
@@ -285,33 +261,6 @@ public class HomeFramePane extends JRootPane implements View {
           updateFrameTitle(frame, home);
         }
       });
-  }
-
-  /**
-   * Catalog listener that updates catalog selection furniture each time a piece of furniture 
-   * is deleted from catalog. This listener is bound to this controller 
-   * with a weak reference to avoid strong link between catalog and this controller.  
-   */
-  private static class CatalogChangeFurnitureListener implements CollectionListener<CatalogPieceOfFurniture> {
-    private WeakReference<HomeFramePane> homeFramePane;
-    
-    public CatalogChangeFurnitureListener(HomeFramePane homeFramePane) {
-      this.homeFramePane = new WeakReference<HomeFramePane>(homeFramePane);
-    }
-    
-    public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
-      // If controller was garbage collected, remove this listener from catalog
-      final HomeFramePane homeFramePane = this.homeFramePane.get();
-      if (homeFramePane == null) {
-        ((FurnitureCatalog)ev.getSource()).removeFurnitureListener(this);
-      } else {
-        switch (ev.getType()) {
-          case DELETE :
-            homeFramePane.catalogSelectedFurniture.remove(ev.getItem());
-            break;
-        }
-      }
-    }
   }
 
   /**

@@ -83,8 +83,6 @@ public class HomeController implements Controller {
   private ResourceBundle             resource;
   private int                        saveUndoLevel;
   private View                       focusedView;
-  private SelectionListener          catalogSelectionListener;
-  private boolean                    catalogFurnitureSelectionSynchronized;
 
   /**
    * Creates the controller of home view.
@@ -348,8 +346,7 @@ public class HomeController implements Controller {
       this.preferences.addPropertyChangeListener(property, listener);
     }
       
-    createCatalogSelectionListener();
-    setCatalogFurnitureSelectionSynchronized(true);
+    addCatalogSelectionListener();
     addHomeBackgroundImageListener();
     addHomeSelectionListener();
     addFurnitureSortListener();
@@ -360,35 +357,6 @@ public class HomeController implements Controller {
     addLanguageListener();
   }
 
-  /**
-   * Adds a selection listener to catalog that enables / disables Add Furniture action.
-   */
-  private void createCatalogSelectionListener() {
-    this.catalogSelectionListener = new SelectionListener() {
-        public void selectionChanged(SelectionEvent ev) {
-          enableActionsOnSelection();
-        }
-      };
-  }
-
-  /**
-   * If <code>catalogSelectionSynchronized</code> is <code>true</code>, the selected 
-   * furniture in the catalog model will be synchronized with be the selection displayed 
-   * by the catalog view managed by the catalog controller.
-   * By default, selection is synchronized. 
-   */
-  public void setCatalogFurnitureSelectionSynchronized(boolean catalogFurnitureSelectionSynchronized) {
-    if (this.catalogFurnitureSelectionSynchronized ^ catalogFurnitureSelectionSynchronized) {
-      if (catalogFurnitureSelectionSynchronized) {
-        this.preferences.getFurnitureCatalog().addSelectionListener(catalogSelectionListener);
-      } else {
-        this.preferences.getFurnitureCatalog().removeSelectionListener(catalogSelectionListener);
-      }
-      this.catalogFurnitureSelectionSynchronized = catalogFurnitureSelectionSynchronized;
-    }
-    getCatalogController().setFurnitureSelectionSynchronized(catalogFurnitureSelectionSynchronized);
-  }
-  
   /**
    * Super class of catalog listeners that writes preferences each time a piece of furniture or a texture
    * is deleted or added in furniture or textures catalog.
@@ -489,6 +457,36 @@ public class HomeController implements Controller {
     }
   }
 
+  /**
+   * Adds a selection listener to catalog that enables / disables Add Furniture action.
+   */
+  private void addCatalogSelectionListener() {
+    this.preferences.getFurnitureCatalog().addSelectionListener(
+        new FurnitureCatalogSelectionChangeListener(this));
+  }
+
+  /**
+   * Catalog selection property listener bound to this component with a weak reference to avoid
+   * strong link between furniture catalog and this component.  
+   */
+  private static class FurnitureCatalogSelectionChangeListener implements SelectionListener {
+    private WeakReference<HomeController> homeController;
+
+    public FurnitureCatalogSelectionChangeListener(HomeController homeController) {
+      this.homeController = new WeakReference<HomeController>(homeController);
+    }
+    
+    public void selectionChanged(SelectionEvent ev) {
+      // If home pane was garbage collected, remove this listener from catalog
+      HomeController homeController = this.homeController.get();
+      if (homeController == null) {
+        ((FurnitureCatalog)ev.getSource()).removeSelectionListener(this);
+      } else {
+        homeController.enableActionsOnSelection();
+      }
+    }
+  }
+  
   /**
    * Adds a property change listener to <code>preferences</code> to update
    * undo and redo presentation names when preferred language changes.
@@ -635,8 +633,7 @@ public class HomeController implements Controller {
       view.setEnabled(HomeView.ActionType.DELETE, false);
     }
 
-    view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE,
-        catalogSelectionContainsFurniture);
+    view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture);
     // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomeView.ActionType.DELETE_HOME_FURNITURE,
         homeSelectionContainsFurniture);
