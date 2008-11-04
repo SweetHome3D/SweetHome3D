@@ -35,6 +35,7 @@ import javax.swing.JTable;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -49,6 +50,7 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -66,7 +68,14 @@ public class HomeControllerTest extends TestCase {
 
   @Override
   protected void setUp() {
-    this.viewFactory = new SwingViewFactory();
+    this.viewFactory = new SwingViewFactory() {
+      @Override
+      public View createFurnitureCatalogView(FurnitureCatalog catalog,
+                                             UserPreferences preferences,
+                                             FurnitureCatalogController furnitureCatalogController) {
+        return new FurnitureCatalogTree(catalog, furnitureCatalogController, false);
+      }
+    };
     this.preferences = new DefaultUserPreferences();
     this.home = new Home();
     this.homeController = 
