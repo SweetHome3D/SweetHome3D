@@ -1020,7 +1020,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
-    Color selectionColor = getSelectioncolor(); 
+    Color selectionColor = getSelectionColor(); 
     Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
         selectionColor.getBlue(), 128);
     Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
@@ -1049,12 +1049,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the color used to draw selection outlines. 
    */
-  private Color getSelectioncolor() {
+  private Color getSelectionColor() {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        Color selectionColor = UIManager.getColor("Focus.color").darker();
+        Color selectionColor = UIManager.getColor("Focus.color");
         if (selectionColor != null) {
-          return selectionColor;
+          return selectionColor.darker();
         } else {
           return UIManager.getColor("List.selectionBackground").darker();
         }
@@ -2449,7 +2449,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
 
       if (this.mouseLocation != null) {
-        g2D.setColor(getSelectioncolor());
+        g2D.setColor(getSelectionColor());
         g2D.setStroke(new BasicStroke(1 / rulerScale));
         if (this.orientation == SwingConstants.HORIZONTAL) {
           // Draw mouse feeback vertical line
