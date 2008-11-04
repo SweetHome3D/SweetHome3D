@@ -56,8 +56,8 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays <code>home</code> in 3D.
    */
-  public abstract HomeView3D createView3D(Home home, UserPreferences preferences,
-                                          HomeController3D homeController3D);
+  public abstract View createView3D(Home home, UserPreferences preferences,
+                                    HomeController3D homeController3D);
 
   /**
    * Returns a new view that displays <code>home</code> and its sub views.

@@ -40,7 +40,6 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.HomeView3D;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
@@ -91,7 +90,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays <code>home</code> in 3D.
    */
-  public HomeView3D createView3D(Home home, UserPreferences preferences,
+  public View createView3D(Home home, UserPreferences preferences,
                            HomeController3D homeController3D) {
     return new HomeComponent3D(home, homeController3D);
   }

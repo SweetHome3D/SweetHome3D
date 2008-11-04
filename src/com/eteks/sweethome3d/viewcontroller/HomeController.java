@@ -1363,7 +1363,7 @@ public class HomeController implements Controller {
       // Export 3D view in a threaded task
       Callable<Void> exportToObjTask = new Callable<Void>() {
             public Void call() throws RecorderException {
-              getHomeController3D().exportToOBJ(objName);
+              getView().exportToOBJ(objName);
               return null;
             }
           };

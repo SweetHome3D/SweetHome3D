@@ -107,7 +107,6 @@ import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
-import com.eteks.sweethome3d.viewcontroller.HomeView3D;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
@@ -119,7 +118,7 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * A component that displays home walls and furniture with Java 3D. 
  * @author Emmanuel Puybaret
  */
-public class HomeComponent3D extends JComponent implements HomeView3D, Printable {
+public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}

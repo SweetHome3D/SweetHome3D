@@ -34,7 +34,6 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
-import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -49,7 +48,7 @@ public class HomeController3D implements Controller {
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
   private final UndoableEditSupport   undoSupport;
-  private HomeView3D                  home3DView;
+  private View                        home3DView;
   // Possibles states
   private final CameraControllerState topCameraState;
   private final CameraControllerState observerCameraState;
@@ -83,7 +82,7 @@ public class HomeController3D implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public HomeView3D getView() {
+  public View getView() {
     // Create view lazily only once it's needed
     if (this.home3DView == null) {
       this.home3DView = this.viewFactory.createView3D(this.home, this.preferences, this);
@@ -115,13 +114,6 @@ public class HomeController3D implements Controller {
         this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());    
   }
 
-  /**
-   * Controls the export of the 3D view to the given OBJ file.
-   */
-  public void exportToOBJ(String objName) throws RecorderException {
-    getView().exportToOBJ(objName);
-  }
-  
   /**
    * Changes current state of controller.
    */

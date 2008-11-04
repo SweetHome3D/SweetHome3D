@@ -167,6 +167,11 @@ public interface HomeView extends View {
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
   public abstract String showExportToOBJDialog(String homeName);
+  
+  /**
+   * Exports the 3D home objects to a given OBJ file.
+   */
+  public abstract void exportToOBJ(String objFile) throws RecorderException;
 
   /**
    * Returns <code>true</code> if clipboard contains data that

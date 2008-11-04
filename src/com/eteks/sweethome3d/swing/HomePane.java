@@ -1764,6 +1764,18 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
+   * Exports the objects of the 3D view to the given OBJ file.
+   */
+  public void exportToOBJ(String objFile) throws RecorderException {
+    View home3DView = this.controller.getHomeController3D().getView();
+    if (home3DView instanceof HomeComponent3D) {
+      ((HomeComponent3D)home3DView).exportToOBJ(objFile);
+    } else {
+      new HomeComponent3D(this.home).exportToOBJ(objFile);
+    }
+  }
+
+  /**
    * Displays a dialog that let user choose whether he wants to delete 
    * the selected furniture from catalog or not.
    * @return <code>true</code> if user confirmed to delete.

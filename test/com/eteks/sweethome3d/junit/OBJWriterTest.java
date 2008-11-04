@@ -36,7 +36,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.OBJWriter;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
-import com.eteks.sweethome3d.viewcontroller.HomeController3D;
+import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Sphere;
@@ -83,8 +83,8 @@ public class OBJWriterTest extends TestCase {
     ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
     Home home = new Home();
-    HomeController3D homeController3D = 
-        new HomeController3D(home, preferences, viewFactory, null, null);
+    HomeController homeController = 
+        new HomeController(home, preferences, viewFactory);
     
     // 2. Add to home a wall and a piece of furniture
     home.addWall(new Wall(0, 0, 0, 1000, 10));
@@ -104,7 +104,7 @@ public class OBJWriterTest extends TestCase {
     assertFalse(objFile + " exists", objFile.exists());
     assertFalse(mtlFile + " exists", mtlFile.exists());
     
-    homeController3D.exportToOBJ(objFile.toString());
+    homeController.getView().exportToOBJ(objFile.toString());
     assertTrue(objFile + " wasn't created", objFile.exists());
     assertTrue(mtlFile + " wasn't created", mtlFile.exists());
     
