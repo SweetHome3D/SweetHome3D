@@ -226,7 +226,11 @@ public class HomeFramePane extends JRootPane implements View {
           // Java 3D 1.5 bug : let's request focus in window for the most recent focus owner when
           // this frame is reactivated
           if (this.mostRecentFocusOwner != null) {
-            this.mostRecentFocusOwner.requestFocusInWindow();
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  mostRecentFocusOwner.requestFocusInWindow();
+                }
+              });
           }
         } 
       };
