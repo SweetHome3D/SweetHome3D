@@ -1,5 +1,5 @@
 /*
- * WizardView.java 28 oct. 2008
+ * DialogView.java 28 oct. 2008
  *
  * Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>. All Rights Reserved.
  *
@@ -20,7 +20,7 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 /**
- * The view that displays a wizard.
+ * The view that displays a pane in a dialog.
  * @author Emmanuel Puybaret
  */
 public interface DialogView extends View {
