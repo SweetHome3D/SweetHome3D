@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.EventQueue;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -295,11 +294,7 @@ public class WizardPane extends JOptionPane implements DialogView {
     this.dialog.dispose();
     
     if (mostRecentFocusOwner != null) {
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            mostRecentFocusOwner.requestFocusInWindow();
-          }
-        });
+      mostRecentFocusOwner.requestFocusInWindow();
     }
   }
 }
