@@ -195,6 +195,8 @@ public class HomeFramePane extends JRootPane implements View {
     // Control frame closing and activation 
     frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     WindowAdapter windowListener = new WindowAdapter () {
+        private Component mostRecentFocusOwner;
+
         @Override
         public void windowStateChanged(WindowEvent ev) {
           controller.setVisualProperty(FRAME_MAXIMIZED_VISUAL_PROPERTY, 
@@ -205,6 +207,28 @@ public class HomeFramePane extends JRootPane implements View {
         public void windowClosing(WindowEvent ev) {
           controller.close();
         }
+        
+        @Override
+        public void windowDeactivated(WindowEvent ev) {
+          // Java 3D 1.5 bug : windowDeactivated notifications should not be sent to this frame
+          // while canvases 3D are created in a child modal dialog like the one managing 
+          // ImportedFurnitureWizardStepsPanel. As this makes Swing loose the most recent focus owner
+          // let's store it in a field to use it when this frame will be reactivated. 
+          Component mostRecentFocusOwner = frame.getMostRecentFocusOwner();          
+          if (!(mostRecentFocusOwner instanceof JFrame)
+              && mostRecentFocusOwner != null) {
+            this.mostRecentFocusOwner = mostRecentFocusOwner;
+          }
+        }
+        
+        @Override
+        public void windowActivated(WindowEvent ev) {                    
+          // Java 3D 1.5 bug : let's request focus in window for the most recent focus owner when
+          // this frame is reactivated
+          if (this.mostRecentFocusOwner != null) {
+            this.mostRecentFocusOwner.requestFocusInWindow();
+          }
+        } 
       };
     frame.addWindowListener(windowListener);    
     frame.addWindowStateListener(windowListener);    

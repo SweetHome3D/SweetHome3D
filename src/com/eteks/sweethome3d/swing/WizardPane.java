@@ -27,7 +27,6 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -40,7 +39,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -278,23 +276,7 @@ public class WizardPane extends JOptionPane implements DialogView {
     // Pack again because resize decorations may have changed dialog preferred size
     this.dialog.pack();
     this.dialog.setMinimumSize(getSize());
-
-    // Search the most recent focus owner in parent view to restore it after dialog is disposed.
-    // Normally Swing is able to restore it, but the Java 3D 1.5 library used in 
-    // ImportedFurnitureWizardStepsPanel makes Swing lose the most recent focus owner   
-    Component root = SwingUtilities.getRoot((JComponent)parentView);
-    final Component mostRecentFocusOwner; 
-    if (root instanceof JFrame) {
-      mostRecentFocusOwner = ((Window)root).getMostRecentFocusOwner();
-    } else {
-      mostRecentFocusOwner = root;
-    }
-    
     this.dialog.setVisible(true);
     this.dialog.dispose();
-    
-    if (mostRecentFocusOwner != null) {
-      mostRecentFocusOwner.requestFocusInWindow();
-    }
   }
 }
