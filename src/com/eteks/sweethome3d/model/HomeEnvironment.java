@@ -80,15 +80,15 @@ public class HomeEnvironment implements Serializable {
   /**
    * Adds the property change <code>listener</code> in parameter to this home.
    */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -106,7 +106,7 @@ public class HomeEnvironment implements Serializable {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
       this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
+          Property.GROUND_COLOR.name(), oldGroundColor, groundColor);
     }
   }
 
@@ -125,7 +125,7 @@ public class HomeEnvironment implements Serializable {
       HomeTexture oldGroundTexture = this.groundTexture;
       this.groundTexture = groundTexture;
       this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_TEXTURE.toString(), oldGroundTexture, groundTexture);
+          Property.GROUND_TEXTURE.name(), oldGroundTexture, groundTexture);
     }
   }
 
@@ -144,7 +144,7 @@ public class HomeEnvironment implements Serializable {
       int oldSkyColor = this.skyColor;
       this.skyColor = skyColor;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
+          Property.SKY_COLOR.name(), oldSkyColor, skyColor);
     }
   }
   
@@ -163,7 +163,7 @@ public class HomeEnvironment implements Serializable {
       int oldLightColor = this.lightColor;
       this.lightColor = lightColor;
       this.propertyChangeSupport.firePropertyChange(
-          Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
+          Property.LIGHT_COLOR.name(), oldLightColor, lightColor);
     }
   }
 
@@ -183,7 +183,7 @@ public class HomeEnvironment implements Serializable {
       float oldWallsAlpha = this.wallsAlpha;
       this.wallsAlpha = wallsAlpha;
       this.propertyChangeSupport.firePropertyChange(
-          Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
+          Property.WALLS_ALPHA.name(), oldWallsAlpha, wallsAlpha);
     }
   }
 }

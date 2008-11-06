@@ -100,6 +100,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
@@ -232,11 +233,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private void removeHomeListeners(Home home) {
     home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
-    home.removePropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
-    home.removePropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener);
-    home.removePropertyChangeListener(Home.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
-    home.removePropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener);
-    home.removePropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener);
+    HomeEnvironment homeEnvironment = home.getEnvironment();
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
     home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
     home.removeWallsListener(this.wallListener);
     for (Wall wall : home.getWalls()) {
@@ -566,7 +568,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           updateBackgroundColor(background, home);
         }
       };
-    home.addPropertyChangeListener(Home.Property.SKY_COLOR, this.skyColorListener);
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
     return background;
   }
 
@@ -574,7 +577,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Updates<code>background</code> color from <code>home</code> sky color.
    */
   private void updateBackgroundColor(Background background, Home home) {
-    background.setColor(new Color3f(new Color(home.getSkyColor())));
+    background.setColor(new Color3f(new Color(home.getEnvironment().getSkyColor())));
     clearPrintedImageCache();
   }
   
@@ -610,8 +613,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               groundOriginX, groundOriginY, groundWidth, groundDepth);
         }
       };
-    home.addPropertyChangeListener(Home.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
-    home.addPropertyChangeListener(Home.Property.GROUND_TEXTURE, this.groundColorAndTextureListener); 
+    HomeEnvironment homeEnvironment = home.getEnvironment();
+    homeEnvironment.addPropertyChangeListener(
+        HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
+    homeEnvironment.addPropertyChangeListener(
+        HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener); 
     
     return groundShape;
   }
@@ -625,10 +631,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                            float groundOriginY,
                                            float groundWidth,
                                            float groundDepth) {
-    Color3f groundColor = new Color3f(new Color(home.getGroundColor()));
+    Color3f groundColor = new Color3f(new Color(home.getEnvironment().getGroundColor()));
     final Appearance groundAppearance = groundShape.getAppearance();
     groundAppearance.getColoringAttributes().setColor(groundColor);
-    HomeTexture groundTexture = home.getGroundTexture();
+    HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
     if (groundTexture != null) {
       final TextureManager imageManager = TextureManager.getInstance();
       imageManager.loadTexture(groundTexture.getImage(), 
@@ -691,7 +697,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
       };
-    home.addPropertyChangeListener(Home.Property.LIGHT_COLOR, this.lightColorListener); 
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener); 
     
     return lights;
   }
@@ -700,7 +707,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Updates<code>light</code> color from <code>home</code> light color.
    */
   private void updateLightColor(Light light, Home home) {
-    light.setColor(new Color3f(new Color(home.getLightColor())));
+    light.setColor(new Color3f(new Color(home.getEnvironment().getLightColor())));
     clearPrintedImageCache();
   }
   
@@ -836,7 +843,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           updateObjects(home.getWalls());
         }
       };
-    home.addPropertyChangeListener(Home.Property.WALLS_ALPHA, this.wallsAlphaListener); 
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener); 
   }
 
   /**
@@ -1349,7 +1357,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               });
       }
       // Update wall left side transparency
-      float wallsAlpha = this.home.getWallsAlpha();
+      float wallsAlpha = this.home.getEnvironment().getWallsAlpha();
       TransparencyAttributes transparencyAttributes = wallSideAppearance.getTransparencyAttributes();
       transparencyAttributes.setTransparency(wallsAlpha);
       // If walls alpha is equal to zero, turn off transparency to get better results 
