@@ -376,7 +376,7 @@ public class HomePane extends JRootPane implements HomeView {
   private void createAction(ActionType action, Object controller, String method, Object ... parameters) {
     try {
       getActionMap().put(action, new ControllerAction(
-          this.resource, action.toString(), controller, method, parameters));
+          this.resource, action.name(), controller, method, parameters));
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
@@ -390,7 +390,7 @@ public class HomePane extends JRootPane implements HomeView {
   private void createClipboardAction(ActionType actionType, 
                                      final Action clipboardAction) {
     getActionMap().put(actionType,
-        new ResourceAction (this.resource, actionType.toString()) {
+        new ResourceAction (this.resource, actionType.name()) {
           public void actionPerformed(ActionEvent ev) {
             ev = new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, null);
             clipboardAction.actionPerformed(ev);
@@ -419,7 +419,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void createMenuAction(MenuActionType action) {
     this.menuActionMap.put(action, new ResourceAction(
-          this.resource, action.toString(), true));
+          this.resource, action.name(), true));
   }
 
   /**
@@ -663,7 +663,7 @@ public class HomePane extends JRootPane implements HomeView {
 
     // Add plugin actions menu items
     for (Action pluginAction : this.pluginActions) {
-      String pluginMenu = (String)pluginAction.getValue(PluginAction.Property.MENU.toString());
+      String pluginMenu = (String)pluginAction.getValue(PluginAction.Property.MENU.name());
       if (pluginMenu != null) {
         boolean pluginActionAdded = false;
         for (int i = 0; i < menuBar.getMenuCount(); i++) {
@@ -1025,7 +1025,7 @@ public class HomePane extends JRootPane implements HomeView {
     // Add plugin actions buttons
     boolean pluginActionsAdded = false;
     for (Action pluginAction : this.pluginActions) {
-      if (Boolean.TRUE.equals(pluginAction.getValue(PluginAction.Property.IN_TOOL_BAR.toString()))) {
+      if (Boolean.TRUE.equals(pluginAction.getValue(PluginAction.Property.IN_TOOL_BAR.name()))) {
         toolBar.add(new ResourceAction.ToolBarAction(pluginAction));
         pluginActionsAdded = true;
       }
@@ -1824,7 +1824,7 @@ public class HomePane extends JRootPane implements HomeView {
             String propertyName = ev.getPropertyName();
             Object oldValue = ev.getOldValue();
             Object newValue = getValue(propertyName);
-            if (PluginAction.Property.ENABLED.toString().equals(propertyName)) {
+            if (PluginAction.Property.ENABLED.name().equals(propertyName)) {
               propertyChangeSupport.firePropertyChange(
                   new PropertyChangeEvent(ev.getSource(), "enabled", oldValue, newValue));
             } else {
@@ -1892,9 +1892,9 @@ public class HomePane extends JRootPane implements HomeView {
         return mnemonic != null
             ? new Integer(mnemonic)
             : null;
-      } else if (PluginAction.Property.IN_TOOL_BAR.toString().equals(key)) {
+      } else if (PluginAction.Property.IN_TOOL_BAR.name().equals(key)) {
         return this.pluginAction.getPropertyValue(PluginAction.Property.IN_TOOL_BAR);
-      } else if (PluginAction.Property.MENU.toString().equals(key)) {
+      } else if (PluginAction.Property.MENU.name().equals(key)) {
         return this.pluginAction.getPropertyValue(PluginAction.Property.MENU);
       } else { 
         return null;
@@ -1911,9 +1911,9 @@ public class HomePane extends JRootPane implements HomeView {
       } else if (MNEMONIC_KEY.equals(key)) {
         this.pluginAction.putPropertyValue(PluginAction.Property.MNEMONIC, 
             new Character((char)((Integer)value).intValue()));
-      } else if (PluginAction.Property.IN_TOOL_BAR.toString().equals(key)) {
+      } else if (PluginAction.Property.IN_TOOL_BAR.name().equals(key)) {
         this.pluginAction.putPropertyValue(PluginAction.Property.IN_TOOL_BAR, value);
-      } else if (PluginAction.Property.MENU.toString().equals(key)) {
+      } else if (PluginAction.Property.MENU.name().equals(key)) {
         this.pluginAction.putPropertyValue(PluginAction.Property.MENU, value);
       } 
     }

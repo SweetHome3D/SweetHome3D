@@ -83,14 +83,14 @@ public class UserPreferencesController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -113,7 +113,7 @@ public class UserPreferencesController implements Controller {
     if (language != this.language) {
       String oldLanguage = this.language;
       this.language = language;
-      this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.toString(), oldLanguage, language);
+      this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), oldLanguage, language);
     }
   }
 
@@ -131,7 +131,7 @@ public class UserPreferencesController implements Controller {
     if (unit != this.unit) {
       UserPreferences.Unit oldUnit = this.unit;
       this.unit = unit;
-      this.propertyChangeSupport.firePropertyChange(Property.UNIT.toString(), oldUnit, unit);
+      this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
     }
   }
 
@@ -148,7 +148,7 @@ public class UserPreferencesController implements Controller {
   public void setMagnetismEnabled(boolean magnetismEnabled) {
     if (magnetismEnabled != this.magnetismEnabled) {
       this.magnetismEnabled = magnetismEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.toString(), !magnetismEnabled, magnetismEnabled);
+      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), !magnetismEnabled, magnetismEnabled);
     }
   }
 
@@ -165,7 +165,7 @@ public class UserPreferencesController implements Controller {
   public void setRulersVisible(boolean rulersVisible) {
     if (rulersVisible != this.rulersVisible) {
       this.rulersVisible = rulersVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.toString(), !rulersVisible, rulersVisible);
+      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), !rulersVisible, rulersVisible);
     }
   }
 
@@ -182,7 +182,7 @@ public class UserPreferencesController implements Controller {
   public void setGridVisible(boolean gridVisible) {
     if (gridVisible != this.gridVisible) {
       this.gridVisible = gridVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.toString(), !gridVisible, gridVisible);
+      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), !gridVisible, gridVisible);
     }
   }
 
@@ -200,7 +200,7 @@ public class UserPreferencesController implements Controller {
     if (newWallThickness != this.newWallThickness) {
       float oldNewWallThickness = this.newWallThickness;
       this.newWallThickness = newWallThickness;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_THICKNESS.toString(), oldNewWallThickness, newWallThickness);
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_THICKNESS.name(), oldNewWallThickness, newWallThickness);
     }
   }
 
@@ -218,7 +218,7 @@ public class UserPreferencesController implements Controller {
     if (newWallHeight != this.newWallHeight) {
       float oldNewWallHeight = this.newWallHeight;
       this.newWallHeight = newWallHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.toString(), oldNewWallHeight, newWallHeight);
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.name(), oldNewWallHeight, newWallHeight);
     }
   }
 

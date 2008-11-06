@@ -218,7 +218,7 @@ public class AppletApplication extends HomeApplication {
       JComponent component = (JComponent)toolBar.getComponent(i);
       if (component instanceof AbstractButton
           && ((AbstractButton)component).getAction().
-                getValue(PluginAction.Property.IN_TOOL_BAR.toString()) == Boolean.TRUE) {
+                getValue(PluginAction.Property.IN_TOOL_BAR.name()) == Boolean.TRUE) {
         pluginButtons.add(component);
       }
     }

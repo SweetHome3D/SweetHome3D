@@ -174,7 +174,7 @@ public class BackgroundImageWizardController extends WizardController
     if (step != this.step) {
       Step oldStep = this.step;
       this.step = step;
-      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.name(), oldStep, step);
     }
   }
   
@@ -189,14 +189,14 @@ public class BackgroundImageWizardController extends WizardController
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -206,7 +206,7 @@ public class BackgroundImageWizardController extends WizardController
     if (image != this.image) {
       Content oldImage = this.image;
       this.image = image;
-      this.propertyChangeSupport.firePropertyChange(Property.IMAGE.toString(), oldImage, image);
+      this.propertyChangeSupport.firePropertyChange(Property.IMAGE.name(), oldImage, image);
     }
   }
   
@@ -225,7 +225,7 @@ public class BackgroundImageWizardController extends WizardController
       Float oldScaleDistance = this.scaleDistance;
       this.scaleDistance = scaleDistance;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SCALE_DISTANCE.toString(), oldScaleDistance, scaleDistance);
+          Property.SCALE_DISTANCE.name(), oldScaleDistance, scaleDistance);
     }
   }
   
@@ -252,7 +252,7 @@ public class BackgroundImageWizardController extends WizardController
       this.scaleDistanceXEnd = scaleDistanceXEnd;
       this.scaleDistanceYEnd = scaleDistanceYEnd;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SCALE_DISTANCE.toString(), oldDistancePoints, 
+          Property.SCALE_DISTANCE.name(), oldDistancePoints, 
           new float [][] {{scaleDistanceXStart, scaleDistanceYStart},
                           {scaleDistanceXEnd, scaleDistanceYEnd}});
     }
@@ -274,13 +274,13 @@ public class BackgroundImageWizardController extends WizardController
       Float oldXOrigin = this.xOrigin;
       this.xOrigin = xOrigin;
       this.propertyChangeSupport.firePropertyChange(
-          Property.X_ORIGIN.toString(), oldXOrigin, xOrigin);
+          Property.X_ORIGIN.name(), oldXOrigin, xOrigin);
     }
     if (yOrigin != this.yOrigin) {
       Float oldYOrigin = this.yOrigin;
       this.yOrigin = yOrigin;
       this.propertyChangeSupport.firePropertyChange(
-          Property.Y_ORIGIN.toString(), oldYOrigin, yOrigin);
+          Property.Y_ORIGIN.name(), oldYOrigin, yOrigin);
     }
   }
 

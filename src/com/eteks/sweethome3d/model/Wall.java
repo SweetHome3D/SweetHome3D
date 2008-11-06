@@ -131,7 +131,7 @@ public class Wall implements Serializable, Selectable {
       float oldXStart = this.xStart;
       this.xStart = xStart;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.X_START.toString(), oldXStart, xStart);
+      this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
     }
   }
 
@@ -151,7 +151,7 @@ public class Wall implements Serializable, Selectable {
       float oldYStart = this.yStart;
       this.yStart = yStart;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.Y_START.toString(), oldYStart, yStart);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
     }
   }
 
@@ -171,7 +171,7 @@ public class Wall implements Serializable, Selectable {
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.X_END.toString(), oldXEnd, xEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
     }
   }
 
@@ -191,7 +191,7 @@ public class Wall implements Serializable, Selectable {
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.Y_END.toString(), oldYEnd, yEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
     }
   }
 
@@ -223,7 +223,7 @@ public class Wall implements Serializable, Selectable {
       Wall oldWallAtStart = this.wallAtStart;
       this.wallAtStart = wallAtStart;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_START.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_START.name(), 
           oldWallAtStart, wallAtStart);
       
       if (detachJoinedWallAtStart) {
@@ -261,7 +261,7 @@ public class Wall implements Serializable, Selectable {
       Wall oldWallAtEnd = this.wallAtEnd;
       this.wallAtEnd = wallAtEnd;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_END.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_AT_END.name(), 
           oldWallAtEnd, wallAtEnd);
       
       if (detachJoinedWallAtEnd) {
@@ -300,7 +300,7 @@ public class Wall implements Serializable, Selectable {
       float oldThickness = this.thickness;
       this.thickness = thickness;
       clearPointsCache();
-      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.name(), 
           oldThickness, thickness);
     }
   }
@@ -323,7 +323,7 @@ public class Wall implements Serializable, Selectable {
         || (height != null && !height.equals(this.height))) {
       Float oldHeight = this.height;
       this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), 
           oldHeight, height);
     }
   }
@@ -344,7 +344,7 @@ public class Wall implements Serializable, Selectable {
         || (heightAtEnd != null && !heightAtEnd.equals(this.heightAtEnd))) {
       Float oldHeightAtEnd = this.heightAtEnd;
       this.heightAtEnd = heightAtEnd;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_AT_END.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT_AT_END.name(), 
           oldHeightAtEnd, heightAtEnd);
     }
   }
@@ -376,7 +376,7 @@ public class Wall implements Serializable, Selectable {
         || (leftSideColor != null && !leftSideColor.equals(this.leftSideColor))) {
       Integer oldLeftSideColor = this.leftSideColor;
       this.leftSideColor = leftSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.name(), 
           oldLeftSideColor, leftSideColor);
     }
   }
@@ -398,7 +398,7 @@ public class Wall implements Serializable, Selectable {
         || (rightSideColor != null && !rightSideColor.equals(this.rightSideColor))) {
       Integer oldLeftSideColor = this.rightSideColor;
       this.rightSideColor = rightSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.name(), 
           oldLeftSideColor, rightSideColor);
     }
   }
@@ -420,7 +420,7 @@ public class Wall implements Serializable, Selectable {
         || (leftSideTexture != null && !leftSideTexture.equals(this.leftSideTexture))) {
       HomeTexture oldLeftSideTexture = this.leftSideTexture;
       this.leftSideTexture = leftSideTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_TEXTURE.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_TEXTURE.name(), 
           oldLeftSideTexture, leftSideTexture);
     }
   }
@@ -441,7 +441,7 @@ public class Wall implements Serializable, Selectable {
         || (rightSideTexture != null && !rightSideTexture.equals(this.rightSideTexture))) {
       HomeTexture oldLeftSideTexture = this.rightSideTexture;
       this.rightSideTexture = rightSideTexture;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_TEXTURE.name(), 
           oldLeftSideTexture, rightSideTexture);
     }
   }

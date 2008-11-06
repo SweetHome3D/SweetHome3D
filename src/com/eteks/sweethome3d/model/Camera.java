@@ -96,7 +96,7 @@ public class Camera implements Serializable {
     if (yaw != this.yaw) {
       float oldYaw = this.yaw;
       this.yaw = yaw;
-      this.propertyChangeSupport.firePropertyChange(Property.YAW.toString(), oldYaw, yaw);
+      this.propertyChangeSupport.firePropertyChange(Property.YAW.name(), oldYaw, yaw);
     }
   }
   
@@ -114,7 +114,7 @@ public class Camera implements Serializable {
     if (pitch != this.pitch) {
       float oldPitch = this.pitch;
       this.pitch = pitch;
-      this.propertyChangeSupport.firePropertyChange(Property.PITCH.toString(), oldPitch, pitch);
+      this.propertyChangeSupport.firePropertyChange(Property.PITCH.name(), oldPitch, pitch);
     }
   }
 
@@ -132,7 +132,7 @@ public class Camera implements Serializable {
     if (fieldOfView != this.fieldOfView) {
       float oldFieldOfView = this.fieldOfView;
       this.fieldOfView = fieldOfView;
-      this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.toString(), oldFieldOfView, fieldOfView);
+      this.propertyChangeSupport.firePropertyChange(Property.FIELD_OF_VIEW.name(), oldFieldOfView, fieldOfView);
     }
   }
 
@@ -150,7 +150,7 @@ public class Camera implements Serializable {
     if (x != this.x) {
       float oldX = this.x;
       this.x = x;
-      this.propertyChangeSupport.firePropertyChange(Property.X.toString(), oldX, x);
+      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
   
@@ -170,7 +170,7 @@ public class Camera implements Serializable {
     if (y != this.y) {
       float oldY = this.y;
       this.y = y;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.toString(), oldY, y);
+      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
   
@@ -190,7 +190,7 @@ public class Camera implements Serializable {
     if (z != this.z) {
       float oldZ = this.z;
       this.z = z;
-      this.propertyChangeSupport.firePropertyChange(Property.Z.toString(), oldZ, z);
+      this.propertyChangeSupport.firePropertyChange(Property.Z.name(), oldZ, z);
     }
   }
 }

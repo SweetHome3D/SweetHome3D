@@ -100,14 +100,14 @@ public abstract class WizardController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -116,7 +116,7 @@ public abstract class WizardController implements Controller {
   private void setBackStepEnabled(boolean backStepEnabled) {
     if (backStepEnabled != this.backStepEnabled) {
       this.backStepEnabled = backStepEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.BACK_STEP_ENABLED.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.BACK_STEP_ENABLED.name(), 
           !backStepEnabled, backStepEnabled);
     }
   }
@@ -134,7 +134,7 @@ public abstract class WizardController implements Controller {
   private void setNextStepEnabled(boolean nextStepEnabled) {
     if (nextStepEnabled != this.nextStepEnabled) {
       this.nextStepEnabled = nextStepEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.NEXT_STEP_ENABLED.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NEXT_STEP_ENABLED.name(), 
           !nextStepEnabled, nextStepEnabled);
     }
   }
@@ -152,7 +152,7 @@ public abstract class WizardController implements Controller {
   private void setLastStep(boolean lastStep) {
     if (lastStep != this.lastStep) {
       this.lastStep = lastStep;
-      this.propertyChangeSupport.firePropertyChange(Property.LAST_STEP.toString(), !lastStep, lastStep);
+      this.propertyChangeSupport.firePropertyChange(Property.LAST_STEP.name(), !lastStep, lastStep);
     }
   }
   
@@ -170,7 +170,7 @@ public abstract class WizardController implements Controller {
     if (stepView != this.stepView) {
       View oldStepView = this.stepView;
       this.stepView = stepView;
-      this.propertyChangeSupport.firePropertyChange(Property.STEP_VIEW.toString(), oldStepView, stepView);
+      this.propertyChangeSupport.firePropertyChange(Property.STEP_VIEW.name(), oldStepView, stepView);
     }
   }
   
@@ -188,7 +188,7 @@ public abstract class WizardController implements Controller {
     if (stepIcon != this.stepIcon) {
       URL oldStepIcon = this.stepIcon;
       this.stepIcon = stepIcon;
-      this.propertyChangeSupport.firePropertyChange(Property.STEP_ICON.toString(), oldStepIcon, stepIcon);
+      this.propertyChangeSupport.firePropertyChange(Property.STEP_ICON.name(), oldStepIcon, stepIcon);
     }
   }
   
@@ -206,7 +206,7 @@ public abstract class WizardController implements Controller {
     if (title != this.title) {
       String oldTitle = this.title;
       this.title = title;
-      this.propertyChangeSupport.firePropertyChange(Property.TITLE.toString(), oldTitle, title);
+      this.propertyChangeSupport.firePropertyChange(Property.TITLE.name(), oldTitle, title);
     }
   }
   
@@ -223,7 +223,7 @@ public abstract class WizardController implements Controller {
   public void setResizable(boolean resizable) {
     if (resizable != this.resizable) {
       this.resizable = resizable;
-      this.propertyChangeSupport.firePropertyChange(Property.RESIZABLE.toString(), !resizable, resizable);
+      this.propertyChangeSupport.firePropertyChange(Property.RESIZABLE.name(), !resizable, resizable);
     }
   }
   
@@ -332,7 +332,7 @@ public abstract class WizardController implements Controller {
       if (firstStep != this.firstStep) {
         this.firstStep = firstStep;
         this.propertyChangeSupport.firePropertyChange(
-            Property.FIRST_STEP.toString(), !firstStep, firstStep);
+            Property.FIRST_STEP.name(), !firstStep, firstStep);
       }
     }  
     
@@ -344,7 +344,7 @@ public abstract class WizardController implements Controller {
       if (lastStep != this.lastStep) {
         this.lastStep = lastStep;
         this.propertyChangeSupport.firePropertyChange(
-            Property.LAST_STEP.toString(), !lastStep, lastStep);
+            Property.LAST_STEP.name(), !lastStep, lastStep);
       }
     }  
     
@@ -356,7 +356,7 @@ public abstract class WizardController implements Controller {
       if (nextStepEnabled != this.nextStepEnabled) {
         this.nextStepEnabled = nextStepEnabled;
         this.propertyChangeSupport.firePropertyChange(
-            Property.NEXT_STEP_ENABLED.toString(), !nextStepEnabled, nextStepEnabled);
+            Property.NEXT_STEP_ENABLED.name(), !nextStepEnabled, nextStepEnabled);
       }
     }  
   }

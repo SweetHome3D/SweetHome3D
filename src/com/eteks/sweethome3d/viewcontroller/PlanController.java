@@ -175,14 +175,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -199,7 +199,7 @@ public class PlanController extends FurnitureController implements Controller {
     Mode oldMode = this.state.getMode();
     if (mode != oldMode) {
       this.state.setMode(mode);
-      this.propertyChangeSupport.firePropertyChange(Property.MODE.toString(), oldMode, mode);
+      this.propertyChangeSupport.firePropertyChange(Property.MODE.name(), oldMode, mode);
     }
   }
 

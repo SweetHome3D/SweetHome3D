@@ -111,7 +111,7 @@ public class HelpPane extends JRootPane implements HelpView {
     ActionMap actions = getActionMap();    
     try {
       final ControllerAction showPreviousAction = new ControllerAction(
-          resource, ActionType.SHOW_PREVIOUS.toString(), controller, "showPrevious");
+          resource, ActionType.SHOW_PREVIOUS.name(), controller, "showPrevious");
       showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
       controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED, 
           new PropertyChangeListener() {
@@ -122,7 +122,7 @@ public class HelpPane extends JRootPane implements HelpView {
       actions.put(ActionType.SHOW_PREVIOUS, showPreviousAction);
       
       final ControllerAction showNextAction = new ControllerAction(
-          resource, ActionType.SHOW_NEXT.toString(), controller, "showNext");
+          resource, ActionType.SHOW_NEXT.name(), controller, "showNext");
       showNextAction.setEnabled(controller.isNextPageEnabled());
       controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED, 
           new PropertyChangeListener() {
@@ -132,7 +132,7 @@ public class HelpPane extends JRootPane implements HelpView {
           });
       actions.put(ActionType.SHOW_NEXT, showNextAction);
       
-      actions.put(ActionType.SEARCH, new ResourceAction(resource, ActionType.SEARCH.toString()) {
+      actions.put(ActionType.SEARCH, new ResourceAction(resource, ActionType.SEARCH.name()) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             final Cursor previousCursor = getCursor();
@@ -151,7 +151,7 @@ public class HelpPane extends JRootPane implements HelpView {
       throw new RuntimeException(ex);
     }
     actions.put(ActionType.CLOSE, new ResourceAction(
-            resource, ActionType.CLOSE.toString(), true) {
+            resource, ActionType.CLOSE.name(), true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           frame.setVisible(false);

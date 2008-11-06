@@ -129,14 +129,14 @@ public class Home3DAttributesController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -167,7 +167,7 @@ public class Home3DAttributesController implements Controller {
     if (observerFieldOfViewInDegrees != this.observerFieldOfViewInDegrees) {
       int oldObserverFieldOfViewInDegrees = this.observerFieldOfViewInDegrees;
       this.observerFieldOfViewInDegrees = observerFieldOfViewInDegrees;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_FIELD_OF_VIEW_IN_DEGREES.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_FIELD_OF_VIEW_IN_DEGREES.name(), 
           oldObserverFieldOfViewInDegrees, observerFieldOfViewInDegrees);
     }
   }
@@ -186,7 +186,7 @@ public class Home3DAttributesController implements Controller {
     if (observerHeight != this.observerHeight) {
       float oldObserverHeight = this.observerHeight;
       this.observerHeight = observerHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_HEIGHT.toString(), oldObserverHeight, observerHeight);
+      this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_HEIGHT.name(), oldObserverHeight, observerHeight);
     }
   }
 
@@ -204,7 +204,7 @@ public class Home3DAttributesController implements Controller {
     if (groundColor != this.groundColor) {
       int oldGroundColor = this.groundColor;
       this.groundColor = groundColor;
-      this.propertyChangeSupport.firePropertyChange(Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
+      this.propertyChangeSupport.firePropertyChange(Property.GROUND_COLOR.name(), oldGroundColor, groundColor);
       
       setGroundPaint(EnvironmentPaint.COLORED);
     }
@@ -224,7 +224,7 @@ public class Home3DAttributesController implements Controller {
     if (groundPaint != this.groundPaint) {
       EnvironmentPaint oldGroundPaint = this.groundPaint;
       this.groundPaint = groundPaint;
-      this.propertyChangeSupport.firePropertyChange(Property.GROUND_PAINT.toString(), oldGroundPaint, groundPaint);
+      this.propertyChangeSupport.firePropertyChange(Property.GROUND_PAINT.name(), oldGroundPaint, groundPaint);
     }
   }
 
@@ -242,7 +242,7 @@ public class Home3DAttributesController implements Controller {
     if (skyColor != this.skyColor) {
       int oldSkyColor = this.skyColor;
       this.skyColor = skyColor;
-      this.propertyChangeSupport.firePropertyChange(Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
+      this.propertyChangeSupport.firePropertyChange(Property.SKY_COLOR.name(), oldSkyColor, skyColor);
     }
   }
 
@@ -260,7 +260,7 @@ public class Home3DAttributesController implements Controller {
     if (lightColor != this.lightColor) {
       int oldLightColor = this.lightColor;
       this.lightColor = lightColor;
-      this.propertyChangeSupport.firePropertyChange(Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
+      this.propertyChangeSupport.firePropertyChange(Property.LIGHT_COLOR.name(), oldLightColor, lightColor);
     }
   }
 
@@ -278,7 +278,7 @@ public class Home3DAttributesController implements Controller {
     if (wallsAlpha != this.wallsAlpha) {
       float oldWallsAlpha = this.wallsAlpha;
       this.wallsAlpha = wallsAlpha;
-      this.propertyChangeSupport.firePropertyChange(Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
+      this.propertyChangeSupport.firePropertyChange(Property.WALLS_ALPHA.name(), oldWallsAlpha, wallsAlpha);
     }
   }
 

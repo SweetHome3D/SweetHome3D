@@ -147,7 +147,7 @@ public class FileUserPreferences extends UserPreferences {
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Read other preferences 
-    Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().toString()));
+    Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().name()));
     setUnit(unit);
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, true));
@@ -359,7 +359,7 @@ public class FileUserPreferences extends UserPreferences {
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
-    preferences.put(UNIT, getUnit().toString());   
+    preferences.put(UNIT, getUnit().name());   
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());

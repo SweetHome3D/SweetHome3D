@@ -181,14 +181,14 @@ public abstract class PluginAction {
   }
   
   /**
-   * Adds the property change <code>listener</code> in parameter to this home.
+   * Adds the property change <code>listener</code> in parameter to this plugin action.
    */
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     this.propertyChangeSupport.addPropertyChangeListener(listener);
   }
 
   /**
-   * Removes the property change <code>listener</code> in parameter from this home.
+   * Removes the property change <code>listener</code> in parameter from this plugin action.
    */
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     this.propertyChangeSupport.removePropertyChangeListener(listener);
@@ -210,7 +210,7 @@ public abstract class PluginAction {
     if (value != oldValue
         || (value != null && !value.equals(oldValue))) {
       this.propertyValues.put(property, value);
-      this.propertyChangeSupport.firePropertyChange(property.toString(), oldValue, value);
+      this.propertyChangeSupport.firePropertyChange(property.name(), oldValue, value);
     }
     
   }

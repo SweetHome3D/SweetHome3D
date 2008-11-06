@@ -105,14 +105,14 @@ public class HomeFurnitureController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -262,7 +262,7 @@ public class HomeFurnitureController implements Controller {
     if (name != this.name) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
 
@@ -280,7 +280,7 @@ public class HomeFurnitureController implements Controller {
     if (x != this.x) {
       Float oldX = this.x;
       this.x = x;
-      this.propertyChangeSupport.firePropertyChange(Property.X.toString(), oldX, x);
+      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
 
@@ -298,7 +298,7 @@ public class HomeFurnitureController implements Controller {
     if (y != this.y) {
       Float oldY = this.y;
       this.y = y;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.toString(), oldY, y);
+      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
 
@@ -316,7 +316,7 @@ public class HomeFurnitureController implements Controller {
     if (elevation != this.elevation) {
       Float oldElevation = this.elevation;
       this.elevation = elevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.toString(), oldElevation, elevation);
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -334,7 +334,7 @@ public class HomeFurnitureController implements Controller {
     if (angleInDegrees != this.angleInDegrees) {
       Integer oldAngleInDegrees = this.angleInDegrees;
       this.angleInDegrees = angleInDegrees;
-      this.propertyChangeSupport.firePropertyChange(Property.ANGLE_IN_DEGREES.toString(), oldAngleInDegrees, angleInDegrees);
+      this.propertyChangeSupport.firePropertyChange(Property.ANGLE_IN_DEGREES.name(), oldAngleInDegrees, angleInDegrees);
     }
   }
 
@@ -352,7 +352,7 @@ public class HomeFurnitureController implements Controller {
     if (width != this.width) {
       Float oldWidth = this.width;
       this.width = width;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.toString(), oldWidth, width);
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
     }
   }
 
@@ -370,7 +370,7 @@ public class HomeFurnitureController implements Controller {
     if (depth != this.depth) {
       Float oldDepth = this.depth;
       this.depth = depth;
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.toString(), oldDepth, depth);
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
     }
   }
 
@@ -388,7 +388,7 @@ public class HomeFurnitureController implements Controller {
     if (height != this.height) {
       Float oldHeight = this.height;
       this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), oldHeight, height);
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
     }
   }
 
@@ -406,7 +406,7 @@ public class HomeFurnitureController implements Controller {
     if (color != this.color) {
       Integer oldColor = this.color;
       this.color = color;
-      this.propertyChangeSupport.firePropertyChange(Property.COLOR.toString(), oldColor, color);
+      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
 
@@ -424,7 +424,7 @@ public class HomeFurnitureController implements Controller {
     if (visible != this.visible) {
       Boolean oldVisible = this.visible;
       this.visible = visible;
-      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.toString(), oldVisible, visible);
+      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), oldVisible, visible);
     }
   }
 
@@ -442,7 +442,7 @@ public class HomeFurnitureController implements Controller {
     if (modelMirrored != this.modelMirrored) {
       Boolean oldModelMirrored = this.modelMirrored;
       this.modelMirrored = modelMirrored;
-      this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.toString(), oldModelMirrored, modelMirrored);
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.name(), oldModelMirrored, modelMirrored);
     }
   }
 
@@ -460,7 +460,7 @@ public class HomeFurnitureController implements Controller {
     if (resizable != this.resizable) {
       boolean oldResizable = this.resizable;
       this.resizable = resizable;
-      this.propertyChangeSupport.firePropertyChange(Property.RESIZABLE.toString(), oldResizable, resizable);
+      this.propertyChangeSupport.firePropertyChange(Property.RESIZABLE.name(), oldResizable, resizable);
     }
   }
 

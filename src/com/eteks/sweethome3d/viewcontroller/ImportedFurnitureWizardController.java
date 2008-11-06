@@ -292,7 +292,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (step != this.step) {
       Step oldStep = this.step;
       this.step = step;
-      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.name(), oldStep, step);
     }
   }
   
@@ -307,14 +307,14 @@ public class ImportedFurnitureWizardController extends WizardController
    * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -331,7 +331,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (model != this.model) {
       Content oldModel = this.model;
       this.model = model;
-      this.propertyChangeSupport.firePropertyChange(Property.MODEL.toString(), oldModel, model);
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL.name(), oldModel, model);
     }
   }
   
@@ -348,7 +348,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public void setBackFaceShown(boolean backFaceShown) {
     if (backFaceShown != this.backFaceShown) {
       this.backFaceShown = backFaceShown;
-      this.propertyChangeSupport.firePropertyChange(Property.BACK_FACE_SHWON.toString(), !backFaceShown, backFaceShown);
+      this.propertyChangeSupport.firePropertyChange(Property.BACK_FACE_SHWON.name(), !backFaceShown, backFaceShown);
     }
   }
 
@@ -366,7 +366,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (modelRotation != this.modelRotation) {
       float [][] oldModelRotation = this.modelRotation;
       this.modelRotation = modelRotation;
-      this.propertyChangeSupport.firePropertyChange(Property.MODEL_ROTATION.toString(), oldModelRotation, modelRotation);
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL_ROTATION.name(), oldModelRotation, modelRotation);
     }
   }
 
@@ -386,7 +386,7 @@ public class ImportedFurnitureWizardController extends WizardController
       String oldName = this.name;
       this.name = name;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+        this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
       }
     }
   }
@@ -405,7 +405,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (width != this.width) {
       float oldWidth = this.width;
       this.width = width;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.toString(), oldWidth, width);
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
     }
   }
 
@@ -423,7 +423,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (depth != this.depth) {
       float oldDepth = this.depth;
       this.depth = depth;
-      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.toString(), oldDepth, depth);
+      this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
     }
   }
 
@@ -441,7 +441,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (height != this.height) {
       float oldHeight = this.height;
       this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), oldHeight, height);
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
     }
   }
 
@@ -459,7 +459,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.toString(), oldElevation, elevation);
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
   
@@ -476,7 +476,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public void setMovable(boolean movable) {
     if (movable != this.movable) {
       this.movable = movable;
-      this.propertyChangeSupport.firePropertyChange(Property.MOVABLE.toString(), !movable, movable);
+      this.propertyChangeSupport.firePropertyChange(Property.MOVABLE.name(), !movable, movable);
     }
   }
 
@@ -493,7 +493,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public void setDoorOrWindow(boolean doorOrWindow) {
     if (doorOrWindow != this.doorOrWindow) {
       this.doorOrWindow = doorOrWindow;
-      this.propertyChangeSupport.firePropertyChange(Property.DOOR_OR_WINDOW.toString(), !doorOrWindow, doorOrWindow);
+      this.propertyChangeSupport.firePropertyChange(Property.DOOR_OR_WINDOW.name(), !doorOrWindow, doorOrWindow);
     }
   }
 
@@ -511,7 +511,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (color != this.color) {
       Integer oldColor = this.color;
       this.color = color;
-      this.propertyChangeSupport.firePropertyChange(Property.COLOR.toString(), oldColor, color);
+      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
   
@@ -529,7 +529,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (category != this.category) {
       FurnitureCategory oldCategory = this.category;
       this.category = category;
-      this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.toString(), oldCategory, category);
+      this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.name(), oldCategory, category);
     }
   }
   
@@ -554,7 +554,7 @@ public class ImportedFurnitureWizardController extends WizardController
     if (iconYaw != this.iconYaw) {
       float oldIconYaw = this.iconYaw;
       this.iconYaw = iconYaw;
-      this.propertyChangeSupport.firePropertyChange(Property.ICON_YAW.toString(), oldIconYaw, iconYaw);
+      this.propertyChangeSupport.firePropertyChange(Property.ICON_YAW.name(), oldIconYaw, iconYaw);
     }
   }
   
@@ -571,7 +571,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public void setProportional(boolean proportional) {
     if (proportional != this.proportional) {
       this.proportional = proportional;
-      this.propertyChangeSupport.firePropertyChange(Property.PROPORTIONAL.toString(), !proportional, proportional);
+      this.propertyChangeSupport.firePropertyChange(Property.PROPORTIONAL.name(), !proportional, proportional);
     }
   }
 

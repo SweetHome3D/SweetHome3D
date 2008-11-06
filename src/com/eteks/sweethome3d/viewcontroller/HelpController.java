@@ -106,14 +106,14 @@ public class HelpController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -123,7 +123,7 @@ public class HelpController implements Controller {
     if (helpPage != this.helpPage) {
       URL oldHelpPage = this.helpPage;
       this.helpPage = helpPage;
-      this.propertyChangeSupport.firePropertyChange(Property.HELP_PAGE.toString(), oldHelpPage, helpPage);
+      this.propertyChangeSupport.firePropertyChange(Property.HELP_PAGE.name(), oldHelpPage, helpPage);
     }
   }
   
@@ -141,7 +141,7 @@ public class HelpController implements Controller {
     if (browserPage != this.browserPage) {
       URL oldBrowserPage = this.browserPage;
       this.browserPage = browserPage;
-      this.propertyChangeSupport.firePropertyChange(Property.BROWSER_PAGE.toString(), oldBrowserPage, browserPage);
+      this.propertyChangeSupport.firePropertyChange(Property.BROWSER_PAGE.name(), oldBrowserPage, browserPage);
     }
   }
   
@@ -158,7 +158,7 @@ public class HelpController implements Controller {
   private void setPreviousPageEnabled(boolean previousPageEnabled) {
     if (previousPageEnabled != this.previousPageEnabled) {
       this.previousPageEnabled = previousPageEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.PREVIOUS_PAGE_ENABLED.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.PREVIOUS_PAGE_ENABLED.name(), 
           !previousPageEnabled, previousPageEnabled);
     }
   }
@@ -176,7 +176,7 @@ public class HelpController implements Controller {
   private void setNextPageEnabled(boolean nextPageEnabled) {
     if (nextPageEnabled != this.nextPageEnabled) {
       this.nextPageEnabled = nextPageEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.NEXT_PAGE_ENABLED.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NEXT_PAGE_ENABLED.name(), 
           !nextPageEnabled, nextPageEnabled);
     }
   }

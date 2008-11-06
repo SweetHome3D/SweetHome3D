@@ -90,14 +90,14 @@ public class PageSetupController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -107,7 +107,7 @@ public class PageSetupController implements Controller {
     if (print != this.print) {
       HomePrint oldPrint = this.print;
       this.print = print;
-      this.propertyChangeSupport.firePropertyChange(Property.PRINT.toString(), oldPrint, print);
+      this.propertyChangeSupport.firePropertyChange(Property.PRINT.name(), oldPrint, print);
     }
   }
 

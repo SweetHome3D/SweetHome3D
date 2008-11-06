@@ -294,7 +294,7 @@ public abstract class UserPreferences {
    */
   public void addPropertyChangeListener(Property property, 
                                         PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -302,7 +302,7 @@ public abstract class UserPreferences {
    */
   public void removePropertyChangeListener(Property property, 
                                            PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -356,7 +356,7 @@ public abstract class UserPreferences {
       String oldLanguage = this.language;
       this.language = language;      
       Locale.setDefault(new Locale(language, Locale.getDefault().getCountry()));
-      this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
           oldLanguage, language);
     }
   }
@@ -391,7 +391,7 @@ public abstract class UserPreferences {
     if (this.unit != unit) {
       Unit oldUnit = this.unit;
       this.unit = unit;
-      this.propertyChangeSupport.firePropertyChange(Property.UNIT.toString(), oldUnit, unit);
+      this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
     }
   }
 
@@ -412,7 +412,7 @@ public abstract class UserPreferences {
   public void setMagnetismEnabled(boolean magnetismEnabled) {
     if (this.magnetismEnabled != magnetismEnabled) {
       this.magnetismEnabled = magnetismEnabled;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), 
           !magnetismEnabled, magnetismEnabled);
     }
   }
@@ -434,7 +434,7 @@ public abstract class UserPreferences {
   public void setRulersVisible(boolean rulersVisible) {
     if (this.rulersVisible != rulersVisible) {
       this.rulersVisible = rulersVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.RULERS_VISIBLE.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RULERS_VISIBLE.name(), 
           !rulersVisible, rulersVisible);
     }
   }
@@ -456,7 +456,7 @@ public abstract class UserPreferences {
   public void setGridVisible(boolean gridVisible) {
     if (this.gridVisible != gridVisible) {
       this.gridVisible = gridVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.name(), 
           !gridVisible, gridVisible);
     }
   }
@@ -476,7 +476,7 @@ public abstract class UserPreferences {
     if (this.newWallThickness != newWallThickness) {
       float oldDefaultThickness = this.newWallThickness;
       this.newWallThickness = newWallThickness;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_THICKNESS.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_THICKNESS.name(), 
           oldDefaultThickness, newWallThickness);
     }
   }
@@ -496,7 +496,7 @@ public abstract class UserPreferences {
     if (this.newWallHeight != newWallHeight) {
       float oldWallHeight = this.newWallHeight;
       this.newWallHeight = newWallHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.name(), 
           oldWallHeight, newWallHeight);
     }
   }
@@ -515,7 +515,7 @@ public abstract class UserPreferences {
     if (!recentHomes.equals(this.recentHomes)) {
       List<String> oldRecentHomes = this.recentHomes;
       this.recentHomes = new ArrayList<String>(recentHomes);
-      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
           oldRecentHomes, getRecentHomes());
     }
   }

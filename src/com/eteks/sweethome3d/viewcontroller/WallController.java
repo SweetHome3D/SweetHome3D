@@ -163,14 +163,14 @@ public class WallController implements Controller {
    * Adds the property change <code>listener</code> in parameter to this controller.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this controller.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -373,7 +373,7 @@ public class WallController implements Controller {
     if (xStart != this.xStart) {
       Float oldXStart = this.xStart;
       this.xStart = xStart;
-      this.propertyChangeSupport.firePropertyChange(Property.X_START.toString(), oldXStart, xStart);
+      this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
       updateLength();
     }
   }
@@ -392,7 +392,7 @@ public class WallController implements Controller {
     if (yStart != this.yStart) {
       Float oldYStart = this.yStart;
       this.yStart = yStart;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_START.toString(), oldYStart, yStart);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
       updateLength();
     }
   }
@@ -411,7 +411,7 @@ public class WallController implements Controller {
     if (xEnd != this.xEnd) {
       Float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
-      this.propertyChangeSupport.firePropertyChange(Property.X_END.toString(), oldXEnd, xEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
       updateLength();
     }
   }
@@ -430,7 +430,7 @@ public class WallController implements Controller {
     if (yEnd != this.yEnd) {
       Float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_END.toString(), oldYEnd, yEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
       updateLength();
     }
   }
@@ -472,7 +472,7 @@ public class WallController implements Controller {
     if (length != this.length) {
       Float oldLength = this.length;
       this.length = length;
-      this.propertyChangeSupport.firePropertyChange(Property.LENGTH.toString(), oldLength, length);
+      this.propertyChangeSupport.firePropertyChange(Property.LENGTH.name(), oldLength, length);
       
       if (updateEndPoint) {
         Float xStart = getXStart();
@@ -504,7 +504,7 @@ public class WallController implements Controller {
   public void setEditablePoints(boolean editablePoints) {
     if (editablePoints != this.editablePoints) {
       this.editablePoints = editablePoints;
-      this.propertyChangeSupport.firePropertyChange(Property.EDITABLE_POINTS.toString(), !editablePoints, editablePoints);
+      this.propertyChangeSupport.firePropertyChange(Property.EDITABLE_POINTS.name(), !editablePoints, editablePoints);
     }
   }
   
@@ -522,7 +522,7 @@ public class WallController implements Controller {
     if (leftSideColor != this.leftSideColor) {
       Integer oldLeftSideColor = this.leftSideColor;
       this.leftSideColor = leftSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.toString(), oldLeftSideColor, leftSideColor);
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_COLOR.name(), oldLeftSideColor, leftSideColor);
       
       setLeftSidePaint(WallPaint.COLORED);
     }
@@ -542,7 +542,7 @@ public class WallController implements Controller {
     if (leftSidePaint != this.leftSidePaint) {
       WallPaint oldLeftSidePaint = this.leftSidePaint;
       this.leftSidePaint = leftSidePaint;
-      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_PAINT.toString(), oldLeftSidePaint, leftSidePaint);
+      this.propertyChangeSupport.firePropertyChange(Property.LEFT_SIDE_PAINT.name(), oldLeftSidePaint, leftSidePaint);
     }
   }
   
@@ -560,7 +560,7 @@ public class WallController implements Controller {
     if (rightSideColor != this.rightSideColor) {
       Integer oldRightSideColor = this.rightSideColor;
       this.rightSideColor = rightSideColor;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.toString(), oldRightSideColor, rightSideColor);
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_COLOR.name(), oldRightSideColor, rightSideColor);
       
       setRightSidePaint(WallPaint.COLORED);
     }
@@ -580,7 +580,7 @@ public class WallController implements Controller {
     if (rightSidePaint != this.rightSidePaint) {
       WallPaint oldRightSidePaint = this.rightSidePaint;
       this.rightSidePaint = rightSidePaint;
-      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_PAINT.toString(), oldRightSidePaint, rightSidePaint);
+      this.propertyChangeSupport.firePropertyChange(Property.RIGHT_SIDE_PAINT.name(), oldRightSidePaint, rightSidePaint);
     }
   }
   
@@ -598,7 +598,7 @@ public class WallController implements Controller {
     if (shape != this.shape) {
       WallShape oldShape = this.shape;
       this.shape = shape;
-      this.propertyChangeSupport.firePropertyChange(Property.SHAPE.toString(), oldShape, shape);
+      this.propertyChangeSupport.firePropertyChange(Property.SHAPE.name(), oldShape, shape);
     }
   }
   
@@ -616,7 +616,7 @@ public class WallController implements Controller {
     if (rectangularWallHeight != this.rectangularWallHeight) {
       Float oldRectangularWallHeight = this.rectangularWallHeight;
       this.rectangularWallHeight = rectangularWallHeight;
-      this.propertyChangeSupport.firePropertyChange(Property.RECTANGULAR_WALL_HEIGHT.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.RECTANGULAR_WALL_HEIGHT.name(), 
           oldRectangularWallHeight, rectangularWallHeight);
       
       setShape(WallShape.RECTANGULAR_WALL);
@@ -637,7 +637,7 @@ public class WallController implements Controller {
     if (slopingWallHeightAtStart != this.slopingWallHeightAtStart) {
       Float oldSlopingHeightHeightAtStart = this.slopingWallHeightAtStart;
       this.slopingWallHeightAtStart = slopingWallHeightAtStart;
-      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_START.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_START.name(), 
           oldSlopingHeightHeightAtStart, slopingWallHeightAtStart);
       
       setShape(WallShape.SLOPING_WALL);
@@ -658,7 +658,7 @@ public class WallController implements Controller {
     if (sloppingWallHeightAtEnd != this.sloppingWallHeightAtEnd) {
       Float oldSlopingWallHeightAtEnd = this.sloppingWallHeightAtEnd;
       this.sloppingWallHeightAtEnd = sloppingWallHeightAtEnd;
-      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_END.toString(), 
+      this.propertyChangeSupport.firePropertyChange(Property.SLOPING_WALL_HEIGHT_AT_END.name(), 
           oldSlopingWallHeightAtEnd, sloppingWallHeightAtEnd);
       
       setShape(WallShape.SLOPING_WALL);
@@ -679,7 +679,7 @@ public class WallController implements Controller {
     if (thickness != this.thickness) {
       Float oldThickness = this.thickness;
       this.thickness = thickness;
-      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.toString(), oldThickness, thickness);
+      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.name(), oldThickness, thickness);
     }
   }
   

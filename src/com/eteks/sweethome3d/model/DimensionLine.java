@@ -110,7 +110,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldXStart = this.xStart;
       this.xStart = xStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_START.toString(), oldXStart, xStart);
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_START.name(), oldXStart, xStart);
     }
   }
 
@@ -130,7 +130,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldYStart = this.yStart;
       this.yStart = yStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_START.toString(), oldYStart, yStart);
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_START.name(), oldYStart, yStart);
     }
   }
 
@@ -150,7 +150,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_END.toString(), oldXEnd, xEnd);
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_END.name(), oldXEnd, xEnd);
     }
   }
 
@@ -170,7 +170,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.toString(), oldYEnd, yEnd);
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.name(), oldYEnd, yEnd);
     }
   }
 
@@ -190,7 +190,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldOffset = this.offset;
       this.offset = offset;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.toString(), oldOffset, offset);
+      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.name(), oldOffset, offset);
     }
   }
 

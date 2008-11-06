@@ -168,7 +168,7 @@ public class ImportedTextureWizardController extends WizardController
     if (step != this.step) {
       Step oldStep = this.step;
       this.step = step;
-      this.propertyChangeSupport.firePropertyChange(Property.STEP.toString(), oldStep, step);
+      this.propertyChangeSupport.firePropertyChange(Property.STEP.name(), oldStep, step);
     }
   }
   
@@ -183,14 +183,14 @@ public class ImportedTextureWizardController extends WizardController
    * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -200,7 +200,7 @@ public class ImportedTextureWizardController extends WizardController
     if (image != this.image) {
       Content oldImage = this.image;
       this.image = image;
-      this.propertyChangeSupport.firePropertyChange(Property.IMAGE.toString(), oldImage, image);
+      this.propertyChangeSupport.firePropertyChange(Property.IMAGE.name(), oldImage, image);
     }
   }
   
@@ -227,7 +227,7 @@ public class ImportedTextureWizardController extends WizardController
       String oldName = this.name;
       this.name = name;
       if (this.propertyChangeSupport != null) {
-        this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+        this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
       }
     }
   }
@@ -246,7 +246,7 @@ public class ImportedTextureWizardController extends WizardController
     if (category != this.category) {
       TexturesCategory oldCategory = this.category;
       this.category = category;
-      this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.toString(), oldCategory, category);
+      this.propertyChangeSupport.firePropertyChange(Property.CATEGORY.name(), oldCategory, category);
     }
   }
   
@@ -264,7 +264,7 @@ public class ImportedTextureWizardController extends WizardController
     if (width != this.width) {
       float oldWidth = this.width;
       this.width = width;
-      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.toString(), oldWidth, width);
+      this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
     }
   }
 
@@ -282,7 +282,7 @@ public class ImportedTextureWizardController extends WizardController
     if (height != this.height) {
       float oldHeight = this.height;
       this.height = height;
-      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), oldHeight, height);
+      this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
     }
   }
 

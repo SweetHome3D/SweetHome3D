@@ -296,7 +296,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
         || (name != null && !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
    
@@ -318,7 +318,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
         float oldDepth = this.depth;
         this.depth = depth;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.DEPTH.toString(), oldDepth, depth);
+        this.propertyChangeSupport.firePropertyChange(Property.DEPTH.name(), oldDepth, depth);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -343,7 +343,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
         float oldHeight = this.height;
         this.height = height;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.toString(), oldHeight, height);
+        this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -368,7 +368,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
         float oldWidth = this.width;
         this.width = width;
         this.shapeCache = null;
-        this.propertyChangeSupport.firePropertyChange(Property.WIDTH.toString(), oldWidth, width);
+        this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
       }
     } else {
       throw new IllegalStateException("Piece isn't resizable");
@@ -390,7 +390,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     if (elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.toString(), oldElevation, elevation);
+      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -439,7 +439,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
         || (color != null && !color.equals(this.color))) {
       Integer oldColor = this.color;
       this.color = color;
-      this.propertyChangeSupport.firePropertyChange(Property.COLOR.toString(), oldColor, color);
+      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
 
@@ -501,7 +501,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public void setVisible(boolean visible) {
     if (visible != this.visible) {
       this.visible = visible;
-      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.toString(), !visible, visible);
+      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE.name(), !visible, visible);
     }
   }
 
@@ -521,7 +521,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       float oldX = this.x;
       this.x = x;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X.toString(), oldX, x);
+      this.propertyChangeSupport.firePropertyChange(Property.X.name(), oldX, x);
     }
   }
   
@@ -541,7 +541,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       float oldY = this.y;
       this.y = y;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y.toString(), oldY, y);
+      this.propertyChangeSupport.firePropertyChange(Property.Y.name(), oldY, y);
     }
   }
 
@@ -561,7 +561,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       float oldAngle = this.angle;
       this.angle = angle;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.ANGLE.toString(), oldAngle, angle);
+      this.propertyChangeSupport.firePropertyChange(Property.ANGLE.name(), oldAngle, angle);
     }
   }
 
@@ -581,7 +581,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     if (this.resizable) {
       if (modelMirrored != this.modelMirrored) {
         this.modelMirrored = modelMirrored;
-        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.toString(), 
+        this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.name(), 
             !modelMirrored, modelMirrored);
       }
     } else {

@@ -92,7 +92,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   private void createActions() {
     // Show previous page action
     Action showPreviousPageAction = new ResourceAction(
-            this.resource, ActionType.SHOW_PREVIOUS_PAGE.toString()) {
+            this.resource, ActionType.SHOW_PREVIOUS_PAGE.name()) {
         public void actionPerformed(ActionEvent e) {
           printableComponent.setPage(printableComponent.getPage() - 1);
           updateComponents();
@@ -100,7 +100,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       };
     // Show next page action
     Action showNextPageAction = new ResourceAction(
-            this.resource, ActionType.SHOW_NEXT_PAGE.toString()) {
+            this.resource, ActionType.SHOW_NEXT_PAGE.name()) {
         public void actionPerformed(ActionEvent e) {
           printableComponent.setPage(printableComponent.getPage() + 1);
           updateComponents();
