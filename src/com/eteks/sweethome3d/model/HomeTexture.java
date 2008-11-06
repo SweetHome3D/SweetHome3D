@@ -19,11 +19,13 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.Serializable;
+
 /**
  * An image used as texture on home 3D objects.
  * @author Emmanuel Puybaret
  */
-public class HomeTexture implements TextureImage {
+public class HomeTexture implements TextureImage, Serializable {
   private static final long serialVersionUID = 1L;
   
   private final String name;
