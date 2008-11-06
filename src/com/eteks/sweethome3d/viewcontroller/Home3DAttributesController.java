@@ -31,6 +31,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -145,17 +146,18 @@ public class Home3DAttributesController implements Controller {
     setObserverFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(
         this.home.getObserverCamera().getFieldOfView())) + 360) % 360);
     setObserverHeight(this.home.getObserverCamera().getZ() * 15 / 14);
-    setGroundColor(this.home.getGroundColor());
-    HomeTexture groundTexture = this.home.getGroundTexture();
+    HomeEnvironment homeEnvironment = this.home.getEnvironment();
+    setGroundColor(homeEnvironment.getGroundColor());
+    HomeTexture groundTexture = homeEnvironment.getGroundTexture();
     getGroundTextureController().setTexture(groundTexture);
     if (groundTexture != null) {
       setGroundPaint(EnvironmentPaint.TEXTURED);
     } else {
       setGroundPaint(EnvironmentPaint.COLORED);
     }
-    setSkyColor(this.home.getSkyColor());
-    setLightColor(this.home.getLightColor());
-    setWallsAlpha(this.home.getWallsAlpha());
+    setSkyColor(homeEnvironment.getSkyColor());
+    setLightColor(homeEnvironment.getLightColor());
+    setWallsAlpha(homeEnvironment.getWallsAlpha());
   }
   
   /**
@@ -303,11 +305,12 @@ public class Home3DAttributesController implements Controller {
 
     final float oldObserverCameraFieldOfView = this.home.getObserverCamera().getFieldOfView();
     final float oldObserverCameraZ = this.home.getObserverCamera().getZ();
-    final int   oldGroundColor = this.home.getGroundColor();
-    final HomeTexture oldGroundTexture = this.home.getGroundTexture();
-    final int   oldSkyColor = this.home.getSkyColor();
-    final int   oldLightColor = this.home.getLightColor();
-    final float oldWallsAlpha = this.home.getWallsAlpha();
+    HomeEnvironment homeEnvironment = this.home.getEnvironment();
+    final int   oldGroundColor = homeEnvironment.getGroundColor();
+    final HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
+    final int   oldSkyColor = homeEnvironment.getSkyColor();
+    final int   oldLightColor = homeEnvironment.getLightColor();
+    final float oldWallsAlpha = homeEnvironment.getWallsAlpha();
     
     // Apply modification
     doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
@@ -349,10 +352,11 @@ public class Home3DAttributesController implements Controller {
     ObserverCamera observerCamera = home.getObserverCamera();
     observerCamera.setFieldOfView(observerCameraFieldOfView);
     observerCamera.setZ(observerCameraZ);
-    home.setGroundColor(groundColor);
-    home.setGroundTexture(groundTexture);
-    home.setSkyColor(skyColor);
-    home.setLightColor(lightColor);
-    home.setWallsAlpha(wallsAlpha);
+    HomeEnvironment homeEnvironment = home.getEnvironment();
+    homeEnvironment.setGroundColor(groundColor);
+    homeEnvironment.setGroundTexture(groundTexture);
+    homeEnvironment.setSkyColor(skyColor);
+    homeEnvironment.setLightColor(lightColor);
+    homeEnvironment.setWallsAlpha(wallsAlpha);
   }
 }

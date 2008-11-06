@@ -48,6 +48,7 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -272,11 +273,11 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Check edited values
     float oldCameraFieldOfView = observerCamera.getFieldOfView();
     float oldCameraHeight = observerCamera.getHeight();
-    int oldGroundColor = home.getGroundColor();
-    TextureImage oldGroundTexture = home.getGroundTexture();
-    int oldSkyColor = home.getSkyColor();
-    int oldLightColor = home.getLightColor();
-    float oldWallsAlpha = home.getWallsAlpha();
+    int oldGroundColor = home.getEnvironment().getGroundColor();
+    TextureImage oldGroundTexture = home.getEnvironment().getGroundTexture();
+    int oldSkyColor = home.getEnvironment().getSkyColor();
+    int oldLightColor = home.getEnvironment().getLightColor();
+    float oldWallsAlpha = home.getEnvironment().getWallsAlpha();
     assertEquals("Wrong field of view", (int)Math.round(Math.toDegrees(oldCameraFieldOfView)), 
         observerFieldOfViewSpinner.getValue());
     assertEquals("Wrong height", (float)Math.round(oldCameraHeight * 100) / 100, 
@@ -452,14 +453,15 @@ public class HomeCameraTest extends ComponentTestFixture {
     ObserverCamera observerCamera = home.getObserverCamera();
     assertEquals("Wrong field of view", cameraFieldOfView, observerCamera.getFieldOfView());
     assertEquals("Wrong height", cameraHeight, observerCamera.getHeight());
-    assertEquals("Wrong ground color", groundColor, home.getGroundColor());
+    HomeEnvironment homeEnvironment = home.getEnvironment();
+    assertEquals("Wrong ground color", groundColor, homeEnvironment.getGroundColor());
     if (groundTexture == null) {
-      assertEquals("Wrong ground texture", groundTexture, home.getGroundTexture());
+      assertEquals("Wrong ground texture", groundTexture, homeEnvironment.getGroundTexture());
     } else {
-      assertEquals("Wrong ground texture", groundTexture.getName(), home.getGroundTexture().getName());
+      assertEquals("Wrong ground texture", groundTexture.getName(), homeEnvironment.getGroundTexture().getName());
     }
-    assertEquals("Wrong sky color", skyColor, home.getSkyColor());
-    assertEquals("Wrong brightness", lightColor, home.getLightColor());
-    assertEquals("Wrong transparency", wallsAlpha, home.getWallsAlpha());
+    assertEquals("Wrong sky color", skyColor, homeEnvironment.getSkyColor());
+    assertEquals("Wrong brightness", lightColor, homeEnvironment.getLightColor());
+    assertEquals("Wrong transparency", wallsAlpha, home.getEnvironment().getWallsAlpha());
   }
 }

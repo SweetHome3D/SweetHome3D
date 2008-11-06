@@ -48,11 +48,11 @@ public class Home implements Serializable {
   
   /**
    * The properties of a home that may change. <code>PropertyChangeListener</code>s added 
-   * to a home will be notified under a property name equal to the string value of one these properties.
+   * to a home will be notified under a property name equal to the name value of one these properties.
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, PRINT};
+    BACKGROUND_IMAGE, CAMERA, PRINT};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
@@ -69,21 +69,23 @@ public class Home implements Serializable {
   private BackgroundImage                             backgroundImage;
   private ObserverCamera                              observerCamera;
   private Camera                                      topCamera;
+  private HomeEnvironment                             environment;
+  private HomePrint                                   print;
+  private String                                      furnitureSortedPropertyName;
+  private List<String>                                furnitureVisiblePropertyNames;
+  private boolean                                     furnitureDescendingSorted;
+  private Map<String, Object>                         visualProperties;
+  private transient PropertyChangeSupport             propertyChangeSupport;
+  private long                                        version;
+  // The 5 following environment fields are still declared for compatibility reasons
   private int                                         skyColor;
   private int                                         groundColor;
   private HomeTexture                                 groundTexture;
   private int                                         lightColor;
   private float                                       wallsAlpha;
-  private HomePrint                                   print;
-  private String                                      furnitureSortedPropertyName;
-  private List<String>                                furnitureVisiblePropertyNames;
-  private boolean                                     furnitureDescendingSorted;
   // The two following fields aren't transient for backward compatibility reasons 
   private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
-  private Map<String, Object>                         visualProperties;
-  private transient PropertyChangeSupport             propertyChangeSupport;
-  private long                                        version;
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -153,6 +155,12 @@ public class Home implements Serializable {
       }
       this.furnitureVisiblePropertyNames = null;
     }
+    // Restore environment fields from home fields for compatibility reasons
+    this.environment.setGroundColor(this.groundColor);
+    this.environment.setGroundTexture(this.groundTexture);
+    this.environment.setSkyColor(this.skyColor);
+    this.environment.setLightColor(this.lightColor);
+    this.environment.setWallsAlpha(this.wallsAlpha);
   }
 
   private void init() {
@@ -183,9 +191,7 @@ public class Home implements Serializable {
     this.observerCamera = new ObserverCamera(100, 100, 170, 
         3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     // Initialize new fields 
-    this.skyColor = (204 << 16) + (228 << 8) + 252;
-    this.groundColor = 0xE0E0E0;
-    this.lightColor = 0xF0F0F0;
+    this.environment = new HomeEnvironment();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.visualProperties = new HashMap<String, Object>();
     
@@ -218,6 +224,13 @@ public class Home implements Serializable {
         this.furnitureVisibleProperties.add(visibleProperty);
       }
     }
+    
+    // Store environment fields in home fields for compatibility reasons
+    this.groundColor = this.environment.getGroundColor();
+    this.groundTexture = this.environment.getGroundTexture();
+    this.skyColor = this.environment.getSkyColor();
+    this.lightColor = this.environment.getLightColor();
+    this.wallsAlpha = this.environment.getWallsAlpha();
     
     out.defaultWriteObject();
     
@@ -485,14 +498,14 @@ public class Home implements Serializable {
    * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
    * Removes the property change <code>listener</code> in parameter from this home.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(property.toString(), listener);
+    this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
@@ -517,7 +530,7 @@ public class Home implements Serializable {
         || (name != null && !name.equals(this.name))) {
       String oldName = this.name;
       this.name = name;
-      this.propertyChangeSupport.firePropertyChange(Property.NAME.toString(), oldName, name);
+      this.propertyChangeSupport.firePropertyChange(Property.NAME.name(), oldName, name);
     }
   }
 
@@ -535,7 +548,7 @@ public class Home implements Serializable {
     if (modified != this.modified) {
       this.modified = modified;
       this.propertyChangeSupport.firePropertyChange(
-          Property.MODIFIED.toString(), !modified, modified);
+          Property.MODIFIED.name(), !modified, modified);
     }
   }
   
@@ -557,7 +570,7 @@ public class Home implements Serializable {
       HomePieceOfFurniture.SortableProperty oldFurnitureSortedProperty = this.furnitureSortedProperty;
       this.furnitureSortedProperty = furnitureSortedProperty;
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_SORTED_PROPERTY.toString(), 
+          Property.FURNITURE_SORTED_PROPERTY.name(), 
           oldFurnitureSortedProperty, furnitureSortedProperty);
     }
   }
@@ -577,7 +590,7 @@ public class Home implements Serializable {
     if (furnitureDescendingSorted != this.furnitureDescendingSorted) {
       this.furnitureDescendingSorted = furnitureDescendingSorted;
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_DESCENDING_SORTED.toString(), 
+          Property.FURNITURE_DESCENDING_SORTED.name(), 
           !furnitureDescendingSorted, furnitureDescendingSorted);
     }
   }
@@ -599,28 +612,28 @@ public class Home implements Serializable {
       List<HomePieceOfFurniture.SortableProperty> oldFurnitureVisibleProperties = this.furnitureVisibleProperties;
       this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(furnitureVisibleProperties);
       this.propertyChangeSupport.firePropertyChange(
-          Property.FURNITURE_VISIBLE_PROPERTIES.toString(), 
+          Property.FURNITURE_VISIBLE_PROPERTIES.name(), 
           Collections.unmodifiableList(oldFurnitureVisibleProperties), 
           Collections.unmodifiableList(furnitureVisibleProperties));
     }
   }
 
   /**
-   * Returns the background image of this home.
+   * Returns the plan background image of this home.
    */
   public BackgroundImage getBackgroundImage() {
     return this.backgroundImage;
   }
 
   /**
-   * Sets the background image of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the plan background image of this home and fires a <code>PropertyChangeEvent</code>.
    */
   public void setBackgroundImage(BackgroundImage backgroundImage) {
     if (backgroundImage != this.backgroundImage) {
       BackgroundImage oldBackgroundImage = this.backgroundImage;
       this.backgroundImage = backgroundImage;
       this.propertyChangeSupport.firePropertyChange(
-          Property.BACKGROUND_IMAGE.toString(), oldBackgroundImage, backgroundImage);
+          Property.BACKGROUND_IMAGE.name(), oldBackgroundImage, backgroundImage);
     }
   }
 
@@ -646,7 +659,7 @@ public class Home implements Serializable {
       Camera oldCamera = this.camera;
       this.camera = camera;
       this.propertyChangeSupport.firePropertyChange(
-          Property.CAMERA.toString(), oldCamera, camera);
+          Property.CAMERA.name(), oldCamera, camera);
     }
   }
 
@@ -662,99 +675,10 @@ public class Home implements Serializable {
   }
 
   /**
-   * Returns the ground color of this home.
+   * Returns the environment attributes of this home.
    */
-  public int getGroundColor() {
-    return this.groundColor;
-  }
-
-  /**
-   * Sets the ground color of this home and fires a <code>PropertyChangeEvent</code>.
-   */
-  public void setGroundColor(int groundColor) {
-    if (groundColor != this.groundColor) {
-      int oldGroundColor = this.groundColor;
-      this.groundColor = groundColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_COLOR.toString(), oldGroundColor, groundColor);
-    }
-  }
-
-  /**
-   * Returns the ground texture of this home.
-   */
-  public HomeTexture getGroundTexture() {
-    return this.groundTexture;
-  }
-
-  /**
-   * Sets the ground texture of this home and fires a <code>PropertyChangeEvent</code>.
-   */
-  public void setGroundTexture(HomeTexture groundTexture) {
-    if (groundTexture != this.groundTexture) {
-      HomeTexture oldGroundTexture = this.groundTexture;
-      this.groundTexture = groundTexture;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.GROUND_TEXTURE.toString(), oldGroundTexture, groundTexture);
-    }
-  }
-
-  /**
-   * Returns the sky color of this home.
-   */
-  public int getSkyColor() {
-    return this.skyColor;
-  }
-  
-  /**
-   * Sets the sky color of this home and fires a <code>PropertyChangeEvent</code>.
-   */
-  public void setSkyColor(int skyColor) {
-    if (skyColor != this.skyColor) {
-      int oldSkyColor = this.skyColor;
-      this.skyColor = skyColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.SKY_COLOR.toString(), oldSkyColor, skyColor);
-    }
-  }
-  
-  /**
-   * Returns the light color of this home.
-   */
-  public int getLightColor() {
-    return this.lightColor;
-  }
-
-  /**
-   * Sets the color that lights this home and fires a <code>PropertyChangeEvent</code>.
-   */
-  public void setLightColor(int lightColor) {
-    if (lightColor != this.lightColor) {
-      int oldLightColor = this.lightColor;
-      this.lightColor = lightColor;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.LIGHT_COLOR.toString(), oldLightColor, lightColor);
-    }
-  }
-
-  /**
-   * Returns the walls transparency alpha factor of this home.
-   */
-  public float getWallsAlpha() {
-    return this.wallsAlpha;
-  }
-
-  /**
-   * Sets the walls transparency alpha of this home and fires a <code>PropertyChangeEvent</code>.
-   * @param wallsAlpha a value between 0 and 1, 0 meaning opaque and 1 invisible.
-   */
-  public void setWallsAlpha(float wallsAlpha) {
-    if (wallsAlpha != this.wallsAlpha) {
-      float oldWallsAlpha = this.wallsAlpha;
-      this.wallsAlpha = wallsAlpha;
-      this.propertyChangeSupport.firePropertyChange(
-          Property.WALLS_ALPHA.toString(), oldWallsAlpha, wallsAlpha);
-    }
+  public HomeEnvironment getEnvironment() {
+    return this.environment;
   }
 
   /**
@@ -772,7 +696,7 @@ public class Home implements Serializable {
       HomePrint oldPrint = this.print;
       this.print = print;
       this.propertyChangeSupport.firePropertyChange(
-          Property.PRINT.toString(), oldPrint, print);
+          Property.PRINT.name(), oldPrint, print);
     }
     this.print = print;
   }
