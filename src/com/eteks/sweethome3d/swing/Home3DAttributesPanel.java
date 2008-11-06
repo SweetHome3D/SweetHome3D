@@ -370,7 +370,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     dialog.dispose();
     if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue()) 
         && this.controller != null) {
-      this.controller.modify();
+      this.controller.modify3DAttributes();
     }
   }
 }

@@ -58,7 +58,7 @@ public class UserPreferencesController implements Controller {
     this.viewFactory = viewFactory;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
-    updateProperties(preferences);
+    updateProperties();
   }
 
   /**
@@ -94,16 +94,16 @@ public class UserPreferencesController implements Controller {
   }
 
   /**
-   * Updates controller edited properties from <code>preferences</code>.
+   * Updates preferences properties edited by this controller.
    */
-  private void updateProperties(UserPreferences preferences) {
-    setLanguage(preferences.getLanguage());
-    setUnit(preferences.getUnit());
-    setMagnetismEnabled(preferences.isMagnetismEnabled());
-    setGridVisible(preferences.isGridVisible());
-    setRulersVisible(preferences.isRulersVisible());
-    setNewWallThickness(preferences.getNewWallThickness());
-    setNewWallHeight(preferences.getNewWallHeight());
+  protected void updateProperties() {
+    setLanguage(this.preferences.getLanguage());
+    setUnit(this.preferences.getUnit());
+    setMagnetismEnabled(this.preferences.isMagnetismEnabled());
+    setGridVisible(this.preferences.isGridVisible());
+    setRulersVisible(this.preferences.isRulersVisible());
+    setNewWallThickness(this.preferences.getNewWallThickness());
+    setNewWallHeight(this.preferences.getNewWallHeight());
   }  
 
   /**
@@ -232,7 +232,7 @@ public class UserPreferencesController implements Controller {
   /**
    * Controls the modification of user preferences.
    */
-  public void modify() {
+  public void modifyUserPreferences() {
     this.preferences.setLanguage(getLanguage());
     this.preferences.setUnit(getUnit());
     this.preferences.setMagnetismEnabled(isMagnetismEnabled());

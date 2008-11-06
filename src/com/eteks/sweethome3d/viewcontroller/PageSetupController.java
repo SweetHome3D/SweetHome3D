@@ -121,7 +121,7 @@ public class PageSetupController implements Controller {
   /**
    * Controls the modification of home print attributes.
    */
-  public void modify() {
+  public void modifyPageSetup() {
     final HomePrint oldHomePrint = this.home.getPrint();
     final HomePrint homePrint = getPrint();
     this.home.setPrint(homePrint);
@@ -141,7 +141,7 @@ public class PageSetupController implements Controller {
       @Override
       public String getPresentationName() {
         return ResourceBundle.getBundle(PageSetupController.class.getName()).
-            getString("undoSetupPageName");
+            getString("undoPageSetupName");
       }
     };
     this.undoSupport.postEdit(undoableEdit);

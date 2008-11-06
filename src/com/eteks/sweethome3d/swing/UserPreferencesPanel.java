@@ -336,7 +336,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             JOptionPane.OK_CANCEL_OPTION, 
             JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
         && this.controller != null) {
-      this.controller.modify();
+      this.controller.modifyUserPreferences();
     }
   }
 

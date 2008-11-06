@@ -519,7 +519,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     
     dialog.dispose();
     if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
-      this.controller.modify();
+      this.controller.modifyFurniture();
     }
   }
 

@@ -100,7 +100,7 @@ public class WallController implements Controller {
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
-    updateProperties(home);
+    updateProperties();
   }
 
   /**
@@ -174,10 +174,10 @@ public class WallController implements Controller {
   }
 
   /**
-   * Updates controller edited properties from selected walls in <code>home</code>.
+   * Updates edited properties from selected walls in the home edited by this controller.
    */
-  private void updateProperties(Home home) {
-    List<Wall> selectedWalls = Home.getWallsSubList(home.getSelectedItems());
+  protected void updateProperties() {
+    List<Wall> selectedWalls = Home.getWallsSubList(this.home.getSelectedItems());
     if (selectedWalls.isEmpty()) {
       setXStart(null); // Nothing to edit
       setYStart(null); 
@@ -310,12 +310,12 @@ public class WallController implements Controller {
       Float height = firstWall.getHeight();
       // If wall height was never set, use home wall height
       if (height == null && firstWall.getHeight() == null) {
-        height = home.getWallHeight(); 
+        height = this.home.getWallHeight(); 
       }
       for (int i = 1; i < selectedWalls.size(); i++) {
         Wall wall = selectedWalls.get(i);
         float wallHeight = wall.getHeight() == null 
-            ? home.getWallHeight()
+            ? this.home.getWallHeight()
             : wall.getHeight();  
         if (height != wallHeight) {
           height = null;
@@ -691,9 +691,9 @@ public class WallController implements Controller {
   }
   
   /**
-   * Controls the modification of selected walls.
+   * Controls the modification of selected walls in edited home.
    */
-  public void modify() {
+  public void modifyWalls() {
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<Wall> selectedWalls = Home.getWallsSubList(oldSelection);
     if (!selectedWalls.isEmpty()) {

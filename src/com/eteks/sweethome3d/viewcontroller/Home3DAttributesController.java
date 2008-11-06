@@ -83,7 +83,7 @@ public class Home3DAttributesController implements Controller {
     this.undoSupport = undoSupport;    
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
-    updateProperties(home);
+    updateProperties();
   }
 
   /**
@@ -139,23 +139,23 @@ public class Home3DAttributesController implements Controller {
   }
 
   /**
-   * Updates controller edited properties from <code>home</code> attributes.
+   * Updates edited properties from the 3D attributes of the home edited by this controller.
    */
-  private void updateProperties(Home home) {
+  protected void updateProperties() {
     setObserverFieldOfViewInDegrees((int)(Math.round(Math.toDegrees(
-        home.getObserverCamera().getFieldOfView())) + 360) % 360);
-    setObserverHeight(home.getObserverCamera().getZ() * 15 / 14);
-    setGroundColor(home.getGroundColor());
-    HomeTexture groundTexture = home.getGroundTexture();
+        this.home.getObserverCamera().getFieldOfView())) + 360) % 360);
+    setObserverHeight(this.home.getObserverCamera().getZ() * 15 / 14);
+    setGroundColor(this.home.getGroundColor());
+    HomeTexture groundTexture = this.home.getGroundTexture();
     getGroundTextureController().setTexture(groundTexture);
     if (groundTexture != null) {
       setGroundPaint(EnvironmentPaint.TEXTURED);
     } else {
       setGroundPaint(EnvironmentPaint.COLORED);
     }
-    setSkyColor(home.getSkyColor());
-    setLightColor(home.getLightColor());
-    setWallsAlpha(home.getWallsAlpha());
+    setSkyColor(this.home.getSkyColor());
+    setLightColor(this.home.getLightColor());
+    setWallsAlpha(this.home.getWallsAlpha());
   }
   
   /**
@@ -288,9 +288,9 @@ public class Home3DAttributesController implements Controller {
   }
 
   /**
-   * Controls the modification of of home.
+   * Controls the modification of the 3D attributes of the edited home.
    */
-  public void modify() {
+  public void modify3DAttributes() {
     final float observerCameraFieldOfView = (float)Math.toRadians(getObserverFieldOfViewInDegrees());
     final float observerCameraZ = getObserverHeight() * 14 / 15;
     final int   groundColor = getGroundColor();
@@ -306,32 +306,32 @@ public class Home3DAttributesController implements Controller {
     final int   oldGroundColor = this.home.getGroundColor();
     final HomeTexture oldGroundTexture = this.home.getGroundTexture();
     final int   oldSkyColor = this.home.getSkyColor();
-    final int   oldLightColor  = this.home.getLightColor();
+    final int   oldLightColor = this.home.getLightColor();
     final float oldWallsAlpha = this.home.getWallsAlpha();
     
     // Apply modification
-    doModifyHome(observerCameraFieldOfView, observerCameraZ, 
+    doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
         groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doModifyHome(oldObserverCameraFieldOfView, oldObserverCameraZ, 
+          doModify3DAttributes(home, oldObserverCameraFieldOfView, oldObserverCameraZ, 
               oldGroundColor, oldGroundTexture, oldSkyColor, oldLightColor, oldWallsAlpha); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doModifyHome(observerCameraFieldOfView, observerCameraZ, 
+          doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
               groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
         }
         
         @Override
         public String getPresentationName() {
           return ResourceBundle.getBundle(Home3DAttributesController.class.getName()).
-              getString("undoModify3DAttributes");
+              getString("undoModify3DAttributesName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -339,19 +339,20 @@ public class Home3DAttributesController implements Controller {
   }
 
   /**
-   * Modifies home 3D attributes.
+   * Modifies the 3D attributes of the given <code>home</code>.
    */
-  private void doModifyHome(float observerCameraFieldOfView, 
-                            float observerCameraZ, 
-                            int groundColor, HomeTexture groundTexture, int skyColor, 
-                            int lightColor, float wallsAlpha) {
-    ObserverCamera observerCamera = this.home.getObserverCamera();
+  private void doModify3DAttributes(Home home,
+                                    float observerCameraFieldOfView, 
+                                    float observerCameraZ, 
+                                    int groundColor, HomeTexture groundTexture, int skyColor, 
+                                    int lightColor, float wallsAlpha) {
+    ObserverCamera observerCamera = home.getObserverCamera();
     observerCamera.setFieldOfView(observerCameraFieldOfView);
     observerCamera.setZ(observerCameraZ);
-    this.home.setGroundColor(groundColor);
-    this.home.setGroundTexture(groundTexture);
-    this.home.setSkyColor(skyColor);
-    this.home.setLightColor(lightColor);
-    this.home.setWallsAlpha(wallsAlpha);
+    home.setGroundColor(groundColor);
+    home.setGroundTexture(groundTexture);
+    home.setSkyColor(skyColor);
+    home.setLightColor(lightColor);
+    home.setWallsAlpha(wallsAlpha);
   }
 }

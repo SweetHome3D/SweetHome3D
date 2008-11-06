@@ -79,7 +79,7 @@ public class HomeFurnitureController implements Controller {
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
-    updateProperties(home);
+    updateProperties();
   }
 
   /**
@@ -116,10 +116,11 @@ public class HomeFurnitureController implements Controller {
   }
 
   /**
-   * Updates controller edited properties from selected furniture in <code>home</code>.
+   * Updates edited properties from selected furniture in the home edited by this controller.
    */
-  private void updateProperties(Home home) {
-    List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(home.getSelectedItems());
+  protected void updateProperties() {
+    List<HomePieceOfFurniture> selectedFurniture = 
+        Home.getFurnitureSubList(this.home.getSelectedItems());
     if (selectedFurniture.isEmpty()) {
       setName(null); // Nothing to edit
       setAngleInDegrees(null);
@@ -471,9 +472,9 @@ public class HomeFurnitureController implements Controller {
   }
   
   /**
-   * Controls the modification of selected furniture.
+   * Controls the modification of selected furniture in the edited home.
    */
-  public void modify() {
+  public void modifyFurniture() {
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<HomePieceOfFurniture> selectedFurniture = 
         Home.getFurnitureSubList(oldSelection);
