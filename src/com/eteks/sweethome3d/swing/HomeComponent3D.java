@@ -68,6 +68,7 @@ import javax.media.j3d.Geometry;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
 import javax.media.j3d.Light;
+import javax.media.j3d.LineAttributes;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
@@ -135,6 +136,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   groundColorAndTextureListener;
   private PropertyChangeListener                   lightColorListener;
   private PropertyChangeListener                   wallsAlphaListener;
+  private PropertyChangeListener                   drawingModeListener;
   private CollectionListener<Wall>                 wallListener;
   private PropertyChangeListener                   wallChangeListener;
   private CollectionListener<HomePieceOfFurniture> furnitureListener;
@@ -239,6 +241,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener);
     home.getCamera().removePropertyChangeListener(this.cameraChangeListener);
     home.removeWallsListener(this.wallListener);
     for (Wall wall : home.getWalls()) {
@@ -733,15 +736,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       int i = 0;
       for (Wall wall : this.home.getWalls()) {
         // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
-        Wall3D wallNode = new Wall3D(wall, this.home);
+        Wall3D wallNode = new Wall3D(wall, this.home, true);
         writer.writeNode(wallNode, "wall_" + ++i);
       }
       // Write 3D furniture 
       i = 0;
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-        // Create a not alive new piece to be able to explore its coordinates without setting capabilities
-        HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, true);
-        writer.writeNode(pieceNode, "piece_" + ++i);
+        if (piece.isVisible()) {
+          // Create a not alive new piece to be able to explore its coordinates without setting capabilities
+          HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, this.home, true, true);
+          writer.writeNode(pieceNode, "piece_" + ++i);
+        }
       }
       writer.close();
     } catch (InterruptedIOException ex) {
@@ -790,11 +795,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addWall(homeRoot, wall, home);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      addPieceOfFurniture(homeRoot, piece);
+      addPieceOfFurniture(homeRoot, piece, home);
     }
     // Add wall and furniture listeners to home for further update
     addWallListener(home, homeRoot);
     addFurnitureListener(home, homeRoot);
+    // Add environment listeners
+    addEnvironmentListeners(home);
     return homeRoot;
   }
 
@@ -810,7 +817,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds a wall listener and walls alpha change listener to <code>home</code> 
+   * Adds a wall listener to <code>home</code> walls  
    * that updates the scene <code>homeRoot</code>, each time a wall is added, updated or deleted. 
    */
   private void addWallListener(final Home home, final Group homeRoot) {
@@ -838,13 +845,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       };
     home.addWallsListener(this.wallListener);
-    this.wallsAlphaListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          updateObjects(home.getWalls());
-        }
-      };
-    home.getEnvironment().addPropertyChangeListener(
-        HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener); 
   }
 
   /**
@@ -854,8 +854,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Home home, final Group homeRoot) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME)) {
-            updatePieceOfFurniture((HomePieceOfFurniture)ev.getSource());
+          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME.name())) {
+            HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
+            updatePieceOfFurniture(piece);
+            // If piece is a door or a window, update walls that intersect with piece
+            if (piece.isDoorOrWindow()) {
+              updateObjects(home.getWalls());
+            }
           }
         }
       };
@@ -867,7 +872,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addPieceOfFurniture(homeRoot, piece);
+              addPieceOfFurniture(homeRoot, piece, home);
               piece.addPropertyChangeListener(furnitureChangeListener);
               break;
             case DELETE :
@@ -885,10 +890,32 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
+   * Adds a walls alpha change listener and drawing mode change listener to <code>home</code> 
+   * environment that updates the home scene objects appearance. 
+   */
+  private void addEnvironmentListeners(final Home home) {
+    this.wallsAlphaListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateObjects(home.getWalls());
+        }
+      };
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener); 
+    this.drawingModeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateObjects(home.getWalls());
+          updateObjects(home.getFurniture());
+        }
+      };
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.DRAWING_MODE, this.drawingModeListener); 
+  }
+
+  /**
    * Adds to <code>homeRoot</code> a wall branch matching <code>wall</code>.
    */
   private void addWall(Group homeRoot, Wall wall, Home home) {
-    Wall3D wall3D = new Wall3D(wall, home);
+    Wall3D wall3D = new Wall3D(wall, home, false);
     this.homeObjects.put(wall, wall3D);
     homeRoot.addChild(wall3D);
     clearPrintedImageCache();
@@ -922,8 +949,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>homeRoot</code> a piece branch matching <code>piece</code>.
    */
-  private void addPieceOfFurniture(Group homeRoot, HomePieceOfFurniture piece) {
-    HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece);
+  private void addPieceOfFurniture(Group homeRoot, HomePieceOfFurniture piece, Home home) {
+    HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home);
     this.homeObjects.put(piece, piece3D);
     homeRoot.addChild(piece3D);
     clearPrintedImageCache();
@@ -968,6 +995,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     public abstract void update();
   }
 
+  private static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
+      new ColoringAttributes(new Color3f(), ColoringAttributes.FASTEST);
+  private static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
+      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_BACK, 0);
+  private static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
+      new LineAttributes(0.5f, LineAttributes.PATTERN_SOLID, true);
+
   /**
    * Root of wall branch.
    */
@@ -984,7 +1018,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     
     private Home home;
 
-    public Wall3D(Wall wall, Home home) {
+    public Wall3D(Wall wall, Home home, boolean ignoreDrawingMode) {
       setUserData(wall);
       this.home = home;
 
@@ -994,8 +1028,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
       // Add wall left and right empty shapes to branch
-      addChild(createWallPartShape());
-      addChild(createWallPartShape());
+      addChild(createWallPartShape(false));
+      addChild(createWallPartShape(false));
+      if (!ignoreDrawingMode) {
+        // Add wall left and right empty outline shapes to branch
+        addChild(createWallPartShape(true));
+        addChild(createWallPartShape(true));
+      }
       // Set wall shape geometry and appearance
       updateWallGeometry();
       updateWallAppearance();
@@ -1005,7 +1044,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      * Returns a new wall part shape with no geometry  
      * and a default appearance with a white material.
      */
-    private Node createWallPartShape() {
+    private Node createWallPartShape(boolean outline) {
       Shape3D wallShape = new Shape3D();
       // Allow wall shape to change its geometry
       wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
@@ -1013,19 +1052,30 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 
       Appearance wallAppearance = new Appearance();
-      wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-      // Combinaison texture and wall color
-      TextureAttributes textureAttributes = new TextureAttributes ();
-      textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-      wallAppearance.setTextureAttributes(textureAttributes);      
+      wallShape.setAppearance(wallAppearance);
       wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
-      wallAppearance.setMaterial(DEFAULT_MATERIAL);
       TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
       transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
       transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
       wallAppearance.setTransparencyAttributes(transparencyAttributes);
-      wallShape.setAppearance(wallAppearance);
+      wallAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+      RenderingAttributes renderingAttributes = new RenderingAttributes();
+      renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+      wallAppearance.setRenderingAttributes(renderingAttributes);
+      
+      if (outline) {
+        wallAppearance.setColoringAttributes(OUTLINE_COLORING_ATTRIBUTES);
+        wallAppearance.setPolygonAttributes(OUTLINE_POLYGON_ATTRIBUTES);
+        wallAppearance.setLineAttributes(OUTLINE_LINE_ATTRIBUTES);
+      } else {
+        wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+        wallAppearance.setMaterial(DEFAULT_MATERIAL);      
+        wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+        // Mix texture and wall color
+        TextureAttributes textureAttributes = new TextureAttributes ();
+        textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+        wallAppearance.setTextureAttributes(textureAttributes);
+      }
       
       return wallShape;
     }
@@ -1045,13 +1095,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     
     private void updateWallSideGeometry(int wallSide, HomeTexture texture) {
-      Shape3D wallShape = (Shape3D)getChild(wallSide);
-      int currentGeometriesCount = wallShape.numGeometries();
+      Shape3D wallFilledShape = (Shape3D)getChild(wallSide);
+      Shape3D wallOutlineShape = numChildren() > 2 
+          ? (Shape3D)getChild(wallSide + 2)
+          : null; 
+      int currentGeometriesCount = wallFilledShape.numGeometries();
       for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
-        wallShape.addGeometry(wallGeometry);
+        wallFilledShape.addGeometry(wallGeometry);
+        if (wallOutlineShape != null) {
+          wallOutlineShape.addGeometry(wallGeometry);
+        }
       }
       for (int i = currentGeometriesCount - 1; i >= 0; i--) {
-        wallShape.removeGeometry(i);
+        wallFilledShape.removeGeometry(i);
+        if (wallOutlineShape != null) {
+          wallOutlineShape.removeGeometry(i);
+        }
       }
     }
     
@@ -1330,23 +1389,27 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      */
     private void updateWallAppearance() {
       Wall wall = (Wall)getUserData();
-      updateWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
+      updateFilledWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
           wall.getLeftSideTexture(), wall.getLeftSideColor());
-      updateWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
+      updateFilledWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
           wall.getRightSideTexture(), wall.getRightSideColor());
+      if (numChildren() > 2) {
+        updateOutlineWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE + 2)).getAppearance());
+        updateOutlineWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE + 2)).getAppearance());
+      }
     }
     
     /**
-     * Sets wall side appearance with its color, texture and transparency.
+     * Sets filled wall side appearance with its color, texture, transparency and visibility.
      */
-    private void updateWallSideAppearance(final Appearance  wallSideAppearance, 
-                                          final HomeTexture wallSideTexture,
-                                          Integer wallSideColor) {
-      // Update material and texture of wall left side
+    private void updateFilledWallSideAppearance(final Appearance wallSideAppearance, 
+                                                final HomeTexture wallSideTexture,
+                                                Integer wallSideColor) {
       if (wallSideTexture == null) {
         wallSideAppearance.setMaterial(getMaterial(wallSideColor));
         wallSideAppearance.setTexture(null);
       } else {
+        // Update material and texture of wall side
         wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
         final TextureManager textureManager = TextureManager.getInstance();
         textureManager.loadTexture(wallSideTexture.getImage(), 
@@ -1356,14 +1419,31 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 }
               });
       }
-      // Update wall left side transparency
+      // Update wall side transparency
       float wallsAlpha = this.home.getEnvironment().getWallsAlpha();
       TransparencyAttributes transparencyAttributes = wallSideAppearance.getTransparencyAttributes();
       transparencyAttributes.setTransparency(wallsAlpha);
       // If walls alpha is equal to zero, turn off transparency to get better results 
       transparencyAttributes.setTransparencyMode(wallsAlpha == 0 
           ? TransparencyAttributes.NONE 
-          : TransparencyAttributes.NICEST);
+          : TransparencyAttributes.NICEST);      
+      // Update wall side visibility
+      RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
+      HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+      renderingAttributes.setVisible(drawingMode == null
+          || drawingMode == HomeEnvironment.DrawingMode.FILL 
+          || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
+    }
+    
+    /**
+     * Sets outline wall side visibility.
+     */
+    private void updateOutlineWallSideAppearance(final Appearance wallSideAppearance) {
+      // Update wall side visibility
+      RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
+      HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+      renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE 
+          || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
     }
     
     private Material getMaterial(Integer color) {
@@ -1391,25 +1471,32 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private static class HomePieceOfFurniture3D extends ObjectBranch {
     private static Executor modelLoader = Executors.newSingleThreadExecutor();
 
-    public HomePieceOfFurniture3D(HomePieceOfFurniture piece) {
-      this(piece, false);
+    private Home home;
+    
+    public HomePieceOfFurniture3D(HomePieceOfFurniture piece, Home home) {
+      this(piece, home, false, false);
     }
 
-    public HomePieceOfFurniture3D(HomePieceOfFurniture piece, boolean waitModelLoadingEnd) {
+    public HomePieceOfFurniture3D(HomePieceOfFurniture piece, 
+                                  Home home, 
+                                  boolean ignoreDrawingMode, 
+                                  boolean waitModelLoadingEnd) {
       setUserData(piece);      
+      this.home = home;
 
       // Allow piece branch to be removed from its parent
       setCapability(BranchGroup.ALLOW_DETACH);
       // Allow to read branch transform child
       setCapability(BranchGroup.ALLOW_CHILDREN_READ);
       
-      createPieceOfFurnitureNode(waitModelLoadingEnd);
+      createPieceOfFurnitureNode(ignoreDrawingMode, waitModelLoadingEnd);
     }
 
     /**
      * Creates the piece node with its transform group and add it to the piece branch. 
      */
-    private void createPieceOfFurnitureNode(boolean waitModelLoadingEnd) {
+    private void createPieceOfFurnitureNode(final boolean ignoreDrawingMode, 
+                                            boolean waitModelLoadingEnd) {
       final TransformGroup pieceTransformGroup = new TransformGroup();
       // Allow the change of the transformation that sets piece size and position
       pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
@@ -1417,10 +1504,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addChild(pieceTransformGroup);
 
       if (waitModelLoadingEnd) {
-        Node modelNode = getModelNode();
-        pieceTransformGroup.addChild(modelNode);
-        // Allow appearance change on all children
-        setAppearanceChangeCapability(modelNode);
+        BranchGroup modelBranch = createModelBranchGroup(ignoreDrawingMode);
+        pieceTransformGroup.addChild(modelBranch);
         update();
       } else {
         pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
@@ -1441,12 +1526,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         // Load piece real 3D model
         modelLoader.execute(new Runnable() {
             public void run() {
-              Node modelNode = getModelNode();
-              final BranchGroup modelBranch = new BranchGroup();
-              modelBranch.addChild(modelNode);
-              // Allow appearance change on all children
-              setAppearanceChangeCapability(modelBranch);
-              
+              final BranchGroup modelBranch = createModelBranchGroup(ignoreDrawingMode);              
               // Change live objects in Event Dispatch Thread
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
@@ -1501,7 +1581,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Change model transformation      
       ((TransformGroup)getChild(0)).setTransform(pieceTransform);
     }
-
+    
     /**
      * Sets the color applied to piece model.
      */
@@ -1513,10 +1593,32 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                              ((color >>> 8) & 0xFF) / 256f,
                                                      (color & 0xFF) / 256f);
         Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
-        setMaterial(getChild(0), material);
+        setMaterial(getFilledModelNode(), material);
       } else {
         // Set default material of model
-        setMaterial(getChild(0), null);
+        setMaterial(getFilledModelNode(), null);
+      }
+    }
+
+    /**
+     * Returns the node of the filled model.
+     */
+    private Node getFilledModelNode() {
+      TransformGroup transformGroup = (TransformGroup)getChild(0);
+      BranchGroup branchGroup = (BranchGroup)transformGroup.getChild(0);
+      return branchGroup.getChild(0);
+    }
+
+    /**
+     * Returns the node of the outline model.
+     */
+    private Node getOutlineModelNode() {
+      TransformGroup transformGroup = (TransformGroup)getChild(0);
+      BranchGroup branchGroup = (BranchGroup)transformGroup.getChild(0);
+      if (branchGroup.numChildren() > 1) {
+        return branchGroup.getChild(1);
+      } else {
+        return null;
       }
     }
 
@@ -1525,7 +1627,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      */
     private void updatePieceOfFurnitureVisibility() {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
-      setVisible(getChild(0), piece.isVisible());
+      HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+      // Update visibility of filled model shapes
+      setVisible(getFilledModelNode(), piece.isVisible()
+          && (drawingMode == null
+              || drawingMode == HomeEnvironment.DrawingMode.FILL 
+              || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
+      Node outlineModelNode = getOutlineModelNode();
+      if (outlineModelNode != null) {
+        // Update visibility of outline model shapes
+        setVisible(outlineModelNode, piece.isVisible()
+            && (drawingMode == HomeEnvironment.DrawingMode.OUTLINE
+                || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
+      }
     }
 
     /**
@@ -1534,19 +1648,36 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     private void updatePieceOfFurnitureModelMirrored() {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
       // Cull front or back model faces whether its model is mirrored or not
-      setCullFace(getChild(0), 
+      setCullFace(getFilledModelNode(), 
           piece.isModelMirrored() ^ piece.isBackFaceShown() 
               ? PolygonAttributes.CULL_FRONT 
               : PolygonAttributes.CULL_BACK);
       // Flip normals if back faces of model are shown
       if (piece.isBackFaceShown()) {
-        setBackFaceNormalFlip(getChild(0), true);
+        setBackFaceNormalFlip(getFilledModelNode(), true);
       }
     }
 
     /**
-     * Returns the 3D model of this piece that fits 
-     * in a 1 unit wide box centered at the origin. 
+     * Returns a new branch group with its model node as a child.
+     */
+    private BranchGroup createModelBranchGroup(boolean ignoreDrawingMode) {
+      BranchGroup modelBranch = new BranchGroup();
+      // Add model node to branch group
+      Node filledModelNode = getModelNode();
+      modelBranch.addChild(filledModelNode);
+      if (!ignoreDrawingMode) {
+        // Add outline model node 
+        modelBranch.addChild(createOutlineModelNode(filledModelNode));
+      }
+      // Allow appearance change on all children
+      setAppearanceChangeCapability(modelBranch);
+      return modelBranch;
+    }
+    
+    /**
+     * Returns the 3D model of this piece that fits in a 1 unit wide box 
+     * centered at the origin. 
      */
     private Node getModelNode() {
       PieceOfFurniture piece = (PieceOfFurniture)getUserData();
@@ -1605,6 +1736,37 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       Appearance boxAppearance = new Appearance();
       boxAppearance.setMaterial(material);
       return new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+    }
+
+    /**
+     * Returns a clone of the given node with an outline appearance on its shapes.
+     */
+    private Node createOutlineModelNode(Node modelNode) {
+      Node node = modelNode.cloneTree();
+      setOutlineAppearance(node);
+      return node;
+    }
+    
+    /**
+     * Sets the outline appearance on all the children of <code>node</code>.
+     */
+    private void setOutlineAppearance(Node node) {
+      if (node instanceof Group) {
+        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          setOutlineAppearance((Node)enumeration.nextElement());
+        }
+      } else if (node instanceof Shape3D) {        
+        Appearance outlineAppearance = new Appearance();
+        ((Shape3D)node).setAppearance(outlineAppearance);
+        outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+        RenderingAttributes renderingAttributes = new RenderingAttributes();
+        renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+        outlineAppearance.setRenderingAttributes(renderingAttributes);
+        outlineAppearance.setColoringAttributes(OUTLINE_COLORING_ATTRIBUTES);
+        outlineAppearance.setPolygonAttributes(OUTLINE_POLYGON_ATTRIBUTES);
+        outlineAppearance.setLineAttributes(OUTLINE_LINE_ATTRIBUTES);
+      }
     }
 
     /**

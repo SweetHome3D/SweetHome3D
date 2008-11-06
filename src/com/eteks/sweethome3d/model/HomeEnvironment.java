@@ -35,13 +35,18 @@ public class HomeEnvironment implements Serializable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA};
+  public enum Property {SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE};
+  
+  public enum DrawingMode {
+    FILL, OUTLINE, FILL_AND_OUTLINE
+  }
   
   private int                             groundColor;
   private HomeTexture                     groundTexture;
   private int                             skyColor;
   private int                             lightColor;
   private float                           wallsAlpha;
+  private DrawingMode                     drawingMode;
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
@@ -66,6 +71,8 @@ public class HomeEnvironment implements Serializable {
     this.skyColor = skyColor;
     this.lightColor = lightColor;
     this.wallsAlpha = wallsAlpha;
+    
+    this.drawingMode = DrawingMode.FILL;
   }
 
   /**
@@ -78,28 +85,28 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Adds the property change <code>listener</code> in parameter to this home.
+   * Adds the property change <code>listener</code> in parameter to this environment.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
     this.propertyChangeSupport.addPropertyChangeListener(property.name(), listener);
   }
 
   /**
-   * Removes the property change <code>listener</code> in parameter from this home.
+   * Removes the property change <code>listener</code> in parameter from this environment.
    */
   public void removePropertyChangeListener(Property property, PropertyChangeListener listener) {
     this.propertyChangeSupport.removePropertyChangeListener(property.name(), listener);
   }
 
   /**
-   * Returns the ground color of this home.
+   * Returns the ground color of this environment.
    */
   public int getGroundColor() {
     return this.groundColor;
   }
 
   /**
-   * Sets the ground color of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the ground color of this environment and fires a <code>PropertyChangeEvent</code>.
    */
   public void setGroundColor(int groundColor) {
     if (groundColor != this.groundColor) {
@@ -111,14 +118,14 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Returns the ground texture of this home.
+   * Returns the ground texture of this environment.
    */
   public HomeTexture getGroundTexture() {
     return this.groundTexture;
   }
 
   /**
-   * Sets the ground texture of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the ground texture of this environment and fires a <code>PropertyChangeEvent</code>.
    */
   public void setGroundTexture(HomeTexture groundTexture) {
     if (groundTexture != this.groundTexture) {
@@ -130,14 +137,14 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Returns the sky color of this home.
+   * Returns the sky color of this environment.
    */
   public int getSkyColor() {
     return this.skyColor;
   }
   
   /**
-   * Sets the sky color of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the sky color of this environment and fires a <code>PropertyChangeEvent</code>.
    */
   public void setSkyColor(int skyColor) {
     if (skyColor != this.skyColor) {
@@ -149,14 +156,14 @@ public class HomeEnvironment implements Serializable {
   }
   
   /**
-   * Returns the light color of this home.
+   * Returns the light color of this environment.
    */
   public int getLightColor() {
     return this.lightColor;
   }
 
   /**
-   * Sets the color that lights this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the color that lights this environment and fires a <code>PropertyChangeEvent</code>.
    */
   public void setLightColor(int lightColor) {
     if (lightColor != this.lightColor) {
@@ -168,14 +175,14 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Returns the walls transparency alpha factor of this home.
+   * Returns the walls transparency alpha factor of this environment.
    */
   public float getWallsAlpha() {
     return this.wallsAlpha;
   }
 
   /**
-   * Sets the walls transparency alpha of this home and fires a <code>PropertyChangeEvent</code>.
+   * Sets the walls transparency alpha of this environment and fires a <code>PropertyChangeEvent</code>.
    * @param wallsAlpha a value between 0 and 1, 0 meaning opaque and 1 invisible.
    */
   public void setWallsAlpha(float wallsAlpha) {
@@ -184,6 +191,25 @@ public class HomeEnvironment implements Serializable {
       this.wallsAlpha = wallsAlpha;
       this.propertyChangeSupport.firePropertyChange(
           Property.WALLS_ALPHA.name(), oldWallsAlpha, wallsAlpha);
+    }
+  }
+
+  /**
+   * Returns the drawing mode of this environment.
+   */
+  public DrawingMode getDrawingMode() {
+    return this.drawingMode;
+  }
+
+  /**
+   * Sets the drawing mode of this environment and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setDrawingMode(DrawingMode drawingMode) {
+    if (drawingMode != this.drawingMode) {
+      DrawingMode oldDrawingMode = this.drawingMode;
+      this.drawingMode = drawingMode;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.DRAWING_MODE.name(), oldDrawingMode, drawingMode);
     }
   }
 }
