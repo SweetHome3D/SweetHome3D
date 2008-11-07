@@ -198,7 +198,7 @@ class MacOSXConfiguration {
     windowMenu.add(new JMenuItem(
         new ResourceAction(resource, "BRING_ALL_TO_FRONT", !defaultFrame) {
             public void actionPerformed(ActionEvent ev) {
-              // Avoid blincking while bringing other windows to front
+              // Avoid blinking while bringing other windows to front
               frame.setAlwaysOnTop(true);
               for (Home home : application.getHomes()) {
                 JFrame applicationFrame = application.getHomeFrame(home);
@@ -238,7 +238,7 @@ class MacOSXConfiguration {
         }
 
         public void menuDeselected(MenuEvent ev) {
-          // Remove dimaically filled part of menu
+          // Remove dynamically filled part of menu
           for (int i = windowMenu.getMenuComponentCount() - 1; i >= 4; i--) {
             windowMenu.remove(i);
           }
