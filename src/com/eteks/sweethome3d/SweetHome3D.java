@@ -78,6 +78,7 @@ import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Sweet Home 3D main class.
@@ -89,7 +90,7 @@ public class SweetHome3D extends HomeApplication {
   private final HomeRecorder        homeRecorder;
   private final FileUserPreferences userPreferences;
   private final ContentManager      contentManager;
-  private final SwingViewFactory    viewFactory;
+  private final ViewFactory         viewFactory;
   private final Map<Home, JFrame>   homeFrames;
 
 
