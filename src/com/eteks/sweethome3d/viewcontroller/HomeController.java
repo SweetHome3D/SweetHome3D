@@ -334,7 +334,7 @@ public class HomeController implements Controller {
   /**
    * Returns the undoable edit support managed by this controller.
    */
-  protected final UndoableEditSupport getUndoableEditSupport() {
+  public final UndoableEditSupport getUndoableEditSupport() {
     return this.undoSupport;
   }
   
