@@ -175,7 +175,7 @@ public class HomeController implements Controller {
       
       // If home version is more recent than current version
       if (home.getVersion() > Home.CURRENT_VERSION) {
-        // Warn the user will display a home created with a more recent version 
+        // Warn the user that view will display a home created with a more recent version 
         getView().invokeLater(new Runnable() { 
             public void run() {
               String message = String.format(resource.getString("moreRecentVersionHome"), home.getName());
@@ -273,7 +273,7 @@ public class HomeController implements Controller {
       List<Plugin> plugins = Collections.emptyList();
       if (this.application != null && this.pluginManager != null) {
         plugins = this.pluginManager.getPlugins(
-            this.application, this.home, this.preferences, this.undoSupport);
+            this.application, this.home, this.preferences, getUndoableEditSupport());
       }
       this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, 
           this.contentManager, plugins, this);
@@ -302,7 +302,7 @@ public class HomeController implements Controller {
     // Create sub controller lazily only once it's needed
     if (this.furnitureController == null) {
       this.furnitureController = new FurnitureController(
-          this.home, this.preferences, this.viewFactory, this.contentManager, this.undoSupport);
+          this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
     }
     return this.furnitureController;
   }
@@ -314,7 +314,7 @@ public class HomeController implements Controller {
     // Create sub controller lazily only once it's needed
     if (this.planController == null) {
       this.planController = new PlanController(
-          this.home, this.preferences, this.viewFactory, this.contentManager, this.undoSupport);
+          this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
     }
     return this.planController;
   }
@@ -326,11 +326,18 @@ public class HomeController implements Controller {
     // Create sub controller lazily only once it's needed
     if (this.homeController3D == null) {
       this.homeController3D = new HomeController3D(
-          this.home, this.preferences, this.viewFactory, this.contentManager, this.undoSupport);
+          this.home, this.preferences, this.viewFactory, this.contentManager, getUndoableEditSupport());
     }
     return this.homeController3D;
   }
 
+  /**
+   * Returns the undoable edit support managed by this controller.
+   */
+  protected final UndoableEditSupport getUndoableEditSupport() {
+    return this.undoSupport;
+  }
+  
   /**
    * Adds listeners that updates the enabled / disabled state of actions.
    */
@@ -731,7 +738,7 @@ public class HomeController implements Controller {
    * Adds undoable edit listener to undo support that enables Undo action.
    */
   private void addUndoSupportListener() {
-    this.undoSupport.addUndoableEditListener(
+    getUndoableEditSupport().addUndoableEditListener(
       new UndoableEditListener () {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomeView view = getView();
@@ -924,17 +931,18 @@ public class HomeController implements Controller {
    */
   public void cut(List<? extends Selectable> items) {
     // Start a compound edit that deletes items and changes presentation name
-    this.undoSupport.beginUpdate();
+    UndoableEditSupport undoSupport = getUndoableEditSupport();
+    undoSupport.beginUpdate();
     getPlanController().deleteItems(items);
     // Add a undoable edit to change presentation name
-    this.undoSupport.postEdit(new AbstractUndoableEdit() { 
+    undoSupport.postEdit(new AbstractUndoableEdit() { 
         @Override
         public String getPresentationName() {
           return resource.getString("undoCutName");
         }      
       });
     // End compound edit
-    this.undoSupport.endUpdate();
+    undoSupport.endUpdate();
   }
   
   /**
@@ -961,7 +969,8 @@ public class HomeController implements Controller {
                         float dx, float dy, final String presentationNameKey) {
     if (!items.isEmpty()) {
       // Start a compound edit that adds walls, furniture and dimension lines to home
-      this.undoSupport.beginUpdate();
+      UndoableEditSupport undoSupport = getUndoableEditSupport();
+      undoSupport.beginUpdate();
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
       // If magnetism is enabled, adjust furniture size and elevation
       if (this.preferences.isMagnetismEnabled()) {
@@ -981,7 +990,7 @@ public class HomeController implements Controller {
       this.home.setSelectedItems(items);
   
       // Add a undoable edit that will select all the items at redo
-      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+      undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public void redo() throws CannotRedoException {
             super.redo();
@@ -995,7 +1004,7 @@ public class HomeController implements Controller {
         });
      
       // End compound edit
-      this.undoSupport.endUpdate();
+      undoSupport.endUpdate();
     }
   }
 
@@ -1018,7 +1027,8 @@ public class HomeController implements Controller {
     this.home.addFurnitureListener(addedFurnitureListener);
     
     // Start a compound edit that adds furniture to home
-    this.undoSupport.beginUpdate();
+    UndoableEditSupport undoSupport = getUndoableEditSupport();
+    undoSupport.beginUpdate();
     // Import furniture
     for (String model : importableModels) {
       getFurnitureController().importFurniture(model);
@@ -1030,7 +1040,7 @@ public class HomeController implements Controller {
       this.home.setSelectedItems(importedFurniture);
       
       // Add a undoable edit that will select the imported furniture at redo
-      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+      undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public void redo() throws CannotRedoException {
             super.redo();
@@ -1045,7 +1055,7 @@ public class HomeController implements Controller {
     }
    
     // End compound edit
-    this.undoSupport.endUpdate();
+    undoSupport.endUpdate();
   }
 
   /**
@@ -1390,7 +1400,7 @@ public class HomeController implements Controller {
    */
   public void setupPage() {
     new PageSetupController(this.home, this.preferences, 
-        this.viewFactory, this.undoSupport).displayView(getView());
+        this.viewFactory, getUndoableEditSupport()).displayView(getView());
   }
 
   /**
@@ -1508,7 +1518,7 @@ public class HomeController implements Controller {
    */
   public void importBackgroundImage() {
     new BackgroundImageWizardController(this.home, this.preferences, 
-        this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
+        this.viewFactory, this.contentManager, getUndoableEditSupport()).displayView(getView());
   }
   
   /**
@@ -1542,7 +1552,7 @@ public class HomeController implements Controller {
         return resource.getString("undoDeleteBackgroundImageName");
       }
     };
-    this.undoSupport.postEdit(undoableEdit);
+    getUndoableEditSupport().postEdit(undoableEdit);
   }
   
   /**
