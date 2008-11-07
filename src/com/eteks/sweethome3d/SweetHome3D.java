@@ -244,7 +244,7 @@ public class SweetHome3D extends HomeApplication {
     System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     if (OperatingSystem.isMacOSX()) {
       // Change Mac OS X application menu name
-      ResourceBundle resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
+      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
       String applicationName = resource.getString("applicationName");
       System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
       // Use Mac OS X screen menu bar for frames menu bar
