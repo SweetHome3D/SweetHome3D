@@ -75,7 +75,7 @@ public class HomeController implements Controller {
   private final UndoableEditSupport  undoSupport;
   private final UndoManager          undoManager;
   private HomeView                   homeView;
-  private FurnitureCatalogController catalogController;
+  private FurnitureCatalogController furnitureCatalogController;
   private FurnitureController        furnitureController;
   private PlanController             planController;
   private HomeController3D           homeController3D;
@@ -284,15 +284,15 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Returns the catalog controller managed by this controller.
+   * Returns the furniture catalog controller managed by this controller.
    */
-  public FurnitureCatalogController getCatalogController() {
+  public FurnitureCatalogController getFurnitureCatalogController() {
     // Create sub controller lazily only once it's needed
-    if (this.catalogController == null) {
-      this.catalogController = new FurnitureCatalogController(
+    if (this.furnitureCatalogController == null) {
+      this.furnitureCatalogController = new FurnitureCatalogController(
           this.preferences.getFurnitureCatalog(), this.preferences, this.viewFactory, this.contentManager);
     }
-    return this.catalogController;
+    return this.furnitureCatalogController;
   }
 
   /**
@@ -607,7 +607,7 @@ public class HomeController implements Controller {
     }
 
     HomeView view = getView();
-    if (this.focusedView == getCatalogController().getView()) {
+    if (this.focusedView == getFurnitureCatalogController().getView()) {
       view.setEnabled(HomeView.ActionType.COPY,
           selectionMode && catalogSelectionContainsFurniture);
       view.setEnabled(HomeView.ActionType.CUT, false);
@@ -639,14 +639,14 @@ public class HomeController implements Controller {
         homeSelectionContainsFurniture);
     view.setEnabled(HomeView.ActionType.DELETE_SELECTION,
         (catalogSelectionContainsFurniture
-            && this.focusedView == getCatalogController().getView())
+            && this.focusedView == getFurnitureCatalogController().getView())
         || (homeSelectionContainsOneCopiableObjectOrMore 
             && (this.focusedView == getFurnitureController().getView()
                 || this.focusedView == getPlanController().getView()
                 || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomeView.ActionType.MODIFY_FURNITURE,
         (catalogSelectionContainsOneModifiablePiece
-             && this.focusedView == getCatalogController().getView())
+             && this.focusedView == getFurnitureCatalogController().getView())
         || (homeSelectionContainsFurniture 
              && (this.focusedView == getFurnitureController().getView()
                  || this.focusedView == getPlanController().getView()
@@ -832,8 +832,8 @@ public class HomeController implements Controller {
    * Modifies the selected furniture of the focused view.  
    */
   public void modifySelectedFurniture() {
-    if (this.focusedView == getCatalogController().getView()) {
-      getCatalogController().modifySelectedFurniture();
+    if (this.focusedView == getFurnitureCatalogController().getView()) {
+      getFurnitureCatalogController().modifySelectedFurniture();
     } else if (this.focusedView == getFurnitureController().getView()
                || this.focusedView == getPlanController().getView()
                || this.focusedView == getHomeController3D().getView()) {
@@ -845,8 +845,8 @@ public class HomeController implements Controller {
    * Imports furniture to the catalog or home depending on the focused view.  
    */
   public void importFurniture() {
-    if (this.focusedView == getCatalogController().getView()) {
-      getCatalogController().importFurniture();
+    if (this.focusedView == getFurnitureCatalogController().getView()) {
+      getFurnitureCatalogController().importFurniture();
     } else {
       getFurnitureController().importFurniture();
     }    
@@ -1052,9 +1052,9 @@ public class HomeController implements Controller {
    * Deletes the selection in the focused component.
    */
   public void delete() {
-    if (this.focusedView == getCatalogController().getView()) {
+    if (this.focusedView == getFurnitureCatalogController().getView()) {
       if (getView().confirmDeleteCatalogSelection()) {
-        getCatalogController().deleteSelection();
+        getFurnitureCatalogController().deleteSelection();
       }
     } else if (this.focusedView == getFurnitureController().getView()) {
       getFurnitureController().deleteSelection();

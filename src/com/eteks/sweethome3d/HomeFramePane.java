@@ -112,7 +112,7 @@ public class HomeFramePane extends JRootPane implements View {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       HomeController homeController = this.controller.getHomeController();
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          (JComponent)homeController.getCatalogController().getView(),
+          (JComponent)homeController.getFurnitureCatalogController().getView(),
           (JComponent)homeController.getFurnitureController().getView(),
           (JComponent)homeController.getPlanController().getView(),
           (JComponent)homeController.getHomeController3D().getView()});      

@@ -304,7 +304,7 @@ public class AppletApplication extends HomeApplication {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          (JComponent)controller.getCatalogController().getView(),
+          (JComponent)controller.getFurnitureCatalogController().getView(),
           (JComponent)controller.getFurnitureController().getView(),
           (JComponent)controller.getPlanController().getView(),
           (JComponent)controller.getHomeController3D().getView()});      

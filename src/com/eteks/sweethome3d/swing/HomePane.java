@@ -444,7 +444,7 @@ public class HomePane extends JRootPane implements HomeView {
                                       ContentManager contentManager,
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new FurnitureCatalogTransferHandler(preferences.getFurnitureCatalog(), contentManager, controller.getCatalogController());
+        new FurnitureCatalogTransferHandler(preferences.getFurnitureCatalog(), contentManager, controller.getFurnitureCatalogController());
     this.furnitureTransferHandler = 
         new FurnitureTransferHandler(home, contentManager, controller);
     this.planTransferHandler = 
@@ -1142,7 +1142,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void setTransferEnabled(boolean enabled) {
     if (enabled) {
-      ((JComponent)this.controller.getCatalogController().getView()).
+      ((JComponent)this.controller.getFurnitureCatalogController().getView()).
           setTransferHandler(this.catalogTransferHandler);
       ((JComponent)this.controller.getFurnitureController().getView()).
           setTransferHandler(this.furnitureTransferHandler);
@@ -1151,7 +1151,7 @@ public class HomePane extends JRootPane implements HomeView {
       ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
           setTransferHandler(this.furnitureTransferHandler);
     } else {
-      ((JComponent)this.controller.getCatalogController().getView()).setTransferHandler(null);
+      ((JComponent)this.controller.getFurnitureCatalogController().getView()).setTransferHandler(null);
       ((JComponent)this.controller.getFurnitureController().getView()).setTransferHandler(null);
       ((JComponent)this.controller.getPlanController().getView()).setTransferHandler(null);
       ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
@@ -1195,7 +1195,7 @@ public class HomePane extends JRootPane implements HomeView {
             Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
             if (focusOwner != null && isChildComponentInvisible(focusOwner)) {
               List<View> splitPanesFocusableViews = Arrays.asList(new View [] {
-                  controller.getCatalogController().getView(),
+                  controller.getFurnitureCatalogController().getView(),
                   controller.getFurnitureController().getView(),
                   controller.getPlanController().getView(),
                   controller.getHomeController3D().getView()});      
@@ -1232,7 +1232,7 @@ public class HomePane extends JRootPane implements HomeView {
   private JComponent createCatalogFurniturePane(Home home,
                                                 UserPreferences preferences,
                                                 final HomeController controller) {
-    JComponent catalogView = (JComponent)controller.getCatalogController().getView();
+    JComponent catalogView = (JComponent)controller.getFurnitureCatalogController().getView();
     JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
     // Add focus listener to catalog tree
     catalogView.addFocusListener(new FocusableViewListener(
