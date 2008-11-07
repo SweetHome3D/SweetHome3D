@@ -19,23 +19,15 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -520,158 +512,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     dialog.dispose();
     if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
       this.controller.modifyFurniture();
-    }
-  }
-
-  /**
-   * A check box that accepts <code>null</code> values. Thus this check box is able to
-   * display 3 states : <code>null</code>, <code>false</code> and <code>true</code>.
-   */
-  private static class NullableCheckBox extends JComponent {
-    private JCheckBox    checkBox;
-    private Boolean      value = Boolean.FALSE;
-    private boolean      nullable;
-    private ItemListener checkBoxListener;
-    private List<ChangeListener> changeListeners = new ArrayList<ChangeListener>(1);
-    
-    /**
-     * Creates a nullable check box.
-     */
-    public NullableCheckBox(String text) {
-      // Measure check box size alone without its text
-      final Dimension checkBoxSize = new JCheckBox().getPreferredSize();
-      // Create a check box that displays a dash upon default check box for a null value
-      this.checkBox = new JCheckBox(text) {
-        @Override
-        protected void paintComponent(Graphics g) {
-          super.paintComponent(g);
-          if (value == null) {
-            g.drawRect(checkBoxSize.width / 2 - 3, checkBoxSize.height / 2, 6, 1);
-          }
-        }
-      };
-      // Add an item listener to change default checking logic 
-      this.checkBoxListener = new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          // If this check box is nullable
-          if (nullable) {
-            // Checking sequence will be null, true, false
-            if (getValue() == Boolean.FALSE) {
-              setValue(null);
-            } else if (getValue() == null) {
-              setValue(Boolean.TRUE);
-            } else {
-              setValue(Boolean.FALSE);
-            }
-          } else {
-            setValue(checkBox.isSelected());
-          }
-        }
-      };
-      this.checkBox.addItemListener(this.checkBoxListener);
-      
-      // Add the check box and its label to this component
-      setLayout(new BorderLayout(2, 0));
-      add(this.checkBox, BorderLayout.WEST);
-    }
-    
-    /**
-     * Returns <code>null</code>, <code>Boolean.TRUE</code> or <code>Boolean.FALSE</code>.
-     */
-    public Boolean getValue() {
-      return this.value;
-    }
-
-    /**
-     * Sets displayed value in check box. 
-     * @param value <code>null</code>, <code>Boolean.TRUE</code> or <code>Boolean.FALSE</code>
-     */
-    public void setValue(Boolean value) {
-      this.value = value;
-      this.checkBox.removeItemListener(this.checkBoxListener);
-      try {
-        if (value != null) {
-          this.checkBox.setSelected(value);
-        } else if (isNullable()) {
-          // Unselect check box to display a dash in its middle
-          this.checkBox.setSelected(false);
-          this.checkBox.repaint();
-        } else {
-          throw new IllegalArgumentException("Check box isn't nullable");
-        }
-        fireStateChanged();
-      } finally {
-        this.checkBox.addItemListener(this.checkBoxListener);
-      }      
-    }
-    
-    /**
-     * Returns <code>true</code> if this check box is nullable.
-     */
-    public boolean isNullable() {
-      return this.nullable;
-    }
-
-    /**
-     * Sets whether this check box is nullable.
-     */
-    public void setNullable(boolean nullable) {
-      this.nullable = nullable;
-      if (!nullable && getValue() == null) {
-        setValue(Boolean.FALSE);
-      }
-    }
-    
-    /**
-     * Sets the mnemonic of this component.
-     * @param mnemonic a <code>VK_...</code> code defined in <code>java.awt.event.KeyEvent</code>. 
-     */
-    public void setMnemonic(int mnemonic) {
-      this.checkBox.setMnemonic(mnemonic);
-    }
-    
-    /**
-     * Returns the mnemonic of this component.
-     */
-    public int getMnemonic() {
-      return this.checkBox.getMnemonic();
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-      this.checkBox.setEnabled(enabled);
-    }
-
-    @Override
-    public boolean isEnabled() {
-      return this.checkBox.isEnabled();
-    }
-    
-    /**
-     * Adds a listener to this component.
-     */
-    public void addChangeListener(final ChangeListener l) {
-      this.changeListeners.add(l);
-    }
-
-    /**
-     * Removes a listener from this component.
-     */
-    public void removeChangeListener(final ChangeListener l) {
-      this.changeListeners.remove(l);
-    }
-
-    public void fireStateChanged() {
-      if (!this.changeListeners.isEmpty()) {
-        ChangeEvent changeEvent = new ChangeEvent(this);
-        // Work on a copy of changeListeners to ensure a listener 
-        // can modify safely listeners list
-        ChangeListener [] listeners = this.changeListeners.
-          toArray(new ChangeListener [this.changeListeners.size()]);
-        for (ChangeListener listener : listeners) {
-          listener.stateChanged(changeEvent);
-        }
-      }
     }
   }
 }
