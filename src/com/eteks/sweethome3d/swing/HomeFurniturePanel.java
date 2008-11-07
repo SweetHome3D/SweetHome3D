@@ -416,7 +416,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   }
   
   /**
-   * Layouts panel composants in panel with their labels. 
+   * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
     int labelAlignment = OperatingSystem.isMacOSX() 
