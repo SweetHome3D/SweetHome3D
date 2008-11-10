@@ -483,7 +483,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     if (this.price != null && this.valueAddedTaxPercentage != null) {
       return this.price.add(getValueAddedTax());
     } else {
-      return null;
+      return this.price;
     }
   }
 
