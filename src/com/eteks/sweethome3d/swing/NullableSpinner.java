@@ -133,9 +133,18 @@ public class NullableSpinner extends AutoCommitSpinner {
           this.isNull = true;
           fireStateChanged();
         }
-      } else { 
-        this.isNull = false;
-        super.setValue(value);
+      } else {
+        if (this.isNull 
+            && value != null 
+            && value.equals(super.getValue())) {
+          // Fire a state change if the value set is the same one as the one stored by number model
+          // and this model exposed a null value before
+          this.isNull = false;
+          fireStateChanged();
+        } else {
+          this.isNull = false;
+          super.setValue(value);
+        }
       }
     }
 
