@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.junit;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -46,6 +47,8 @@ import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
@@ -112,6 +115,12 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     final HomeController controller = 
         new HomeController(home, preferences, viewFactory, contentManager);
     final JComponent homeView = (JComponent)controller.getView();
+    final List<CatalogPieceOfFurniture> addedCatalogFurniture = new ArrayList<CatalogPieceOfFurniture>();
+    preferences.getFurnitureCatalog().addFurnitureListener(new CollectionListener<CatalogPieceOfFurniture>() {
+        public void collectionChanged(CollectionEvent<CatalogPieceOfFurniture> ev) {
+          addedCatalogFurniture.add(ev.getItem());
+        }
+      });
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Imported Furniture Wizard Test");    
@@ -308,11 +317,12 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         }
       });
     
-    // 10. Check the matching new catalog piece of furniture was created and it's the selected piece
+    // 10. Check the matching new catalog piece of furniture was created
     List<CatalogPieceOfFurniture> selectedCatalogFurniture = 
-        preferences.getFurnitureCatalog().getSelectedFurniture();
-    assertEquals("Wrong selected furniture count in catalog", 1, selectedCatalogFurniture.size());
-    CatalogPieceOfFurniture catalogPiece = selectedCatalogFurniture.get(0);
+        controller.getFurnitureCatalogController().getSelectedFurniture();
+    assertEquals("Wrong selected furniture count in catalog", 0, selectedCatalogFurniture.size());
+    assertEquals("Incorrect count of created catalog piece", 1, addedCatalogFurniture.size());    
+    CatalogPieceOfFurniture catalogPiece = addedCatalogFurniture.get(0);
     assertEquals("Wrong catalog piece name", pieceTestName, catalogPiece.getName());
     assertEquals("Wrong catalog piece category name", categoryTestName, catalogPiece.getCategory().getName());
     assertTrue("Catalog doesn't contain new piece", 
@@ -333,10 +343,12 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertEquals("Wrong home piece name", pieceTestName, homePiece.getName());
     
     // 11. Transfer focus to tree 
-    JComponent catalogView = (JComponent)controller.getCatalogController().getView();
+    JComponent catalogView = (JComponent)controller.getFurnitureCatalogController().getView();
     tester.focus(catalogView);        
     // Check plan view has focus
     assertTrue("Catalog tree doesn't have the focus", catalogView.isFocusOwner());
+    // Select the piece added to catalog
+    controller.getFurnitureCatalogController().setSelectedFurniture(addedCatalogFurniture);
     // Delete new catalog piece of furniture
     final Action deleteAction = homeView.getActionMap().get(HomePane.ActionType.DELETE);
     assertTrue("Delete action isn't enable", deleteAction.isEnabled());
@@ -362,7 +374,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         }
       });
     // Check selection is empty
-    selectedCatalogFurniture = preferences.getFurnitureCatalog().getSelectedFurniture();
+    selectedCatalogFurniture = controller.getFurnitureCatalogController().getSelectedFurniture();
     assertTrue("Catalog selected furniture isn't empty", selectedCatalogFurniture.isEmpty());
     // Check catalog doesn't contain the new piece
     assertFalse("Piece is still in catalog", 

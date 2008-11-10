@@ -94,7 +94,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     frame.selectButton.doClick();
     // Select the first piece in catalog tree
     JTree catalogTree = (JTree)
-        frame.homeController.getCatalogController().getView();
+        frame.homeController.getFurnitureCatalogController().getView();
     catalogTree.expandRow(0); 
     catalogTree.addSelectionInterval(1, 1);
     // Click on Add furniture button

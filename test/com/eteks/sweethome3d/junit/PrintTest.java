@@ -87,7 +87,7 @@ public class PrintTest extends ComponentTestFixture {
     // Add a piece of furniture to home
     List<CatalogPieceOfFurniture> selectedPieces = Arrays.asList(
         new CatalogPieceOfFurniture [] {preferences.getFurnitureCatalog().getCategories().get(0).getFurniture().get(0)}); 
-    preferences.getFurnitureCatalog().setSelectedFurniture(selectedPieces);
+    controller.getFurnitureCatalogController().setSelectedFurniture(selectedPieces);
     runAction(controller, HomePane.ActionType.ADD_HOME_FURNITURE);
     // Check home contains one piece
     assertEquals("Home doesn't contain any furniture", 1, home.getFurniture().size());

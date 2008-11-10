@@ -201,7 +201,7 @@ public class HomePane extends JRootPane implements HomeView {
     createActions(controller);
     createMenuActions(controller);   
     createPluginActions(plugins);
-    createTransferHandlers(home, preferences, contentManager, controller);
+    createTransferHandlers(home, contentManager, controller);
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
@@ -440,11 +440,11 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Creates components transfer handlers.
    */
-  private void createTransferHandlers(Home home, UserPreferences preferences,
+  private void createTransferHandlers(Home home, 
                                       ContentManager contentManager,
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new FurnitureCatalogTransferHandler(preferences.getFurnitureCatalog(), contentManager, controller.getFurnitureCatalogController());
+        new FurnitureCatalogTransferHandler(contentManager, controller.getFurnitureCatalogController());
     this.furnitureTransferHandler = 
         new FurnitureTransferHandler(home, contentManager, controller);
     this.planTransferHandler = 

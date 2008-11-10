@@ -392,7 +392,7 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Furniture catalog listeners that writes preferences each time a piece of furniture 
+   * Furniture catalog listener that writes preferences each time a piece of furniture 
    * is deleted or added in furniture catalog. This listener is bound to this controller 
    * with a weak reference to avoid strong link between catalog and this controller.  
    */
@@ -416,7 +416,7 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Textures catalog listeners that writes preferences each time a texture 
+   * Textures catalog listener that writes preferences each time a texture 
    * is deleted or added in textures catalog. This listener is bound to this controller 
    * with a weak reference to avoid strong link between catalog and this controller.  
    */
@@ -440,7 +440,7 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Textures catalog listeners that writes preferences each time a texture 
+   * Textures catalog listener that writes preferences each time a texture 
    * is deleted or added in textures catalog. This listener is bound to this controller 
    * with a weak reference to avoid strong link between catalog and this controller.  
    */
@@ -468,32 +468,13 @@ public class HomeController implements Controller {
    * Adds a selection listener to catalog that enables / disables Add Furniture action.
    */
   private void addCatalogSelectionListener() {
-    this.preferences.getFurnitureCatalog().addSelectionListener(
-        new FurnitureCatalogSelectionChangeListener(this));
+    getFurnitureCatalogController().addSelectionListener(new SelectionListener() {
+          public void selectionChanged(SelectionEvent ev) {
+            enableActionsOnSelection();
+          }
+        });
   }
 
-  /**
-   * Catalog selection property listener bound to this component with a weak reference to avoid
-   * strong link between furniture catalog and this component.  
-   */
-  private static class FurnitureCatalogSelectionChangeListener implements SelectionListener {
-    private WeakReference<HomeController> homeController;
-
-    public FurnitureCatalogSelectionChangeListener(HomeController homeController) {
-      this.homeController = new WeakReference<HomeController>(homeController);
-    }
-    
-    public void selectionChanged(SelectionEvent ev) {
-      // If home pane was garbage collected, remove this listener from catalog
-      HomeController homeController = this.homeController.get();
-      if (homeController == null) {
-        ((FurnitureCatalog)ev.getSource()).removeSelectionListener(this);
-      } else {
-        homeController.enableActionsOnSelection();
-      }
-    }
-  }
-  
   /**
    * Adds a property change listener to <code>preferences</code> to update
    * undo and redo presentation names when preferred language changes.
@@ -589,7 +570,7 @@ public class HomeController implements Controller {
     
     // Search if catalog selection contains at least one piece
     List<CatalogPieceOfFurniture> catalogSelectedItems = 
-        this.preferences.getFurnitureCatalog().getSelectedFurniture();    
+        getFurnitureCatalogController().getSelectedFurniture();    
     boolean catalogSelectionContainsFurniture = !catalogSelectedItems.isEmpty();
     boolean catalogSelectionContainsOneModifiablePiece = catalogSelectedItems.size() == 1
         && catalogSelectedItems.get(0).isModifiable();
@@ -813,7 +794,7 @@ public class HomeController implements Controller {
     // Use automatically selection mode  
     getPlanController().setMode(PlanController.Mode.SELECTION);
     List<CatalogPieceOfFurniture> selectedFurniture = 
-      this.preferences.getFurnitureCatalog().getSelectedFurniture();
+      getFurnitureCatalogController().getSelectedFurniture();
     if (!selectedFurniture.isEmpty()) {
       List<HomePieceOfFurniture> newFurniture = 
           new ArrayList<HomePieceOfFurniture>();

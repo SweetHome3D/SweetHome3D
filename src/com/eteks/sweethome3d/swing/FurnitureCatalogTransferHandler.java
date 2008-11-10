@@ -33,7 +33,6 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
-import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
@@ -43,24 +42,14 @@ import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogTransferHandler extends TransferHandler {
-  private final FurnitureCatalog           catalog;
   private final ContentManager             contentManager;
   private final FurnitureCatalogController catalogController;
 
   /**
    * Creates a handler able to transfer catalog selected furniture.
    */
-  public FurnitureCatalogTransferHandler(FurnitureCatalog catalog) {
-    this(catalog, null, null);
-  }
-
-  /**
-   * Creates a handler able to transfer catalog selected furniture.
-   */
-  public FurnitureCatalogTransferHandler(FurnitureCatalog catalog,
-                                ContentManager contentManager,
-                                FurnitureCatalogController catalogController) {
-    this.catalog = catalog;
+  public FurnitureCatalogTransferHandler(ContentManager contentManager,
+                                         FurnitureCatalogController catalogController) {
     this.contentManager = contentManager;
     this.catalogController = catalogController;
   }
@@ -79,7 +68,7 @@ public class FurnitureCatalogTransferHandler extends TransferHandler {
    */
   @Override
   protected Transferable createTransferable(JComponent source) {
-    List<CatalogPieceOfFurniture> selectedCatalogFurniture = this.catalog.getSelectedFurniture();
+    List<CatalogPieceOfFurniture> selectedCatalogFurniture = this.catalogController.getSelectedFurniture();
     List<HomePieceOfFurniture> transferedFurniture = 
         new ArrayList<HomePieceOfFurniture>(selectedCatalogFurniture.size());
     for (CatalogPieceOfFurniture piece : selectedCatalogFurniture) {

@@ -29,10 +29,8 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public abstract class FurnitureCatalog {
-  private List<FurnitureCategory>       categories         = new ArrayList<FurnitureCategory>();
+  private List<FurnitureCategory>       categories = new ArrayList<FurnitureCategory>();
   private boolean                       sorted;
-  private List<CatalogPieceOfFurniture> selectedFurniture  = Collections.emptyList();
-  private final List<SelectionListener> selectionListeners = new ArrayList<SelectionListener>();
   private final CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
                              new CollectionChangeSupport<CatalogPieceOfFurniture>(this);
 
@@ -137,8 +135,6 @@ public abstract class FurnitureCatalog {
     if (category != null) {
       int pieceIndex = Collections.binarySearch(category.getFurniture(), piece);
       if (pieceIndex >= 0) {
-        // Ensure selectedFurniture don't keep a reference to piece
-        deselectPieceOfFurniture(piece);
         category.delete(piece);
         
         if (category.getFurnitureCount() == 0) {
@@ -152,58 +148,6 @@ public abstract class FurnitureCatalog {
       }
     }
 
-    throw new IllegalArgumentException(
-        "catalog doesn't contain piece " + piece.getName());
-  }
-
-  /**
-   * Adds the selection <code>listener</code> in parameter to this home.
-   */
-  public void addSelectionListener(SelectionListener listener) {
-    this.selectionListeners.add(listener);
-  }
-
-  /**
-   * Removes the selection <code>listener</code> in parameter from this home.
-   */
-  public void removeSelectionListener(SelectionListener listener) {
-    this.selectionListeners.remove(listener);
-  }
-  
-  /**
-   * Returns an unmodifiable list of the selected furniture in catalog.
-   */
-  public List<CatalogPieceOfFurniture> getSelectedFurniture() {
-    return Collections.unmodifiableList(this.selectedFurniture);
-  }
-  
-  /**
-   * Sets the selected items in home and notifies listeners selection change.
-   */
-  public void setSelectedFurniture(List<CatalogPieceOfFurniture> selectedFurniture) {
-    this.selectedFurniture = new ArrayList<CatalogPieceOfFurniture>(selectedFurniture);
-    if (!this.selectionListeners.isEmpty()) {
-      SelectionEvent selectionEvent = new SelectionEvent(this, getSelectedFurniture());
-      // Work on a copy of selectionListeners to ensure a listener 
-      // can modify safely listeners list
-      SelectionListener [] listeners = this.selectionListeners.
-        toArray(new SelectionListener [this.selectionListeners.size()]);
-      for (SelectionListener listener : listeners) {
-        listener.selectionChanged(selectionEvent);
-      }
-    }
-  }
-
-  /**
-   * Removes <code>piece</code> from selected furniture.
-   */
-  private void deselectPieceOfFurniture(CatalogPieceOfFurniture piece) {
-    int pieceSelectionIndex = this.selectedFurniture.indexOf(piece);
-    if (pieceSelectionIndex != -1) {
-      List<CatalogPieceOfFurniture> selectedItems = 
-          new ArrayList<CatalogPieceOfFurniture>(getSelectedFurniture());
-      selectedItems.remove(pieceSelectionIndex);
-      setSelectedFurniture(selectedItems);
-    }
+    throw new IllegalArgumentException("catalog doesn't contain piece " + piece.getName());
   }
 }

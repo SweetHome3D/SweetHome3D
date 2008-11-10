@@ -68,7 +68,7 @@ public class SwingViewFactory implements ViewFactory {
   public View createFurnitureCatalogView(FurnitureCatalog catalog,
                                   UserPreferences preferences,
                                   FurnitureCatalogController furnitureCatalogController) {
-    return new FurnitureCatalogTree(catalog, furnitureCatalogController, true);
+    return new FurnitureCatalogTree(catalog, furnitureCatalogController);
   }
   
   /**

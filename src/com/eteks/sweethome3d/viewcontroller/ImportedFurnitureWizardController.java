@@ -194,7 +194,6 @@ public class ImportedFurnitureWizardController extends WizardController
     // If a category exists, add new piece to catalog
     if (this.category != null) {
       catalog.add(this.category, newPiece);
-      catalog.setSelectedFurniture(Arrays.asList(new CatalogPieceOfFurniture [] {newPiece}));
     }
   }
   
