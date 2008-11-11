@@ -504,7 +504,8 @@ public class FurnitureTable extends JTable implements View, Printable {
         switch ((HomePieceOfFurniture.SortableProperty)column.getIdentifier()) {
           case CATALOG_ID :
             // Copy piece catalog id
-            csv.append(copiedPiece.getCatalogId());
+            String catalogId = copiedPiece.getCatalogId();
+            csv.append(catalogId != null ? catalogId : "");
             break;
           case NAME :
             // Copy piece name
