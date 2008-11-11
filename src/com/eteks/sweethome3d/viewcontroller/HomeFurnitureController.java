@@ -546,20 +546,22 @@ public class HomeFurnitureController implements Controller {
       piece.setY(y != null 
           ? y.floatValue() : piece.getY());
       piece.setAngle(angle != null ? angle.floatValue() : piece.getAngle());
-      piece.setWidth(width != null && piece.isResizable() 
-          ? width.floatValue() : piece.getWidth());
-      piece.setDepth(depth != null && piece.isResizable() 
-          ? depth.floatValue() : piece.getDepth());
-      piece.setHeight(height != null && piece.isResizable() 
-          ? height.floatValue() : piece.getHeight());
+      if (piece.isResizable()) {
+        piece.setWidth(width != null 
+            ? width.floatValue() : piece.getWidth());
+        piece.setDepth(depth != null  
+            ? depth.floatValue() : piece.getDepth());
+        piece.setHeight(height != null  
+            ? height.floatValue() : piece.getHeight());
+        piece.setModelMirrored(modelMirrored != null  
+            ? modelMirrored.booleanValue() : piece.isModelMirrored());
+      }
       piece.setElevation(elevation != null 
           ? elevation.floatValue() : piece.getElevation());
       piece.setColor(color != null 
           ? color : piece.getColor());
       piece.setVisible(visible != null 
           ? visible.booleanValue() : piece.isVisible());
-      piece.setModelMirrored(modelMirrored != null && piece.isResizable() 
-          ? modelMirrored.booleanValue() : piece.isModelMirrored());
     }
   }
 
@@ -578,10 +580,10 @@ public class HomeFurnitureController implements Controller {
         piece.setWidth(modifiedPiece.getWidth());
         piece.setDepth(modifiedPiece.getDepth());
         piece.setHeight(modifiedPiece.getHeight());
+        piece.setModelMirrored(modifiedPiece.isModelMirrored());
       }
       piece.setColor(modifiedPiece.getColor());
       piece.setVisible(modifiedPiece.isVisible());
-      piece.setModelMirrored(modifiedPiece.isModelMirrored());
     }
   }
 
