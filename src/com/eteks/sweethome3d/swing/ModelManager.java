@@ -282,7 +282,7 @@ public class ModelManager {
    * An object file loader that translates lines starting by "o" unsupported by 
    * <code>ObjectFile</code> loader to lines starting by "g".
    */
-  public static class ObjectFileTranslator extends ObjectFile {
+  private static class ObjectFileTranslator extends ObjectFile {
     @Override
     public Scene load(final URL defaultUrl) throws FileNotFoundException, IncorrectFormatException, ParsingErrorException {
       try {
