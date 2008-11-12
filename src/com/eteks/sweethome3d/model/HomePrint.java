@@ -26,6 +26,9 @@ import java.io.Serializable;
  * @author Emmanuel Puybaret
  */
 public class HomePrint implements Serializable {
+  /**
+   * Paper orientation. 
+   */
   public enum PaperOrientation {PORTRAIT, LANDSCAPE, REVERSE_LANDSCAPE};
   
   private final PaperOrientation paperOrientation;

@@ -58,7 +58,7 @@ import com.eteks.sweethome3d.viewcontroller.WallController;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
 
 /**
- * View factory working with Swing components.
+ * View factory that instantiates the Swing components of this package.
  * @author Emmanuel Puybaret
  */
 public class SwingViewFactory implements ViewFactory {

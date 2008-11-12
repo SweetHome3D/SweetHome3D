@@ -36,7 +36,9 @@ public class HomeEnvironment implements Serializable {
    * The environment properties that may change.
    */
   public enum Property {SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE};
-  
+  /**
+   * The various modes used to draw home in 3D. 
+   */
   public enum DrawingMode {
     FILL, OUTLINE, FILL_AND_OUTLINE
   }

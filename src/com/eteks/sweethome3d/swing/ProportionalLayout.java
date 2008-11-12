@@ -33,6 +33,9 @@ import java.awt.LayoutManager2;
  * @author Emmanuel Puybaret
  */
 public class ProportionalLayout implements LayoutManager2 {
+  /**
+   * The two locations where components managed by a {@link ProportionalLayout} instance can be placed.
+   */
   public enum Constraints {TOP, BOTTOM}
 
   private Component topComponent;

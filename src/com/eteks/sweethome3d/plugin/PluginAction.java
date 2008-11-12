@@ -62,7 +62,7 @@ public abstract class PluginAction {
      * The key of the property of <code>Boolean</code> type that specifies
      * if an action will appear in the main tool bar.
      */
-    IN_TOOL_BAR,
+    TOOL_BAR,
     /**
      * The key of the property of <code>String</code> type that specifies
      * in which menu of the main menu bar an action should appear. 
@@ -160,9 +160,9 @@ public abstract class PluginAction {
     if (mnemonicKey != null) {
       putPropertyValue(Property.MNEMONIC, Character.valueOf(mnemonicKey.charAt(0)));
     }
-    String inToolBar = getOptionalString(resource, propertyPrefix + Property.IN_TOOL_BAR);
-    if (inToolBar != null) {
-      putPropertyValue(Property.IN_TOOL_BAR, Boolean.valueOf(inToolBar));
+    String toolBar = getOptionalString(resource, propertyPrefix + Property.TOOL_BAR);
+    if (toolBar != null) {
+      putPropertyValue(Property.TOOL_BAR, Boolean.valueOf(toolBar));
     }
     putPropertyValue(Property.MENU, 
         getOptionalString(resource, propertyPrefix + Property.MENU));

@@ -62,7 +62,6 @@ public class PageSetupPanel extends JPanel implements DialogView {
 
   /**
    * Creates a panel that displays page setup.
-   * @param home home with print attributes edited by this panel
    * @param controller the controller of this panel
    */
   public PageSetupPanel(PageSetupController controller) {

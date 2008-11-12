@@ -245,7 +245,7 @@ public class Wall implements Serializable, Selectable {
    * listeners added to this wall will receive a change notification. 
    * If the end point of this wall is attached to an other wall, it will be detached 
    * from this wall, and wall listeners will receive a change notification.
-   * @param wallAtStart a wall or <code>null</code> to detach this wall
+   * @param wallAtEnd a wall or <code>null</code> to detach this wall
    *          from any wall it was attached to before.
    */
   public void setWallAtEnd(Wall wallAtEnd) {

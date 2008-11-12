@@ -45,7 +45,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
- * Singleton managing Sweet Home 3D plug-ins.
+ * Sweet Home 3D plug-ins manager.
  * @author Emmanuel Puybaret
  */
 public class PluginManager {

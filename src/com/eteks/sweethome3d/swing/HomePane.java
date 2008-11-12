@@ -1025,7 +1025,7 @@ public class HomePane extends JRootPane implements HomeView {
     // Add plugin actions buttons
     boolean pluginActionsAdded = false;
     for (Action pluginAction : this.pluginActions) {
-      if (Boolean.TRUE.equals(pluginAction.getValue(PluginAction.Property.IN_TOOL_BAR.name()))) {
+      if (Boolean.TRUE.equals(pluginAction.getValue(PluginAction.Property.TOOL_BAR.name()))) {
         toolBar.add(new ResourceAction.ToolBarAction(pluginAction));
         pluginActionsAdded = true;
       }
@@ -1892,8 +1892,8 @@ public class HomePane extends JRootPane implements HomeView {
         return mnemonic != null
             ? new Integer(mnemonic)
             : null;
-      } else if (PluginAction.Property.IN_TOOL_BAR.name().equals(key)) {
-        return this.pluginAction.getPropertyValue(PluginAction.Property.IN_TOOL_BAR);
+      } else if (PluginAction.Property.TOOL_BAR.name().equals(key)) {
+        return this.pluginAction.getPropertyValue(PluginAction.Property.TOOL_BAR);
       } else if (PluginAction.Property.MENU.name().equals(key)) {
         return this.pluginAction.getPropertyValue(PluginAction.Property.MENU);
       } else { 
@@ -1911,8 +1911,8 @@ public class HomePane extends JRootPane implements HomeView {
       } else if (MNEMONIC_KEY.equals(key)) {
         this.pluginAction.putPropertyValue(PluginAction.Property.MNEMONIC, 
             new Character((char)((Integer)value).intValue()));
-      } else if (PluginAction.Property.IN_TOOL_BAR.name().equals(key)) {
-        this.pluginAction.putPropertyValue(PluginAction.Property.IN_TOOL_BAR, value);
+      } else if (PluginAction.Property.TOOL_BAR.name().equals(key)) {
+        this.pluginAction.putPropertyValue(PluginAction.Property.TOOL_BAR, value);
       } else if (PluginAction.Property.MENU.name().equals(key)) {
         this.pluginAction.putPropertyValue(PluginAction.Property.MENU, value);
       } 

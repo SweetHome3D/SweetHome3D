@@ -291,6 +291,10 @@ public abstract class UserPreferences {
   
   /**
    * Adds the <code>listener</code> in parameter to these preferences. 
+   * <br>Caution: a user preferences instance generally exists during all the application ;
+   * therefore you should take care of not bounding permanently listeners to this
+   * object (for example, do not create anonymous listeners on user preferences
+   * in classes depending on an edited home).
    */
   public void addPropertyChangeListener(Property property, 
                                         PropertyChangeListener listener) {
@@ -531,5 +535,5 @@ public abstract class UserPreferences {
    * Returns <code>true</code> if the given furniture library exists.
    * @param furnitureLibraryName the name of the resource to check
    */
-  public abstract boolean furnitureLibraryExists(String name) throws RecorderException;
+  public abstract boolean furnitureLibraryExists(String furnitureLibraryName) throws RecorderException;
 }

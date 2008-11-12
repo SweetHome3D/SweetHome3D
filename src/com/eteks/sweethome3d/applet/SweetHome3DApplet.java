@@ -29,10 +29,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
 /**
  * This applet class loads Sweet Home 3D classes from jars in classpath or from extension 
- * jars stored as resources. It's Java 1.1 compatible to be loadable by old JVMs.
+ * jars stored as resources.
  * <p>This applet accepts the following parameters:
  * 
- * <lu><li><code>furnitureCatalogURLs</code> specifies the URLs of the furniture libraries available 
+ * <ul><li><code>furnitureCatalogURLs</code> specifies the URLs of the furniture libraries available 
  *     in Sweet Home 3D catalog. These URLs are comma or space separated, and if they are not 
  *     absolute URLs, they will be considered as relative to applet codebase. Each URL is a ZIP file 
  *     that must contain a file named <code>PluginFurnitureCatalog.properties</code> describing the 
@@ -87,7 +87,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>If you want the applet open a home at launch without creating a <code>readHomeURL</code> 
  *     service, set <code>%s</code> value for <code>readHomeURL</code> parameter and put the absolute 
  *     URL of the home file or its URL relative to applet codebase in <code>defaultHome</code> 
- *     parameter.</li></lu>
+ *     parameter.</li></ul>
+ * 
+ * <p>This class is Java 1.1 compatible and to be able to notify to users that 
+ * it requires Java 5 when it's run under an old JVM.
  *     
  * @author Emmanuel Puybaret
  */

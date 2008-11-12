@@ -50,7 +50,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public enum Property {NAME, WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
   
   /** 
-   * Properties on which home furniture may be sorted.  
+   * The properties on which home furniture may be sorted.  
    */
   public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
                                 DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE,
