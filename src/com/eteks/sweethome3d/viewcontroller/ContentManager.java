@@ -27,7 +27,7 @@ import com.eteks.sweethome3d.model.RecorderException;
  * @author Emmanuel Puybaret
  */
 public interface ContentManager {
-  public enum ContentType {SWEET_HOME_3D, MODEL, IMAGE, OBJ, PDF, FURNITURE_LIBRARY};
+  public enum ContentType {SWEET_HOME_3D, MODEL, IMAGE, OBJ, PDF, FURNITURE_LIBRARY, USER_DEFINED};
 
   /**
    * Returns a {@link Content content} object that references a given content name.

@@ -232,7 +232,7 @@ public class FileContentManager implements ContentManager {
   
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
-  private Map<ContentType, String>        fileDefaultExtensions;
+  private Map<ContentType, String>        defaultFileExtensions;
 
   public FileContentManager() {  
     // Fill file filters map
@@ -244,13 +244,11 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
     // Fill file default extension map
-    this.fileDefaultExtensions = new HashMap<ContentType, String>();
-    this.fileDefaultExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_LIBRARY_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.MODEL, OBJ_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.IMAGE, PNG_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.PDF, PDF_EXTENSION);
-    this.fileDefaultExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
+    this.defaultFileExtensions = new HashMap<ContentType, String>();
+    this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_LIBRARY_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }
   
   /**
@@ -284,12 +282,40 @@ public class FileContentManager implements ContentManager {
   }
   
   /**
+   * Returns the file filters available for a given content type.
+   * This method may be overridden to add some file filters to existing content types
+   * or to define the filters of a user defined content type.
+   */
+  protected FileFilter [] getFileFilter(ContentType contentType) {
+    if (contentType == ContentType.USER_DEFINED) {
+      throw new IllegalArgumentException("Unknown user defined content type");
+    } else {
+      return this.fileFilters.get(contentType);
+    }
+  }
+  
+  /**
+   * Returns the default file extension of a given content type. 
+   * If not <code>null</code> this extension will be appended automatically 
+   * to the file name chosen by user in save dialog.
+   * This method may be overridden to change the default file extension of an existing content type
+   * or to define the default file extension of a user defined content type.
+   */
+  protected String getDefaultFileExtension(ContentType contentType) {
+    if (contentType == ContentType.USER_DEFINED) {
+      return null;
+    } else {
+      return this.defaultFileExtensions.get(contentType);
+    }
+  }
+  
+  /**
    * Returns <code>true</code> if the file path in parameter is accepted
    * for <code>contentType</code>.
    */
   public boolean isAcceptable(String contentName, 
                               ContentType contentType) {
-    for (FileFilter filter : fileFilters.get(contentType)) {
+    for (FileFilter filter : getFileFilter(contentType)) {
       if (filter.accept(new File(contentName))) {
         return true;
       }
@@ -299,7 +325,7 @@ public class FileContentManager implements ContentManager {
   
   /**
    * Returns the file path chosen by user with an open file dialog.
-   * @return the file path or <code>null</code> if user cancelled its choice.
+   * @return the file path or <code>null</code> if user canceled its choice.
    */
   public String showOpenDialog(View        parentView,
                                String      dialogTitle,
@@ -316,24 +342,20 @@ public class FileContentManager implements ContentManager {
    * Returns the file path chosen by user with a save file dialog.
    * If this file already exists, the user will be prompted whether 
    * he wants to overwrite this existing file. 
-   * @return the chosen file path or <code>null</code> if user cancelled its choice.
+   * @return the chosen file path or <code>null</code> if user canceled its choice.
    */
   public String showSaveDialog(View        parentView,
                                String      dialogTitle,
                                ContentType contentType,
                                String      name) {
-    String defaultExtension = this.fileDefaultExtensions.get(contentType);
+    String defaultExtension = getDefaultFileExtension(contentType);
     if (name != null) {
       // If name has an extension, remove it and build a name that matches contentType
       int extensionIndex = name.lastIndexOf('.');
       if (extensionIndex != -1) {
         name = name.substring(0, extensionIndex);
-        switch(contentType) {
-          case SWEET_HOME_3D :
-          case PDF :
-          case OBJ :
-            name += defaultExtension;
-            break;
+        if (defaultExtension != null) {
+          name += defaultExtension;
         }
       }
     }
@@ -348,15 +370,11 @@ public class FileContentManager implements ContentManager {
     
     boolean addedExtension = false;
     if (savedName != null) {
-      switch(contentType) {
-        case SWEET_HOME_3D :
-        case PDF :
-        case OBJ :
-          if (!savedName.toLowerCase().endsWith(defaultExtension)) {
-            savedName += defaultExtension;
-            addedExtension = true;
-          }
-          break;
+      if (defaultExtension != null) {
+        if (!savedName.toLowerCase().endsWith(defaultExtension)) {
+          savedName += defaultExtension;
+          addedExtension = true;
+        }
       }
 
       // If no extension was added to file under Mac OS X, 
@@ -441,7 +459,7 @@ public class FileContentManager implements ContentManager {
     // Set supported files filter 
     FileFilter acceptAllFileFilter = fileChooser.getAcceptAllFileFilter();
     fileChooser.addChoosableFileFilter(acceptAllFileFilter);
-    FileFilter [] contentFileFilters = fileFilters.get(contentType);
+    FileFilter [] contentFileFilters = getFileFilter(contentType);
     for (FileFilter filter : contentFileFilters) {
       fileChooser.addChoosableFileFilter(filter);
     }
