@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <jnlp spec="1.5+" 
-      codebase="http://sweethome3d.sourceforge.net/" 
+      codebase="http://www.sweethome3d.eu/" 
       href="SweetHome3D.jnlp">
   <information>
     <title>Sweet Home 3D</title>
     <vendor>eTeks</vendor>
-    <homepage href="http://sweethome3d.sourceforge.net/"/>
+    <homepage href="http://www.sweethome3d.eu/"/>
     <description>Sweet Home 3D</description>
     <description kind="short">Arrange the furniture of your house</description>
     <icon href="SweetHome3DIcon.gif"/>
