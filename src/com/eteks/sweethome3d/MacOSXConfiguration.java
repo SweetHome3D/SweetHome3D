@@ -48,8 +48,10 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
@@ -66,10 +68,11 @@ class MacOSXConfiguration {
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
   public static void bindToApplicationMenu(final SweetHome3D homeApplication,
+                                           ContentManager contentManager,
                                            ViewFactory viewFactory) {
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = new HomeController(
-        new Home(), homeApplication, viewFactory);
+        new Home(), homeApplication, viewFactory, contentManager, null);
     final HomePane defaultHomeView = (HomePane)defaultController.getView();
     for (HomePane.ActionType action : HomePane.ActionType.values()) {
       switch (action) {

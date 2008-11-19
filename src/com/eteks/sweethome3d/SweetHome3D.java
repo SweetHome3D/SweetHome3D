@@ -355,7 +355,7 @@ public class SweetHome3D extends HomeApplication {
     
     if (OperatingSystem.isMacOSX()) {
       // Bind to application menu  
-      MacOSXConfiguration.bindToApplicationMenu(application, application.viewFactory);
+      MacOSXConfiguration.bindToApplicationMenu(application, application.contentManager, application.viewFactory);
     }
 
     return application;
