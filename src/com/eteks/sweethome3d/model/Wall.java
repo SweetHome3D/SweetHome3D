@@ -467,6 +467,7 @@ public class Wall implements Serializable, Selectable {
    */
   public float [][] getPoints() {
     if (this.pointsCache == null) {
+      final float epsilon = 0.01f;
       float [][] wallPoints = getRectanglePoints();
       float limit = 2 * this.thickness;
       // If wall is joined to a wall at its start, 
@@ -478,11 +479,38 @@ public class Wall implements Serializable, Selectable {
               wallAtStartPoints [1], wallAtStartPoints [0], limit);
           computeIntersection(wallPoints [3], wallPoints [2],  
               wallAtStartPoints [2], wallAtStartPoints [3], limit);
+
+          // If the computed start point of this wall and the computed end point of the wall at start 
+          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+          if (this.wallAtStart.pointsCache != null) {
+            if (Math.abs(wallPoints [0][0] - this.wallAtStart.pointsCache [1][0]) < epsilon
+                && Math.abs(wallPoints [0][1] - this.wallAtStart.pointsCache [1][1]) < epsilon) {
+              wallPoints [0] = this.wallAtStart.pointsCache [1];
+            }                        
+            if (Math.abs(wallPoints [3][0] - this.wallAtStart.pointsCache [2][0]) < epsilon
+                && Math.abs(wallPoints [3][1] - this.wallAtStart.pointsCache [2][1]) < epsilon) {
+              wallPoints [3] = this.wallAtStart.pointsCache [2];
+            }
+          }
         } else if (this.wallAtStart.getWallAtStart() == this) {
           computeIntersection(wallPoints [0], wallPoints [1], 
               wallAtStartPoints [2], wallAtStartPoints [3], limit);
           computeIntersection(wallPoints [3], wallPoints [2],  
               wallAtStartPoints [0], wallAtStartPoints [1], limit);
+          
+          // If the computed start point of this wall and the computed start point of the wall at start 
+          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+          if (this.wallAtStart.pointsCache != null) {
+            if (Math.abs(wallPoints [0][0] - this.wallAtStart.pointsCache [3][0]) < epsilon
+                && Math.abs(wallPoints [0][1] - this.wallAtStart.pointsCache [3][1]) < epsilon) {
+              wallPoints [0] = this.wallAtStart.pointsCache [3];
+            }                            
+            if (this.wallAtStart.pointsCache != null
+                && Math.abs(wallPoints [3][0] - this.wallAtStart.pointsCache [0][0]) < epsilon
+                && Math.abs(wallPoints [3][1] - this.wallAtStart.pointsCache [0][1]) < epsilon) {
+              wallPoints [3] = this.wallAtStart.pointsCache [0];
+            }
+          }
         }
       }
     
@@ -495,14 +523,39 @@ public class Wall implements Serializable, Selectable {
               wallAtEndPoints [0], wallAtEndPoints [1], limit);
           computeIntersection(wallPoints [2], wallPoints [3], 
               wallAtEndPoints [3], wallAtEndPoints [2], limit);
-        
+
+          // If the computed end point of this wall and the computed start point of the wall at end 
+          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+          if (this.wallAtEnd.pointsCache != null) {
+            if (Math.abs(wallPoints [1][0] - this.wallAtEnd.pointsCache [0][0]) < epsilon
+                && Math.abs(wallPoints [1][1] - this.wallAtEnd.pointsCache [0][1]) < epsilon) {
+              wallPoints [1] = this.wallAtEnd.pointsCache [0];
+            }                        
+            if (Math.abs(wallPoints [2][0] - this.wallAtEnd.pointsCache [3][0]) < epsilon
+                && Math.abs(wallPoints [2][1] - this.wallAtEnd.pointsCache [3][1]) < epsilon) {
+              wallPoints [2] = this.wallAtEnd.pointsCache [3];
+            }
+          }
         } else if (this.wallAtEnd.getWallAtEnd() == this) {
           computeIntersection(wallPoints [1], wallPoints [0],  
               wallAtEndPoints [3], wallAtEndPoints [2], limit);
           computeIntersection(wallPoints [2], wallPoints [3], 
               wallAtEndPoints [0], wallAtEndPoints [1], limit);
+
+          // If the computed end point of this wall and the computed start point of the wall at end 
+          // are equal to within epsilon, share the exact same point to avoid computing errors on areas 
+          if (this.wallAtEnd.pointsCache != null) {
+            if (Math.abs(wallPoints [1][0] - this.wallAtEnd.pointsCache [2][0]) < epsilon
+                && Math.abs(wallPoints [1][1] - this.wallAtEnd.pointsCache [2][1]) < epsilon) {
+              wallPoints [1] = this.wallAtEnd.pointsCache [2];
+            }                        
+            if (Math.abs(wallPoints [2][0] - this.wallAtEnd.pointsCache [1][0]) < epsilon
+                && Math.abs(wallPoints [2][1] - this.wallAtEnd.pointsCache [1][1]) < epsilon) {
+              wallPoints [2] = this.wallAtEnd.pointsCache [1];
+            }
+          }
         }
-      }
+      }      
       // Cache shape
       this.pointsCache = wallPoints;
     }
