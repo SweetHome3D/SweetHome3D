@@ -47,6 +47,7 @@ import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
+import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
@@ -176,6 +177,14 @@ public class SwingViewFactory implements ViewFactory {
   public DialogView createWallView(UserPreferences preferences,
                                  WallController wallController) {
     return new WallPanel(preferences, wallController);
+  }
+  
+  /**
+   * Returns a new view that edits room values.
+   */
+  public DialogView createRoomView(UserPreferences preferences,
+                                   RoomController roomController) {
+    return new RoomPanel(preferences, roomController);
   }
   
   /**

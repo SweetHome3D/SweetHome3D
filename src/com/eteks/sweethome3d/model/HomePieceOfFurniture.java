@@ -644,11 +644,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   /**
-   * Returns <code>true</code> if one of the vertex of this piece is 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if one of the corner of this piece is 
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
-  public boolean isVertexAt(float x, float y, float margin) {
+  public boolean isPointAt(float x, float y, float margin) {
     for (float [] point : getPoints()) {
       if (Math.abs(x - point[0]) <= margin && Math.abs(y - point[1]) <= margin) {
         return true;
@@ -658,41 +657,37 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
 
   /**
-   * Returns <code>true</code> if the top left vertex of this piece is 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if the top left point of this piece is 
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
-  public boolean isTopLeftVertexAt(float x, float y, float margin) {
+  public boolean isTopLeftPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[0][0]) <= margin && Math.abs(y - points[0][1]) <= margin;
   }
 
   /**
-   * Returns <code>true</code> if the top right vertex of this piece is 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if the top right point of this piece is 
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
-  public boolean isTopRightVertexAt(float x, float y, float margin) {
+  public boolean isTopRightPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[1][0]) <= margin && Math.abs(y - points[1][1]) <= margin;
   }
 
   /**
-   * Returns <code>true</code> if the bottom left vertex of this piece is 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if the bottom left point of this piece is 
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
-  public boolean isBottomLeftVertexAt(float x, float y, float margin) {
+  public boolean isBottomLeftPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[3][0]) <= margin && Math.abs(y - points[3][1]) <= margin;
   }
 
   /**
-   * Returns <code>true</code> if the bottom right vertex of this piece is 
-   * the point at (<code>x</code>, <code>y</code>)
-   * with a given <code>margin</code>.
+   * Returns <code>true</code> if the bottom right point of this piece is 
+   * the point at (<code>x</code>, <code>y</code>) with a given <code>margin</code>.
    */
-  public boolean isBottomRightVertexAt(float x, float y, float margin) {
+  public boolean isBottomRightPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin;
   }

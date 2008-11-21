@@ -37,7 +37,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -471,7 +470,7 @@ public class WallPanel extends JPanel implements DialogView {
     } else if (controller.getLeftSidePaint() == WallController.WallPaint.TEXTURED) {
       this.leftSideTextureRadioButton.setSelected(true);
     } else { // null
-      deselectAllRadioButtons(this.leftSideColorRadioButton, this.leftSideTextureRadioButton);
+      SwingTools.deselectAllRadioButtons(this.leftSideColorRadioButton, this.leftSideTextureRadioButton);
     }
   }
 
@@ -484,7 +483,7 @@ public class WallPanel extends JPanel implements DialogView {
     } else if (controller.getRightSidePaint() == WallController.WallPaint.TEXTURED) {
       this.rightSideTextureRadioButton.setSelected(true);
     } else { // null
-      deselectAllRadioButtons(this.rightSideColorRadioButton, this.rightSideTextureRadioButton);
+      SwingTools.deselectAllRadioButtons(this.rightSideColorRadioButton, this.rightSideTextureRadioButton);
     }
   }
 
@@ -497,20 +496,8 @@ public class WallPanel extends JPanel implements DialogView {
     } else if (controller.getShape() == WallController.WallShape.RECTANGULAR_WALL) {
       this.rectangularWallRadioButton.setSelected(true);
     } else { // null
-      deselectAllRadioButtons(this.slopingWallRadioButton, this.rectangularWallRadioButton);
+      SwingTools.deselectAllRadioButtons(this.slopingWallRadioButton, this.rectangularWallRadioButton);
     }
-  }
-
-  /**
-   * Forces radio buttons to be deselected even if thay belong to a button group. 
-   */
-  private void deselectAllRadioButtons(JRadioButton ... radioButtons) {
-    for (JRadioButton radioButton : radioButtons) {
-      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
-      group.remove(radioButton);
-      radioButton.setSelected(false);
-      group.add(radioButton);
-    }    
   }
   
   /**

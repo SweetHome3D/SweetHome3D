@@ -58,19 +58,26 @@ public abstract class UserPreferences {
     CENTIMETER {
       private Locale        formatLocale;  
       private String        name;
-      private DecimalFormat formatWithUnit;
-      private DecimalFormat format;
+      private DecimalFormat lengthFormatWithUnit;
+      private DecimalFormat lengthFormat;
+      private DecimalFormat areaFormatWithUnit;
       
       @Override
       public Format getLengthFormatWithUnit() {
         checkLocaleChange();
-        return this.formatWithUnit;
+        return this.lengthFormatWithUnit;
+      }
+
+      @Override
+      public Format getAreaFormatWithUnit() {
+        checkLocaleChange();
+        return this.areaFormatWithUnit;
       }
 
       @Override
       public Format getLengthFormat() {
         checkLocaleChange();
-        return this.format;
+        return this.lengthFormat;
       }
       
       @Override
@@ -85,8 +92,17 @@ public abstract class UserPreferences {
           this.formatLocale = Locale.getDefault();  
           ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
           this.name = resource.getString("centimerUnit");
-          this.formatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
-          this.format = new DecimalFormat("#,##0.#");          
+          this.lengthFormatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
+          this.lengthFormat = new DecimalFormat("#,##0.#");
+          String squareMeterUnit = resource.getString("squareMeterUnit");
+          this.areaFormatWithUnit = new DecimalFormat("#,##0.## " + squareMeterUnit) {
+              @Override
+              public StringBuffer format(double number, StringBuffer result,
+                                         FieldPosition fieldPosition) {
+                // Convert square centimeter to square meter
+                return super.format(number / 10000, result, fieldPosition);                
+              }
+            };
         }
       }
 
@@ -118,7 +134,8 @@ public abstract class UserPreferences {
     INCH {
       private Locale        formatLocale;
       private String        name;
-      private DecimalFormat inchFormat;
+      private DecimalFormat lengthFormat;
+      private DecimalFormat areaFormatWithUnit;
       private final char [] fractionCharacters = {'\u215b',   // 1/8
                                                   '\u00bc',   // 1/4  
                                                   '\u215c',   // 3/8
@@ -130,7 +147,7 @@ public abstract class UserPreferences {
       @Override
       public Format getLengthFormatWithUnit() {
         checkLocaleChange();
-        return this.inchFormat;
+        return this.lengthFormat;
       }
 
       @Override
@@ -138,6 +155,11 @@ public abstract class UserPreferences {
         return getLengthFormatWithUnit();
       }
 
+      @Override
+      public Format getAreaFormatWithUnit() {
+        checkLocaleChange();
+        return this.areaFormatWithUnit;
+      }
       
       @Override
       public String getName() {
@@ -154,40 +176,50 @@ public abstract class UserPreferences {
           
           // Create format for feet and inches
           final Format footFormat = new DecimalFormat("#,##0''");
-          this.inchFormat = new DecimalFormat("0.000\"") {            
-            @Override
-            public StringBuffer format(double number, StringBuffer result,
-                                       FieldPosition fieldPosition) {
-              float feet = (float)Math.floor(centimeterToFoot((float)number));              
-              float remainingInches = centimeterToInch((float)number - feetToCentimeter(feet));
-              if (remainingInches >= 11.9995f) {
-                feet++;
-                remainingInches -= 12;
-              }
-              footFormat.format(feet, result, fieldPosition);
-              // Format remaining inches only if it's larger that 0.0005
-              if (remainingInches >= 0.0005f) {
-                // Try to format decimals with 1/8, 1/4, 1/2 fractions first
-                int integerPart = (int)Math.floor(remainingInches);
-                float fractionPart = remainingInches - integerPart;
-                float remainderToClosestEighth = fractionPart % 0.125f;
-                if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
-                  int eighth = Math.round(fractionPart * 8); 
-                  String remainingInchesString;
-                  if (eighth == 0 || eighth == 8) {
-                    remainingInchesString = Math.round(remainingInches) + "\"";
-                  } else {
-                    remainingInchesString = String.valueOf(integerPart) + fractionCharacters [eighth - 1] + "\"";
-                  }
-                  result.append(remainingInchesString);
-                  fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
-                } else {                
-                  super.format(remainingInches, result, fieldPosition);
+          this.lengthFormat = new DecimalFormat("0.000\"") {            
+              @Override
+              public StringBuffer format(double number, StringBuffer result,
+                                         FieldPosition fieldPosition) {
+                float feet = (float)Math.floor(centimeterToFoot((float)number));              
+                float remainingInches = centimeterToInch((float)number - feetToCentimeter(feet));
+                if (remainingInches >= 11.9995f) {
+                  feet++;
+                  remainingInches -= 12;
                 }
+                footFormat.format(feet, result, fieldPosition);
+                // Format remaining inches only if it's larger that 0.0005
+                if (remainingInches >= 0.0005f) {
+                  // Try to format decimals with 1/8, 1/4, 1/2 fractions first
+                  int integerPart = (int)Math.floor(remainingInches);
+                  float fractionPart = remainingInches - integerPart;
+                  float remainderToClosestEighth = fractionPart % 0.125f;
+                  if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
+                    int eighth = Math.round(fractionPart * 8); 
+                    String remainingInchesString;
+                    if (eighth == 0 || eighth == 8) {
+                      remainingInchesString = Math.round(remainingInches) + "\"";
+                    } else {
+                      remainingInchesString = String.valueOf(integerPart) + fractionCharacters [eighth - 1] + "\"";
+                    }
+                    result.append(remainingInchesString);
+                    fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
+                  } else {                
+                    super.format(remainingInches, result, fieldPosition);
+                  }
+                }
+                return result;
               }
-              return result;
-            }
-          };
+            };
+          
+          String squareFootUnit = resource.getString("squareFootUnit");
+          this.areaFormatWithUnit = new DecimalFormat("#,##0.## " + squareFootUnit){
+              @Override
+              public StringBuffer format(double number, StringBuffer result,
+                                         FieldPosition fieldPosition) {
+                // Convert square centimeter to square foot
+                return super.format(number / 929.0304, result, fieldPosition);                
+              }
+            };          
         }
       }
       
@@ -242,6 +274,11 @@ public abstract class UserPreferences {
      */
     public abstract Format getLengthFormat(); 
 
+    /**
+     * Returns a format able to format areas with their localized unit.
+     */
+    public abstract Format getAreaFormatWithUnit();
+    
     /**
      * Returns a localized name of this unit.
      */

@@ -31,6 +31,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -45,6 +46,7 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -107,6 +109,8 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.sun.j3d.utils.geometry.Box;
@@ -141,6 +145,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   wallChangeListener;
   private CollectionListener<HomePieceOfFurniture> furnitureListener;
   private PropertyChangeListener                   furnitureChangeListener;
+  private CollectionListener<Room>                 roomListener;
+  private PropertyChangeListener                   roomChangeListener;
   // Offscreen printed image cache
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
@@ -251,6 +257,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       piece.removePropertyChangeListener(this.furnitureChangeListener);
     }
+    home.removeRoomsListener(this.roomListener);
+    for (Room room : home.getRooms()) {
+      room.removePropertyChangeListener(this.roomChangeListener);
+    }
   }
 
   /**
@@ -342,7 +352,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     view.setFieldOfView(fieldOfView);
     // Use a different front clip distance for observer camera 
     // to obtain better results
-    double frontClipDistance = observerCamera ? 2 : 20;
+    double frontClipDistance = observerCamera ? 2 : 5;
     // Update front and back clip distance to ensure their ratio is less than 3000
     view.setFrontClipDistance(frontClipDistance);
     view.setBackClipDistance(frontClipDistance * 3000);
@@ -651,26 +661,72 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     
     // Create ground geometry
-    Point3f [] coords = {new Point3f(groundOriginX, 0, groundOriginY), 
-                         new Point3f(groundOriginX, 0, groundOriginY + groundDepth),
-                         new Point3f(groundOriginX + groundWidth, 0, groundOriginY + groundDepth),
-                         new Point3f(groundOriginX + groundWidth, 0, groundOriginY)};
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
-    geometryInfo.setCoordinates (coords);
-
-    // Compute ground texture coordinates
+    float groundOffset = 0f;
+    List<Point3f> coords = new ArrayList<Point3f>();
+    List<Integer> stripCounts = new ArrayList<Integer>();
+    // First add the coordinates of the ground rectangle
+    coords.add(new Point3f(groundOriginX, groundOffset, groundOriginY)); 
+    coords.add(new Point3f(groundOriginX, groundOffset, groundOriginY + groundDepth));
+    coords.add(new Point3f(groundOriginX + groundWidth, groundOffset, groundOriginY + groundDepth));
+    coords.add(new Point3f(groundOriginX + groundWidth, groundOffset, groundOriginY));
+    // Compute ground texture coordinates if necessary
+    List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
     if (groundTexture != null) {
-      TexCoord2f [] textureCoords = {new TexCoord2f(0, 0),
-                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), 0),
-                                     new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()),
-                                     new TexCoord2f(0, groundDepth / groundTexture.getHeight())};
+      textureCoords.add(new TexCoord2f(0, 0));
+      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), 0));
+      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()));
+      textureCoords.add(new TexCoord2f(0, groundDepth / groundTexture.getHeight()));
+    }
+    stripCounts.add(4);
+    
+    // Then, define all the room holes
+    for (Room room : home.getRooms()) {
+      if (room.isFloorVisible()) {
+        float [][] points = room.getPoints();
+        if (points.length > 2) {
+          if (room.isClockwise()) {
+            // Reverse points order if they are in the good order
+            points = getReversedArray(points);
+          }
+          for (int i = 0; i < points.length; i++) {
+            coords.add(new Point3f(points[i][0], groundOffset, points[i][1]));
+            if (groundTexture != null) {
+              textureCoords.add(new TexCoord2f((points[i][0] - groundOriginX) / groundTexture.getWidth(), 
+                  (points[i][1] - groundOriginY) / groundTexture.getHeight()));
+            }
+          }
+          stripCounts.add(points.length);
+        }
+      }
+    }
+    
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+    geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
+    int [] stripCountsArray = new int [stripCounts.size()];
+    for (int i = 0; i < stripCountsArray.length; i++) {
+      stripCountsArray [i] = stripCounts.get(i);
+    }
+    geometryInfo.setStripCounts(stripCountsArray);
+    geometryInfo.setContourCounts(new int [] {stripCountsArray.length});
+
+    if (groundTexture != null) {
       geometryInfo.setTextureCoordinateParams(1, 2);
-      geometryInfo.setTextureCoordinates(0, textureCoords);
+      geometryInfo.setTextureCoordinates(0, textureCoords.toArray(new TexCoord2f [textureCoords.size()]));
     }
     
     groundShape.setGeometry(geometryInfo.getIndexedGeometryArray());
 
     clearPrintedImageCache();
+  }
+
+  /**
+   * Returns an array that cites <code>points</code> in reverse order.
+   */
+  private static float [][] getReversedArray(float [][] points) {
+    List<float []> pointList = Arrays.asList(points);
+    Collections.reverse(pointList);
+    points = pointList.toArray(points);
+    return points;
   }
   
   /**
@@ -681,6 +737,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new DirectionalLight(new Color3f(), new Vector3f(1.5f, -0.8f, -1)),         
         new DirectionalLight(new Color3f(), new Vector3f(-1.5f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(), new Vector3f(0, -0.8f, 1)), 
+        new DirectionalLight(new Color3f(0.2f, 0.2f, 0.2f), new Vector3f(0, 1f, 0)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
     for (int i = 0; i < lights.length - 1; i++) {
       updateLightColor(lights [i], home);
@@ -748,6 +805,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           writer.writeNode(pieceNode, "piece_" + ++i);
         }
       }
+      // Write 3D rooms 
+      i = 0;
+      for (Room room : this.home.getRooms()) {
+        // Create a not alive new room to be able to explore its coordinates without setting capabilities 
+        Room3D roomNode = new Room3D(room, this.home, true);
+        writer.writeNode(roomNode, "room_" + ++i);
+      }
       writer.close();
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Export to " + objName + " interrupted");
@@ -790,16 +854,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private Node createHomeTree(Home home) {
     Group homeRoot = createHomeRoot();
-    // Add walls and pieces already available 
+    // Add walls, pieces and rooms already available 
     for (Wall wall : home.getWalls()) {
       addWall(homeRoot, wall, home);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       addPieceOfFurniture(homeRoot, piece, home);
     }
-    // Add wall and furniture listeners to home for further update
+    for (Room room : home.getRooms()) {
+      addRoom(homeRoot, room, home);
+    }
+    // Add wall, furniture, room listeners to home for further update
     addWallListener(home, homeRoot);
     addFurnitureListener(home, homeRoot);
+    addRoomListener(home, homeRoot);
     // Add environment listeners
     addEnvironmentListeners(home);
     return homeRoot;
@@ -823,7 +891,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addWallListener(final Home home, final Group homeRoot) {
     this.wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateWall((Wall)ev.getSource());
+          updateWall((Wall)ev.getSource());          
+          updateObjects(home.getRooms());
         }
       };
     for (Wall wall : home.getWalls()) {
@@ -842,6 +911,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               wall.removePropertyChangeListener(wallChangeListener);
               break;
           }
+          updateObjects(home.getRooms());
         }
       };
     home.addWallsListener(this.wallListener);
@@ -887,6 +957,39 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       };
     home.addFurnitureListener(this.furnitureListener);
+  }
+
+  /**
+   * Adds a room listener to <code>home</code> rooms  
+   * that updates the scene <code>homeRoot</code>, each time a room is added, updated or deleted. 
+   */
+  private void addRoomListener(final Home home, final Group homeRoot) {
+    this.roomChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          updateRoom((Room)ev.getSource());
+          groundColorAndTextureListener.propertyChange(null);
+        }
+      };
+    for (Room room : home.getRooms()) {
+      room.addPropertyChangeListener(this.roomChangeListener);
+    }      
+    this.roomListener = new CollectionListener<Room>() {
+        public void collectionChanged(CollectionEvent<Room> ev) {
+          Room room = ev.getItem();
+          switch (ev.getType()) {
+            case ADD :
+              addRoom(homeRoot, room, home);
+              room.addPropertyChangeListener(roomChangeListener);
+              break;
+            case DELETE :
+              deleteObject(room);
+              room.removePropertyChangeListener(roomChangeListener);
+              break;
+          }
+          groundColorAndTextureListener.propertyChange(null);
+        }
+      };
+    home.addRoomsListener(this.roomListener);
   }
 
   /**
@@ -964,9 +1067,26 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
+   * Adds to <code>homeRoot</code> a room branch matching <code>room</code>.
+   */
+  private void addRoom(Group homeRoot, Room room, Home home) {
+    Room3D room3D = new Room3D(room, home, false);
+    this.homeObjects.put(room, room3D);
+    homeRoot.addChild(room3D);
+    clearPrintedImageCache();
+  }
+
+  /**
+   * Updates <code>room</code> geometry and its appearance.
+   */
+  private void updateRoom(Room room) {
+    updateObjects(Arrays.asList(new Room [] {room}));
+  }
+  
+  /**
    * Updates <code>objects</code> later. Should be invoked from Event Dispatch Thread.
    */
-  private void updateObjects(Collection<? extends Object> objects) {
+  private void updateObjects(Collection<? extends Selectable> objects) {
     if (this.homeObjectsToUpdate != null) {
       this.homeObjectsToUpdate.addAll(objects);
     } else {
@@ -1935,6 +2055,225 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
       appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
       appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+    }
+  }
+
+  /**
+   * Root of room branch.
+   */
+  private static class Room3D extends ObjectBranch {
+    private static final Material DEFAULT_MATERIAL = new Material();
+    private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
+    
+    static {
+      DEFAULT_MATERIAL.setDiffuseColor(new Color3f(0.75f, 0.75f, 0.75f));
+      DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    }
+    
+    private static final int FLOOR_PART  = 0;
+    private static final int CEILING_PART = 1;
+    
+    private Home home;
+
+    public Room3D(Room room, Home home, boolean ignoreInvisiblePart) {
+      setUserData(room);
+      this.home = home;
+
+      // Allow room branch to be removed from its parent
+      setCapability(BranchGroup.ALLOW_DETACH);
+      // Allow to read branch shape children
+      setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+      
+      // Add room floor and cellar empty shapes to branch
+      addChild(createRoomPartShape());
+      addChild(createRoomPartShape());
+      // Set room shape geometry and appearance
+      updateRoomGeometry();
+      updateRoomAppearance();
+      
+      if (ignoreInvisiblePart) {
+        if (!room.isCeilingVisible()) {
+          removeChild(CEILING_PART);
+        }
+        if (!room.isFloorVisible()) {
+          removeChild(FLOOR_PART);
+        }
+      }
+    }
+
+    /**
+     * Returns a new wall part shape with no geometry  
+     * and a default appearance with a white material.
+     */
+    private Node createRoomPartShape() {
+      Shape3D roomShape = new Shape3D();
+      // Allow wall shape to change its geometry
+      roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+      roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+      roomShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+
+      Appearance roomAppearance = new Appearance();
+      roomShape.setAppearance(roomAppearance);
+      roomAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+      RenderingAttributes renderingAttributes = new RenderingAttributes();
+      renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+      roomAppearance.setRenderingAttributes(renderingAttributes);
+      roomAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      roomAppearance.setMaterial(DEFAULT_MATERIAL);      
+      roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+      // Mix texture and wall color
+      TextureAttributes textureAttributes = new TextureAttributes ();
+      textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      roomAppearance.setTextureAttributes(textureAttributes);
+      
+      return roomShape;
+    }
+
+    @Override
+    public void update() {
+      updateRoomGeometry();
+      updateRoomAppearance();
+    }
+    
+    /**
+     * Sets the 3D geometry of this room shapes that matches its 2D geometry.  
+     */
+    private void updateRoomGeometry() {
+      updateRoomSideGeometry(FLOOR_PART, ((Room)getUserData()).getFloorTexture());
+      updateRoomSideGeometry(CEILING_PART, ((Room)getUserData()).getCeilingTexture());
+    }
+    
+    private void updateRoomSideGeometry(int roomSide, HomeTexture texture) {
+      Shape3D roomShape = (Shape3D)getChild(roomSide);
+      boolean roomGeometryEmpty = roomShape.numGeometries() == 0; 
+      Geometry roomGeometry = createRoomGeometry(roomSide, texture);
+      if (roomGeometry != null) {
+        roomShape.addGeometry(roomGeometry);
+      }
+      if (!roomGeometryEmpty) {
+        roomShape.removeGeometry(0);
+      }
+    }
+    
+    /**
+     * Returns room geometry computed from its points.
+     */
+    private Geometry createRoomGeometry(int roomPart, HomeTexture texture) {
+      Room room = (Room)getUserData();
+      float [][] points = room.getPoints();
+      if (points.length > 2) {
+        boolean clockwise = room.isClockwise();
+        if (clockwise && roomPart == FLOOR_PART
+            || !clockwise && roomPart == CEILING_PART) {
+          // Reverse points order if they are in the good order
+          points = getReversedArray(points);
+        }
+        
+        // Compute room coordinates
+        Point3f [] coords = new Point3f [points.length];
+        for (int i = 0; i < points.length; i++) {
+          float y = roomPart == FLOOR_PART 
+              ? 0 
+              : getRoomHeightAt(points[i][0], points[i][1]);
+          coords [i] = new Point3f(points[i][0], y, points[i][1]);
+        }
+        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+        geometryInfo.setCoordinates (coords);
+        geometryInfo.setStripCounts(new int [] {coords.length});
+        // Compute room texture coordinates
+        if (texture != null) {
+          TexCoord2f [] textureCoords = new TexCoord2f [points.length];
+          for (int i = 0; i < points.length; i++) {
+            textureCoords [i] = new TexCoord2f(points[i][0] / texture.getWidth(), points[i][1] / texture.getHeight());
+          }
+          geometryInfo.setTextureCoordinateParams(1, 2);
+          geometryInfo.setTextureCoordinates(0, textureCoords);
+        }
+        
+        // Generate normals
+        new NormalGenerator(0).generateNormals(geometryInfo);
+        return geometryInfo.getIndexedGeometryArray();
+      } else {
+        return null;
+      }
+    }
+    
+    /**
+     * Returns the room height at the given point. 
+     */
+    private float getRoomHeightAt(float x, float y) {
+      final float epsilon = 0.01f;
+      for (Wall wall : this.home.getWalls()) {
+        float testWidth = wall.getThickness() + epsilon;
+        Shape testRectangle = new Rectangle2D.Float(x - testWidth / 2, y - testWidth / 2, 
+            testWidth, testWidth);
+        Float wallHeightAtStart = wall.getHeight();
+        if (testRectangle.contains(wall.getXStart(), wall.getYStart())) {
+          return wallHeightAtStart != null 
+              ? wallHeightAtStart 
+              : this.home.getWallHeight();
+        } else if (testRectangle.contains(wall.getXEnd(), wall.getYEnd())) {
+          return wall.isTrapezoidal() 
+              ? wall.getHeightAtEnd() 
+              : (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
+        }
+      }
+      return this.home.getWallHeight();
+    }
+
+    /**
+     * Sets room appearance with its color, texture.
+     */
+    private void updateRoomAppearance() {
+      Room room = (Room)getUserData();
+      updateRoomSideAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
+          room.getFloorTexture(), room.getFloorColor(), room.isFloorVisible());
+      updateRoomSideAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
+          room.getCeilingTexture(), room.getCeilingColor(), room.isCeilingVisible());
+    }
+    
+    /**
+     * Sets room side appearance with its color, texture and visibility.
+     */
+    private void updateRoomSideAppearance(final Appearance roomSideAppearance, 
+                                          final HomeTexture roomSideTexture,
+                                          Integer roomSideColor,
+                                          boolean visible) {
+      if (roomSideTexture == null) {
+        roomSideAppearance.setMaterial(getMaterial(roomSideColor));
+        roomSideAppearance.setTexture(null);
+      } else {
+        // Update material and texture of room side
+        roomSideAppearance.setMaterial(DEFAULT_MATERIAL);
+        final TextureManager textureManager = TextureManager.getInstance();
+        textureManager.loadTexture(roomSideTexture.getImage(), 
+            new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {
+                  roomSideAppearance.setTexture(texture);
+                }
+              });
+      }
+      // Update room side visibility
+      RenderingAttributes renderingAttributes = roomSideAppearance.getRenderingAttributes();
+      renderingAttributes.setVisible(visible);
+    }
+    
+    private Material getMaterial(Integer color) {
+      if (color != null) {
+        Material material = materials.get(color); 
+        if (material == null) {
+          Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
+                                               ((color >>> 8) & 0xFF) / 256f,
+                                                       (color & 0xFF) / 256f);
+          material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
+          material.setCapability(Material.ALLOW_COMPONENT_READ);
+          // Store created materials in cache
+          materials.put(color, material);
+        }
+        return material;
+      } else {
+        return DEFAULT_MATERIAL;
+      }
     }
   }
 }

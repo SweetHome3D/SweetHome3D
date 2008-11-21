@@ -266,6 +266,9 @@ public class AppletApplication extends HomeApplication {
     final JToggleButton createWallsToggleButton = 
         new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_WALLS));
     toolBar.add(createWallsToggleButton);
+    final JToggleButton createRoomsToggleButton = 
+        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_ROOMS));
+    toolBar.add(createRoomsToggleButton);
     final JToggleButton createDimensionLinesToggleButton = 
         new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_DIMENSION_LINES));
     toolBar.add(createDimensionLinesToggleButton);
@@ -273,6 +276,7 @@ public class AppletApplication extends HomeApplication {
     ButtonGroup group = new ButtonGroup();
     group.add(selectToggleButton);
     group.add(createWallsToggleButton);
+    group.add(createRoomsToggleButton);
     group.add(createDimensionLinesToggleButton);
     controller.getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
         new PropertyChangeListener() {

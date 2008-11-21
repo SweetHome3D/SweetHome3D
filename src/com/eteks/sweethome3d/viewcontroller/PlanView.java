@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 import com.eteks.sweethome3d.model.DimensionLine;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 
 /**
@@ -27,7 +28,7 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public interface PlanView extends View {
-  public enum CursorType {SELECTION, WALL_CREATION, ROTATION, ELEVATION, HEIGHT, RESIZE, DUPLICATION}
+  public enum CursorType {SELECTION, DRAW, ROTATION, ELEVATION, HEIGHT, RESIZE, DUPLICATION}
 
   /**
    * Sets rectangle selection feedback coordinates. 
@@ -104,24 +105,36 @@ public interface PlanView extends View {
   /**
    * Sets the location point for <code>wall</code> alignment feedback. 
    */
-  public abstract void setWallAlignmentFeeback(Wall wall, float x, float y);
+  public abstract void setWallAlignmentFeedback(Wall wall, float x, float y);
 
   /**
    * Deletes the wall alignment feedback. 
    */
-  public abstract void deleteWallAlignmentFeeback();
+  public abstract void deleteWallAlignmentFeedback();
+
+  /**
+   * Sets the location point for <code>room</code> alignment feedback.
+   */
+  public abstract void setRoomAlignmentFeedback(Room room,
+                                                float x, 
+                                                float y, boolean magnetizedPoint);
+
+  /**
+   * Deletes the room point feedback.
+   */
+  public abstract void deleteRoomAlignmentFeedback();
 
   /**
    * Sets the location point for <code>dimensionLine</code> alignment feedback. 
    */
-  public abstract void setDimensionLineAlignmentFeeback(DimensionLine dimensionLine,
+  public abstract void setDimensionLineAlignmentFeedback(DimensionLine dimensionLine,
                                                         float x,
                                                         float y);
 
   /**
    * Deletes the dimension line alignment feedback. 
    */
-  public abstract void deleteDimensionLineAlignmentFeeback();
+  public abstract void deleteDimensionLineAlignmentFeedback();
 
   /**
    * Returns the component used as an horizontal ruler for this plan.

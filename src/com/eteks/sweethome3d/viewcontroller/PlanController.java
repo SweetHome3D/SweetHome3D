@@ -19,14 +19,21 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -39,11 +46,14 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Camera;
+import com.eteks.sweethome3d.model.CollectionEvent;
+import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -57,9 +67,12 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController extends FurnitureController implements Controller {
   public enum Property {MODE}
   
-  public enum Mode {WALL_CREATION, SELECTION, DIMENSION_LINE_CREATION}
+  public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION}
   
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
+  
+  private static final int PIXEL_MARGIN = 3;
+  private static final int PIXEL_WALL_MARGIN = 2;
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -87,6 +100,11 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       newDimensionLineState;
   private final ControllerState       dimensionLineResizeState;
   private final ControllerState       dimensionLineOffsetState;
+  private final ControllerState       roomCreationState;
+  private final ControllerState       newRoomState;
+  private final ControllerState       roomResizeState;
+  private final ControllerState       roomAreaOffsetState;
+  private final ControllerState       roomNameOffsetState;
   // Current state
   private ControllerState             state;
   // Mouse cursor position at last mouse press
@@ -96,6 +114,8 @@ public class PlanController extends FurnitureController implements Controller {
   private boolean                     duplicationActivatedLastMousePress;
   private float                       xLastMouseMove;
   private float                       yLastMouseMove;
+  private Area                        wallsAreaCache;
+  private List<GeneralPath>           roomPathsCache;
 
 
   /**
@@ -136,10 +156,15 @@ public class PlanController extends FurnitureController implements Controller {
     this.newDimensionLineState = new NewDimensionLineState();
     this.dimensionLineResizeState = new DimensionLineResizeState();
     this.dimensionLineOffsetState = new DimensionLineOffsetState();
+    this.roomCreationState = new RoomCreationState();
+    this.newRoomState = new NewRoomState();
+    this.roomResizeState = new RoomResizeState();
+    this.roomAreaOffsetState = new RoomAreaOffsetState();
+    this.roomNameOffsetState = new RoomNameOffsetState();
     // Set default state to selectionState
     setState(this.selectionState);
     
-    addHomeListeners();
+    addModelListeners();
     addLanguageListener(preferences);
     
     // Restore previous scale if it exists
@@ -383,6 +408,41 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private ControllerState getDimensionLineOffsetState() {
     return this.dimensionLineOffsetState;
+  }
+  
+  /**
+   * Returns the room creation state.
+   */
+  protected ControllerState getRoomCreationState() {
+    return this.roomCreationState;
+  }
+
+  /**
+   * Returns the new room state.
+   */
+  protected ControllerState getNewRoomState() {
+    return this.newRoomState;
+  }
+  
+  /**
+   * Returns the room resize state.
+   */
+  protected ControllerState getRoomResizeState() {
+    return this.roomResizeState;
+  }
+  
+  /**
+   * Returns the room area offset state.
+   */
+  protected ControllerState getRoomAreaOffsetState() {
+    return this.roomAreaOffsetState;
+  }
+  
+  /**
+   * Returns the room name offset state.
+   */
+  protected ControllerState getRoomNameOffsetState() {
+    return this.roomNameOffsetState;
   }
   
   /**
@@ -650,6 +710,16 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Controls the modification of selected rooms.
+   */
+  public void modifySelectedRooms() {
+    if (!Home.getRoomsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new RoomController(this.home, this.preferences, this.viewFactory,
+          this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
+  
+  /**
    * Returns the scale in plan view. 
    */
   public float getScale() {
@@ -670,6 +740,7 @@ public class PlanController extends FurnitureController implements Controller {
   @Override
   public void selectAll() {
     List<Selectable> all = new ArrayList<Selectable>(this.home.getWalls());
+    all.addAll(this.home.getRooms());
     all.addAll(this.home.getDimensionLines());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
@@ -693,7 +764,7 @@ public class PlanController extends FurnitureController implements Controller {
     return getView().getVerticalRuler();
   }
   
-  private void addHomeListeners() {
+  private void addModelListeners() {
     this.selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent selectionEvent) {
           getView().makeSelectionVisible();
@@ -706,6 +777,37 @@ public class PlanController extends FurnitureController implements Controller {
           if (home.getSelectedItems().contains(ev.getSource())) {
             getView().makeSelectionVisible();
           }
+        }
+      });
+    // Add listener to update roomPathsCache when walls change
+    final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          switch (Wall.Property.valueOf(ev.getPropertyName())) {
+            case X_START :
+            case X_END :
+            case Y_START :
+            case Y_END :
+            case WALL_AT_START :
+            case WALL_AT_END :
+            case THICKNESS :
+              wallsAreaCache = null;
+              roomPathsCache = null;
+              break;
+          }
+        }
+      };
+    for (Wall wall : home.getWalls()) {
+      wall.addPropertyChangeListener(wallChangeListener);
+    }
+    this.home.addWallsListener(new CollectionListener<Wall> () {
+        public void collectionChanged(CollectionEvent<Wall> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(wallChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(wallChangeListener);
+          }
+          wallsAreaCache = null;
+          roomPathsCache = null;
         }
       });
   }
@@ -795,7 +897,7 @@ public class PlanController extends FurnitureController implements Controller {
    * which has a start point not joined to any wall. 
    */
   private Wall getWallStartAt(float x, float y, Wall ignoredWall) {
-    float margin = 2 / getView().getScale();
+    float margin = PIXEL_WALL_MARGIN / getView().getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtStart() == null
@@ -810,7 +912,7 @@ public class PlanController extends FurnitureController implements Controller {
    * which has a end point not joined to any wall. 
    */
   private Wall getWallEndAt(float x, float y, Wall ignoredWall) {
-    float margin = 2 / getView().getScale();
+    float margin = PIXEL_WALL_MARGIN / getView().getScale();
     for (Wall wall : this.home.getWalls()) {
       if (wall != ignoredWall
           && wall.getWallAtEnd() == null
@@ -829,7 +931,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (wall.containsWallStartAt(x, y, margin)) {
         return wall;
       }
@@ -838,17 +940,67 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the selected wall with an end point 
-   * at (<code>x</code>, <code>y</code>).
+   * Returns the selected wall with an end point at (<code>x</code>, <code>y</code>).
    */
   private Wall getResizedWallEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (wall.containsWallEndAt(x, y, margin)) {
         return wall;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected room with a point at (<code>x</code>, <code>y</code>).
+   */
+  private Room getResizedRoomAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room) {
+      Room room = (Room)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getView().getScale();
+      if (room.getPointIndexAt(x, y, margin) != -1) {
+        return room;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected room with its name center point at (<code>x</code>, <code>y</code>).
+   */
+  private Room getRoomNameAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room) {
+      Room room = (Room)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getView().getScale();
+      if (room.getName() != null
+          && room.getName().trim().length() > 0
+          && room.isNameCenterPointAt(x, y, margin)) {
+        return room;
+      }
+    } 
+    return null;
+  }
+  
+  /**
+   * Returns the selected room with its area center point at (<code>x</code>, <code>y</code>).
+   */
+  private Room getRoomAreaAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room) {
+      Room room = (Room)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getView().getScale();
+      if (room.isAreaVisible() 
+          && room.isAreaCenterPointAt(x, y, margin)) {
+        return room;
       }
     } 
     return null;
@@ -863,7 +1015,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
         return dimensionLine;
       }
@@ -880,7 +1032,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
         return dimensionLine;
       }
@@ -897,7 +1049,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (dimensionLine.isMiddlePointAt(x, y, margin)) {
         return dimensionLine;
       }
@@ -909,7 +1061,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the item at (<code>x</code>, <code>y</code>) point.
    */
   private Selectable getItemAt(float x, float y) {
-    float margin = 3 / getView().getScale();
+    float margin = PIXEL_MARGIN / getView().getScale();
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null
         && camera == this.home.getCamera()
@@ -944,41 +1096,54 @@ public class PlanController extends FurnitureController implements Controller {
           return wall;
         }
       }    
+
+      for (Room room : this.home.getRooms()) {
+        if (room.containsPoint(x, y, margin)) {
+          return room;
+        }
+      }    
       return null;
     }
   }
 
   /**
    * Returns the items that intersects with the rectangle of (<code>x0</code>,
-   * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite
-   * corners.
+   * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite corners.
    */
   private List<Selectable> getRectangleItems(float x0, float y0, float x1, float y1) {
     List<Selectable> items = new ArrayList<Selectable>();
+    updateRectangleItems(items, this.home.getDimensionLines(), x0, y0, x1, y1);
+    updateRectangleItems(items, this.home.getRooms(), x0, y0, x1, y1);
+    updateRectangleItems(items, this.home.getWalls(), x0, y0, x1, y1);
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
-    }
-    for (DimensionLine dimensionLine : home.getDimensionLines()) {
-      if (dimensionLine.intersectsRectangle(x0, y0, x1, y1)) {
-        items.add(dimensionLine);
-      }
     }
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible() && piece.intersectsRectangle(x0, y0, x1, y1)) {
         items.add(piece);
       }
     }
-    for (Wall wall : home.getWalls()) {
-      if (wall.intersectsRectangle(x0, y0, x1, y1)) {
-        items.add(wall);
+    return items;
+  }
+
+  /**
+   * Adds to <code>rectangleItems</code> every item of <code>selectableItems</code>
+   * that intersects with the rectangle of (<code>x0</code>, <code>y0</code>), 
+   * (<code>x1</code>, <code>y1</code>) opposite corners.
+   */
+  private void updateRectangleItems(List<Selectable> rectangleItems,
+                                    Collection<? extends Selectable> selectableItems,
+                                    float x0, float y0, float x1, float y1) {
+    for (Selectable item : selectableItems) {
+      if (item.intersectsRectangle(x0, y0, x1, y1)) {
+        rectangleItems.add(item);
       }
     }
-    return items;
   }
   
   /**
-   * Returns the selected piece of furniture with a vertex 
+   * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
@@ -986,8 +1151,8 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
-      if (piece.isTopLeftVertexAt(x, y, margin)) {
+      float margin = PIXEL_MARGIN / getView().getScale();
+      if (piece.isTopLeftPointAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -995,7 +1160,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the selected piece of furniture with a vertex 
+   * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
   private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
@@ -1003,8 +1168,8 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
-      if (piece.isTopRightVertexAt(x, y, margin)) {
+      float margin = PIXEL_MARGIN / getView().getScale();
+      if (piece.isTopRightPointAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -1012,7 +1177,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the selected piece of furniture with a vertex 
+   * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to resize the height 
    * of the piece.
    */
@@ -1021,9 +1186,9 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (piece.isResizable() 
-          && piece.isBottomLeftVertexAt(x, y, margin)) {
+          && piece.isBottomLeftPointAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -1031,7 +1196,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the selected piece of furniture with a vertex 
+   * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to resize 
    * the width and the depth of the piece.
    */
@@ -1040,9 +1205,9 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       if (piece.isResizable() 
-          && piece.isBottomRightVertexAt(x, y, margin)) {
+          && piece.isBottomRightPointAt(x, y, margin)) {
         return piece;
       }
     } 
@@ -1058,7 +1223,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the last point 
       // of the rectangle surrounding camera
@@ -1081,7 +1246,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = 3 / getView().getScale();
+      float margin = PIXEL_MARGIN / getView().getScale();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the second and the third point 
       // of the rectangle surrounding camera
@@ -1115,14 +1280,15 @@ public class PlanController extends FurnitureController implements Controller {
 
       deleteFurniture(Home.getFurnitureSubList(items));      
 
-      List<Selectable> deletedWallsAndDimensionLines = 
+      List<Selectable> deletedOtherObjects = 
           new ArrayList<Selectable>(Home.getWallsSubList(items));
-      deletedWallsAndDimensionLines.addAll(Home.getDimensionLinesSubList(items));
-      // First post to undo support that walls and dimension lines are deleted, 
+      deletedOtherObjects.addAll(Home.getRoomsSubList(items));
+      deletedOtherObjects.addAll(Home.getDimensionLinesSubList(items));
+      // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls can't be stored       
-      postDeleteWallsAndDimensionLines(deletedWallsAndDimensionLines);
-      // Then delete walls and dimension lines from plan
-      doDeleteItems(deletedWallsAndDimensionLines);
+      postDeleteItems(deletedOtherObjects);
+      // Then delete objects from plan
+      doDeleteItems(deletedOtherObjects);
 
       // End compound edit
       this.undoSupport.endUpdate();
@@ -1132,25 +1298,19 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable delete items operation about <code>deletedItems</code>.
    */
-  private void postDeleteWallsAndDimensionLines(final List<? extends Selectable> deletedItems) {
+  private void postDeleteItems(final List<? extends Selectable> deletedItems) {
     // Manage walls
-    List<Wall> deletedWalls = new ArrayList<Wall>();
-    for (Selectable item : deletedItems) {
-      if (item instanceof Wall) {
-        deletedWalls.add((Wall)item);
-      }
-    }
+    List<Wall> deletedWalls = Home.getWallsSubList(deletedItems);
     // Get joined walls data for undo operation
     final JoinedWall [] joinedDeletedWalls = 
       JoinedWall.getJoinedWalls(deletedWalls);
 
+    // Manage rooms
+    List<Room> deletedRooms = Home.getRoomsSubList(deletedItems);
+    final Room [] rooms = deletedRooms.toArray(new Room [deletedRooms.size()]);
+    
     // Manage dimension lines
-    List<DimensionLine> deletedDimensionLines = new ArrayList<DimensionLine>();
-    for (Selectable item : deletedItems) {
-      if (item instanceof DimensionLine) {
-        deletedDimensionLines.add((DimensionLine)item);
-      }
-    }
+    List<DimensionLine> deletedDimensionLines = Home.getDimensionLinesSubList(deletedItems);
     final DimensionLine [] dimensionLines = deletedDimensionLines.toArray(
         new DimensionLine [deletedDimensionLines.size()]);
     
@@ -1159,6 +1319,7 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doAddWalls(joinedDeletedWalls);       
+        doAddRooms(rooms);
         doAddDimensionLines(dimensionLines);
         selectAndShowItems(deletedItems);
       }
@@ -1168,6 +1329,7 @@ public class PlanController extends FurnitureController implements Controller {
         super.redo();
         selectItems(deletedItems);
         doDeleteWalls(joinedDeletedWalls);       
+        doDeleteRooms(rooms);
         doDeleteDimensionLines(dimensionLines);
       }      
       
@@ -1188,6 +1350,8 @@ public class PlanController extends FurnitureController implements Controller {
         home.deleteWall((Wall)item);
       } else if (item instanceof DimensionLine) {
         home.deleteDimensionLine((DimensionLine)item);
+      } else if (item instanceof Room) {
+        home.deleteRoom((Room)item);
       } else if (item instanceof HomePieceOfFurniture) {
         home.deletePieceOfFurniture((HomePieceOfFurniture)item);
       }
@@ -1228,6 +1392,14 @@ public class PlanController extends FurnitureController implements Controller {
         Camera camera = (Camera)item;
         camera.setX(camera.getX() + dx);
         camera.setY(camera.getY() + dy);
+      } else if (item instanceof Room) {
+        Room room = (Room)item;
+        float [][] points = room.getPoints();
+        for (int i = 0; i < points.length; i++) {
+          points [i][0] += dx;
+          points [i][1] += dy;
+        }
+        room.setPoints(points);
       } else if (item instanceof DimensionLine) {
         DimensionLine dimensionLine = (DimensionLine)item;
         dimensionLine.setXStart(dimensionLine.getXStart() + dx);
@@ -1295,6 +1467,16 @@ public class PlanController extends FurnitureController implements Controller {
     } else {
       moveWallEndPoint(wall, x, y, true);
     }    
+  }
+  
+  /**
+   * Moves <code>room</code> point at the given index to (<code>x</code>, <code>y</code>).
+   */
+  private void moveRoomPoint(Room room, float x, float y, int pointIndex) {
+    float [][] points = room.getPoints();
+    points [pointIndex][0] = x;
+    points [pointIndex][1] = y;
+    room.setPoints(points);
   }
   
   /**
@@ -1435,6 +1617,68 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Add <code>newRooms</code> to home and post an undoable new room line operation.
+   */
+  public void addRooms(List<Room> newRooms) {
+    for (Room room : newRooms) {
+      this.home.addRoom(room);
+    }
+    postAddRooms(newRooms, this.home.getSelectedItems());
+  }
+  
+  /**
+   * Posts an undoable new room operation, about <code>newRooms</code>.
+   */
+  private void postAddRooms(List<Room> newRooms, 
+                            List<Selectable> oldSelection) {
+    if (newRooms.size() > 0) {
+      final Room [] rooms = newRooms.toArray(
+          new Room [newRooms.size()]);
+      final Selectable [] oldSelectedItems = 
+          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          doDeleteRooms(rooms);
+          selectAndShowItems(Arrays.asList(oldSelectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          doAddRooms(rooms);       
+          selectAndShowItems(Arrays.asList(rooms));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoAddRoomsName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Adds the <code>rooms</code> to plan component.
+   */
+  private void doAddRooms(Room [] rooms) {
+    for (Room room : rooms) {
+      this.home.addRoom(room);
+    }
+  }
+  
+  /**
+   * Deletes <code>rooms</code>.
+   */
+  private void doDeleteRooms(Room [] rooms) {
+    for (Room room : rooms) {
+      this.home.deleteRoom(room);
+    }
+  }
+
+  /**
    * Add <code>newDimensionLines</code> to home and post an undoable new dimension line operation.
    */
   public void addDimensionLines(List<DimensionLine> newDimensionLines) {
@@ -1562,6 +1806,8 @@ public class PlanController extends FurnitureController implements Controller {
     addFurniture(furniture);
     List<Selectable> emptyWallList = Collections.emptyList();
     postAddWalls(Home.getWallsSubList(items), emptyWallList);
+    List<Selectable> emptyRoomList = Collections.emptyList();
+    postAddRooms(Home.getRoomsSubList(items), emptyRoomList);
     List<Selectable> emptyDimensionLineList = Collections.emptyList();
     postAddDimensionLines(Home.getDimensionLinesSubList(items), emptyDimensionLineList);
 
@@ -1624,6 +1870,109 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
   
+  /**
+   * Posts an undoable operation about <code>room</code> resizing.
+   */
+  private void postRoomResize(final Room room, final float oldX, final float oldY, 
+                              final int pointIndex) {
+    float [] roomPoint = room.getPoints() [pointIndex];
+    final float newX = roomPoint [0];
+    final float newY = roomPoint [1];
+    if (newX != oldX || newY != oldY) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          moveRoomPoint(room, oldX, oldY, pointIndex);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          moveRoomPoint(room, newX, newY, pointIndex);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoRoomResizeName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+  
+  /**
+   * Posts an undoable operation about <code>room</code> name offset change.
+   */
+  public void postRoomNameOffset(final Room room, final float oldNameXOffset, 
+                                 final float oldNameYOffset) {
+    final float newNameXOffset = room.getNameXOffset();
+    final float newNameYOffset = room.getNameYOffset();
+    if (newNameXOffset != oldNameXOffset
+        || newNameYOffset != oldNameYOffset) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          room.setNameXOffset(oldNameXOffset);
+          room.setNameYOffset(oldNameYOffset);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          room.setNameXOffset(newNameXOffset);
+          room.setNameYOffset(newNameYOffset);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoRoomNameOffsetName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Posts an undoable operation about <code>room</code> area offset change.
+   */
+  public void postRoomAreaOffset(final Room room, final float oldAreaXOffset, 
+                                 final float oldAreaYOffset) {
+    final float newAreaXOffset = room.getAreaXOffset();
+    final float newAreaYOffset = room.getAreaYOffset();
+    if (newAreaXOffset != oldAreaXOffset
+        || newAreaYOffset != oldAreaYOffset) {
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          room.setAreaXOffset(oldAreaXOffset);
+          room.setAreaYOffset(oldAreaYOffset);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          room.setAreaXOffset(newAreaXOffset);
+          room.setAreaYOffset(newAreaYOffset);
+          selectAndShowItems(Arrays.asList(new Room [] {room}));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoRoomAreaOffsetName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
   /**
    * Post to undo support an angle change on <code>piece</code>. 
    */
@@ -1828,6 +2177,109 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the points of a general path which contains only one path.
+   */
+  private float [][] getPathPoints(GeneralPath roomPath) {
+    List<float []> pathPoints = new ArrayList<float[]>();
+    for (PathIterator it = roomPath.getPathIterator(null); !it.isDone(); ) {
+      float [] pathPoint = new float[2];
+      if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+        pathPoints.add(pathPoint);
+      }
+      it.next();
+    }      
+    return pathPoints.toArray(new float [pathPoints.size()][]);
+  }
+
+  /**
+   * Returns the list of closed paths that may define rooms from 
+   * the current set of home walls.
+   */
+  private List<GeneralPath> getRoomPaths() {
+    if (this.roomPathsCache == null) {
+      // Make an exclusive or with a rectangle bigger than its bounding rectangle
+      // (this allows us to recognize any part outside of the walls when the home isn't rectangular)
+      Area roomsArea = new Area(getWallsArea());
+      Rectangle2D areaBounds = roomsArea.getBounds2D();
+      areaBounds.add(areaBounds.getMinX() - 100000, areaBounds.getMinY() - 100000);
+      areaBounds.add(areaBounds.getMaxX() + 100000, areaBounds.getMaxY() + 100000);
+      roomsArea.exclusiveOr(new Area(areaBounds));
+      
+      // Iterate over all the paths the area contains
+      List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
+      GeneralPath roomPath = new GeneralPath();
+      for (PathIterator it = roomsArea.getPathIterator(null, 0.5f); !it.isDone(); ) {
+        float [] roomPoint = new float[2];
+        switch (it.currentSegment(roomPoint)) {
+          case PathIterator.SEG_MOVETO : 
+            roomPath.moveTo(roomPoint [0], roomPoint [1]);
+            break;
+          case PathIterator.SEG_LINETO : 
+            roomPath.lineTo(roomPoint [0], roomPoint [1]);
+            break;
+          case PathIterator.SEG_CLOSE :
+            if (!roomPath.contains(areaBounds.getMinX() + 0.5f, areaBounds.getMinY() + 0.5f)) {
+              roomPaths.add(roomPath);
+            }
+            roomPath = new GeneralPath();
+            break;
+        }
+        it.next();
+      }
+      this.roomPathsCache = roomPaths;
+    }
+    return this.roomPathsCache;
+  }
+  
+  /**
+   * Returns the area covered by walls.
+   */
+  private Area getWallsArea() {
+    if (this.wallsAreaCache == null) {
+      // Compute walls area
+      Area wallsArea = new Area();
+      for (Wall wall : home.getWalls()) {
+        wallsArea.add(new Area(getPath(wall.getPoints())));
+      }
+      this.wallsAreaCache = wallsArea;
+    }
+    return this.wallsAreaCache;
+  }
+  
+  /**
+   * Returns the shape matching the coordinates in <code>points</code> array.
+   */
+  private GeneralPath getPath(float [][] points) {
+    GeneralPath path = new GeneralPath();
+    path.moveTo(points [0][0], points [0][1]);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points [i][0], points [i][1]);
+    }
+    path.closePath();
+    return path;
+  }
+
+  /**
+   * Returns the path matching a given area.
+   */
+  private GeneralPath getPath(Area area) {
+    GeneralPath path = new GeneralPath();
+    for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); ) {
+      float [] point = new float[2];
+      switch (it.currentSegment(point)) {
+        case PathIterator.SEG_MOVETO : 
+          path.moveTo(point [0], point [1]);
+          break;
+        case PathIterator.SEG_LINETO : 
+          path.lineTo(point [0], point [1]);
+          break;
+      }
+      it.next();
+    }
+    return path;
+  }
+
+  /**
    * Stores the walls at start and at end of a given wall. This data are useful
    * to add a collection of walls after an undo/redo delete operation.
    */
@@ -1912,15 +2364,15 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * A point which coordinates are computed with a magnetism algorithm.
+   * A point which coordinates are computed with an angle magnetism algorithm.
    */
-  private static class PointWithMagnetism {
+  private static class PointWithAngleMagnetism {
     private static final int STEP_COUNT = 24; // 15 degrees step 
-    private float xMagnetizedPoint;
-    private float yMagnetizedPoint;
+    private float x;
+    private float y;
     
     /**
-     * Create a point that applies magnetism to point (<code>x</code>,
+     * Create a point that applies angle magnetism to point (<code>x</code>,
      * <code>y</code>). Point end coordinates may be different from
      * x or y, to match the closest point belonging to one of the radius of a
      * circle centered at (<code>xStart</code>, <code>yStart</code>), each
@@ -1928,18 +2380,18 @@ public class PlanController extends FurnitureController implements Controller {
      * (<code>xStart</code>, <code>yStart</code>) to the computed point is 
      * approximated depending on the current <code>unit</code> and scale.
      */
-    public PointWithMagnetism(float xStart, float yStart, float x, float y, 
-                              UserPreferences.Unit unit, float maxLengthDelta) {
-      this.xMagnetizedPoint = x;
-      this.yMagnetizedPoint = y;
+    public PointWithAngleMagnetism(float xStart, float yStart, float x, float y, 
+                                   UserPreferences.Unit unit, float maxLengthDelta) {
+      this.x = x;
+      this.y = y;
       if (xStart == x) {
         // Apply magnetism to the length of the line joining start point to magnetized point
         float magnetizedLength = unit.getMagnetizedLength(Math.abs(yStart - y), maxLengthDelta);
-        this.yMagnetizedPoint = yStart + (float)(magnetizedLength * Math.signum(y - yStart));
+        this.y = yStart + (float)(magnetizedLength * Math.signum(y - yStart));
       } else if (yStart == y) {
         // Apply magnetism to the length of the line joining start point to magnetized point
         float magnetizedLength = unit.getMagnetizedLength(Math.abs(xStart - x), maxLengthDelta);
-        this.xMagnetizedPoint = xStart + (float)(magnetizedLength * Math.signum(x - xStart));
+        this.x = xStart + (float)(magnetizedLength * Math.signum(x - xStart));
       } else { // xStart != x && yStart != y
         double angleStep = 2 * Math.PI / STEP_COUNT; 
         // Caution : pixel coordinate space is indirect !
@@ -1989,36 +2441,101 @@ public class PlanController extends FurnitureController implements Controller {
         double magnetismAngle;
         if (Math.abs(xEnd2 - xEnd1) < Math.abs(yEnd1 - yEnd2)) {
           magnetismAngle = angle2; 
-          this.xMagnetizedPoint = xStart + (float)((yStart - y) / tanAngle2);            
+          this.x = xStart + (float)((yStart - y) / tanAngle2);            
         } else {
           magnetismAngle = angle1; 
-          this.yMagnetizedPoint = yStart - (float)((x - xStart) * tanAngle1);
+          this.y = yStart - (float)((x - xStart) * tanAngle1);
         }
         
         // Apply magnetism to the length of the line joining start point 
         // to magnetized point
         float magnetizedLength = unit.getMagnetizedLength((float)Point2D.distance(xStart, yStart, 
-            this.xMagnetizedPoint, this.yMagnetizedPoint), maxLengthDelta);
-        this.xMagnetizedPoint = xStart + (float)(magnetizedLength * Math.cos(magnetismAngle));            
-        this.yMagnetizedPoint = yStart - (float)(magnetizedLength * Math.sin(magnetismAngle));
+            this.x, this.y), maxLengthDelta);
+        this.x = xStart + (float)(magnetizedLength * Math.cos(magnetismAngle));            
+        this.y = yStart - (float)(magnetizedLength * Math.sin(magnetismAngle));
       }       
     }
 
     /**
      * Returns the abscissa of end point computed with magnetism.
      */
-    float getXMagnetizedPoint() {
-      return this.xMagnetizedPoint;
+    float getX() {
+      return this.x;
     }
 
     /**
      * Returns the ordinate of end point computed with magnetism.
      */
-    float getYMagnetizedPoint() {
-      return this.yMagnetizedPoint;
+    float getY() {
+      return this.y;
     }
   }
  
+  /**
+   * A point which coordinates are equal to the closest point of a wall or a room.
+   */
+  private class PointMagnetizedToClosestWallOrRoomPoint {
+    private float   x;
+    private float   y;
+    private boolean magnetized;
+    
+    /**
+     * Create a point that applies magnetism to point (<code>x</code>, <code>y</code>).
+     * If this point point is close to a point of a wall corner or of a room 
+     * within the given <code>margin</code>, the magnetized point will be the closest one.
+     */
+    public PointMagnetizedToClosestWallOrRoomPoint(Collection<Room> rooms, float x, float y, float margin) {
+      // Find the closest wall point to (x,y)
+      double smallestDistance = Double.MAX_VALUE;
+      for (GeneralPath roomPath : getRoomPaths()) {
+        smallestDistance = updateMagnetizedPoint(x, y,
+            smallestDistance, getPathPoints(roomPath));
+      }      
+      for (Room room : rooms) {
+        smallestDistance = updateMagnetizedPoint(x, y,
+            smallestDistance, room.getPoints());
+      }      
+      this.magnetized = smallestDistance <= margin * margin;
+      if (!this.magnetized) {
+        // Don't magnetism if closest wall point is too far
+        this.x = x;
+        this.y = y;
+      }
+    }
+
+    private double updateMagnetizedPoint(float x, float y,
+                                         double smallestDistance,
+                                         float [][] roomPoints) {
+      for (int i = 0; i < roomPoints.length; i++) {
+        double distance = Point2D.distanceSq(roomPoints [i][0], roomPoints [i][1], x, y);
+        if (distance < smallestDistance) {
+          this.x = roomPoints [i][0];
+          this.y = roomPoints [i][1];
+          smallestDistance = distance;
+        }
+      }
+      return smallestDistance;
+    }
+
+    /**
+     * Returns the abscissa of end point computed with magnetism.
+     */
+    public float getX() {
+      return this.x;
+    }
+
+    /**
+     * Returns the ordinate of end point computed with magnetism.
+     */
+    public float getY() {
+      return this.y;
+    }
+    
+    public boolean isMagnetized() {
+      return this.magnetized;
+    }
+  }
+  
   /**
    * Controller state classes super class.
    */
@@ -2061,13 +2578,35 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   // ControllerState subclasses
+
+  /**
+   * Abstract state able to manage the transition to other modes.
+   */
+  private abstract class AbstractModeChangeState extends ControllerState {
+    @Override
+    public void setMode(Mode mode) {
+      switch (mode) {
+        case SELECTION :
+          setState(getSelectionState());
+          break;
+        case WALL_CREATION :
+          setState(getWallCreationState());
+          break;
+        case ROOM_CREATION :
+          setState(getRoomCreationState());
+          break;
+        case DIMENSION_LINE_CREATION :
+          setState(getDimensionLineCreationState());
+          break;
+      } 
+    }
+  }
   
   /**
-   * Default selection state. This state manages transition to
-   * <code>WALL_CREATION</code> and <code>DIMENSION_LINES_CREATION</code> mode, 
+   * Default selection state. This state manages transition to other modes, 
    * the deletion of selected objects, and the move of selected objects with arrow keys.
    */
-  private class SelectionState extends ControllerState {
+  private class SelectionState extends AbstractModeChangeState {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
@@ -2079,18 +2618,6 @@ public class PlanController extends FurnitureController implements Controller {
       getView().setResizeIndicatorVisible(true);
     }
     
-    @Override
-    public void setMode(Mode mode) {
-      switch (mode) {
-        case WALL_CREATION :
-          setState(getWallCreationState());
-          break;
-        case DIMENSION_LINE_CREATION :
-          setState(getDimensionLineCreationState());
-          break;
-      } 
-    }
-
     @Override
     public void deleteSelection() {
       deleteItems(home.getSelectedItems());
@@ -2112,11 +2639,14 @@ public class PlanController extends FurnitureController implements Controller {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
-      } else if (getResizedDimensionLineStartAt(x, y) != null
+      } else if (getRoomNameAt(x, y) != null
+          || getRoomAreaAt(x, y) != null
+          || getResizedDimensionLineStartAt(x, y) != null
           || getResizedDimensionLineEndAt(x, y) != null
           || getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
-          || getResizedWallEndAt(x, y) != null) {
+          || getResizedWallEndAt(x, y) != null
+          || getResizedRoomAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
       } else if (getOffsetDimensionLineAt(x, y) != null
           || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
@@ -2138,6 +2668,10 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getCameraYawRotationState());
         } else if (getPitchRotatedCameraAt(x, y) != null) {
           setState(getCameraPitchRotationState());
+        } else if (getRoomNameAt(x, y) != null) {
+          setState(getRoomNameOffsetState());
+        } else if (getRoomAreaAt(x, y) != null) {
+          setState(getRoomAreaOffsetState());
         } else if (getResizedDimensionLineStartAt(x, y) != null
             || getResizedDimensionLineEndAt(x, y) != null) {
           setState(getDimensionLineResizeState());
@@ -2146,6 +2680,8 @@ public class PlanController extends FurnitureController implements Controller {
         } else if (getResizedWallStartAt(x, y) != null
             || getResizedWallEndAt(x, y) != null) {
           setState(getWallResizeState());
+        } else if (getResizedRoomAt(x, y) != null) {
+          setState(getRoomResizeState());
         } else if (getOffsetDimensionLineAt(x, y) != null) {
           setState(getDimensionLineOffsetState());
         } else if (getHeightResizedPieceOfFurnitureAt(x, y) != null) {
@@ -2175,6 +2711,8 @@ public class PlanController extends FurnitureController implements Controller {
             modifySelectedWalls();
           } else if (item instanceof HomePieceOfFurniture) {
             modifySelectedFurniture();
+          } else if (item instanceof Room) {
+            modifySelectedRooms();
           } 
         }
       }
@@ -2282,6 +2820,8 @@ public class PlanController extends FurnitureController implements Controller {
           for (Selectable item : this.movedItems) {
             if (item instanceof Wall) {
               home.addWall((Wall)item);
+            } else if (item instanceof Room) {
+              home.addRoom((Room)item);
             } else if (item instanceof DimensionLine) {
               home.addDimensionLine((DimensionLine)item);
             } else if (item instanceof HomePieceOfFurniture) {
@@ -2432,11 +2972,10 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Wall creation state. This state manages transition to
-   * <code>SELECTION</code> and <code>DIMENSION_LINES_CREATION</code> modes, 
+   * Wall creation state. This state manages transition to other modes, 
    * and initial wall creation.
    */
-  private class WallCreationState extends ControllerState {
+  private class WallCreationState extends AbstractModeChangeState {
     @Override
     public Mode getMode() {
       return Mode.WALL_CREATION;
@@ -2444,25 +2983,12 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void enter() {
-      getView().setCursor(PlanView.CursorType.WALL_CREATION);
-    }
-
-    @Override
-    public void setMode(Mode mode) {
-      switch (mode) {
-        case SELECTION :
-          // Change state to SelectionState
-          setState(getSelectionState());
-          break;
-        case DIMENSION_LINE_CREATION :
-          setState(getDimensionLineCreationState());
-          break;
-      } 
+      getView().setCursor(PlanView.CursorType.DRAW);
     }
 
     @Override
     public void moveMouse(float x, float y) {
-      getView().setWallAlignmentFeeback(null, x, y);
+      getView().setWallAlignmentFeedback(null, x, y);
     }
 
     @Override
@@ -2474,7 +3000,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void exit() {
-      getView().deleteWallAlignmentFeeback();
+      getView().deleteWallAlignmentFeedback();
     }  
   }
 
@@ -2522,15 +3048,16 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void setMode(Mode mode) {
+      // Escape current creation and change state to matching mode
+      escape();
       switch (mode) {
         case SELECTION :
-          // Escape current creation and change state to SelectionState
-          escape();
           setState(getSelectionState());
           break;
+        case ROOM_CREATION :
+          setState(getRoomCreationState());
+          break;
         case DIMENSION_LINE_CREATION :
-          // Escape current creation and change state to DimensionLineCreationState
-          escape();
           setState(getDimensionLineCreationState());
           break;
       } 
@@ -2565,7 +3092,7 @@ public class PlanController extends FurnitureController implements Controller {
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       PlanView planView = getView();
-      planView.setWallAlignmentFeeback(null, 
+      planView.setWallAlignmentFeedback(null, 
           getXLastMousePress(), getYLastMousePress());
     }
 
@@ -2576,10 +3103,10 @@ public class PlanController extends FurnitureController implements Controller {
       float xEnd;
       float yEnd;
       if (this.magnetismEnabled) {
-        PointWithMagnetism point = new PointWithMagnetism(
+        PointWithAngleMagnetism point = new PointWithAngleMagnetism(
             this.xStart, this.yStart, x, y, preferences.getUnit(), planView.getPixelLength());
-        xEnd = point.getXMagnetizedPoint();
-        yEnd = point.getYMagnetizedPoint();
+        xEnd = point.getX();
+        yEnd = point.getY();
       } else {
         xEnd = x;
         yEnd = y;
@@ -2597,7 +3124,7 @@ public class PlanController extends FurnitureController implements Controller {
         this.newWall.setYEnd(yEnd);
       }         
       planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
-      planView.setWallAlignmentFeeback(this.newWall, xEnd, yEnd);
+      planView.setWallAlignmentFeedback(this.newWall, xEnd, yEnd);
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
       // free, it will the wall at end of the new wall.
@@ -2683,7 +3210,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void exit() {
       PlanView planView = getView();
       planView.deleteToolTipFeedback();
-      planView.deleteWallAlignmentFeeback();
+      planView.deleteWallAlignmentFeedback();
       this.wallStartAtStart = null;
       this.wallEndAtStart = null;
       this.newWall = null;
@@ -2732,7 +3259,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), 
           getXLastMousePress(), getYLastMousePress());
-      planView.setWallAlignmentFeeback(this.selectedWall, this.oldX, this.oldY);
+      planView.setWallAlignmentFeedback(this.selectedWall, this.oldX, this.oldY);
     }
     
     @Override
@@ -2741,7 +3268,7 @@ public class PlanController extends FurnitureController implements Controller {
       float newX = x - this.deltaXToResizePoint;
       float newY = y - this.deltaYToResizePoint;
       if (this.magnetismEnabled) {
-        PointWithMagnetism point = new PointWithMagnetism(
+        PointWithAngleMagnetism point = new PointWithAngleMagnetism(
             this.startPoint 
                 ? this.selectedWall.getXEnd()
                 : this.selectedWall.getXStart(), 
@@ -2749,13 +3276,13 @@ public class PlanController extends FurnitureController implements Controller {
                 ? this.selectedWall.getYEnd()
                 : this.selectedWall.getYStart(), newX, newY, 
             preferences.getUnit(), planView.getPixelLength());
-        newX = point.getXMagnetizedPoint();
-        newY = point.getYMagnetizedPoint();
+        newX = point.getX();
+        newY = point.getY();
       } 
       moveWallPoint(this.selectedWall, newX, newY, this.startPoint);
 
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), x, y);
-      planView.setWallAlignmentFeeback(this.selectedWall, newX, newY);
+      planView.setWallAlignmentFeedback(this.selectedWall, newX, newY);
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
     }
@@ -2785,7 +3312,7 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(false);
       planView.deleteToolTipFeedback();
-      planView.deleteWallAlignmentFeeback();
+      planView.deleteWallAlignmentFeedback();
       this.selectedWall = null;
     }  
   }
@@ -2883,7 +3410,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureElevationState extends ControllerState {
     private boolean              magnetismEnabled;
-    private float                deltaYToElevationVertex;
+    private float                deltaYToElevationPoint;
     private HomePieceOfFurniture selectedPiece;
     private float                oldElevation;
     private String               elevationToolTipFeedback;
@@ -2898,7 +3425,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.elevationToolTipFeedback = resource.getString("elevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
-      this.deltaYToElevationVertex = getYLastMousePress() - elevationPoint [1];
+      this.deltaYToElevationPoint = getYLastMousePress() - elevationPoint [1];
       this.oldElevation = this.selectedPiece.getElevation();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
@@ -2913,7 +3440,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute the new height of the piece 
       PlanView planView = getView();
       float [] topRightPoint = this.selectedPiece.getPoints() [1];
-      float deltaY = y - this.deltaYToElevationVertex - topRightPoint[1];
+      float deltaY = y - this.deltaYToElevationPoint - topRightPoint[1];
       float newElevation = this.oldElevation - deltaY;
       newElevation = Math.max(newElevation, 0f);
       if (this.magnetismEnabled) {
@@ -2968,7 +3495,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureHeightState extends ControllerState {
     private boolean              magnetismEnabled;
-    private float                deltaYToResizeVertex;
+    private float                deltaYToResizePoint;
     private HomePieceOfFurniture selectedPiece;
     private float                oldHeight;
     private String               resizeToolTipFeedback;
@@ -2983,7 +3510,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.resizeToolTipFeedback = resource.getString("heightResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [3];
-      this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
+      this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
       this.oldHeight = this.selectedPiece.getHeight();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
@@ -2998,7 +3525,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute the new height of the piece 
       PlanView planView = getView();
       float [] bottomLeftPoint = this.selectedPiece.getPoints() [3];
-      float deltaY = y - this.deltaYToResizeVertex - bottomLeftPoint[1];
+      float deltaY = y - this.deltaYToResizePoint - bottomLeftPoint[1];
       float newHeight = this.oldHeight - deltaY;
       newHeight = Math.max(newHeight, 0f);
       if (this.magnetismEnabled) {
@@ -3054,8 +3581,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class PieceOfFurnitureResizeState extends ControllerState {
     private boolean              magnetismEnabled;
-    private float                deltaXToResizeVertex;
-    private float                deltaYToResizeVertex;
+    private float                deltaXToResizePoint;
+    private float                deltaYToResizePoint;
     private HomePieceOfFurniture selectedPiece;
     private float                oldX;
     private float                oldY;
@@ -3075,8 +3602,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.depthResizeToolTipFeedback = resource.getString("depthResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
-      this.deltaXToResizeVertex = getXLastMousePress() - resizePoint [0];
-      this.deltaYToResizeVertex = getYLastMousePress() - resizePoint [1];
+      this.deltaXToResizePoint = getXLastMousePress() - resizePoint [0];
+      this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
       this.oldX = this.selectedPiece.getX();
       this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
@@ -3098,8 +3625,8 @@ public class PlanController extends FurnitureController implements Controller {
       double cos = Math.cos(angle); 
       double sin = Math.sin(angle); 
       float [] topLeftPoint = this.selectedPiece.getPoints() [0];
-      float deltaX = x - this.deltaXToResizeVertex - topLeftPoint[0];
-      float deltaY = y - this.deltaYToResizeVertex - topLeftPoint[1];
+      float deltaX = x - this.deltaXToResizePoint - topLeftPoint[0];
+      float deltaY = y - this.deltaYToResizePoint - topLeftPoint[1];
       float newWidth =  (float)(deltaY * sin + deltaX * cos);
       float newDepth =  (float)(deltaY * cos - deltaX * sin);
 
@@ -3297,9 +3824,9 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Dimension line creation state. This state manages transition to
-   * <code>SELECTION</code> mode, and initial dimension line creation.
+   * other modes, and initial dimension line creation.
    */
-  private class DimensionLineCreationState extends ControllerState {
+  private class DimensionLineCreationState extends AbstractModeChangeState {
     @Override
     public Mode getMode() {
       return Mode.DIMENSION_LINE_CREATION;
@@ -3307,37 +3834,24 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void enter() {
-      getView().setCursor(PlanView.CursorType.WALL_CREATION);
-    }
-
-    @Override
-    public void setMode(Mode mode) {
-      switch (mode) {
-        case SELECTION :
-          // Change state to SelectionState
-          setState(getSelectionState());
-          break;
-        case WALL_CREATION :
-          setState(getWallCreationState());
-          break;
-      } 
+      getView().setCursor(PlanView.CursorType.DRAW);
     }
 
     @Override
     public void moveMouse(float x, float y) {
-      getView().setDimensionLineAlignmentFeeback(null, x, y);
+      getView().setDimensionLineAlignmentFeedback(null, x, y);
     }
 
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
-      // Change state to NewWallState
+      // Change state to NewDimensionLineState
       setState(getNewDimensionLineState());
     }
 
     @Override
     public void exit() {
-      getView().deleteDimensionLineAlignmentFeeback();
+      getView().deleteDimensionLineAlignmentFeedback();
     }  
   }
 
@@ -3359,16 +3873,17 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void setMode(Mode mode) {
+      // Escape current creation and change state to matching mode
+      escape();
       switch (mode) {
         case SELECTION :
-          // Escape current creation and change state to SelectionState
-          escape();
           setState(getSelectionState());
           break;
         case WALL_CREATION :
-          // Escape current creation and change state to WallCreationState
-          escape();
           setState(getWallCreationState());
+          break;
+        case ROOM_CREATION :
+          setState(getRoomCreationState());
           break;
       } 
     }
@@ -3382,7 +3897,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.newDimensionLine = null;
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
-      getView().setDimensionLineAlignmentFeeback(null, getXLastMousePress(), getYLastMousePress());
+      getView().setDimensionLineAlignmentFeedback(null, getXLastMousePress(), getYLastMousePress());
     }
 
     @Override
@@ -3400,11 +3915,11 @@ public class PlanController extends FurnitureController implements Controller {
         float xEnd;
         float yEnd;
         if (this.magnetismEnabled) {
-          PointWithMagnetism point = new PointWithMagnetism(
+          PointWithAngleMagnetism point = new PointWithAngleMagnetism(
               this.xStart, this.yStart, x, y,
               preferences.getUnit(), planView.getPixelLength());
-          xEnd = point.getXMagnetizedPoint();
-          yEnd = point.getYMagnetizedPoint();
+          xEnd = point.getX();
+          yEnd = point.getY();
         } else {
           xEnd = x;
           yEnd = y;
@@ -3420,7 +3935,7 @@ public class PlanController extends FurnitureController implements Controller {
           this.newDimensionLine.setXEnd(xEnd); 
           this.newDimensionLine.setYEnd(yEnd); 
         }         
-        planView.setDimensionLineAlignmentFeeback(this.newDimensionLine, xEnd, yEnd);
+        planView.setDimensionLineAlignmentFeedback(this.newDimensionLine, xEnd, yEnd);
       }
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
@@ -3445,7 +3960,7 @@ public class PlanController extends FurnitureController implements Controller {
           offsetChoice = true;
           PlanView planView = getView();
           planView.setCursor(PlanView.CursorType.HEIGHT);
-          planView.deleteDimensionLineAlignmentFeeback();
+          planView.deleteDimensionLineAlignmentFeedback();
         }
       }
     }
@@ -3474,7 +3989,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void exit() {
-      getView().deleteDimensionLineAlignmentFeeback();
+      getView().deleteDimensionLineAlignmentFeedback();
       this.newDimensionLine = null;
       this.oldSelection = null;
     }  
@@ -3552,12 +4067,12 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.startPoint) {
         this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
-        planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+        planView.setDimensionLineAlignmentFeedback(this.selectedDimensionLine, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
       } else {
         this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
-        planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+        planView.setDimensionLineAlignmentFeedback(this.selectedDimensionLine, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
       }
       toggleMagnetism(wasShiftDownLastMousePress());
@@ -3592,19 +4107,19 @@ public class PlanController extends FurnitureController implements Controller {
               * Math.sin(dimensionLineStartToDimensionLineEndAngle));
 
           if (this.magnetismEnabled) {
-            PointWithMagnetism point = new PointWithMagnetism(
+            PointWithAngleMagnetism point = new PointWithAngleMagnetism(
                 this.selectedDimensionLine.getXEnd(), 
                 this.selectedDimensionLine.getYEnd(), xNewStartPoint, yNewStartPoint,
                 preferences.getUnit(), planView.getPixelLength());
-            xNewStartPoint = point.getXMagnetizedPoint();
-            yNewStartPoint = point.getYMagnetizedPoint();
+            xNewStartPoint = point.getX();
+            yNewStartPoint = point.getY();
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.startPoint);        
-          planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+          planView.setDimensionLineAlignmentFeedback(this.selectedDimensionLine, 
               xNewStartPoint, yNewStartPoint);
         } else {
-          planView.deleteDimensionLineAlignmentFeeback();
+          planView.deleteDimensionLineAlignmentFeedback();
         }        
       } else {
         // Compute the new end point of the dimension line knowing that the distance 
@@ -3630,19 +4145,19 @@ public class PlanController extends FurnitureController implements Controller {
               * Math.sin(dimensionLineStartToDimensionLineEndAngle));
 
           if (this.magnetismEnabled) {
-            PointWithMagnetism point = new PointWithMagnetism(
+            PointWithAngleMagnetism point = new PointWithAngleMagnetism(
                 this.selectedDimensionLine.getXStart(), 
                 this.selectedDimensionLine.getYStart(), xNewEndPoint, yNewEndPoint,
                 preferences.getUnit(), planView.getPixelLength());
-            xNewEndPoint = point.getXMagnetizedPoint();
-            yNewEndPoint = point.getYMagnetizedPoint();
+            xNewEndPoint = point.getX();
+            yNewEndPoint = point.getY();
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.startPoint);
-          planView.setDimensionLineAlignmentFeeback(this.selectedDimensionLine, 
+          planView.setDimensionLineAlignmentFeedback(this.selectedDimensionLine, 
               xNewEndPoint, yNewEndPoint);
         } else {
-          planView.deleteDimensionLineAlignmentFeeback();
+          planView.deleteDimensionLineAlignmentFeedback();
         }
       }     
 
@@ -3673,7 +4188,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void exit() {
       PlanView planView = getView();
-      planView.deleteDimensionLineAlignmentFeeback();
+      planView.deleteDimensionLineAlignmentFeedback();
       planView.setResizeIndicatorVisible(false);
       this.selectedDimensionLine = null;
     }  
@@ -3742,6 +4257,543 @@ public class PlanController extends FurnitureController implements Controller {
     public void exit() {
       getView().setResizeIndicatorVisible(false);
       this.selectedDimensionLine = null;
+    }  
+  }
+
+  /**
+   * Room creation state. This state manages transition to
+   * other modes, and initial room creation.
+   */
+  private class RoomCreationState extends AbstractModeChangeState {
+    private boolean                magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.ROOM_CREATION;
+    }
+
+    @Override
+    public void enter() {
+      getView().setCursor(PlanView.CursorType.DRAW);
+      toggleMagnetism(wasShiftDownLastMousePress());
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      if (this.magnetismEnabled) {
+        // Find the closest wall or room point to current mouse location
+        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
+            home.getRooms(), x, y, PIXEL_WALL_MARGIN / getView().getScale());
+        getView().setRoomAlignmentFeedback(null, point.getX(), 
+            point.getY(), point.isMagnetized());
+      } else {
+        getView().setRoomAlignmentFeedback(null, x, y, false);
+      } 
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown, boolean duplicationActivated) {
+      // Change state to NewRoomState
+      setState(getNewRoomState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // Compute again feedback point as if mouse moved
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void exit() {
+      getView().deleteRoomAlignmentFeedback();
+    }  
+  }
+
+  /**
+   * New room state. This state manages room creation at mouse press. 
+   */
+  private class NewRoomState extends ControllerState {
+    private Collection<Room>       rooms;
+    private float                  xPreviousPoint;
+    private float                  yPreviousPoint;
+    private Room                   newRoom;
+    private float []               newPoint;
+    private List<Selectable>       oldSelection;
+    private boolean                magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.ROOM_CREATION;
+    }
+    
+    @Override
+    public void setMode(Mode mode) {
+      // Escape current creation and change state to matching mode
+      escape();
+      switch (mode) {
+        case SELECTION :
+          setState(getSelectionState());
+          break;
+        case WALL_CREATION :
+          setState(getWallCreationState());
+          break;
+        case DIMENSION_LINE_CREATION :
+          setState(getDimensionLineCreationState());
+          break;
+      } 
+    }
+
+    @Override
+    public void enter() {
+      this.oldSelection = home.getSelectedItems();
+      this.rooms = home.getRooms();
+      this.newRoom = null;
+      toggleMagnetism(wasShiftDownLastMousePress());
+      if (this.magnetismEnabled) {
+        // Find the closest wall or room point to current mouse location
+        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
+            this.rooms, getXLastMouseMove(), getYLastMouseMove(), 
+            PIXEL_WALL_MARGIN / getView().getScale());
+        this.xPreviousPoint = point.getX();
+        this.yPreviousPoint = point.getY();
+        getView().setRoomAlignmentFeedback(null, point.getX(), 
+            point.getY(), point.isMagnetized());
+        
+      } else {
+         this.xPreviousPoint = getXLastMousePress();
+         this.yPreviousPoint = getYLastMousePress();
+         getView().setRoomAlignmentFeedback(null, this.xPreviousPoint, this.yPreviousPoint, false);
+      }
+      deselectAll();
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      PlanView planView = getView();
+      // Compute the coordinates where current edit room point should be moved
+      float xEnd = x;
+      float yEnd = y;
+      boolean magnetizedPoint = false;
+      if (this.magnetismEnabled) {
+        // Find the closest wall or room point to current mouse location
+        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
+            this.rooms, x, y, PIXEL_WALL_MARGIN / getView().getScale());
+        magnetizedPoint = point.isMagnetized();
+        if (magnetizedPoint) {
+          xEnd = point.getX();
+          yEnd = point.getY();
+        } else {
+          // Use magnetism if closest wall point is too far
+          PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
+              this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getUnit(), planView.getPixelLength());
+          xEnd = pointWithAngleMagnetism.getX();
+          yEnd = pointWithAngleMagnetism.getY();
+        }
+      } 
+
+      // If current room doesn't exist
+      if (this.newRoom == null) {
+        // Create a new one
+        this.newRoom = new Room(new float [][] {{this.xPreviousPoint, this.yPreviousPoint}, {xEnd, yEnd}});
+        home.addRoom(this.newRoom);
+        selectItem(this.newRoom);
+      } else if (this.newPoint != null) {
+        // Add a point to current room
+        float [][] points = this.newRoom.getPoints();
+        this.xPreviousPoint = points [points.length - 1][0];
+        this.yPreviousPoint = points [points.length - 1][1]; 
+        float [][] newPoints = new float [points.length + 1][];
+        System.arraycopy(points, 0, newPoints, 0, points.length);
+        newPoints [newPoints.length - 1] = this.newPoint;
+        this.newPoint [0] = xEnd; 
+        this.newPoint [1] = yEnd; 
+        this.newRoom.setPoints(newPoints);
+        this.newPoint = null;
+      } else {
+        // Otherwise update its last point
+        float [][] points = this.newRoom.getPoints();
+        points [points.length - 1][0] = xEnd;
+        points [points.length - 1][1] = yEnd;
+        this.newRoom.setPoints(points);
+      }         
+      planView.setRoomAlignmentFeedback(this.newRoom, xEnd, yEnd, magnetizedPoint);
+      
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+    }
+    
+    @Override
+    public void pressMouse(float x, float y, int clickCount, 
+                           boolean shiftDown, boolean duplicationActivated) {
+      if (clickCount == 2) {
+        if (this.newRoom == null) {
+          // Try to guess the room that contains the point (x,y)
+          this.newRoom = createRoomAt(x, y);
+          if (this.newRoom != null) {
+            home.addRoom(this.newRoom);
+            selectItem(this.newRoom);           
+          }
+        }
+        if (this.newRoom != null
+            && this.newRoom.getPoints().length > 2) {
+          // Post walls creation to undo support
+          postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+          // Change state to WallCreationState 
+        }
+        setState(getRoomCreationState());
+      } else {
+        // Create a new room only when it will have one point
+        // meaning after the first mouse move
+        if (this.newRoom != null) {
+          this.newPoint = new float [2];
+        }
+      }
+    }
+
+    /**
+     * Returns the room matching the closed path that contains the point at the given
+     * coordinates or <code>null</code> if there's no closed path at this point. 
+     */
+    private Room createRoomAt(float x, float y) {
+      for (GeneralPath roomPath : getRoomPaths()) {
+        if (roomPath.contains(x, y)) {
+          // Add to roomPath a half of the footprint on floor of all the doors and windows 
+          // with a elevation equal to zero that intersects with roomPath
+          for (HomePieceOfFurniture piece : home.getFurniture()) {
+            if (piece.isDoorOrWindow()
+                && piece.getElevation() == 0) {
+              float [][] doorPoints = piece.getPoints();
+              int intersectionCount = 0;
+              for (int i = 0; i < doorPoints.length; i++) {
+                if (roomPath.contains(doorPoints [i][0], doorPoints [i][1])) {
+                  intersectionCount++;
+                }                
+              }
+              if (intersectionCount == 2
+                  && doorPoints.length == 4) {
+                // Find the intersection of the door with home walls
+                Area wallsDoorIntersection = new Area(getWallsArea());
+                wallsDoorIntersection.intersect(new Area(getPath(doorPoints)));
+                // Reduce the size of intersection to its half
+                float [][] intersectionPoints = getPathPoints(getPath(wallsDoorIntersection));
+                Shape halfDoorPath = null;
+                if (intersectionPoints.length == 4) {
+                  float epsilon = 0.05f;
+                  for (int i = 0; i < intersectionPoints.length; i++) {
+                    // Check point in room with rectangle intersection test otherwise we miss some points
+                    if (roomPath.intersects(intersectionPoints [i][0] - epsilon / 2, 
+                        intersectionPoints [i][1] - epsilon / 2, epsilon, epsilon)) {
+                      int inPoint1 = i;
+                      int inPoint2;
+                      int outPoint1;
+                      int outPoint2;
+                      if (roomPath.intersects(intersectionPoints [i + 1][0] - epsilon / 2, 
+                               intersectionPoints [i + 1][1] - epsilon / 2, epsilon, epsilon)) {
+                        inPoint2 = i + 1;
+                        outPoint2 = (i + 2) % 4;
+                        outPoint1 = (i + 3) % 4;
+                      } else {
+                        outPoint1 = (i + 1) % 4;
+                        outPoint2 = (i + 2) % 4;
+                        inPoint2 = (i + 3) % 4;
+                      }
+                      intersectionPoints [outPoint1][0] = (intersectionPoints [outPoint1][0] 
+                          + intersectionPoints [inPoint1][0]) / 2; 
+                      intersectionPoints [outPoint1][1] = (intersectionPoints [outPoint1][1] 
+                          + intersectionPoints [inPoint1][1]) / 2; 
+                      intersectionPoints [outPoint2][0] = (intersectionPoints [outPoint2][0] 
+                          + intersectionPoints [inPoint2][0]) / 2; 
+                      intersectionPoints [outPoint2][1] = (intersectionPoints [outPoint2][1] 
+                          + intersectionPoints [inPoint2][1]) / 2;
+                      
+                      GeneralPath path = getPath(intersectionPoints);
+                      // Enlarge the intersection path to ensure its union with room builds only one path
+                      AffineTransform transform = new AffineTransform();
+                      Rectangle2D bounds2D = path.getBounds2D();                    
+                      transform.translate(bounds2D.getCenterX(), bounds2D.getCenterY());
+                      double min = Math.min(bounds2D.getWidth(), bounds2D.getHeight());
+                      double scale = (min + epsilon) / min;
+                      transform.scale(scale, scale);
+                      transform.translate(-bounds2D.getCenterX(), -bounds2D.getCenterY());
+                      halfDoorPath = path.createTransformedShape(transform);
+                      break;
+                    }
+                  }
+                }                
+                
+                if (halfDoorPath != null) {
+                  Area halfDoorRoomUnion = new Area(halfDoorPath);
+                  halfDoorRoomUnion.add(new Area(roomPath));
+                  roomPath = getPath(halfDoorRoomUnion);
+                }
+              }
+            }
+          }
+          
+          return new Room(getPathPoints(roomPath));
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      // If the new room already exists, 
+      // compute again its last point as if mouse moved
+      if (this.newRoom != null) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
+    }
+
+    @Override
+    public void escape() {
+      if (this.newRoom != null) {
+        float [][] points = this.newRoom.getPoints();
+        if (points.length <= 3) {
+          // Delete current created room if it doesn't have more than 2 clicked points
+          home.deleteRoom(this.newRoom);
+        } else {
+          // Remove last currently edited point
+          float [][] newPoints = new float [points.length -1][];
+          System.arraycopy(points, 0, newPoints, 0, newPoints.length);
+          this.newRoom.setPoints(newPoints);
+          // Post walls creation to undo support
+          postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+        }
+      }
+      // Change state to RoomCreationState 
+      setState(getRoomCreationState());
+    }
+
+    @Override
+    public void exit() {
+      getView().deleteRoomAlignmentFeedback();
+      this.newRoom = null;
+      this.newPoint = null;
+      this.oldSelection = null;
+    }  
+  }
+
+  /**
+   * Room resize state. This state manages room resizing. 
+   */
+  private class RoomResizeState extends AbstractWallState {
+    private Collection<Room> rooms;
+    private Room             selectedRoom;
+    private int              roomPointIndex;
+    private float            oldX;
+    private float            oldY;
+    private float            deltaXToResizePoint;
+    private float            deltaYToResizePoint;
+    private boolean          magnetismEnabled;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      super.enter();
+      this.selectedRoom = (Room)home.getSelectedItems().get(0);
+      this.rooms = new ArrayList<Room>(home.getRooms());
+      this.rooms.remove(this.selectedRoom);
+      float margin = PIXEL_MARGIN / getView().getScale();
+      this.roomPointIndex = this.selectedRoom.getPointIndexAt( 
+          getXLastMousePress(), getYLastMousePress(), margin);
+      float [][] roomPoints = this.selectedRoom.getPoints();
+      this.oldX = roomPoints [this.roomPointIndex][0];
+      this.oldY = roomPoints [this.roomPointIndex][1];
+      this.deltaXToResizePoint = getXLastMousePress() - this.oldX;
+      this.deltaYToResizePoint = getYLastMousePress() - this.oldY;
+      toggleMagnetism(wasShiftDownLastMousePress());
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      PlanView planView = getView();
+      float newX = x - this.deltaXToResizePoint;
+      float newY = y - this.deltaYToResizePoint;
+      boolean magnetizedPoint = false;
+      if (this.magnetismEnabled) {
+        // Find the closest wall or room point to current mouse location
+        PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
+            this.rooms, newX, newY, PIXEL_WALL_MARGIN / getView().getScale());
+        magnetizedPoint = point.isMagnetized();
+        if (magnetizedPoint) {
+          newX = point.getX();
+          newY = point.getY();
+        } else {
+          // Use magnetism if closest wall point is too far
+          float [][] roomPoints = this.selectedRoom.getPoints();
+          int previousPointIndex = this.roomPointIndex == 0 
+              ? roomPoints.length - 1 
+              : this.roomPointIndex - 1;
+          float xPreviousPoint = roomPoints [previousPointIndex][0];
+          float yPreviousPoint = roomPoints [previousPointIndex][1];
+          PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
+              xPreviousPoint, yPreviousPoint, newX, newY, preferences.getUnit(), planView.getPixelLength());
+          newX = pointWithAngleMagnetism.getX();
+          newY = pointWithAngleMagnetism.getY();
+        }
+      } 
+      moveRoomPoint(this.selectedRoom, newX, newY, this.roomPointIndex);
+
+      planView.setRoomAlignmentFeedback(this.selectedRoom, newX, newY, magnetizedPoint);
+      // Ensure point at (x,y) is visible
+      planView.makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postRoomResize(this.selectedRoom, this.oldX, this.oldY, this.roomPointIndex);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void escape() {
+      moveRoomPoint(this.selectedRoom, this.oldX, this.oldY, this.roomPointIndex);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteRoomAlignmentFeedback();
+      this.selectedRoom = null;
+    }  
+  }
+
+  /**
+   * Room name offset state. This state manages room name offset. 
+   */
+  private class RoomNameOffsetState extends ControllerState {
+    private Room  selectedRoom;
+    private float oldNameXOffset;
+    private float oldNameYOffset;
+    private float xLastMouseMove;
+    private float yLastMouseMove;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedRoom = (Room)home.getSelectedItems().get(0);
+      this.oldNameXOffset = this.selectedRoom.getNameXOffset();
+      this.oldNameYOffset = this.selectedRoom.getNameYOffset();
+      this.xLastMouseMove = getXLastMousePress();
+      this.yLastMouseMove = getYLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      this.selectedRoom.setNameXOffset(this.selectedRoom.getNameXOffset() + x - this.xLastMouseMove);
+      this.selectedRoom.setNameYOffset(this.selectedRoom.getNameYOffset() + y - this.yLastMouseMove);
+      this.xLastMouseMove = x;
+      this.yLastMouseMove = y;
+
+      // Ensure point at (x,y) is visible
+      getView().makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postRoomNameOffset(this.selectedRoom, this.oldNameXOffset, this.oldNameYOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedRoom.setNameXOffset(this.oldNameXOffset);
+      this.selectedRoom.setNameYOffset(this.oldNameYOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedRoom = null;
+    }  
+  }
+  
+  /**
+   * Room area offset state. This state manages room area offset. 
+   */
+  private class RoomAreaOffsetState extends ControllerState {
+    private Room  selectedRoom;
+    private float oldAreaXOffset;
+    private float oldAreaYOffset;
+    private float xLastMouseMove;
+    private float yLastMouseMove;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public void enter() {
+      this.selectedRoom = (Room)home.getSelectedItems().get(0);
+      this.oldAreaXOffset = this.selectedRoom.getAreaXOffset();
+      this.oldAreaYOffset = this.selectedRoom.getAreaYOffset();
+      this.xLastMouseMove = getXLastMousePress();
+      this.yLastMouseMove = getYLastMousePress();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      this.selectedRoom.setAreaXOffset(this.selectedRoom.getAreaXOffset() + x - this.xLastMouseMove);
+      this.selectedRoom.setAreaYOffset(this.selectedRoom.getAreaYOffset() + y - this.yLastMouseMove);
+      this.xLastMouseMove = x;
+      this.yLastMouseMove = y;
+
+      // Ensure point at (x,y) is visible
+      getView().makePointVisible(x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      postRoomAreaOffset(this.selectedRoom, this.oldAreaXOffset, this.oldAreaYOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedRoom.setAreaXOffset(this.oldAreaXOffset);
+      this.selectedRoom.setAreaYOffset(this.oldAreaYOffset);
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void exit() {
+      getView().setResizeIndicatorVisible(false);
+      this.selectedRoom = null;
     }  
   }
 }

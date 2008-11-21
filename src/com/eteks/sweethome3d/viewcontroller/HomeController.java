@@ -245,6 +245,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, true);
     homeView.setEnabled(HomeView.ActionType.SELECT, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, true);
+    homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, 
@@ -258,7 +259,8 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
         this.home.getFurniture().size() > 0 
-        || this.home.getWalls().size() > 0);
+        || this.home.getWalls().size() > 0 
+        || this.home.getRooms().size() > 0);
     homeView.setEnabled(HomeView.ActionType.HELP, true);
     homeView.setEnabled(HomeView.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
@@ -581,6 +583,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsOneCopiableObjectOrMore = false;
     boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsWalls = false;
+    boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
     if (selectionMode) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
@@ -589,9 +592,10 @@ public class HomeController implements Controller {
       List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
       homeSelectionContainsWalls = !selectedWalls.isEmpty();
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
+      homeSelectionContainsRooms = !Home.getRoomsSubList(selectedItems).isEmpty();
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
       homeSelectionContainsOneCopiableObjectOrMore = 
-          homeSelectionContainsFurniture || homeSelectionContainsWalls || homeSelectionContainsDimensionLines; 
+          homeSelectionContainsFurniture || homeSelectionContainsWalls || homeSelectionContainsRooms || homeSelectionContainsDimensionLines; 
     }
 
     HomeView view = getView();
@@ -645,6 +649,8 @@ public class HomeController implements Controller {
         homeSelectionContainsWalls);
     view.setEnabled(HomeView.ActionType.SPLIT_WALL,
         homeSelectionContainsOneWall);
+    view.setEnabled(HomeView.ActionType.MODIFY_ROOM,
+        homeSelectionContainsRooms);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_TOP,
         homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_BOTTOM,
@@ -689,7 +695,8 @@ public class HomeController implements Controller {
           selectionMode
           && (this.home.getFurniture().size() > 0 
               || this.home.getWalls().size() > 0 
-              || this.home.getDimensionLines().size() > 0));
+              || this.home.getDimensionLines().size() > 0
+              || this.home.getRooms().size() > 0));
     } else {
       view.setEnabled(HomeView.ActionType.SELECT_ALL, false);
     }
@@ -712,7 +719,8 @@ public class HomeController implements Controller {
     HomeView view = getView();
     view.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
         this.home.getFurniture().size() > 0 
-        || this.home.getWalls().size() > 0);
+        || this.home.getWalls().size() > 0 
+        || this.home.getRooms().size() > 0);
   }
 
   /**
@@ -966,6 +974,7 @@ public class HomeController implements Controller {
       }
       getPlanController().addFurniture(addedFurniture);
       getPlanController().addWalls(Home.getWallsSubList(items));
+      getPlanController().addRooms(Home.getRoomsSubList(items));
       getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
       getPlanController().moveItems(items, dx, dy);
       this.home.setSelectedItems(items);

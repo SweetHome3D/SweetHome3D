@@ -122,6 +122,12 @@ public interface ViewFactory {
                                           WallController wallController);
 
   /**
+   * Returns a new view that edits room values.
+   */
+  public abstract DialogView createRoomView(UserPreferences preferences,
+                                            RoomController roomController);
+  
+  /**
    * Returns a new view that edits 3D attributes.
    */
   public abstract DialogView createHome3DAttributesView(UserPreferences preferences,

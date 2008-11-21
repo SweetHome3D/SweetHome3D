@@ -141,10 +141,11 @@ public class HomePane extends JRootPane implements HomeView {
   private final ContentManager                  contentManager;
   private final HomeController                  controller;
   private ResourceBundle                        resource;
-  // Button models shared by Select, Create walls and Create dimensions menu items
+  // Button models shared by Select, Create walls, Create rooms and Create dimensions menu items
   // and the matching tool bar buttons
   private final JToggleButton.ToggleButtonModel selectToggleModel;
   private final JToggleButton.ToggleButtonModel createWallsToggleModel;
+  private final JToggleButton.ToggleButtonModel createRoomsToggleModel;
   private final JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
   // Button models shared by View from top and View from observer menu items and
   // the matching tool bar buttons
@@ -184,6 +185,9 @@ public class HomePane extends JRootPane implements HomeView {
     this.createWallsToggleModel = new JToggleButton.ToggleButtonModel();
     this.createWallsToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.WALL_CREATION);
+    this.createRoomsToggleModel = new JToggleButton.ToggleButtonModel();
+    this.createRoomsToggleModel.setSelected(controller.getPlanController().getMode() 
+        == PlanController.Mode.ROOM_CREATION);
     this.createDimensionLinesToggleModel = new JToggleButton.ToggleButtonModel();
     this.createDimensionLinesToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.DIMENSION_LINE_CREATION);
@@ -338,12 +342,16 @@ public class HomePane extends JRootPane implements HomeView {
         PlanController.Mode.SELECTION);
     createAction(ActionType.CREATE_WALLS, controller.getPlanController(), "setMode",
         PlanController.Mode.WALL_CREATION);
+    createAction(ActionType.CREATE_ROOMS, controller.getPlanController(), "setMode",
+        PlanController.Mode.ROOM_CREATION);
     createAction(ActionType.CREATE_DIMENSION_LINES, controller.getPlanController(), "setMode",
         PlanController.Mode.DIMENSION_LINE_CREATION);
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
     createAction(ActionType.MODIFY_WALL, 
         controller.getPlanController(), "modifySelectedWalls");
+    createAction(ActionType.MODIFY_ROOM, 
+        controller.getPlanController(), "modifySelectedRooms");
     createAction(ActionType.REVERSE_WALL_DIRECTION, 
         controller.getPlanController(), "reverseSelectedWallsDirection");
     createAction(ActionType.SPLIT_WALL, 
@@ -528,6 +536,8 @@ public class HomePane extends JRootPane implements HomeView {
                 == PlanController.Mode.SELECTION);
             createWallsToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.WALL_CREATION);
+            createRoomsToggleModel.setSelected(planController.getMode() 
+                == PlanController.Mode.ROOM_CREATION);
             createDimensionLinesToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.DIMENSION_LINE_CREATION);
           }
@@ -612,17 +622,21 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.add(selectRadioButtonMenuItem);
     JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(false);
     planMenu.add(createWallsRadioButtonMenuItem);
+    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = createCreateRoomsRadioButtonMenuItem(false);
+    planMenu.add(createRoomsRadioButtonMenuItem);
     JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(false);
     planMenu.add(createDimensionLinesRadioButtonMenuItem);
     // Add Select, Create Walls and Create dimensions menu items to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);  
+    group.add(createRoomsRadioButtonMenuItem);  
     group.add(createDimensionLinesRadioButtonMenuItem);  
     planMenu.addSeparator();
     planMenu.add(getMenuItemAction(ActionType.MODIFY_WALL));
     planMenu.add(getMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
     planMenu.add(getMenuItemAction(ActionType.SPLIT_WALL));
+    planMenu.add(getMenuItemAction(ActionType.MODIFY_ROOM));
     planMenu.addSeparator();
     planMenu.add(createImportModifyBackgroundImageMenuItem(home));
     planMenu.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
@@ -930,6 +944,14 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
+   * Returns a radio button menu item for Create rooms action. 
+   */
+  private JRadioButtonMenuItem createCreateRoomsRadioButtonMenuItem(boolean popup) {
+    return createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, 
+        ActionType.CREATE_ROOMS, popup);
+  }
+  
+  /**
    * Returns a radio button menu item for Create dimensions action. 
    */
   private JRadioButtonMenuItem createCreateDimensionLinesRadioButtonMenuItem(boolean popup) {
@@ -1006,6 +1028,11 @@ public class HomePane extends JRootPane implements HomeView {
     // Use the same model as Create walls menu item
     createWallsToggleButton.setModel(this.createWallsToggleModel);
     toolBar.add(createWallsToggleButton);
+    JToggleButton createRoomsToggleButton = 
+        new JToggleButton(getToolBarAction(ActionType.CREATE_ROOMS));
+    // Use the same model as Create walls menu item
+    createRoomsToggleButton.setModel(this.createRoomsToggleModel);
+    toolBar.add(createRoomsToggleButton);
     JToggleButton createDimensionLinesToggleButton = 
         new JToggleButton(getToolBarAction(ActionType.CREATE_DIMENSION_LINES));
     // Use the same model as Create dimensions menu item
@@ -1015,6 +1042,7 @@ public class HomePane extends JRootPane implements HomeView {
     ButtonGroup group = new ButtonGroup();
     group.add(selectToggleButton);
     group.add(createWallsToggleButton);
+    group.add(createRoomsToggleButton);
     group.add(createDimensionLinesToggleButton);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
@@ -1358,18 +1386,22 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.add(selectRadioButtonMenuItem);
     JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(true);
     planViewPopup.add(createWallsRadioButtonMenuItem);
+    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = createCreateRoomsRadioButtonMenuItem(true);
+    planViewPopup.add(createRoomsRadioButtonMenuItem);
     JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(true);
     planViewPopup.add(createDimensionLinesRadioButtonMenuItem);
     // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectRadioButtonMenuItem);
     group.add(createWallsRadioButtonMenuItem);
+    group.add(createRoomsRadioButtonMenuItem);
     group.add(createDimensionLinesRadioButtonMenuItem);
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_FURNITURE));
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_WALL));
     planViewPopup.add(getPopupMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
     planViewPopup.add(getPopupMenuItemAction(ActionType.SPLIT_WALL));
+    planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_ROOM));
     planViewPopup.addSeparator();
     planViewPopup.add(createImportModifyBackgroundImageMenuItem(home));
     planViewPopup.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));

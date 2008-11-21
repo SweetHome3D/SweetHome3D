@@ -776,10 +776,7 @@ public class WallController implements Controller {
                              Float height, Float heightAtEnd, Float thickness) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
-      // Modify wall coordinates if modifiedWalls contains only one wall
-      if (modifiedWalls.length == 1) {
-        moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
-      }
+      moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
       if (leftSideTexture != null) {
         wall.setLeftSideTexture(leftSideTexture);
         wall.setLeftSideColor(null);
@@ -816,11 +813,8 @@ public class WallController implements Controller {
   private void undoModifyWalls(ModifiedWall [] modifiedWalls) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
-      // Modify wall coordinates if modifiedWalls contains only one wall
-      if (modifiedWalls.length == 1) {
-        moveWallPoints(wall, modifiedWall.getXStart(), modifiedWall.getYStart(),
-            modifiedWall.getXEnd(), modifiedWall.getYEnd());
-      }
+      moveWallPoints(wall, modifiedWall.getXStart(), modifiedWall.getYStart(),
+          modifiedWall.getXEnd(), modifiedWall.getYEnd());
       wall.setLeftSideColor(modifiedWall.getLeftSideColor());
       wall.setLeftSideTexture(modifiedWall.getLeftSideTexture());
       wall.setRightSideColor(modifiedWall.getRightSideColor());
@@ -831,33 +825,55 @@ public class WallController implements Controller {
     }
   }
   
-  private void moveWallPoints(Wall wall, float xStart, float yStart, float xEnd, float yEnd) {
-    wall.setXStart(xStart);
-    wall.setYStart(yStart);
+  private void moveWallPoints(Wall wall, Float xStart, Float yStart, Float xEnd, Float yEnd) {
     Wall wallAtStart = wall.getWallAtStart();
-    // If wall is joined to a wall at its start 
-    if (wallAtStart != null) {
-      // Move the wall start point or end point
-      if (wallAtStart.getWallAtStart() == wall) {
-        wallAtStart.setXStart(xStart);
-        wallAtStart.setYStart(yStart);
-      } else if (wallAtStart.getWallAtEnd() == wall) {
-        wallAtStart.setXEnd(xStart);
-        wallAtStart.setYEnd(yStart);
+    if (xStart != null) {
+      wall.setXStart(xStart);
+      // If wall is joined to a wall at its start 
+      if (wallAtStart != null) {
+        // Move the wall start point or end point
+        if (wallAtStart.getWallAtStart() == wall) {
+          wallAtStart.setXStart(xStart);
+        } else if (wallAtStart.getWallAtEnd() == wall) {
+          wallAtStart.setXEnd(xStart);
+        }
       }
     }
-    wall.setXEnd(xEnd);
-    wall.setYEnd(yEnd);
+    if (yStart != null) {
+      wall.setYStart(yStart);
+      // If wall is joined to a wall at its start 
+      if (wallAtStart != null) {
+        // Move the wall start point or end point
+        if (wallAtStart.getWallAtStart() == wall) {
+          wallAtStart.setYStart(yStart);
+        } else if (wallAtStart.getWallAtEnd() == wall) {
+          wallAtStart.setYEnd(yStart);
+        }
+      }
+    }
     Wall wallAtEnd = wall.getWallAtEnd();
-    // If wall is joined to a wall at its end  
-    if (wallAtEnd != null) {
-      // Move the wall start point or end point
-      if (wallAtEnd.getWallAtStart() == wall) {
-        wallAtEnd.setXStart(xEnd);
-        wallAtEnd.setYStart(yEnd);
-      } else if (wallAtEnd.getWallAtEnd() == wall) {
-        wallAtEnd.setXEnd(xEnd);
-        wallAtEnd.setYEnd(yEnd);
+    if (xEnd != null) {
+      wall.setXEnd(xEnd);
+      // If wall is joined to a wall at its end  
+      if (wallAtEnd != null) {
+        // Move the wall start point or end point
+        if (wallAtEnd.getWallAtStart() == wall) {
+          wallAtEnd.setXStart(xEnd);
+        } else if (wallAtEnd.getWallAtEnd() == wall) {
+          wallAtEnd.setXEnd(xEnd);
+        }
+      }
+    }
+    if (yEnd != null) {
+      wall.setYEnd(yEnd);
+      // If wall is joined to a wall at its end  
+      if (wallAtEnd != null) {
+        // Move the wall start point or end point
+        if (wallAtEnd.getWallAtStart() == wall) {
+          wallAtEnd.setYStart(yEnd);
+        } else if (wallAtEnd.getWallAtEnd() == wall) {
+          wallAtEnd.setYEnd(yEnd);
+        }
       }
     }
   }

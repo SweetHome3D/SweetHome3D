@@ -29,6 +29,9 @@ import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.text.JTextComponent;
@@ -123,5 +126,17 @@ public class SwingTools {
     SelectionOnFocusManager selectionOnFocusManager = new SelectionOnFocusManager();
     textComponent.addFocusListener(selectionOnFocusManager);
     textComponent.addMouseListener(selectionOnFocusManager);
+  }
+  
+  /**
+   * Forces radio buttons to be deselected even if they belong to a button group. 
+   */
+  public static void deselectAllRadioButtons(JRadioButton ... radioButtons) {
+    for (JRadioButton radioButton : radioButtons) {
+      ButtonGroup group = ((JToggleButton.ToggleButtonModel)radioButton.getModel()).getGroup();
+      group.remove(radioButton);
+      radioButton.setSelected(false);
+      group.add(radioButton);
+    }    
   }
 }

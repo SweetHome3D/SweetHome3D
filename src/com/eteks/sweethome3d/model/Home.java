@@ -60,6 +60,8 @@ public class Home implements Serializable {
   private transient List<SelectionListener>           selectionListeners;
   private List<Wall>                                  walls;
   private transient CollectionChangeSupport<Wall>     wallsChangeSupport;
+  private List<Room>                                  rooms;
+  private transient CollectionChangeSupport<Room>     roomsChangeSupport;
   private List<DimensionLine>                         dimensionLines;
   private transient CollectionChangeSupport<DimensionLine> dimensionLinesChangeSupport;
   private Camera                                      camera;
@@ -169,6 +171,7 @@ public class Home implements Serializable {
     this.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(this);
     this.selectionListeners = new ArrayList<SelectionListener>();
     this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
+    this.roomsChangeSupport = new CollectionChangeSupport<Room>(this);
     this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
     this.propertyChangeSupport = new PropertyChangeSupport(this);
 
@@ -192,6 +195,7 @@ public class Home implements Serializable {
         3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     // Initialize new fields 
     this.environment = new HomeEnvironment();
+    this.rooms = new ArrayList<Room>();
     this.dimensionLines = new ArrayList<DimensionLine>();
     this.visualProperties = new HashMap<String, Object>();
     
@@ -439,6 +443,57 @@ public class Home implements Serializable {
     this.walls = new ArrayList<Wall>(this.walls);
     this.walls.remove(wall);
     this.wallsChangeSupport.fireCollectionChanged(wall, CollectionEvent.Type.DELETE);
+  }
+
+  /**
+   * Adds the room <code>listener</code> in parameter to this home.
+   */
+  public void addRoomsListener(CollectionListener<Room> listener) {
+    this.roomsChangeSupport.addCollectionListener(listener);
+  }
+  
+  /**
+   * Removes the room <code>listener</code> in parameter from this home.
+   */
+  public void removeRoomsListener(CollectionListener<Room> listener) {
+    this.roomsChangeSupport.removeCollectionListener(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the rooms of this home.
+   */
+  public Collection<Room> getRooms() {
+    return Collections.unmodifiableCollection(this.rooms);
+  }
+
+  /**
+   * Adds a given <code>room</code> to the set of rooms of this home.
+   * Once the <code>room</code> is added, room listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   */
+  public void addRoom(Room room) {
+    // Make a copy of the list to avoid conflicts in the list returned by getRooms
+    this.rooms = new ArrayList<Room>(this.rooms);
+    this.rooms.add(room);
+    this.roomsChangeSupport.fireCollectionChanged(room, CollectionEvent.Type.ADD);
+  }
+
+  /**
+   * Removes a given <code>room</code> from the set of rooms of this home.
+   * Once the <code>room</code> is removed, room listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   */
+  public void deleteRoom(Room room) {
+    //  Ensure selectedItems don't keep a reference to room
+    deselectItem(room);
+    // Make a copy of the list to avoid conflicts in the list returned by getRooms
+    this.rooms = new ArrayList<Room>(this.rooms);
+    this.rooms.remove(room);
+    this.roomsChangeSupport.fireCollectionChanged(room, CollectionEvent.Type.DELETE);
   }
 
   /**
@@ -735,6 +790,8 @@ public class Home implements Serializable {
     for (Selectable obj : objects) {
       if (obj instanceof HomePieceOfFurniture) {
         list.add(new HomePieceOfFurniture((HomePieceOfFurniture)obj));
+      } else if (obj instanceof Room) {
+        list.add(new Room((Room)obj));
       } else if (obj instanceof DimensionLine) {
         list.add(new DimensionLine((DimensionLine)obj));
       } else if (!(obj instanceof Wall)
@@ -762,6 +819,13 @@ public class Home implements Serializable {
     return getSubList(items, Wall.class);
   }
 
+  /**
+   * Returns a sub list of <code>items</code> that contains only rooms.
+   */
+  public static List<Room> getRoomsSubList(List<? extends Selectable> items) {
+    return getSubList(items, Room.class);
+  }
+  
   /**
    * Returns a sub list of <code>items</code> that contains only dimension lines.
    */
