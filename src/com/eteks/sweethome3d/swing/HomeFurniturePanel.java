@@ -107,14 +107,22 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
+    final PropertyChangeListener nameChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          nameTextField.setText(controller.getName());
+        }
+      };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME, nameChangeListener);
     this.nameTextField.getDocument().addDocumentListener(new DocumentListener() {
         public void changedUpdate(DocumentEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.NAME, nameChangeListener);
           String name = nameTextField.getText(); 
           if (name == null || name.trim().length() == 0) {
             controller.setName(null);
           } else {
             controller.setName(name);
           }
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME, nameChangeListener);
         }
   
         public void insertUpdate(DocumentEvent ev) {
@@ -125,12 +133,6 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           changedUpdate(ev);
         }
       });
-    controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            nameTextField.setText(controller.getName());
-          }
-        });
         
     // Create X label and its spinner bound to X controller property
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
