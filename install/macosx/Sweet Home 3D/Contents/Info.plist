@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 1.4 Copyright 2007-2008 eTeks</string>
+	<string>Sweet Home 3D 1.5 Copyright 2007-2008 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>1.4</string>
+	<string>1.5</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.4</string>
+	<string>1.5</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
