@@ -2221,23 +2221,29 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      * Returns the room height at the given point. 
      */
     private float getRoomHeightAt(float x, float y) {
-      final float epsilon = 0.01f;
+      double smallestDistance = Float.POSITIVE_INFINITY;
+      float roomHeight = this.home.getWallHeight();
+      // Search the closest wall point to x, y
       for (Wall wall : this.home.getWalls()) {
-        float testWidth = wall.getThickness() + epsilon;
-        Shape testRectangle = new Rectangle2D.Float(x - testWidth / 2, y - testWidth / 2, 
-            testWidth, testWidth);
         Float wallHeightAtStart = wall.getHeight();
-        if (testRectangle.contains(wall.getXStart(), wall.getYStart())) {
-          return wallHeightAtStart != null 
-              ? wallHeightAtStart 
-              : this.home.getWallHeight();
-        } else if (testRectangle.contains(wall.getXEnd(), wall.getYEnd())) {
-          return wall.isTrapezoidal() 
-              ? wall.getHeightAtEnd() 
-              : (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
+        float [][] points = wall.getPoints();
+        for (int i = 0; i < points.length; i++) {
+          double distanceToWallPoint = Point2D.distanceSq(points [i][0], points [i][1], x, y);
+          if (distanceToWallPoint < smallestDistance) {
+            smallestDistance = distanceToWallPoint; 
+            if (i == 0 || i == 3) { // Wall start
+              roomHeight = wallHeightAtStart != null 
+                  ? wallHeightAtStart 
+                  : this.home.getWallHeight();
+            } else { // Wall end
+              roomHeight = wall.isTrapezoidal() 
+                  ? wall.getHeightAtEnd() 
+                  : (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
+            }
+          }
         }
       }
-      return this.home.getWallHeight();
+      return roomHeight;
     }
 
     /**
