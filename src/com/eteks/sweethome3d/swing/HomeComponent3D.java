@@ -31,7 +31,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -678,28 +677,39 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), 0));
     }
     stripCounts.add(4);
-    
-    // Then, define all the room holes
+
+    // Compute the union of the rooms
+    Area roomsArea = new Area();
     for (Room room : home.getRooms()) {
       if (room.isFloorVisible()) {
         float [][] points = room.getPoints();
         if (points.length > 2) {
           if (room.isClockwise()) {
-            // Reverse points order if they are in the good order
+            // Reverse points order if they are not in the good order
             points = getReversedArray(points);
           }
-          for (int i = 0; i < points.length; i++) {
-            coords.add(new Point3f(points[i][0], groundOffset, points[i][1]));
-            if (groundTexture != null) {
-              textureCoords.add(new TexCoord2f((points[i][0] - groundOriginX) / groundTexture.getWidth(), 
-                  (points[i][1] - groundOriginY) / groundTexture.getHeight()));
-            }
-          }
-          stripCounts.add(points.length);
+          roomsArea.add(new Area(getShape(points)));
         }
       }
     }
-    
+    // Then, define all the holes in ground from rooms area
+    int pointsCount = 0;
+    for (PathIterator it = roomsArea.getPathIterator(null); !it.isDone(); ) {
+      float [] roomPoint = new float[2];
+      if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
+        stripCounts.add(pointsCount);
+        pointsCount = 0;
+      } else {
+        coords.add(new Point3f(roomPoint [0], groundOffset, roomPoint [1]));
+        if (groundTexture != null) {
+          textureCoords.add(new TexCoord2f((roomPoint [0] - groundOriginX) / groundTexture.getWidth(), 
+              (roomPoint [1] - groundOriginY) / groundTexture.getHeight()));
+        }
+        pointsCount++;
+      }
+      it.next();
+    }
+
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
     geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
     int [] stripCountsArray = new int [stripCounts.size()];
@@ -717,6 +727,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     groundShape.setGeometry(geometryInfo.getIndexedGeometryArray());
 
     clearPrintedImageCache();
+  }
+
+  /**
+   * Returns the shape matching the coordinates in <code>points</code> array.
+   */
+  private static Shape getShape(float [][] points) {
+    GeneralPath path = new GeneralPath();
+    path.moveTo(points [0][0], points [0][1]);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points [i][0], points [i][1]);
+    }
+    path.closePath();
+    return path;
   }
 
   /**
@@ -1239,7 +1262,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      * that intersect wall.
      */
     private Geometry [] createWallGeometries(int wallSide, HomeTexture texture) {
-      Shape wallShape = getShape(getWallSidePoints(wallSide));
+      Shape wallShape = HomeComponent3D.getShape(getWallSidePoints(wallSide));
       float wallHeightAtStart = getWallHeightAtStart();
       float wallHeightAtEnd = getWallHeightAtEnd();
       float maxWallHeight = Math.max(wallHeightAtStart, wallHeightAtEnd);
@@ -1266,7 +1289,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
         if (piece.isDoorOrWindow() 
             && piece.getElevation() < maxWallHeight) {
-          Shape pieceShape = getShape(piece.getPoints());
+          Shape pieceShape = HomeComponent3D.getShape(piece.getPoints());
           Area wallArea = new Area(wallShape);
           wallArea.intersect(new Area(pieceShape));
           boolean wallPieceIntersectionEmpty = wallArea.isEmpty();
@@ -1341,19 +1364,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       }
       return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
-    }
-    
-    /**
-     * Returns the shape matching the coordinates in <code>points</code> array.
-     */
-    private Shape getShape(float [][] points) {
-      GeneralPath wallPath = new GeneralPath();
-      wallPath.moveTo(points [0][0], points [0][1]);
-      for (int i = 1; i < points.length; i++) {
-        wallPath.lineTo(points [i][0], points [i][1]);
-      }
-      wallPath.closePath();
-      return wallPath;
     }
     
     /**
