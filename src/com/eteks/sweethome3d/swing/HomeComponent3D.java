@@ -673,9 +673,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
     if (groundTexture != null) {
       textureCoords.add(new TexCoord2f(0, 0));
-      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), 0));
-      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()));
       textureCoords.add(new TexCoord2f(0, groundDepth / groundTexture.getHeight()));
+      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), groundDepth / groundTexture.getHeight()));
+      textureCoords.add(new TexCoord2f(groundWidth / groundTexture.getWidth(), 0));
     }
     stripCounts.add(4);
     
