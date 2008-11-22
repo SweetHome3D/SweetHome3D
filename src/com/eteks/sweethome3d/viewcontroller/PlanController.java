@@ -4440,12 +4440,16 @@ public class PlanController extends FurnitureController implements Controller {
             selectItem(this.newRoom);           
           }
         }
-        if (this.newRoom != null
-            && this.newRoom.getPoints().length > 2) {
-          // Post walls creation to undo support
-          postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
-          // Change state to WallCreationState 
+        if (this.newRoom != null) {
+          if (this.newRoom.getPoints().length > 2) {
+            // Post walls creation to undo support
+            postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+          } else {
+            // Delete rooms with only two points
+            home.deleteRoom(this.newRoom);
+          }
         }
+          // Change state to WallCreationState 
         setState(getRoomCreationState());
       } else {
         // Create a new room only when it will have one point
