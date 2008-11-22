@@ -1181,7 +1181,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       if (room.isAreaVisible()) {
         float area = room.getArea();
-        if (area > 0) {
+        if (area > 0.01f) {
           float xArea = xRoomCenter + room.getAreaXOffset(); 
           float yArea = yRoomCenter + room.getAreaYOffset();
           // Draw room area 
@@ -1305,7 +1305,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                             Paint indicatorPaint, 
                                             float planScale) {
     if (this.resizeIndicatorVisible
-        && room.isAreaVisible()) {
+        && room.isAreaVisible()
+        && room.getArea() > 0.01f) {
       float xArea = room.getXCenter() + room.getAreaXOffset(); 
       float yArea = room.getYCenter() + room.getAreaYOffset();
       paintTextLocationIndicator(g2D, xArea, yArea, indicatorPaint, planScale);
