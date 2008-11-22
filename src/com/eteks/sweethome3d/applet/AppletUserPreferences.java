@@ -37,6 +37,7 @@ import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -62,7 +63,7 @@ public class AppletUserPreferences extends UserPreferences {
  
     // Read other preferences from resource bundle
     ResourceBundle resource = ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
-    Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
+    LengthUnit defaultUnit = LengthUnit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));

@@ -48,6 +48,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
@@ -128,9 +129,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create unit label and radio buttons bound to controller UNIT property
     this.unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
     this.centimeterRadioButton = new JRadioButton(this.resource.getString("centimeterRadioButton.text"), 
-        controller.getUnit() == UserPreferences.Unit.CENTIMETER);
+        controller.getUnit() == LengthUnit.CENTIMETER);
     this.inchRadioButton = new JRadioButton(this.resource.getString("inchRadioButton.text"), 
-        controller.getUnit() == UserPreferences.Unit.INCH);
+        controller.getUnit() == LengthUnit.INCH);
     ButtonGroup unitButtonGroup = new ButtonGroup();
     unitButtonGroup.add(this.centimeterRadioButton);
     unitButtonGroup.add(this.inchRadioButton);
@@ -138,8 +139,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     ItemListener unitChangeListener = new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setUnit(centimeterRadioButton.isSelected() 
-              ? UserPreferences.Unit.CENTIMETER
-              : UserPreferences.Unit.INCH);
+              ? LengthUnit.CENTIMETER
+              : LengthUnit.INCH);
         }
       };
     this.centimeterRadioButton.addItemListener(unitChangeListener);
@@ -147,7 +148,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            centimeterRadioButton.setSelected(controller.getUnit() == UserPreferences.Unit.CENTIMETER);
+            centimeterRadioButton.setSelected(controller.getUnit() == LengthUnit.CENTIMETER);
           }
         });
 
@@ -341,8 +342,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   }
 
   private static class SpinnerLengthModel extends SpinnerNumberModel {
-    private UserPreferences.Unit unit = 
-      UserPreferences.Unit.CENTIMETER;
+    private LengthUnit unit = 
+      LengthUnit.CENTIMETER;
 
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
@@ -355,18 +356,18 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         new ChangeListener () {
           public void stateChanged(ChangeEvent ev) {
             if (centimeterButton.isSelected()) {
-              if (unit == UserPreferences.Unit.INCH) {
+              if (unit == LengthUnit.INCH) {
                 setStepSize(centimeterStepSize);
-                setValue(UserPreferences.Unit.inchToCentimeter(
+                setValue(LengthUnit.inchToCentimeter(
                     getNumber().floatValue()));
-                unit = UserPreferences.Unit.CENTIMETER;
+                unit = LengthUnit.CENTIMETER;
               }
             } else {
-              if (unit == UserPreferences.Unit.CENTIMETER) {
+              if (unit == LengthUnit.CENTIMETER) {
                 setStepSize(inchStepSize);
-                setValue(UserPreferences.Unit.centimeterToInch(
+                setValue(LengthUnit.centimeterToInch(
                     getNumber().floatValue()));
-                unit = UserPreferences.Unit.INCH;
+                unit = LengthUnit.INCH;
               }
             }
           }
@@ -377,8 +378,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
      * Returns the displayed value in centimeter.
      */
     public float getLength() {
-      if (unit == UserPreferences.Unit.INCH) {
-        return UserPreferences.Unit.inchToCentimeter(getNumber().floatValue());
+      if (unit == LengthUnit.INCH) {
+        return LengthUnit.inchToCentimeter(getNumber().floatValue());
       } else {
         return getNumber().floatValue();
       }
@@ -388,8 +389,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
      * Sets the length in centimeter displayed in this model.
      */
     public void setLength(float length) {
-      if (unit == UserPreferences.Unit.INCH) {
-        length = UserPreferences.Unit.centimeterToInch(length);
+      if (unit == LengthUnit.INCH) {
+        length = LengthUnit.centimeterToInch(length);
       } 
       setValue(length);
     }

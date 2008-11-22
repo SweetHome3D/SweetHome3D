@@ -218,7 +218,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                 final ContentManager contentManager,
                                 final ImportedFurnitureWizardController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
 
     // Model panel components
     this.modelChoiceOrChangeLabel = new JLabel(); 

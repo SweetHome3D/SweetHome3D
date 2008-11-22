@@ -24,6 +24,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -41,7 +42,7 @@ public class DefaultUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog());
     // Read other preferences from resource bundle
     ResourceBundle resource = ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
-    Unit defaultUnit = Unit.valueOf(resource.getString("unit").toUpperCase());
+    LengthUnit defaultUnit = LengthUnit.valueOf(resource.getString("unit").toUpperCase());
     setUnit(defaultUnit);
     setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
     setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));

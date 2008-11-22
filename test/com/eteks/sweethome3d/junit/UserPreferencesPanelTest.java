@@ -30,6 +30,7 @@ import junit.framework.TestCase;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.UserPreferencesPanel;
@@ -50,7 +51,7 @@ public class UserPreferencesPanelTest extends TestCase {
     UserPreferences defaultPreferences = new DefaultUserPreferences();
     // Copy these preferences into system preferences
     UserPreferences preferences = new FileUserPreferences();
-    preferences.setUnit(defaultPreferences.getUnit());
+    preferences.setUnit(defaultPreferences.getLengthUnit());
     preferences.setRulersVisible(
         defaultPreferences.isRulersVisible());
     preferences.setGridVisible(
@@ -109,16 +110,16 @@ public class UserPreferencesPanelTest extends TestCase {
     preferences.setNewWallThickness(controller.getNewWallThickness());
     preferences.setNewWallHeight(controller.getNewWallHeight());
     // Check preferences value
-    assertPreferencesEqual(UserPreferences.Unit.INCH, false, false, false,
-        UserPreferences.Unit.inchToCentimeter(1), 
-        UserPreferences.Unit.inchToCentimeter(100), 
+    assertPreferencesEqual(LengthUnit.INCH, false, false, false,
+        LengthUnit.inchToCentimeter(1), 
+        LengthUnit.inchToCentimeter(100), 
         preferences);
     
     // 5. Save preferences and read them in an other system preferences object
     preferences.write();
     UserPreferences readPreferences = new FileUserPreferences();
     // Check if readPreferences and preferences have the same values
-    assertPreferencesEqual(preferences.getUnit(),
+    assertPreferencesEqual(preferences.getLengthUnit(),
         preferences.isMagnetismEnabled(), 
         preferences.isRulersVisible(), 
         preferences.isGridVisible(), 
@@ -133,7 +134,7 @@ public class UserPreferencesPanelTest extends TestCase {
    * Assert values in parameter are the same as the ones 
    * stored in <code>preferences</code>.
    */
-  private void assertPreferencesEqual(UserPreferences.Unit unit,
+  private void assertPreferencesEqual(LengthUnit unit,
                                       boolean magnetism,
                                       boolean rulers,
                                       boolean grid,
@@ -141,7 +142,7 @@ public class UserPreferencesPanelTest extends TestCase {
                                       float newHomeWallHeight,
                                       UserPreferences preferences) {
     
-    assertEquals("Wrong unit", unit, preferences.getUnit());
+    assertEquals("Wrong unit", unit, preferences.getLengthUnit());
     assertEquals("Wrong magnestism", magnetism,
         preferences.isMagnetismEnabled());
     assertEquals("Wrong rulers visibility", rulers,

@@ -804,7 +804,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
              int row, int column) {
-          value = preferences.getUnit().getLengthFormat().format((Float)value);
+          value = preferences.getLengthUnit().getFormat().format((Float)value);
           setHorizontalAlignment(JLabel.RIGHT);
           return super.getTableCellRendererComponent(
               table, value, isSelected, hasFocus, row, column);

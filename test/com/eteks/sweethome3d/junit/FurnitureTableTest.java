@@ -44,6 +44,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.FurnitureTable;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
@@ -64,8 +65,8 @@ public class FurnitureTableTest extends TestCase {
     // Read default user preferences
     UserPreferences preferences = new DefaultUserPreferences();
     // Check the current unit isn't centimeter
-    UserPreferences.Unit currentUnit = preferences.getUnit();
-    assertFalse("Unit is in centimeter", currentUnit == UserPreferences.Unit.CENTIMETER);
+    LengthUnit currentUnit = preferences.getLengthUnit();
+    assertFalse("Unit is in centimeter", currentUnit == LengthUnit.CENTIMETER);
     // Get furniture catalog
     FurnitureCatalog catalog = preferences.getFurnitureCatalog();
     
@@ -84,9 +85,9 @@ public class FurnitureTableTest extends TestCase {
     
     // 4. Check the displayed depth in table are different in French and US version
     for (int row = 0, n = table.getRowCount(); row < n; row++) {
-      preferences.setUnit(UserPreferences.Unit.INCH);
+      preferences.setUnit(LengthUnit.INCH);
       String widthInInch = getRenderedDepth(table, row);
-      preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+      preferences.setUnit(LengthUnit.CENTIMETER);
       String widthInMeter = getRenderedDepth(table, row);
       assertFalse("Same depth in different units", 
           widthInInch.equals(widthInMeter));

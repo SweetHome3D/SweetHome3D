@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -41,7 +42,7 @@ public class UserPreferencesController implements Controller {
   private DialogView                  userPreferencesView;
 
   private String                language;
-  private UserPreferences.Unit  unit;
+  private LengthUnit  unit;
   private boolean               magnetismEnabled;
   private boolean               rulersVisible;
   private boolean               gridVisible;
@@ -98,7 +99,7 @@ public class UserPreferencesController implements Controller {
    */
   protected void updateProperties() {
     setLanguage(this.preferences.getLanguage());
-    setUnit(this.preferences.getUnit());
+    setUnit(this.preferences.getLengthUnit());
     setMagnetismEnabled(this.preferences.isMagnetismEnabled());
     setGridVisible(this.preferences.isGridVisible());
     setRulersVisible(this.preferences.isRulersVisible());
@@ -127,9 +128,9 @@ public class UserPreferencesController implements Controller {
   /**
    * Sets the edited unit.
    */
-  public void setUnit(UserPreferences.Unit unit) {
+  public void setUnit(LengthUnit unit) {
     if (unit != this.unit) {
-      UserPreferences.Unit oldUnit = this.unit;
+      LengthUnit oldUnit = this.unit;
       this.unit = unit;
       this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
     }
@@ -138,7 +139,7 @@ public class UserPreferencesController implements Controller {
   /**
    * Returns the edited unit.
    */
-  public UserPreferences.Unit getUnit() {
+  public LengthUnit getUnit() {
     return this.unit;
   }
 

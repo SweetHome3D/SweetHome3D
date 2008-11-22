@@ -26,6 +26,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.NumberFormatter;
 
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -179,7 +180,7 @@ public class NullableSpinner extends AutoCommitSpinner {
 
     public NullableSpinnerLengthModel(UserPreferences preferences, float minimum, float maximum) {
       super(minimum, minimum, maximum, 
-            preferences.getUnit() == UserPreferences.Unit.INCH
+            preferences.getLengthUnit() == LengthUnit.INCH
               ? 0.125f : 0.5f);
       this.preferences = preferences;
     }
@@ -190,8 +191,8 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Float getLength() {
       if (getValue() == null) {
         return null;
-      } else if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        return UserPreferences.Unit.inchToCentimeter(((Number)getValue()).floatValue());
+      } else if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+        return LengthUnit.inchToCentimeter(((Number)getValue()).floatValue());
       } else {
         return ((Number)getValue()).floatValue();
       }
@@ -202,8 +203,8 @@ public class NullableSpinner extends AutoCommitSpinner {
      */
     public void setLength(Float length) {
       if (length != null 
-          && this.preferences.getUnit() == UserPreferences.Unit.INCH) {
-        length = UserPreferences.Unit.centimeterToInch(length);
+          && this.preferences.getLengthUnit() == LengthUnit.INCH) {
+        length = LengthUnit.centimeterToInch(length);
       } 
       setValue(length);
     }

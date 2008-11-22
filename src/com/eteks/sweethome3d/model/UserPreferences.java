@@ -21,9 +21,6 @@ package com.eteks.sweethome3d.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.text.DecimalFormat;
-import java.text.FieldPosition;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,255 +48,11 @@ public abstract class UserPreferences {
   
   private final PropertyChangeSupport propertyChangeSupport;
 
-  /**
-   * Unit used for sizes.
-   */
-  public enum Unit {
-    CENTIMETER {
-      private Locale        formatLocale;  
-      private String        name;
-      private DecimalFormat lengthFormatWithUnit;
-      private DecimalFormat lengthFormat;
-      private DecimalFormat areaFormatWithUnit;
-      
-      @Override
-      public Format getLengthFormatWithUnit() {
-        checkLocaleChange();
-        return this.lengthFormatWithUnit;
-      }
-
-      @Override
-      public Format getAreaFormatWithUnit() {
-        checkLocaleChange();
-        return this.areaFormatWithUnit;
-      }
-
-      @Override
-      public Format getLengthFormat() {
-        checkLocaleChange();
-        return this.lengthFormat;
-      }
-      
-      @Override
-      public String getName() {
-        checkLocaleChange();
-        return this.name;
-      }
-      
-      private void checkLocaleChange() {
-        // Instantiate formats if locale changed
-        if (!Locale.getDefault().equals(this.formatLocale)) {
-          this.formatLocale = Locale.getDefault();  
-          ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
-          this.name = resource.getString("centimerUnit");
-          this.lengthFormatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
-          this.lengthFormat = new DecimalFormat("#,##0.#");
-          String squareMeterUnit = resource.getString("squareMeterUnit");
-          this.areaFormatWithUnit = new DecimalFormat("#,##0.## " + squareMeterUnit) {
-              @Override
-              public StringBuffer format(double number, StringBuffer result,
-                                         FieldPosition fieldPosition) {
-                // Convert square centimeter to square meter
-                return super.format(number / 10000, result, fieldPosition);                
-              }
-            };
-        }
-      }
-
-      @Override
-      public float getMagnetizedLength(float length, float maxDelta) {
-        // Use a maximum precision of 1 mm depending on maxDelta
-        maxDelta *= 2;
-        float precision = 1 / 10f;
-        if (maxDelta > 100) {
-          precision = 100;
-        } else if (maxDelta > 10) {
-          precision = 10;
-        } else if (maxDelta > 5) {
-          precision = 5;
-        } else if (maxDelta > 1) {
-          precision = 1;
-        } else if  (maxDelta > 0.5f) {
-          precision = 0.5f;
-        } 
-        return Math.round(length / precision) * precision;
-      }
-
-      @Override
-      public float getMinimumLength() {
-        return 0.1f;
-      }
-    }, 
-    
-    INCH {
-      private Locale        formatLocale;
-      private String        name;
-      private DecimalFormat lengthFormat;
-      private DecimalFormat areaFormatWithUnit;
-      private final char [] fractionCharacters = {'\u215b',   // 1/8
-                                                  '\u00bc',   // 1/4  
-                                                  '\u215c',   // 3/8
-                                                  '\u00bd',   // 1/2
-                                                  '\u215d',   // 5/8
-                                                  '\u00be',   // 3/4
-                                                  '\u215e'};  // 7/8
-      
-      @Override
-      public Format getLengthFormatWithUnit() {
-        checkLocaleChange();
-        return this.lengthFormat;
-      }
-
-      @Override
-      public Format getLengthFormat() {
-        return getLengthFormatWithUnit();
-      }
-
-      @Override
-      public Format getAreaFormatWithUnit() {
-        checkLocaleChange();
-        return this.areaFormatWithUnit;
-      }
-      
-      @Override
-      public String getName() {
-        checkLocaleChange();
-        return this.name;
-      }
-      
-      private void checkLocaleChange() {
-        // Instantiate format if locale changed
-        if (!Locale.getDefault().equals(this.formatLocale)) {
-          this.formatLocale = Locale.getDefault();  
-          ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
-          this.name = resource.getString("inchUnit");
-          
-          // Create format for feet and inches
-          final Format footFormat = new DecimalFormat("#,##0''");
-          this.lengthFormat = new DecimalFormat("0.000\"") {            
-              @Override
-              public StringBuffer format(double number, StringBuffer result,
-                                         FieldPosition fieldPosition) {
-                float feet = (float)Math.floor(centimeterToFoot((float)number));              
-                float remainingInches = centimeterToInch((float)number - feetToCentimeter(feet));
-                if (remainingInches >= 11.9995f) {
-                  feet++;
-                  remainingInches -= 12;
-                }
-                footFormat.format(feet, result, fieldPosition);
-                // Format remaining inches only if it's larger that 0.0005
-                if (remainingInches >= 0.0005f) {
-                  // Try to format decimals with 1/8, 1/4, 1/2 fractions first
-                  int integerPart = (int)Math.floor(remainingInches);
-                  float fractionPart = remainingInches - integerPart;
-                  float remainderToClosestEighth = fractionPart % 0.125f;
-                  if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
-                    int eighth = Math.round(fractionPart * 8); 
-                    String remainingInchesString;
-                    if (eighth == 0 || eighth == 8) {
-                      remainingInchesString = Math.round(remainingInches) + "\"";
-                    } else {
-                      remainingInchesString = String.valueOf(integerPart) + fractionCharacters [eighth - 1] + "\"";
-                    }
-                    result.append(remainingInchesString);
-                    fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
-                  } else {                
-                    super.format(remainingInches, result, fieldPosition);
-                  }
-                }
-                return result;
-              }
-            };
-          
-          String squareFootUnit = resource.getString("squareFootUnit");
-          this.areaFormatWithUnit = new DecimalFormat("#,##0.## " + squareFootUnit){
-              @Override
-              public StringBuffer format(double number, StringBuffer result,
-                                         FieldPosition fieldPosition) {
-                // Convert square centimeter to square foot
-                return super.format(number / 929.0304, result, fieldPosition);                
-              }
-            };          
-        }
-      }
-      
-      @Override
-      public float getMagnetizedLength(float length, float maxDelta) {
-        // Use a maximum precision of 1/8 inch depending on maxDelta
-        maxDelta = centimeterToInch(maxDelta) * 2;
-        float precision = 1 / 8f;
-        if (maxDelta > 6) {
-          precision = 6;
-        } else if (maxDelta > 3) {
-          precision = 3;
-        } else if (maxDelta > 1) {
-          precision = 1;
-        } else if  (maxDelta > 0.5f) {
-          precision = 0.5f;
-        } else if  (maxDelta > 0.25f) {
-          precision = 0.25f;
-        }
-        return inchToCentimeter(Math.round(centimeterToInch(length) / precision) * precision);
-      }
-
-      @Override
-      public float getMinimumLength() {        
-        return UserPreferences.Unit.inchToCentimeter(0.125f);
-      }
-    };
-
-    public static float centimeterToInch(float length) {
-      return length / 2.54f;
-    }
-
-    public static float centimeterToFoot(float length) {
-      return length / 2.54f / 12;
-    }
-    
-    public static float inchToCentimeter(float length) {
-      return length * 2.54f;
-    }
-    
-    public static float feetToCentimeter(float length) {
-      return length * 2.54f * 12;
-    }
-    
-    /**
-     * Returns a format able to format lengths with their localized unit.
-     */
-    public abstract Format getLengthFormatWithUnit(); 
-
-    /**
-     * Returns a format able to format lengths.
-     */
-    public abstract Format getLengthFormat(); 
-
-    /**
-     * Returns a format able to format areas with their localized unit.
-     */
-    public abstract Format getAreaFormatWithUnit();
-    
-    /**
-     * Returns a localized name of this unit.
-     */
-    public abstract String getName();
-    
-    /**
-     * Returns the value close to the given length under magnetism. 
-     */
-    public abstract float getMagnetizedLength(float length, float maxDelta);
-
-    /**
-     * Returns the minimum value for length.
-     */
-    public abstract float getMinimumLength();
-  }
-
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
   private String           language;
   private String           currency;
-  private Unit             unit;
+  private LengthUnit             unit;
   private boolean          magnetismEnabled = true;
   private boolean          rulersVisible    = true;
   private boolean          gridVisible      = true;
@@ -375,9 +128,9 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Returns the unit currently in use.
+   * Returns the length unit currently in use.
    */
-  public Unit getUnit() {
+  public LengthUnit getLengthUnit() {
     return this.unit;
   }
   
@@ -428,9 +181,9 @@ public abstract class UserPreferences {
    * Changes the unit currently in use, and notifies listeners of this change. 
    * @param unit one of the values of Unit.
    */
-  public void setUnit(Unit unit) {
+  public void setUnit(LengthUnit unit) {
     if (this.unit != unit) {
-      Unit oldUnit = this.unit;
+      LengthUnit oldUnit = this.unit;
       this.unit = unit;
       this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
     }

@@ -74,6 +74,7 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -140,7 +141,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
                                 final ContentManager contentManager, 
                                 final ImportedTextureWizardController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
 
     // Image choice panel components
     this.imageChoiceOrChangeLabel = new JLabel(); 
@@ -558,8 +559,8 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
                   }
                   controller.setCategory(userCategory);
                   float defaultWidth = 20;
-                  if (preferences.getUnit() == UserPreferences.Unit.INCH) {
-                    defaultWidth = UserPreferences.Unit.inchToCentimeter(8);
+                  if (preferences.getLengthUnit() == LengthUnit.INCH) {
+                    defaultWidth = LengthUnit.inchToCentimeter(8);
                   }
                   controller.setWidth(defaultWidth);
                   controller.setHeight(defaultWidth / readImage.getWidth() * readImage.getHeight());

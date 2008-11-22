@@ -110,7 +110,7 @@ public class WallPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences, 
                                 final WallController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
     
     // Create X start label and its spinner bound to X_START controller property
     this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));

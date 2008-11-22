@@ -99,6 +99,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -1010,7 +1011,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintGrid(Graphics2D g2D, float gridScale) {
     float mainGridSize;
     float [] gridSizes;
-    if (this.preferences.getUnit() == UserPreferences.Unit.INCH) {
+    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
       // Use a grid in inch and foot with a minimun grid increment of 1 inch
       mainGridSize = 2.54f * 12; // 1 foot
       gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
@@ -1184,7 +1185,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float xArea = xRoomCenter + room.getAreaXOffset(); 
           float yArea = yRoomCenter + room.getAreaYOffset();
           // Draw room area 
-          String areaText = this.preferences.getUnit().getAreaFormatWithUnit().format(area);
+          String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
           Rectangle2D areaTextBounds = fontMetrics.getStringBounds(areaText, g2D);
           g2D.drawString(areaText, xArea - (float)areaTextBounds.getWidth() / 2, yArea);
         }
@@ -1710,7 +1711,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
       
       // Draw dimension length in middle
-      String lengthText = this.preferences.getUnit().getLengthFormat().format(dimensionLineLength);
+      String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
       Rectangle2D lengthTextBounds = fontMetrics.getStringBounds(lengthText, g2D);
       
       g2D.drawString(lengthText, 
@@ -2708,7 +2709,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private void paintRuler(Graphics2D g2D, float rulerScale) {
       float mainGridSize;
       float [] gridSizes;
-      if (preferences.getUnit() == UserPreferences.Unit.INCH) {
+      if (preferences.getLengthUnit() == LengthUnit.INCH) {
         // Use a grid in inch and foot with a minimun grid increment of 1 inch
         mainGridSize = 2.54f * 12; // 1 foot
         gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
@@ -2851,13 +2852,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (Math.abs(value) < 1E-5) {
         value = 0; // Avoid "-0" text
       }
-      if (preferences.getUnit() == UserPreferences.Unit.CENTIMETER) {
+      if (preferences.getLengthUnit() == LengthUnit.CENTIMETER) {
         text = format.format(value / 100);
         if (value == 0) {
           text += "m";
         }
       } else {
-        text = format.format(UserPreferences.Unit.centimeterToFoot(value)) + "'"; 
+        text = format.format(LengthUnit.centimeterToFoot(value)) + "'"; 
       }
       return text;
     }

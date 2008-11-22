@@ -21,7 +21,6 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -127,7 +126,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     pieceY += 200;
     assertLocationAndOrientationEqualPiece(pieceX, pieceY, 0, piece);
     
-    // 5. Press mouse button at top left vertex of selected piece 
+    // 5. Press mouse button at top left point of selected piece 
     tester.actionMousePress(planComponent, 
         new ComponentLocation(new Point(120, 120)));
     // Drag mouse to (-depthPixel / 2 - 1, widthPixel / 2) pixels from piece center
@@ -139,7 +138,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     assertLocationAndOrientationEqualPiece(
         pieceX, pieceY, (float)Math.PI * 3 / 2, piece);
 
-    // 6. Press mouse button at top left vertex of selected piece
+    // 6. Press mouse button at top left point of selected piece
     tester.actionMousePress(planComponent, new ComponentLocation(
         new Point(120 + widthPixel / 2 - depthPixel / 2, 
                   120 + depthPixel / 2 + widthPixel / 2)));
@@ -214,7 +213,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         selectedItems.contains(fifthWall));
     
     // 11. Click at point (pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2) 
-    //     at width and depth resize vertex of the piece
+    //     at width and depth resize point of the piece
     int pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
     int pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
     tester.actionClick(planComponent, pieceXPixel + depthPixel / 2, pieceYPixel - widthPixel / 2);
@@ -237,7 +236,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         pieceDepth + 4 / planComponent.getScale(), pieceHeight, piece);
 
     // 12. Click at point (pieceXPixel + depthPixel / 2, pieceYPixel + widthPixel / 2) 
-    //     at height resize vertex of the piece
+    //     at height resize point of the piece
     pieceXPixel = Math.round((piece.getX() + 40) * planComponent.getScale());
     pieceYPixel = Math.round((piece.getY() + 40) * planComponent.getScale());
     tester.actionMouseMove(planComponent, new ComponentLocation(new Point(
@@ -256,7 +255,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
         Math.round((pieceHeight - 4 / planComponent.getScale()) * 2) / 2, piece);
 
     // 13. Click at point (pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2) 
-    //     at elevation vertex of the piece
+    //     at elevation point of the piece
     float pieceElevation = piece.getElevation();
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(
         pieceXPixel - depthPixel / 2, pieceYPixel - widthPixel / 2)));

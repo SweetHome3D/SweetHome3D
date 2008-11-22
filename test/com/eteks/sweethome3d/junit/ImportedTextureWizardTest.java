@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -84,7 +85,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     final UserPreferences preferences = new FileUserPreferences();
     // Ensure we use default language and centimeter unit
     preferences.setLanguage(language);
-    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    preferences.setUnit(LengthUnit.CENTIMETER);
     ViewFactory viewFactory = new SwingViewFactory();
     // Create a dummy content manager
     final URL testedImageName = BackgroundImageWizardTest.class.getResource("resources/test.png");

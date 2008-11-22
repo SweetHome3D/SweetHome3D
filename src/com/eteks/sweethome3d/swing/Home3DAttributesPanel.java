@@ -96,7 +96,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences,
                                 final Home3DAttributesController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
     
     // Create observer field of view label and spinner bound to OBSERVER_FIELD_OF_VIEW_IN_DEGREES controller property
     this.observerFieldOfViewLabel = new JLabel(this.resource.getString("observerFieldOfViewLabel.text"));

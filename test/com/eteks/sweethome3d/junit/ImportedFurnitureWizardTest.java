@@ -55,6 +55,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.ColorButton;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -79,7 +80,7 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     final UserPreferences preferences = new FileUserPreferences();
     // Ensure we use default language and centimeter unit
     preferences.setLanguage(language);
-    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    preferences.setUnit(LengthUnit.CENTIMETER);
     final ViewFactory viewFactory = new SwingViewFactory();
     final URL testedModelName = ImportedFurnitureWizardTest.class.getResource("resources/test.obj");
     // Create a dummy content manager

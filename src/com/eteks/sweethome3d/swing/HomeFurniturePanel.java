@@ -99,7 +99,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences, 
                                 final HomeFurnitureController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
     
     // Create name label and its text field bound to NAME controller property
     this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));

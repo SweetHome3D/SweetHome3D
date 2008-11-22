@@ -136,7 +136,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                                 final ContentManager contentManager,
                                 final BackgroundImageWizardController controller) {
     // Get unit name matching current unit 
-    String unitName = preferences.getUnit().getName();
+    String unitName = preferences.getLengthUnit().getName();
 
     // Image choice panel components
     this.imageChoiceOrChangeLabel = new JLabel(); 

@@ -57,6 +57,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -2381,7 +2382,7 @@ public class PlanController extends FurnitureController implements Controller {
      * approximated depending on the current <code>unit</code> and scale.
      */
     public PointWithAngleMagnetism(float xStart, float yStart, float x, float y, 
-                                   UserPreferences.Unit unit, float maxLengthDelta) {
+                                   LengthUnit unit, float maxLengthDelta) {
       this.x = x;
       this.y = y;
       if (xStart == x) {
@@ -3019,7 +3020,7 @@ public class PlanController extends FurnitureController implements Controller {
       float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
           wall.getXEnd(), wall.getYEnd());
       return String.format(this.wallLengthToolTipFeedback, 
-          preferences.getUnit().getLengthFormatWithUnit().format(length));
+          preferences.getLengthUnit().getFormatWithUnit().format(length));
     }
   }
 
@@ -3104,7 +3105,7 @@ public class PlanController extends FurnitureController implements Controller {
       float yEnd;
       if (this.magnetismEnabled) {
         PointWithAngleMagnetism point = new PointWithAngleMagnetism(
-            this.xStart, this.yStart, x, y, preferences.getUnit(), planView.getPixelLength());
+            this.xStart, this.yStart, x, y, preferences.getLengthUnit(), planView.getPixelLength());
         xEnd = point.getX();
         yEnd = point.getY();
       } else {
@@ -3275,7 +3276,7 @@ public class PlanController extends FurnitureController implements Controller {
             this.startPoint 
                 ? this.selectedWall.getYEnd()
                 : this.selectedWall.getYStart(), newX, newY, 
-            preferences.getUnit(), planView.getPixelLength());
+            preferences.getLengthUnit(), planView.getPixelLength());
         newX = point.getX();
         newY = point.getY();
       } 
@@ -3444,7 +3445,7 @@ public class PlanController extends FurnitureController implements Controller {
       float newElevation = this.oldElevation - deltaY;
       newElevation = Math.max(newElevation, 0f);
       if (this.magnetismEnabled) {
-        newElevation = preferences.getUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
+        newElevation = preferences.getLengthUnit().getMagnetizedLength(newElevation, planView.getPixelLength());
       }
 
       // Update piece new dimension
@@ -3486,7 +3487,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     private String getToolTipFeedbackText(float height) {
       return String.format(this.elevationToolTipFeedback,  
-          preferences.getUnit().getLengthFormatWithUnit().format(height));
+          preferences.getLengthUnit().getFormatWithUnit().format(height));
     }
   }
 
@@ -3529,9 +3530,9 @@ public class PlanController extends FurnitureController implements Controller {
       float newHeight = this.oldHeight - deltaY;
       newHeight = Math.max(newHeight, 0f);
       if (this.magnetismEnabled) {
-        newHeight = preferences.getUnit().getMagnetizedLength(newHeight, planView.getPixelLength());
+        newHeight = preferences.getLengthUnit().getMagnetizedLength(newHeight, planView.getPixelLength());
       }
-      newHeight = Math.max(newHeight, preferences.getUnit().getMinimumLength());
+      newHeight = Math.max(newHeight, preferences.getLengthUnit().getMinimumLength());
 
       // Update piece new dimension
       this.selectedPiece.setHeight(newHeight);
@@ -3572,7 +3573,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     private String getToolTipFeedbackText(float height) {
       return String.format(this.resizeToolTipFeedback,  
-          preferences.getUnit().getLengthFormatWithUnit().format(height));
+          preferences.getLengthUnit().getFormatWithUnit().format(height));
     }
   }
 
@@ -3631,11 +3632,11 @@ public class PlanController extends FurnitureController implements Controller {
       float newDepth =  (float)(deltaY * cos - deltaX * sin);
 
       if (this.magnetismEnabled) {
-        newWidth = preferences.getUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
-        newDepth = preferences.getUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
+        newWidth = preferences.getLengthUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
+        newDepth = preferences.getLengthUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
       }
-      newWidth = Math.max(newWidth, preferences.getUnit().getMinimumLength());
-      newDepth = Math.max(newDepth, preferences.getUnit().getMinimumLength());
+      newWidth = Math.max(newWidth, preferences.getLengthUnit().getMinimumLength());
+      newDepth = Math.max(newDepth, preferences.getLengthUnit().getMinimumLength());
 
       // Update piece new location
       float newX = (float)(topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
@@ -3686,9 +3687,9 @@ public class PlanController extends FurnitureController implements Controller {
     
     private String getToolTipFeedbackText(float width, float depth) {
       return "<html>" + String.format(this.widthResizeToolTipFeedback,  
-              preferences.getUnit().getLengthFormatWithUnit().format(width))
+              preferences.getLengthUnit().getFormatWithUnit().format(width))
           + "<br>" + String.format(this.depthResizeToolTipFeedback,
-              preferences.getUnit().getLengthFormatWithUnit().format(depth));
+              preferences.getLengthUnit().getFormatWithUnit().format(depth));
     }
   }
 
@@ -3917,7 +3918,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.magnetismEnabled) {
           PointWithAngleMagnetism point = new PointWithAngleMagnetism(
               this.xStart, this.yStart, x, y,
-              preferences.getUnit(), planView.getPixelLength());
+              preferences.getLengthUnit(), planView.getPixelLength());
           xEnd = point.getX();
           yEnd = point.getY();
         } else {
@@ -4110,7 +4111,7 @@ public class PlanController extends FurnitureController implements Controller {
             PointWithAngleMagnetism point = new PointWithAngleMagnetism(
                 this.selectedDimensionLine.getXEnd(), 
                 this.selectedDimensionLine.getYEnd(), xNewStartPoint, yNewStartPoint,
-                preferences.getUnit(), planView.getPixelLength());
+                preferences.getLengthUnit(), planView.getPixelLength());
             xNewStartPoint = point.getX();
             yNewStartPoint = point.getY();
           } 
@@ -4148,7 +4149,7 @@ public class PlanController extends FurnitureController implements Controller {
             PointWithAngleMagnetism point = new PointWithAngleMagnetism(
                 this.selectedDimensionLine.getXStart(), 
                 this.selectedDimensionLine.getYStart(), xNewEndPoint, yNewEndPoint,
-                preferences.getUnit(), planView.getPixelLength());
+                preferences.getLengthUnit(), planView.getPixelLength());
             xNewEndPoint = point.getX();
             yNewEndPoint = point.getY();
           } 
@@ -4390,7 +4391,7 @@ public class PlanController extends FurnitureController implements Controller {
         } else {
           // Use magnetism if closest wall point is too far
           PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
-              this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getUnit(), planView.getPixelLength());
+              this.xPreviousPoint, this.yPreviousPoint, x, y, preferences.getLengthUnit(), planView.getPixelLength());
           xEnd = pointWithAngleMagnetism.getX();
           yEnd = pointWithAngleMagnetism.getY();
         }
@@ -4642,7 +4643,7 @@ public class PlanController extends FurnitureController implements Controller {
           float xPreviousPoint = roomPoints [previousPointIndex][0];
           float yPreviousPoint = roomPoints [previousPointIndex][1];
           PointWithAngleMagnetism pointWithAngleMagnetism = new PointWithAngleMagnetism(
-              xPreviousPoint, yPreviousPoint, newX, newY, preferences.getUnit(), planView.getPixelLength());
+              xPreviousPoint, yPreviousPoint, newX, newY, preferences.getLengthUnit(), planView.getPixelLength());
           newX = pointWithAngleMagnetism.getX();
           newY = pointWithAngleMagnetism.getY();
         }

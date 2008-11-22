@@ -847,16 +847,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns home bounds. 
    */
   private Rectangle2D computeExportedHomeBounds() {
-    Rectangle2D homeBounds = null;
-    // Compute plan bounds to include walls and furniture
-    for (Wall wall : this.home.getWalls()) {
-      if (homeBounds == null) {
-        homeBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
-      } else {
-        homeBounds.add(wall.getXStart(), wall.getYStart());
-      }
-      homeBounds.add(wall.getXEnd(), wall.getYEnd());
-    }
+    // Compute bounds that include walls and furniture
+    Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         for (float [] point : piece.getPoints()) {
@@ -868,7 +860,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       }
     }
-    return homeBounds;
+    return updateObjectsBounds(homeBounds, this.home.getRooms());
+  }
+  
+  /**
+   * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+   */
+  private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
+                                          Collection<? extends Selectable> objects) {
+    for (Selectable wall : objects) {
+      for (float [] point : wall.getPoints()) {
+        if (objectBounds == null) {
+          objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        } else {
+          objectBounds.add(point [0], point [1]);
+        }
+      }
+    }
+    return objectBounds;
   }
   
   /**

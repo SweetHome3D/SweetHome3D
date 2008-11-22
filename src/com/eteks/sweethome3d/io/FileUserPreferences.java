@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -147,7 +148,7 @@ public class FileUserPreferences extends UserPreferences {
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Read other preferences 
-    Unit unit = Unit.valueOf(preferences.get(UNIT, defaultPreferences.getUnit().name()));
+    LengthUnit unit = LengthUnit.valueOf(preferences.get(UNIT, defaultPreferences.getLengthUnit().name()));
     setUnit(unit);
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, true));
@@ -359,7 +360,7 @@ public class FileUserPreferences extends UserPreferences {
 
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
-    preferences.put(UNIT, getUnit().name());   
+    preferences.put(UNIT, getLengthUnit().name());   
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());

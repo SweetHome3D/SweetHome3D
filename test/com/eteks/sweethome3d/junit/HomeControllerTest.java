@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
@@ -277,7 +278,7 @@ public class HomeControllerTest extends TestCase {
     HomePieceOfFurniture piece = new HomePieceOfFurniture(firstCategory.getFurniture().get(0));
     this.home.addPieceOfFurniture(piece);
     // Use centimeter as unit
-    this.preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    this.preferences.setUnit(LengthUnit.CENTIMETER);
     // Check displayed values in table
     assertFurnitureFirstRowEquals(this.furnitureTable, piece.getName(),
         piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.isVisible());
@@ -416,7 +417,7 @@ public class HomeControllerTest extends TestCase {
           getTableCellRendererComponent(table, table.getValueAt(0, column), false, false, 0, column);
       if (values [column] instanceof Number) {
         assertEquals("Wrong value at column " + column,  
-            this.preferences.getUnit().getLengthFormat().format(values [column]), 
+            this.preferences.getLengthUnit().getFormat().format(values [column]), 
             ((JLabel)cellRendererComponent).getText());
       } else if (values [column] instanceof Boolean) {
         assertEquals("Wrong value at column " + column, values [column], 

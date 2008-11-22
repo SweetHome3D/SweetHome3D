@@ -41,6 +41,7 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.BackgroundImageWizardStepsPanel;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -62,7 +63,7 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     final UserPreferences preferences = new DefaultUserPreferences();
     // Ensure we use centimeter unit
-    preferences.setUnit(UserPreferences.Unit.CENTIMETER);
+    preferences.setUnit(LengthUnit.CENTIMETER);
     final URL testedImageName = BackgroundImageWizardTest.class.getResource("resources/test.png");
     // Create a dummy content manager
     final ContentManager contentManager = new ContentManager() {
