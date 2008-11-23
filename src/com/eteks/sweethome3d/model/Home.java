@@ -462,22 +462,33 @@ public class Home implements Serializable {
   /**
    * Returns an unmodifiable collection of the rooms of this home.
    */
-  public Collection<Room> getRooms() {
-    return Collections.unmodifiableCollection(this.rooms);
+  public List<Room> getRooms() {
+    return Collections.unmodifiableList(this.rooms);
   }
 
   /**
-   * Adds a given <code>room</code> to the set of rooms of this home.
+   * Adds a given <code>room</code> to the list of rooms of this home.
    * Once the <code>room</code> is added, room listeners added to this home will receive a
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
    * notification, with an {@link CollectionEvent#getType() event type} 
    * equal to {@link CollectionEvent.Type#ADD ADD}. 
    */
   public void addRoom(Room room) {
+    addRoom(room, this.rooms.size());
+  }
+
+  /**
+   * Adds the <code>room</code> in parameter at a given <code>index</code>.
+   * Once the <code>room</code> is added, room listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}.
+   */
+  public void addRoom(Room room, int index) {
     // Make a copy of the list to avoid conflicts in the list returned by getRooms
     this.rooms = new ArrayList<Room>(this.rooms);
-    this.rooms.add(room);
-    this.roomsChangeSupport.fireCollectionChanged(room, CollectionEvent.Type.ADD);
+    this.rooms.add(index, room);
+    this.roomsChangeSupport.fireCollectionChanged(room, index, CollectionEvent.Type.ADD);
   }
 
   /**

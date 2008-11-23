@@ -37,7 +37,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.TreeMap;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -1097,12 +1099,19 @@ public class PlanController extends FurnitureController implements Controller {
         }
       }    
 
-      for (Room room : this.home.getRooms()) {
-        if (room.containsPoint(x, y, margin)) {
-          return room;
+      List<Room> rooms = this.home.getRooms();
+      // Search in home rooms in reverse order to give priority to last drawn room
+      // at highest elevation in case it covers an other piece
+      Room foundRoom = null;
+      for (int i = rooms.size() - 1; i >= 0; i--) {
+        Room room = rooms.get(i);
+        if (room.containsPoint(x, y, margin)
+            && (foundRoom == null
+                || room.isCeilingVisible() && !foundRoom.isCeilingVisible())) {
+          foundRoom = room;
         }
       }    
-      return null;
+      return foundRoom;
     }
   }
 
@@ -1285,7 +1294,7 @@ public class PlanController extends FurnitureController implements Controller {
       deletedOtherObjects.addAll(Home.getRoomsSubList(items));
       deletedOtherObjects.addAll(Home.getDimensionLinesSubList(items));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
-      // otherwise data about joined walls can't be stored       
+      // otherwise data about joined walls and rooms index can't be stored       
       postDeleteItems(deletedOtherObjects);
       // Then delete objects from plan
       doDeleteItems(deletedOtherObjects);
@@ -1305,9 +1314,20 @@ public class PlanController extends FurnitureController implements Controller {
     final JoinedWall [] joinedDeletedWalls = 
       JoinedWall.getJoinedWalls(deletedWalls);
 
-    // Manage rooms
+    // Manage rooms and their index
     List<Room> deletedRooms = Home.getRoomsSubList(deletedItems);
-    final Room [] rooms = deletedRooms.toArray(new Room [deletedRooms.size()]);
+    List<Room> homeRooms = this.home.getRooms(); 
+    // Sort the deleted rooms in the ascending order of their index in home
+    Map<Integer, Room> sortedMap = new TreeMap<Integer, Room>(); 
+    for (Room room : deletedRooms) {
+      sortedMap.put(homeRooms.indexOf(room), room); 
+    }
+    final Room [] rooms = sortedMap.values().toArray(new Room [sortedMap.size()]); 
+    final int [] roomsIndex = new int [rooms.length];
+    int i = 0;
+    for (int index : sortedMap.keySet()) {
+      roomsIndex [i++] = index; 
+    }
     
     // Manage dimension lines
     List<DimensionLine> deletedDimensionLines = Home.getDimensionLinesSubList(deletedItems);
@@ -1319,7 +1339,7 @@ public class PlanController extends FurnitureController implements Controller {
       public void undo() throws CannotUndoException {
         super.undo();
         doAddWalls(joinedDeletedWalls);       
-        doAddRooms(rooms);
+        doAddRooms(rooms, roomsIndex);
         doAddDimensionLines(dimensionLines);
         selectAndShowItems(deletedItems);
       }
@@ -1529,13 +1549,13 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Add <code>newWalls</code> to home and post an undoable new wall operation.
+   * Add <code>walls</code> to home and post an undoable new wall operation.
    */
-  public void addWalls(List<Wall> newWalls) {
-    for (Wall wall : newWalls) {
+  public void addWalls(List<Wall> walls) {
+    for (Wall wall : walls) {
       this.home.addWall(wall);
     }
-    postAddWalls(newWalls, this.home.getSelectedItems());
+    postAddWalls(walls, this.home.getSelectedItems());
   }
   
   /**
@@ -1575,16 +1595,16 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Adds the walls in <code>joinedNewWalls</code> to plan component, joins
+   * Adds the walls in <code>joinedWalls</code> to plan component, joins
    * them to other walls if necessary.
    */
-  private void doAddWalls(JoinedWall [] joinedNewWalls) {
+  private void doAddWalls(JoinedWall [] joinedWalls) {
     // First add all walls to home
-    for (JoinedWall joinedNewWall : joinedNewWalls) {
+    for (JoinedWall joinedNewWall : joinedWalls) {
       this.home.addWall(joinedNewWall.getWall());
     }
     // Then join them to each other if necessary
-    for (JoinedWall joinedNewWall : joinedNewWalls) {
+    for (JoinedWall joinedNewWall : joinedWalls) {
       Wall wall = joinedNewWall.getWall();
       Wall wallAtStart = joinedNewWall.getWallAtStart();
       if (wallAtStart != null) {
@@ -1619,36 +1639,40 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Add <code>newRooms</code> to home and post an undoable new room line operation.
    */
-  public void addRooms(List<Room> newRooms) {
-    for (Room room : newRooms) {
-      this.home.addRoom(room);
+  public void addRooms(List<Room> rooms) {
+    final Room [] newRooms = rooms.toArray(new Room [rooms.size()]);
+    // Get indices of rooms added to home
+    final int [] roomsIndex = new int [rooms.size()];
+    int endIndex = home.getRooms().size();
+    for (int i = 0; i < roomsIndex.length; i++) {
+      roomsIndex [i] = endIndex++; 
     }
-    postAddRooms(newRooms, this.home.getSelectedItems());
+    doAddRooms(newRooms, roomsIndex);
+    postAddRooms(newRooms, roomsIndex, this.home.getSelectedItems());
   }
   
   /**
    * Posts an undoable new room operation, about <code>newRooms</code>.
    */
-  private void postAddRooms(List<Room> newRooms, 
+  private void postAddRooms(final Room [] newRooms,
+                            final int [] roomsIndex, 
                             List<Selectable> oldSelection) {
-    if (newRooms.size() > 0) {
-      final Room [] rooms = newRooms.toArray(
-          new Room [newRooms.size()]);
+    if (newRooms.length > 0) {
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteRooms(rooms);
+          doDeleteRooms(newRooms);
           selectAndShowItems(Arrays.asList(oldSelectedItems));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddRooms(rooms);       
-          selectAndShowItems(Arrays.asList(rooms));
+          doAddRooms(newRooms, roomsIndex);       
+          selectAndShowItems(Arrays.asList(newRooms));
         }      
   
         @Override
@@ -1661,11 +1685,27 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Posts an undoable new room operation, about <code>newRooms</code>.
+   */
+  private void postAddRooms(List<Room> rooms, 
+                            List<Selectable> oldSelection) {
+    // Search the index of rooms in home list of rooms
+    Room [] newRooms = rooms.toArray(new Room [rooms.size()]);
+    int [] roomsIndex = new int [rooms.size()];
+    List<Room> homeRooms = this.home.getRooms(); 
+    for (int i = 0; i < roomsIndex.length; i++) {
+      roomsIndex [i] = homeRooms.lastIndexOf(newRooms [i]); 
+    }
+    postAddRooms(newRooms, roomsIndex, oldSelection);
+  }
+
+  /**
    * Adds the <code>rooms</code> to plan component.
    */
-  private void doAddRooms(Room [] rooms) {
-    for (Room room : rooms) {
-      this.home.addRoom(room);
+  private void doAddRooms(Room [] rooms,
+                          int [] roomsIndex) {
+    for (int i = 0; i < roomsIndex.length; i++) {
+      this.home.addRoom (rooms [i], roomsIndex [i]);
     }
   }
   
@@ -1681,11 +1721,10 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Add <code>newDimensionLines</code> to home and post an undoable new dimension line operation.
    */
-  public void addDimensionLines(List<DimensionLine> newDimensionLines) {
-    for (DimensionLine dimensionLine : newDimensionLines) {
-      this.home.addDimensionLine(dimensionLine);
-    }
-    postAddDimensionLines(newDimensionLines, this.home.getSelectedItems());
+  public void addDimensionLines(List<DimensionLine> dimensionLines) {
+    doAddDimensionLines(
+        dimensionLines.toArray(new DimensionLine [dimensionLines.size()]));
+    postAddDimensionLines(dimensionLines, this.home.getSelectedItems());
   }
   
   /**

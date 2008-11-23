@@ -145,6 +145,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
   private List<HomePieceOfFurniture> sortedHomeFurniture;
+  private List<Room>                 sortedHomeRooms;
 
   private Rectangle2D        planBoundsCache;  
   private boolean            planBoundsCacheValid;  
@@ -344,7 +345,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME)) {
+          if (!HomePieceOfFurniture.Property.NAME.name().equals(ev.getPropertyName())) {
             sortedHomeFurniture = null;
             invalidatePlanBoundsAndRevalidate();
           }
@@ -399,7 +400,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when rooms change
     final PropertyChangeListener roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          invalidatePlanBoundsAndRevalidate();
+          if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {
+            sortedHomeRooms = null;
+            invalidatePlanBoundsAndRevalidate();
+          }
         }
       };
     for (Room room : home.getRooms()) {
@@ -1123,26 +1127,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintRooms(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
                           Color foregroundColor, PaintMode paintMode) {
-    Collection<Room> paintedRooms;
-    if (paintMode != PaintMode.CLIPBOARD) {
-      paintedRooms = this.home.getRooms();
-    } else {
-      // In clipboard paint mode, paint only selected rooms
-      paintedRooms = Home.getRoomsSubList(selectedItems);
+    if (this.sortedHomeRooms == null) {
+      // Sort home rooms in floor / floor-ceiling / ceiling order
+      this.sortedHomeRooms = new ArrayList<Room>(this.home.getRooms());
+      Collections.sort(this.sortedHomeRooms,
+          new Comparator<Room>() {
+            public int compare(Room room1, Room room2) {
+              if (room1.isFloorVisible() == room2.isFloorVisible()
+                  && room1.isCeilingVisible() == room2.isCeilingVisible()) {
+                return 0; // Keep default order if the rooms have the same visibility
+              } else if (!room2.isFloorVisible()
+                         || room2.isCeilingVisible()) {
+                return 1;
+              } else {
+                return -1;
+              }
+            }
+          });
     }
-    g2D.setPaint(paintMode == PaintMode.PRINT 
+    
+    Color fillPaint = paintMode == PaintMode.PRINT 
         ? Color.WHITE
-        : new Color(128, 128, 128, 144));
-    
-    for (Room room : paintedRooms) { 
-      g2D.fill(getShape(room.getPoints()));
-    }
-    
+        : new Color(128, 128, 128, 144);
     // Draw rooms area
-    g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
-    for (Room room : paintedRooms) { 
-      g2D.draw(getShape(room.getPoints()));
+    for (Room room : this.sortedHomeRooms) { 
+      boolean selectedRoom = selectedItems.contains(room);
+      // In clipboard paint mode, paint room only if it is selected
+      if (paintMode != PaintMode.CLIPBOARD
+          || selectedRoom) {
+        g2D.setPaint(fillPaint);
+        g2D.fill(getShape(room.getPoints()));
+        g2D.setPaint(foregroundColor);
+        g2D.draw(getShape(room.getPoints()));
+      }
     }
   }
 
@@ -1151,41 +1169,38 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintRoomsNameAndArea(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
                                      Color foregroundColor, PaintMode paintMode) {
-    Collection<Room> paintedRooms;
-    if (paintMode != PaintMode.CLIPBOARD) {
-      paintedRooms = this.home.getRooms();
-    } else {
-      // In clipboard paint mode, paint only selected rooms
-      paintedRooms = Home.getRoomsSubList(selectedItems);
-    }
-
     g2D.setPaint(foregroundColor);
     Font previousFont = g2D.getFont();
     g2D.setFont(previousFont.deriveFont(previousFont.getSize2D() * 2f));
     FontMetrics fontMetrics = g2D.getFontMetrics();
-    for (Room room : paintedRooms) {
-      float xRoomCenter = room.getXCenter();
-      float yRoomCenter = room.getYCenter();
-      String name = room.getName();
-      if (name != null) {
-        name = name.trim();
-        if (name.length() > 0) {
-          float xName = xRoomCenter + room.getNameXOffset(); 
-          float yName = yRoomCenter + room.getNameYOffset();
-          // Draw room name
-          Rectangle2D nameBounds = fontMetrics.getStringBounds(name, g2D);
-          g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
+    for (Room room : this.sortedHomeRooms) { 
+      boolean selectedRoom = selectedItems.contains(room);
+      // In clipboard paint mode, paint room only if it is selected
+      if (paintMode != PaintMode.CLIPBOARD
+          || selectedRoom) {
+        float xRoomCenter = room.getXCenter();
+        float yRoomCenter = room.getYCenter();
+        String name = room.getName();
+        if (name != null) {
+          name = name.trim();
+          if (name.length() > 0) {
+            float xName = xRoomCenter + room.getNameXOffset(); 
+            float yName = yRoomCenter + room.getNameYOffset();
+            // Draw room name
+            Rectangle2D nameBounds = fontMetrics.getStringBounds(name, g2D);
+            g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
+          }
         }
-      }
-      if (room.isAreaVisible()) {
-        float area = room.getArea();
-        if (area > 0.01f) {
-          float xArea = xRoomCenter + room.getAreaXOffset(); 
-          float yArea = yRoomCenter + room.getAreaYOffset();
-          // Draw room area 
-          String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-          Rectangle2D areaTextBounds = fontMetrics.getStringBounds(areaText, g2D);
-          g2D.drawString(areaText, xArea - (float)areaTextBounds.getWidth() / 2, yArea);
+        if (room.isAreaVisible()) {
+          float area = room.getArea();
+          if (area > 0.01f) {
+            float xArea = xRoomCenter + room.getAreaXOffset(); 
+            float yArea = yRoomCenter + room.getAreaYOffset();
+            // Draw room area 
+            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
+            Rectangle2D areaTextBounds = fontMetrics.getStringBounds(areaText, g2D);
+            g2D.drawString(areaText, xArea - (float)areaTextBounds.getWidth() / 2, yArea);
+          }
         }
       }
     }
