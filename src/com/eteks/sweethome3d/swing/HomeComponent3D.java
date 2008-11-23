@@ -805,7 +805,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
       if (this.home.getWalls().size() > 0) {
         // Create a not alive new ground to be able to explore its coordinates without setting capabilities
-        Rectangle2D homeBounds = computeExportedHomeBounds();
+        Rectangle2D homeBounds = getExportedHomeBounds();
         Node groundNode = createGroundNode(this.home, 
             (float)homeBounds.getX(), (float)homeBounds.getY(), 
             (float)homeBounds.getWidth(), (float)homeBounds.getHeight());
@@ -846,7 +846,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns home bounds. 
    */
-  private Rectangle2D computeExportedHomeBounds() {
+  private Rectangle2D getExportedHomeBounds() {
     // Compute bounds that include walls and furniture
     Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
