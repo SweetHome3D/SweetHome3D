@@ -24,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.swing.undo.UndoableEditSupport;
@@ -34,6 +35,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
@@ -190,7 +192,7 @@ public class HomeController3D implements Controller {
     
     private Camera topCamera;
     private Rectangle2D homeBounds;
-    private PropertyChangeListener wallOrFurnitureChangeListener = new PropertyChangeListener() {
+    private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
           updateCameraFromHomeBounds();
         }
@@ -198,9 +200,9 @@ public class HomeController3D implements Controller {
     private CollectionListener<Wall> wallListener = new CollectionListener<Wall>() {
         public void collectionChanged(CollectionEvent<Wall> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(wallOrFurnitureChangeListener);
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(wallOrFurnitureChangeListener);
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
           updateCameraFromHomeBounds();
         }
@@ -208,37 +210,51 @@ public class HomeController3D implements Controller {
     private CollectionListener<HomePieceOfFurniture> furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(wallOrFurnitureChangeListener);
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(wallOrFurnitureChangeListener);
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
+          } 
+          updateCameraFromHomeBounds();
+        }
+      };
+    private CollectionListener<Room> roomsListener = new CollectionListener<Room>() {
+        public void collectionChanged(CollectionEvent<Room> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
           updateCameraFromHomeBounds();
         }
       };
 
     public TopCameraState() {
-      this.homeBounds = computeHomeBounds();
+      this.homeBounds = getHomeBounds();
     }
       
     @Override
     public void enter() {
       this.topCamera = home.getCamera();
       updateCameraFromHomeBounds();
-      home.addWallsListener(this.wallListener);
       for (Wall wall : home.getWalls()) {
-        wall.addPropertyChangeListener(this.wallOrFurnitureChangeListener);
+        wall.addPropertyChangeListener(this.objectChangeListener);
       }
+      home.addWallsListener(this.wallListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
-        piece.addPropertyChangeListener(this.wallOrFurnitureChangeListener);
+        piece.addPropertyChangeListener(this.objectChangeListener);
       }
       home.addFurnitureListener(this.furnitureListener);
+      for (Room room : home.getRooms()) {
+        room.addPropertyChangeListener(this.objectChangeListener);
+      }
+      home.addRoomsListener(this.roomsListener);
     }
     
     /**
      * Updates camera location from home bounds.
      */
     private void updateCameraFromHomeBounds() {
-      Rectangle2D newHomeBounds = computeHomeBounds();
+      Rectangle2D newHomeBounds = getHomeBounds();
       float deltaZ = (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight())  
           - Math.max(newHomeBounds.getWidth(), newHomeBounds.getHeight()));
       this.homeBounds = newHomeBounds;
@@ -248,17 +264,9 @@ public class HomeController3D implements Controller {
     /**
      * Returns home bounds that includes walls and furniture.
      */
-    private Rectangle2D computeHomeBounds() {
-      Rectangle2D homeBounds = null;
-      // Compute plan bounds to include walls and furniture
-      for (Wall wall : home.getWalls()) {
-        if (homeBounds == null) {
-          homeBounds = new Rectangle2D.Float(wall.getXStart(), wall.getYStart(), 0, 0);
-        } else {
-          homeBounds.add(wall.getXStart(), wall.getYStart());
-        }
-        homeBounds.add(wall.getXEnd(), wall.getYEnd());
-      }
+    private Rectangle2D getHomeBounds() {
+      Rectangle2D homeBounds = updateObjectsBounds(null, home.getWalls());
+      homeBounds = updateObjectsBounds(null, home.getRooms());
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         if (piece.isVisible()) {
           for (float [] point : piece.getPoints()) {
@@ -286,12 +294,29 @@ public class HomeController3D implements Controller {
       }
     }
     
+    /**
+     * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+     */
+    private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
+                                            Collection<? extends Selectable> objects) {
+      for (Selectable wall : objects) {
+        for (float [] point : wall.getPoints()) {
+          if (objectBounds == null) {
+            objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            objectBounds.add(point [0], point [1]);
+          }
+        }
+      }
+      return objectBounds;
+    }
+
     @Override
     public void moveCamera(float delta) {
       // Use a 5 times bigger delta for top camera move
       delta *= 5;
       float newZ = this.topCamera.getZ() - (float)Math.sin(this.topCamera.getPitch()) * delta;
-      // Check new evelvation is between home wall height and a half, and 3 times its largest dimension  
+      // Check new elevation is between home wall height and a half, and 3 times its largest dimension  
       newZ = Math.max(newZ, home.getWallHeight() * 1.5f);
       newZ = Math.min(newZ, (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3 * Math.sin(this.topCamera.getPitch())));
       double distanceToCenterAtGroundLevel = newZ / Math.tan(this.topCamera.getPitch());
@@ -336,14 +361,18 @@ public class HomeController3D implements Controller {
     @Override
     public void exit() {
       this.topCamera = null;
-      home.removeWallsListener(wallListener);
       for (Wall wall : home.getWalls()) {
-        wall.removePropertyChangeListener(this.wallOrFurnitureChangeListener);
+        wall.removePropertyChangeListener(this.objectChangeListener);
       }
+      home.removeWallsListener(wallListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
-        piece.removePropertyChangeListener(this.wallOrFurnitureChangeListener);
+        piece.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeFurnitureListener(this.furnitureListener);
+      for (Room room : home.getRooms()) {
+        room.removePropertyChangeListener(this.objectChangeListener);
+      }
+      home.removeRoomsListener(this.roomsListener);
     }
   }
   

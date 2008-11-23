@@ -1080,7 +1080,8 @@ public class HomeController implements Controller {
   public void selectAll() {
     if (this.focusedView == getFurnitureController().getView()) {
       getFurnitureController().selectAll();
-    } else if (this.focusedView == getPlanController().getView()) {
+    } else if (this.focusedView == getPlanController().getView()
+               || this.focusedView == getHomeController3D().getView()) {
       getPlanController().selectAll();
     }
   }
