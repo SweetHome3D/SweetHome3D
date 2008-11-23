@@ -115,7 +115,7 @@ public class FurnitureController implements Controller {
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     final HomePieceOfFurniture [] newFurniture = furniture.
         toArray(new HomePieceOfFurniture [furniture.size()]);
-    // Get indices of furniture add to home
+    // Get indices of furniture added to home
     final int [] furnitureIndex = new int [furniture.size()];
     int endIndex = home.getFurniture().size();
     for (int i = 0; i < furnitureIndex.length; i++) {
@@ -171,7 +171,7 @@ public class FurnitureController implements Controller {
    */
   public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
-    // Sort the selected furniture in the ascending order of their index in home
+    // Sort the deleted furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
         new TreeMap<Integer, HomePieceOfFurniture>(); 
     for (HomePieceOfFurniture piece : deletedFurniture) {
