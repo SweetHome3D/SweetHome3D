@@ -368,17 +368,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when walls change
     final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          switch (Wall.Property.valueOf(ev.getPropertyName())) {
-            case X_START :
-            case X_END :
-            case Y_START :
-            case Y_END :
-            case WALL_AT_START :
-            case WALL_AT_END :
-            case THICKNESS :
-              wallsAreaCache = null;
-              invalidatePlanBoundsAndRevalidate();
-              break;
+          String propertyName = ev.getPropertyName();
+          if (Wall.Property.X_START.name().equals(propertyName)
+              || Wall.Property.X_END.name().equals(propertyName) 
+              || Wall.Property.Y_START.name().equals(propertyName) 
+              || Wall.Property.Y_END.name().equals(propertyName)
+              || Wall.Property.WALL_AT_START.name().equals(propertyName)
+              || Wall.Property.WALL_AT_END.name().equals(propertyName)
+              || Wall.Property.THICKNESS.name().equals(propertyName)) {
+            wallsAreaCache = null;
+            invalidatePlanBoundsAndRevalidate();
           }
         }
       };
@@ -438,12 +437,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       });
     home.getObserverCamera().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          switch (Camera.Property.valueOf(ev.getPropertyName())) {
-            case X :
-            case Y :
-            case YAW :
-              invalidatePlanBoundsAndRevalidate();
-              break;
+          String propertyName = ev.getPropertyName();
+          if (Camera.Property.X.name().equals(propertyName)
+              || Camera.Property.Y.name().equals(propertyName) 
+              || Camera.Property.YAW.name().equals(propertyName)) {
+            invalidatePlanBoundsAndRevalidate();
           }
         }
       });

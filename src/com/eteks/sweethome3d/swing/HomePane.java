@@ -1863,33 +1863,27 @@ public class HomePane extends JRootPane implements HomeView {
               // In case a property value changes, fire the new value decorated in subclasses
               // unless new value is null (most Swing listeners don't check new value is null !)
               if (newValue != null) {
-                switch (PluginAction.Property.valueOf(propertyName)) {
-                  case NAME:
-                    propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                        Action.NAME, oldValue, newValue));
-                    break;
-                  case SHORT_DESCRIPTION:
-                    propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                        Action.NAME, oldValue, newValue));
-                    break;
-                  case MNEMONIC:
-                    propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                        Action.MNEMONIC_KEY, 
-                        oldValue != null 
-                            ? new Integer((Character)oldValue) 
-                            : null, newValue));
-                    break;
-                  case SMALL_ICON:
-                    propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                        Action.SMALL_ICON, 
-                        oldValue != null 
-                           ? IconManager.getInstance().getIcon((Content)oldValue, DEFAULT_SMALL_ICON_HEIGHT, HomePane.this) 
-                           : null, newValue));
-                    break;
-                  default:
-                    propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
-                        propertyName, oldValue, newValue));
-                    break;
+                if (PluginAction.Property.NAME.name().equals(propertyName)) {
+                  propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                      Action.NAME, oldValue, newValue));
+                } else if (PluginAction.Property.SHORT_DESCRIPTION.name().equals(propertyName)) {
+                  propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                      Action.NAME, oldValue, newValue));
+                } else if (PluginAction.Property.MNEMONIC.name().equals(propertyName)) {
+                  propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                      Action.MNEMONIC_KEY, 
+                      oldValue != null 
+                          ? new Integer((Character)oldValue) 
+                          : null, newValue));
+                } else if (PluginAction.Property.SMALL_ICON.name().equals(propertyName)) {
+                  propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                      Action.SMALL_ICON, 
+                      oldValue != null 
+                         ? IconManager.getInstance().getIcon((Content)oldValue, DEFAULT_SMALL_ICON_HEIGHT, HomePane.this) 
+                         : null, newValue));
+                } else {
+                  propertyChangeSupport.firePropertyChange(new PropertyChangeEvent(ev.getSource(), 
+                      propertyName, oldValue, newValue));
                 }
               }
             }

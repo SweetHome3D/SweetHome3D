@@ -783,17 +783,16 @@ public class PlanController extends FurnitureController implements Controller {
     // Add listener to update roomPathsCache when walls change
     final PropertyChangeListener wallChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          switch (Wall.Property.valueOf(ev.getPropertyName())) {
-            case X_START :
-            case X_END :
-            case Y_START :
-            case Y_END :
-            case WALL_AT_START :
-            case WALL_AT_END :
-            case THICKNESS :
-              wallsAreaCache = null;
-              roomPathsCache = null;
-              break;
+          String propertyName = ev.getPropertyName();
+          if (Wall.Property.X_START.name().equals(propertyName)
+              || Wall.Property.X_END.name().equals(propertyName) 
+              || Wall.Property.Y_START.name().equals(propertyName) 
+              || Wall.Property.Y_END.name().equals(propertyName)
+              || Wall.Property.WALL_AT_START.name().equals(propertyName)
+              || Wall.Property.WALL_AT_END.name().equals(propertyName)
+              || Wall.Property.THICKNESS.name().equals(propertyName)) {
+            wallsAreaCache = null;
+            roomPathsCache = null;
           }
         }
       };
