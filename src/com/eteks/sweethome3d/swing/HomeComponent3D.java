@@ -757,15 +757,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   private Light [] createLights(final Home home) {
     final Light [] lights = {
-        new DirectionalLight(new Color3f(), new Vector3f(1.5f, -0.8f, -1)),         
-        new DirectionalLight(new Color3f(), new Vector3f(-1.5f, -0.8f, -1)), 
-        new DirectionalLight(new Color3f(), new Vector3f(0, -0.8f, 1)), 
-        new DirectionalLight(new Color3f(0.2f, 0.2f, 0.2f), new Vector3f(0, 1f, 0)), 
+        new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1.5f, -0.8f, -1)),         
+        new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(-1.5f, -0.8f, -1)), 
+        new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(0, -0.8f, 1)), 
+        new DirectionalLight(new Color3f(0.5f, 0.5f, 0.5f), new Vector3f(0, 1f, 0)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
     for (int i = 0; i < lights.length - 1; i++) {
-      updateLightColor(lights [i], home);
       // Allow directional lights color to change
       lights [i].setCapability(DirectionalLight.ALLOW_COLOR_WRITE);
+      // Store default color in user data
+      Color3f defaultColor = new Color3f();
+      lights [i].getColor(defaultColor);
+      lights [i].setUserData(defaultColor);
+      updateLightColor(lights [i], home);
     }
     
     for (Light light : lights) {
@@ -790,7 +794,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Updates<code>light</code> color from <code>home</code> light color.
    */
   private void updateLightColor(Light light, Home home) {
-    light.setColor(new Color3f(new Color(home.getEnvironment().getLightColor())));
+    Color3f defaultColor = (Color3f)light.getUserData();
+    int lightColor = home.getEnvironment().getLightColor();
+    light.setColor(new Color3f(((lightColor >>> 16) & 0xFF) / 256f * defaultColor.x,
+                                ((lightColor >>> 8) & 0xFF) / 256f * defaultColor.y,
+                                        (lightColor & 0xFF) / 256f * defaultColor.z));
     clearPrintedImageCache();
   }
   
