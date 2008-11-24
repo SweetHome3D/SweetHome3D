@@ -118,6 +118,7 @@ public class PlanController extends FurnitureController implements Controller {
   private float                       xLastMouseMove;
   private float                       yLastMouseMove;
   private Area                        wallsAreaCache;
+  private Area                        insideWallsAreaCache;
   private List<GeneralPath>           roomPathsCache;
 
 
@@ -794,6 +795,7 @@ public class PlanController extends FurnitureController implements Controller {
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
               || Wall.Property.THICKNESS.name().equals(propertyName)) {
             wallsAreaCache = null;
+            insideWallsAreaCache = null;
             roomPathsCache = null;
           }
         }
@@ -809,6 +811,7 @@ public class PlanController extends FurnitureController implements Controller {
             ev.getItem().removePropertyChangeListener(wallChangeListener);
           }
           wallsAreaCache = null;
+          insideWallsAreaCache = null;
           roomPathsCache = null;
         }
       });
@@ -2246,6 +2249,7 @@ public class PlanController extends FurnitureController implements Controller {
       
       // Iterate over all the paths the area contains
       List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
+      Area insideWallsArea = new Area(getWallsArea());
       GeneralPath roomPath = new GeneralPath();
       for (PathIterator it = roomsArea.getPathIterator(null, 0.5f); !it.isDone(); ) {
         float [] roomPoint = new float[2];
@@ -2257,7 +2261,9 @@ public class PlanController extends FurnitureController implements Controller {
             roomPath.lineTo(roomPoint [0], roomPoint [1]);
             break;
           case PathIterator.SEG_CLOSE :
-            if (!roomPath.contains(areaBounds.getMinX() + 0.5f, areaBounds.getMinY() + 0.5f)) {
+            roomPath.closePath();
+            if (!roomPath.contains(areaBounds.getMinX() + 0.5f, areaBounds.getMinY() + 0.5f)) {         
+              insideWallsArea.add(new Area(roomPath));
               roomPaths.add(roomPath);
             }
             roomPath = new GeneralPath();
@@ -2266,8 +2272,19 @@ public class PlanController extends FurnitureController implements Controller {
         it.next();
       }
       this.roomPathsCache = roomPaths;
+      this.insideWallsAreaCache = insideWallsArea;
     }
     return this.roomPathsCache;
+  }
+  
+  /**
+   * Returns the area that includes walls and inside walls area.
+   */
+  private Area getInsideWallsArea() {
+    if (this.insideWallsAreaCache == null) {
+      getRoomPaths();
+    }
+    return this.insideWallsAreaCache;
   }
   
   /**
@@ -4439,6 +4456,10 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.newRoom == null) {
         // Create a new one
         this.newRoom = new Room(new float [][] {{this.xPreviousPoint, this.yPreviousPoint}, {xEnd, yEnd}});
+        // Let's consider that points outside of home will create  by default a room with no ceiling
+        Area insideWallsArea = getInsideWallsArea();
+        this.newRoom.setCeilingVisible(insideWallsArea.contains(this.xPreviousPoint, this.yPreviousPoint)
+            && insideWallsArea.contains(xEnd, yEnd));
         home.addRoom(this.newRoom);
         selectItem(this.newRoom);
       } else if (this.newPoint != null) {
@@ -4479,7 +4500,8 @@ public class PlanController extends FurnitureController implements Controller {
           }
         }
         if (this.newRoom != null) {
-          if (this.newRoom.getPoints().length > 2) {
+          float [][] roomPoints = this.newRoom.getPoints();
+          if (roomPoints.length > 2) {
             // Post walls creation to undo support
             postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
           } else {
@@ -4487,13 +4509,22 @@ public class PlanController extends FurnitureController implements Controller {
             home.deleteRoom(this.newRoom);
           }
         }
-          // Change state to WallCreationState 
+          // Change state to RoomCreationState 
         setState(getRoomCreationState());
       } else {
         // Create a new room only when it will have one point
         // meaning after the first mouse move
         if (this.newRoom != null) {
           this.newPoint = new float [2];
+          // Let's consider that any point outside of home will create 
+          // by default a room with no ceiling
+          if (this.newRoom.isCeilingVisible()) {
+            float [][] roomPoints = this.newRoom.getPoints();
+            float [] lastPoint = roomPoints [roomPoints.length - 1];
+            if (!getInsideWallsArea().contains(lastPoint [0], lastPoint [1])) {
+              this.newRoom.setCeilingVisible(false);
+            }
+          }
         }
       }
     }
@@ -4618,7 +4649,7 @@ public class PlanController extends FurnitureController implements Controller {
       // Change state to RoomCreationState 
       setState(getRoomCreationState());
     }
-
+    
     @Override
     public void exit() {
       getView().deleteRoomAlignmentFeedback();
