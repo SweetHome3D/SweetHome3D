@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import javax.swing.undo.UndoableEditSupport;
@@ -265,19 +264,25 @@ public class HomeController3D implements Controller {
      * Returns home bounds that includes walls and furniture.
      */
     private Rectangle2D getHomeBounds() {
-      Rectangle2D homeBounds = updateObjectsBounds(null, home.getWalls());
-      homeBounds = updateObjectsBounds(null, home.getRooms());
+      // Compute plan bounds to include rooms, walls and furniture
+      Rectangle2D homeBounds = null;
+      for (Wall wall : home.getWalls()) {
+        homeBounds = updateHomeBounds(homeBounds, wall.getXStart(), wall.getYStart());
+        homeBounds.add(wall.getXEnd(), wall.getYEnd());
+      }
       for (HomePieceOfFurniture piece : home.getFurniture()) {
         if (piece.isVisible()) {
           for (float [] point : piece.getPoints()) {
-            if (homeBounds == null) {
-              homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-            } else {
-              homeBounds.add(point [0], point [1]);
-            }
+            homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
           }
         }
       }
+      for (Room room : home.getRooms()) {
+        for (float [] point : room.getPoints()) {
+          homeBounds = updateHomeBounds(homeBounds, point [0], point [1]);
+        }
+      }
+
       if (homeBounds != null) {
         // Ensure plan bounds are always minimum 10 meters wide centered in middle of 3D view
         return new Rectangle2D.Float(
@@ -293,22 +298,18 @@ public class HomeController3D implements Controller {
         return new Rectangle2D.Float(0, 0, MIN_SIZE, MIN_SIZE);
       }
     }
-    
+
     /**
-     * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+     * Adds the point at the given coordinates to <code>homeBounds</code>.
      */
-    private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
-                                            Collection<? extends Selectable> objects) {
-      for (Selectable wall : objects) {
-        for (float [] point : wall.getPoints()) {
-          if (objectBounds == null) {
-            objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            objectBounds.add(point [0], point [1]);
-          }
-        }
+    private Rectangle2D updateHomeBounds(Rectangle2D homeBounds,
+                                         float x, float y) {
+      if (homeBounds == null) {
+        homeBounds = new Rectangle2D.Float(x, y, 0, 0);
+      } else {
+        homeBounds.add(x, y);
       }
-      return objectBounds;
+      return homeBounds;
     }
 
     @Override
