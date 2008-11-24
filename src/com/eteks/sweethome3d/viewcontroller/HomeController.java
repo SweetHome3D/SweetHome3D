@@ -271,18 +271,32 @@ public class HomeController implements Controller {
    */
   public HomeView getView() {
     if (this.homeView == null) {
-      // Retrieve home plug-ins
-      List<Plugin> plugins = Collections.emptyList();
-      if (this.application != null && this.pluginManager != null) {
-        plugins = this.pluginManager.getPlugins(
-            this.application, this.home, this.preferences, getUndoableEditSupport());
-      }
-      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, 
-          this.contentManager, plugins, this);
+      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);
       enableDefaultActions(this.homeView);
       addListeners();
     }
     return this.homeView;
+  }
+
+  /**
+   * Returns the plug-ins available with this controller.
+   */
+  public List<Plugin> getPlugins() {
+    if (this.application != null && this.pluginManager != null) {
+      // Retrieve home plug-ins
+      return this.pluginManager.getPlugins(
+          this.application, this.home, this.preferences, getUndoableEditSupport());
+    } else {
+      List<Plugin> plugins = Collections.emptyList();
+      return plugins;
+    }
+  }
+
+  /**
+   * Returns the content manager of this controller.
+   */
+  public ContentManager getContentManager() {
+    return this.contentManager;
   }
 
   /**

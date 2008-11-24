@@ -72,9 +72,9 @@ import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCategory;
-import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -113,17 +113,16 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   public ImportedTextureWizardStepsPanel(CatalogTexture catalogTexture, 
                                          String textureName, 
                                          UserPreferences preferences, 
-                                         ContentManager contentManager,
                                          final ImportedTextureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedTextureWizardStepsPanel.class.getName());
     this.imageLoader = Executors.newSingleThreadExecutor();
-    createComponents(preferences, contentManager, controller);
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
     updateController(catalogTexture);
     if (textureName != null) {
-      updateController(textureName, contentManager, preferences, true);
+      updateController(textureName, controller.getContentManager(), preferences, true);
     }
     
     controller.addPropertyChangeListener(ImportedTextureWizardController.Property.STEP, 
@@ -138,7 +137,6 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
    * Creates components displayed by this panel.
    */
   private void createComponents(final UserPreferences preferences, 
-                                final ContentManager contentManager, 
                                 final ImportedTextureWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
@@ -148,9 +146,9 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          String imageName = showImageChoiceDialog(contentManager);
+          String imageName = showImageChoiceDialog(controller.getContentManager());
           if (imageName != null) {
-            updateController(imageName, contentManager, preferences, false);
+            updateController(imageName, controller.getContentManager(), preferences, false);
           }
         }
       });
@@ -171,7 +169,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String textureName = files.get(0).getAbsolutePath();
-            updateController(textureName, contentManager, preferences, false);
+            updateController(textureName, controller.getContentManager(), preferences, false);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {

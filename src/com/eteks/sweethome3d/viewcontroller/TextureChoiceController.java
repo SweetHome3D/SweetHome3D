@@ -60,7 +60,7 @@ public class TextureChoiceController implements Controller {
   public TextureChoiceView getView() {
     // Create view lazily only once it's needed
     if (this.textureChoiceView == null) {
-      this.textureChoiceView = this.viewFactory.createTextureChoiceView(this.title, this.preferences, this);
+      this.textureChoiceView = this.viewFactory.createTextureChoiceView(this.preferences, this);
     }
     return this.textureChoiceView;
   }
@@ -95,6 +95,13 @@ public class TextureChoiceController implements Controller {
    */
   public HomeTexture getTexture() {
     return this.texture;
+  }
+
+  /**
+   * Returns the text that should be displayed as texture choice dialog title.
+   */
+  public String getDialogTitle() {
+    return this.title;
   }
 
   /**

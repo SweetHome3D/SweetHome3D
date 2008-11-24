@@ -138,7 +138,6 @@ public class HomePane extends JRootPane implements HomeView {
   private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
   
   private final Home                            home;
-  private final ContentManager                  contentManager;
   private final HomeController                  controller;
   private ResourceBundle                        resource;
   // Button models shared by Select, Create walls, Create rooms and Create dimensions menu items
@@ -162,18 +161,8 @@ public class HomePane extends JRootPane implements HomeView {
    * Creates this view associated with its controller.
    */
   public HomePane(Home home, UserPreferences preferences, 
-                  ContentManager contentManager, HomeController controller) {
-    this(home, preferences, contentManager, null, controller);
-  }
-  
-  /**
-   * Creates this view associated with its controller.
-   */
-  public HomePane(Home home, UserPreferences preferences,
-                  ContentManager contentManager, List<Plugin> plugins,
                   HomeController controller) {
     this.home = home;
-    this.contentManager = contentManager;
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     // Create unique toggle button models for Selection / Wall creation / Dimension line creation states
@@ -204,12 +193,12 @@ public class HomePane extends JRootPane implements HomeView {
     
     createActions(controller);
     createMenuActions(controller);   
-    createPluginActions(plugins);
-    createTransferHandlers(home, contentManager, controller);
+    createPluginActions(controller.getPlugins());
+    createTransferHandlers(home, controller);
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = createHomeMenuBar(home, preferences, controller, contentManager);
+    JMenuBar homeMenuBar = createHomeMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
     contentPane.add(createToolBar(), BorderLayout.NORTH);
@@ -449,14 +438,13 @@ public class HomePane extends JRootPane implements HomeView {
    * Creates components transfer handlers.
    */
   private void createTransferHandlers(Home home, 
-                                      ContentManager contentManager,
                                       HomeController controller) {
     this.catalogTransferHandler = 
-        new FurnitureCatalogTransferHandler(contentManager, controller.getFurnitureCatalogController());
+        new FurnitureCatalogTransferHandler(controller.getContentManager(), controller.getFurnitureCatalogController());
     this.furnitureTransferHandler = 
-        new FurnitureTransferHandler(home, contentManager, controller);
+        new FurnitureTransferHandler(home, controller.getContentManager(), controller);
     this.planTransferHandler = 
-        new PlanTransferHandler(home, contentManager, controller);
+        new PlanTransferHandler(home, controller.getContentManager(), controller);
   }
 
   /**
@@ -549,8 +537,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private JMenuBar createHomeMenuBar(final Home home, 
                                      UserPreferences preferences,
-                                     final HomeController controller,
-                                     final ContentManager contentManager) {
+                                     final HomeController controller) {
     // Create File menu
     JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
     fileMenu.add(getMenuItemAction(ActionType.NEW_HOME));
@@ -560,7 +547,7 @@ public class HomePane extends JRootPane implements HomeView {
         new JMenu(this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU));
     openRecentHomeMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
-          updateOpenRecentHomeMenu(openRecentHomeMenu, controller, contentManager);
+          updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
         }
       
         public void menuCanceled(MenuEvent ev) {
@@ -888,12 +875,11 @@ public class HomePane extends JRootPane implements HomeView {
    * Updates <code>openRecentHomeMenu</code> from current recent homes in preferences.
    */
   protected void updateOpenRecentHomeMenu(JMenu openRecentHomeMenu, 
-                                          final HomeController controller, 
-                                          ContentManager contentManager) {
+                                          final HomeController controller) {
     openRecentHomeMenu.removeAll();
     for (final String homeName : controller.getRecentHomes()) {
       openRecentHomeMenu.add(
-          new AbstractAction(contentManager.getPresentationName(
+          new AbstractAction(controller.getContentManager().getPresentationName(
                   homeName, ContentManager.ContentType.SWEET_HOME_3D)) {
             public void actionPerformed(ActionEvent e) {
               controller.open(homeName);
@@ -1555,7 +1541,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays a content chooser open dialog to choose the name of a home.
    */
   public String showOpenDialog() {
-    return this.contentManager.showOpenDialog(this, 
+    return this.controller.getContentManager().showOpenDialog(this, 
         this.resource.getString("openHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D);
   }
@@ -1564,7 +1550,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays a content chooser open dialog to choose a furniture library.
    */
   public String showImportFurnitureLibraryDialog() {
-    return this.contentManager.showOpenDialog(this, 
+    return this.controller.getContentManager().showOpenDialog(this, 
         this.resource.getString("importFurnitureLibraryDialog.title"), 
         ContentManager.ContentType.FURNITURE_LIBRARY);
   }
@@ -1590,7 +1576,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays a content chooser save dialog to choose the name of a home.
    */
   public String showSaveDialog(String homeName) {
-    return this.contentManager.showSaveDialog(this,
+    return this.controller.getContentManager().showSaveDialog(this,
         this.resource.getString("saveHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D, homeName);
   }
@@ -1629,7 +1615,7 @@ public class HomePane extends JRootPane implements HomeView {
     String message;
     if (homeName != null) {
       message = String.format(messageFormat, 
-          "\"" + this.contentManager.getPresentationName(
+          "\"" + this.controller.getContentManager().getPresentationName(
               homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
     } else {
       message = String.format(messageFormat, "");
@@ -1658,7 +1644,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public boolean confirmSaveNewerHome(String homeName) {
     String message = String.format(this.resource.getString("confirmSaveNewerHome.message"), 
-        this.contentManager.getPresentationName(
+        this.controller.getContentManager().getPresentationName(
             homeName, ContentManager.ContentType.SWEET_HOME_3D));
     String title = this.resource.getString("confirmSaveNewerHome.title");
     String save = this.resource.getString("confirmSaveNewerHome.save");
@@ -1756,7 +1742,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Shows a content chooser save dialog to print a home in a PDF file.
    */
   public String showPrintToPDFDialog(String homeName) {
-    return this.contentManager.showSaveDialog(this,
+    return this.controller.getContentManager().showSaveDialog(this,
         this.resource.getString("printToPDFDialog.title"), 
         ContentManager.ContentType.PDF, homeName);
   }
@@ -1769,7 +1755,7 @@ public class HomePane extends JRootPane implements HomeView {
     OutputStream outputStream = null;
     try {
       outputStream = new FileOutputStream(pdfFile);
-      new HomePDFPrinter(this.home, this.contentManager, this.controller, getFont())
+      new HomePDFPrinter(this.home, this.controller, getFont())
           .write(outputStream);
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Print interrupted");
@@ -1790,7 +1776,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
   public String showExportToOBJDialog(String homeName) {
-    return this.contentManager.showSaveDialog(this,
+    return this.controller.getContentManager().showSaveDialog(this,
         this.resource.getString("exportToOBJDialog.title"), 
         ContentManager.ContentType.OBJ, homeName);
   }

@@ -127,6 +127,13 @@ public class BackgroundImageWizardController extends WizardController
   }
   
   /**
+   * Returns the content manager of this controller.
+   */
+  public ContentManager getContentManager() {
+    return this.contentManager;
+  }
+
+  /**
    * Returns the current step state.
    */
   @Override
@@ -162,7 +169,7 @@ public class BackgroundImageWizardController extends WizardController
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       this.stepsView = this.viewFactory.createBackgroundImageWizardStepsView(
-          this.home.getBackgroundImage(), this.preferences, this.contentManager, this);
+          this.home.getBackgroundImage(), this.preferences, this);
     }
     return this.stepsView;
   }

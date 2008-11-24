@@ -126,7 +126,14 @@ public class ImportedTextureWizardController extends WizardController
     }
     catalog.add(this.category, newTexture);
   }
-  
+    
+  /**
+   * Returns the content manager of this controller.
+   */
+  public ContentManager getContentManager() {
+    return this.contentManager;
+  }
+
   /**
    * Returns the current step state.
    */
@@ -156,7 +163,7 @@ public class ImportedTextureWizardController extends WizardController
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       this.stepsView = this.viewFactory.createImportedTextureWizardStepsView(this.texture, this.textureName, 
-          this.preferences, this.contentManager, this);
+          this.preferences, this);
     }
     return this.stepsView;
   }

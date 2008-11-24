@@ -186,17 +186,16 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                            String modelName,
                                            boolean importHomePiece,
                                            UserPreferences preferences, 
-                                           ContentManager contentManager,
                                            final ImportedFurnitureWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
     this.modelLoader = Executors.newSingleThreadExecutor();
-    createComponents(importHomePiece, preferences, contentManager, controller);
+    createComponents(importHomePiece, preferences, controller);
     setMnemonics();
     layoutComponents();
     updateController(piece);
     if (modelName != null) {
-      updateController(modelName, contentManager,  
+      updateController(modelName, controller.getContentManager(),  
           importHomePiece 
               ? null 
               : preferences.getFurnitureCatalog().getCategories().get(0), true);
@@ -215,7 +214,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   private void createComponents(final boolean importHomePiece, 
                                 final UserPreferences preferences,
-                                final ContentManager contentManager,
                                 final ImportedFurnitureWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
@@ -229,9 +227,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             : preferences.getFurnitureCatalog().getCategories().get(0);
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          String modelName = showModelChoiceDialog(contentManager);
+          String modelName = showModelChoiceDialog(controller.getContentManager());
           if (modelName != null) {
-            updateController(modelName, contentManager, defaultModelCategory, false);
+            updateController(modelName, controller.getContentManager(), defaultModelCategory, false);
           }
         }
       });
@@ -291,7 +289,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String modelName = files.get(0).getAbsolutePath();
-            updateController(modelName, contentManager, defaultModelCategory, false);
+            updateController(modelName, controller.getContentManager(), defaultModelCategory, false);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {

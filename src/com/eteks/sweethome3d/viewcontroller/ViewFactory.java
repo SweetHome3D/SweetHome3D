@@ -19,15 +19,12 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.util.List;
-
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.plugin.Plugin;
 
 /**
  * A factory that specifies how to create the views displayed in Sweet Home 3D. 
@@ -63,7 +60,6 @@ public interface ViewFactory {
    * Returns a new view that displays <code>home</code> and its sub views.
    */
   public abstract HomeView createHomeView(Home home, UserPreferences preferences,
-                                          ContentManager contentManager, List<Plugin> plugins,
                                           HomeController homeController);
 
   /**
@@ -76,7 +72,7 @@ public interface ViewFactory {
    */
   public abstract View createBackgroundImageWizardStepsView(
                                  BackgroundImage backgroundImage,
-                                 UserPreferences preferences, ContentManager contentManager,
+                                 UserPreferences preferences, 
                                  BackgroundImageWizardController backgroundImageWizardController);
 
   /**
@@ -85,7 +81,7 @@ public interface ViewFactory {
   public abstract ImportedFurnitureWizardStepsView createImportedFurnitureWizardStepsView(
                                  CatalogPieceOfFurniture piece,
                                  String modelName, boolean importHomePiece,
-                                 UserPreferences preferences, ContentManager contentManager,
+                                 UserPreferences preferences, 
                                  ImportedFurnitureWizardController importedFurnitureWizardController);
 
   /**
@@ -94,7 +90,6 @@ public interface ViewFactory {
   public abstract View createImportedTextureWizardStepsView(
                                  CatalogTexture texture, String textureName,
                                  UserPreferences preferences,
-                                 ContentManager contentManager,
                                  ImportedTextureWizardController importedTextureWizardController);
 
   /**
@@ -136,8 +131,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that edits the texture of its controller.  
    */
-  public abstract TextureChoiceView createTextureChoiceView(String textureDialogTitle,
-                                                     UserPreferences preferences,
+  public abstract TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                                      TextureChoiceController textureChoiceController);
 
   /**

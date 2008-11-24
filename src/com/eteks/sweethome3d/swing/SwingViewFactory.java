@@ -19,17 +19,13 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.util.List;
-
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.viewcontroller.BackgroundImageWizardController;
-import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
@@ -100,9 +96,8 @@ public class SwingViewFactory implements ViewFactory {
    * Returns a new view that displays <code>home</code> and its sub views.
    */
   public HomeView createHomeView(Home home, UserPreferences preferences,
-                                 ContentManager contentManager, List<Plugin> plugins,
                                  HomeController homeController) {
-    return new HomePane(home, preferences, contentManager, plugins, homeController);
+    return new HomePane(home, preferences, homeController);
   }
 
   /**
@@ -115,11 +110,10 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps user to choose a background image. 
    */
-  public View createBackgroundImageWizardStepsView(
-                      BackgroundImage backgroundImage,
-                      UserPreferences preferences, ContentManager contentManager,
+  public View createBackgroundImageWizardStepsView(BackgroundImage backgroundImage,
+                      UserPreferences preferences, 
                       BackgroundImageWizardController backgroundImageWizardController) {
-    return new BackgroundImageWizardStepsPanel(backgroundImage, preferences, contentManager, 
+    return new BackgroundImageWizardStepsPanel(backgroundImage, preferences,  
         backgroundImageWizardController);
   }
 
@@ -129,10 +123,10 @@ public class SwingViewFactory implements ViewFactory {
   public ImportedFurnitureWizardStepsView createImportedFurnitureWizardStepsView(
                       CatalogPieceOfFurniture piece,
                       String modelName, boolean importHomePiece,
-                      UserPreferences preferences, ContentManager contentManager,
+                      UserPreferences preferences, 
                       ImportedFurnitureWizardController importedFurnitureWizardController) {
     return new ImportedFurnitureWizardStepsPanel(piece, modelName, importHomePiece,
-        preferences, contentManager, importedFurnitureWizardController);
+        preferences, importedFurnitureWizardController);
   }
 
   /**
@@ -141,10 +135,9 @@ public class SwingViewFactory implements ViewFactory {
   public View createImportedTextureWizardStepsView(
                       CatalogTexture texture, String textureName,
                       UserPreferences preferences,
-                      ContentManager contentManager,
                       ImportedTextureWizardController importedTextureWizardController) {
     return new ImportedTextureWizardStepsPanel(texture, textureName, preferences,
-        contentManager, importedTextureWizardController);
+        importedTextureWizardController);
   }
 
   /**
@@ -198,10 +191,9 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits the texture of the given controller.  
    */
-  public TextureChoiceView createTextureChoiceView(String textureDialogTitle,
-                                            UserPreferences preferences,
+  public TextureChoiceView createTextureChoiceView(UserPreferences preferences,
                                             TextureChoiceController textureChoiceController) {
-    return new TextureChoiceComponent(textureDialogTitle, preferences, textureChoiceController);
+    return new TextureChoiceComponent(preferences, textureChoiceController);
   }
 
   /**
@@ -216,8 +208,8 @@ public class SwingViewFactory implements ViewFactory {
    * Returns a new view that displays <code>home</code> print preview. 
    */
   public DialogView createPrintPreviewView(Home home,
-                                                 HomeController homeController,
-                                                 PrintPreviewController printPreviewController) {
+                                           HomeController homeController,
+                                           PrintPreviewController printPreviewController) {
     return new PrintPreviewPanel(home, homeController, printPreviewController);
   }
   

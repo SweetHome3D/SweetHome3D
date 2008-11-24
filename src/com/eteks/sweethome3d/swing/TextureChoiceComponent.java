@@ -87,8 +87,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
   /**
    * Creates a texture button.
    */
-  public TextureChoiceComponent(final String title, 
-                                final UserPreferences preferences,
+  public TextureChoiceComponent(final UserPreferences preferences,
                                 final TextureChoiceController controller) {
     JLabel dummyLabel = new JLabel("Text");
     Dimension iconDimension = dummyLabel.getPreferredSize();
@@ -141,7 +140,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         JOptionPane optionPane = new JOptionPane(texturePanel, JOptionPane.PLAIN_MESSAGE, 
             JOptionPane.OK_CANCEL_OPTION);
         final JDialog dialog = optionPane.createDialog(
-            SwingUtilities.getRootPane(TextureChoiceComponent.this), title);
+            SwingUtilities.getRootPane(TextureChoiceComponent.this), controller.getDialogTitle());
         dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         dialog.setResizable(true);
         // Pack again because resize decorations may have changed dialog preferred size

@@ -111,12 +111,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    */
   public BackgroundImageWizardStepsPanel(BackgroundImage backgroundImage, 
                                          UserPreferences preferences, 
-                                         ContentManager  contentManager,
                                          final BackgroundImageWizardController controller) {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
     this.imageLoader = Executors.newSingleThreadExecutor();
-    createComponents(preferences, contentManager, controller);
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
     updateController(backgroundImage);
@@ -133,7 +132,6 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Creates components displayed by this panel.
    */
   private void createComponents(UserPreferences preferences, 
-                                final ContentManager contentManager,
                                 final BackgroundImageWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
@@ -143,9 +141,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          String imageName = showImageChoiceDialog(contentManager);
+          String imageName = showImageChoiceDialog(controller.getContentManager());
           if (imageName != null) {
-            updateController(imageName, contentManager);
+            updateController(imageName, controller.getContentManager());
           }
         }
       });
@@ -165,7 +163,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            updateController(files.get(0).getAbsolutePath(), contentManager);
+            updateController(files.get(0).getAbsolutePath(), controller.getContentManager());
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {

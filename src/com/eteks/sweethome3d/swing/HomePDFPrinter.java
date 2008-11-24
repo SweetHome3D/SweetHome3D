@@ -44,14 +44,11 @@ import com.lowagie.text.pdf.PdfWriter;
  */
 public class HomePDFPrinter {
   private final Home           home;
-  private final ContentManager contentManager;
   private final HomeController controller;
   private final Font           defaultFont;
 
-  public HomePDFPrinter(Home home, ContentManager contentManager, 
-                        HomeController controller, Font defaultFont) {
+  public HomePDFPrinter(Home home, HomeController controller, Font defaultFont) {
     this.home = home;
-    this.contentManager = contentManager;
     this.controller = controller;
     this.defaultFont = defaultFont;
   }
@@ -75,7 +72,7 @@ public class HomePDFPrinter {
       pdfDocument.addCreationDate();
       String homeName = this.home.getName();
       if (homeName != null) {
-        pdfDocument.addTitle(this.contentManager.getPresentationName(
+        pdfDocument.addTitle(this.controller.getContentManager().getPresentationName(
             homeName, ContentManager.ContentType.PDF));
       }
       
