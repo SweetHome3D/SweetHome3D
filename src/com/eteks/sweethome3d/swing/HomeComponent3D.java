@@ -760,7 +760,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1.5f, -0.8f, -1)),         
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(-1.5f, -0.8f, -1)), 
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(0, -0.8f, 1)), 
-        new DirectionalLight(new Color3f(0.5f, 0.5f, 0.5f), new Vector3f(0, 1f, 0)), 
+        new DirectionalLight(new Color3f(0.7f, 0.7f, 0.7f), new Vector3f(0, 1f, 0)), 
         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
     for (int i = 0; i < lights.length - 1; i++) {
       // Allow directional lights color to change
@@ -2093,7 +2093,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
     
     static {
-      DEFAULT_MATERIAL.setDiffuseColor(new Color3f(0.75f, 0.75f, 0.75f));
       DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
     }
     
