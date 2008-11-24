@@ -116,14 +116,7 @@ public enum LengthUnit {
     private String        name;
     private DecimalFormat lengthFormat;
     private DecimalFormat areaFormatWithUnit;
-    private final char [] fractionCharacters = {'\u215b',   // 1/8
-                                                '\u00bc',   // 1/4  
-                                                '\u215c',   // 3/8
-                                                '\u00bd',   // 1/2
-                                                '\u215d',   // 5/8
-                                                '\u00be',   // 3/4
-                                                '\u215e'};  // 7/8
-    
+
     @Override
     public Format getFormatWithUnit() {
       checkLocaleChange();
@@ -156,6 +149,13 @@ public enum LengthUnit {
         
         // Create format for feet and inches
         final Format footFormat = new DecimalFormat("#,##0''");
+        final char [] inchFractionCharacters = {'\u215b',   // 1/8
+                                                '\u00bc',   // 1/4  
+                                                '\u215c',   // 3/8
+                                                '\u00bd',   // 1/2
+                                                '\u215d',   // 5/8
+                                                '\u00be',   // 3/4
+                                                '\u215e'};  // 7/8        
         this.lengthFormat = new DecimalFormat("0.000\"") {            
             @Override
             public StringBuffer format(double number, StringBuffer result,
@@ -179,7 +179,7 @@ public enum LengthUnit {
                   if (eighth == 0 || eighth == 8) {
                     remainingInchesString = Math.round(remainingInches) + "\"";
                   } else {
-                    remainingInchesString = String.valueOf(integerPart) + fractionCharacters [eighth - 1] + "\"";
+                    remainingInchesString = String.valueOf(integerPart) + inchFractionCharacters [eighth - 1] + "\"";
                   }
                   result.append(remainingInchesString);
                   fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
