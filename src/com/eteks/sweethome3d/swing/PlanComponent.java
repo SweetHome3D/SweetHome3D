@@ -416,6 +416,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(roomChangeListener);
           }
+          sortedHomeRooms = null;
           invalidatePlanBoundsAndRevalidate();
         }
       });
