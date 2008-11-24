@@ -4600,14 +4600,17 @@ public class PlanController extends FurnitureController implements Controller {
     public void escape() {
       if (this.newRoom != null) {
         float [][] points = this.newRoom.getPoints();
-        if (points.length <= 3) {
+        if (points.length < 3
+            || (points.length == 3 && this.newPoint == null)) {
           // Delete current created room if it doesn't have more than 2 clicked points
           home.deleteRoom(this.newRoom);
         } else {
-          // Remove last currently edited point
-          float [][] newPoints = new float [points.length -1][];
-          System.arraycopy(points, 0, newPoints, 0, newPoints.length);
-          this.newRoom.setPoints(newPoints);
+          if (this.newPoint == null) {
+            // Remove last currently edited point
+            float [][] newPoints = new float [points.length -1][];
+            System.arraycopy(points, 0, newPoints, 0, newPoints.length);
+            this.newRoom.setPoints(newPoints);
+          }
           // Post walls creation to undo support
           postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
         }
