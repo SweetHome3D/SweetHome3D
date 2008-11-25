@@ -587,8 +587,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
+      Point lastMousePressedLocation;
+      
       @Override
       public void mousePressed(MouseEvent ev) {
+        this.lastMousePressedLocation = ev.getPoint();
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();
           controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
@@ -606,9 +609,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       @Override
       public void mouseMoved(MouseEvent ev) {
-        if (isEnabled()) {
-          controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+        // Ignore mouseMoved events that follows a mousePressed at the same location (Linux notifies this kind of events)
+        if (this.lastMousePressedLocation == null
+            || !this.lastMousePressedLocation.equals(ev.getPoint())) {
+          if (isEnabled()) {
+            controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+          }
         }
+        this.lastMousePressedLocation = null;
       }
 
       @Override
