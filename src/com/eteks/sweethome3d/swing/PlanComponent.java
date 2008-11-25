@@ -287,21 +287,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     // Create a path that draws three arrows going left, right and down
     TEXT_LOCATION_INDICATOR = new GeneralPath();
-    TEXT_LOCATION_INDICATOR.moveTo(0, 2);        // Down line
-    TEXT_LOCATION_INDICATOR.lineTo(0, 10);
-    TEXT_LOCATION_INDICATOR.moveTo(-1.2f, 6.5f); // Down arrow
-    TEXT_LOCATION_INDICATOR.lineTo(0f, 9.5f);
-    TEXT_LOCATION_INDICATOR.lineTo(1.2f, 6.5f);
-    TEXT_LOCATION_INDICATOR.moveTo(2f, 1f);      // Right line
-    TEXT_LOCATION_INDICATOR.lineTo(9, 4);
-    TEXT_LOCATION_INDICATOR.moveTo(6, 4.5f);     // Right arrow
-    TEXT_LOCATION_INDICATOR.lineTo(10, 5);
-    TEXT_LOCATION_INDICATOR.lineTo(7.5f, 1.5f);
-    TEXT_LOCATION_INDICATOR.moveTo(-2f, 1f);     // Left line
-    TEXT_LOCATION_INDICATOR.lineTo(-9, 4);
-    TEXT_LOCATION_INDICATOR.moveTo(-6, 4.5f);    // Left arrow
-    TEXT_LOCATION_INDICATOR.lineTo(-10, 5);
-    TEXT_LOCATION_INDICATOR.lineTo(-7.5f, 1.5f);
+    TEXT_LOCATION_INDICATOR.append(new Arc2D.Float(-2, 0, 4, 4, 190, 160, Arc2D.CHORD), false);
+    TEXT_LOCATION_INDICATOR.moveTo(0, 4);        // Down line
+    TEXT_LOCATION_INDICATOR.lineTo(0, 12);
+    TEXT_LOCATION_INDICATOR.moveTo(-1.2f, 8.5f); // Down arrow
+    TEXT_LOCATION_INDICATOR.lineTo(0f, 11.5f);
+    TEXT_LOCATION_INDICATOR.lineTo(1.2f, 8.5f);
+    TEXT_LOCATION_INDICATOR.moveTo(2f, 3f);      // Right line
+    TEXT_LOCATION_INDICATOR.lineTo(9, 6);
+    TEXT_LOCATION_INDICATOR.moveTo(6, 6.5f);     // Right arrow
+    TEXT_LOCATION_INDICATOR.lineTo(10, 7);
+    TEXT_LOCATION_INDICATOR.lineTo(7.5f, 3.5f);
+    TEXT_LOCATION_INDICATOR.moveTo(-2f, 3f);     // Left line
+    TEXT_LOCATION_INDICATOR.lineTo(-9, 6);
+    TEXT_LOCATION_INDICATOR.moveTo(-6, 6.5f);    // Left arrow
+    TEXT_LOCATION_INDICATOR.lineTo(-10, 7);
+    TEXT_LOCATION_INDICATOR.lineTo(-7.5f, 3.5f);
   }
 
   /**
@@ -400,7 +401,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when rooms change
     final PropertyChangeListener roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Room.Property.POINTS.name().equals(ev.getPropertyName())) {
+          if (Room.Property.POINTS.name().equals(ev.getPropertyName())
+              || Room.Property.NAME.name().equals(ev.getPropertyName())
+              || Room.Property.NAME_X_OFFSET.name().equals(ev.getPropertyName())
+              || Room.Property.NAME_Y_OFFSET.name().equals(ev.getPropertyName())
+              || Room.Property.AREA_VISIBLE.name().equals(ev.getPropertyName())
+              || Room.Property.AREA_X_OFFSET.name().equals(ev.getPropertyName())
+              || Room.Property.AREA_Y_OFFSET.name().equals(ev.getPropertyName())) {
             sortedHomeRooms = null;
             invalidatePlanBoundsAndRevalidate();
           }
