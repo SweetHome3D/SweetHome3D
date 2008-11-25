@@ -610,13 +610,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       @Override
       public void mouseMoved(MouseEvent ev) {
         // Ignore mouseMoved events that follows a mousePressed at the same location (Linux notifies this kind of events)
-        if (this.lastMousePressedLocation == null
-            || !this.lastMousePressedLocation.equals(ev.getPoint())) {
+        if (this.lastMousePressedLocation != null
+            && !this.lastMousePressedLocation.equals(ev.getPoint())) {
+          this.lastMousePressedLocation = null;
+        }
+        if (this.lastMousePressedLocation == null) {
           if (isEnabled()) {
             controller.moveMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
           }
         }
-        this.lastMousePressedLocation = null;
       }
 
       @Override
