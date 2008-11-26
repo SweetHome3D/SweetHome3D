@@ -684,10 +684,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       if (room.isFloorVisible()) {
         float [][] points = room.getPoints();
         if (points.length > 2) {
-          if (room.isClockwise()) {
-            // Reverse points order if they are not in the good order
-            points = getReversedArray(points);
-          }
           roomsArea.add(new Area(getShape(points)));
         }
       }
@@ -2171,20 +2167,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     
     private void updateRoomSideGeometry(int roomSide, HomeTexture texture) {
       Shape3D roomShape = (Shape3D)getChild(roomSide);
-      boolean roomGeometryEmpty = roomShape.numGeometries() == 0; 
-      Geometry roomGeometry = createRoomGeometry(roomSide, texture);
-      if (roomGeometry != null) {
+      int currentGeometriesCount = roomShape.numGeometries();
+      for (Geometry roomGeometry : createRoomGeometries(roomSide, texture)) {
         roomShape.addGeometry(roomGeometry);
       }
-      if (!roomGeometryEmpty) {
-        roomShape.removeGeometry(0);
+      for (int i = currentGeometriesCount - 1; i >= 0; i--) {
+        roomShape.removeGeometry(i);
       }
     }
     
     /**
      * Returns room geometry computed from its points.
      */
-    private Geometry createRoomGeometry(int roomPart, HomeTexture texture) {
+    private Geometry [] createRoomGeometries(int roomPart, HomeTexture texture) {
       Room room = (Room)getUserData();
       float [][] points = room.getPoints();
       if (points.length > 2) {
@@ -2195,32 +2190,79 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           points = getReversedArray(points);
         }
         
-        // Compute room coordinates
-        Point3f [] coords = new Point3f [points.length];
-        for (int i = 0; i < points.length; i++) {
-          float y = roomPart == FLOOR_PART 
-              ? 0 
-              : getRoomHeightAt(points[i][0], points[i][1]);
-          coords [i] = new Point3f(points[i][0], y, points[i][1]);
-        }
-        GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-        geometryInfo.setCoordinates (coords);
-        geometryInfo.setStripCounts(new int [] {coords.length});
-        // Compute room texture coordinates
-        if (texture != null) {
-          TexCoord2f [] textureCoords = new TexCoord2f [points.length];
-          for (int i = 0; i < points.length; i++) {
-            textureCoords [i] = new TexCoord2f(points[i][0] / texture.getWidth(), points[i][1] / texture.getHeight());
+        // If room isn't singular retrieve all the points of its different polygons 
+        List<float [][]> roomPoints = new ArrayList<float[][]>();
+        if (!room.isSingular()) {        
+          GeneralPath roomShape = new GeneralPath();
+          roomShape.moveTo(points [0][0], points [0][1]);
+          for (int i = 1; i < points.length; i++) {
+            roomShape.lineTo(points [i][0], points [i][1]);
           }
-          geometryInfo.setTextureCoordinateParams(1, 2);
-          geometryInfo.setTextureCoordinates(0, textureCoords);
+          roomShape.closePath();
+          // Retrieve the points of the different polygons 
+          // and reverse their points order if necessary
+          Area roomArea = new Area(roomShape);
+          List<float []> currentPathPoints = new ArrayList<float[]>();
+          roomPoints = new ArrayList<float[][]>();
+          for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
+            float [] roomPoint = new float[2];
+            switch (it.currentSegment(roomPoint)) {
+              case PathIterator.SEG_MOVETO : 
+                currentPathPoints.add(roomPoint);
+                break;
+              case PathIterator.SEG_LINETO : 
+                currentPathPoints.add(roomPoint);
+                break;
+              case PathIterator.SEG_CLOSE :
+                float [][] pathPoints = 
+                    currentPathPoints.toArray(new float [currentPathPoints.size()][]);
+                boolean pathPointsClockwise = new Room(pathPoints).isClockwise();
+                if (pathPointsClockwise && roomPart == FLOOR_PART
+                    || !pathPointsClockwise && roomPart == CEILING_PART) {
+                  pathPoints = getReversedArray(pathPoints);
+                }
+                roomPoints.add(pathPoints);
+                currentPathPoints.clear();
+                break;
+            }
+            it.next();        
+          }
+        } else {
+          roomPoints = Arrays.asList(new float [][][] {points});
         }
         
-        // Generate normals
-        new NormalGenerator(0).generateNormals(geometryInfo);
-        return geometryInfo.getIndexedGeometryArray();
+        Geometry [] geometries = new Geometry [roomPoints.size()];
+        for (int i = 0; i < geometries.length; i++) {
+          float [][] geometryPoints = roomPoints.get(i);
+          // Compute room coordinates
+          Point3f [] coords = new Point3f [geometryPoints.length];
+          for (int j = 0; j < geometryPoints.length; j++) {
+            float y = roomPart == FLOOR_PART 
+                ? 0 
+                : getRoomHeightAt(geometryPoints [j][0], geometryPoints [j][1]);
+            coords [j] = new Point3f(geometryPoints [j][0], y, geometryPoints [j][1]);
+          }
+          GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+          geometryInfo.setCoordinates (coords);
+          geometryInfo.setStripCounts(new int [] {coords.length});
+          // Compute room texture coordinates
+          if (texture != null) {
+            TexCoord2f [] textureCoords = new TexCoord2f [geometryPoints.length];
+            for (int j = 0; j < geometryPoints.length; j++) {
+              textureCoords [j] = new TexCoord2f(geometryPoints[j][0] / texture.getWidth(), 
+                  geometryPoints[j][1] / texture.getHeight());
+            }
+            geometryInfo.setTextureCoordinateParams(1, 2);
+            geometryInfo.setTextureCoordinates(0, textureCoords);
+          }
+          
+          // Generate normals
+          new NormalGenerator(0).generateNormals(geometryInfo);
+          geometries [i] = geometryInfo.getIndexedGeometryArray();
+        }
+        return geometries;
       } else {
-        return null;
+        return new Geometry [0];
       }
     }
     
