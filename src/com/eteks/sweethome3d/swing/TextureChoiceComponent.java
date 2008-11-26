@@ -27,6 +27,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.datatransfer.DataFlavor;
@@ -143,9 +144,11 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             SwingUtilities.getRootPane(TextureChoiceComponent.this), controller.getDialogTitle());
         dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         dialog.setResizable(true);
-        // Pack again because resize decorations may have changed dialog preferred size
-        dialog.pack();
-        dialog.setMinimumSize(getPreferredSize());
+        Dimension preferredSize = getPreferredSize();
+        dialog.setMinimumSize(preferredSize);
+        // Use a larger preferred size to let large images be displayed
+        preferredSize.width += 50;
+        dialog.setPreferredSize(preferredSize);
         // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
         dialog.addComponentListener(new ComponentAdapter() {
             @Override
@@ -380,23 +383,19 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
       // Second row
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
-          0, 1, 1, 4, 1, 1, GridBagConstraints.CENTER,
+          0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
       add(this.texturePreviewLabel, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       // Third row
-      add(this.importTextureButton, new GridBagConstraints(
+      JPanel buttonsPanel = new JPanel(new GridLayout(3, 1));
+      buttonsPanel.add(this.importTextureButton);
+      buttonsPanel.add(this.modifyTextureButton);
+      buttonsPanel.add(this.deleteTextureButton);
+      add(buttonsPanel, new GridBagConstraints(
           1, 2, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
-      // Forth row
-      add(this.modifyTextureButton, new GridBagConstraints(
-          1, 3, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
-      // Fifth row
-      add(this.deleteTextureButton, new GridBagConstraints(
-          1, 4, 1, 1, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
     }
     
     /**
@@ -413,8 +412,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       this.previewTexture = previewTexture;
       if (previewTexture != null) {
         this.texturePreviewLabel.setIcon(
-            IconManager.getInstance().getIcon(previewTexture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel)); 
-        this.texturePreviewLabel.revalidate();
+            IconManager.getInstance().getIcon(previewTexture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel));
+        texturePreviewLabel.revalidate();
       } else {
         // Preview a dummy empty icon
         this.texturePreviewLabel.setIcon(new Icon() {
