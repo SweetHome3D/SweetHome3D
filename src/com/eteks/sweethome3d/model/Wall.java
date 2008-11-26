@@ -67,7 +67,7 @@ public class Wall implements Serializable, Selectable {
   /**
    * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
    * to (<code>xEnd</code>, <code>yEnd</code>), 
-   * with given thickness. Left and right colors are <code>null</code>.
+   * with given thickness. Height, left and right colors are <code>null</code>.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness) {
     this.xStart = xStart;
@@ -75,6 +75,20 @@ public class Wall implements Serializable, Selectable {
     this.xEnd = xEnd;
     this.yEnd = yEnd;
     this.thickness = thickness;
+  }
+  
+  /**
+   * Creates a wall from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>), 
+   * with given thickness and height. Left and right colors are <code>null</code>.
+   */
+  public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height) {
+    this.xStart = xStart;
+    this.yStart = yStart;
+    this.xEnd = xEnd;
+    this.yEnd = yEnd;
+    this.thickness = thickness;
+    this.height = height;
   }
   
   /**
