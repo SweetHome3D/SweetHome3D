@@ -20,14 +20,18 @@
 package com.eteks.sweethome3d.model;
 
 import java.awt.Shape;
+import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * A room or a polygon in a home plan. 
@@ -61,6 +65,7 @@ public class Room implements Serializable, Selectable {
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
+  private transient Float areaCache;
 
   /**
    * Creates a room from its name and the given coordinates.
@@ -200,6 +205,7 @@ public class Room implements Serializable, Selectable {
       float [][] oldPoints = this.points;
       this.points = deepCopy(points);
       this.shapeCache = null;
+      this.areaCache  = null;
       this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
     }
   }
@@ -412,19 +418,48 @@ public class Room implements Serializable, Selectable {
    * Returns the area of this room.
    */
   public float getArea() {
-    return Math.abs(getSignedArea());
+    if (this.areaCache == null) {
+      Area roomArea = new Area(getShape());
+      if (roomArea.isSingular()) {
+        this.areaCache = Math.abs(getSignedArea(getPoints()));
+      } else {
+        // Add the surface of the different polygons of this room
+        float area = 0;
+        List<float []> currentPathPoints = new ArrayList<float[]>();
+        for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
+          float [] roomPoint = new float[2];
+          switch (it.currentSegment(roomPoint)) {
+            case PathIterator.SEG_MOVETO : 
+              currentPathPoints.add(roomPoint);
+              break;
+            case PathIterator.SEG_LINETO : 
+              currentPathPoints.add(roomPoint);
+              break;
+            case PathIterator.SEG_CLOSE :
+              float [][] pathPoints = 
+                  currentPathPoints.toArray(new float [currentPathPoints.size()][]);
+              area += Math.abs(getSignedArea(pathPoints));
+              currentPathPoints.clear();
+              break;
+          }
+          it.next();        
+        }
+        this.areaCache = area;
+      }
+    }
+    return this.areaCache;
   }
   
-  private float getSignedArea() {
+  private float getSignedArea(float areaPoints [][]) {
     // From "Area of a General Polygon" algorithm described in  
     // http://www.davidchandler.com/AreaOfAGeneralPolygon.pdf
     float area = 0;
-    for (int i = 1; i < this.points.length; i++) {
-      area += this.points [i][0] * this.points [i - 1][1];
-      area -= this.points [i][1] * this.points [i - 1][0];
+    for (int i = 1; i < areaPoints.length; i++) {
+      area += areaPoints [i][0] * areaPoints [i - 1][1];
+      area -= areaPoints [i][1] * areaPoints [i - 1][0];
     }
-    area += this.points [0][0] * this.points [this.points.length - 1][1];
-    area -= this.points [0][1] * this.points [this.points.length - 1][0];
+    area += areaPoints [0][0] * areaPoints [areaPoints.length - 1][1];
+    area -= areaPoints [0][1] * areaPoints [areaPoints.length - 1][0];
     return area / 2;
   }
   
@@ -432,7 +467,14 @@ public class Room implements Serializable, Selectable {
    * Returns <code>true</code> if the points of this room are in clockwise order.
    */
   public boolean isClockwise() {
-    return getSignedArea() < 0;
+    return getSignedArea(getPoints()) < 0;
+  }
+  
+  /**
+   * Returns <code>true</code> if this room is comprised of only one polygon.
+   */
+  public boolean isSingular() {
+    return new Area(getShape()).isSingular();
   }
   
   /**
