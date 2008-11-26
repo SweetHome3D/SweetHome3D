@@ -85,7 +85,7 @@ public class TextureManager {
    * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>. 
    * If the texture isn't loaded in cache yet, a one pixel white image texture will be notified 
    * immediately to the given <code>textureObserver</code>, then a second notification will 
-   * be given once the image texture is loaded in Event Dispath Thread . If the texture is in cache, 
+   * be given once the image texture is loaded in Event Dispatch Thread . If the texture is in cache, 
    * it will be notified immediately to the given <code>textureObserver</code>.
    * @param content an object containing an image
    * @param textureObserver the observer that will be notified once the texture is available
