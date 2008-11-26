@@ -66,8 +66,10 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   private ColorButton                      groundColorButton;
   private JRadioButton                     groundTextureRadioButton;
   private JComponent                       groundTextureComponent;
-  private JLabel                           skyColorLabel;
+  private JRadioButton                     skyColorRadioButton;
   private ColorButton                      skyColorButton;
+  private JRadioButton                     skyTextureRadioButton;
+  private JComponent                       skyTextureComponent;
   private JLabel                           brightnessLabel;
   private JSlider                          brightnessSlider;
   private JLabel                           wallsTransparencyLabel;
@@ -177,13 +179,27 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     
     this.groundTextureComponent = (JComponent)controller.getGroundTextureController().getView();
 
-    ButtonGroup group = new ButtonGroup();
-    group.add(this.groundColorRadioButton);
-    group.add(this.groundTextureRadioButton);
+    ButtonGroup groundGroup = new ButtonGroup();
+    groundGroup.add(this.groundColorRadioButton);
+    groundGroup.add(this.groundTextureRadioButton);
     updateGroundRadioButtons(controller);
     
-    // Ground sky color label and button bound to SKY_COLOR controller property
-    this.skyColorLabel = new JLabel(this.resource.getString("skyColorLabel.text"));
+    // Sky color and texture buttons bound to sky controller properties
+    this.skyColorRadioButton = new JRadioButton(this.resource.getString("skyColorRadioButton.text"));
+    this.skyColorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (skyColorRadioButton.isSelected()) {
+            controller.setSkyPaint(Home3DAttributesController.EnvironmentPaint.COLORED);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.SKY_PAINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateSkyRadioButtons(controller);
+          }
+        });
+  
     this.skyColorButton = new ColorButton();
     this.skyColorButton.setColorDialogTitle(this.resource.getString("skyColorDialog.title"));
     this.skyColorButton.setColor(controller.getSkyColor());
@@ -199,6 +215,22 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
             skyColorButton.setColor(controller.getSkyColor());
           }
         });
+    
+    this.skyTextureRadioButton = new JRadioButton(this.resource.getString("skyTextureRadioButton.text"));
+    this.skyTextureRadioButton.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent ev) {
+        if (skyTextureRadioButton.isSelected()) {
+          controller.setSkyPaint(Home3DAttributesController.EnvironmentPaint.TEXTURED);
+        }
+      }
+    });
+    
+    this.skyTextureComponent = (JComponent)controller.getSkyTextureController().getView();
+
+    ButtonGroup skyGroup = new ButtonGroup();
+    skyGroup.add(this.skyColorRadioButton);
+    skyGroup.add(this.skyTextureRadioButton);
+    updateSkyRadioButtons(controller);
     
     // Brightness label and slider bound to LIGHT_COLOR controller property
     this.brightnessLabel = new JLabel(this.resource.getString("brightnessLabel.text"));
@@ -264,6 +296,17 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   }
 
   /**
+   * Updates sky radio buttons. 
+   */
+  private void updateSkyRadioButtons(Home3DAttributesController controller) {
+    if (controller.getSkyPaint() == Home3DAttributesController.EnvironmentPaint.COLORED) {
+      this.skyColorRadioButton.setSelected(true);
+    } else {
+      this.skyTextureRadioButton.setSelected(true);
+    } 
+  }
+
+  /**
    * Sets components mnemonics and label / component associations.
    */
   private void setMnemonics() {
@@ -278,9 +321,10 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(this.resource.getString("groundColorRadioButton.mnemonic")).getKeyCode());
       this.groundTextureRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("groundTextureRadioButton.mnemonic")).getKeyCode());
-      this.skyColorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("skyColorLabel.mnemonic")).getKeyCode());
-      this.skyColorLabel.setLabelFor(this.skyColorButton);
+      this.skyColorRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("skyColorRadioButton.mnemonic")).getKeyCode());
+      this.skyTextureRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("skyTextureRadioButton.mnemonic")).getKeyCode());
       this.brightnessLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("brightnessLabel.mnemonic")).getKeyCode());
       this.brightnessLabel.setLabelFor(this.brightnessSlider);
@@ -321,7 +365,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     add(this.groundColorButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 10), 0, 0));
-    add(this.skyColorLabel, new GridBagConstraints(
+    add(this.skyColorRadioButton, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.skyColorButton, new GridBagConstraints(
@@ -334,6 +378,12 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     add(this.groundTextureComponent, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
+    add(this.skyTextureRadioButton, new GridBagConstraints(
+        2, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.skyTextureComponent, new GridBagConstraints(
+        3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Fourth row
     add(this.brightnessLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment, 

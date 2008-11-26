@@ -45,7 +45,7 @@ public class Home3DAttributesController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {OBSERVER_FIELD_OF_VIEW_IN_DEGREES, OBSERVER_HEIGHT, 
-      GROUND_COLOR, GROUND_PAINT, GROUND_TEXTURE, SKY_COLOR,
+      GROUND_COLOR, GROUND_PAINT, SKY_COLOR, SKY_PAINT,
       LIGHT_COLOR, WALLS_ALPHA}
   /**
    * The possible values for {@linkplain #getGroundPaint() ground paint type}.
@@ -58,6 +58,7 @@ public class Home3DAttributesController implements Controller {
   private final ContentManager        contentManager;
   private final UndoableEditSupport   undoSupport;
   private TextureChoiceController     groundTextureController;
+  private TextureChoiceController     skyTextureController;
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  home3DAttributesView;
 
@@ -66,6 +67,7 @@ public class Home3DAttributesController implements Controller {
   private int   groundColor;
   private EnvironmentPaint groundPaint;
   private int   skyColor;
+  private EnvironmentPaint skyPaint;
   private int   lightColor;
   private float wallsAlpha;
 
@@ -104,6 +106,25 @@ public class Home3DAttributesController implements Controller {
           });
     }
     return this.groundTextureController;
+  }
+
+  /**
+   * Returns the texture controller of the sky.
+   */
+  public TextureChoiceController getSkyTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.skyTextureController == null) {
+      ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
+      this.skyTextureController = new TextureChoiceController(
+          resource.getString("skyTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+      this.skyTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setSkyPaint(EnvironmentPaint.TEXTURED);
+            }
+          });
+    }
+    return this.skyTextureController;
   }
 
   /**
@@ -156,6 +177,13 @@ public class Home3DAttributesController implements Controller {
       setGroundPaint(EnvironmentPaint.COLORED);
     }
     setSkyColor(homeEnvironment.getSkyColor());
+    HomeTexture skyTexture = homeEnvironment.getSkyTexture();
+    getSkyTextureController().setTexture(skyTexture);
+    if (skyTexture != null) {
+      setSkyPaint(EnvironmentPaint.TEXTURED);
+    } else {
+      setSkyPaint(EnvironmentPaint.COLORED);
+    }
     setLightColor(homeEnvironment.getLightColor());
     setWallsAlpha(homeEnvironment.getWallsAlpha());
   }
@@ -254,6 +282,24 @@ public class Home3DAttributesController implements Controller {
   }
 
   /**
+   * Sets whether the sky is colored or textured.
+   */
+  public void setSkyPaint(EnvironmentPaint skyPaint) {
+    if (skyPaint != this.skyPaint) {
+      EnvironmentPaint oldSkyPaint = this.skyPaint;
+      this.skyPaint = skyPaint;
+      this.propertyChangeSupport.firePropertyChange(Property.SKY_PAINT.name(), oldSkyPaint, skyPaint);
+    }
+  }
+
+  /**
+   * Returns whether the sky is colored or textured.
+   */
+  public EnvironmentPaint getSkyPaint() {
+    return this.skyPaint;
+  }
+
+  /**
    * Sets the edited light color.
    */
   public void setLightColor(int lightColor) {
@@ -300,6 +346,9 @@ public class Home3DAttributesController implements Controller {
         ? getGroundTextureController().getTexture()
         : null;
     final int   skyColor = getSkyColor();
+    final HomeTexture skyTexture = getSkyPaint() == EnvironmentPaint.TEXTURED
+        ? getSkyTextureController().getTexture()
+        : null;
     final int   lightColor  = getLightColor();
     final float wallsAlpha = getWallsAlpha();
 
@@ -309,26 +358,27 @@ public class Home3DAttributesController implements Controller {
     final int   oldGroundColor = homeEnvironment.getGroundColor();
     final HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
     final int   oldSkyColor = homeEnvironment.getSkyColor();
+    final HomeTexture oldSkyTexture = homeEnvironment.getSkyTexture();
     final int   oldLightColor = homeEnvironment.getLightColor();
     final float oldWallsAlpha = homeEnvironment.getWallsAlpha();
     
     // Apply modification
     doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
-        groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
+        groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
           doModify3DAttributes(home, oldObserverCameraFieldOfView, oldObserverCameraZ, 
-              oldGroundColor, oldGroundTexture, oldSkyColor, oldLightColor, oldWallsAlpha); 
+              oldGroundColor, oldGroundTexture, oldSkyColor, oldSkyTexture, oldLightColor, oldWallsAlpha); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
-              groundColor, groundTexture, skyColor, lightColor, wallsAlpha); 
+              groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
         }
         
         @Override
@@ -347,7 +397,8 @@ public class Home3DAttributesController implements Controller {
   private void doModify3DAttributes(Home home,
                                     float observerCameraFieldOfView, 
                                     float observerCameraZ, 
-                                    int groundColor, HomeTexture groundTexture, int skyColor, 
+                                    int groundColor, HomeTexture groundTexture, 
+                                    int skyColor, HomeTexture skyTexture, 
                                     int lightColor, float wallsAlpha) {
     ObserverCamera observerCamera = home.getObserverCamera();
     observerCamera.setFieldOfView(observerCameraFieldOfView);
@@ -356,6 +407,7 @@ public class Home3DAttributesController implements Controller {
     homeEnvironment.setGroundColor(groundColor);
     homeEnvironment.setGroundTexture(groundTexture);
     homeEnvironment.setSkyColor(skyColor);
+    homeEnvironment.setSkyTexture(skyTexture);
     homeEnvironment.setLightColor(lightColor);
     homeEnvironment.setWallsAlpha(wallsAlpha);
   }

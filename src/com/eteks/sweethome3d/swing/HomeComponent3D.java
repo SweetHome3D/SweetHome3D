@@ -242,6 +242,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     home.removePropertyChangeListener(Home.Property.CAMERA, this.homeCameraListener);
     HomeEnvironment homeEnvironment = home.getEnvironment();
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
+    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
     homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
@@ -566,30 +567,106 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns a new background node.  
    */
   private Node createBackgroundNode(final Home home) {
-    final Background background = new Background();
-    updateBackgroundColor(background, home);
-    // Allow background color to change
-    background.setCapability(Background.ALLOW_COLOR_WRITE);
-    background.setApplicationBounds(new BoundingBox(
-        new Point3d(-100000, -100000, -100000), 
-        new Point3d(100000, 100000, 100000)));
+    final Appearance backgroundAppearance = new Appearance();
+    ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
+    backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
+    // Allow background color and texture to change
+    backgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    backgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
+    backgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
     
-    // Add a listener on sky color property change to home
+    Geometry halfSphereGeometry = createHalfSphereGeometry();   
+    final Shape3D halfSphere = new Shape3D(halfSphereGeometry, backgroundAppearance);
+    BranchGroup backgroundBranch = new BranchGroup();
+    backgroundBranch.addChild(halfSphere);
+    
+    final Background background = new Background(backgroundBranch);
+    updateBackgroundColorAndTexture(backgroundAppearance, home);
+    background.setImageScaleMode(Background.SCALE_FIT_ALL);
+    background.setApplicationBounds(new BoundingBox(
+        new Point3d(-1E6, -1E6, -1E6), 
+        new Point3d(1E6, 1E6, 1E6)));    
+    
+    // Add a listener on sky color and texture properties change 
     this.skyColorListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateBackgroundColor(background, home);
+          updateBackgroundColorAndTexture(backgroundAppearance, home);
         }
       };
     home.getEnvironment().addPropertyChangeListener(
         HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
+    home.getEnvironment().addPropertyChangeListener(
+        HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
     return background;
   }
 
   /**
-   * Updates<code>background</code> color from <code>home</code> sky color.
+   * Returns a half sphere oriented inward and with texture ordinates 
+   * that spread along an hemisphere. 
    */
-  private void updateBackgroundColor(Background background, Home home) {
-    background.setColor(new Color3f(new Color(home.getEnvironment().getSkyColor())));
+  private Geometry createHalfSphereGeometry() {
+    final int divisionCount = 48; 
+    Point3f [] coords = new Point3f [divisionCount * divisionCount];
+    TexCoord2f [] textureCoords = new TexCoord2f [divisionCount * divisionCount];
+    for (int i = 0, k = 0; i < divisionCount; i++) {
+      double alpha = i * 2 * Math.PI / divisionCount;
+      float cosAlpha = (float)Math.cos(alpha);
+      float sinAlpha = (float)Math.sin(alpha);
+      double nextAlpha = (i  + 1) * 2 * Math.PI / divisionCount;
+      float cosNextAlpha = (float)Math.cos(nextAlpha);
+      float sinNextAlpha = (float)Math.sin(nextAlpha);
+      for (int j = 0; j < divisionCount / 4; j++) {
+        double beta = 2 * j * Math.PI / divisionCount;
+        float cosBeta = (float)Math.cos(beta);
+        float sinBeta = (float)Math.sin(beta);
+        // Correct the bottom of the hemisphere to avoid seeing at black line at the horizon
+        float y = j != 0 ? sinBeta : -0.01f;
+        double nextBeta = 2 * (j + 1) * Math.PI / divisionCount;
+        float cosNextBeta = (float)Math.cos(nextBeta);
+        float sinNextBeta = (float)Math.sin(nextBeta);
+        coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
+        textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinBeta); 
+        
+        coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
+        textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinBeta); 
+        
+        coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
+        textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinNextBeta); 
+        
+        coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
+        textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinNextBeta); 
+      }
+    }
+    
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
+    geometryInfo.setCoordinates(coords);
+    geometryInfo.setTextureCoordinateParams(1, 2);
+    geometryInfo.setTextureCoordinates(0, textureCoords);
+    geometryInfo.indexify();
+    geometryInfo.compact();
+    Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray();
+    return halfSphereGeometry;
+  }
+
+  /**
+   * Updates<code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.
+   */
+  private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home) {
+    Color3f skyColor = new Color3f(new Color(home.getEnvironment().getSkyColor()));
+    backgroundAppearance.getColoringAttributes().setColor(skyColor);
+    HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
+    if (skyTexture != null) {
+      final TextureManager imageManager = TextureManager.getInstance();
+      imageManager.loadTexture(skyTexture.getImage(), 
+          new TextureManager.TextureObserver() {
+              public void textureUpdated(Texture texture) {
+                backgroundAppearance.setTexture(texture);
+              }
+            });
+    } else {
+      backgroundAppearance.setTexture(null);
+    }
+
     clearPrintedImageCache();
   }
   
@@ -618,7 +695,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     updateGroundColorAndTexture(groundShape, home, 
         groundOriginX, groundOriginY, groundWidth, groundDepth);
     
-    // Add a listener on ground color and texture property change to home
+    // Add a listener on ground color and texture properties change 
     this.groundColorAndTextureListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateGroundColorAndTexture(groundShape, home, 

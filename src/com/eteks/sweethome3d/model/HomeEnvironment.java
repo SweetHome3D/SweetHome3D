@@ -35,7 +35,7 @@ public class HomeEnvironment implements Serializable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE};
+  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE};
   /**
    * The various modes used to draw home in 3D. 
    */
@@ -46,6 +46,7 @@ public class HomeEnvironment implements Serializable {
   private int                             groundColor;
   private HomeTexture                     groundTexture;
   private int                             skyColor;
+  private HomeTexture                     skyTexture;
   private int                             lightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
@@ -157,6 +158,25 @@ public class HomeEnvironment implements Serializable {
     }
   }
   
+  /**
+   * Returns the sky texture of this environment.
+   */
+  public HomeTexture getSkyTexture() {
+    return this.skyTexture;
+  }
+
+  /**
+   * Sets the sky texture of this environment and fires a <code>PropertyChangeEvent</code>.
+   */
+  public void setSkyTexture(HomeTexture skyTexture) {
+    if (skyTexture != this.skyTexture) {
+      HomeTexture oldSkyTexture = this.skyTexture;
+      this.skyTexture = skyTexture;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.SKY_TEXTURE.name(), oldSkyTexture, skyTexture);
+    }
+  }
+
   /**
    * Returns the light color of this environment.
    */
