@@ -57,6 +57,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private ResourceBundle          resource;
   private JLabel                  nameLabel;
   private JTextField              nameTextField;
+  private NullableCheckBox        nameVisibleCheckBox;
   private JLabel                  xLabel;
   private JSpinner                xSpinner;
   private JLabel                  yLabel;
@@ -134,6 +135,25 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         }
       });
         
+    // Create name visible check box bound to NAME_VISIBLE controller property
+    this.nameVisibleCheckBox = new NullableCheckBox(this.resource.getString("nameVisibleCheckBox.text"));
+    this.nameVisibleCheckBox.setNullable(controller.getNameVisible() == null);
+    this.nameVisibleCheckBox.setValue(controller.getNameVisible());
+    final PropertyChangeListener nameVisibleChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        nameVisibleCheckBox.setNullable(ev.getNewValue() == null);
+        nameVisibleCheckBox.setValue((Boolean)ev.getNewValue());
+      }
+    };
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME_VISIBLE, nameVisibleChangeListener);
+    this.nameVisibleCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.removePropertyChangeListener(HomeFurnitureController.Property.NAME_VISIBLE, nameVisibleChangeListener);
+          controller.setNameVisible(nameVisibleCheckBox.getValue());
+          controller.addPropertyChangeListener(HomeFurnitureController.Property.NAME_VISIBLE, nameVisibleChangeListener);
+        }
+      });
+    
     // Create X label and its spinner bound to X controller property
     this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
@@ -433,13 +453,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(this.nameTextField, new GridBagConstraints(
         1, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
-    add(this.angleLabel, new GridBagConstraints(
-        4, 0, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
-    add(this.angleSpinner, new GridBagConstraints(
-        5, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+    add(this.nameVisibleCheckBox, new GridBagConstraints(
+        4, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     // Second row
     add(this.xLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, labelAlignment, 
@@ -487,11 +504,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
     add(this.mirroredModelCheckBox, new GridBagConstraints(
-        2, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, lastRowInsets, 0, 0));
     add(this.visibleCheckBox, new GridBagConstraints(
-        4, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+        3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, lastRowInsets, 0, 0));
+    add(this.angleLabel, new GridBagConstraints(
+        4, 3, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, lastRowInsets, 0, 0));
+    add(this.angleSpinner, new GridBagConstraints(
+        5, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
   }
 
   /**

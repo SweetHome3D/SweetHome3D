@@ -54,6 +54,9 @@ public class Home implements Serializable {
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
     BACKGROUND_IMAGE, CAMERA, PRINT};
   
+  private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f, TextStyle.FontStyle.PLAIN);
+  private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f, TextStyle.FontStyle.PLAIN);
+
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
   private transient List<Selectable>                  selectedItems;
@@ -791,6 +794,17 @@ public class Home implements Serializable {
    */
   public long getVersion() {
     return this.version;
+  }
+  
+  /**
+   * Returns the default text style of a class of selectable object. 
+   */
+  public TextStyle getDefaultTextStyle(Class<? extends Selectable> selectableClass) {
+    if (Room.class.isAssignableFrom(selectableClass)) {
+      return DEFAULT_ROOM_TEXT_STYLE;
+    } else {
+      return DEFAULT_TEXT_STYLE;
+    }
   }
   
   /**

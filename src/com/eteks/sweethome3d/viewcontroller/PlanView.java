@@ -19,9 +19,8 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import com.eteks.sweethome3d.model.DimensionLine;
-import com.eteks.sweethome3d.model.Room;
-import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.TextStyle;
 
 /**
  * The view that displays the plan of a home.
@@ -79,14 +78,21 @@ public interface PlanView extends View {
   public abstract float getPixelLength();
 
   /**
+   * Returns the coordinates of the bounding rectangle of the <code>text</code> displayed at
+   * the point (<code>x</code>,<code>y</code>).  
+   */
+  public abstract float [][] getTextBounds(String text, TextStyle style, 
+                                           float x, float y, float angle);
+
+  /**
    * Sets the cursor of this component as rotation cursor. 
    */
   public abstract void setCursor(CursorType cursorType);
 
   /**
-   * Sets tool tip text displayed as feeback. 
+   * Sets tool tip text displayed as feedback. 
    * @param toolTipFeedback the text displayed in the tool tip 
-   *                    or <code>null</code> to make tool tip disapear.
+   *                    or <code>null</code> to make tool tip disappear.
    */
   public abstract void setToolTipFeedback(String toolTipFeedback,
                                           float x, float y);
@@ -103,38 +109,16 @@ public interface PlanView extends View {
   public abstract void setResizeIndicatorVisible(boolean resizeIndicatorVisible);
 
   /**
-   * Sets the location point for <code>wall</code> alignment feedback. 
+   * Sets the location point for alignment feedback.
    */
-  public abstract void setWallAlignmentFeedback(Wall wall, float x, float y);
-
+  public abstract void setAlignmentFeedback(Selectable alignedObject,
+                                            float x, 
+                                            float y, 
+                                            boolean showPoint);
   /**
-   * Deletes the wall alignment feedback. 
+   * Deletes the alignment feedback. 
    */
-  public abstract void deleteWallAlignmentFeedback();
-
-  /**
-   * Sets the location point for <code>room</code> alignment feedback.
-   */
-  public abstract void setRoomAlignmentFeedback(Room room,
-                                                float x, 
-                                                float y, boolean magnetizedPoint);
-
-  /**
-   * Deletes the room point feedback.
-   */
-  public abstract void deleteRoomAlignmentFeedback();
-
-  /**
-   * Sets the location point for <code>dimensionLine</code> alignment feedback. 
-   */
-  public abstract void setDimensionLineAlignmentFeedback(DimensionLine dimensionLine,
-                                                        float x,
-                                                        float y);
-
-  /**
-   * Deletes the dimension line alignment feedback. 
-   */
-  public abstract void deleteDimensionLineAlignmentFeedback();
+  public abstract void deleteAlignmentFeedback();
 
   /**
    * Returns the component used as an horizontal ruler for this plan.

@@ -67,6 +67,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
@@ -101,6 +103,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -134,20 +137,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor       resizeCursor;
   private final Cursor       duplicationCursor;
   private Rectangle2D        rectangleFeedback;
-  private Wall               wallAlignmentFeedback;
-  private Point2D            wallLocationFeeback;
-  private Room               roomAlignmentFeedback;
-  private Point2D            roomLocationFeeback;
-  private boolean            roomMagnetizedFeedback;
-  private DimensionLine      dimensionLineAlignmentFeedback;
-  private Point2D            dimensionLineLocationFeeback;
+  private Selectable         alignedObjectFeedback;
+  private Point2D            locationFeeback;
+  private boolean            showPointFeedback;
   private boolean            selectionScrollUpdated;
   private JToolTip           toolTip;
   private JWindow            toolTipWindow;
   private boolean            resizeIndicatorVisible;
-  private List<HomePieceOfFurniture> sortedHomeFurniture;
-  private List<Room>                 sortedHomeRooms;
-
+  
+  private List<HomePieceOfFurniture>  sortedHomeFurniture;
+  private List<Room>                  sortedHomeRooms;
+  private Map<TextStyle, Font>        fonts;
+  private Map<TextStyle, FontMetrics> fontsMetrics;
+  
   private Rectangle2D        planBoundsCache;  
   private boolean            planBoundsCacheValid;  
   private BufferedImage      backgroundImageCache;
@@ -174,9 +176,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   private static final float WALL_STROKE_WIDTH = 1.5f;  
   
-  private static final float SMALL_TEXT_SIZE_FACTOR = 1.5f;
-  private static final float MEDIUM_TEXT_SIZE_FACTOR = 2f;
-
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
     // at top left point of a piece of furniture
@@ -847,10 +846,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       componentFont = getFont();
     }
-    Font roomTextFont = componentFont.deriveFont(componentFont.getSize2D() * MEDIUM_TEXT_SIZE_FACTOR);
-    FontMetrics roomTextFontMetrics = getFontMetrics(roomTextFont);
-    Font dimensionLineTextFont = componentFont.deriveFont(componentFont.getSize2D() * SMALL_TEXT_SIZE_FACTOR);
-    FontMetrics dimensionLineTextFontMetrics = getFontMetrics(dimensionLineTextFont);    
     
     Rectangle2D objectBounds = null;
     for (Selectable object : objects) {
@@ -874,11 +869,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (roomName != null && roomName.length() > 0) {
           float xName = xRoomCenter + room.getNameXOffset(); 
           float yName = yRoomCenter + room.getNameYOffset();
-          Rectangle2D nameBounds = roomTextFontMetrics.getStringBounds(roomName, g);
+          TextStyle nameStyle = room.getNameStyle();
+          if (nameStyle == null) {
+            nameStyle = this.home.getDefaultTextStyle(room.getClass());
+          }          
+          FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
+          Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
           objectBounds.add(xName - nameBounds.getWidth() / 2, 
-              yName - roomTextFontMetrics.getAscent());
+              yName - nameFontMetrics.getAscent());
           objectBounds.add(xName + nameBounds.getWidth() / 2, 
-              yName + roomTextFontMetrics.getDescent());
+              yName + nameFontMetrics.getDescent());
         }
         if (room.isAreaVisible()) {
           float area = room.getArea();
@@ -886,20 +886,51 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             float xArea = xRoomCenter + room.getAreaXOffset(); 
             float yArea = yRoomCenter + room.getAreaYOffset();
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-            Rectangle2D areaTextBounds = roomTextFontMetrics.getStringBounds(areaText, g);
+            TextStyle areaStyle = room.getAreaStyle();
+            if (areaStyle == null) {
+              areaStyle = this.home.getDefaultTextStyle(room.getClass());
+            }          
+            FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
+            Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
             objectBounds.add(xArea - areaTextBounds.getWidth() / 2, 
-                yArea - roomTextFontMetrics.getAscent());
+                yArea - areaFontMetrics.getAscent());
             objectBounds.add(xArea + areaTextBounds.getWidth() / 2, 
-                yArea + roomTextFontMetrics.getDescent());
+                yArea + areaFontMetrics.getDescent());
           }
+        }
+      } else if (object instanceof HomePieceOfFurniture) {
+        // Add to bounds the displayed name of piece of furniture 
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)object;
+        float xPiece = piece.getX();
+        float yPiece = piece.getY();
+        String pieceName = piece.getName();
+        if (piece.isVisible()
+            && piece.isNameVisible()
+            && pieceName.length() > 0) {
+          float xName = xPiece + piece.getNameXOffset(); 
+          float yName = yPiece + piece.getNameYOffset();
+          TextStyle nameStyle = piece.getNameStyle();
+          if (nameStyle == null) {
+            nameStyle = this.home.getDefaultTextStyle(piece.getClass());
+          }          
+          FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
+          Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
+          objectBounds.add(xName - nameBounds.getWidth() / 2, 
+              yName - nameFontMetrics.getAscent());
+          objectBounds.add(xName + nameBounds.getWidth() / 2, 
+              yName + nameFontMetrics.getDescent());
         }
       } else if (object instanceof DimensionLine) {
         // Add to bounds the text bounds of dimension line length 
         DimensionLine dimensionLine = (DimensionLine)object;
-        float dimensionLineLength = (float)Point2D.distance(dimensionLine.getXStart(), dimensionLine.getYStart(), 
-            dimensionLine.getXEnd(), dimensionLine.getYEnd());
+        float dimensionLineLength = dimensionLine.getLength();
         String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
-        Rectangle2D lengthTextBounds = dimensionLineTextFontMetrics.getStringBounds(lengthText, g);
+        TextStyle lengthStyle = dimensionLine.getLengthStyle();
+        if (lengthStyle == null) {
+          lengthStyle = this.home.getDefaultTextStyle(dimensionLine.getClass());
+        }          
+        FontMetrics lengthFontMetrics = getFontMetrics(componentFont, lengthStyle);
+        Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g);
         // Transform length text bounding rectangle corners to their real location
         double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
             dimensionLine.getXEnd() - dimensionLine.getXStart());
@@ -909,8 +940,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         transform.translate(0, dimensionLine.getOffset());
         transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2, 
             dimensionLine.getOffset() <= 0 
-                ? -dimensionLineTextFontMetrics.getDescent() - 1
-                : dimensionLineTextFontMetrics.getAscent() + 1);
+                ? -lengthFontMetrics.getDescent() - 1
+                : lengthFontMetrics.getAscent() + 1);
         GeneralPath lengthTextBoundsPath = new GeneralPath(lengthTextBounds);
         for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); ) {
           float [] pathPoint = new float[2];
@@ -944,6 +975,86 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     return objectBounds;
   }
   
+  /**
+   * Returns the coordinates of the bounding rectangle of the <code>text</code> centered at
+   * the point (<code>x</code>,<code>y</code>).  
+   */
+  public float [][] getTextBounds(String text, TextStyle style, 
+                                  float x, float y, float angle) {
+    FontMetrics fontMetrics = getFontMetrics(getFont(), style);
+    Rectangle2D textBounds = fontMetrics.getStringBounds(text, null);
+    float halfTextLength = (float)textBounds.getWidth() / 2;
+    float textBaseLine = fontMetrics.getAscent();
+    if (angle == 0) {
+      return new float [][] {
+          {x - halfTextLength, y - textBaseLine},
+          {x + halfTextLength, y - textBaseLine},
+          {x + halfTextLength, y + (float)textBounds.getHeight() - textBaseLine},
+          {x - halfTextLength, y + (float)textBounds.getHeight() - textBaseLine}};
+    } else {
+      // Transform text bounding rectangle corners to their real location
+      AffineTransform transform = new AffineTransform();
+      transform.translate(x - halfTextLength, y + (float)textBounds.getHeight() - textBaseLine);
+      transform.rotate(angle);
+      GeneralPath textBoundsPath = new GeneralPath(textBounds);
+      List<float []> textPoints = new ArrayList<float[]>(4);
+      for (PathIterator it = textBoundsPath.getPathIterator(transform); !it.isDone(); ) {
+        float [] pathPoint = new float[2];
+        if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+          textPoints.add(pathPoint);
+        }
+        it.next();
+      }
+      return textPoints.toArray(new float [textPoints.size()][]);
+    }
+  }
+  
+  /**
+   * Returns the AWT font matching a given text style.
+   */
+  private Font getFont(Font defaultFont, TextStyle textStyle) {
+    if (this.fonts == null) {
+      this.fonts = new WeakHashMap<TextStyle, Font>();
+    }
+    Font font = this.fonts.get(textStyle);
+    if (font == null) {
+      int awtFontStyle = Font.PLAIN;
+      TextStyle.FontStyle fontStyle = textStyle.getFontStyle();
+      if (fontStyle != null) {
+        switch (fontStyle) {
+          case BOLD :
+            awtFontStyle = Font.BOLD;
+            break;
+          case ITALIC :
+            awtFontStyle = Font.ITALIC;
+            break;
+          case BOLD_ITALIC :
+            awtFontStyle = Font.BOLD | Font.ITALIC;
+            break;
+        }
+      }
+      font = new Font(defaultFont.getName(), awtFontStyle, 1);
+      font = font.deriveFont(textStyle.getFontSize());
+      this.fonts.put(textStyle, font);
+    }
+    return font;
+  }
+
+  /**
+   * Returns the font metrics matching a given text style.
+   */
+  private FontMetrics getFontMetrics(Font defaultFont, TextStyle textStyle) {
+    if (this.fontsMetrics == null) {
+      this.fontsMetrics = new WeakHashMap<TextStyle, FontMetrics>();
+    }
+    FontMetrics fontMetrics = this.fontsMetrics.get(textStyle);
+    if (fontMetrics == null) {
+      fontMetrics = getFontMetrics(getFont(defaultFont, textStyle));
+      this.fontsMetrics.put(textStyle, fontMetrics);
+    }
+    return fontMetrics;
+  }
+
   /**
    * Paints this component.
    */
@@ -1180,7 +1291,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintFurniture(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
     paintDimensionLines(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
         locationFeedbackStroke, planScale, foregroundColor, paintMode);
+    // Paint rooms and furniture name last to ensure they are not hidden
     paintRoomsNameAndArea(g2D, selectedItems, planScale, foregroundColor, paintMode);
+    paintFurnitureName(g2D, selectedItems, planScale, foregroundColor, paintMode);
     if (paintMode == PaintMode.PAINT) {
       paintSelectedRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
@@ -1192,10 +1305,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, backgroundColor, foregroundColor);
       
-      paintWallAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, planScale);
-      paintRoomAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, planScale,
-          selectionOutlinePaint, selectionOutlineStroke);
-      paintDimensionLineAlignmentFeedback(g2D, selectionColor, locationFeedbackStroke, planScale);
+      if (this.alignedObjectFeedback instanceof Wall) {
+        paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, 
+            selectionColor, locationFeedbackStroke, planScale);
+      } else if (this.alignedObjectFeedback instanceof Room) {
+        paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
+            selectionColor, locationFeedbackStroke, planScale,
+            selectionOutlinePaint, selectionOutlineStroke);
+      } else if (this.alignedObjectFeedback instanceof DimensionLine) {
+        paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
+            selectionColor, locationFeedbackStroke, planScale);
+      }
       paintRectangleFeedback(g2D, selectionColor, planScale);
     }
   }
@@ -1270,8 +1390,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                      Color foregroundColor, PaintMode paintMode) {
     g2D.setPaint(foregroundColor);
     Font previousFont = g2D.getFont();
-    g2D.setFont(previousFont.deriveFont(previousFont.getSize2D() * MEDIUM_TEXT_SIZE_FACTOR));
-    FontMetrics fontMetrics = g2D.getFontMetrics();
     for (Room room : this.sortedHomeRooms) { 
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
@@ -1285,8 +1403,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (name.length() > 0) {
             float xName = xRoomCenter + room.getNameXOffset(); 
             float yName = yRoomCenter + room.getNameYOffset();
+            TextStyle nameStyle = room.getNameStyle();
+            if (nameStyle == null) {
+              nameStyle = this.home.getDefaultTextStyle(room.getClass());
+            }          
+            FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
+            Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
             // Draw room name
-            Rectangle2D nameBounds = fontMetrics.getStringBounds(name, g2D);
+            g2D.setFont(getFont(previousFont, nameStyle));
             g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
           }
         }
@@ -1295,9 +1419,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (area > 0.01f) {
             float xArea = xRoomCenter + room.getAreaXOffset(); 
             float yArea = yRoomCenter + room.getAreaYOffset();
-            // Draw room area 
+            TextStyle areaStyle = room.getNameStyle();
+            if (areaStyle == null) {
+              areaStyle = this.home.getDefaultTextStyle(room.getClass());
+            }          
+            FontMetrics areaFontMetrics = getFontMetrics(previousFont, areaStyle);
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-            Rectangle2D areaTextBounds = fontMetrics.getStringBounds(areaText, g2D);
+            Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g2D);
+            // Draw room area 
+            g2D.setFont(getFont(previousFont, areaStyle));
             g2D.drawString(areaText, xArea - (float)areaTextBounds.getWidth() / 2, yArea);
           }
         }
@@ -1402,9 +1532,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (this.resizeIndicatorVisible
         && room.getName() != null
         && room.getName().trim().length() > 0) {
-      float xArea = room.getXCenter() + room.getNameXOffset(); 
-      float yArea = room.getYCenter() + room.getNameYOffset();
-      paintTextLocationIndicator(g2D, xArea, yArea,
+      float xName = room.getXCenter() + room.getNameXOffset(); 
+      float yName = room.getYCenter() + room.getNameYOffset();
+      paintTextLocationIndicator(g2D, xName, yName,
           indicatorPaint, planScale);
     }
   }
@@ -1601,7 +1731,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintFurniture(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
-    BasicStroke pieceBorderStroke = new BasicStroke(1f / planScale);
     if (this.sortedHomeFurniture == null) {
       // Sort home furniture in elevation order
       this.sortedHomeFurniture = 
@@ -1620,6 +1749,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }
           });
     }
+    BasicStroke pieceBorderStroke = new BasicStroke(1f / planScale);
     // Draw furniture
     for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
       if (piece.isVisible()) {
@@ -1640,6 +1770,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
     }
+  }
+
+  /**
+   * Paints home furniture visible name.
+   */
+  private void paintFurnitureName(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+                                  Color foregroundColor, PaintMode paintMode) {
+    Font previousFont = g2D.getFont();
+    // Draw furniture name
+    for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
+      if (piece.isVisible()
+          && piece.isNameVisible()) {
+        boolean selectedPiece = selectedItems.contains(piece);
+        // In clipboard paint mode, paint piece only if it is selected
+        if (paintMode != PaintMode.CLIPBOARD
+            || selectedPiece) {
+          String name = piece.getName().trim();
+          if (name.length() > 0) {
+            float xName = piece.getX() + piece.getNameXOffset(); 
+            float yName = piece.getY() + piece.getNameYOffset();
+            TextStyle nameStyle = piece.getNameStyle();
+            if (nameStyle == null) {
+              nameStyle = this.home.getDefaultTextStyle(piece.getClass());
+            }          
+            FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
+            Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
+            // Draw room name
+            g2D.setFont(getFont(previousFont, nameStyle));
+            g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
+          }
+        }
+      }
+    }
+    g2D.setFont(previousFont);
   }
 
   /**
@@ -1754,6 +1918,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.draw(FURNITURE_RESIZE_INDICATOR);
         g2D.setTransform(previousTransform);
       }
+      
+      if (piece.isNameVisible()
+          && piece.getName().trim().length() > 0) {
+        float xName = piece.getX() + piece.getNameXOffset(); 
+        float yName = piece.getY() + piece.getNameYOffset();
+        paintTextLocationIndicator(g2D, xName, yName,
+            indicatorPaint, planScale);
+      }
     }
   }
   
@@ -1777,14 +1949,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     BasicStroke dimensionLineStroke = new BasicStroke(1 / planScale);
     // Change font size
     Font previousFont = g2D.getFont();
-    g2D.setFont(previousFont.deriveFont(previousFont.getSize2D() * SMALL_TEXT_SIZE_FACTOR));
-    FontMetrics fontMetrics = g2D.getFontMetrics();
     for (DimensionLine dimensionLine : paintedDimensionLines) {
       AffineTransform previousTransform = g2D.getTransform();
       double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
           dimensionLine.getXEnd() - dimensionLine.getXStart());
-      float dimensionLineLength = (float)Point2D.distance(dimensionLine.getXStart(), dimensionLine.getYStart(), 
-          dimensionLine.getXEnd(), dimensionLine.getYEnd());
+      float dimensionLineLength = dimensionLine.getLength();
       g2D.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
       g2D.rotate(angle);
       g2D.translate(0, dimensionLine.getOffset());
@@ -1821,15 +1990,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
       g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
       
-      // Draw dimension length in middle
       String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
-      Rectangle2D lengthTextBounds = fontMetrics.getStringBounds(lengthText, g2D);
-      
+      TextStyle lengthStyle = dimensionLine.getLengthStyle();
+      if (lengthStyle == null) {
+        lengthStyle = this.home.getDefaultTextStyle(dimensionLine.getClass());
+      }          
+      FontMetrics lengthFontMetrics = getFontMetrics(previousFont, lengthStyle);
+      Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g2D);      
+      // Draw dimension length in middle
+      g2D.setFont(getFont(previousFont, lengthStyle));
       g2D.drawString(lengthText, 
           (dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
           dimensionLine.getOffset() <= 0 
-              ? -fontMetrics.getDescent() - 1 / planScale
-              : fontMetrics.getAscent() + 1 / planScale);
+              ? -lengthFontMetrics.getDescent() - 1 / planScale
+              : lengthFontMetrics.getAscent() + 1 / planScale);
       
       g2D.setTransform(previousTransform);
     }
@@ -1893,61 +2067,62 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints wall location feedback.
    */
   private void paintWallAlignmentFeedback(Graphics2D g2D, 
+                                          Wall alignedWall, Point2D locationFeedback, 
                                           Paint feedbackPaint, Stroke feedbackStroke,
                                           float planScale) {
     // Paint wall location feedback
-    if (this.wallLocationFeeback != null) {
+    if (locationFeedback != null) {
       float margin = 1f / planScale;
-      // Search which wall start or end point is at wallLocationFeeback abscissa or ordinate
-      // ignoring the start and end point of wallAlignmentFeedback
-      float x = (float)this.wallLocationFeeback.getX(); 
-      float y = (float)this.wallLocationFeeback.getY();
+      // Search which wall start or end point is at locationFeedback abscissa or ordinate
+      // ignoring the start and end point of alignedWall
+      float x = (float)locationFeedback.getX(); 
+      float y = (float)locationFeedback.getY();
       float deltaXToClosestWall = Float.POSITIVE_INFINITY;
       float deltaYToClosestWall = Float.POSITIVE_INFINITY;
-      for (Wall alignedWall : this.home.getWalls()) {
-        if (alignedWall != this.wallAlignmentFeedback) {
-          if (Math.abs(x - alignedWall.getXStart()) < margin
-              && (this.wallAlignmentFeedback == null
-                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallAlignmentFeedback))) {
-            if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYStart())) {
-              deltaYToClosestWall = y - alignedWall.getYStart();
+      for (Wall wall : this.home.getWalls()) {
+        if (wall != alignedWall) {
+          if (Math.abs(x - wall.getXStart()) < margin
+              && (alignedWall == null
+                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
+            if (Math.abs(deltaYToClosestWall) > Math.abs(y - wall.getYStart())) {
+              deltaYToClosestWall = y - wall.getYStart();
             }
-          } else if (Math.abs(x - alignedWall.getXEnd()) < margin
-                    && (this.wallAlignmentFeedback == null
-                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallAlignmentFeedback))) {
-            if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWall.getYEnd())) {
-              deltaYToClosestWall = y - alignedWall.getYEnd();
+          } else if (Math.abs(x - wall.getXEnd()) < margin
+                    && (alignedWall == null
+                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
+            if (Math.abs(deltaYToClosestWall) > Math.abs(y - wall.getYEnd())) {
+              deltaYToClosestWall = y - wall.getYEnd();
             }                
           }
           
-          if (Math.abs(y - alignedWall.getYStart()) < margin
-              && (this.wallAlignmentFeedback == null
-                  || !equalsWallPoint(alignedWall.getXStart(), alignedWall.getYStart(), this.wallAlignmentFeedback))) {
-            if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXStart())) {
-              deltaXToClosestWall = x - alignedWall.getXStart();
+          if (Math.abs(y - wall.getYStart()) < margin
+              && (alignedWall == null
+                  || !equalsWallPoint(wall.getXStart(), wall.getYStart(), alignedWall))) {
+            if (Math.abs(deltaXToClosestWall) > Math.abs(x - wall.getXStart())) {
+              deltaXToClosestWall = x - wall.getXStart();
             }
-          } else if (Math.abs(y - alignedWall.getYEnd()) < margin
-                    && (this.wallAlignmentFeedback == null
-                        || !equalsWallPoint(alignedWall.getXEnd(), alignedWall.getYEnd(), this.wallAlignmentFeedback))) {
-            if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWall.getXEnd())) {
-              deltaXToClosestWall = x - alignedWall.getXEnd();
+          } else if (Math.abs(y - wall.getYEnd()) < margin
+                    && (alignedWall == null
+                        || !equalsWallPoint(wall.getXEnd(), wall.getYEnd(), alignedWall))) {
+            if (Math.abs(deltaXToClosestWall) > Math.abs(x - wall.getXEnd())) {
+              deltaXToClosestWall = x - wall.getXEnd();
             }                
           }
 
-          float [][] alignedWallPoints = alignedWall.getPoints();
-          for (int i = 0; i < alignedWallPoints.length; i++) {
-            if (Math.abs(x - alignedWallPoints [i][0]) < margin
-                && (this.wallAlignmentFeedback == null
-                    || !equalsWallPoint(alignedWallPoints [i][0], alignedWallPoints [i][1], this.wallAlignmentFeedback))) {
-              if (Math.abs(deltaYToClosestWall) > Math.abs(y - alignedWallPoints [i][1])) {
-                deltaYToClosestWall = y - alignedWallPoints [i][1];
+          float [][] wallPoints = wall.getPoints();
+          for (int i = 0; i < wallPoints.length; i++) {
+            if (Math.abs(x - wallPoints [i][0]) < margin
+                && (alignedWall == null
+                    || !equalsWallPoint(wallPoints [i][0], wallPoints [i][1], alignedWall))) {
+              if (Math.abs(deltaYToClosestWall) > Math.abs(y - wallPoints [i][1])) {
+                deltaYToClosestWall = y - wallPoints [i][1];
               }
             }
-            if (Math.abs(y - alignedWallPoints [i][1]) < margin
-                && (this.wallAlignmentFeedback == null
-                    || !equalsWallPoint(alignedWallPoints [i][0], alignedWallPoints [i][1], this.wallAlignmentFeedback))) {
-              if (Math.abs(deltaXToClosestWall) > Math.abs(x - alignedWallPoints [i][0])) {
-                deltaXToClosestWall = x - alignedWallPoints [i][0];
+            if (Math.abs(y - wallPoints [i][1]) < margin
+                && (alignedWall == null
+                    || !equalsWallPoint(wallPoints [i][0], wallPoints [i][1], alignedWall))) {
+              if (Math.abs(deltaXToClosestWall) > Math.abs(x - wallPoints [i][0])) {
+                deltaXToClosestWall = x - wallPoints [i][0];
               }                
             }
           }
@@ -1992,44 +2167,45 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints room location feedback.
    */
   private void paintRoomAlignmentFeedback(Graphics2D g2D, 
+                                          Room alignedRoom, Point2D locationFeedback, 
+                                          boolean magnetizedPointFeedback, 
                                           Paint feedbackPaint, Stroke feedbackStroke,
-                                          float planScale, 
-                                          Paint pointPaint, 
+                                          float planScale, Paint pointPaint, 
                                           Stroke pointStroke) {
     // Paint room location feedback
-    if (this.roomLocationFeeback != null) {
+    if (locationFeedback != null) {
       float margin = 1f / planScale;
-      // Search which room points are at roomLocationFeeback abscissa or ordinate
-      float x = (float)this.roomLocationFeeback.getX(); 
-      float y = (float)this.roomLocationFeeback.getY();
+      // Search which room points are at locationFeedback abscissa or ordinate
+      float x = (float)locationFeedback.getX(); 
+      float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
-      for (Room alignedRoom : this.home.getRooms()) {
-        if (alignedRoom != this.roomAlignmentFeedback) {
-          float [][] alignedRoomPoints = alignedRoom.getPoints();
-          for (int i = 0; i < alignedRoomPoints.length; i++) {
-            if (Math.abs(x - alignedRoomPoints [i][0]) < margin
-                && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedRoomPoints [i][1])) {
-              deltaYToClosestObject = y - alignedRoomPoints [i][1];
+      for (Room room : this.home.getRooms()) {
+        if (room != alignedRoom) {
+          float [][] roomPoints = room.getPoints();
+          for (int i = 0; i < roomPoints.length; i++) {
+            if (Math.abs(x - roomPoints [i][0]) < margin
+                && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i][1])) {
+              deltaYToClosestObject = y - roomPoints [i][1];
             }
-            if (Math.abs(y - alignedRoomPoints [i][1]) < margin
-                && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedRoomPoints [i][0])) {
-              deltaXToClosestObject = x - alignedRoomPoints [i][0];
+            if (Math.abs(y - roomPoints [i][1]) < margin
+                && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i][0])) {
+              deltaXToClosestObject = x - roomPoints [i][0];
             } 
           }
         }
       }
-      // Search which wall points are at roomLocationFeeback abscissa or ordinate
-      for (Wall alignedWall : this.home.getWalls()) {
-        float [][] alignedWallPoints = alignedWall.getPoints();
-        for (int i = 0; i < alignedWallPoints.length; i++) {
-          if (Math.abs(x - alignedWallPoints [i][0]) < margin
-              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedWallPoints [i][1])) {
-            deltaYToClosestObject = y - alignedWallPoints [i][1];
+      // Search which wall points are at locationFeedback abscissa or ordinate
+      for (Wall wall : this.home.getWalls()) {
+        float [][] wallPoints = wall.getPoints();
+        for (int i = 0; i < wallPoints.length; i++) {
+          if (Math.abs(x - wallPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
+            deltaYToClosestObject = y - wallPoints [i][1];
           }
-          if (Math.abs(y - alignedWallPoints [i][1]) < margin
-              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedWallPoints [i][0])) {
-            deltaXToClosestObject = x - alignedWallPoints [i][0];
+          if (Math.abs(y - wallPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - wallPoints [i][0])) {
+            deltaXToClosestObject = x - wallPoints [i][0];
           }
         }
       }
@@ -2057,11 +2233,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       
-      if (this.roomMagnetizedFeedback) {
+      if (magnetizedPointFeedback) {
         g2D.setPaint(pointPaint);         
         g2D.setStroke(pointStroke);
-        g2D.draw(new Ellipse2D.Float((float)this.roomLocationFeeback.getX() - 5f / planScale, 
-            (float)this.roomLocationFeeback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
+        g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale, 
+            (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
       }
     }
   }
@@ -2070,90 +2246,91 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints dimension line location feedback.
    */
   private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
+                                                   DimensionLine alignedDimensionLine, Point2D locationFeedback, 
                                                    Paint feedbackPaint, Stroke feedbackStroke,
                                                    float planScale) {
     // Paint dimension line location feedback
-    if (this.dimensionLineLocationFeeback != null) {
+    if (locationFeedback != null) {
       float margin = 1f / planScale;
-      // Search which room points are at roomLocationFeeback abscissa or ordinate
-      float x = (float)this.dimensionLineLocationFeeback.getX(); 
-      float y = (float)this.dimensionLineLocationFeeback.getY();
+      // Search which room points are at locationFeedback abscissa or ordinate
+      float x = (float)locationFeedback.getX(); 
+      float y = (float)locationFeedback.getY();
       float deltaXToClosestObject = Float.POSITIVE_INFINITY;
       float deltaYToClosestObject = Float.POSITIVE_INFINITY;
-      for (Room alignedRoom : this.home.getRooms()) {
-        float [][] alignedRoomPoints = alignedRoom.getPoints();
-        for (int i = 0; i < alignedRoomPoints.length; i++) {
-          if (Math.abs(x - alignedRoomPoints [i][0]) < margin
-              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedRoomPoints [i][1])) {
-            deltaYToClosestObject = y - alignedRoomPoints [i][1];
+      for (Room room : this.home.getRooms()) {
+        float [][] roomPoints = room.getPoints();
+        for (int i = 0; i < roomPoints.length; i++) {
+          if (Math.abs(x - roomPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - roomPoints [i][1])) {
+            deltaYToClosestObject = y - roomPoints [i][1];
           }
-          if (Math.abs(y - alignedRoomPoints [i][1]) < margin
-              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedRoomPoints [i][0])) {
-            deltaXToClosestObject = x - alignedRoomPoints [i][0];
+          if (Math.abs(y - roomPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - roomPoints [i][0])) {
+            deltaXToClosestObject = x - roomPoints [i][0];
           } 
         }
       }
-      // Search which dimension line start or end point is at dimensionLineLocationFeeback abscissa or ordinate
-      // ignoring the start and end point of dimensionLineFeeback
-      for (DimensionLine alignedDimensionLine : this.home.getDimensionLines()) {
-        if (alignedDimensionLine != this.dimensionLineAlignmentFeedback) {
-          if (Math.abs(x - alignedDimensionLine.getXStart()) < margin
-              && (this.dimensionLineAlignmentFeedback == null
-                  || !equalsDimensionLinePoint(alignedDimensionLine.getXStart(), alignedDimensionLine.getYStart(), 
-                          this.dimensionLineAlignmentFeedback))) {
-            if (Math.abs(deltaYToClosestObject) > Math.abs(y - alignedDimensionLine.getYStart())) {
-              deltaYToClosestObject = y - alignedDimensionLine.getYStart();
+      // Search which dimension line start or end point is at locationFeedback abscissa or ordinate
+      // ignoring the start and end point of alignedDimensionLine
+      for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
+        if (dimensionLine != alignedDimensionLine) {
+          if (Math.abs(x - dimensionLine.getXStart()) < margin
+              && (alignedDimensionLine == null
+                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(), 
+                          alignedDimensionLine))) {
+            if (Math.abs(deltaYToClosestObject) > Math.abs(y - dimensionLine.getYStart())) {
+              deltaYToClosestObject = y - dimensionLine.getYStart();
             }
-          } else if (Math.abs(x - alignedDimensionLine.getXEnd()) < margin
-                    && (this.dimensionLineAlignmentFeedback == null
-                        || !equalsDimensionLinePoint(alignedDimensionLine.getXEnd(), alignedDimensionLine.getYEnd(), 
-                                this.dimensionLineAlignmentFeedback))) {
-            if (Math.abs(deltaYToClosestObject) > Math.abs(y - alignedDimensionLine.getYEnd())) {
-              deltaYToClosestObject = y - alignedDimensionLine.getYEnd();
+          } else if (Math.abs(x - dimensionLine.getXEnd()) < margin
+                    && (alignedDimensionLine == null
+                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+                                alignedDimensionLine))) {
+            if (Math.abs(deltaYToClosestObject) > Math.abs(y - dimensionLine.getYEnd())) {
+              deltaYToClosestObject = y - dimensionLine.getYEnd();
             }                
           }
-          if (Math.abs(y - alignedDimensionLine.getYStart()) < margin
-              && (this.dimensionLineAlignmentFeedback == null
-                  || !equalsDimensionLinePoint(alignedDimensionLine.getXStart(), alignedDimensionLine.getYStart(), 
-                          this.dimensionLineAlignmentFeedback))) {
-            if (Math.abs(deltaXToClosestObject) > Math.abs(x - alignedDimensionLine.getXStart())) {
-              deltaXToClosestObject = x - alignedDimensionLine.getXStart();
+          if (Math.abs(y - dimensionLine.getYStart()) < margin
+              && (alignedDimensionLine == null
+                  || !equalsDimensionLinePoint(dimensionLine.getXStart(), dimensionLine.getYStart(), 
+                          alignedDimensionLine))) {
+            if (Math.abs(deltaXToClosestObject) > Math.abs(x - dimensionLine.getXStart())) {
+              deltaXToClosestObject = x - dimensionLine.getXStart();
             }
-          } else if (Math.abs(y - alignedDimensionLine.getYEnd()) < margin
-                    && (this.dimensionLineAlignmentFeedback == null
-                        || !equalsDimensionLinePoint(alignedDimensionLine.getXEnd(), alignedDimensionLine.getYEnd(), 
-                                this.dimensionLineAlignmentFeedback))) {
-            if (Math.abs(deltaXToClosestObject) > Math.abs(x - alignedDimensionLine.getXEnd())) {
-              deltaXToClosestObject = x - alignedDimensionLine.getXEnd();
+          } else if (Math.abs(y - dimensionLine.getYEnd()) < margin
+                    && (alignedDimensionLine == null
+                        || !equalsDimensionLinePoint(dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+                                alignedDimensionLine))) {
+            if (Math.abs(deltaXToClosestObject) > Math.abs(x - dimensionLine.getXEnd())) {
+              deltaXToClosestObject = x - dimensionLine.getXEnd();
             }                
           }
         }
       }
-      // Search which wall points are at dimensionLineLocationFeeback abscissa or ordinate
-      for (Wall alignedWall : this.home.getWalls()) {
-        float [][] alignedWallPoints = alignedWall.getPoints();
-        for (int i = 0; i < alignedWallPoints.length; i++) {
-          if (Math.abs(x - alignedWallPoints [i][0]) < margin
-              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedWallPoints [i][1])) {
-            deltaYToClosestObject = y - alignedWallPoints [i][1];
+      // Search which wall points are at locationFeedback abscissa or ordinate
+      for (Wall wall : this.home.getWalls()) {
+        float [][] wallPoints = wall.getPoints();
+        for (int i = 0; i < wallPoints.length; i++) {
+          if (Math.abs(x - wallPoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - wallPoints [i][1])) {
+            deltaYToClosestObject = y - wallPoints [i][1];
           }
-          if (Math.abs(y - alignedWallPoints [i][1]) < margin
-              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedWallPoints [i][0])) {
-            deltaXToClosestObject = x - alignedWallPoints [i][0];
+          if (Math.abs(y - wallPoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - wallPoints [i][0])) {
+            deltaXToClosestObject = x - wallPoints [i][0];
           }
         }
       }
-      // Search which piece of furniture points are at dimensionLineLocationFeeback abscissa or ordinate
-      for (HomePieceOfFurniture alignedFurniture : this.home.getFurniture()) {
-        float [][] alignedPiecePoints = alignedFurniture.getPoints();
-        for (int i = 0; i < alignedPiecePoints.length; i++) {
-          if (Math.abs(x - alignedPiecePoints [i][0]) < margin
-              && Math.abs(deltaYToClosestObject) > Math.abs(y - alignedPiecePoints [i][1])) {
-            deltaYToClosestObject = y - alignedPiecePoints [i][1];
+      // Search which piece of furniture points are at locationFeedback abscissa or ordinate
+      for (HomePieceOfFurniture furniture : this.home.getFurniture()) {
+        float [][] piecePoints = furniture.getPoints();
+        for (int i = 0; i < piecePoints.length; i++) {
+          if (Math.abs(x - piecePoints [i][0]) < margin
+              && Math.abs(deltaYToClosestObject) > Math.abs(y - piecePoints [i][1])) {
+            deltaYToClosestObject = y - piecePoints [i][1];
           }
-          if (Math.abs(y - alignedPiecePoints [i][1]) < margin
-              && Math.abs(deltaXToClosestObject) > Math.abs(x - alignedPiecePoints [i][0])) {
-            deltaXToClosestObject = x - alignedPiecePoints [i][0];
+          if (Math.abs(y - piecePoints [i][1]) < margin
+              && Math.abs(deltaXToClosestObject) > Math.abs(x - piecePoints [i][0])) {
+            deltaXToClosestObject = x - piecePoints [i][0];
           }
         }
       }
@@ -2589,58 +2766,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Sets the location point for <code>wall</code> alignment feedback. 
+   * Sets the location point for alignment feedback. 
    */
-  public void setWallAlignmentFeedback(Wall wall, float x, float y) {
-    this.wallAlignmentFeedback = wall;
-    this.wallLocationFeeback = new Point2D.Float(x, y);
+  public void setAlignmentFeedback(Selectable alignedObject,
+                                   float x, 
+                                   float y, 
+                                   boolean showPointFeedback) {
+    this.alignedObjectFeedback = alignedObject;
+    this.locationFeeback = new Point2D.Float(x, y);
+    this.showPointFeedback = showPointFeedback;
     repaint();
   }
   
   /**
-   * Deletes the wall alignment feedback. 
+   * Deletes the alignment feedback. 
    */
-  public void deleteWallAlignmentFeedback() {
-    this.wallAlignmentFeedback = null;
-    this.wallLocationFeeback = null;
+  public void deleteAlignmentFeedback() {
+    this.alignedObjectFeedback = null;
+    this.locationFeeback = null;
     repaint();
-  }
-
-  /**
-   * Sets the location point for <code>dimensionLine</code> alignment feedback. 
-   */
-  public void setDimensionLineAlignmentFeedback(DimensionLine dimensionLine, float x, float y) {
-    this.dimensionLineAlignmentFeedback = dimensionLine;
-    this.dimensionLineLocationFeeback = new Point2D.Float(x, y);
-    repaint();
-  }
-  
-  /**
-   * Deletes the dimension line alignment feedback. 
-   */
-  public void deleteDimensionLineAlignmentFeedback() {
-    this.dimensionLineAlignmentFeedback = null;
-    this.dimensionLineLocationFeeback = null;
-    repaint();
-  }
-
-  /**
-   * Sets the location point for <code>room</code> alignment feedback.
-   */
-  public void setRoomAlignmentFeedback(Room room, float x, float y, boolean magnetizedPoint) {
-    this.roomAlignmentFeedback = room;
-    this.roomLocationFeeback = new Point2D.Float(x, y);
-    this.roomMagnetizedFeedback = magnetizedPoint;
-    repaint();
-  }
-
-  /**
-   * Deletes the room alignment feedback.
-   */
-  public void deleteRoomAlignmentFeedback() {
-    this.roomAlignmentFeedback = null;
-    this.roomLocationFeeback = null;
-    this.roomMagnetizedFeedback = false;
   }
 
   // Scrollable implementation

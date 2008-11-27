@@ -47,7 +47,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
+  public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
+    WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -186,6 +187,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   
   private String     catalogId;
   private String     name;
+  private boolean    nameVisible;
+  private float      nameXOffset;
+  private float      nameYOffset;
+  private TextStyle  nameStyle;
   private Content    icon;
   private Content    model;
   private float      width;
@@ -300,6 +305,82 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
   }
    
+  /**
+   * Returns whether the name of this piece should be drawn or not. 
+   */
+  public boolean isNameVisible() {
+    return this.nameVisible;  
+  }
+  
+  /**
+   * Sets whether the name of this piece is visible or not. Once this room 
+   * is updated, listeners added to this piece will receive a change notification.
+   */
+  public void setNameVisible(boolean nameVisible) {
+    if (nameVisible != this.nameVisible) {
+      this.nameVisible = nameVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_VISIBLE.name(), !nameVisible, nameVisible);
+    }
+  }
+  
+  /**
+   * Returns the distance along x axis applied to piece abscissa to display piece name. 
+   */
+  public float getNameXOffset() {
+    return this.nameXOffset;  
+  }
+  
+  /**
+   * Sets the distance along x axis applied to piece abscissa to display piece name. 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   */
+  public void setNameXOffset(float nameXOffset) {
+    if (nameXOffset != this.nameXOffset) {
+      float oldNameXOffset = this.nameXOffset;
+      this.nameXOffset = nameXOffset;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_X_OFFSET.name(), oldNameXOffset, nameXOffset);
+    }
+  }
+  
+  /**
+   * Returns the distance along y axis applied to piece ordinate 
+   * to display piece name.
+   */
+  public float getNameYOffset() {
+    return this.nameYOffset;  
+  }
+
+  /**
+   * Sets the distance along y axis applied to piece ordinate to display piece name. 
+   * Once this piece is updated, listeners added to this room will receive a change notification.
+   */
+  public void setNameYOffset(float nameYOffset) {
+    if (nameYOffset != this.nameYOffset) {
+      float oldNameYOffset = this.nameYOffset;
+      this.nameYOffset = nameYOffset;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_Y_OFFSET.name(), oldNameYOffset, nameYOffset);
+    }
+  }
+
+  /**
+   * Returns the text style used to display piece name.
+   */
+  public TextStyle getNameStyle() {
+    return this.nameStyle;  
+  }
+
+  /**
+   * Sets the text style used to display piece name.
+   * Once this piecec is updated, listeners added to this piece will receive a change notification.
+   */
+  public void setNameStyle(TextStyle nameStyle) {
+    if (nameStyle != this.nameStyle) {
+      TextStyle oldNameStyle = this.nameStyle;
+      this.nameStyle = nameStyle;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_STYLE.name(), oldNameStyle, nameStyle);
+    }
+  }
+  
   /**
    * Returns the depth of this piece of furniture.
    */
@@ -690,6 +771,16 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   public boolean isBottomRightPointAt(float x, float y, float margin) {
     float [][] points = getPoints();
     return Math.abs(x - points[2][0]) <= margin && Math.abs(y - points[2][1]) <= margin;
+  }
+
+  /**
+   * Returns <code>true</code> if the center point at which is displayed the name 
+   * of this piece is equal to the point at (<code>x</code>, <code>y</code>) 
+   * with a given <code>margin</code>. 
+   */
+  public boolean isNameCenterPointAt(float x, float y, float margin) {
+    return Math.abs(x - getX() - getNameXOffset()) <= margin 
+        && Math.abs(y - getY() - getNameYOffset()) <= margin;
   }
 
   /**

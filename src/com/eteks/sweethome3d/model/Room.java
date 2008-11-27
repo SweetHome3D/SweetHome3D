@@ -42,8 +42,8 @@ public class Room implements Serializable, Selectable {
    * The properties of a room that may change. <code>PropertyChangeListener</code>s added 
    * to a room will be notified under a property name equal to the string value of one these properties.
    */
-  public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, 
-      POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, 
+  public enum Property {NAME, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
+      POINTS, AREA_VISIBLE, AREA_X_OFFSET, AREA_Y_OFFSET, AREA_STYLE,
       FLOOR_COLOR, FLOOR_TEXTURE, FLOOR_VISIBLE, 
       CEILING_COLOR, CEILING_TEXTURE, CEILING_VISIBLE}
   
@@ -52,10 +52,12 @@ public class Room implements Serializable, Selectable {
   private String      name;
   private float       nameXOffset;
   private float       nameYOffset;
+  private TextStyle   nameStyle;
   private float [][]  points;
   private boolean     areaVisible;
   private float       areaXOffset;
   private float       areaYOffset;
+  private TextStyle   areaStyle;
   private boolean     floorVisible;
   private Integer     floorColor;
   private HomeTexture floorTexture;
@@ -181,6 +183,25 @@ public class Room implements Serializable, Selectable {
   }
   
   /**
+   * Returns the text style used to display room name.
+   */
+  public TextStyle getNameStyle() {
+    return this.nameStyle;  
+  }
+
+  /**
+   * Sets the text style used to display room name.
+   * Once this room is updated, listeners added to this room will receive a change notification.
+   */
+  public void setNameStyle(TextStyle nameStyle) {
+    if (nameStyle != this.nameStyle) {
+      TextStyle oldNameStyle = this.nameStyle;
+      this.nameStyle = nameStyle;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_STYLE.name(), oldNameStyle, nameStyle);
+    }
+  }
+  
+  /**
    * Returns the points of the polygon matching this room. 
    * @return an array of the (x,y) coordinates of the room points.
    */
@@ -265,6 +286,25 @@ public class Room implements Serializable, Selectable {
       float oldAreaYOffset = this.areaYOffset;
       this.areaYOffset = areaYOffset;
       this.propertyChangeSupport.firePropertyChange(Property.AREA_Y_OFFSET.name(), oldAreaYOffset, areaYOffset);
+    }
+  }
+  
+  /**
+   * Returns the text style used to display room area.
+   */
+  public TextStyle getAreaStyle() {
+    return this.areaStyle;  
+  }
+
+  /**
+   * Sets the text style used to display room area.
+   * Once this room is updated, listeners added to this room will receive a change notification.
+   */
+  public void setAreaStyle(TextStyle areaStyle) {
+    if (areaStyle != this.areaStyle) {
+      TextStyle oldAreaStyle = this.areaStyle;
+      this.areaStyle = areaStyle;
+      this.propertyChangeSupport.firePropertyChange(Property.AREA_STYLE.name(), oldAreaStyle, areaStyle);
     }
   }
   

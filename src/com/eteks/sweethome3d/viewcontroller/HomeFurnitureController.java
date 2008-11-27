@@ -43,7 +43,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {NAME, X, Y, ELEVATION, ANGLE_IN_DEGREES, 
+  public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, 
       WIDTH, DEPTH,  HEIGHT, COLOR, VISIBLE, MODEL_MIRRORED, RESIZABLE}
   
   private final Home                  home;
@@ -53,14 +53,15 @@ public class HomeFurnitureController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeFurnitureView;
 
-  private String name;
-  private Float x;
-  private Float y;
-  private Float elevation;
+  private String  name;
+  private Boolean nameVisible;
+  private Float   x;
+  private Float   y;
+  private Float   elevation;
   private Integer angleInDegrees;
-  private Float width;
-  private Float depth;
-  private Float height;
+  private Float   width;
+  private Float   depth;
+  private Float   height;
   private Integer color;
   private Boolean visible;
   private Boolean modelMirrored;
@@ -123,6 +124,7 @@ public class HomeFurnitureController implements Controller {
         Home.getFurnitureSubList(this.home.getSelectedItems());
     if (selectedFurniture.isEmpty()) {
       setName(null); // Nothing to edit
+      setNameVisible(null); 
       setAngleInDegrees(null);
       setX(null);
       setY(null);
@@ -146,6 +148,15 @@ public class HomeFurnitureController implements Controller {
         }
       }
       setName(name);
+      
+      Boolean nameVisible = firstPiece.isNameVisible();
+      for (int i = 1; i < selectedFurniture.size(); i++) {
+        if (nameVisible != selectedFurniture.get(i).isNameVisible()) {
+          nameVisible = null;
+          break;
+        }
+      }
+      setNameVisible(nameVisible);
       
       Float angle = firstPiece.getAngle();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -271,6 +282,24 @@ public class HomeFurnitureController implements Controller {
    */
   public String getName() {
     return this.name;
+  }
+  
+  /**
+   * Returns whether furniture name should be drawn or not. 
+   */
+  public Boolean getNameVisible() {
+    return this.nameVisible;  
+  }
+  
+  /**
+   * Sets whether furniture name is visible or not.
+   */
+  public void setNameVisible(Boolean nameVisible) {
+    if (nameVisible != this.nameVisible) {
+      Boolean oldNameVisible = this.resizable;
+      this.nameVisible = nameVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.NAME_VISIBLE.name(), oldNameVisible, nameVisible);
+    }
   }
   
   /**
@@ -480,6 +509,7 @@ public class HomeFurnitureController implements Controller {
         Home.getFurnitureSubList(oldSelection);
     if (!selectedFurniture.isEmpty()) {
       final String name = getName();
+      final Boolean nameVisible = getNameVisible();
       final Float x = getX();
       final Float y = getY();
       final Float elevation = getElevation();
@@ -500,7 +530,7 @@ public class HomeFurnitureController implements Controller {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
-          name, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
+          name, nameVisible, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new AbstractUndoableEdit() {
           @Override
@@ -514,7 +544,7 @@ public class HomeFurnitureController implements Controller {
           public void redo() throws CannotRedoException {
             super.redo();
             doModifyFurniture(modifiedFurniture, 
-                name, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
+                name, nameVisible, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
             home.setSelectedItems(oldSelection); 
           }
           
@@ -533,7 +563,8 @@ public class HomeFurnitureController implements Controller {
    * Modifies furniture properties with the values in parameter.
    */
   private void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
-                                 String name, Float width, Float depth, Float height, 
+                                 String name, Boolean nameVisible, 
+                                 Float width, Float depth, Float height, 
                                  Float x, Float y, Float elevation, 
                                  Float angle, Integer color, 
                                  Boolean visible, Boolean modelMirrored) {
@@ -541,6 +572,8 @@ public class HomeFurnitureController implements Controller {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       piece.setName(name != null 
           ? name : piece.getName());
+      piece.setNameVisible(nameVisible != null 
+          ? nameVisible : piece.isNameVisible());
       piece.setX(x != null 
           ? x.floatValue() : piece.getX());
       piece.setY(y != null 
@@ -572,6 +605,7 @@ public class HomeFurnitureController implements Controller {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       piece.setName(modifiedPiece.getName());
+      piece.setNameVisible(modifiedPiece.isNameVisible());
       piece.setX(modifiedPiece.getX());
       piece.setY(modifiedPiece.getY());
       piece.setElevation(modifiedPiece.getElevation());
@@ -593,6 +627,7 @@ public class HomeFurnitureController implements Controller {
   private static final class ModifiedPieceOfFurniture {
     private final HomePieceOfFurniture piece;
     private final String  name;
+    private final boolean nameVisible;
     private final float   x;
     private final float   y;
     private final float   elevation;
@@ -607,6 +642,7 @@ public class HomeFurnitureController implements Controller {
     public ModifiedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
       this.name = piece.getName();
+      this.nameVisible = piece.isNameVisible();
       this.x = piece.getX();
       this.y = piece.getY();
       this.elevation = piece.getElevation();
@@ -625,6 +661,10 @@ public class HomeFurnitureController implements Controller {
     
     public String getName() {
       return this.name;
+    }
+    
+    public boolean isNameVisible() {
+      return this.nameVisible;
     }
 
     public float getDepth() {

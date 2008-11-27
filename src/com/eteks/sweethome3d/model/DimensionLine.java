@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.awt.Shape;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -38,15 +39,16 @@ public class DimensionLine implements Serializable, Selectable {
    * The properties of a dimension line that may change. <code>PropertyChangeListener</code>s added 
    * to a dimension line will be notified under a property name equal to the string value of one these properties.
    */
-  public enum ModifiableProperty {X_START, Y_START, X_END, Y_END, OFFSET} 
+  public enum Property {X_START, Y_START, X_END, Y_END, OFFSET, LENGTH_STYLE} 
    
   private static final long serialVersionUID = 1L;
   
-  private float xStart;
-  private float yStart;
-  private float xEnd;
-  private float yEnd;
-  private float offset;
+  private float     xStart;
+  private float     yStart;
+  private float     xEnd;
+  private float     yEnd;
+  private float     offset;
+  private TextStyle lengthStyle;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -110,7 +112,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldXStart = this.xStart;
       this.xStart = xStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_START.name(), oldXStart, xStart);
+      this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
     }
   }
 
@@ -130,7 +132,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldYStart = this.yStart;
       this.yStart = yStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_START.name(), oldYStart, yStart);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
     }
   }
 
@@ -150,7 +152,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.X_END.name(), oldXEnd, xEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
     }
   }
 
@@ -170,7 +172,7 @@ public class DimensionLine implements Serializable, Selectable {
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.name(), oldYEnd, yEnd);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
     }
   }
 
@@ -190,7 +192,33 @@ public class DimensionLine implements Serializable, Selectable {
       float oldOffset = this.offset;
       this.offset = offset;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(ModifiableProperty.Y_END.name(), oldOffset, offset);
+      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldOffset, offset);
+    }
+  }
+
+  /**
+   * Returns the length of this dimension line.
+   */
+  public float getLength() {
+    return (float)Point2D.distance(getXStart(), getYStart(), getXEnd(), getYEnd());
+  }
+
+  /**
+   * Returns the text style used to display dimension line length.
+   */
+  public TextStyle getLengthStyle() {
+    return this.lengthStyle;  
+  }
+
+  /**
+   * Sets the text style used to display dimension line length.
+   * Once this dimension line is updated, listeners added to it will receive a change notification.
+   */
+  public void setLengthStyle(TextStyle lengthStyle) {
+    if (lengthStyle != this.lengthStyle) {
+      TextStyle oldLengthStyle = this.lengthStyle;
+      this.lengthStyle = lengthStyle;
+      this.propertyChangeSupport.firePropertyChange(Property.LENGTH_STYLE.name(), oldLengthStyle, lengthStyle);
     }
   }
 
