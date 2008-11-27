@@ -619,7 +619,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         double beta = 2 * j * Math.PI / divisionCount;
         float cosBeta = (float)Math.cos(beta);
         float sinBeta = (float)Math.sin(beta);
-        // Correct the bottom of the hemisphere to avoid seeing at black line at the horizon
+        // Correct the bottom of the hemisphere to avoid seeing a black line at the horizon
         float y = j != 0 ? sinBeta : -0.01f;
         double nextBeta = 2 * (j + 1) * Math.PI / divisionCount;
         float cosNextBeta = (float)Math.cos(nextBeta);
