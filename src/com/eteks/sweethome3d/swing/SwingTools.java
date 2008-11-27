@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.EventQueue;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -30,6 +32,9 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
@@ -138,5 +143,34 @@ public class SwingTools {
       radioButton.setSelected(false);
       group.add(radioButton);
     }    
+  }
+  
+  /**
+   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to ones of its component. 
+   */
+  public static int showConfirmDialog(JComponent parentComponent,
+                                      String title,
+                                      JComponent messageComponent,
+                                      final JComponent focusedComponent) {
+    JOptionPane optionPane = new JOptionPane(messageComponent, 
+        JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parentComponent), title);
+    // Add a listener that transfer focus to focusedComponent when dialog is shown
+    dialog.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent ev) {
+          focusedComponent.requestFocusInWindow();
+          dialog.removeComponentListener(this);
+        }
+      });
+    dialog.setVisible(true);
+    
+    dialog.dispose();
+    Object value = optionPane.getValue();
+    if (value instanceof Integer) {
+      return (Integer)value;
+    } else {
+      return JOptionPane.CLOSED_OPTION;
+    }
   }
 }

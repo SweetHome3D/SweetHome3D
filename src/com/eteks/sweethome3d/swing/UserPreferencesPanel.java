@@ -333,9 +333,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    */
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("preferences.title");
-    if (JOptionPane.showConfirmDialog((JComponent)parentView, this, dialogTitle, 
-            JOptionPane.OK_CANCEL_OPTION, 
-            JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+    if (SwingTools.showConfirmDialog((JComponent)parentView, 
+            dialogTitle, this, this.languageComboBox) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyUserPreferences();
     }

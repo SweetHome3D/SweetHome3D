@@ -22,21 +22,17 @@ package com.eteks.sweethome3d.swing;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -522,20 +518,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
    */
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("homeFurniture.title");
-    JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
-    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
-    // Add a listener that transfer focus to first text field when dialog is shown
-    dialog.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentShown(ComponentEvent ev) {
-          nameTextField.requestFocusInWindow();
-          dialog.removeComponentListener(this);
-        }
-      });
-    dialog.setVisible(true);
-    
-    dialog.dispose();
-    if (new Integer(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
+    if (SwingTools.showConfirmDialog((JComponent)parentView, 
+            dialogTitle, this, this.nameTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyFurniture();
     }
   }
