@@ -53,9 +53,9 @@ import com.eteks.sweethome3d.viewcontroller.PlanView;
  */
 public class HomePrintableComponent extends JComponent implements Printable {
   /**
-   * List of the dynamic fields that the user may insert in header and footer.
+   * List of the variables that the user may insert in header and footer.
    */
-  public enum DynamicField {
+  public enum Variable {
     PAGE_NUMBER("$pageNumber", "{0, number, integer}"),
     PAGE_COUNT("$pageCount", "{1, number, integer}"),
     PLAN_SCALE("$planScale", "{2}"),
@@ -67,7 +67,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     private final String userCode;
     private final String formatCode;
 
-    private DynamicField(String userCode, String formatCode) {
+    private Variable(String userCode, String formatCode) {
       this.userCode = userCode;
       this.formatCode = formatCode;      
     }
@@ -87,7 +87,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     }
     
     /**
-     * Returns the message format built from a format that uses dynamic fields.
+     * Returns the message format built from a format that uses variables.
      */
     public static MessageFormat getMessageFormat(String format) {
       // Replace $$ escape sequence ($$ is the escape sequence for $ character)
@@ -96,9 +96,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
       // Replace MessageFormat escape sequences
       format = format.replace("'", "''");
       format = format.replace("{", "'{'");
-      // Replace dynamic field by their MessageFormat code
-      for (DynamicField dynamicField : DynamicField.values()) {
-        format = format.replace(dynamicField.getUserCode(), dynamicField.getFormatCode());
+      // Replace variable by their MessageFormat code
+      for (Variable variable : Variable.values()) {
+        format = format.replace(variable.getUserCode(), variable.getFormatCode());
       }
       format = format.replace(temp, "$");
       return new MessageFormat(format);
@@ -163,7 +163,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
           + HEADER_FOOTER_MARGIN;
       
-      // Retrieve dynamic field values
+      // Retrieve variable values
       int pageNumber = page + 1; 
       int pageCount = getPageCount(); 
       String planScale = "?";
@@ -183,13 +183,13 @@ public class HomePrintableComponent extends JComponent implements Printable {
       }
       String homePresentationName = this.controller.getContentManager().getPresentationName(
            homeName, ContentManager.ContentType.SWEET_HOME_3D);
-      Object [] dynamicFieldValues = new Object [] {
+      Object [] variableValues = new Object [] {
           pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName};
       
       // Create header text
       String headerFormat = homePrint.getHeaderFormat();      
       if (headerFormat != null) {
-        header = DynamicField.getMessageFormat(headerFormat).format(dynamicFieldValues).trim();
+        header = Variable.getMessageFormat(headerFormat).format(variableValues).trim();
         if (header.length() > 0) {
           xHeader = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(header)) / 2;
           yHeader = imageableY + fontMetrics.getAscent();
@@ -203,7 +203,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       // Create footer text
       String footerFormat = homePrint.getFooterFormat();
       if (footerFormat != null) {
-        footer = DynamicField.getMessageFormat(footerFormat).format(dynamicFieldValues).trim();
+        footer = Variable.getMessageFormat(footerFormat).format(variableValues).trim();
         if (footer.length() > 0) {
           xFooter = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(footer)) / 2;
           yFooter = imageableY + imageableHeight - fontMetrics.getDescent();

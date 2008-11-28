@@ -77,7 +77,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private JButton             pageFormatButton;
   private JCheckBox           furniturePrintedCheckBox;
   private JCheckBox           planPrintedCheckBox;
-  private JRadioButton        defaultPlanScaleRadioButton;
+  private JRadioButton        bestFitPlanScaleRadioButton;
   private JRadioButton        userPlanScaleRadioButton;
   private JSpinner            userPlanScaleSpinner;
   private JCheckBox           view3DPrintedCheckBox;
@@ -85,8 +85,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private JTextField          headerFormatTextField;
   private JLabel              footerFormatLabel;
   private JTextField          footerFormatTextField;
-  private JLabel              dynamicFieldsLabel;
-  private JToolBar            dynamicFieldButtonsToolBar;  
+  private JLabel              variablesLabel;
+  private JToolBar            variableButtonsToolBar;  
 
   /**
    * Creates a panel that displays page setup.
@@ -105,17 +105,17 @@ public class PageSetupPanel extends JPanel implements DialogView {
   }
 
   /**
-   * Creates actions for dynamic fields.
+   * Creates actions for variables.
    */
   private void createActions() {
     ActionMap actions = getActionMap();
-    for (final HomePrintableComponent.DynamicField dynamicField : 
-                      HomePrintableComponent.DynamicField.values()) {
-      actions.put(dynamicField, 
-          new ResourceAction(this.resource, "INSERT_" + dynamicField.name()) {
+    for (final HomePrintableComponent.Variable variable : 
+                      HomePrintableComponent.Variable.values()) {
+      actions.put(variable, 
+          new ResourceAction(this.resource, "INSERT_" + variable.name()) {
             @Override
             public void actionPerformed(ActionEvent ev) {
-              insertDynamicCode(dynamicField.getUserCode());
+              insertVariable(variable.getUserCode());
             }
           });
     }
@@ -124,7 +124,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
   /**
    * Inserts a code in the text field that has the focus and selects it.
    */
-  private void insertDynamicCode(String userCode) {
+  private void insertVariable(String userCode) {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner instanceof JTextField) {
       JTextField textField = (JTextField)focusOwner;
@@ -168,22 +168,22 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.planPrintedCheckBox.addItemListener(itemListener);
 
     // Create scale radio buttons and user's scale spinner
-    this.defaultPlanScaleRadioButton = new JRadioButton(
-        this.resource.getString("defaultPlanScaleRadioButton.text"));
+    this.bestFitPlanScaleRadioButton = new JRadioButton(
+        this.resource.getString("bestFitPlanScaleRadioButton.text"));
     this.userPlanScaleRadioButton = new JRadioButton(
         this.resource.getString("userPlanScaleRadioButton.text"));
     ButtonGroup scaleButtonsGroup = new ButtonGroup();
-    scaleButtonsGroup.add(this.defaultPlanScaleRadioButton);
+    scaleButtonsGroup.add(this.bestFitPlanScaleRadioButton);
     scaleButtonsGroup.add(this.userPlanScaleRadioButton);
     final NullableSpinner.NullableSpinnerNumberModel userPlanScaleSpinnerModel = 
-        new NullableSpinner.NullableSpinnerNumberModel(10, 1, 1000, 10);
+        new NullableSpinner.NullableSpinnerNumberModel(10, 1, 10000, 10);
     this.userPlanScaleSpinner = new AutoCommitSpinner(userPlanScaleSpinnerModel);
     userPlanScaleSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           updateController(controller);
         }
       });
-    this.defaultPlanScaleRadioButton.addActionListener(new ActionListener() {
+    this.bestFitPlanScaleRadioButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           updateController(controller);
         }
@@ -227,14 +227,14 @@ public class PageSetupPanel extends JPanel implements DialogView {
     FocusListener textFieldFocusListener = new FocusListener() {
         public void focusGained(FocusEvent ev) {
           ActionMap actionMap = getActionMap();
-          for (HomePrintableComponent.DynamicField field : HomePrintableComponent.DynamicField.values()) {
+          for (HomePrintableComponent.Variable field : HomePrintableComponent.Variable.values()) {
             actionMap.get(field).setEnabled(true);
           }
         }
   
         public void focusLost(FocusEvent ev) {
           ActionMap actionMap = getActionMap();
-          for (HomePrintableComponent.DynamicField field : HomePrintableComponent.DynamicField.values()) {
+          for (HomePrintableComponent.Variable field : HomePrintableComponent.Variable.values()) {
             actionMap.get(field).setEnabled(false);
           }
         }
@@ -249,20 +249,20 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.footerFormatTextField.getDocument().addDocumentListener(documentListener);
     this.footerFormatTextField.addFocusListener(textFieldFocusListener);
 
-    // Create dynamic fields buttons tool bar
-    this.dynamicFieldsLabel = new JLabel(this.resource.getString("dynamicFieldsLabel.text"));
-    this.dynamicFieldButtonsToolBar = new JToolBar();
-    this.dynamicFieldButtonsToolBar.setFloatable(false);
+    // Create variables buttons tool bar
+    this.variablesLabel = new JLabel(this.resource.getString("variablesLabel.text"));
+    this.variableButtonsToolBar = new JToolBar();
+    this.variableButtonsToolBar.setFloatable(false);
     ActionMap actions = getActionMap();
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_NUMBER));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_COUNT));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PLAN_SCALE));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.DATE));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.TIME));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME));
-    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.HOME_NAME));
-    for (int i = 0, n = this.dynamicFieldButtonsToolBar.getComponentCount(); i < n; i++) {        
-      JComponent component = (JComponent)this.dynamicFieldButtonsToolBar.getComponentAtIndex(i); 
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.PAGE_NUMBER));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.PAGE_COUNT));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.PLAN_SCALE));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.DATE));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.TIME));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.HOME_PRESENTATION_NAME));
+    this.variableButtonsToolBar.add(actions.get(HomePrintableComponent.Variable.HOME_NAME));
+    for (int i = 0, n = this.variableButtonsToolBar.getComponentCount(); i < n; i++) {        
+      JComponent component = (JComponent)this.variableButtonsToolBar.getComponentAtIndex(i); 
       // Remove focusable property on buttons
       component.setFocusable(false);
     }
@@ -283,8 +283,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
     if (homePrint != null) {
       this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
       this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
-      this.defaultPlanScaleRadioButton.setEnabled(homePrint.isPlanPrinted());      
-      this.defaultPlanScaleRadioButton.setSelected(homePrint.getPlanScale() == null);
+      this.bestFitPlanScaleRadioButton.setEnabled(homePrint.isPlanPrinted());      
+      this.bestFitPlanScaleRadioButton.setSelected(homePrint.getPlanScale() == null);
       this.userPlanScaleRadioButton.setEnabled(homePrint.isPlanPrinted());      
       this.userPlanScaleRadioButton.setSelected(homePrint.getPlanScale() != null);      
       this.userPlanScaleSpinner.setEnabled(homePrint.isPlanPrinted() && homePrint.getPlanScale() != null);      
@@ -300,8 +300,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
     } else {
       this.furniturePrintedCheckBox.setSelected(true);
       this.planPrintedCheckBox.setSelected(true);
-      this.defaultPlanScaleRadioButton.setSelected(true);
-      this.defaultPlanScaleRadioButton.setEnabled(false);
+      this.bestFitPlanScaleRadioButton.setSelected(true);
+      this.bestFitPlanScaleRadioButton.setEnabled(false);
       this.userPlanScaleRadioButton.setEnabled(true);
       this.userPlanScaleSpinner.setEnabled(false);      
       this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
@@ -359,8 +359,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(this.resource.getString("planPrintedCheckBox.mnemonic")).getKeyCode());
       this.view3DPrintedCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("view3DPrintedCheckBox.mnemonic")).getKeyCode());
-      this.defaultPlanScaleRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("defaultPlanScaleRadioButton.mnemonic")).getKeyCode());
+      this.bestFitPlanScaleRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("bestFitPlanScaleRadioButton.mnemonic")).getKeyCode());
       this.userPlanScaleRadioButton.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("userPlanScaleRadioButton.mnemonic")).getKeyCode());
       this.headerFormatLabel.setDisplayedMnemonic(
@@ -393,7 +393,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
     topPanel.add(this.planPrintedCheckBox, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-    topPanel.add(this.defaultPlanScaleRadioButton, new GridBagConstraints(
+    topPanel.add(this.bestFitPlanScaleRadioButton, new GridBagConstraints(
         0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 20, 2, 0), 0, 0));
     topPanel.add(this.userPlanScaleRadioButton, new GridBagConstraints(
@@ -429,10 +429,10 @@ public class PageSetupPanel extends JPanel implements DialogView {
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, lastComponentInsets, 0, 0));
     // Last row
-    add(this.dynamicFieldsLabel, new GridBagConstraints(
+    add(this.variablesLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(this.dynamicFieldButtonsToolBar, new GridBagConstraints(
+    add(this.variableButtonsToolBar, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
