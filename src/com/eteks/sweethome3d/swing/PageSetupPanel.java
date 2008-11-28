@@ -434,7 +434,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.variableButtonsToolBar, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**

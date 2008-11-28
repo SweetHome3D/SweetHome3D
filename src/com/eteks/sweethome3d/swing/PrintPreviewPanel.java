@@ -22,13 +22,10 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.Paint;
 import java.awt.event.ActionEvent;
-import java.awt.geom.GeneralPath;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
@@ -139,26 +136,14 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
           @Override
           public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             Graphics2D g2D = (Graphics2D)g;
-            Paint oldPaint = g2D.getPaint();
-            Color startColor = new Color(127, 127, 127, 200);
-            Color endColor = new Color(192, 192, 192, 50);
-            // Fill right border with a gradient
-            g2D.setPaint(new GradientPaint(x + width - 5, 0, startColor, x + width - 1, 0, endColor));
-            GeneralPath border = new GeneralPath();
-            border.moveTo(x + width - 5, 0);
-            border.lineTo(x + width, 5);
-            border.lineTo(x + width, y + height);
-            border.lineTo(x + width - 5, y + height - 5);
-            g2D.fill(border);
-            // Fill bottom border with a gradient
-            g2D.setPaint(new GradientPaint(0, y + height - 5, startColor, 0, y + height - 1, endColor));
-            border = new GeneralPath();
-            border.moveTo(0, y + height - 5);
-            border.lineTo(5, y + height);
-            border.lineTo(x + width, y + height);
-            border.lineTo(x + width - 5, y + height - 5);
-            g2D.fill(border);
-            g2D.setPaint(oldPaint);
+            Color oldColor = g2D.getColor();
+            // Fill left and right border with a gradient
+            for (int i = 0; i < 5; i++) {
+              g2D.setColor(new Color(128, 128, 128, 200 - i * 45));
+              g2D.drawLine(x + width - 5 + i, y + i, x + width - 5 + i, y + height - 5 + i);
+              g2D.drawLine(x + i, y + height - 5 + i, x + width - 5 + i - 1, y + height - 5 + i);
+            }
+            g2D.setColor(oldColor);
           }
         },
         BorderFactory.createLineBorder(Color.BLACK)));
