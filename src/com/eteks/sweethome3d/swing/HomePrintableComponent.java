@@ -152,6 +152,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     float  yFooter = 0;
     Rectangle clipBounds = g2D.getClipBounds();
     AffineTransform oldTransform = g2D.getTransform();
+    Paper oldPaper = pageFormat.getPaper();
     if (homePrint != null) {
       float imageableY = (float)pageFormat.getImageableY();
       float imageableHeight = (float)pageFormat.getImageableHeight();
@@ -262,6 +263,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
         g2D.drawString(footer, xFooter, yFooter);
       }
     }  
+    pageFormat.setPaper(oldPaper);    
     return pageExists;
   }
 
