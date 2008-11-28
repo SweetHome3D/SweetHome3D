@@ -111,7 +111,8 @@ public interface PlanView extends View {
   /**
    * Sets the location point for alignment feedback.
    */
-  public abstract void setAlignmentFeedback(Selectable alignedObject,
+  public abstract void setAlignmentFeedback(Class<? extends Selectable> alignedObjectClass,
+                                            Selectable alignedObject,
                                             float x, 
                                             float y, 
                                             boolean showPoint);

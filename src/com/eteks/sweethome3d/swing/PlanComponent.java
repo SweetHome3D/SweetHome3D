@@ -137,6 +137,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor       resizeCursor;
   private final Cursor       duplicationCursor;
   private Rectangle2D        rectangleFeedback;
+  private Class<? extends Selectable> alignedObjectClass;
   private Selectable         alignedObjectFeedback;
   private Point2D            locationFeeback;
   private boolean            showPointFeedback;
@@ -1339,16 +1340,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, backgroundColor, foregroundColor);
       
-      if (this.alignedObjectFeedback instanceof Wall) {
-        paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, 
-            selectionColor, locationFeedbackStroke, planScale);
-      } else if (this.alignedObjectFeedback instanceof Room) {
-        paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
-            selectionColor, locationFeedbackStroke, planScale,
-            selectionOutlinePaint, selectionOutlineStroke);
-      } else if (this.alignedObjectFeedback instanceof DimensionLine) {
-        paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
-            selectionColor, locationFeedbackStroke, planScale);
+      if (this.alignedObjectClass != null) {
+        if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, 
+              selectionColor, locationFeedbackStroke, planScale);
+        } else if (Room.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
+              selectionColor, locationFeedbackStroke, planScale,
+              selectionOutlinePaint, selectionOutlineStroke);
+        } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
+              selectionColor, locationFeedbackStroke, planScale);
+        }
       }
       paintRectangleFeedback(g2D, selectionColor, planScale);
     }
@@ -2284,7 +2287,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                                    Paint feedbackPaint, Stroke feedbackStroke,
                                                    float planScale) {
     // Paint dimension line location feedback
-    if (locationFeedback != null) {
+    if (locationFeedback != null) {      
       float margin = 1f / planScale;
       // Search which room points are at locationFeedback abscissa or ordinate
       float x = (float)locationFeedback.getX(); 
@@ -2802,10 +2805,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Sets the location point for alignment feedback. 
    */
-  public void setAlignmentFeedback(Selectable alignedObject,
+  public void setAlignmentFeedback(Class<? extends Selectable> alignedObjectClass,
+                                   Selectable alignedObject,
                                    float x, 
                                    float y, 
                                    boolean showPointFeedback) {
+    this.alignedObjectClass = alignedObjectClass;
     this.alignedObjectFeedback = alignedObject;
     this.locationFeeback = new Point2D.Float(x, y);
     this.showPointFeedback = showPointFeedback;
@@ -2816,6 +2821,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Deletes the alignment feedback. 
    */
   public void deleteAlignmentFeedback() {
+    this.alignedObjectClass = null;
     this.alignedObjectFeedback = null;
     this.locationFeeback = null;
     repaint();

@@ -3149,7 +3149,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void moveMouse(float x, float y) {
-      getView().setAlignmentFeedback(null, x, y, false);
+      getView().setAlignmentFeedback(Wall.class, null, x, y, false);
     }
 
     @Override
@@ -3253,7 +3253,7 @@ public class PlanController extends FurnitureController implements Controller {
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       PlanView planView = getView();
-      planView.setAlignmentFeedback(null, 
+      planView.setAlignmentFeedback(Wall.class, null, 
           getXLastMousePress(), getYLastMousePress(), false);
     }
 
@@ -3285,7 +3285,7 @@ public class PlanController extends FurnitureController implements Controller {
         this.newWall.setYEnd(yEnd);
       }         
       planView.setToolTipFeedback(getToolTipFeedbackText(this.newWall), x, y);
-      planView.setAlignmentFeedback(this.newWall, xEnd, yEnd, false);
+      planView.setAlignmentFeedback(Wall.class, this.newWall, xEnd, yEnd, false);
       
       // If the start or end line of a wall close to (xEnd, yEnd) is
       // free, it will the wall at end of the new wall.
@@ -3420,7 +3420,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), 
           getXLastMousePress(), getYLastMousePress());
-      planView.setAlignmentFeedback(this.selectedWall, this.oldX, this.oldY, false);
+      planView.setAlignmentFeedback(Wall.class, this.selectedWall, this.oldX, this.oldY, false);
     }
     
     @Override
@@ -3443,7 +3443,7 @@ public class PlanController extends FurnitureController implements Controller {
       moveWallPoint(this.selectedWall, newX, newY, this.startPoint);
 
       planView.setToolTipFeedback(getToolTipFeedbackText(this.selectedWall), x, y);
-      planView.setAlignmentFeedback(this.selectedWall, newX, newY, false);
+      planView.setAlignmentFeedback(Wall.class, this.selectedWall, newX, newY, false);
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
     }
@@ -4057,7 +4057,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void moveMouse(float x, float y) {
-      getView().setAlignmentFeedback(null, x, y, false);
+      getView().setAlignmentFeedback(DimensionLine.class, null, x, y, false);
     }
 
     @Override
@@ -4118,7 +4118,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.newDimensionLine = null;
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
-      getView().setAlignmentFeedback(null, getXLastMousePress(), getYLastMousePress(), false);
+      getView().setAlignmentFeedback(DimensionLine.class, 
+          null, getXLastMousePress(), getYLastMousePress(), false);
     }
 
     @Override
@@ -4156,7 +4157,8 @@ public class PlanController extends FurnitureController implements Controller {
           this.newDimensionLine.setXEnd(xEnd); 
           this.newDimensionLine.setYEnd(yEnd); 
         }         
-        planView.setAlignmentFeedback(this.newDimensionLine, xEnd, yEnd, false);
+        planView.setAlignmentFeedback(DimensionLine.class, 
+            this.newDimensionLine, xEnd, yEnd, false);
       }
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
@@ -4288,12 +4290,12 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.startPoint) {
         this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
-        planView.setAlignmentFeedback(this.selectedDimensionLine, 
+        planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart(), false);
       } else {
         this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd());
-        planView.setAlignmentFeedback(this.selectedDimensionLine, 
+        planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
             this.selectedDimensionLine.getXEnd(), this.selectedDimensionLine.getYEnd(), false);
       }
       toggleMagnetism(wasShiftDownLastMousePress());
@@ -4337,7 +4339,7 @@ public class PlanController extends FurnitureController implements Controller {
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.startPoint);        
-          planView.setAlignmentFeedback(this.selectedDimensionLine, 
+          planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
               xNewStartPoint, yNewStartPoint, false);
         } else {
           planView.deleteAlignmentFeedback();
@@ -4375,7 +4377,7 @@ public class PlanController extends FurnitureController implements Controller {
           } 
 
           moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.startPoint);
-          planView.setAlignmentFeedback(this.selectedDimensionLine, 
+          planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
               xNewEndPoint, yNewEndPoint, false);
         } else {
           planView.deleteAlignmentFeedback();
@@ -4506,10 +4508,10 @@ public class PlanController extends FurnitureController implements Controller {
         // Find the closest wall or room point to current mouse location
         PointMagnetizedToClosestWallOrRoomPoint point = new PointMagnetizedToClosestWallOrRoomPoint(
             home.getRooms(), x, y, PIXEL_WALL_MARGIN / getView().getScale());
-        getView().setAlignmentFeedback(null, point.getX(), 
+        getView().setAlignmentFeedback(Room.class, null, point.getX(), 
             point.getY(), point.isMagnetized());
       } else {
-        getView().setAlignmentFeedback(null, x, y, false);
+        getView().setAlignmentFeedback(Room.class, null, x, y, false);
       } 
     }
 
@@ -4582,13 +4584,14 @@ public class PlanController extends FurnitureController implements Controller {
             PIXEL_WALL_MARGIN / getView().getScale());
         this.xPreviousPoint = point.getX();
         this.yPreviousPoint = point.getY();
-        getView().setAlignmentFeedback(null, point.getX(), 
-            point.getY(), point.isMagnetized());
+        getView().setAlignmentFeedback(Room.class, null, 
+            point.getX(), point.getY(), point.isMagnetized());
         
       } else {
          this.xPreviousPoint = getXLastMousePress();
          this.yPreviousPoint = getYLastMousePress();
-         getView().setAlignmentFeedback(null, this.xPreviousPoint, this.yPreviousPoint, false);
+         getView().setAlignmentFeedback(Room.class, null, 
+             this.xPreviousPoint, this.yPreviousPoint, false);
       }
       deselectAll();
     }
@@ -4646,7 +4649,8 @@ public class PlanController extends FurnitureController implements Controller {
         points [points.length - 1][1] = yEnd;
         this.newRoom.setPoints(points);
       }         
-      planView.setAlignmentFeedback(this.newRoom, xEnd, yEnd, magnetizedPoint);
+      planView.setAlignmentFeedback(Room.class, this.newRoom, 
+          xEnd, yEnd, magnetizedPoint);
       
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
@@ -4891,7 +4895,7 @@ public class PlanController extends FurnitureController implements Controller {
       } 
       moveRoomPoint(this.selectedRoom, newX, newY, this.roomPointIndex);
 
-      planView.setAlignmentFeedback(this.selectedRoom, newX, newY, magnetizedPoint);
+      planView.setAlignmentFeedback(Room.class, this.selectedRoom, newX, newY, magnetizedPoint);
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
     }
