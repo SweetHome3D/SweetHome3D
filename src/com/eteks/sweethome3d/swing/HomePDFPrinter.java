@@ -57,7 +57,7 @@ public class HomePDFPrinter {
    * Writes to <code>outputStream</code> the print of a home in PDF format.
    */
   public void write(OutputStream outputStream) throws IOException {
-    PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+    PageFormat pageFormat = HomePrintableComponent.getPageFormat(this.home.getPrint());
     Document pdfDocument = new Document(new Rectangle((float)pageFormat.getWidth(), (float)pageFormat.getHeight()));
     try {
       // Get a PDF writer that will write to the given PDF output stream
@@ -78,7 +78,7 @@ public class HomePDFPrinter {
       
       PdfContentByte pdfContent = pdfWriter.getDirectContent();
       HomePrintableComponent printableComponent = 
-        new HomePrintableComponent(this.home, this.controller, this.defaultFont);
+          new HomePrintableComponent(this.home, this.controller, this.defaultFont);
       // Print each page
       for (int page = 0, pageCount = printableComponent.getPageCount(); page < pageCount; page++) {
         // Check current thread isn't interrupted

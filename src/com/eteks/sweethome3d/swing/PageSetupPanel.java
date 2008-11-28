@@ -19,11 +19,15 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.print.PageFormat;
@@ -33,13 +37,21 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ResourceBundle;
 
+import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -52,6 +64,44 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class PageSetupPanel extends JPanel implements DialogView {
+  /**
+   * List dynamic fields that the user may insert in header and footer.
+   */
+  public enum DynamicField {
+    PAGE_NUMBER("$pageNumber", "{0, number, integer}"),
+    PAGE_COUNT("$pageCount", "{1, number, integer}"),
+    DATE("$date", "{2, date}"),
+    TIME("$time", "{2, time}"),
+    HOME_PRESENTATION_NAME("$name", "{3}"),
+    HOME_NAME("$file", "{4}");    
+    
+    private final String userCode;
+    private final String formatCode;
+
+    private DynamicField(String userCode, String formatCode) {
+      this.userCode = userCode;
+      this.formatCode = formatCode;      
+    }
+    
+    /**
+     * Returns a user readable code matching this field.
+     */
+    public String getUserCode() {
+      return this.userCode;
+    }
+    
+    /**
+     * Returns a format usable code matching this field.
+     */
+    public String getFormatCode()  {
+      return this.formatCode;
+    }
+    
+    private String getActionPrefix() {
+      return "INSERT_" + name();
+    }
+  };
+
   private final PageSetupController controller;
   private ResourceBundle      resource;
   private PageFormat          pageFormat;
@@ -59,6 +109,12 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private JCheckBox           furniturePrintedCheckBox;
   private JCheckBox           planPrintedCheckBox;
   private JCheckBox           view3DPrintedCheckBox;
+  private JLabel              headerFormatLabel;
+  private JTextField          headerFormatTextField;
+  private JLabel              footerFormatLabel;
+  private JTextField          footerFormatTextField;
+  private JLabel              dynamicFieldsLabel;
+  private JToolBar            dynamicFieldButtonsToolBar;  
 
   /**
    * Creates a panel that displays page setup.
@@ -69,15 +125,87 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         PageSetupPanel.class.getName());
+    createActions();
     createComponents(controller);
     setMnemonics();
     layoutComponents();
   }
 
   /**
+   * Creates actions for dynamic fields.
+   */
+  private void createActions() {
+    ActionMap actions = getActionMap();
+    actions.put(DynamicField.PAGE_NUMBER, new ResourceAction(
+        this.resource, DynamicField.PAGE_NUMBER.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.PAGE_NUMBER.getUserCode());
+        }
+      });
+    actions.put(DynamicField.PAGE_COUNT, new ResourceAction(
+        this.resource, DynamicField.PAGE_COUNT.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.PAGE_COUNT.getUserCode());
+        }
+      });
+    actions.put(DynamicField.DATE, new ResourceAction(
+        this.resource, DynamicField.DATE.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.DATE.getUserCode());
+        }
+      });
+    actions.put(DynamicField.TIME, new ResourceAction(
+        this.resource, DynamicField.TIME.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.TIME.getUserCode());
+        }
+      });
+    actions.put(DynamicField.HOME_PRESENTATION_NAME, new ResourceAction(
+        this.resource, DynamicField.HOME_PRESENTATION_NAME.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.HOME_PRESENTATION_NAME.getUserCode());
+        }
+      });
+    actions.put(DynamicField.HOME_NAME, new ResourceAction(
+        this.resource, DynamicField.HOME_NAME.getActionPrefix()) {
+        @Override
+        public void actionPerformed(ActionEvent ev) {
+          insertDynamicCode(DynamicField.HOME_NAME.getUserCode());
+        }
+      });
+  }
+
+  /**
+   * Inserts a code in the text field that has the focus.
+   */
+  private void insertDynamicCode(String userCode) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner instanceof JTextField) {
+      JTextField textField = (JTextField)focusOwner;
+      Document document = textField.getDocument();
+      try {
+        document.insertString(textField.getCaretPosition(), userCode, null);
+      } catch (BadLocationException ex) {
+        // Caret can't be at a bad location 
+      }
+    }
+  }
+
+  /**
    * Creates and initializes components.
    */
   private void createComponents(final PageSetupController controller) {
+    final PropertyChangeListener printChangeListener = new PropertyChangeListener() {
+      public void propertyChange(PropertyChangeEvent ev) {
+        updateComponents(controller.getPrint());
+      }
+    };
+
     this.pageFormatButton = new JButton(this.resource.getString("pageFormatButton.text"));
     this.pageFormatButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
@@ -101,31 +229,95 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.view3DPrintedCheckBox = new JCheckBox(
         this.resource.getString("view3DPrintedCheckBox.text")); 
     this.view3DPrintedCheckBox.addItemListener(checkBoxListener);
-    
-    controller.addPropertyChangeListener(PageSetupController.Property.PRINT, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            updateComponents(controller.getPrint());
+
+    this.headerFormatLabel = new JLabel(this.resource.getString("headerFormatLabel.text"));
+    this.headerFormatTextField = new JTextField(20);
+    if (!OperatingSystem.isMacOSX()) {
+      SwingTools.addAutoSelectionOnFocusGain(this.headerFormatTextField);
+    }
+    DocumentListener documentListener = new DocumentListener() {
+        public void changedUpdate(DocumentEvent ev) {
+          controller.removePropertyChangeListener(PageSetupController.Property.PRINT, printChangeListener);
+          updateController(controller);
+          controller.addPropertyChangeListener(PageSetupController.Property.PRINT, printChangeListener);
+        }
+  
+        public void insertUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+  
+        public void removeUpdate(DocumentEvent ev) {
+          changedUpdate(ev);
+        }
+      };
+    this.headerFormatTextField.getDocument().addDocumentListener(documentListener);
+    FocusListener textFieldFocusListener = new FocusListener() {
+        public void focusGained(FocusEvent ev) {
+          ActionMap actionMap = getActionMap();
+          for (DynamicField field : DynamicField.values()) {
+            actionMap.get(field).setEnabled(true);
           }
-        });
-    updateComponents(controller.getPrint());
+        }
+  
+        public void focusLost(FocusEvent ev) {
+          ActionMap actionMap = getActionMap();
+          for (DynamicField field : DynamicField.values()) {
+            actionMap.get(field).setEnabled(false);
+          }
+        }
+      };
+    this.headerFormatTextField.addFocusListener(textFieldFocusListener);
+    
+    this.footerFormatLabel = new JLabel(this.resource.getString("footerFormatLabel.text"));
+    this.footerFormatTextField = new JTextField(20);
+    if (!OperatingSystem.isMacOSX()) {
+      SwingTools.addAutoSelectionOnFocusGain(this.footerFormatTextField);
+    }
+    this.footerFormatTextField.getDocument().addDocumentListener(documentListener);
+    this.footerFormatTextField.addFocusListener(textFieldFocusListener);
+
+    // Create dynamic fields buttons tool bar
+    this.dynamicFieldsLabel = new JLabel(this.resource.getString("dynamicFieldsLabel.text"));
+    this.dynamicFieldButtonsToolBar = new JToolBar();
+    this.dynamicFieldButtonsToolBar.setFloatable(false);
+    ActionMap actions = getActionMap();
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.PAGE_NUMBER));
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.PAGE_COUNT));
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.DATE));
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.TIME));
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.HOME_PRESENTATION_NAME));
+    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.HOME_NAME));
+    for (int i = 0, n = this.dynamicFieldButtonsToolBar.getComponentCount(); i < n; i++) {        
+      JComponent component = (JComponent)this.dynamicFieldButtonsToolBar.getComponentAtIndex(i); 
+      // Remove focusable property on buttons
+      component.setFocusable(false);
+    }
+    
+    controller.addPropertyChangeListener(PageSetupController.Property.PRINT, printChangeListener);
+    updateComponents(controller.getPrint());    
   }
   
   /**
    * Updates components from <code>homePrint</code> attributes.
    */
   private void updateComponents(HomePrint homePrint) {
-    this.pageFormat = PageSetupPanel.getPageFormat(homePrint);
+    this.pageFormat = HomePrintableComponent.getPageFormat(homePrint);
     // Check if off screen image is supported 
     boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
     if (homePrint != null) {
       this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
       this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
       this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
+      String headerFormat = homePrint.getHeaderFormat();
+      this.headerFormatTextField.setText(headerFormat != null ? headerFormat : "");
+      String footerFormat = homePrint.getFooterFormat();
+      this.footerFormatTextField.setText(footerFormat != null ? footerFormat : "");
     } else {
       this.furniturePrintedCheckBox.setSelected(true);
       this.planPrintedCheckBox.setSelected(true);
       this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
+      this.headerFormatTextField.setText("");
+      this.footerFormatTextField.setText("");
     }
     this.view3DPrintedCheckBox.setEnabled(offscreenCanvas3DSupported);
   }
@@ -154,7 +346,9 @@ public class PageSetupPanel extends JPanel implements DialogView {
         (float)(paper.getWidth() - paper.getImageableWidth() - paper.getImageableX()),
         this.furniturePrintedCheckBox.isSelected(),
         this.planPrintedCheckBox.isSelected(),
-        this.view3DPrintedCheckBox.isSelected());
+        this.view3DPrintedCheckBox.isSelected(),
+        this.headerFormatTextField.getText().trim(),
+        this.footerFormatTextField.getText().trim());
     controller.setPrint(homePrint);
   }
 
@@ -171,6 +365,12 @@ public class PageSetupPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(this.resource.getString("planPrintedCheckBox.mnemonic")).getKeyCode());
       this.view3DPrintedCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("view3DPrintedCheckBox.mnemonic")).getKeyCode());
+      this.headerFormatLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("headerFormatLabel.mnemonic")).getKeyCode());
+      this.headerFormatLabel.setLabelFor(this.headerFormatTextField);
+      this.footerFormatLabel.setDisplayedMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("footerFormatLabel.mnemonic")).getKeyCode());
+      this.footerFormatLabel.setLabelFor(this.footerFormatTextField);
     }
   }
   
@@ -179,22 +379,51 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   private void layoutComponents() {
     // First row
-    add(this.pageFormatButton, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+    JPanel topPanel = new JPanel(new GridBagLayout());
+    topPanel.add(this.pageFormatButton, new GridBagConstraints(
+        0, 0, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0) , 0, 0));
-    // Second row
-    Insets componentInsets = new Insets(0, 0, 5, 0);
-    add(this.furniturePrintedCheckBox, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, componentInsets , 0, 0));
-    // Third row
-    add(this.planPrintedCheckBox, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, componentInsets , 0, 0));
-    // Last row
-    add(this.view3DPrintedCheckBox, new GridBagConstraints(
+    Insets lastComponentInsets = new Insets(0, 0, 5, 0);
+    topPanel.add(this.furniturePrintedCheckBox, new GridBagConstraints(
+        0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, lastComponentInsets , 0, 0));
+    topPanel.add(this.planPrintedCheckBox, new GridBagConstraints(
+        0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, lastComponentInsets , 0, 0));
+    topPanel.add(this.view3DPrintedCheckBox, new GridBagConstraints(
         0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(topPanel, new GridBagConstraints(
+        0, 0, 2, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    // Second row
+    add(new JSeparator(), new GridBagConstraints(
+        0, 1, 2, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -10, 0));
+    // Third row
+    int labelAlignment = OperatingSystem.isMacOSX() 
+        ? GridBagConstraints.LINE_END
+        : GridBagConstraints.LINE_START;
+    add(this.headerFormatLabel, new GridBagConstraints(
+        0, 2, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.headerFormatTextField, new GridBagConstraints(
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, lastComponentInsets, 0, 0));
+    // Forth row
+    add(this.footerFormatLabel, new GridBagConstraints(
+        0, 3, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.footerFormatTextField, new GridBagConstraints(
+        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, lastComponentInsets, 0, 0));
+    // Last row
+    add(this.dynamicFieldsLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    add(this.dynamicFieldButtonsToolBar, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**
@@ -202,42 +431,10 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("pageSetup.title");
-    if (JOptionPane.showConfirmDialog(SwingUtilities.getRootPane((JComponent)parentView), this, dialogTitle, 
-        JOptionPane.OK_CANCEL_OPTION, 
-        JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION
+    if (SwingTools.showConfirmDialog((JComponent)parentView, 
+            dialogTitle, this, this.pageFormatButton) == JOptionPane.OK_OPTION
         && this.controller != null) {
-      this.controller.modifyPageSetup();
-    }
-  }
-
-  /**
-   * Returns a <code>PageFormat</code> object created from <code>homePrint</code>.
-   */
-  public static PageFormat getPageFormat(HomePrint homePrint) {
-    PrinterJob printerJob = PrinterJob.getPrinterJob();
-    if (homePrint == null) {
-      return printerJob.defaultPage();
-    } else {
-      PageFormat pageFormat = new PageFormat();
-      switch (homePrint.getPaperOrientation()) {
-        case PORTRAIT :
-          pageFormat.setOrientation(PageFormat.PORTRAIT);
-          break;
-        case LANDSCAPE :
-          pageFormat.setOrientation(PageFormat.LANDSCAPE);
-          break;
-        case REVERSE_LANDSCAPE :
-          pageFormat.setOrientation(PageFormat.REVERSE_LANDSCAPE);
-          break;
-      }
-      Paper paper = new Paper();
-      paper.setSize(homePrint.getPaperWidth(), homePrint.getPaperHeight());
-      paper.setImageableArea(homePrint.getPaperLeftMargin(), homePrint.getPaperTopMargin(), 
-          homePrint.getPaperWidth() - homePrint.getPaperLeftMargin() - homePrint.getPaperRightMargin(), 
-          homePrint.getPaperHeight() - homePrint.getPaperTopMargin() - homePrint.getPaperBottomMargin());
-      pageFormat.setPaper(paper);
-      pageFormat = printerJob.validatePage(pageFormat);
-      return pageFormat;
+          this.controller.modifyPageSetup();
     }
   }
 }

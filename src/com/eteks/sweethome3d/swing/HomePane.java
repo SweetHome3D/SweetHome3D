@@ -1717,7 +1717,7 @@ public class HomePane extends JRootPane implements HomeView {
    *    exception if it was interrupted.
    */
   public Callable<Void> showPrintDialog() {
-    PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+    PageFormat pageFormat = HomePrintableComponent.getPageFormat(this.home.getPrint());
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
     printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller, getFont()), pageFormat);
     if (printerJob.printDialog()) {

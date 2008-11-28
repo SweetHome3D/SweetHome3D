@@ -30,7 +30,7 @@ public class HomePrint implements Serializable {
    * Paper orientation. 
    */
   public enum PaperOrientation {PORTRAIT, LANDSCAPE, REVERSE_LANDSCAPE};
-  
+    
   private final PaperOrientation paperOrientation;
   private final float            paperWidth;
   private final float            paperHeight;
@@ -41,6 +41,8 @@ public class HomePrint implements Serializable {
   private final boolean          furniturePrinted;
   private final boolean          planPrinted;
   private final boolean          view3DPrinted;
+  private final String           headerFormat;
+  private final String           footerFormat;
   
   /**
    * Create a print attributes for home from the given parameters.
@@ -54,7 +56,9 @@ public class HomePrint implements Serializable {
                    float paperRightMargin,
                    boolean furniturePrinted,
                    boolean planPrinted,
-                   boolean view3DPrinted) {
+                   boolean view3DPrinted,
+                   String headerFormat,
+                   String footerFormat) {
     this.paperOrientation = paperOrientation;
     this.paperWidth = paperWidth;
     this.paperHeight = paperHeight;
@@ -65,6 +69,8 @@ public class HomePrint implements Serializable {
     this.furniturePrinted = furniturePrinted;
     this.planPrinted = planPrinted;
     this.view3DPrinted = view3DPrinted;
+    this.headerFormat = headerFormat;
+    this.footerFormat = footerFormat;
   }
 
   /**
@@ -136,4 +142,18 @@ public class HomePrint implements Serializable {
   public boolean isView3DPrinted() {
     return this.view3DPrinted;
   } 
+  
+  /**
+   * Returns the string format used to print page headers. 
+   */
+  public String getHeaderFormat() {
+    return this.headerFormat;
+  }
+
+  /**
+   * Returns the string format used to print page footers. 
+   */
+  public String getFooterFormat() {
+    return this.footerFormat;
+  }
 }

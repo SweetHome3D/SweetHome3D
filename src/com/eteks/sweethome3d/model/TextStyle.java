@@ -37,6 +37,10 @@ public class TextStyle implements Serializable {
   private final String fontStyleName; // Keep font style as a string to avoid future serialization 
                                       // conflicts if FontStyle is enriched 
   
+  public TextStyle(float fontSize) {
+    this(fontSize, FontStyle.PLAIN);    
+  }
+  
   public TextStyle(float fontSize, FontStyle fontStyle) {
     this.fontSize = fontSize;
     this.fontStyleName = fontStyle.name();    

@@ -22,19 +22,29 @@ package com.eteks.sweethome3d.swing;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import java.text.MessageFormat;
+import java.util.Date;
 
 import javax.swing.JComponent;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
+import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.swing.PageSetupPanel.DynamicField;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
 /**
@@ -42,12 +52,17 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
  * and the 3D view of a home.
  */
 public class HomePrintableComponent extends JComponent implements Printable {
+  private static final float   HEADER_FOOTER_MARGIN = LengthUnit.centimeterToInch(0.2f) * 72;
+  
   private final Home           home;
   private final HomeController controller;
   private final Font           defaultFont;
+  private final Font           headerFooterFont;
   private int                  page;
   private int                  pageCount = -1;
   private int                  planViewIndex;
+  private Date                 printDate;
+
   
   /**
    * Creates a printable component that will print or display the
@@ -58,6 +73,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     this.home = home;
     this.controller = controller;
     this.defaultFont = defaultFont;
+    this.headerFooterFont = defaultFont.deriveFont(11f);
   }
   
   /**
@@ -74,9 +90,94 @@ public class HomePrintableComponent extends JComponent implements Printable {
     g2D.setColor(Color.WHITE);
     g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
                                     pageFormat.getHeight()));
-    
     int pageExists = NO_SUCH_PAGE;
     HomePrint homePrint = this.home.getPrint();
+    
+    // Prepare header and footer
+    String header = null;
+    float  xHeader = 0;
+    float  yHeader = 0;
+    String footer = null;
+    float  xFooter = 0;
+    float  yFooter = 0;
+    Rectangle clipBounds = g2D.getClipBounds();
+    AffineTransform oldTransform = g2D.getTransform();
+    if (homePrint != null) {
+      float imageableY = (float)pageFormat.getImageableY();
+      float imageableHeight = (float)pageFormat.getImageableHeight();
+      FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
+      float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
+          + HEADER_FOOTER_MARGIN;
+      
+      // Retrieve dynamic field values
+      int pageNumber = page + 1; 
+      int pageCount = getPageCount(); 
+      if (page == 0) {
+        this.printDate = new Date();
+      }
+      String homeName = this.home.getName();
+      if (homeName == null) {
+        homeName = "";
+      }
+      String homePresentationName = this.controller.getContentManager().getPresentationName(
+           homeName, ContentManager.ContentType.SWEET_HOME_3D);
+      Object [] dynamicFieldValues = new Object [] {
+          pageNumber, pageCount, this.printDate, homePresentationName, homeName};
+      
+      // Create header text
+      String headerFormat = homePrint.getHeaderFormat();      
+      if (headerFormat != null) {
+        header = getFormattedText(headerFormat, dynamicFieldValues).trim();
+        if (header.length() > 0) {
+          xHeader = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(header)) / 2;
+          yHeader = imageableY + fontMetrics.getAscent();
+          imageableY += headerFooterHeight;
+          imageableHeight -= headerFooterHeight;
+        } else {
+          header = null;
+        }
+      }
+      
+      // Create footer text
+      String footerFormat = homePrint.getFooterFormat();
+      if (footerFormat != null) {
+        footer = getFormattedText(footerFormat, dynamicFieldValues).trim();
+        if (footer.length() > 0) {
+          xFooter = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(footer)) / 2;
+          yFooter = imageableY + imageableHeight - fontMetrics.getDescent();
+          imageableHeight -= headerFooterHeight;
+        } else {
+          footer = null;
+        }
+      }
+      
+      // Update page format paper margins depending on paper orientation
+      Paper paper = pageFormat.getPaper();
+      switch (pageFormat.getOrientation()) {
+        case PageFormat.PORTRAIT:
+          paper.setImageableArea(paper.getImageableX(), imageableY, 
+              paper.getImageableWidth(), imageableHeight);
+          break;
+        case PageFormat.LANDSCAPE :
+          paper.setImageableArea(paper.getWidth() - (imageableHeight + imageableY), 
+              paper.getImageableY(), 
+              imageableHeight, paper.getImageableHeight());
+        case PageFormat.REVERSE_LANDSCAPE:
+          paper.setImageableArea(imageableY, paper.getImageableY(), 
+              imageableHeight, paper.getImageableHeight());
+          break;
+      }
+      pageFormat.setPaper(paper);
+      if (clipBounds == null) {
+        g2D.clipRect((int)pageFormat.getImageableX(), (int)pageFormat.getImageableY(), 
+            (int)pageFormat.getImageableWidth(), (int)pageFormat.getImageableHeight());
+      } else {  
+        g2D.clipRect(clipBounds.x, (int)pageFormat.getImageableY(), 
+            clipBounds.width, (int)pageFormat.getImageableHeight());
+      }
+    }
+    
+    // Print current page 
     if ((homePrint == null || homePrint.isFurniturePrinted())
         && page <= this.planViewIndex) {
       // Try to print next furniture view page
@@ -87,7 +188,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     } 
     if ((homePrint == null || homePrint.isPlanPrinted())
         && page == this.planViewIndex) {
-      return ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
+      pageExists = ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
     } else if ((homePrint == null && page == this.planViewIndex + 1)
                || (homePrint != null
                    && homePrint.isView3DPrinted()
@@ -95,18 +196,47 @@ public class HomePrintableComponent extends JComponent implements Printable {
                          && page == this.planViewIndex + 1)
                        || (!homePrint.isPlanPrinted()
                            && page == this.planViewIndex)))) {
-      return ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
+      pageExists = ((Printable)this.controller.getHomeController3D().getView()).print(g2D, pageFormat, 0);
     }
+    
+    // Print header and footer
+    if (pageExists == PAGE_EXISTS) {
+      g2D.setTransform(oldTransform);
+      g2D.setClip(clipBounds);
+      g2D.setFont(this.headerFooterFont);
+      g2D.setColor(Color.BLACK);
+      if (header != null) {
+        g2D.drawString(header, xHeader, yHeader);
+      }
+      if (footer != null) {
+        g2D.drawString(footer, xFooter, yFooter);
+      }
+    }  
     return pageExists;
   }
 
+  /**
+   * Returns the formatted text built from format.
+   */
+  private String getFormattedText(String format, Object [] dynamicFieldValues) {
+    // Replace $$ escape sequence
+    final String temp = "|#&%<>/!";
+    format = format.replace("$$", temp);
+    format = format.replace("{", "{{");
+    for (DynamicField dynamicField : DynamicField.values()) {
+      format = format.replace(dynamicField.getUserCode(), dynamicField.getFormatCode());
+    }
+    format = format.replace(temp, "$");
+    return new MessageFormat(format).format(dynamicFieldValues);
+  }
+  
   /**
    * Returns the preferred size of this component according to paper orientation and size
    * of home print attributes.
    */
   @Override
   public Dimension getPreferredSize() {
-    PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+    PageFormat pageFormat = getPageFormat(this.home.getPrint());
     double maxSize = Math.max(pageFormat.getWidth(), pageFormat.getHeight());
     Insets insets = getInsets();
     return new Dimension((int)(pageFormat.getWidth() / maxSize * 400) + insets.left + insets.right, 
@@ -121,7 +251,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     try {
       Graphics2D g2D = (Graphics2D)g.create();
       // Print printable object at component's scale
-      PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+      PageFormat pageFormat = getPageFormat(this.home.getPrint());
       Insets insets = getInsets();
       double scale = (getWidth() - insets.left - insets.right) / pageFormat.getWidth();
       g2D.scale(scale, scale);
@@ -154,7 +284,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
    */
   public int getPageCount() {
     if (this.pageCount == -1) {
-      PageFormat pageFormat = PageSetupPanel.getPageFormat(this.home.getPrint());
+      PageFormat pageFormat = getPageFormat(this.home.getPrint());
       BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
       Graphics dummyGraphics = dummyImage.getGraphics();
       // Count pages by printing in a dummy image
@@ -170,5 +300,36 @@ public class HomePrintableComponent extends JComponent implements Printable {
       dummyGraphics.dispose();
     }
     return this.pageCount;
+  }
+
+  /**
+   * Returns a <code>PageFormat</code> object created from <code>homePrint</code>.
+   */
+  public static PageFormat getPageFormat(HomePrint homePrint) {
+    final PrinterJob printerJob = PrinterJob.getPrinterJob();
+    if (homePrint == null) {
+      return printerJob.defaultPage();
+    } else {
+      PageFormat pageFormat = new PageFormat();
+      switch (homePrint.getPaperOrientation()) {
+        case PORTRAIT :
+          pageFormat.setOrientation(PageFormat.PORTRAIT);
+          break;
+        case LANDSCAPE :
+          pageFormat.setOrientation(PageFormat.LANDSCAPE);
+          break;
+        case REVERSE_LANDSCAPE :
+          pageFormat.setOrientation(PageFormat.REVERSE_LANDSCAPE);
+          break;
+      }
+      Paper paper = new Paper();
+      paper.setSize(homePrint.getPaperWidth(), homePrint.getPaperHeight());
+      paper.setImageableArea(homePrint.getPaperLeftMargin(), homePrint.getPaperTopMargin(), 
+          homePrint.getPaperWidth() - homePrint.getPaperLeftMargin() - homePrint.getPaperRightMargin(), 
+          homePrint.getPaperHeight() - homePrint.getPaperTopMargin() - homePrint.getPaperBottomMargin());
+      pageFormat.setPaper(paper);
+      pageFormat = printerJob.validatePage(pageFormat);
+      return pageFormat;
+    }
   }
 }
