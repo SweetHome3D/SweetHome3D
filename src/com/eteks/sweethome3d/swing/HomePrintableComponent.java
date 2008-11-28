@@ -171,7 +171,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
         planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
       } else {
         if (planView instanceof PlanComponent) {
-          planScale = "1/" + Math.round(((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
+          planScale = "1/" + Math.round(1 / ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
         }        
       }          
       if (page == 0) {
