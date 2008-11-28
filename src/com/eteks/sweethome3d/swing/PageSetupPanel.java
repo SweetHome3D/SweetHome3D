@@ -50,8 +50,6 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -64,44 +62,6 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class PageSetupPanel extends JPanel implements DialogView {
-  /**
-   * List dynamic fields that the user may insert in header and footer.
-   */
-  public enum DynamicField {
-    PAGE_NUMBER("$pageNumber", "{0, number, integer}"),
-    PAGE_COUNT("$pageCount", "{1, number, integer}"),
-    DATE("$date", "{2, date}"),
-    TIME("$time", "{2, time}"),
-    HOME_PRESENTATION_NAME("$name", "{3}"),
-    HOME_NAME("$file", "{4}");    
-    
-    private final String userCode;
-    private final String formatCode;
-
-    private DynamicField(String userCode, String formatCode) {
-      this.userCode = userCode;
-      this.formatCode = formatCode;      
-    }
-    
-    /**
-     * Returns a user readable code matching this field.
-     */
-    public String getUserCode() {
-      return this.userCode;
-    }
-    
-    /**
-     * Returns a format usable code matching this field.
-     */
-    public String getFormatCode()  {
-      return this.formatCode;
-    }
-    
-    private String getActionPrefix() {
-      return "INSERT_" + name();
-    }
-  };
-
   private final PageSetupController controller;
   private ResourceBundle      resource;
   private PageFormat          pageFormat;
@@ -136,63 +96,62 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   private void createActions() {
     ActionMap actions = getActionMap();
-    actions.put(DynamicField.PAGE_NUMBER, new ResourceAction(
-        this.resource, DynamicField.PAGE_NUMBER.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.PAGE_NUMBER, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.PAGE_NUMBER.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.PAGE_NUMBER.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.PAGE_NUMBER.getUserCode());
         }
       });
-    actions.put(DynamicField.PAGE_COUNT, new ResourceAction(
-        this.resource, DynamicField.PAGE_COUNT.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.PAGE_COUNT, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.PAGE_COUNT.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.PAGE_COUNT.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.PAGE_COUNT.getUserCode());
         }
       });
-    actions.put(DynamicField.DATE, new ResourceAction(
-        this.resource, DynamicField.DATE.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.DATE, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.DATE.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.DATE.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.DATE.getUserCode());
         }
       });
-    actions.put(DynamicField.TIME, new ResourceAction(
-        this.resource, DynamicField.TIME.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.TIME, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.TIME.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.TIME.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.TIME.getUserCode());
         }
       });
-    actions.put(DynamicField.HOME_PRESENTATION_NAME, new ResourceAction(
-        this.resource, DynamicField.HOME_PRESENTATION_NAME.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.HOME_PRESENTATION_NAME.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME.getUserCode());
         }
       });
-    actions.put(DynamicField.HOME_NAME, new ResourceAction(
-        this.resource, DynamicField.HOME_NAME.getActionPrefix()) {
+    actions.put(HomePrintableComponent.DynamicField.HOME_NAME, new ResourceAction(
+        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.HOME_NAME.name()) {
         @Override
         public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(DynamicField.HOME_NAME.getUserCode());
+          insertDynamicCode(HomePrintableComponent.DynamicField.HOME_NAME.getUserCode());
         }
       });
   }
 
   /**
-   * Inserts a code in the text field that has the focus.
+   * Inserts a code in the text field that has the focus and selects it.
    */
   private void insertDynamicCode(String userCode) {
     Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner instanceof JTextField) {
       JTextField textField = (JTextField)focusOwner;
-      Document document = textField.getDocument();
-      try {
-        document.insertString(textField.getCaretPosition(), userCode, null);
-      } catch (BadLocationException ex) {
-        // Caret can't be at a bad location 
-      }
+      textField.replaceSelection(userCode);
+      int lastCharacter = textField.getCaretPosition();
+      int firstCharacter = lastCharacter - userCode.length();
+      textField.setSelectionStart(firstCharacter);
+      textField.setSelectionEnd(lastCharacter);
     }
   }
 
@@ -254,14 +213,14 @@ public class PageSetupPanel extends JPanel implements DialogView {
     FocusListener textFieldFocusListener = new FocusListener() {
         public void focusGained(FocusEvent ev) {
           ActionMap actionMap = getActionMap();
-          for (DynamicField field : DynamicField.values()) {
+          for (HomePrintableComponent.DynamicField field : HomePrintableComponent.DynamicField.values()) {
             actionMap.get(field).setEnabled(true);
           }
         }
   
         public void focusLost(FocusEvent ev) {
           ActionMap actionMap = getActionMap();
-          for (DynamicField field : DynamicField.values()) {
+          for (HomePrintableComponent.DynamicField field : HomePrintableComponent.DynamicField.values()) {
             actionMap.get(field).setEnabled(false);
           }
         }
@@ -281,12 +240,12 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.dynamicFieldButtonsToolBar = new JToolBar();
     this.dynamicFieldButtonsToolBar.setFloatable(false);
     ActionMap actions = getActionMap();
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.PAGE_NUMBER));
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.PAGE_COUNT));
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.DATE));
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.TIME));
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.HOME_PRESENTATION_NAME));
-    this.dynamicFieldButtonsToolBar.add(actions.get(DynamicField.HOME_NAME));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_NUMBER));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_COUNT));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.DATE));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.TIME));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.HOME_NAME));
     for (int i = 0, n = this.dynamicFieldButtonsToolBar.getComponentCount(); i < n; i++) {        
       JComponent component = (JComponent)this.dynamicFieldButtonsToolBar.getComponentAtIndex(i); 
       // Remove focusable property on buttons

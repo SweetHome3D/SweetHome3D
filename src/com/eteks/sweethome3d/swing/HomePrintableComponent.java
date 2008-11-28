@@ -43,7 +43,6 @@ import javax.swing.JComponent;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.LengthUnit;
-import com.eteks.sweethome3d.swing.PageSetupPanel.DynamicField;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 
@@ -52,6 +51,58 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
  * and the 3D view of a home.
  */
 public class HomePrintableComponent extends JComponent implements Printable {
+  /**
+   * List of the dynamic fields that the user may insert in header and footer.
+   */
+  public enum DynamicField {
+    PAGE_NUMBER("$pageNumber", "{0, number, integer}"),
+    PAGE_COUNT("$pageCount", "{1, number, integer}"),
+    DATE("$date", "{2, date}"),
+    TIME("$time", "{2, time}"),
+    HOME_PRESENTATION_NAME("$name", "{3}"),
+    HOME_NAME("$file", "{4}");    
+    
+    private final String userCode;
+    private final String formatCode;
+
+    private DynamicField(String userCode, String formatCode) {
+      this.userCode = userCode;
+      this.formatCode = formatCode;      
+    }
+    
+    /**
+     * Returns a user readable code matching this field.
+     */
+    public String getUserCode() {
+      return this.userCode;
+    }
+    
+    /**
+     * Returns a format usable code matching this field.
+     */
+    public String getFormatCode()  {
+      return this.formatCode;
+    }
+    
+    /**
+     * Returns the message format built from a format that uses dynamic fields.
+     */
+    public static MessageFormat getMessageFormat(String format) {
+      // Replace $$ escape sequence ($$ is the escape sequence for $ character)
+      final String temp = "|#&%<>/!";
+      format = format.replace("$$", temp);
+      // Replace MessageFormat escape sequences
+      format = format.replace("'", "''");
+      format = format.replace("{", "'{'");
+      // Replace dynamic field by their MessageFormat code
+      for (DynamicField dynamicField : DynamicField.values()) {
+        format = format.replace(dynamicField.getUserCode(), dynamicField.getFormatCode());
+      }
+      format = format.replace(temp, "$");
+      return new MessageFormat(format);
+    }
+  };
+
   private static final float   HEADER_FOOTER_MARGIN = LengthUnit.centimeterToInch(0.2f) * 72;
   
   private final Home           home;
@@ -62,7 +113,6 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private int                  pageCount = -1;
   private int                  planViewIndex;
   private Date                 printDate;
-
   
   /**
    * Creates a printable component that will print or display the
@@ -127,7 +177,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       // Create header text
       String headerFormat = homePrint.getHeaderFormat();      
       if (headerFormat != null) {
-        header = getFormattedText(headerFormat, dynamicFieldValues).trim();
+        header = DynamicField.getMessageFormat(headerFormat).format(dynamicFieldValues).trim();
         if (header.length() > 0) {
           xHeader = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(header)) / 2;
           yHeader = imageableY + fontMetrics.getAscent();
@@ -141,7 +191,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       // Create footer text
       String footerFormat = homePrint.getFooterFormat();
       if (footerFormat != null) {
-        footer = getFormattedText(footerFormat, dynamicFieldValues).trim();
+        footer = DynamicField.getMessageFormat(footerFormat).format(dynamicFieldValues).trim();
         if (footer.length() > 0) {
           xFooter = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(footer)) / 2;
           yFooter = imageableY + imageableHeight - fontMetrics.getDescent();
@@ -215,21 +265,6 @@ public class HomePrintableComponent extends JComponent implements Printable {
     return pageExists;
   }
 
-  /**
-   * Returns the formatted text built from format.
-   */
-  private String getFormattedText(String format, Object [] dynamicFieldValues) {
-    // Replace $$ escape sequence
-    final String temp = "|#&%<>/!";
-    format = format.replace("$$", temp);
-    format = format.replace("{", "{{");
-    for (DynamicField dynamicField : DynamicField.values()) {
-      format = format.replace(dynamicField.getUserCode(), dynamicField.getFormatCode());
-    }
-    format = format.replace(temp, "$");
-    return new MessageFormat(format).format(dynamicFieldValues);
-  }
-  
   /**
    * Returns the preferred size of this component according to paper orientation and size
    * of home print attributes.
