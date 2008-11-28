@@ -371,7 +371,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   /**
    * Sets the text style used to display piece name.
-   * Once this piecec is updated, listeners added to this piece will receive a change notification.
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
    */
   public void setNameStyle(TextStyle nameStyle) {
     if (nameStyle != this.nameStyle) {
