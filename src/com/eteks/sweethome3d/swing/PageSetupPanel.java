@@ -69,6 +69,8 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class PageSetupPanel extends JPanel implements DialogView {
+  private static final int DEFAULT_SCALE = 10;
+  
   private final PageSetupController controller;
   private ResourceBundle      resource;
   private PageFormat          pageFormat;
@@ -174,7 +176,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
     scaleButtonsGroup.add(this.defaultPlanScaleRadioButton);
     scaleButtonsGroup.add(this.userPlanScaleRadioButton);
     final NullableSpinner.NullableSpinnerNumberModel userPlanScaleSpinnerModel = 
-        new NullableSpinner.NullableSpinnerNumberModel(1, 1, 1000, 10);
+        new NullableSpinner.NullableSpinnerNumberModel(10, 1, 1000, 10);
     this.userPlanScaleSpinner = new AutoCommitSpinner(userPlanScaleSpinnerModel);
     userPlanScaleSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -190,7 +192,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
         public void actionPerformed(ActionEvent ev) {
           if (userPlanScaleRadioButton.isSelected() 
               && userPlanScaleSpinnerModel.getValue() == null) {
-            userPlanScaleSpinnerModel.setValue(1);
+            userPlanScaleSpinnerModel.setValue(DEFAULT_SCALE);
           } else {
             updateController(controller);
           }
@@ -289,7 +291,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
       this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
       userPlanScaleSpinnerModel.setNullable(homePrint.getPlanScale() == null);
       userPlanScaleSpinnerModel.setValue(homePrint.getPlanScale() != null
-          ? 1 / homePrint.getPlanScale()
+          ? new Integer(Math.round(1 / homePrint.getPlanScale()))
           : null);
       String headerFormat = homePrint.getHeaderFormat();
       this.headerFormatTextField.setText(headerFormat != null ? headerFormat : "");
