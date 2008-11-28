@@ -31,6 +31,8 @@ public class HomePrint implements Serializable {
    */
   public enum PaperOrientation {PORTRAIT, LANDSCAPE, REVERSE_LANDSCAPE};
     
+  private static final long serialVersionUID = -2868070768300325498L;
+  
   private final PaperOrientation paperOrientation;
   private final float            paperWidth;
   private final float            paperHeight;
