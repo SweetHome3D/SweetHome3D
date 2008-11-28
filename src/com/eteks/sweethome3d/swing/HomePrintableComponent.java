@@ -45,6 +45,7 @@ import com.eteks.sweethome3d.model.HomePrint;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.PlanView;
 
 /**
  * A printable component used to print or preview the furniture, the plan 
@@ -57,10 +58,11 @@ public class HomePrintableComponent extends JComponent implements Printable {
   public enum DynamicField {
     PAGE_NUMBER("$pageNumber", "{0, number, integer}"),
     PAGE_COUNT("$pageCount", "{1, number, integer}"),
-    DATE("$date", "{2, date}"),
-    TIME("$time", "{2, time}"),
-    HOME_PRESENTATION_NAME("$name", "{3}"),
-    HOME_NAME("$file", "{4}");    
+    PLAN_SCALE("$planScale", "{2}"),
+    DATE("$date", "{3, date}"),
+    TIME("$time", "{3, time}"),
+    HOME_PRESENTATION_NAME("$name", "{4}"),
+    HOME_NAME("$file", "{5}");    
     
     private final String userCode;
     private final String formatCode;
@@ -153,6 +155,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     Rectangle clipBounds = g2D.getClipBounds();
     AffineTransform oldTransform = g2D.getTransform();
     Paper oldPaper = pageFormat.getPaper();
+    final PlanView planView = this.controller.getPlanController().getView();
     if (homePrint != null) {
       float imageableY = (float)pageFormat.getImageableY();
       float imageableHeight = (float)pageFormat.getImageableHeight();
@@ -163,6 +166,14 @@ public class HomePrintableComponent extends JComponent implements Printable {
       // Retrieve dynamic field values
       int pageNumber = page + 1; 
       int pageCount = getPageCount(); 
+      String planScale = "?";
+      if (homePrint.getPlanScale() != null) {
+        planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
+      } else {
+        if (planView instanceof PlanComponent) {
+          planScale = "1/" + Math.round(((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
+        }        
+      }          
       if (page == 0) {
         this.printDate = new Date();
       }
@@ -173,7 +184,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       String homePresentationName = this.controller.getContentManager().getPresentationName(
            homeName, ContentManager.ContentType.SWEET_HOME_3D);
       Object [] dynamicFieldValues = new Object [] {
-          pageNumber, pageCount, this.printDate, homePresentationName, homeName};
+          pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName};
       
       // Create header text
       String headerFormat = homePrint.getHeaderFormat();      
@@ -239,7 +250,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
     } 
     if ((homePrint == null || homePrint.isPlanPrinted())
         && page == this.planViewIndex) {
-      pageExists = ((Printable)this.controller.getPlanController().getView()).print(g2D, pageFormat, 0);
+      pageExists = ((Printable)planView).print(g2D, pageFormat, 0);
     } else if ((homePrint == null && page == this.planViewIndex + 1)
                || (homePrint != null
                    && homePrint.isView3DPrinted()

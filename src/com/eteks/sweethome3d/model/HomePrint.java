@@ -43,8 +43,10 @@ public class HomePrint implements Serializable {
   private final boolean          furniturePrinted;
   private final boolean          planPrinted;
   private final boolean          view3DPrinted;
+  private final Float            planScale;
   private final String           headerFormat;
   private final String           footerFormat;
+
   
   /**
    * Create a print attributes for home from the given parameters.
@@ -59,6 +61,7 @@ public class HomePrint implements Serializable {
                    boolean furniturePrinted,
                    boolean planPrinted,
                    boolean view3DPrinted,
+                   Float planScale,
                    String headerFormat,
                    String footerFormat) {
     this.paperOrientation = paperOrientation;
@@ -71,6 +74,7 @@ public class HomePrint implements Serializable {
     this.furniturePrinted = furniturePrinted;
     this.planPrinted = planPrinted;
     this.view3DPrinted = view3DPrinted;
+    this.planScale = planScale;
     this.headerFormat = headerFormat;
     this.footerFormat = footerFormat;
   }
@@ -144,6 +148,14 @@ public class HomePrint implements Serializable {
   public boolean isView3DPrinted() {
     return this.view3DPrinted;
   } 
+  
+  /**
+   * Returns the scale used to print home plan or 
+   * <code>null</code> if no special scale is desired. 
+   */
+  public Float getPlanScale() {
+    return this.planScale;
+  }
   
   /**
    * Returns the string format used to print page headers. 

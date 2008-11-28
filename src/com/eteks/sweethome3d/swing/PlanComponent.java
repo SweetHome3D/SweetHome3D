@@ -811,7 +811,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         this.planBoundsCache.add(this.backgroundImageCache.getWidth() * backgroundImage.getScale() - backgroundImage.getXOrigin(),
             this.backgroundImageCache.getHeight() * backgroundImage.getScale() - backgroundImage.getYOrigin());
       }
-      Rectangle2D homeObjectsBounds = getHomeObjectsBounds(getGraphics());
+      Rectangle2D homeObjectsBounds = getObjectsBounds(getGraphics(), getHomeObjects());
       if (homeObjectsBounds != null) {
         this.planBoundsCache.add(homeObjectsBounds);
       }
@@ -824,22 +824,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Returns the walls, furniture, rooms and dimension lines bounds of the home 
+   * Returns the collection of walls, furniture, rooms and dimension lines of the home 
    * displayed by this component.
    */
-  private Rectangle2D getHomeObjectsBounds(Graphics g) {
-    Collection<Selectable> homeObjects = new ArrayList<Selectable>();
-    homeObjects.addAll(this.home.getWalls());
+  private List<Selectable> getHomeObjects() {
+    List<Selectable> homeObjects = new ArrayList<Selectable>(this.home.getWalls());
     homeObjects.addAll(this.home.getFurniture());
     homeObjects.addAll(this.home.getRooms());
     homeObjects.addAll(this.home.getDimensionLines());
-    return getObjectsBounds(homeObjects, g);
+    return homeObjects;
   }
   
   /**
    * Returns the bounds of the given collection of <code>objects</code>.
    */
-  private Rectangle2D getObjectsBounds(Collection<Selectable> objects, Graphics g) {
+  private Rectangle2D getObjectsBounds(Graphics g, Collection<Selectable> objects) {
     // Retrieve used font
     Font componentFont;
     if (g != null) {
@@ -1085,14 +1084,54 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);   
     g2D.dispose();
   }
-  
+
+  /**
+   * Returns the print preferred scale of the plan drawn in this component
+   * to make it fill <code>pageFormat</code> imageable size.
+   */
+  public float getPrintPreferredScale(Graphics g, PageFormat pageFormat) {
+    List<Selectable> printedObjects = getHomeObjects(); 
+    Rectangle2D printedObjectBounds = getObjectsBounds(g, printedObjects);
+    if (printedObjectBounds != null) {
+      float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
+      float imageableHeightCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72);
+      float extraMargin = getStrokeWidthExtraMargin(printedObjects);
+      // Compute the largest integer scale possible
+      int scaleInverse = (int)Math.ceil(Math.max(
+          (printedObjectBounds.getWidth() + 2 * extraMargin) / imageableWidthCm,
+          (printedObjectBounds.getHeight() + 2 * extraMargin) / imageableHeightCm));
+      return 1f / scaleInverse;
+    } else {
+      return 0;
+    }
+  }
   
   /**
-   * Prints this component to make it fill <code>pageFormat</code> imageable size.
+   * Returns the margin that should be added around home objects bounds to ensure their
+   * line stroke width is always fully visible.
+   */
+  private float getStrokeWidthExtraMargin(List<Selectable> objects) {
+    float extraMargin = BORDER_STROKE_WIDTH / 2;
+    if (Home.getWallsSubList(objects).size() > 0
+        || Home.getRoomsSubList(objects).size() > 0) {
+      extraMargin = WALL_STROKE_WIDTH / 2;
+    }
+    return extraMargin;
+  }
+  
+  /**
+   * Prints this component plan at the scale given in the home print attributes or at a scale 
+   * that makes it fill <code>pageFormat</code> imageable size if this attribute is <code>null</code>.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    Rectangle2D printedObjectBounds = getHomeObjectsBounds(g);
+    List<Selectable> printedObjects = getHomeObjects(); 
+    Rectangle2D printedObjectBounds = getObjectsBounds(g, printedObjects);
     if (printedObjectBounds != null && pageIndex == 0) {
+      // Compute a scale that ensures the plan will fill the component if plan scale is null
+      float printScale = this.home.getPrint() != null && this.home.getPrint().getPlanScale() != null 
+          ? this.home.getPrint().getPlanScale().floatValue()
+          : getPrintPreferredScale(g, pageFormat);
+          
       Graphics2D g2D = (Graphics2D)g.create();
       double imageableX = pageFormat.getImageableX();
       double imageableY = pageFormat.getImageableY();
@@ -1101,20 +1140,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.clip(new Rectangle2D.Double(imageableX, imageableY, imageableWidth, imageableHeight));
       // Change coordinates system to paper imageable origin
       g2D.translate(imageableX, imageableY);
-      // Compute a scale that ensures the plan will fill the component
-      float extraMargin = BORDER_STROKE_WIDTH;
-      if (this.home.getWalls().size() > 0
-          || this.home.getRooms().size() > 0) {
-        extraMargin = WALL_STROKE_WIDTH / 2;
-      }
-      float printScale = (float)Math.min(imageableWidth / (printedObjectBounds.getWidth() + 2 * extraMargin),
-          imageableHeight / (printedObjectBounds.getHeight() + 2 * extraMargin));
+      // Apply print scale to paper size expressed in 1/72nds of an inch
+      printScale *= LengthUnit.centimeterToInch(72);
       g2D.scale(printScale, printScale);
+      float extraMargin = getStrokeWidthExtraMargin(printedObjects);
       g2D.translate(-printedObjectBounds.getMinX() + extraMargin,
           -printedObjectBounds.getMinY() + extraMargin);
-      // Center plan in component
-      g2D.translate((imageableWidth / printScale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2, 
-          (imageableHeight / printScale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2);
+      // Center plan in component if possible
+      g2D.translate(Math.max(0, 
+              (imageableWidth / printScale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2), 
+          Math.max(0, 
+              (imageableHeight / printScale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2));
       setRenderingHints(g2D);
       // Print component contents
       paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
@@ -1137,12 +1173,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     } else {
       // Use a scale of 1
       float clipboardScale = 1f;
-      float extraMargin = BORDER_STROKE_WIDTH / 2;
-      List<Selectable> selectedItems = this.home.getSelectedItems();
-      if (Home.getWallsSubList(selectedItems).size() > 0
-          || Home.getRoomsSubList(selectedItems).size() > 0) {
-        extraMargin = WALL_STROKE_WIDTH / 2;
-      }
+      float extraMargin = getStrokeWidthExtraMargin(this.home.getSelectedItems());
       BufferedImage image = new BufferedImage((int)Math.ceil(selectionBounds.getWidth() * clipboardScale + 2 * extraMargin), 
               (int)Math.ceil(selectionBounds.getHeight() * clipboardScale + 2 * extraMargin), BufferedImage.TYPE_INT_RGB);      
       Graphics2D g2D = (Graphics2D)image.getGraphics();
@@ -1151,8 +1182,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.fillRect(0, 0, image.getWidth(), image.getHeight());
       // Change component coordinates system to plan system
       g2D.scale(clipboardScale, clipboardScale);
-      g2D.translate(-selectionBounds.getMinX() + extraMargin / clipboardScale,
-          -selectionBounds.getMinY() + extraMargin / clipboardScale);
+      g2D.translate(-selectionBounds.getMinX() + extraMargin,
+          -selectionBounds.getMinY() + extraMargin);
       setRenderingHints(g2D);
       // Paint component contents
       paintContent(g2D, clipboardScale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
@@ -2540,11 +2571,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private Rectangle2D getSelectionBounds(boolean includeCamera) {
     if (includeCamera) {
-      return getObjectsBounds(this.home.getSelectedItems(), getGraphics());
+      return getObjectsBounds(getGraphics(), this.home.getSelectedItems());
     } else {
       List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
       selectedItems.remove(this.home.getCamera());
-      return getObjectsBounds(selectedItems, getGraphics());
+      return getObjectsBounds(getGraphics(), selectedItems);
     }
   }
 

@@ -38,20 +38,27 @@ import java.beans.PropertyChangeListener;
 import java.util.ResourceBundle;
 
 import javax.swing.ActionMap;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.eteks.sweethome3d.model.HomePrint;
+import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.NullableSpinner.NullableSpinnerNumberModel;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
@@ -68,6 +75,9 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private JButton             pageFormatButton;
   private JCheckBox           furniturePrintedCheckBox;
   private JCheckBox           planPrintedCheckBox;
+  private JRadioButton        defaultPlanScaleRadioButton;
+  private JRadioButton        userPlanScaleRadioButton;
+  private JSpinner            userPlanScaleSpinner;
   private JCheckBox           view3DPrintedCheckBox;
   private JLabel              headerFormatLabel;
   private JTextField          headerFormatTextField;
@@ -80,13 +90,14 @@ public class PageSetupPanel extends JPanel implements DialogView {
    * Creates a panel that displays page setup.
    * @param controller the controller of this panel
    */
-  public PageSetupPanel(PageSetupController controller) {
+  public PageSetupPanel(UserPreferences preferences, 
+                        PageSetupController controller) {
     super(new GridBagLayout());
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(
         PageSetupPanel.class.getName());
     createActions();
-    createComponents(controller);
+    createComponents(preferences, controller);
     setMnemonics();
     layoutComponents();
   }
@@ -96,48 +107,16 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   private void createActions() {
     ActionMap actions = getActionMap();
-    actions.put(HomePrintableComponent.DynamicField.PAGE_NUMBER, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.PAGE_NUMBER.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.PAGE_NUMBER.getUserCode());
-        }
-      });
-    actions.put(HomePrintableComponent.DynamicField.PAGE_COUNT, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.PAGE_COUNT.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.PAGE_COUNT.getUserCode());
-        }
-      });
-    actions.put(HomePrintableComponent.DynamicField.DATE, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.DATE.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.DATE.getUserCode());
-        }
-      });
-    actions.put(HomePrintableComponent.DynamicField.TIME, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.TIME.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.TIME.getUserCode());
-        }
-      });
-    actions.put(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME.getUserCode());
-        }
-      });
-    actions.put(HomePrintableComponent.DynamicField.HOME_NAME, new ResourceAction(
-        this.resource, "INSERT_" + HomePrintableComponent.DynamicField.HOME_NAME.name()) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          insertDynamicCode(HomePrintableComponent.DynamicField.HOME_NAME.getUserCode());
-        }
-      });
+    for (final HomePrintableComponent.DynamicField dynamicField : 
+                      HomePrintableComponent.DynamicField.values()) {
+      actions.put(dynamicField, 
+          new ResourceAction(this.resource, "INSERT_" + dynamicField.name()) {
+            @Override
+            public void actionPerformed(ActionEvent ev) {
+              insertDynamicCode(dynamicField.getUserCode());
+            }
+          });
+    }
   }
 
   /**
@@ -150,15 +129,15 @@ public class PageSetupPanel extends JPanel implements DialogView {
       textField.replaceSelection(userCode);
       int lastCharacter = textField.getCaretPosition();
       int firstCharacter = lastCharacter - userCode.length();
-      textField.setSelectionStart(firstCharacter);
-      textField.setSelectionEnd(lastCharacter);
+      textField.select(firstCharacter, lastCharacter);
     }
   }
 
   /**
    * Creates and initializes components.
    */
-  private void createComponents(final PageSetupController controller) {
+  private void createComponents(UserPreferences preferences, 
+                                final PageSetupController controller) {
     final PropertyChangeListener printChangeListener = new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent ev) {
         updateComponents(controller.getPrint());
@@ -176,18 +155,51 @@ public class PageSetupPanel extends JPanel implements DialogView {
       });
     this.furniturePrintedCheckBox = new JCheckBox(
         this.resource.getString("furniturePrintedCheckBox.text"));
-    ItemListener checkBoxListener = new ItemListener() {
+    ItemListener itemListener = new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           updateController(controller);
         }
       };
-    this.furniturePrintedCheckBox.addItemListener(checkBoxListener);
+    this.furniturePrintedCheckBox.addItemListener(itemListener);
     this.planPrintedCheckBox = new JCheckBox(
         this.resource.getString("planPrintedCheckBox.text")); 
-    this.planPrintedCheckBox.addItemListener(checkBoxListener);
+    this.planPrintedCheckBox.addItemListener(itemListener);
+
+    // Create scale radio buttons and user's scale spinner
+    this.defaultPlanScaleRadioButton = new JRadioButton(
+        this.resource.getString("defaultPlanScaleRadioButton.text"));
+    this.userPlanScaleRadioButton = new JRadioButton(
+        this.resource.getString("userPlanScaleRadioButton.text"));
+    ButtonGroup scaleButtonsGroup = new ButtonGroup();
+    scaleButtonsGroup.add(this.defaultPlanScaleRadioButton);
+    scaleButtonsGroup.add(this.userPlanScaleRadioButton);
+    final NullableSpinner.NullableSpinnerNumberModel userPlanScaleSpinnerModel = 
+        new NullableSpinner.NullableSpinnerNumberModel(1, 1, 1000, 10);
+    this.userPlanScaleSpinner = new AutoCommitSpinner(userPlanScaleSpinnerModel);
+    userPlanScaleSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          updateController(controller);
+        }
+      });
+    this.defaultPlanScaleRadioButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          updateController(controller);
+        }
+      });
+    this.userPlanScaleRadioButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          if (userPlanScaleRadioButton.isSelected() 
+              && userPlanScaleSpinnerModel.getValue() == null) {
+            userPlanScaleSpinnerModel.setValue(1);
+          } else {
+            updateController(controller);
+          }
+        }
+      });    
+
     this.view3DPrintedCheckBox = new JCheckBox(
         this.resource.getString("view3DPrintedCheckBox.text")); 
-    this.view3DPrintedCheckBox.addItemListener(checkBoxListener);
+    this.view3DPrintedCheckBox.addItemListener(itemListener);
 
     this.headerFormatLabel = new JLabel(this.resource.getString("headerFormatLabel.text"));
     this.headerFormatTextField = new JTextField(20);
@@ -242,6 +254,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
     ActionMap actions = getActionMap();
     this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_NUMBER));
     this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PAGE_COUNT));
+    this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.PLAN_SCALE));
     this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.DATE));
     this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.TIME));
     this.dynamicFieldButtonsToolBar.add(actions.get(HomePrintableComponent.DynamicField.HOME_PRESENTATION_NAME));
@@ -263,10 +276,21 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.pageFormat = HomePrintableComponent.getPageFormat(homePrint);
     // Check if off screen image is supported 
     boolean offscreenCanvas3DSupported = Component3DManager.getInstance().isOffScreenImageSupported();
+    final NullableSpinnerNumberModel userPlanScaleSpinnerModel = 
+        (NullableSpinner.NullableSpinnerNumberModel)this.userPlanScaleSpinner.getModel();
     if (homePrint != null) {
       this.furniturePrintedCheckBox.setSelected(homePrint.isFurniturePrinted());
       this.planPrintedCheckBox.setSelected(homePrint.isPlanPrinted());
+      this.defaultPlanScaleRadioButton.setEnabled(homePrint.isPlanPrinted());      
+      this.defaultPlanScaleRadioButton.setSelected(homePrint.getPlanScale() == null);
+      this.userPlanScaleRadioButton.setEnabled(homePrint.isPlanPrinted());      
+      this.userPlanScaleRadioButton.setSelected(homePrint.getPlanScale() != null);      
+      this.userPlanScaleSpinner.setEnabled(homePrint.isPlanPrinted() && homePrint.getPlanScale() != null);      
       this.view3DPrintedCheckBox.setSelected(homePrint.isView3DPrinted() && offscreenCanvas3DSupported);
+      userPlanScaleSpinnerModel.setNullable(homePrint.getPlanScale() == null);
+      userPlanScaleSpinnerModel.setValue(homePrint.getPlanScale() != null
+          ? 1 / homePrint.getPlanScale()
+          : null);
       String headerFormat = homePrint.getHeaderFormat();
       this.headerFormatTextField.setText(headerFormat != null ? headerFormat : "");
       String footerFormat = homePrint.getFooterFormat();
@@ -274,7 +298,13 @@ public class PageSetupPanel extends JPanel implements DialogView {
     } else {
       this.furniturePrintedCheckBox.setSelected(true);
       this.planPrintedCheckBox.setSelected(true);
+      this.defaultPlanScaleRadioButton.setSelected(true);
+      this.defaultPlanScaleRadioButton.setEnabled(false);
+      this.userPlanScaleRadioButton.setEnabled(true);
+      this.userPlanScaleSpinner.setEnabled(false);      
       this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
+      userPlanScaleSpinnerModel.setNullable(true);
+      userPlanScaleSpinnerModel.setValue(null);
       this.headerFormatTextField.setText("");
       this.footerFormatTextField.setText("");
     }
@@ -306,6 +336,9 @@ public class PageSetupPanel extends JPanel implements DialogView {
         this.furniturePrintedCheckBox.isSelected(),
         this.planPrintedCheckBox.isSelected(),
         this.view3DPrintedCheckBox.isSelected(),
+        this.userPlanScaleRadioButton.isSelected() && this.userPlanScaleSpinner.getValue() != null
+            ? 1f / ((Number)this.userPlanScaleSpinner.getValue()).intValue()
+            : null,
         this.headerFormatTextField.getText().trim(),
         this.footerFormatTextField.getText().trim());
     controller.setPrint(homePrint);
@@ -324,6 +357,10 @@ public class PageSetupPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(this.resource.getString("planPrintedCheckBox.mnemonic")).getKeyCode());
       this.view3DPrintedCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("view3DPrintedCheckBox.mnemonic")).getKeyCode());
+      this.defaultPlanScaleRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("defaultPlanScaleRadioButton.mnemonic")).getKeyCode());
+      this.userPlanScaleRadioButton.setMnemonic(
+          KeyStroke.getKeyStroke(this.resource.getString("userPlanScaleRadioButton.mnemonic")).getKeyCode());
       this.headerFormatLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(this.resource.getString("headerFormatLabel.mnemonic")).getKeyCode());
       this.headerFormatLabel.setLabelFor(this.headerFormatTextField);
@@ -337,21 +374,37 @@ public class PageSetupPanel extends JPanel implements DialogView {
    * Layouts panel components in panel with their labels. 
    */
   private void layoutComponents() {
+    int labelAlignment = OperatingSystem.isMacOSX() 
+        ? GridBagConstraints.LINE_END
+        : GridBagConstraints.LINE_START;
     // First row
     JPanel topPanel = new JPanel(new GridBagLayout());
     topPanel.add(this.pageFormatButton, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0) , 0, 0));
     Insets lastComponentInsets = new Insets(0, 0, 5, 0);
+    // Furniture component
     topPanel.add(this.furniturePrintedCheckBox, new GridBagConstraints(
         0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, lastComponentInsets , 0, 0));
+    // Plan components
     topPanel.add(this.planPrintedCheckBox, new GridBagConstraints(
         0, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, lastComponentInsets , 0, 0));
-    topPanel.add(this.view3DPrintedCheckBox, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
+    topPanel.add(this.defaultPlanScaleRadioButton, new GridBagConstraints(
         0, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 20, 2, 0), 0, 0));
+    topPanel.add(this.userPlanScaleRadioButton, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, new Insets(0, 20, 5, 0), 0, 0));
+    topPanel.add(this.userPlanScaleSpinner, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, lastComponentInsets, 0, 0));
+    // 3D view component
+    topPanel.add(this.view3DPrintedCheckBox, new GridBagConstraints(
+        0, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    
     add(topPanel, new GridBagConstraints(
         0, 0, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
@@ -360,9 +413,6 @@ public class PageSetupPanel extends JPanel implements DialogView {
         0, 1, 2, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -10, 0));
     // Third row
-    int labelAlignment = OperatingSystem.isMacOSX() 
-        ? GridBagConstraints.LINE_END
-        : GridBagConstraints.LINE_START;
     add(this.headerFormatLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
