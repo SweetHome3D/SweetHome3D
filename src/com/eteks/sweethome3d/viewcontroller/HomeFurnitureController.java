@@ -504,70 +504,123 @@ public class HomeFurnitureController implements Controller {
    * Controls the modification of selected furniture in the edited home.
    */
   public void modifyFurniture() {
-    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
+    List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<HomePieceOfFurniture> selectedFurniture = 
         Home.getFurnitureSubList(oldSelection);
     if (!selectedFurniture.isEmpty()) {
-      final String name = getName();
-      final Boolean nameVisible = getNameVisible();
-      final Float x = getX();
-      final Float y = getY();
-      final Float elevation = getElevation();
-      final Float angle = getAngleInDegrees() != null
+      String name = getName();
+      Boolean nameVisible = getNameVisible();
+      Float x = getX();
+      Float y = getY();
+      Float elevation = getElevation();
+      Float angle = getAngleInDegrees() != null
           ? (float)Math.toRadians(getAngleInDegrees())  : null;
-      final Float width = getWidth();
-      final Float depth = getDepth();
-      final Float height = getHeight();
-      final Integer color = getColor();
-      final Boolean visible = getVisible();
-      final Boolean modelMirrored = getModelMirrored();
+      Float width = getWidth();
+      Float depth = getDepth();
+      Float height = getHeight();
+      Integer color = getColor();
+      Boolean visible = getVisible();
+      Boolean modelMirrored = getModelMirrored();
       
       // Create an array of modified furniture with their current properties values
-      final ModifiedPieceOfFurniture [] modifiedFurniture = 
+      ModifiedPieceOfFurniture [] modifiedFurniture = 
           new ModifiedPieceOfFurniture [selectedFurniture.size()]; 
       for (int i = 0; i < modifiedFurniture.length; i++) {
         modifiedFurniture [i] = new ModifiedPieceOfFurniture(selectedFurniture.get(i));
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
-          name, nameVisible, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
+          name, nameVisible, x, y, width, depth, height, elevation, angle, color, visible, modelMirrored); 
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            undoModifyFurniture(modifiedFurniture); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            doModifyFurniture(modifiedFurniture, 
-                name, nameVisible, width, depth, height, x, y, elevation, angle, color, visible, modelMirrored); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return ResourceBundle.getBundle(HomeFurnitureController.class.getName()).
-                getString("undoModifyFurnitureName");
-          }
-        };
+        UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
+            this.home, oldSelection, modifiedFurniture, 
+            name, nameVisible, x, y, width, depth, height, 
+            elevation, angle, color, modelMirrored, visible);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
   }
   
   /**
+   * Undoable edit for furniture modification. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class FurnitureModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home                        home;
+    private final ModifiedPieceOfFurniture [] modifiedFurniture;
+    private final List<Selectable>            oldSelection;
+    private final String                      name;
+    private final Boolean                     nameVisible;
+    private final Float                       x;
+    private final Float                       y;
+    private final Float                       width;
+    private final Float                       depth;
+    private final Float                       height;
+    private final Float                       elevation;
+    private final Float                       angle;
+    private final Integer                     color;
+    private final Boolean                     modelMirrored;
+    private final Boolean                     visible;
+
+    private FurnitureModificationUndoableEdit(Home home,
+                                              List<Selectable> oldSelection,
+                                              ModifiedPieceOfFurniture [] modifiedFurniture,
+                                              String name, Boolean nameVisible, 
+                                              Float x, Float y,
+                                              Float width, Float depth, Float height,
+                                              Float elevation, Float angle,
+                                              Integer color,
+                                              Boolean modelMirrored,
+                                              Boolean visible) {
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.modifiedFurniture = modifiedFurniture;
+      this.name = name;
+      this.nameVisible = nameVisible;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.depth = depth;
+      this.height = height;
+      this.elevation = elevation;
+      this.angle = angle;
+      this.modelMirrored = modelMirrored;
+      this.visible = visible;
+      this.color = color;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      undoModifyFurniture(this.modifiedFurniture); 
+      home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doModifyFurniture(this.modifiedFurniture, 
+          this.name, this.nameVisible, this.x, this.y, this.width, 
+          this.depth, this.height, this.elevation, this.angle, this.color, this.visible, this.modelMirrored); 
+      home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(HomeFurnitureController.class.getName()).
+          getString("undoModifyFurnitureName");
+    }
+  }
+
+  /**
    * Modifies furniture properties with the values in parameter.
    */
-  private void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
-                                 String name, Boolean nameVisible, 
-                                 Float width, Float depth, Float height, 
-                                 Float x, Float y, Float elevation, 
-                                 Float angle, Integer color, 
-                                 Boolean visible, Boolean modelMirrored) {
+  private static void doModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture, 
+                                        String name, Boolean nameVisible, 
+                                        Float x, Float y, Float width, 
+                                        Float depth, Float height, Float elevation, 
+                                        Float angle, Integer color, 
+                                        Boolean visible, Boolean modelMirrored) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       piece.setName(name != null 
@@ -601,7 +654,7 @@ public class HomeFurnitureController implements Controller {
   /**
    * Restores furniture properties from the values stored in <code>modifiedFurniture</code>.
    */
-  private void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
+  private static void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
       piece.setName(modifiedPiece.getName());

@@ -203,39 +203,61 @@ public class ImportedFurnitureWizardController extends WizardController
    * and undo support will receive a new undoable edit.
    * @param piece the piece of furniture to add.
    */
-  public void addPieceOfFurniture(final HomePieceOfFurniture piece) {
-    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
+  public void addPieceOfFurniture(HomePieceOfFurniture piece) {
+    List<Selectable> oldSelection = this.home.getSelectedItems(); 
     // Get index of the piece added to home
-    final int pieceIndex = home.getFurniture().size();
+    int pieceIndex = home.getFurniture().size();
     
     home.addPieceOfFurniture(piece, pieceIndex);
     home.setSelectedItems(Arrays.asList(piece)); 
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          home.deletePieceOfFurniture(piece);
-          home.setSelectedItems(oldSelection); 
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          home.addPieceOfFurniture(piece, pieceIndex);
-          home.setSelectedItems(Arrays.asList(piece)); 
-        }
-        
-        @Override
-        public String getPresentationName() {
-          return ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName()).
-              getString("undoImportFurnitureName");
-        }
-      };
+      UndoableEdit undoableEdit = new PieceOfFurnitureImportationUndoableEdit(
+          home, oldSelection, piece, pieceIndex);
       this.undoSupport.postEdit(undoableEdit);
     }
   }
   
+  /**
+   * Undoable edit for piece importation. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class PieceOfFurnitureImportationUndoableEdit extends AbstractUndoableEdit {
+    private final Home                 home;
+    private final List<Selectable>     oldSelection;
+    private final HomePieceOfFurniture piece;
+    private final int                  pieceIndex;
+
+    private PieceOfFurnitureImportationUndoableEdit(Home home,
+                                                    List<Selectable> oldSelection,
+                                                    HomePieceOfFurniture piece,
+                                                    int pieceIndex) {
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.piece = piece;
+      this.pieceIndex = pieceIndex;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.deletePieceOfFurniture(this.piece);
+      this.home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.addPieceOfFurniture(this.piece, this.pieceIndex);
+      this.home.setSelectedItems(Arrays.asList(this.piece)); 
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName()).
+          getString("undoImportFurnitureName");
+    }
+  }
+
   /**
    * Returns the content manager of this controller.
    */

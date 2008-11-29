@@ -435,25 +435,24 @@ public class RoomController implements Controller {
    * Controls the modification of selected rooms in edited home.
    */
   public void modifyRooms() {
-    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
+    List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<Room> selectedRooms = Home.getRoomsSubList(oldSelection);
     if (!selectedRooms.isEmpty()) {
-      final String name = getName();
-      final Boolean areaVisible = getAreaVisible();
-      final Boolean floorVisible = getFloorVisible();
-      final Integer floorColor = getFloorPaint() == RoomPaint.COLORED 
+      String name = getName();
+      Boolean areaVisible = getAreaVisible();
+      Boolean floorVisible = getFloorVisible();
+      Integer floorColor = getFloorPaint() == RoomPaint.COLORED 
           ? getFloorColor() : null;
-      final HomeTexture floorTexture = getFloorPaint() == RoomPaint.TEXTURED
+      HomeTexture floorTexture = getFloorPaint() == RoomPaint.TEXTURED
           ? getFloorTextureController().getTexture() : null;
-      final Boolean ceilingVisible = getCeilingVisible();
-      final Integer ceilingColor = getCeilingPaint() == RoomPaint.COLORED
+      Boolean ceilingVisible = getCeilingVisible();
+      Integer ceilingColor = getCeilingPaint() == RoomPaint.COLORED
           ? getCeilingColor() : null;
-      final HomeTexture ceilingTexture = getCeilingPaint() == RoomPaint.TEXTURED
+      HomeTexture ceilingTexture = getCeilingPaint() == RoomPaint.TEXTURED
           ? getCeilingTextureController().getTexture() : null;
       
       // Create an array of modified rooms with their current properties values
-      final ModifiedRoom [] modifiedRooms = 
-          new ModifiedRoom [selectedRooms.size()]; 
+      ModifiedRoom [] modifiedRooms = new ModifiedRoom [selectedRooms.size()]; 
       for (int i = 0; i < modifiedRooms.length; i++) {
         modifiedRooms [i] = new ModifiedRoom(selectedRooms.get(i));
       }
@@ -462,38 +461,83 @@ public class RoomController implements Controller {
           floorVisible, floorColor, floorTexture, 
           ceilingVisible, ceilingColor, ceilingTexture);       
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            undoModifyRooms(modifiedRooms); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            doModifyRooms(modifiedRooms, name, areaVisible, 
-                floorVisible, floorColor, floorTexture, 
-                ceilingVisible, ceilingColor, ceilingTexture); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return ResourceBundle.getBundle(RoomController.class.getName()).
-                getString("undoModifyRoomsName");
-          }
-        };
+        UndoableEdit undoableEdit = new RoomsModificationUndoableEdit(this.home, oldSelection,
+            modifiedRooms, name, areaVisible, floorColor,
+            floorTexture, floorVisible, ceilingColor, ceilingTexture,
+            ceilingVisible);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
   }
 
   /**
+   * Undoable edit for rooms modification. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class RoomsModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home             home;
+    private final List<Selectable> oldSelection;
+    private final ModifiedRoom []  modifiedRooms;
+    private final String           name;
+    private final Boolean          areaVisible;
+    private final Integer          floorColor;
+    private final HomeTexture      floorTexture;
+    private final Boolean          floorVisible;
+    private final Integer          ceilingColor;
+    private final HomeTexture      ceilingTexture;
+    private final Boolean          ceilingVisible;
+
+    private RoomsModificationUndoableEdit(Home home,
+                                          List<Selectable> oldSelection,
+                                          ModifiedRoom [] modifiedRooms,
+                                          String name,
+                                          Boolean areaVisible,
+                                          Integer floorColor,
+                                          HomeTexture floorTexture,
+                                          Boolean floorVisible,
+                                          Integer ceilingColor,
+                                          HomeTexture ceilingTexture,
+                                          Boolean ceilingVisible) {
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.modifiedRooms = modifiedRooms;
+      this.name = name;
+      this.areaVisible = areaVisible;
+      this.floorColor = floorColor;
+      this.floorTexture = floorTexture;
+      this.floorVisible = floorVisible;
+      this.ceilingColor = ceilingColor;
+      this.ceilingTexture = ceilingTexture;
+      this.ceilingVisible = ceilingVisible;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      undoModifyRooms(this.modifiedRooms); 
+      this.home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doModifyRooms(this.modifiedRooms, this.name, this.areaVisible, 
+          this.floorVisible, this.floorColor, this.floorTexture, 
+          this.ceilingVisible, this.ceilingColor, this.ceilingTexture); 
+      this.home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(RoomController.class.getName()).
+          getString("undoModifyRoomsName");
+    }
+  }
+
+  /**
    * Modifies rooms properties with the values in parameter.
    */
-  private void doModifyRooms(ModifiedRoom [] modifiedRooms, 
+  private static void doModifyRooms(ModifiedRoom [] modifiedRooms, 
                              String name, Boolean areaVisible, 
                              Boolean floorVisible, Integer floorColor, HomeTexture floorTexture, 
                              Boolean ceilingVisible, Integer ceilingColor, HomeTexture ceilingTexture) {
@@ -531,7 +575,7 @@ public class RoomController implements Controller {
   /**
    * Restores room properties from the values stored in <code>modifiedRooms</code>.
    */
-  private void undoModifyRooms(ModifiedRoom [] modifiedRooms) {
+  private static void undoModifyRooms(ModifiedRoom [] modifiedRooms) {
     for (ModifiedRoom modifiedRoom : modifiedRooms) {
       Room room = modifiedRoom.getRoom();
       room.setName(modifiedRoom.getName());

@@ -339,67 +339,132 @@ public class Home3DAttributesController implements Controller {
    * Controls the modification of the 3D attributes of the edited home.
    */
   public void modify3DAttributes() {
-    final float observerCameraFieldOfView = (float)Math.toRadians(getObserverFieldOfViewInDegrees());
-    final float observerCameraZ = getObserverHeight() * 14 / 15;
-    final int   groundColor = getGroundColor();
-    final HomeTexture groundTexture = getGroundPaint() == EnvironmentPaint.TEXTURED
+    float observerCameraFieldOfView = (float)Math.toRadians(getObserverFieldOfViewInDegrees());
+    float observerCameraZ = getObserverHeight() * 14 / 15;
+    int   groundColor = getGroundColor();
+    HomeTexture groundTexture = getGroundPaint() == EnvironmentPaint.TEXTURED
         ? getGroundTextureController().getTexture()
         : null;
-    final int   skyColor = getSkyColor();
-    final HomeTexture skyTexture = getSkyPaint() == EnvironmentPaint.TEXTURED
+    int   skyColor = getSkyColor();
+    HomeTexture skyTexture = getSkyPaint() == EnvironmentPaint.TEXTURED
         ? getSkyTextureController().getTexture()
         : null;
-    final int   lightColor  = getLightColor();
-    final float wallsAlpha = getWallsAlpha();
+    int   lightColor  = getLightColor();
+    float wallsAlpha = getWallsAlpha();
 
-    final float oldObserverCameraFieldOfView = this.home.getObserverCamera().getFieldOfView();
-    final float oldObserverCameraZ = this.home.getObserverCamera().getZ();
+    float oldObserverCameraFieldOfView = this.home.getObserverCamera().getFieldOfView();
+    float oldObserverCameraZ = this.home.getObserverCamera().getZ();
     HomeEnvironment homeEnvironment = this.home.getEnvironment();
-    final int   oldGroundColor = homeEnvironment.getGroundColor();
-    final HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
-    final int   oldSkyColor = homeEnvironment.getSkyColor();
-    final HomeTexture oldSkyTexture = homeEnvironment.getSkyTexture();
-    final int   oldLightColor = homeEnvironment.getLightColor();
-    final float oldWallsAlpha = homeEnvironment.getWallsAlpha();
+    int   oldGroundColor = homeEnvironment.getGroundColor();
+    HomeTexture oldGroundTexture = homeEnvironment.getGroundTexture();
+    int   oldSkyColor = homeEnvironment.getSkyColor();
+    HomeTexture oldSkyTexture = homeEnvironment.getSkyTexture();
+    int   oldLightColor = homeEnvironment.getLightColor();
+    float oldWallsAlpha = homeEnvironment.getWallsAlpha();
     
     // Apply modification
     doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
         groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          doModify3DAttributes(home, oldObserverCameraFieldOfView, oldObserverCameraZ, 
-              oldGroundColor, oldGroundTexture, oldSkyColor, oldSkyTexture, oldLightColor, oldWallsAlpha); 
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
-              groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
-        }
-        
-        @Override
-        public String getPresentationName() {
-          return ResourceBundle.getBundle(Home3DAttributesController.class.getName()).
-              getString("undoModify3DAttributesName");
-        }
-      };
+      UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(this.home,
+          oldObserverCameraFieldOfView, oldObserverCameraZ,
+          oldGroundColor, oldGroundTexture, oldSkyColor,
+          oldSkyTexture, oldLightColor, oldWallsAlpha, observerCameraFieldOfView,
+          observerCameraZ, groundColor, groundTexture, skyColor,
+          skyTexture, lightColor, wallsAlpha);
       this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Undoable edit for 3D attributes modification. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class Home3DAttributesModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home        home;
+    private final float       oldObserverCameraFieldOfView;
+    private final float       oldObserverCameraZ;
+    private final int         oldGroundColor;
+    private final HomeTexture oldGroundTexture;
+    private final int         oldSkyColor;
+    private final HomeTexture oldSkyTexture;
+    private final int         oldLightColor;
+    private final float       oldWallsAlpha;
+    private final float       observerCameraFieldOfView;
+    private final float       observerCameraZ;
+    private final int         groundColor;
+    private final HomeTexture groundTexture;
+    private final int         skyColor;
+    private final HomeTexture skyTexture;
+    private final int         lightColor;
+    private final float       wallsAlpha;
+
+    private Home3DAttributesModificationUndoableEdit(Home home,
+                                                     float oldObserverCameraFieldOfView,
+                                                     float oldObserverCameraZ,
+                                                     int oldGroundColor,
+                                                     HomeTexture oldGroundTexture,
+                                                     int oldSkyColor,
+                                                     HomeTexture oldSkyTexture,
+                                                     int oldLightColor,
+                                                     float oldWallsAlpha,
+                                                     float observerCameraFieldOfView,
+                                                     float observerCameraZ,
+                                                     int groundColor,
+                                                     HomeTexture groundTexture,
+                                                     int skyColor,
+                                                     HomeTexture skyTexture,
+                                                     int lightColor,
+                                                     float wallsAlpha) {
+      this.home = home;
+      this.oldObserverCameraFieldOfView = oldObserverCameraFieldOfView;
+      this.oldObserverCameraZ = oldObserverCameraZ;
+      this.oldGroundColor = oldGroundColor;
+      this.oldGroundTexture = oldGroundTexture;
+      this.oldSkyColor = oldSkyColor;
+      this.oldSkyTexture = oldSkyTexture;
+      this.oldLightColor = oldLightColor;
+      this.oldWallsAlpha = oldWallsAlpha;
+      this.observerCameraFieldOfView = observerCameraFieldOfView;
+      this.observerCameraZ = observerCameraZ;
+      this.groundColor = groundColor;
+      this.groundTexture = groundTexture;
+      this.skyColor = skyColor;
+      this.skyTexture = skyTexture;
+      this.lightColor = lightColor;
+      this.wallsAlpha = wallsAlpha;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doModify3DAttributes(this.home, this.oldObserverCameraFieldOfView, this.oldObserverCameraZ, 
+          this.oldGroundColor, this.oldGroundTexture, this.oldSkyColor, this.oldSkyTexture, this.oldLightColor, this.oldWallsAlpha); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doModify3DAttributes(this.home, this.observerCameraFieldOfView, this.observerCameraZ, 
+          this.groundColor, this.groundTexture, this.skyColor, this.skyTexture, this.lightColor, this.wallsAlpha); 
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(Home3DAttributesController.class.getName()).
+          getString("undoModify3DAttributesName");
     }
   }
 
   /**
    * Modifies the 3D attributes of the given <code>home</code>.
    */
-  private void doModify3DAttributes(Home home,
-                                    float observerCameraFieldOfView, 
-                                    float observerCameraZ, 
-                                    int groundColor, HomeTexture groundTexture, 
-                                    int skyColor, HomeTexture skyTexture, 
-                                    int lightColor, float wallsAlpha) {
+  private static void doModify3DAttributes(Home home,
+                                           float observerCameraFieldOfView, 
+                                           float observerCameraZ, 
+                                           int groundColor, HomeTexture groundTexture, 
+                                           int skyColor, HomeTexture skyTexture, 
+                                           int lightColor, float wallsAlpha) {
     ObserverCamera observerCamera = home.getObserverCamera();
     observerCamera.setFieldOfView(observerCameraFieldOfView);
     observerCamera.setZ(observerCameraZ);

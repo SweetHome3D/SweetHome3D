@@ -41,13 +41,13 @@ public class UserPreferencesController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  userPreferencesView;
 
-  private String                language;
+  private String      language;
   private LengthUnit  unit;
-  private boolean               magnetismEnabled;
-  private boolean               rulersVisible;
-  private boolean               gridVisible;
-  private float                 newWallThickness;
-  private float                 newWallHeight;
+  private boolean     magnetismEnabled;
+  private boolean     rulersVisible;
+  private boolean     gridVisible;
+  private float       newWallThickness;
+  private float       newWallHeight;
 
   /**
    * Creates the controller of user preferences view.

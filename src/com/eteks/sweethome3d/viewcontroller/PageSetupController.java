@@ -122,28 +122,47 @@ public class PageSetupController implements Controller {
    * Controls the modification of home print attributes.
    */
   public void modifyPageSetup() {
-    final HomePrint oldHomePrint = this.home.getPrint();
-    final HomePrint homePrint = getPrint();
+    HomePrint oldHomePrint = this.home.getPrint();
+    HomePrint homePrint = getPrint();
     this.home.setPrint(homePrint);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        home.setPrint(oldHomePrint);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        home.setPrint(homePrint);
-      }
-      
-      @Override
-      public String getPresentationName() {
-        return ResourceBundle.getBundle(PageSetupController.class.getName()).
-            getString("undoPageSetupName");
-      }
-    };
+    UndoableEdit undoableEdit = 
+        new HomePrintModificationUndoableEdit(this.home, oldHomePrint, homePrint);
     this.undoSupport.postEdit(undoableEdit);
+  }
+
+  /**
+   * Undoable edit for home print modification. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class HomePrintModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home      home;
+    private final HomePrint oldHomePrint;
+    private final HomePrint homePrint;
+
+    private HomePrintModificationUndoableEdit(Home home,
+                                              HomePrint oldHomePrint,
+                                              HomePrint homePrint) {
+      this.home = home;
+      this.oldHomePrint = oldHomePrint;
+      this.homePrint = homePrint;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setPrint(this.oldHomePrint);
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setPrint(this.homePrint);
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(PageSetupController.class.getName()).
+          getString("undoPageSetupName");
+    }
   }
 }

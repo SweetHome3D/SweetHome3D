@@ -102,30 +102,54 @@ public class BackgroundImageWizardController extends WizardController
         scaleDistancePoints [1][0], scaleDistancePoints [1][1], 
         getXOrigin(), getYOrigin());
     this.home.setBackgroundImage(image);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        home.setBackgroundImage(oldImage); 
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        home.setBackgroundImage(image);
-      }
-      
-      @Override
-      public String getPresentationName() {
-        return ResourceBundle.getBundle(BackgroundImageWizardController.class.getName()).
-          getString(oldImage == null 
-              ? "undoImportBackgroundImageName"
-              : "undoModifyBackgroundImageName");
-      }
-    };
+    final Home home = this.home;
+    final boolean modification = oldImage == null;
+    UndoableEdit undoableEdit = 
+        new BackgroundImageUndoableEdit(home, modification, oldImage, image);
     this.undoSupport.postEdit(undoableEdit);
   }
-  
+
+  /**
+   * Undoable edit for background image. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class BackgroundImageUndoableEdit extends AbstractUndoableEdit {
+    private final Home            home;
+    private final boolean         modification;
+    private final BackgroundImage oldImage;
+    private final BackgroundImage image;
+
+    private BackgroundImageUndoableEdit(Home home,
+                                        boolean modification,
+                                        BackgroundImage oldImage,
+                                        BackgroundImage image) {
+      this.home = home;
+      this.modification = modification;
+      this.oldImage = oldImage;
+      this.image = image;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setBackgroundImage(this.oldImage); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setBackgroundImage(this.image);
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(BackgroundImageWizardController.class.getName()).
+        getString(this.modification 
+            ? "undoImportBackgroundImageName"
+            : "undoModifyBackgroundImageName");
+    }
+  }
+
   /**
    * Returns the content manager of this controller.
    */

@@ -694,23 +694,23 @@ public class WallController implements Controller {
    * Controls the modification of selected walls in edited home.
    */
   public void modifyWalls() {
-    final List<Selectable> oldSelection = this.home.getSelectedItems(); 
+    List<Selectable> oldSelection = this.home.getSelectedItems(); 
     List<Wall> selectedWalls = Home.getWallsSubList(oldSelection);
     if (!selectedWalls.isEmpty()) {
-      final Float xStart = getXStart();
-      final Float yStart = getYStart();
-      final Float xEnd = getXEnd();
-      final Float yEnd = getYEnd();
-      final Integer leftSideColor = getLeftSidePaint() == WallPaint.COLORED 
+      Float xStart = getXStart();
+      Float yStart = getYStart();
+      Float xEnd = getXEnd();
+      Float yEnd = getYEnd();
+      Integer leftSideColor = getLeftSidePaint() == WallPaint.COLORED 
           ? getLeftSideColor() : null;
-      final HomeTexture leftSideTexture = getLeftSidePaint() == WallPaint.TEXTURED
+      HomeTexture leftSideTexture = getLeftSidePaint() == WallPaint.TEXTURED
           ? getLeftSideTextureController().getTexture() : null;
-      final Integer rightSideColor = getRightSidePaint() == WallPaint.COLORED
+      Integer rightSideColor = getRightSidePaint() == WallPaint.COLORED
           ? getRightSideColor() : null;
-      final HomeTexture rightSideTexture = getRightSidePaint() == WallPaint.TEXTURED
+      HomeTexture rightSideTexture = getRightSidePaint() == WallPaint.TEXTURED
           ? getRightSideTextureController().getTexture() : null;
-      final Float thickness = getThickness();
-      final Float height;
+      Float thickness = getThickness();
+      Float height;
       if (getShape() == WallShape.SLOPING_WALL) {
         height = getSlopingWallHeightAtStart();
       } else if (getShape() == WallShape.RECTANGULAR_WALL) {
@@ -718,7 +718,7 @@ public class WallController implements Controller {
       } else {
         height = null;
       }
-      final Float heightAtEnd;
+      Float heightAtEnd;
       if (getShape() == WallShape.SLOPING_WALL) {
         heightAtEnd = getSlopingWallHeightAtEnd();
       } else if (getShape() == WallShape.RECTANGULAR_WALL) {
@@ -728,52 +728,104 @@ public class WallController implements Controller {
       }
       
       // Create an array of modified walls with their current properties values
-      final ModifiedWall [] modifiedWalls = 
-          new ModifiedWall [selectedWalls.size()]; 
+      ModifiedWall [] modifiedWalls = new ModifiedWall [selectedWalls.size()]; 
       for (int i = 0; i < modifiedWalls.length; i++) {
         modifiedWalls [i] = new ModifiedWall(selectedWalls.get(i));
       }
       // Apply modification
       doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
           leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-          height, heightAtEnd, thickness);       
+          height, heightAtEnd, thickness);      
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            undoModifyWalls(modifiedWalls); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            doModifyWalls(modifiedWalls, xStart, yStart, xEnd, yEnd, 
-                leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
-                height, heightAtEnd, thickness); 
-            home.setSelectedItems(oldSelection); 
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return ResourceBundle.getBundle(WallController.class.getName()).
-                getString("undoModifyWallsName");
-          }
-        };
+        UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, oldSelection,
+            modifiedWalls, xStart, yStart, xEnd, yEnd,
+            leftSideColor, leftSideTexture, rightSideColor,
+            rightSideTexture, thickness, height,
+            heightAtEnd);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
   }
 
   /**
+   * Undoable edit for walls modification. This class isn't anonymous to avoid
+   * being bound to controller and its view.
+   */
+  private static class WallsModificationUndoableEdit extends AbstractUndoableEdit {
+    private final Home             home;
+    private final List<Selectable> oldSelection;
+    private final ModifiedWall []  modifiedWalls;
+    private final Float            xStart;
+    private final Float            yStart;
+    private final Float            xEnd;
+    private final Float            yEnd;
+    private final Integer          leftSideColor;
+    private final HomeTexture      leftSideTexture;
+    private final Integer          rightSideColor;
+    private final HomeTexture      rightSideTexture;
+    private final Float            thickness;
+    private final Float            height;
+    private final Float            heightAtEnd;
+
+    private WallsModificationUndoableEdit(Home home,
+                                          List<Selectable> oldSelection,
+                                          ModifiedWall [] modifiedWalls,
+                                          Float xStart, Float yStart,
+                                          Float xEnd, Float yEnd,
+                                          Integer leftSideColor,
+                                          HomeTexture leftSideTexture,
+                                          Integer rightSideColor,
+                                          HomeTexture rightSideTexture,
+                                          Float thickness,
+                                          Float height,
+                                          Float heightAtEnd) {
+      this.xStart = xStart;
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.yStart = yStart;
+      this.xEnd = xEnd;
+      this.yEnd = yEnd;
+      this.thickness = thickness;
+      this.rightSideTexture = rightSideTexture;
+      this.leftSideTexture = leftSideTexture;
+      this.height = height;
+      this.modifiedWalls = modifiedWalls;
+      this.heightAtEnd = heightAtEnd;
+      this.leftSideColor = leftSideColor;
+      this.rightSideColor = rightSideColor;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      undoModifyWalls(this.modifiedWalls); 
+      this.home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doModifyWalls(this.modifiedWalls, this.xStart, this.yStart, this.xEnd, this.yEnd, 
+          this.leftSideColor, this.leftSideTexture, this.rightSideColor, this.rightSideTexture, 
+          this.height, this.heightAtEnd, this.thickness); 
+      this.home.setSelectedItems(this.oldSelection); 
+    }
+
+    @Override
+    public String getPresentationName() {
+      return ResourceBundle.getBundle(WallController.class.getName()).
+          getString("undoModifyWallsName");
+    }
+  }
+
+  /**
    * Modifies walls properties with the values in parameter.
    */
-  private void doModifyWalls(ModifiedWall [] modifiedWalls, 
-                             Float xStart, Float yStart, Float xEnd, Float yEnd,
-                             Integer leftSideColor, HomeTexture leftSideTexture, 
-                             Integer rightSideColor, HomeTexture rightSideTexture,
-                             Float height, Float heightAtEnd, Float thickness) {
+  private static void doModifyWalls(ModifiedWall [] modifiedWalls, 
+                                    Float xStart, Float yStart, Float xEnd, Float yEnd,
+                                    Integer leftSideColor, HomeTexture leftSideTexture, 
+                                    Integer rightSideColor, HomeTexture rightSideTexture,
+                                    Float height, Float heightAtEnd, Float thickness) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       moveWallPoints(wall, xStart, yStart, xEnd, yEnd);
@@ -810,7 +862,7 @@ public class WallController implements Controller {
   /**
    * Restores wall properties from the values stored in <code>modifiedWalls</code>.
    */
-  private void undoModifyWalls(ModifiedWall [] modifiedWalls) {
+  private static void undoModifyWalls(ModifiedWall [] modifiedWalls) {
     for (ModifiedWall modifiedWall : modifiedWalls) {
       Wall wall = modifiedWall.getWall();
       moveWallPoints(wall, modifiedWall.getXStart(), modifiedWall.getYStart(),
@@ -825,7 +877,7 @@ public class WallController implements Controller {
     }
   }
   
-  private void moveWallPoints(Wall wall, Float xStart, Float yStart, Float xEnd, Float yEnd) {
+  private static void moveWallPoints(Wall wall, Float xStart, Float yStart, Float xEnd, Float yEnd) {
     Wall wallAtStart = wall.getWallAtStart();
     if (xStart != null) {
       wall.setXStart(xStart);
