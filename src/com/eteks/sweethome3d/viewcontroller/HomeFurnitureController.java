@@ -599,7 +599,7 @@ public class HomeFurnitureController implements Controller {
   }
 
   /**
-   * Restores furniture properties from the values stored in <code>modifiedFurnitures</code>.
+   * Restores furniture properties from the values stored in <code>modifiedFurniture</code>.
    */
   private void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
