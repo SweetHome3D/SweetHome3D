@@ -144,11 +144,9 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             SwingUtilities.getRootPane(TextureChoiceComponent.this), controller.getDialogTitle());
         dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
         dialog.setResizable(true);
-        Dimension preferredSize = getPreferredSize();
-        dialog.setMinimumSize(preferredSize);
-        // Use a larger preferred size to let large images be displayed
-        preferredSize.width += 50;
-        dialog.setPreferredSize(preferredSize);
+        // Pack again because resize decorations may have changed dialog preferred size
+        dialog.pack();
+        dialog.setMinimumSize(getPreferredSize());
         // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
         dialog.addComponentListener(new ComponentAdapter() {
             @Override
@@ -384,7 +382,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       // Second row
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
           0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
-          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 0, 0));
+          GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 50, 0));
       add(this.texturePreviewLabel, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
