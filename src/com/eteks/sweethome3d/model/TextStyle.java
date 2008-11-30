@@ -19,7 +19,11 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The different attributes that defines a text style. 
@@ -27,10 +31,12 @@ import java.io.Serializable;
  */
 public class TextStyle implements Serializable {
   private static final long serialVersionUID = 1L;
-  
+    
   private final float   fontSize;
   private final boolean bold;
   private final boolean italic;
+  
+  private static final Map<TextStyle,TextStyle> textStylesCache = new HashMap<TextStyle,TextStyle>(); 
   
   public TextStyle(float fontSize) {
     this(fontSize, false, false);    
@@ -40,6 +46,17 @@ public class TextStyle implements Serializable {
     this.fontSize = fontSize;
     this.bold = bold;
     this.italic = italic;
+    
+    textStylesCache.put(this, this);
+  }
+  
+  /**
+   * Reads style and updates cache.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    
+    textStylesCache.put(this, this);
   }
   
   /**
@@ -70,7 +87,7 @@ public class TextStyle implements Serializable {
     if (getFontSize() == fontSize) {
       return this;
     } else {
-      return new TextStyle(fontSize, isBold(), isItalic());
+      return getCachedTextStyle(new TextStyle(fontSize, isBold(), isItalic()));
     }
   }
 
@@ -81,7 +98,7 @@ public class TextStyle implements Serializable {
     if (isBold() == bold) {
       return this;
     } else {
-      return new TextStyle(getFontSize(), bold, isItalic());
+      return getCachedTextStyle(new TextStyle(getFontSize(), bold, isItalic()));
     }
   }
 
@@ -92,10 +109,24 @@ public class TextStyle implements Serializable {
     if (isItalic() == italic) {
       return this;
     } else {
-      return new TextStyle(getFontSize(), isBold(), italic);
+      return getCachedTextStyle(new TextStyle(getFontSize(), isBold(), italic));
     }
   }
 
+  /**
+   * Returns the text style instance equal to <code>textStyle</code> from cache 
+   * if it exists or <code>textStyle</code> itself after storing it in cache.
+   */
+  private TextStyle getCachedTextStyle(TextStyle textStyle) {
+    TextStyle cachedTextStyle = textStylesCache.get(textStyle);
+    if (cachedTextStyle != null) {
+      return cachedTextStyle;
+    } else {
+      textStylesCache.put(textStyle, textStyle);
+      return textStyle;
+    }
+  }
+  
   /**
    * Returns <code>true</code> if this text style is equal to <code>object</code>.
    */
