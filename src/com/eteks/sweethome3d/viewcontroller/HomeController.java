@@ -51,6 +51,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -247,6 +248,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, true);
+    homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, 
         this.home.getBackgroundImage() != null);
@@ -599,6 +601,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
+    boolean homeSelectionContainsOneLabel = false;
     if (selectionMode) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
       homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
@@ -608,8 +611,13 @@ public class HomeController implements Controller {
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
       homeSelectionContainsRooms = !Home.getRoomsSubList(selectedItems).isEmpty();
       boolean homeSelectionContainsDimensionLines = !Home.getDimensionLinesSubList(selectedItems).isEmpty();
+      final List<Label> selectedLabels = Home.getLabelsSubList(selectedItems);
+      boolean homeSelectionContainsLabels = !selectedLabels.isEmpty();
+      homeSelectionContainsOneLabel = selectedLabels.size() == 1;
       homeSelectionContainsOneCopiableObjectOrMore = 
-          homeSelectionContainsFurniture || homeSelectionContainsWalls || homeSelectionContainsRooms || homeSelectionContainsDimensionLines; 
+          homeSelectionContainsFurniture || homeSelectionContainsWalls 
+          || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
+          || homeSelectionContainsLabels; 
     }
 
     HomeView view = getView();
@@ -665,6 +673,8 @@ public class HomeController implements Controller {
         homeSelectionContainsOneWall);
     view.setEnabled(HomeView.ActionType.MODIFY_ROOM,
         homeSelectionContainsRooms);
+    view.setEnabled(HomeView.ActionType.MODIFY_LABEL,
+        homeSelectionContainsOneLabel);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_TOP,
         homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_BOTTOM,
@@ -709,8 +719,9 @@ public class HomeController implements Controller {
           selectionMode
           && (this.home.getFurniture().size() > 0 
               || this.home.getWalls().size() > 0 
+              || this.home.getRooms().size() > 0
               || this.home.getDimensionLines().size() > 0
-              || this.home.getRooms().size() > 0));
+              || this.home.getLabels().size() > 0));
     } else {
       view.setEnabled(HomeView.ActionType.SELECT_ALL, false);
     }
@@ -990,6 +1001,7 @@ public class HomeController implements Controller {
       getPlanController().addWalls(Home.getWallsSubList(items));
       getPlanController().addRooms(Home.getRoomsSubList(items));
       getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
+      getPlanController().addLabels(Home.getLabelsSubList(items));
       getPlanController().moveItems(items, dx, dy);
       this.home.setSelectedItems(items);
   

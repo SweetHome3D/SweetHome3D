@@ -123,6 +123,13 @@ public interface ViewFactory {
                                             RoomController roomController);
   
   /**
+   * Returns a new view that edits label values.
+   */
+  public abstract DialogView createLabelView(boolean modification,
+                                             UserPreferences preferences,
+                                             LabelController labelController);
+  
+  /**
    * Returns a new view that edits 3D attributes.
    */
   public abstract DialogView createHome3DAttributesView(UserPreferences preferences,

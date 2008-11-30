@@ -28,7 +28,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 
 /**
- * A transferable class that manages the transfer of a list of objects in a home.
+ * A transferable class that manages the transfer of a list of items in a home.
  * @author Emmanuel Puybaret
  */
 public class HomeTransferableList implements Transferable {
@@ -53,7 +53,7 @@ public class HomeTransferableList implements Transferable {
    * Creates a transferable list of a copy of <code>items</code>.
    */
   public HomeTransferableList(List<? extends Selectable> items) {
-    this.transferedItems = Home.deepCopy(items);
+    this.transferedItems = Home.duplicate(items);
   }
 
   /**
@@ -61,7 +61,7 @@ public class HomeTransferableList implements Transferable {
    */
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
     if (flavor.equals(HOME_FLAVOR)) {
-      return Home.deepCopy(this.transferedItems);
+      return Home.duplicate(this.transferedItems);
     } else {
       throw new UnsupportedFlavorException(flavor);
     }

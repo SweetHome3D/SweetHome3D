@@ -67,6 +67,8 @@ public class Home implements Serializable {
   private transient CollectionChangeSupport<Room>     roomsChangeSupport;
   private List<DimensionLine>                         dimensionLines;
   private transient CollectionChangeSupport<DimensionLine> dimensionLinesChangeSupport;
+  private List<Label>                                 labels;
+  private transient CollectionChangeSupport<Label>    labelsChangeSupport;
   private Camera                                      camera;
   private String                                      name;
   private float                                       wallHeight;
@@ -176,6 +178,7 @@ public class Home implements Serializable {
     this.wallsChangeSupport = new CollectionChangeSupport<Wall>(this);
     this.roomsChangeSupport = new CollectionChangeSupport<Room>(this);
     this.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(this);
+    this.labelsChangeSupport = new CollectionChangeSupport<Label>(this);
     this.propertyChangeSupport = new PropertyChangeSupport(this);
 
     if (this.furnitureVisibleProperties == null) {
@@ -200,6 +203,7 @@ public class Home implements Serializable {
     this.environment = new HomeEnvironment();
     this.rooms = new ArrayList<Room>();
     this.dimensionLines = new ArrayList<DimensionLine>();
+    this.labels = new ArrayList<Label>();
     this.visualProperties = new HashMap<String, Object>();
     
     this.version = CURRENT_VERSION;
@@ -564,6 +568,58 @@ public class Home implements Serializable {
   }
 
   /**
+   * Adds the label <code>listener</code> in parameter to this home.
+   */
+  public void addLabelsListener(CollectionListener<Label> listener) {
+    this.labelsChangeSupport.addCollectionListener(listener);
+  }
+  
+  /**
+   * Removes the label <code>listener</code> in parameter from this home.
+   */
+  public void removeLabelsListener(CollectionListener<Label> listener) {
+    this.labelsChangeSupport.removeCollectionListener(listener);
+  } 
+
+  /**
+   * Returns an unmodifiable collection of the labels of this home.
+   */
+  public Collection<Label> getLabels() {
+    return Collections.unmodifiableCollection(this.labels);
+  }
+
+  /**
+   * Adds a given label to the set of labels of this home.
+   * Once <code>label</code> is added, label listeners added 
+   * to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#ADD ADD}. 
+   */
+  public void addLabel(Label label) {
+    // Make a copy of the list to avoid conflicts in the list returned by getLabels
+    this.labels = new ArrayList<Label>(this.labels);
+    this.labels.add(label);
+    this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.ADD);
+  }
+
+  /**
+   * Removes a given label from the set of labels of this home.
+   * Once <code>label</code> is removed, label listeners added to this home will receive a
+   * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged}
+   * notification, with an {@link CollectionEvent#getType() event type} 
+   * equal to {@link CollectionEvent.Type#DELETE DELETE}.
+   */
+  public void deleteLabel(Label label) {
+    //  Ensure selectedItems don't keep a reference to label
+    deselectItem(label);
+    // Make a copy of the list to avoid conflicts in the list returned by getLabels
+    this.labels = new ArrayList<Label>(this.labels);
+    this.labels.remove(label);
+    this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
+  }
+
+  /**
    * Adds the property change <code>listener</code> in parameter to this home.
    */
   public void addPropertyChangeListener(Property property, PropertyChangeListener listener) {
@@ -797,7 +853,7 @@ public class Home implements Serializable {
   }
   
   /**
-   * Returns the default text style of a class of selectable object. 
+   * Returns the default text style of a class of selectable item. 
    */
   public TextStyle getDefaultTextStyle(Class<? extends Selectable> selectableClass) {
     if (Room.class.isAssignableFrom(selectableClass)) {
@@ -808,25 +864,18 @@ public class Home implements Serializable {
   }
   
   /**
-   * Performs a deep copy of home selectable <code>objects</code>.
+   * Returns a deep copy of home selectable <code>items</code>.
    */
-  public static List<Selectable> deepCopy(List<? extends Selectable> objects) {
+  public static List<Selectable> duplicate(List<? extends Selectable> items) {
     List<Selectable> list = new ArrayList<Selectable>();
-    for (Selectable obj : objects) {
-      if (obj instanceof HomePieceOfFurniture) {
-        list.add(new HomePieceOfFurniture((HomePieceOfFurniture)obj));
-      } else if (obj instanceof Room) {
-        list.add(new Room((Room)obj));
-      } else if (obj instanceof DimensionLine) {
-        list.add(new DimensionLine((DimensionLine)obj));
-      } else if (!(obj instanceof Wall)
-                 && !(obj instanceof Camera)) { // Camera isn't copiable
-        throw new RuntimeException(
-            "Don't kwon how to copy " + obj.getClass().getName() + " instances");
+    for (Selectable item : items) {
+      if (!(item instanceof Wall)         // Walls are copied further
+          && !(item instanceof Camera)) { // Cameras can't be duplicated
+        list.add(item.clone());
       }
     }
-    // Add to list a deep copy of walls with their walls at start and end point set
-    list.addAll(Wall.deepCopy(getWallsSubList(objects)));
+    // Add to list a clone of walls list with their walls at start and end point set
+    list.addAll(Wall.clone(getWallsSubList(items)));
     return list;
   }
 
@@ -856,6 +905,13 @@ public class Home implements Serializable {
    */
   public static List<DimensionLine> getDimensionLinesSubList(List<? extends Selectable> items) {
     return getSubList(items, DimensionLine.class);
+  }
+  
+  /**
+   * Returns a sub list of <code>items</code> that contains only labels.
+   */
+  public static List<Label> getLabelsSubList(List<? extends Selectable> items) {
+    return getSubList(items, Label.class);
   }
   
   @SuppressWarnings("unchecked")

@@ -97,6 +97,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
@@ -347,7 +348,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Adds home objects and selection listeners on this component to receive  
+   * Adds home items and selection listeners on this component to receive  
    * changes notifications from home. 
    */
   private void addModelListeners(Home home, UserPreferences preferences) {
@@ -455,6 +456,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           invalidatePlanBoundsAndRevalidate();
         }
       });
+
+    // Add listener to update plan when labels change
+    final PropertyChangeListener labelChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          invalidatePlanBoundsAndRevalidate();
+        }
+      };
+    for (Label label : home.getLabels()) {
+      label.addPropertyChangeListener(labelChangeListener);
+    }
+    home.addLabelsListener(new CollectionListener<Label> () {
+        public void collectionChanged(CollectionEvent<Label> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(labelChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(labelChangeListener);
+          }
+          invalidatePlanBoundsAndRevalidate();
+        }
+      });
+
     home.getObserverCamera().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           String propertyName = ev.getPropertyName();
@@ -812,9 +834,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         this.planBoundsCache.add(this.backgroundImageCache.getWidth() * backgroundImage.getScale() - backgroundImage.getXOrigin(),
             this.backgroundImageCache.getHeight() * backgroundImage.getScale() - backgroundImage.getYOrigin());
       }
-      Rectangle2D homeObjectsBounds = getObjectsBounds(getGraphics(), getHomeObjects());
-      if (homeObjectsBounds != null) {
-        this.planBoundsCache.add(homeObjectsBounds);
+      Rectangle2D homeItemsBounds = getItemsBounds(getGraphics(), getHomeItems());
+      if (homeItemsBounds != null) {
+        this.planBoundsCache.add(homeItemsBounds);
       }
       for (float [] point : this.home.getObserverCamera().getPoints()) {
         this.planBoundsCache.add(point [0], point [1]);
@@ -828,18 +850,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the collection of walls, furniture, rooms and dimension lines of the home 
    * displayed by this component.
    */
-  private List<Selectable> getHomeObjects() {
-    List<Selectable> homeObjects = new ArrayList<Selectable>(this.home.getWalls());
-    homeObjects.addAll(this.home.getFurniture());
-    homeObjects.addAll(this.home.getRooms());
-    homeObjects.addAll(this.home.getDimensionLines());
-    return homeObjects;
+  private List<Selectable> getHomeItems() {
+    List<Selectable> homeItems = new ArrayList<Selectable>(this.home.getWalls());
+    homeItems.addAll(this.home.getFurniture());
+    homeItems.addAll(this.home.getRooms());
+    homeItems.addAll(this.home.getDimensionLines());
+    homeItems.addAll(this.home.getLabels());
+    return homeItems;
   }
   
   /**
-   * Returns the bounds of the given collection of <code>objects</code>.
+   * Returns the bounds of the given collection of <code>items</code>.
    */
-  private Rectangle2D getObjectsBounds(Graphics g, Collection<Selectable> objects) {
+  private Rectangle2D getItemsBounds(Graphics g, Collection<Selectable> items) {
     // Retrieve used font
     Font componentFont;
     if (g != null) {
@@ -848,22 +871,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       componentFont = getFont();
     }
     
-    Rectangle2D objectBounds = null;
-    for (Selectable object : objects) {
-      if (!(object instanceof HomePieceOfFurniture)
-          || ((HomePieceOfFurniture)object).isVisible()) {
-        // Add to bounds all the visible objects
-        for (float [] point : object.getPoints()) {
-          if (objectBounds == null) {
-            objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+    Rectangle2D itemBounds = null;
+    for (Selectable item : items) {
+      if (!(item instanceof HomePieceOfFurniture)
+          || ((HomePieceOfFurniture)item).isVisible()) {
+        // Add to bounds all the visible items
+        for (float [] point : item.getPoints()) {
+          if (itemBounds == null) {
+            itemBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
           } else {
-            objectBounds.add(point [0], point [1]);
+            itemBounds.add(point [0], point [1]);
           }
         }
       }
-      if (object instanceof Room) {
+      if (item instanceof Room) {
         // Add to bounds the displayed name and area bounds of each room 
-        Room room = (Room)object;
+        Room room = (Room)item;
         float xRoomCenter = room.getXCenter();
         float yRoomCenter = room.getYCenter();
         String roomName = room.getName();
@@ -876,9 +899,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }          
           FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
           Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
-          objectBounds.add(xName - nameBounds.getWidth() / 2, 
+          itemBounds.add(xName - nameBounds.getWidth() / 2, 
               yName - nameFontMetrics.getAscent());
-          objectBounds.add(xName + nameBounds.getWidth() / 2, 
+          itemBounds.add(xName + nameBounds.getWidth() / 2, 
               yName + nameFontMetrics.getDescent());
         }
         if (room.isAreaVisible()) {
@@ -893,15 +916,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }          
             FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
             Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
-            objectBounds.add(xArea - areaTextBounds.getWidth() / 2, 
+            itemBounds.add(xArea - areaTextBounds.getWidth() / 2, 
                 yArea - areaFontMetrics.getAscent());
-            objectBounds.add(xArea + areaTextBounds.getWidth() / 2, 
+            itemBounds.add(xArea + areaTextBounds.getWidth() / 2, 
                 yArea + areaFontMetrics.getDescent());
           }
         }
-      } else if (object instanceof HomePieceOfFurniture) {
+      } else if (item instanceof HomePieceOfFurniture) {
         // Add to bounds the displayed name of piece of furniture 
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)object;
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
         float xPiece = piece.getX();
         float yPiece = piece.getY();
         String pieceName = piece.getName();
@@ -916,14 +939,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }          
           FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
           Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
-          objectBounds.add(xName - nameBounds.getWidth() / 2, 
+          itemBounds.add(xName - nameBounds.getWidth() / 2, 
               yName - nameFontMetrics.getAscent());
-          objectBounds.add(xName + nameBounds.getWidth() / 2, 
+          itemBounds.add(xName + nameBounds.getWidth() / 2, 
               yName + nameFontMetrics.getDescent());
         }
-      } else if (object instanceof DimensionLine) {
+      } else if (item instanceof DimensionLine) {
         // Add to bounds the text bounds of dimension line length 
-        DimensionLine dimensionLine = (DimensionLine)object;
+        DimensionLine dimensionLine = (DimensionLine)item;
         float dimensionLineLength = dimensionLine.getLength();
         String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
         TextStyle lengthStyle = dimensionLine.getLengthStyle();
@@ -947,7 +970,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); ) {
           float [] pathPoint = new float[2];
           if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            objectBounds.add(pathPoint [0], pathPoint [1]);
+            itemBounds.add(pathPoint [0], pathPoint [1]);
           }
           it.next();
         }
@@ -959,7 +982,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
           float [] pathPoint = new float[2];
           if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            objectBounds.add(pathPoint [0], pathPoint [1]);
+            itemBounds.add(pathPoint [0], pathPoint [1]);
           }
           it.next();
         }
@@ -967,13 +990,29 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
           float [] pathPoint = new float[2];
           if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            objectBounds.add(pathPoint [0], pathPoint [1]);
+            itemBounds.add(pathPoint [0], pathPoint [1]);
           }
           it.next();
         }
-      }
-    }
-    return objectBounds;
+      } else if (item instanceof Label) {
+        // Add to bounds the displayed text of a label 
+        Label label = (Label)item;
+        float xLabel = label.getX();
+        float yLabel = label.getY();
+        String labelText = label.getText();
+        TextStyle labelStyle = label.getStyle();
+        if (labelStyle == null) {
+          labelStyle = this.home.getDefaultTextStyle(label.getClass());
+        }          
+        FontMetrics labelFontMetrics = getFontMetrics(componentFont, labelStyle);
+        Rectangle2D labelBounds = labelFontMetrics.getStringBounds(labelText, g);
+        itemBounds.add(xLabel - labelBounds.getWidth() / 2, 
+            yLabel - labelFontMetrics.getAscent());
+        itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
+            yLabel + labelFontMetrics.getDescent());
+      } 
+    } 
+    return itemBounds;
   }
   
   /**
@@ -1091,16 +1130,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * to make it fill <code>pageFormat</code> imageable size.
    */
   public float getPrintPreferredScale(Graphics g, PageFormat pageFormat) {
-    List<Selectable> printedObjects = getHomeObjects(); 
-    Rectangle2D printedObjectBounds = getObjectsBounds(g, printedObjects);
-    if (printedObjectBounds != null) {
+    List<Selectable> printedItems = getHomeItems(); 
+    Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
+    if (printedItemBounds != null) {
       float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
       float imageableHeightCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableHeight() / 72);
-      float extraMargin = getStrokeWidthExtraMargin(printedObjects);
+      float extraMargin = getStrokeWidthExtraMargin(printedItems);
       // Compute the largest integer scale possible
       int scaleInverse = (int)Math.ceil(Math.max(
-          (printedObjectBounds.getWidth() + 2 * extraMargin) / imageableWidthCm,
-          (printedObjectBounds.getHeight() + 2 * extraMargin) / imageableHeightCm));
+          (printedItemBounds.getWidth() + 2 * extraMargin) / imageableWidthCm,
+          (printedItemBounds.getHeight() + 2 * extraMargin) / imageableHeightCm));
       return 1f / scaleInverse;
     } else {
       return 0;
@@ -1108,13 +1147,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Returns the margin that should be added around home objects bounds to ensure their
+   * Returns the margin that should be added around home items bounds to ensure their
    * line stroke width is always fully visible.
    */
-  private float getStrokeWidthExtraMargin(List<Selectable> objects) {
+  private float getStrokeWidthExtraMargin(List<Selectable> items) {
     float extraMargin = BORDER_STROKE_WIDTH / 2;
-    if (Home.getWallsSubList(objects).size() > 0
-        || Home.getRoomsSubList(objects).size() > 0) {
+    if (Home.getWallsSubList(items).size() > 0
+        || Home.getRoomsSubList(items).size() > 0) {
       extraMargin = WALL_STROKE_WIDTH / 2;
     }
     return extraMargin;
@@ -1125,9 +1164,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * that makes it fill <code>pageFormat</code> imageable size if this attribute is <code>null</code>.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    List<Selectable> printedObjects = getHomeObjects(); 
-    Rectangle2D printedObjectBounds = getObjectsBounds(g, printedObjects);
-    if (printedObjectBounds != null && pageIndex == 0) {
+    List<Selectable> printedItems = getHomeItems(); 
+    Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
+    if (printedItemBounds != null && pageIndex == 0) {
       // Compute a scale that ensures the plan will fill the component if plan scale is null
       float printScale = this.home.getPrint() != null && this.home.getPrint().getPlanScale() != null 
           ? this.home.getPrint().getPlanScale().floatValue()
@@ -1144,14 +1183,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Apply print scale to paper size expressed in 1/72nds of an inch
       printScale *= LengthUnit.centimeterToInch(72);
       g2D.scale(printScale, printScale);
-      float extraMargin = getStrokeWidthExtraMargin(printedObjects);
-      g2D.translate(-printedObjectBounds.getMinX() + extraMargin,
-          -printedObjectBounds.getMinY() + extraMargin);
+      float extraMargin = getStrokeWidthExtraMargin(printedItems);
+      g2D.translate(-printedItemBounds.getMinX() + extraMargin,
+          -printedItemBounds.getMinY() + extraMargin);
       // Center plan in component if possible
       g2D.translate(Math.max(0, 
-              (imageableWidth / printScale - printedObjectBounds.getWidth() - 2 * extraMargin) / 2), 
+              (imageableWidth / printScale - printedItemBounds.getWidth() - 2 * extraMargin) / 2), 
           Math.max(0, 
-              (imageableHeight / printScale - printedObjectBounds.getHeight() - 2 * extraMargin) / 2));
+              (imageableHeight / printScale - printedItemBounds.getHeight() - 2 * extraMargin) / 2));
       setRenderingHints(g2D);
       // Print component contents
       paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
@@ -1326,9 +1365,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintFurniture(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
     paintDimensionLines(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
         locationFeedbackStroke, planScale, foregroundColor, paintMode);
-    // Paint rooms and furniture name last to ensure they are not hidden
+    // Paint rooms text, furniture name and labels last to ensure they are not hidden
     paintRoomsNameAndArea(g2D, selectedItems, planScale, foregroundColor, paintMode);
     paintFurnitureName(g2D, selectedItems, planScale, foregroundColor, paintMode);
+    paintLabels(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+        planScale, foregroundColor, paintMode);
+    
     if (paintMode == PaintMode.PAINT) {
       paintSelectedRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
@@ -1815,6 +1857,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintFurnitureName(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
                                   Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
+    g2D.setPaint(foregroundColor);
     // Draw furniture name
     for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
       if (piece.isVisible()
@@ -2101,6 +2144,46 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Paints home labels.
+   */
+  private void paintLabels(Graphics2D g2D, List<Selectable> selectedItems, 
+                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                           float planScale, Color foregroundColor, PaintMode paintMode) {
+    Font previousFont = g2D.getFont();
+    g2D.setPaint(foregroundColor);
+    // Draw labels
+    for (Label label : this.home.getLabels()) {
+      boolean selectedLabel = selectedItems.contains(label);
+      // In clipboard paint mode, paint label only if it is selected
+      if (paintMode != PaintMode.CLIPBOARD
+          || selectedLabel) {
+        String labelText = label.getText();
+        float xLabel = label.getX(); 
+        float yLabel = label.getY();
+        TextStyle labelStyle = label.getStyle();
+        if (labelStyle == null) {
+          labelStyle = this.home.getDefaultTextStyle(label.getClass());
+        }          
+        float [][] labelBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, 0);
+        float labelWidth = labelBounds [2][0] - labelBounds [0][0];
+        // Draw label text
+        g2D.setFont(getFont(previousFont, labelStyle));        
+        g2D.drawString(labelText, xLabel - labelWidth / 2, yLabel);
+
+        if (paintMode == PaintMode.PAINT
+            && selectedLabel) {
+          // Draw selection border
+          g2D.setPaint(selectionOutlinePaint);
+          g2D.setStroke(selectionOutlineStroke);
+          g2D.draw(getShape(labelBounds));
+          g2D.setPaint(foregroundColor);
+        }
+      }
+    }
+    g2D.setFont(previousFont);
+  }
+
+  /**
    * Paints wall location feedback.
    */
   private void paintWallAlignmentFeedback(Graphics2D g2D, 
@@ -2369,6 +2452,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               && Math.abs(deltaXToClosestObject) > Math.abs(x - piecePoints [i][0])) {
             deltaXToClosestObject = x - piecePoints [i][0];
           }
+          
         }
       }
       
@@ -2574,11 +2658,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private Rectangle2D getSelectionBounds(boolean includeCamera) {
     if (includeCamera) {
-      return getObjectsBounds(getGraphics(), this.home.getSelectedItems());
+      return getItemsBounds(getGraphics(), this.home.getSelectedItems());
     } else {
       List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
       selectedItems.remove(this.home.getCamera());
-      return getObjectsBounds(getGraphics(), selectedItems);
+      return getItemsBounds(getGraphics(), selectedItems);
     }
   }
 

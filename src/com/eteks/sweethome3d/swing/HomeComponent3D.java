@@ -129,8 +129,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
   
   private final Home                               home;
-  private final Map<Object, ObjectBranch>          homeObjects = new HashMap<Object, ObjectBranch>();
-  private Collection<Object>                       homeObjectsToUpdate;
+  private final Map<Selectable, ObjectBranch>      homeObjects = new HashMap<Selectable, ObjectBranch>();
+  private Collection<Selectable>                   homeObjectsToUpdate;
   private SimpleUniverse                           universe;
   // Listeners bound to home that updates 3D scene objects
   private PropertyChangeListener                   cameraChangeListener;
@@ -1156,7 +1156,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Detaches from the scene the branch matching <code>homeObject</code>.
    */
-  private void deleteObject(Object homeObject) {
+  private void deleteObject(Selectable homeObject) {
     this.homeObjects.get(homeObject).detach();
     this.homeObjects.remove(homeObject);
     clearPrintedImageCache();
@@ -1203,11 +1203,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (this.homeObjectsToUpdate != null) {
       this.homeObjectsToUpdate.addAll(objects);
     } else {
-      this.homeObjectsToUpdate = new HashSet<Object>(objects);
+      this.homeObjectsToUpdate = new HashSet<Selectable>(objects);
       // Invoke later the update of objects of homeObjectsToUpdate
       EventQueue.invokeLater(new Runnable () {
         public void run() {
-          for (Object object : homeObjectsToUpdate) {
+          for (Selectable object : homeObjectsToUpdate) {
             ObjectBranch objectBranch = homeObjects.get(object);
             // Check object wasn't deleted since updateObjects call
             if (objectBranch != null) { 

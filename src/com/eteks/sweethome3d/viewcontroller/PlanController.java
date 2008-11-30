@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
@@ -71,7 +72,7 @@ import com.eteks.sweethome3d.model.Wall;
 public class PlanController extends FurnitureController implements Controller {
   public enum Property {MODE}
   
-  public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION}
+  public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION, LABEL_CREATION}
   
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
@@ -110,6 +111,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       roomResizeState;
   private final ControllerState       roomAreaOffsetState;
   private final ControllerState       roomNameOffsetState;
+  private final ControllerState       labelCreationState;
   // Current state
   private ControllerState             state;
   // Mouse cursor position at last mouse press
@@ -167,6 +169,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.roomResizeState = new RoomResizeState();
     this.roomAreaOffsetState = new RoomAreaOffsetState();
     this.roomNameOffsetState = new RoomNameOffsetState();
+    this.labelCreationState = new LabelCreationState();
     // Set default state to selectionState
     setState(this.selectionState);
     
@@ -459,6 +462,13 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Returns the label creation state.
+   */
+  protected ControllerState getLabelCreationState() {
+    return this.labelCreationState;
+  }
+
+  /**
    * Returns the abscissa of mouse position at last mouse press.
    */
   protected float getXLastMousePress() {
@@ -645,10 +655,10 @@ public class PlanController extends FurnitureController implements Controller {
         wallAtEnd != null
         && wallAtEnd.getWallAtStart() == splitWall;
 
-      // Create new walls with copy constructor to copy their characteristics 
-      Wall firstWall = new Wall(splitWall);
+      // Clone new walls to copy their characteristics 
+      Wall firstWall = splitWall.clone();
       this.home.addWall(firstWall);
-      Wall secondWall = new Wall(splitWall);
+      Wall secondWall = splitWall.clone();
       this.home.addWall(secondWall);
       
       // Change split walls end and start point
@@ -723,12 +733,30 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Controls the modification of selected rooms.
+   * Controls the modification of the selected rooms.
    */
   public void modifySelectedRooms() {
     if (!Home.getRoomsSubList(this.home.getSelectedItems()).isEmpty()) {
       new RoomController(this.home, this.preferences, this.viewFactory,
           this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
+  
+  /**
+   * Controls the creation of new labels.
+   */
+  public void createNewLabel(float x, float y) {
+    new LabelController(this.home, x, y, this.preferences, this.viewFactory,
+        this.undoSupport).displayView(getView());
+  }
+  
+  /**
+   * Controls the modification of the selected labels.
+   */
+  public void modifySelectedLabels() {
+    if (!Home.getLabelsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new LabelController(this.home, this.preferences, this.viewFactory,
+          this.undoSupport).displayView(getView());
     }
   }
   
@@ -748,7 +776,7 @@ public class PlanController extends FurnitureController implements Controller {
   } 
   
   /**
-   * Selects all visible objects in home.
+   * Selects all visible items in home.
    */
   @Override
   public void selectAll() {
@@ -1083,6 +1111,15 @@ public class PlanController extends FurnitureController implements Controller {
       return camera;
     }
     
+    for (Label label : this.home.getLabels()) {
+      if (label.containsPoint(x, y, margin)) {
+        return label;
+      } else if (isItemTextAt(label, label.getText(), label.getStyle(), 
+          label.getX(), label.getY(), x, y, textMargin)) {
+        return label;
+      }
+    }    
+    
     for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
       if (dimensionLine.containsPoint(x, y, margin)) {
         return dimensionLine;
@@ -1095,24 +1132,19 @@ public class PlanController extends FurnitureController implements Controller {
     HomePieceOfFurniture foundPiece = null;
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
-      if (piece.isVisible() 
-          && piece.containsPoint(x, y, margin)
-          && (foundPiece == null
-              || piece.getElevation() > foundPiece.getElevation())) {
-        foundPiece = piece;
-      } else { 
-        // Search if piece name contains point in case it is drawn outside of the piece
-        String roomName = piece.getName();
-        if (roomName != null
-            && piece.isNameVisible()) {
-          TextStyle nameStyle = piece.getNameStyle();
-          if (nameStyle == null) {
-            nameStyle = this.home.getDefaultTextStyle(piece.getClass());              
-          }          
-          float [][] nameBounds = getView().getTextBounds(roomName, nameStyle, 
-              piece.getX() + piece.getNameXOffset(), 
-              piece.getY() + piece.getNameYOffset(), 0);
-          if (getPath(nameBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin)) {
+      if (piece.isVisible()) {
+        if (piece.containsPoint(x, y, margin)
+            && (foundPiece == null
+                || piece.getElevation() > foundPiece.getElevation())) {
+          foundPiece = piece;
+        } else if (foundPiece == null) { 
+          // Search if piece name contains point in case it is drawn outside of the piece
+          String pieceName = piece.getName();
+          if (pieceName != null
+              && piece.isNameVisible() 
+              && isItemTextAt(piece, pieceName, piece.getNameStyle(), 
+                  piece.getX() + piece.getNameXOffset(), 
+                  piece.getY() + piece.getNameYOffset(), x, y, textMargin)) {
             foundPiece = piece;
           }
         }
@@ -1140,29 +1172,18 @@ public class PlanController extends FurnitureController implements Controller {
         } else { 
           // Search if room name contains point in case it is drawn outside of the room
           String roomName = room.getName();
-          if (roomName != null) {
-            TextStyle nameStyle = room.getNameStyle();
-            if (nameStyle == null) {
-              nameStyle = this.home.getDefaultTextStyle(room.getClass());              
-            }          
-            float [][] nameBounds = getView().getTextBounds(roomName, nameStyle, 
+          if (roomName != null 
+              && isItemTextAt(room, roomName, room.getNameStyle(), 
                 room.getXCenter() + room.getNameXOffset(), 
-                room.getYCenter() + room.getNameYOffset(), 0);
-            if (getPath(nameBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin)) {
-              foundRoom = room;
-            }
+                room.getYCenter() + room.getNameYOffset(), x, y, textMargin)) {
+            foundRoom = room;
           }
           // Search if room area contains point in case its text is drawn outside of the room 
           if (room.isAreaVisible()) {
-            TextStyle areaStyle = room.getAreaStyle();
-            if (areaStyle == null) {
-              areaStyle = this.home.getDefaultTextStyle(room.getClass());              
-            }          
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea());
-            float [][] nameBounds = getView().getTextBounds(areaText, areaStyle, 
+            if (isItemTextAt(room, areaText, room.getAreaStyle(), 
                 room.getXCenter() + room.getAreaXOffset(), 
-                room.getYCenter() + room.getAreaYOffset(), 0);
-            if (getPath(nameBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin)) {
+                room.getYCenter() + room.getAreaYOffset(), x, y, textMargin)) {
               foundRoom = room;
             }
           }
@@ -1173,6 +1194,19 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns <code>true</code> if the <code>text</code> of an <code>item</code> displayed
+   * at the point (<code>xText</code>, <code>yText</code>) contains the point (<code>x</code>, <code>y</code>).
+   */
+  private boolean isItemTextAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, 
+                               float x, float y, float textMargin) {
+    if (textStyle == null) {
+      textStyle = this.home.getDefaultTextStyle(item.getClass());              
+    }          
+    float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, 0);
+    return getPath(textBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin);
+  }
+  
+  /**
    * Returns the items that intersects with the rectangle of (<code>x0</code>,
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite corners.
    */
@@ -1181,6 +1215,7 @@ public class PlanController extends FurnitureController implements Controller {
     updateRectangleItems(items, this.home.getDimensionLines(), x0, y0, x1, y1);
     updateRectangleItems(items, this.home.getRooms(), x0, y0, x1, y1);
     updateRectangleItems(items, this.home.getWalls(), x0, y0, x1, y1);
+    updateRectangleItems(items, this.home.getLabels(), x0, y0, x1, y1);
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
@@ -1365,15 +1400,16 @@ public class PlanController extends FurnitureController implements Controller {
 
       deleteFurniture(Home.getFurnitureSubList(items));      
 
-      List<Selectable> deletedOtherObjects = 
+      List<Selectable> deletedOtherItems = 
           new ArrayList<Selectable>(Home.getWallsSubList(items));
-      deletedOtherObjects.addAll(Home.getRoomsSubList(items));
-      deletedOtherObjects.addAll(Home.getDimensionLinesSubList(items));
+      deletedOtherItems.addAll(Home.getRoomsSubList(items));
+      deletedOtherItems.addAll(Home.getDimensionLinesSubList(items));
+      deletedOtherItems.addAll(Home.getLabelsSubList(items));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls and rooms index can't be stored       
-      postDeleteItems(deletedOtherObjects);
-      // Then delete objects from plan
-      doDeleteItems(deletedOtherObjects);
+      postDeleteItems(deletedOtherItems);
+      // Then delete items from plan
+      doDeleteItems(deletedOtherItems);
 
       // End compound edit
       this.undoSupport.endUpdate();
@@ -1410,6 +1446,10 @@ public class PlanController extends FurnitureController implements Controller {
     final DimensionLine [] dimensionLines = deletedDimensionLines.toArray(
         new DimensionLine [deletedDimensionLines.size()]);
     
+    // Manage labels
+    List<Label> deletedLabels = Home.getLabelsSubList(deletedItems);
+    final Label [] labels = deletedLabels.toArray(new Label [deletedLabels.size()]);
+    
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
@@ -1417,6 +1457,7 @@ public class PlanController extends FurnitureController implements Controller {
         doAddWalls(joinedDeletedWalls);       
         doAddRooms(rooms, roomsIndex);
         doAddDimensionLines(dimensionLines);
+        doAddLabels(labels);
         selectAndShowItems(deletedItems);
       }
       
@@ -1427,6 +1468,7 @@ public class PlanController extends FurnitureController implements Controller {
         doDeleteWalls(joinedDeletedWalls);       
         doDeleteRooms(rooms);
         doDeleteDimensionLines(dimensionLines);
+        doDeleteLabels(labels);
       }      
       
       @Override
@@ -1448,6 +1490,8 @@ public class PlanController extends FurnitureController implements Controller {
         home.deleteDimensionLine((DimensionLine)item);
       } else if (item instanceof Room) {
         home.deleteRoom((Room)item);
+      } else if (item instanceof Label) {
+        home.deleteLabel((Label)item);
       } else if (item instanceof HomePieceOfFurniture) {
         home.deletePieceOfFurniture((HomePieceOfFurniture)item);
       }
@@ -1480,28 +1524,8 @@ public class PlanController extends FurnitureController implements Controller {
         moveWallEndPoint(wall, 
             wall.getXEnd() + dx, wall.getYEnd() + dy,
             !items.contains(wall.getWallAtEnd()));
-      } else if (item instanceof HomePieceOfFurniture) {
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        piece.setX(piece.getX() + dx);
-        piece.setY(piece.getY() + dy);
-      } else if (item instanceof Camera) {
-        Camera camera = (Camera)item;
-        camera.setX(camera.getX() + dx);
-        camera.setY(camera.getY() + dy);
-      } else if (item instanceof Room) {
-        Room room = (Room)item;
-        float [][] points = room.getPoints();
-        for (int i = 0; i < points.length; i++) {
-          points [i][0] += dx;
-          points [i][1] += dy;
-        }
-        room.setPoints(points);
-      } else if (item instanceof DimensionLine) {
-        DimensionLine dimensionLine = (DimensionLine)item;
-        dimensionLine.setXStart(dimensionLine.getXStart() + dx);
-        dimensionLine.setYStart(dimensionLine.getYStart() + dy);
-        dimensionLine.setXEnd(dimensionLine.getXEnd() + dx);
-        dimensionLine.setYEnd(dimensionLine.getYEnd() + dy);
+      } else {
+        item.move(dx, dy);
       } 
     }
   }
@@ -1631,13 +1655,13 @@ public class PlanController extends FurnitureController implements Controller {
     for (Wall wall : walls) {
       this.home.addWall(wall);
     }
-    postAddWalls(walls, this.home.getSelectedItems());
+    postCreateWalls(walls, this.home.getSelectedItems());
   }
   
   /**
    * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
-  private void postAddWalls(List<Wall> newWalls, List<Selectable> oldSelection) {
+  private void postCreateWalls(List<Wall> newWalls, List<Selectable> oldSelection) {
     if (newWalls.size() > 0) {
       // Retrieve data about joined walls to newWalls
       final JoinedWall [] joinedNewWalls = new JoinedWall [newWalls.size()];
@@ -1663,7 +1687,7 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoAddWallsName");
+          return resource.getString("undoCreateWallsName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -1724,13 +1748,13 @@ public class PlanController extends FurnitureController implements Controller {
       roomsIndex [i] = endIndex++; 
     }
     doAddRooms(newRooms, roomsIndex);
-    postAddRooms(newRooms, roomsIndex, this.home.getSelectedItems());
+    postCreateRooms(newRooms, roomsIndex, this.home.getSelectedItems());
   }
   
   /**
    * Posts an undoable new room operation, about <code>newRooms</code>.
    */
-  private void postAddRooms(final Room [] newRooms,
+  private void postCreateRooms(final Room [] newRooms,
                             final int [] roomsIndex, 
                             List<Selectable> oldSelection) {
     if (newRooms.length > 0) {
@@ -1753,7 +1777,7 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoAddRoomsName");
+          return resource.getString("undoCreateRoomsName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -1763,8 +1787,8 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable new room operation, about <code>newRooms</code>.
    */
-  private void postAddRooms(List<Room> rooms, 
-                            List<Selectable> oldSelection) {
+  private void postCreateRooms(List<Room> rooms, 
+                               List<Selectable> oldSelection) {
     // Search the index of rooms in home list of rooms
     Room [] newRooms = rooms.toArray(new Room [rooms.size()]);
     int [] roomsIndex = new int [rooms.size()];
@@ -1772,7 +1796,7 @@ public class PlanController extends FurnitureController implements Controller {
     for (int i = 0; i < roomsIndex.length; i++) {
       roomsIndex [i] = homeRooms.lastIndexOf(newRooms [i]); 
     }
-    postAddRooms(newRooms, roomsIndex, oldSelection);
+    postCreateRooms(newRooms, roomsIndex, oldSelection);
   }
 
   /**
@@ -1795,19 +1819,19 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Add <code>newDimensionLines</code> to home and post an undoable new dimension line operation.
+   * Add <code>dimensionLines</code> to home and post an undoable new dimension line operation.
    */
   public void addDimensionLines(List<DimensionLine> dimensionLines) {
     doAddDimensionLines(
         dimensionLines.toArray(new DimensionLine [dimensionLines.size()]));
-    postAddDimensionLines(dimensionLines, this.home.getSelectedItems());
+    postCreateDimensionLines(dimensionLines, this.home.getSelectedItems());
   }
   
   /**
    * Posts an undoable new dimension line operation, about <code>newDimensionLines</code>.
    */
-  private void postAddDimensionLines(List<DimensionLine> newDimensionLines, 
-                                     List<Selectable> oldSelection) {
+  private void postCreateDimensionLines(List<DimensionLine> newDimensionLines, 
+                                        List<Selectable> oldSelection) {
     if (newDimensionLines.size() > 0) {
       final DimensionLine [] dimensionLines = newDimensionLines.toArray(
           new DimensionLine [newDimensionLines.size()]);
@@ -1830,7 +1854,7 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoAddDimensionLinesName");
+          return resource.getString("undoCreateDimensionLinesName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -1852,6 +1876,65 @@ public class PlanController extends FurnitureController implements Controller {
   private void doDeleteDimensionLines(DimensionLine [] dimensionLines) {
     for (DimensionLine dimensionLine : dimensionLines) {
       this.home.deleteDimensionLine(dimensionLine);
+    }
+  }
+
+  /**
+   * Add <code>labels</code> to home and post an undoable new label operation.
+   */
+  public void addLabels(List<Label> labels) {
+    doAddLabels(labels.toArray(new Label [labels.size()]));
+    postCreateLabels(labels, this.home.getSelectedItems());
+  }
+  
+  /**
+   * Posts an undoable new label operation, about <code>newLabels</code>.
+   */
+  private void postCreateLabels(List<Label> newLabels, 
+                             List<Selectable> oldSelection) {
+    if (newLabels.size() > 0) {
+      final Label [] labels = newLabels.toArray(new Label [newLabels.size()]);
+      final Selectable [] oldSelectedItems = 
+          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          doDeleteLabels(labels);
+          selectAndShowItems(Arrays.asList(oldSelectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          doAddLabels(labels);       
+          selectAndShowItems(Arrays.asList(labels));
+        }      
+  
+        @Override
+        public String getPresentationName() {
+          return resource.getString("undoCreateLabelsName");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Adds the labels in <code>labels</code> to plan component.
+   */
+  private void doAddLabels(Label [] labels) {
+    for (Label label : labels) {
+      this.home.addLabel(label);
+    }
+  }
+  
+  /**
+   * Deletes labels in <code>labels</code>.
+   */
+  private void doDeleteLabels(Label [] labels) {
+    for (Label label : labels) {
+      this.home.deleteLabel(label);
     }
   }
 
@@ -1919,12 +2002,11 @@ public class PlanController extends FurnitureController implements Controller {
       });
 
     addFurniture(furniture);
-    List<Selectable> emptyWallList = Collections.emptyList();
-    postAddWalls(Home.getWallsSubList(items), emptyWallList);
-    List<Selectable> emptyRoomList = Collections.emptyList();
-    postAddRooms(Home.getRoomsSubList(items), emptyRoomList);
-    List<Selectable> emptyDimensionLineList = Collections.emptyList();
-    postAddDimensionLines(Home.getDimensionLinesSubList(items), emptyDimensionLineList);
+    List<Selectable> emptyList = Collections.emptyList();
+    postCreateWalls(Home.getWallsSubList(items), emptyList);
+    postCreateRooms(Home.getRoomsSubList(items), emptyList);
+    postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList);
+    postCreateLabels(Home.getLabelsSubList(items), emptyList);
 
     // Add a undoable edit that will select all the items at redo
     this.undoSupport.postEdit(new AbstractUndoableEdit() {      
@@ -2755,13 +2837,16 @@ public class PlanController extends FurnitureController implements Controller {
         case DIMENSION_LINE_CREATION :
           setState(getDimensionLineCreationState());
           break;
+        case LABEL_CREATION :
+          setState(getLabelCreationState());
+          break;
       } 
     }
   }
   
   /**
    * Default selection state. This state manages transition to other modes, 
-   * the deletion of selected objects, and the move of selected objects with arrow keys.
+   * the deletion of selected items, and the move of selected items with arrow keys.
    */
   private class SelectionState extends AbstractModeChangeState {
     @Override
@@ -2874,6 +2959,8 @@ public class PlanController extends FurnitureController implements Controller {
             modifySelectedFurniture();
           } else if (item instanceof Room) {
             modifySelectedRooms();
+          } else if (item instanceof Label) {
+            modifySelectedLabels();
           } 
         }
       }
@@ -2886,9 +2973,10 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Move selection state. This state manages the move of current selected walls
-   * with mouse and the selection of one wall, if mouse isn't moved while button
-   * is depressed.
+   * Move selection state. This state manages the move of current selected items
+   * with mouse and the selection of one item, if mouse isn't moved while button
+   * is depressed. If duplication is activated during the move of the mouse,
+   * moved items are duplicated first.  
    */
   private class SelectionMoveState extends ControllerState {
     private float            xLastMouseMove;
@@ -2977,7 +3065,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (duplicationActivated) {
           // Duplicate original items and add them to home
           this.duplicatedItems = this.movedItems;          
-          this.movedItems = Home.deepCopy(this.movedItems);          
+          this.movedItems = Home.duplicate(this.movedItems);          
           for (Selectable item : this.movedItems) {
             if (item instanceof Wall) {
               home.addWall((Wall)item);
@@ -2987,6 +3075,8 @@ public class PlanController extends FurnitureController implements Controller {
               home.addDimensionLine((DimensionLine)item);
             } else if (item instanceof HomePieceOfFurniture) {
               home.addPieceOfFurniture((HomePieceOfFurniture)item);
+            } else if (item instanceof Label) {
+              home.addLabel((Label)item);
             }
           }
           
@@ -3221,6 +3311,9 @@ public class PlanController extends FurnitureController implements Controller {
         case DIMENSION_LINE_CREATION :
           setState(getDimensionLineCreationState());
           break;
+        case LABEL_CREATION :
+          setState(getLabelCreationState());
+          break;
       } 
     }
 
@@ -3321,7 +3414,7 @@ public class PlanController extends FurnitureController implements Controller {
               this.wallStartAtEnd, this.wallEndAtEnd);
         }
         // Post walls creation to undo support
-        postAddWalls(this.newWalls, this.oldSelection);
+        postCreateWalls(this.newWalls, this.oldSelection);
         selectItems(this.newWalls);
         // Change state to WallCreationState 
         setState(getWallCreationState());
@@ -3361,7 +3454,7 @@ public class PlanController extends FurnitureController implements Controller {
         this.newWalls.remove(this.newWall);
       }
       // Post other walls creation to undo support
-      postAddWalls(this.newWalls, this.oldSelection);
+      postCreateWalls(this.newWalls, this.oldSelection);
       selectItems(this.newWalls);
       // Change state to WallCreationState 
       setState(getWallCreationState());
@@ -4106,6 +4199,9 @@ public class PlanController extends FurnitureController implements Controller {
         case ROOM_CREATION :
           setState(getRoomCreationState());
           break;
+        case LABEL_CREATION :
+          setState(getLabelCreationState());
+          break;
       } 
     }
 
@@ -4173,7 +4269,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (offsetChoice) {
           selectItem(this.newDimensionLine);
           // Post dimension line creation to undo support
-          postAddDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
+          postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
               this.oldSelection);
           this.newDimensionLine = null;
           // Change state to WallCreationState 
@@ -4568,6 +4664,9 @@ public class PlanController extends FurnitureController implements Controller {
         case DIMENSION_LINE_CREATION :
           setState(getDimensionLineCreationState());
           break;
+        case LABEL_CREATION :
+          setState(getLabelCreationState());
+          break;
       } 
     }
 
@@ -4672,7 +4771,7 @@ public class PlanController extends FurnitureController implements Controller {
           float [][] roomPoints = this.newRoom.getPoints();
           if (roomPoints.length > 2) {
             // Post walls creation to undo support
-            postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+            postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
           } else {
             // Delete rooms with only two points
             home.deleteRoom(this.newRoom);
@@ -4812,7 +4911,7 @@ public class PlanController extends FurnitureController implements Controller {
             this.newRoom.setPoints(newPoints);
           }
           // Post walls creation to undo support
-          postAddRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+          postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
         }
       }
       // Change state to RoomCreationState 
@@ -5040,6 +5139,33 @@ public class PlanController extends FurnitureController implements Controller {
     public void exit() {
       getView().setResizeIndicatorVisible(false);
       this.selectedRoom = null;
+    }  
+  }
+
+  /**
+   * Label creation state. This state manages transition to
+   * other modes, and initial label creation.
+   */
+  private class LabelCreationState extends AbstractModeChangeState {
+    @Override
+    public Mode getMode() {
+      return Mode.LABEL_CREATION;
+    }
+
+    @Override
+    public void enter() {
+      getView().setCursor(PlanView.CursorType.DRAW);
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown, boolean duplicationActivated) {
+      createNewLabel(x, y);
+    }
+
+    @Override
+    public void exit() {
+      getView().deleteAlignmentFeedback();
     }  
   }
 }

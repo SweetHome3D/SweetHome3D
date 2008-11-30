@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
+import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
@@ -178,6 +179,15 @@ public class SwingViewFactory implements ViewFactory {
   public DialogView createRoomView(UserPreferences preferences,
                                    RoomController roomController) {
     return new RoomPanel(preferences, roomController);
+  }
+  
+  /**
+   * Returns a new view that edits label values.
+   */
+  public DialogView createLabelView(boolean modification,
+                                    UserPreferences preferences,
+                                    LabelController labelController) {
+    return new LabelPanel(modification, preferences, labelController);
   }
   
   /**
