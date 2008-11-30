@@ -131,7 +131,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
-      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, TEXT_STYLE}
+      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -430,7 +430,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(MenuActionType.OPEN_RECENT_HOME_MENU);
     createMenuAction(MenuActionType.SORT_HOME_FURNITURE_MENU);
     createMenuAction(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
-    createMenuAction(MenuActionType.TEXT_STYLE);
+    createMenuAction(MenuActionType.MODIFY_TEXT_STYLE);
   }
   
   /**
@@ -883,9 +883,8 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private JMenu createTextStyleMenu(final Home home,
                                     final UserPreferences preferences) {
-    // Create Furniture Display property submenu
-    JMenu textStyleMenu = new JMenu(
-        this.menuActionMap.get(MenuActionType.TEXT_STYLE));
+    JMenu modifyTextStyleMenu = new JMenu(
+        this.menuActionMap.get(MenuActionType.MODIFY_TEXT_STYLE));
     
     JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
     // Use a special model for bold check box menu item that is selected if
@@ -932,7 +931,7 @@ public class HomePane extends JRootPane implements HomeView {
       }); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     boldMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
-    textStyleMenu.add(boldMenuItem);
+    modifyTextStyleMenu.add(boldMenuItem);
     
     JCheckBoxMenuItem italicMenuItem = new JCheckBoxMenuItem();
     // Use a special model for italic check box menu item that is selected if
@@ -979,11 +978,11 @@ public class HomePane extends JRootPane implements HomeView {
       }); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     italicMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
-    textStyleMenu.add(italicMenuItem);
-    textStyleMenu.addSeparator();
-    textStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
-    textStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
-    return textStyleMenu;
+    modifyTextStyleMenu.add(italicMenuItem);
+    modifyTextStyleMenu.addSeparator();
+    modifyTextStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
+    modifyTextStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
+    return modifyTextStyleMenu;
   }
   
   /**
