@@ -414,9 +414,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.NAME.name().equals(ev.getPropertyName())
               || Room.Property.NAME_X_OFFSET.name().equals(ev.getPropertyName())
               || Room.Property.NAME_Y_OFFSET.name().equals(ev.getPropertyName())
+              || Room.Property.NAME_STYLE.name().equals(ev.getPropertyName())
               || Room.Property.AREA_VISIBLE.name().equals(ev.getPropertyName())
               || Room.Property.AREA_X_OFFSET.name().equals(ev.getPropertyName())
-              || Room.Property.AREA_Y_OFFSET.name().equals(ev.getPropertyName())) {
+              || Room.Property.AREA_Y_OFFSET.name().equals(ev.getPropertyName())
+              || Room.Property.AREA_STYLE.name().equals(ev.getPropertyName())) {
             sortedHomeRooms = null;
             invalidatePlanBoundsAndRevalidate();
           }
@@ -1058,22 +1060,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
     Font font = this.fonts.get(textStyle);
     if (font == null) {
-      int awtFontStyle = Font.PLAIN;
-      TextStyle.FontStyle fontStyle = textStyle.getFontStyle();
-      if (fontStyle != null) {
-        switch (fontStyle) {
-          case BOLD :
-            awtFontStyle = Font.BOLD;
-            break;
-          case ITALIC :
-            awtFontStyle = Font.ITALIC;
-            break;
-          case BOLD_ITALIC :
-            awtFontStyle = Font.BOLD | Font.ITALIC;
-            break;
-        }
+      int fontStyle = Font.PLAIN;
+      if (textStyle.isBold()) {
+        fontStyle = Font.BOLD;
       }
-      font = new Font(defaultFont.getName(), awtFontStyle, 1);
+      if (textStyle.isItalic()) {
+        fontStyle |= Font.ITALIC;
+      }
+      font = new Font(defaultFont.getName(), fontStyle, 1);
       font = font.deriveFont(textStyle.getFontSize());
       this.fonts.put(textStyle, font);
     }

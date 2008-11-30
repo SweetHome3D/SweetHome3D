@@ -105,10 +105,15 @@ import javax.swing.event.MenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
@@ -126,7 +131,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
-      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU}
+      OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, TEXT_STYLE}
   
   private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
   private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
@@ -347,6 +352,14 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getPlanController(), "modifySelectedWalls");
     createAction(ActionType.MODIFY_ROOM, 
         controller.getPlanController(), "modifySelectedRooms");
+    createAction(ActionType.TOGGLE_BOLD_STYLE, 
+        controller.getPlanController(), "toggleBoldStyle");
+    createAction(ActionType.TOGGLE_ITALIC_STYLE, 
+        controller.getPlanController(), "toggleItalicStyle");
+    createAction(ActionType.INCREASE_TEXT_SIZE, 
+        controller.getPlanController(), "increaseTextSize");
+    createAction(ActionType.DECREASE_TEXT_SIZE, 
+        controller.getPlanController(), "decreaseTextSize");
     createAction(ActionType.MODIFY_LABEL, 
         controller.getPlanController(), "modifySelectedLabels");
     createAction(ActionType.REVERSE_WALL_DIRECTION, 
@@ -359,8 +372,8 @@ public class HomePane extends JRootPane implements HomeView {
         controller, "modifyBackgroundImage");
     createAction(ActionType.DELETE_BACKGROUND_IMAGE, 
         controller, "deleteBackgroundImage");
-    createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
     createAction(ActionType.ZOOM_IN, controller, "zoomIn");
+    createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
     
     createAction(ActionType.VIEW_FROM_TOP, 
         controller.getHomeController3D(), "viewFromTop");
@@ -417,6 +430,7 @@ public class HomePane extends JRootPane implements HomeView {
     createMenuAction(MenuActionType.OPEN_RECENT_HOME_MENU);
     createMenuAction(MenuActionType.SORT_HOME_FURNITURE_MENU);
     createMenuAction(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
+    createMenuAction(MenuActionType.TEXT_STYLE);
   }
   
   /**
@@ -636,15 +650,15 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.add(getMenuItemAction(ActionType.MODIFY_WALL));
     planMenu.add(getMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
     planMenu.add(getMenuItemAction(ActionType.SPLIT_WALL));
-    planMenu.addSeparator();
     planMenu.add(getMenuItemAction(ActionType.MODIFY_ROOM));
     planMenu.add(getMenuItemAction(ActionType.MODIFY_LABEL));
+    planMenu.add(createTextStyleMenu(home, preferences));
     planMenu.addSeparator();
     planMenu.add(createImportModifyBackgroundImageMenuItem(home));
     planMenu.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
     planMenu.addSeparator();
-    planMenu.add(getMenuItemAction(ActionType.ZOOM_OUT));
     planMenu.add(getMenuItemAction(ActionType.ZOOM_IN));
+    planMenu.add(getMenuItemAction(ActionType.ZOOM_OUT));
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
@@ -865,6 +879,114 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
+   * Returns text style menu.
+   */
+  private JMenu createTextStyleMenu(final Home home,
+                                    final UserPreferences preferences) {
+    // Create Furniture Display property submenu
+    JMenu textStyleMenu = new JMenu(
+        this.menuActionMap.get(MenuActionType.TEXT_STYLE));
+    
+    JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
+    // Use a special model for bold check box menu item that is selected if
+    // texts in home selected items are all bold 
+    boldMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+        @Override
+        public boolean isSelected() {
+          // Find if selected items are all bold or not
+          Boolean selectionBoldStyle = null;
+          for (Selectable item : home.getSelectedItems()) {
+            Boolean bold;
+            if (item instanceof Label) {
+              bold = isItemTextBold(item, ((Label)item).getStyle());
+            } else if (item instanceof HomePieceOfFurniture
+                && ((HomePieceOfFurniture)item).isVisible()) {
+              bold = isItemTextBold(item, ((HomePieceOfFurniture)item).getNameStyle());
+            } else if (item instanceof Room) {
+              Room room = (Room)item;
+              bold = isItemTextBold(room, room.getNameStyle());
+              if (bold != isItemTextBold(room, room.getAreaStyle())) {
+                bold = null;
+              }
+            } else if (item instanceof DimensionLine) {
+              bold = isItemTextBold(item, ((DimensionLine)item).getLengthStyle());
+            } else {
+              continue;
+            }
+            if (selectionBoldStyle == null) {
+              selectionBoldStyle = bold;
+            } else if (bold == null || !selectionBoldStyle.equals(bold)) {
+              selectionBoldStyle = null;
+              break;
+            }
+          }
+          return selectionBoldStyle != null && selectionBoldStyle;
+        }
+        
+        private boolean isItemTextBold(Selectable item, TextStyle textStyle) {
+          if (textStyle == null) {
+            textStyle = preferences.getDefaultTextStyle(item.getClass());              
+          }          
+          return textStyle.isBold();
+        }
+      }); 
+    // Configure check box menu item action after setting its model to avoid losing its mnemonic
+    boldMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
+    textStyleMenu.add(boldMenuItem);
+    
+    JCheckBoxMenuItem italicMenuItem = new JCheckBoxMenuItem();
+    // Use a special model for italic check box menu item that is selected if
+    // texts in home selected items are all italic 
+    italicMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
+        @Override
+        public boolean isSelected() {
+          // Find if selected items are all italic or not
+          Boolean selectionItalicStyle = null;
+          for (Selectable item : home.getSelectedItems()) {
+            Boolean italic;
+            if (item instanceof Label) {
+              italic = isItemTextItalic(item, ((Label)item).getStyle());
+            } else if (item instanceof HomePieceOfFurniture
+                && ((HomePieceOfFurniture)item).isVisible()) {
+              italic = isItemTextItalic(item, ((HomePieceOfFurniture)item).getNameStyle());
+            } else if (item instanceof Room) {
+              Room room = (Room)item;
+              italic = isItemTextItalic(room, room.getNameStyle());
+              if (italic != isItemTextItalic(room, room.getAreaStyle())) {
+                italic = null;
+              }
+            } else if (item instanceof DimensionLine) {
+              italic = isItemTextItalic(item, ((DimensionLine)item).getLengthStyle());
+            } else {
+              continue;
+            }
+            if (selectionItalicStyle == null) {
+              selectionItalicStyle = italic;
+            } else if (italic == null || !selectionItalicStyle.equals(italic)) {
+              selectionItalicStyle = null;
+              break;
+            }
+          }
+          return selectionItalicStyle != null && selectionItalicStyle;
+        }
+        
+        private boolean isItemTextItalic(Selectable item, TextStyle textStyle) {
+          if (textStyle == null) {
+            textStyle = preferences.getDefaultTextStyle(item.getClass());              
+          }          
+          return textStyle.isItalic();
+        }
+      }); 
+    // Configure check box menu item action after setting its model to avoid losing its mnemonic
+    italicMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
+    textStyleMenu.add(italicMenuItem);
+    textStyleMenu.addSeparator();
+    textStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
+    textStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
+    return textStyleMenu;
+  }
+  
+  /**
    * Returns Import / Modify background image menu item.
    */
   private JMenuItem createImportModifyBackgroundImageMenuItem(final Home home) {
@@ -1061,8 +1183,8 @@ public class HomePane extends JRootPane implements HomeView {
     group.add(createLabelsToggleButton);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(getToolBarAction(ActionType.ZOOM_OUT));
     toolBar.add(getToolBarAction(ActionType.ZOOM_IN));
+    toolBar.add(getToolBarAction(ActionType.ZOOM_OUT));
     toolBar.addSeparator();
     
     // Add plugin actions buttons
@@ -1419,9 +1541,9 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_WALL));
     planViewPopup.add(getPopupMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
     planViewPopup.add(getPopupMenuItemAction(ActionType.SPLIT_WALL));
-    planViewPopup.addSeparator();
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_ROOM));
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_LABEL));
+    planViewPopup.add(createTextStyleMenu(home, preferences));
     planViewPopup.addSeparator();
     planViewPopup.add(createImportModifyBackgroundImageMenuItem(home));
     planViewPopup.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
@@ -2049,6 +2171,8 @@ public class HomePane extends JRootPane implements HomeView {
           ActionMap actionMap = getActionMap();
           Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
                                          actionMap.get(ActionType.ZOOM_OUT), 
+                                         actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
+                                         actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
                                          actionMap.get(ActionType.HELP)};
           int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
           for (Action specialKeyAction : specialKeyActions) {

@@ -693,7 +693,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.home.deleteWall(splitWall);
       selectAndShowItems(Arrays.asList(new Wall [] {firstWall}));
       
-      postSplitSelectedWalls(splitJoinedWall, 
+      postSplitSelectedWall(splitJoinedWall, 
           new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems);
     }
   }
@@ -701,10 +701,10 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable split wall operation.
    */
-  private void postSplitSelectedWalls(final JoinedWall splitJoinedWall, 
-                                      final JoinedWall firstJoinedWall, 
-                                      final JoinedWall secondJoinedWall,
-                                      List<Selectable> oldSelection) {
+  private void postSplitSelectedWall(final JoinedWall splitJoinedWall, 
+                                     final JoinedWall firstJoinedWall, 
+                                     final JoinedWall secondJoinedWall,
+                                     List<Selectable> oldSelection) {
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
@@ -726,7 +726,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return resource.getString("undoSplitWallsName");
+        return resource.getString("undoSplitWallName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -760,6 +760,286 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
   
+  /**
+   * Toggles bold style of texts in selected items.
+   */
+  public void toggleBoldStyle() {
+    // Find if selected items are all bold or not
+    Boolean selectionBoldStyle = null;
+    for (Selectable item : this.home.getSelectedItems()) {
+      Boolean bold;
+      if (item instanceof Label) {
+        bold = getItemTextStyle(item, ((Label)item).getStyle()).isBold();
+      } else if (item instanceof HomePieceOfFurniture
+          && ((HomePieceOfFurniture)item).isVisible()) {
+        bold = getItemTextStyle(item, ((HomePieceOfFurniture)item).getNameStyle()).isBold();
+      } else if (item instanceof Room) {
+        Room room = (Room)item;
+        bold = getItemTextStyle(room, room.getNameStyle()).isBold();
+        if (bold != getItemTextStyle(room, room.getAreaStyle()).isBold()) {
+          bold = null;
+        }
+      } else if (item instanceof DimensionLine) {
+        bold = getItemTextStyle(item, ((DimensionLine)item).getLengthStyle()).isBold();
+      } else {
+        continue;
+      }
+      if (selectionBoldStyle == null) {
+        selectionBoldStyle = bold;
+      } else if (bold == null || !selectionBoldStyle.equals(bold)) {
+        selectionBoldStyle = null;
+        break;
+      }
+    }
+    
+    // Apply new bold style to all selected items
+    if (selectionBoldStyle == null) {
+      selectionBoldStyle = Boolean.TRUE;
+    } else {
+      selectionBoldStyle = !selectionBoldStyle;
+    }
+
+    List<Selectable> itemsWithText = new ArrayList<Selectable>(); 
+    List<TextStyle> oldTextStyles = new ArrayList<TextStyle>(); 
+    List<TextStyle> textStyles = new ArrayList<TextStyle>(); 
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item instanceof Label) {
+        Label label = (Label)item;
+        itemsWithText.add(label);
+        TextStyle oldTextStyle = getItemTextStyle(label, label.getStyle());
+        oldTextStyles.add(oldTextStyle);
+        textStyles.add(oldTextStyle.deriveBoldStyle(selectionBoldStyle));
+      } else if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (piece.isVisible()) {
+          itemsWithText.add(piece);
+          TextStyle oldNameStyle = getItemTextStyle(piece, piece.getNameStyle());
+          oldTextStyles.add(oldNameStyle);
+          textStyles.add(oldNameStyle.deriveBoldStyle(selectionBoldStyle));
+        }
+      } else if (item instanceof Room) {
+        final Room room = (Room)item;
+        itemsWithText.add(room);
+        TextStyle oldNameStyle = getItemTextStyle(room, room.getNameStyle());
+        oldTextStyles.add(oldNameStyle);
+        textStyles.add(oldNameStyle.deriveBoldStyle(selectionBoldStyle));
+        TextStyle oldAreaStyle = getItemTextStyle(room, room.getAreaStyle());
+        oldTextStyles.add(oldAreaStyle);
+        textStyles.add(oldAreaStyle.deriveBoldStyle(selectionBoldStyle));
+      } else if (item instanceof DimensionLine) {
+        DimensionLine dimensionLine = (DimensionLine)item;
+        itemsWithText.add(dimensionLine);
+        TextStyle oldLengthStyle = getItemTextStyle(dimensionLine, dimensionLine.getLengthStyle());
+        oldTextStyles.add(oldLengthStyle);
+        textStyles.add(oldLengthStyle.deriveBoldStyle(selectionBoldStyle));
+      } 
+    }
+    modifyTextStyle(itemsWithText.toArray(new Selectable [itemsWithText.size()]),
+        oldTextStyles.toArray(new TextStyle [oldTextStyles.size()]),
+        textStyles.toArray(new TextStyle [textStyles.size()]));
+  }
+  
+  private TextStyle getItemTextStyle(Selectable item, TextStyle textStyle) {
+    if (textStyle == null) {
+      textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
+    }          
+    return textStyle;
+  }
+  
+  /**
+   * Toggles italic style of texts in selected items.
+   */
+  public void toggleItalicStyle() {
+    // Find if selected items are all italic or not
+    Boolean selectionItalicStyle = null;
+    for (Selectable item : this.home.getSelectedItems()) {
+      Boolean italic;
+      if (item instanceof Label) {
+        italic = getItemTextStyle(item, ((Label)item).getStyle()).isItalic();
+      } else if (item instanceof HomePieceOfFurniture
+          && ((HomePieceOfFurniture)item).isVisible()) {
+        italic = getItemTextStyle(item, ((HomePieceOfFurniture)item).getNameStyle()).isItalic();
+      } else if (item instanceof Room) {
+        Room room = (Room)item;
+        italic = getItemTextStyle(room, room.getNameStyle()).isItalic();
+        if (italic != getItemTextStyle(room, room.getAreaStyle()).isItalic()) {
+          italic = null;
+        }
+      } else if (item instanceof DimensionLine) {
+        italic = getItemTextStyle(item, ((DimensionLine)item).getLengthStyle()).isItalic();
+      } else {
+        continue;
+      }
+      if (selectionItalicStyle == null) {
+        selectionItalicStyle = italic;
+      } else if (italic == null || !selectionItalicStyle.equals(italic)) {
+        selectionItalicStyle = null;
+        break;
+      }
+    }
+    
+    // Apply new italic style to all selected items
+    if (selectionItalicStyle == null) {
+      selectionItalicStyle = Boolean.TRUE;
+    } else {
+      selectionItalicStyle = !selectionItalicStyle; 
+    }
+    
+    List<Selectable> itemsWithText = new ArrayList<Selectable>(); 
+    List<TextStyle> oldTextStyles = new ArrayList<TextStyle>(); 
+    List<TextStyle> textStyles = new ArrayList<TextStyle>(); 
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item instanceof Label) {
+        Label label = (Label)item;
+        itemsWithText.add(label);
+        TextStyle oldTextStyle = getItemTextStyle(label, label.getStyle());
+        oldTextStyles.add(oldTextStyle);
+        textStyles.add(oldTextStyle.deriveItalicStyle(selectionItalicStyle));
+      } else if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (piece.isVisible()) {
+          itemsWithText.add(piece);
+          TextStyle oldNameStyle = getItemTextStyle(piece, piece.getNameStyle());
+          oldTextStyles.add(oldNameStyle);
+          textStyles.add(oldNameStyle.deriveItalicStyle(selectionItalicStyle));
+        }
+      } else if (item instanceof Room) {
+        final Room room = (Room)item;
+        itemsWithText.add(room);
+        TextStyle oldNameStyle = getItemTextStyle(room, room.getNameStyle());
+        oldTextStyles.add(oldNameStyle);
+        textStyles.add(oldNameStyle.deriveItalicStyle(selectionItalicStyle));
+        TextStyle oldAreaStyle = getItemTextStyle(room, room.getAreaStyle());
+        oldTextStyles.add(oldAreaStyle);
+        textStyles.add(oldAreaStyle.deriveItalicStyle(selectionItalicStyle));
+      } else if (item instanceof DimensionLine) {
+        DimensionLine dimensionLine = (DimensionLine)item;
+        itemsWithText.add(dimensionLine);
+        TextStyle oldLengthStyle = getItemTextStyle(dimensionLine, dimensionLine.getLengthStyle());
+        oldTextStyles.add(oldLengthStyle);
+        textStyles.add(oldLengthStyle.deriveItalicStyle(selectionItalicStyle));
+      } 
+    }
+    modifyTextStyle(itemsWithText.toArray(new Selectable [itemsWithText.size()]),
+        oldTextStyles.toArray(new TextStyle [oldTextStyles.size()]),
+        textStyles.toArray(new TextStyle [textStyles.size()]));
+  }
+  
+  /**
+   * Increase the size of texts in selected items.
+   */
+  public void increaseTextSize() {
+    applyFactorToTextSize(1.1f);
+  }
+  
+  /**
+   * Decrease the size of texts in selected items.
+   */
+  public void decreaseTextSize() {
+    applyFactorToTextSize(1 / 1.1f);
+  }
+
+  /**
+   * Applies a factor to the font size of the texts of the selected items in home.
+   */
+  private void applyFactorToTextSize(float factor) {
+    List<Selectable> itemsWithText = new ArrayList<Selectable>(); 
+    List<TextStyle> oldTextStyles = new ArrayList<TextStyle>(); 
+    List<TextStyle> textStyles = new ArrayList<TextStyle>(); 
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item instanceof Label) {
+        Label label = (Label)item;
+        itemsWithText.add(label);
+        TextStyle oldLabelStyle = getItemTextStyle(item, label.getStyle());
+        oldTextStyles.add(oldLabelStyle);
+        textStyles.add(oldLabelStyle.deriveStyle(Math.round(oldLabelStyle.getFontSize() * factor)));
+      } else if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (piece.isVisible()) {
+          itemsWithText.add(piece);
+          TextStyle oldNameStyle = getItemTextStyle(piece, piece.getNameStyle());
+          oldTextStyles.add(oldNameStyle);
+          textStyles.add(oldNameStyle.deriveStyle(Math.round(oldNameStyle.getFontSize() * factor)));
+        }
+      } else if (item instanceof Room) {
+        final Room room = (Room)item;
+        itemsWithText.add(room);
+        TextStyle oldNameStyle = getItemTextStyle(room, room.getNameStyle());
+        oldTextStyles.add(oldNameStyle);
+        textStyles.add(oldNameStyle.deriveStyle(Math.round(oldNameStyle.getFontSize() * factor)));
+        TextStyle oldAreaStyle = getItemTextStyle(room, room.getAreaStyle());
+        oldTextStyles.add(oldAreaStyle);
+        textStyles.add(oldAreaStyle.deriveStyle(Math.round(oldAreaStyle.getFontSize() * factor)));
+      } else if (item instanceof DimensionLine) {
+        DimensionLine dimensionLine = (DimensionLine)item;
+        itemsWithText.add(dimensionLine);
+        TextStyle oldLengthStyle = getItemTextStyle(dimensionLine, dimensionLine.getLengthStyle());
+        oldTextStyles.add(oldLengthStyle);
+        textStyles.add(oldLengthStyle.deriveStyle(Math.round(oldLengthStyle.getFontSize() * factor)));
+      } 
+    }
+    modifyTextStyle(itemsWithText.toArray(new Selectable [itemsWithText.size()]), 
+        oldTextStyles.toArray(new TextStyle [oldTextStyles.size()]),
+        textStyles.toArray(new TextStyle [textStyles.size()]));
+  }
+  
+  /**
+   * Changes the style of items and posts an undoable change style operation.
+   */
+  private void modifyTextStyle(final Selectable [] items, 
+                               final TextStyle [] oldStyles,
+                               final TextStyle [] styles) {
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
+    
+    doModifyTextStyle(items, styles);
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        doModifyTextStyle(items, oldStyles);
+        selectAndShowItems(Arrays.asList(oldSelectedItems));
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doModifyTextStyle(items, styles);
+        selectAndShowItems(Arrays.asList(oldSelectedItems));
+      }      
+
+      @Override
+      public String getPresentationName() {
+        return resource.getString("undoModifyTextStyleName");
+      }      
+    };
+    this.undoSupport.postEdit(undoableEdit);
+  }
+  
+  /**
+   * Changes the style of items.
+   */
+  private void doModifyTextStyle(Selectable [] items, TextStyle [] styles) {
+    int styleIndex = 0;
+    for (Selectable item : items) {
+      if (item instanceof Label) {
+        ((Label)item).setStyle(styles [styleIndex++]);
+      } else if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (piece.isVisible()) {
+          piece.setNameStyle(styles [styleIndex++]);
+        }
+      } else if (item instanceof Room) {
+        final Room room = (Room)item;
+        room.setNameStyle(styles [styleIndex++]);
+        room.setAreaStyle(styles [styleIndex++]);
+      } else if (item instanceof DimensionLine) {
+        ((DimensionLine)item).setLengthStyle(styles [styleIndex++]);
+      } 
+    }
+  }
+
   /**
    * Returns the scale in plan view. 
    */

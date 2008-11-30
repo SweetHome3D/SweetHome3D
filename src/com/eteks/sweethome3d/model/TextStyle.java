@@ -26,24 +26,20 @@ import java.io.Serializable;
  * @author Emmanuel Puybaret
  */
 public class TextStyle implements Serializable {
-  /**
-   * The different styles applicable to font. 
-   */
-  public enum FontStyle {PLAIN, ITALIC, BOLD, BOLD_ITALIC}
-
   private static final long serialVersionUID = 1L;
   
-  private final float  fontSize;
-  private final String fontStyleName; // Keep font style as a string to avoid future serialization 
-                                      // conflicts if FontStyle is enriched 
+  private final float   fontSize;
+  private final boolean bold;
+  private final boolean italic;
   
   public TextStyle(float fontSize) {
-    this(fontSize, FontStyle.PLAIN);    
+    this(fontSize, false, false);    
   }
   
-  public TextStyle(float fontSize, FontStyle fontStyle) {
+  public TextStyle(float fontSize, boolean bold, boolean italic) {
     this.fontSize = fontSize;
-    this.fontStyleName = fontStyle.name();    
+    this.bold = bold;
+    this.italic = italic;
   }
   
   /**
@@ -54,16 +50,52 @@ public class TextStyle implements Serializable {
   }
   
   /**
-   * Returns the font style of this text style.
+   * Returns whether this text style is bold or not.
    */
-  public FontStyle getFontStyle() {
-    try {
-      return FontStyle.valueOf(this.fontStyleName);
-    } catch (IllegalArgumentException ex) {
-      return null;
-    }
+  public boolean isBold() {
+    return this.bold;
   }
   
+  /**
+   * Returns whether this text style is italic or not.
+   */
+  public boolean isItalic() {
+    return this.italic;
+  }
+
+  /**
+   * Returns a derived style of this text style with a given font size.
+   */
+  public TextStyle deriveStyle(float fontSize) {
+    if (getFontSize() == fontSize) {
+      return this;
+    } else {
+      return new TextStyle(fontSize, isBold(), isItalic());
+    }
+  }
+
+  /**
+   * Returns a derived style of this text style with a given bold style.
+   */
+  public TextStyle deriveBoldStyle(boolean bold) {
+    if (isBold() == bold) {
+      return this;
+    } else {
+      return new TextStyle(getFontSize(), bold, isItalic());
+    }
+  }
+
+  /**
+   * Returns a derived style of this text style with a given italic style.
+   */
+  public TextStyle deriveItalicStyle(boolean italic) {
+    if (isItalic() == italic) {
+      return this;
+    } else {
+      return new TextStyle(getFontSize(), isBold(), italic);
+    }
+  }
+
   /**
    * Returns <code>true</code> if this text style is equal to <code>object</code>.
    */
@@ -72,7 +104,8 @@ public class TextStyle implements Serializable {
     if (object instanceof TextStyle) {
       TextStyle textStyle = (TextStyle)object;
       return textStyle.fontSize == this.fontSize
-          && (textStyle.getFontStyle() == getFontStyle());
+          && textStyle.bold == this.bold
+          && textStyle.italic == this.italic;
     }
     return false;
   }
@@ -83,9 +116,11 @@ public class TextStyle implements Serializable {
   @Override
   public int hashCode() {
     int hashCode = Float.floatToIntBits(this.fontSize);
-    FontStyle fontStyle = getFontStyle();
-    if (fontStyle != null) {
-      hashCode += fontStyle.hashCode();
+    if (this.bold) {
+      hashCode++;
+    }
+    if (this.italic) {
+      hashCode++;
     }
     return hashCode;
   }

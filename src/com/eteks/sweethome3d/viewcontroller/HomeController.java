@@ -602,6 +602,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOneLabel = false;
+    boolean homeSelectionContainsItemsWithText = false;
     if (selectionMode) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
       homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
@@ -618,6 +619,9 @@ public class HomeController implements Controller {
           homeSelectionContainsFurniture || homeSelectionContainsWalls 
           || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
           || homeSelectionContainsLabels; 
+      homeSelectionContainsItemsWithText = 
+          homeSelectionContainsFurniture || homeSelectionContainsRooms 
+          || homeSelectionContainsDimensionLines || homeSelectionContainsLabels;
     }
 
     HomeView view = getView();
@@ -675,6 +679,14 @@ public class HomeController implements Controller {
         homeSelectionContainsRooms);
     view.setEnabled(HomeView.ActionType.MODIFY_LABEL,
         homeSelectionContainsOneLabel);
+    view.setEnabled(HomeView.ActionType.TOGGLE_BOLD_STYLE, 
+        homeSelectionContainsItemsWithText);
+    view.setEnabled(HomeView.ActionType.TOGGLE_ITALIC_STYLE, 
+        homeSelectionContainsItemsWithText);
+    view.setEnabled(HomeView.ActionType.INCREASE_TEXT_SIZE, 
+        homeSelectionContainsItemsWithText);
+    view.setEnabled(HomeView.ActionType.DECREASE_TEXT_SIZE, 
+        homeSelectionContainsItemsWithText);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_TOP,
         homeSelectionContainsTwoPiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_BOTTOM,

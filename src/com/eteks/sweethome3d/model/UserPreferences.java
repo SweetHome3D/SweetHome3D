@@ -41,8 +41,8 @@ public abstract class UserPreferences {
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}  
   private static final String [] SUPPORTED_LANGUAGES; 
 
-  private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f, TextStyle.FontStyle.PLAIN);
-  private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f, TextStyle.FontStyle.PLAIN);
+  private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
+  private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f);
 
   static {
     ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
