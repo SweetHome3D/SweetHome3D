@@ -23,7 +23,7 @@ package com.eteks.sweethome3d.model;
  * An object that is selectable in home.
  * @author Emmanuel Puybaret
  */
-public interface Selectable {
+public interface Selectable extends Cloneable {
   /**
    * Returns the points of the shape surrounding this object.
    * @return an array of the (x,y) coordinates of the rectangle.
@@ -45,4 +45,13 @@ public interface Selectable {
   public abstract boolean containsPoint(float x, float y,
                                         float margin);
 
+  /**
+   * Moves this object of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public abstract void move(float dx, float dy);
+  
+  /**
+   * Returns a clone of this object.
+   */
+  public abstract Selectable clone();
 }

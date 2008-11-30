@@ -238,6 +238,10 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       HomePieceOfFurniture homePiece = 
           (HomePieceOfFurniture)piece;
       this.catalogId = homePiece.getCatalogId();
+      this.nameVisible = homePiece.isNameVisible();
+      this.nameXOffset = homePiece.getNameXOffset();
+      this.nameYOffset = homePiece.getNameYOffset();
+      this.nameStyle = homePiece.getNameStyle();
       this.visible = homePiece.isVisible();
       this.angle = homePiece.getAngle();
       this.x = homePiece.getX();
@@ -804,7 +808,29 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
     return this.shapeCache;
   }
+
+  /**
+   * Moves this piece of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    setX(getX() + dx);
+    setY(getY() + dy);
+  }
   
+  /**
+   * Returns a clone of this piece.
+   */
+  @Override
+  public HomePieceOfFurniture clone() {
+    try {
+      HomePieceOfFurniture clone = (HomePieceOfFurniture)super.clone();
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
+  }
+
   /**
    * Returns a comparator that compares furniture on a given <code>property</code> in ascending order.
    */

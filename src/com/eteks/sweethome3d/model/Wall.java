@@ -92,21 +92,6 @@ public class Wall implements Serializable, Selectable {
   }
   
   /**
-   * Creates a wall from a given <code>wall</code>.
-   * The walls at start and at end are not copied.  
-   */
-  public Wall(Wall wall) {
-    this(wall.getXStart(), wall.getYStart(), 
-         wall.getXEnd(), wall.getYEnd(), wall.getThickness());
-    this.height = wall.getHeight();
-    this.heightAtEnd = wall.getHeightAtEnd();
-    this.leftSideColor = wall.getLeftSideColor();
-    this.leftSideTexture = wall.getLeftSideTexture();
-    this.rightSideColor = wall.getRightSideColor();
-    this.rightSideTexture = wall.getRightSideTexture();
-  }
-
-  /**
    * Initializes new wall transient fields  
    * and reads wall from <code>in</code> stream with default reading method.
    */
@@ -695,15 +680,15 @@ public class Wall implements Serializable, Selectable {
   }
   
   /**
-   * Returns a deep copy of the <code>walls</code>. All existing walls 
+   * Returns a clone of the <code>walls</code> list. All existing walls 
    * are copied and their wall at start and end point are set with copied
    * walls only if they belong to the returned list.
    */
-  public static List<Wall> deepCopy(List<Wall> walls) {
+  public static List<Wall> clone(List<Wall> walls) {
     ArrayList<Wall> wallsCopy = new ArrayList<Wall>(walls.size());
-    // Deep copy walls
+    // Clone walls
     for (Wall wall : walls) {
-      wallsCopy.add(new Wall(wall));      
+      wallsCopy.add(wall.clone());      
     }
     // Update walls at start and end point
     for (int i = 0; i < walls.size(); i++) {
@@ -718,5 +703,32 @@ public class Wall implements Serializable, Selectable {
       }
     }
     return wallsCopy;
+  }
+
+  /**
+   * Moves this wall of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    setXStart(getXStart() + dx);
+    setYStart(getYStart() + dy);
+    setXEnd(getXEnd() + dx);
+    setYEnd(getYEnd() + dy);
+  }
+  
+  /**
+   * Returns a clone of this wall expected 
+   * its wall at start and wall at end aren't copied.
+   */
+  @Override
+  public Wall clone() {
+    try {
+      Wall clone = (Wall)super.clone();
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      clone.wallAtStart = null;
+      clone.wallAtEnd = null;
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
   }
 }

@@ -66,14 +66,6 @@ public class DimensionLine implements Serializable, Selectable {
   }
   
   /**
-   * Creates a dimension line from an existing one.
-   * @param dimensionLine the dimension line from which data are copied
-   */
-  public DimensionLine(DimensionLine dimensionLine) {
-    this(dimensionLine.xStart, dimensionLine.yStart, dimensionLine.xEnd, dimensionLine.yEnd, dimensionLine.offset);
-  }
-
-  /**
    * Initializes new dimension line transient fields  
    * and reads its properties from <code>in</code> stream with default reading method.
    */
@@ -327,5 +319,29 @@ public class DimensionLine implements Serializable, Selectable {
       this.shapeCache = dimensionLineShape;
     }
     return this.shapeCache;
+  }
+  
+  /**
+   * Moves this dimension line of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    setXStart(getXStart() + dx);
+    setYStart(getYStart() + dy);
+    setXEnd(getXEnd() + dx);
+    setYEnd(getYEnd() + dy);
+  }
+  
+  /**
+   * Returns a clone of this dimension line.
+   */
+  @Override
+  public DimensionLine clone() {
+    try {
+      DimensionLine clone = (DimensionLine)super.clone();
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
   }
 }

@@ -81,25 +81,6 @@ public class Room implements Serializable, Selectable {
   }
 
   /**
-   * Creates a copy of a given room.
-   */
-  public Room(Room room) {
-    this.name = room.name;
-    this.nameXOffset = room.nameXOffset;
-    this.nameYOffset = room.nameYOffset;
-    this.points = deepCopy(room.points);
-    this.areaVisible = room.areaVisible;
-    this.areaXOffset = room.areaXOffset;
-    this.areaYOffset = room.areaYOffset;
-    this.floorVisible = room.floorVisible;
-    this.floorColor = room.floorColor;
-    this.floorTexture = room.floorTexture;
-    this.ceilingVisible = room.ceilingVisible;
-    this.ceilingColor = room.ceilingColor;
-    this.ceilingTexture = room.ceilingTexture;
-  }
-
-  /**
    * Initializes new room transient fields  
    * and reads room from <code>in</code> stream with default reading method.
    */
@@ -594,5 +575,33 @@ public class Room implements Serializable, Selectable {
       this.shapeCache = roomShape;
     }
     return this.shapeCache;
+  }
+
+  /**
+   * Moves this room of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    if (dx != 0 || dy != 0) {
+      float [][] points = getPoints();
+      for (int i = 0; i < points.length; i++) {
+        points [i][0] += dx;
+        points [i][1] += dy;
+      }
+      setPoints(points);
+    }
+  }
+  
+  /**
+   * Returns a clone of this room.
+   */
+  @Override
+  public Room clone() {
+    try {
+      Room clone = (Room)super.clone();
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
   }
 }

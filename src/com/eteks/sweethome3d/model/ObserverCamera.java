@@ -33,8 +33,8 @@ import java.awt.geom.Rectangle2D;
 public class ObserverCamera extends Camera implements Selectable {
   private static final long serialVersionUID = 1L;
 
-  private transient Shape    shape;
-  private transient Shape    rectangleShape;
+  private transient Shape shapeCache;
+  private transient Shape rectangleShapeCache;
   
   /**
    * Creates a camera at given location and angle.
@@ -48,17 +48,17 @@ public class ObserverCamera extends Camera implements Selectable {
    */
   public void setYaw(float yaw) {
     super.setYaw(yaw);
-    this.shape = null;
-    this.rectangleShape = null;
+    this.shapeCache = null;
+    this.rectangleShapeCache = null;
   }
   
   /**
-   * Sets the abcissa of this camera.
+   * Sets the abscissa of this camera.
    */
   public void setX(float x) {
     super.setX(x);
-    this.shape = null;
-    this.rectangleShape = null;
+    this.shapeCache = null;
+    this.rectangleShapeCache = null;
   }
   
   /**
@@ -66,8 +66,8 @@ public class ObserverCamera extends Camera implements Selectable {
    */
   public void setY(float y) {
     super.setY(y);
-    this.shape = null;
-    this.rectangleShape = null;
+    this.shapeCache = null;
+    this.rectangleShapeCache = null;
   }
   
   /**
@@ -138,7 +138,7 @@ public class ObserverCamera extends Camera implements Selectable {
    * Returns the ellipse shape matching this camera.
    */
   private Shape getShape() {
-    if (this.shape == null) {
+    if (this.shapeCache == null) {
       // Create the ellipse that matches piece bounds
       Ellipse2D cameraEllipse = new Ellipse2D.Float(
           getX() - getWidth() / 2, getY() - getDepth() / 2,
@@ -150,16 +150,16 @@ public class ObserverCamera extends Camera implements Selectable {
       GeneralPath pieceShape = new GeneralPath();
       pieceShape.append(it, false);
       // Cache shape
-      this.shape = pieceShape;
+      this.shapeCache = pieceShape;
     }
-    return this.shape;
+    return this.shapeCache;
   }
 
   /**
    * Returns the rectangle shape matching this camera.
    */
   private Shape getRectangleShape() {
-    if (this.rectangleShape == null) {
+    if (this.rectangleShapeCache == null) {
       // Create the ellipse that matches piece bounds
       Rectangle2D cameraRectangle = new Rectangle2D.Float(
           getX() - getWidth() / 2, getY() - getDepth() / 2,
@@ -171,8 +171,24 @@ public class ObserverCamera extends Camera implements Selectable {
       GeneralPath cameraRectangleShape = new GeneralPath();
       cameraRectangleShape.append(it, false);
       // Cache shape
-      this.rectangleShape = cameraRectangleShape;
+      this.rectangleShapeCache = cameraRectangleShape;
     }
-    return this.rectangleShape;
+    return this.rectangleShapeCache;
+  }
+
+  /**
+   * Moves this camera of (<code>dx</code>, <code>dy</code>) units.
+   */
+  public void move(float dx, float dy) {
+    setX(getX() + dx);
+    setY(getY() + dy);
+  }
+  
+  /**
+   * Returns a clone of this camera.
+   */
+  @Override
+  public ObserverCamera clone() {
+    return new ObserverCamera(getX(), getY(), getZ(), getYaw(), getPitch(), getFieldOfView());
   }
 }
