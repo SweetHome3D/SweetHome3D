@@ -895,7 +895,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float yName = yRoomCenter + room.getNameYOffset();
           TextStyle nameStyle = room.getNameStyle();
           if (nameStyle == null) {
-            nameStyle = this.home.getDefaultTextStyle(room.getClass());
+            nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
           }          
           FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
           Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
@@ -912,7 +912,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
             TextStyle areaStyle = room.getAreaStyle();
             if (areaStyle == null) {
-              areaStyle = this.home.getDefaultTextStyle(room.getClass());
+              areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
             }          
             FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
             Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
@@ -935,7 +935,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           float yName = yPiece + piece.getNameYOffset();
           TextStyle nameStyle = piece.getNameStyle();
           if (nameStyle == null) {
-            nameStyle = this.home.getDefaultTextStyle(piece.getClass());
+            nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
           }          
           FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
           Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
@@ -951,7 +951,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
         TextStyle lengthStyle = dimensionLine.getLengthStyle();
         if (lengthStyle == null) {
-          lengthStyle = this.home.getDefaultTextStyle(dimensionLine.getClass());
+          lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
         }          
         FontMetrics lengthFontMetrics = getFontMetrics(componentFont, lengthStyle);
         Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g);
@@ -1002,7 +1002,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         String labelText = label.getText();
         TextStyle labelStyle = label.getStyle();
         if (labelStyle == null) {
-          labelStyle = this.home.getDefaultTextStyle(label.getClass());
+          labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
         }          
         FontMetrics labelFontMetrics = getFontMetrics(componentFont, labelStyle);
         Rectangle2D labelBounds = labelFontMetrics.getStringBounds(labelText, g);
@@ -1484,7 +1484,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             float yName = yRoomCenter + room.getNameYOffset();
             TextStyle nameStyle = room.getNameStyle();
             if (nameStyle == null) {
-              nameStyle = this.home.getDefaultTextStyle(room.getClass());
+              nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
             }          
             FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
             Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
@@ -1500,7 +1500,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             float yArea = yRoomCenter + room.getAreaYOffset();
             TextStyle areaStyle = room.getNameStyle();
             if (areaStyle == null) {
-              areaStyle = this.home.getDefaultTextStyle(room.getClass());
+              areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
             }          
             FontMetrics areaFontMetrics = getFontMetrics(previousFont, areaStyle);
             String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
@@ -1872,7 +1872,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             float yName = piece.getY() + piece.getNameYOffset();
             TextStyle nameStyle = piece.getNameStyle();
             if (nameStyle == null) {
-              nameStyle = this.home.getDefaultTextStyle(piece.getClass());
+              nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
             }          
             FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
             Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
@@ -2073,7 +2073,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
       TextStyle lengthStyle = dimensionLine.getLengthStyle();
       if (lengthStyle == null) {
-        lengthStyle = this.home.getDefaultTextStyle(dimensionLine.getClass());
+        lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
       }          
       FontMetrics lengthFontMetrics = getFontMetrics(previousFont, lengthStyle);
       Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g2D);      
@@ -2162,7 +2162,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         float yLabel = label.getY();
         TextStyle labelStyle = label.getStyle();
         if (labelStyle == null) {
-          labelStyle = this.home.getDefaultTextStyle(label.getClass());
+          labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
         }          
         float [][] labelBounds = getTextBounds(labelText, labelStyle, xLabel, yLabel, 0);
         float labelWidth = labelBounds [2][0] - labelBounds [0][0];

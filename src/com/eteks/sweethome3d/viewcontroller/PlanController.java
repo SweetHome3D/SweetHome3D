@@ -783,6 +783,7 @@ public class PlanController extends FurnitureController implements Controller {
     List<Selectable> all = new ArrayList<Selectable>(this.home.getWalls());
     all.addAll(this.home.getRooms());
     all.addAll(this.home.getDimensionLines());
+    all.addAll(this.home.getLabels());
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (piece.isVisible()) {
         all.add(piece);
@@ -1200,7 +1201,7 @@ public class PlanController extends FurnitureController implements Controller {
   private boolean isItemTextAt(Selectable item, String text, TextStyle textStyle, float xText, float yText, 
                                float x, float y, float textMargin) {
     if (textStyle == null) {
-      textStyle = this.home.getDefaultTextStyle(item.getClass());              
+      textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
     }          
     float [][] textBounds = getView().getTextBounds(text, textStyle, xText, yText, 0);
     return getPath(textBounds).intersects(x - textMargin, y - textMargin, 2 * textMargin, 2 * textMargin);

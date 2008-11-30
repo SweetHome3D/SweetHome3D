@@ -40,7 +40,10 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}  
   private static final String [] SUPPORTED_LANGUAGES; 
-  
+
+  private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f, TextStyle.FontStyle.PLAIN);
+  private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f, TextStyle.FontStyle.PLAIN);
+
   static {
     ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
     SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
@@ -314,6 +317,17 @@ public abstract class UserPreferences {
     }
   }
   
+  /**
+   * Returns the default text style of a class of selectable item. 
+   */
+  public TextStyle getDefaultTextStyle(Class<? extends Selectable> selectableClass) {
+    if (Room.class.isAssignableFrom(selectableClass)) {
+      return DEFAULT_ROOM_TEXT_STYLE;
+    } else {
+      return DEFAULT_TEXT_STYLE;
+    }
+  }
+
   /**
    * Adds <code>furnitureLibraryName</code> to furniture catalog  
    * to make the furniture library it contains available.
