@@ -839,6 +839,9 @@ public class PlanController extends FurnitureController implements Controller {
         textStyles.toArray(new TextStyle [textStyles.size()]));
   }
   
+  /**
+   * Returns <code>textStyle</code> if not null or the default text style.
+   */
   private TextStyle getItemTextStyle(Selectable item, TextStyle textStyle) {
     if (textStyle == null) {
       textStyle = this.preferences.getDefaultTextStyle(item.getClass());              
