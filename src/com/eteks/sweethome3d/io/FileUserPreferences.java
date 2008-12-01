@@ -699,7 +699,11 @@ public class FileUserPreferences extends UserPreferences {
    */
   @Override
   public void resetIgnoredActionTips() {
-    this.ignoredActionTips.clear();
+    for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
+         it.hasNext(); ) {
+      Entry<String, Boolean> ignoredActionTipEntry = it.next();
+      ignoredActionTipEntry.setValue(false);
+    }
     super.resetIgnoredActionTips();
   }
 
