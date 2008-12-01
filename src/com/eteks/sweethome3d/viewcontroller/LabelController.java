@@ -171,12 +171,14 @@ public class LabelController implements Controller {
     List<Selectable> oldSelection = this.home.getSelectedItems();
     String text = getText();
     
-    // Apply modification
-    Label label = new Label(text, x, y);
-    doAddLabel(this.home, label); 
-    if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new LabelCreationUndoableEdit(this.home, oldSelection, label);
-      this.undoSupport.postEdit(undoableEdit);
+    if (text != null && text.trim().length() > 0) {
+      // Apply modification
+      Label label = new Label(text, x, y);
+      doAddLabel(this.home, label); 
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new LabelCreationUndoableEdit(this.home, oldSelection, label);
+        this.undoSupport.postEdit(undoableEdit);
+      }
     }
   }
 
