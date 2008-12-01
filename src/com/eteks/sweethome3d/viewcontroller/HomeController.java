@@ -164,8 +164,7 @@ public class HomeController implements Controller {
       };
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
-    this.resource = ResourceBundle.getBundle(
-        HomeController.class.getName());
+    this.resource = ResourceBundle.getBundle(HomeController.class.getName());
     
     // Update recent homes list
     if (home.getName() != null) {
@@ -583,8 +582,7 @@ public class HomeController implements Controller {
    * Enables action bound to selection. 
    */
   private void enableActionsOnSelection() {
-    boolean selectionMode =  
-        getPlanController().getMode() == PlanController.Mode.SELECTION;
+    boolean modificationState = getPlanController().isModificationState();
     
     // Search if catalog selection contains at least one piece
     List<CatalogPieceOfFurniture> catalogSelectedItems = 
@@ -603,7 +601,7 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOneLabel = false;
     boolean homeSelectionContainsItemsWithText = false;
-    if (selectionMode) {
+    if (!modificationState) {
       homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
       homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
           Home.getFurnitureSubList(selectedItems).size() >= 2;
@@ -627,7 +625,7 @@ public class HomeController implements Controller {
     HomeView view = getView();
     if (this.focusedView == getFurnitureCatalogController().getView()) {
       view.setEnabled(HomeView.ActionType.COPY,
-          selectionMode && catalogSelectionContainsFurniture);
+          !modificationState && catalogSelectionContainsFurniture);
       view.setEnabled(HomeView.ActionType.CUT, false);
       view.setEnabled(HomeView.ActionType.DELETE, false);
       for (CatalogPieceOfFurniture piece : catalogSelectedItems) {
@@ -705,10 +703,8 @@ public class HomeController implements Controller {
     if (this.focusedView == getFurnitureController().getView()
         || this.focusedView == getPlanController().getView()
         || this.focusedView == getHomeController3D().getView()) {
-      boolean selectionMode =  
-          getPlanController().getMode() == PlanController.Mode.SELECTION;
       view.setEnabled(HomeView.ActionType.PASTE,
-          selectionMode && !view.isClipboardEmpty());
+          !getPlanController().isModificationState() && !view.isClipboardEmpty());
     } else {
       view.setEnabled(HomeView.ActionType.PASTE, false);
     }
@@ -719,16 +715,15 @@ public class HomeController implements Controller {
    */
   private void enableSelectAllAction() {
     HomeView view = getView();
-    boolean selectionMode =  
-      getPlanController().getMode() == PlanController.Mode.SELECTION;
+    boolean modificationState = getPlanController().isModificationState();
     if (this.focusedView == getFurnitureController().getView()) {
       view.setEnabled(HomeView.ActionType.SELECT_ALL,
-          selectionMode 
+          !modificationState 
           && this.home.getFurniture().size() > 0);
     } else if (this.focusedView == getPlanController().getView()
                || this.focusedView == getHomeController3D().getView()) {
       view.setEnabled(HomeView.ActionType.SELECT_ALL,
-          selectionMode
+          !modificationState
           && (this.home.getFurniture().size() > 0 
               || this.home.getWalls().size() > 0 
               || this.home.getRooms().size() > 0
@@ -769,7 +764,7 @@ public class HomeController implements Controller {
         public void undoableEditHappened(UndoableEditEvent ev) {
           HomeView view = getView();
           view.setEnabled(HomeView.ActionType.UNDO, 
-              getPlanController().getMode() == PlanController.Mode.SELECTION);
+              !getPlanController().isModificationState());
           view.setEnabled(HomeView.ActionType.REDO, false);
           view.setUndoRedoName(ev.getEdit().getUndoPresentationName(), null);
           saveUndoLevel++;
@@ -810,23 +805,23 @@ public class HomeController implements Controller {
 
   /**
    * Adds a property change listener to plan controller to 
-   * enable/disable authorized actions according to current mode.
+   * enable/disable authorized actions according to its modification state.
    */
   private void addPlanControllerListener() {
-    getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
+    getPlanController().addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             enableActionsOnSelection();
             enableSelectAllAction();
             HomeView view = getView();
-            if (getPlanController().getMode() == PlanController.Mode.SELECTION) {
-              enablePasteAction();
-              view.setEnabled(HomeView.ActionType.UNDO, undoManager.canUndo());
-              view.setEnabled(HomeView.ActionType.REDO, undoManager.canRedo());
-            } else {
+            if (getPlanController().isModificationState()) {
               view.setEnabled(HomeView.ActionType.PASTE, false);
               view.setEnabled(HomeView.ActionType.UNDO, false);
               view.setEnabled(HomeView.ActionType.REDO, false);
+            } else {
+              enablePasteAction();
+              view.setEnabled(HomeView.ActionType.UNDO, undoManager.canUndo());
+              view.setEnabled(HomeView.ActionType.REDO, undoManager.canRedo());
             }
           }
         });
@@ -878,6 +873,8 @@ public class HomeController implements Controller {
    * Imports furniture to the catalog or home depending on the focused view.  
    */
   public void importFurniture() {
+    // Always use selection mode after an import furniture operation
+    getPlanController().setMode(PlanController.Mode.SELECTION);
     if (this.focusedView == getFurnitureCatalogController().getView()) {
       getFurnitureCatalogController().importFurniture();
     } else {
@@ -983,8 +980,6 @@ public class HomeController implements Controller {
    * and post a drop operation to undo support.
    */
   public void drop(final List<? extends Selectable> items, float dx, float dy) {
-    // Always use selection mode after a drop operation
-    getPlanController().setMode(PlanController.Mode.SELECTION);
     addItems(items, dx, dy, "undoDropName");
   }
 
@@ -994,6 +989,8 @@ public class HomeController implements Controller {
   private void addItems(final List<? extends Selectable> items, 
                         float dx, float dy, final String presentationNameKey) {
     if (!items.isEmpty()) {
+      // Always use selection mode after a drop or a paste operation
+      getPlanController().setMode(PlanController.Mode.SELECTION);
       // Start a compound edit that adds walls, furniture and dimension lines to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();

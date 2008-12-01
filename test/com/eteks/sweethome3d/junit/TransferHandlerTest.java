@@ -157,18 +157,22 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // 5. Use Wall creation mode
     controller.getPlanController().setMode(PlanController.Mode.WALL_CREATION);
-    // Check Cut, Copy, Paste actions are disabled
-    assertActionsEnabled(controller, false, false, false, false);    
+    // Check Cut, Copy, Paste actions are enabled
+    assertActionsEnabled(controller, true, true, false, true);    
     // Create a wall between points (25, 25) and (100, 25)
     tester.actionClick(planComponent, 25, 25);
+    // Check Cut, Copy, Paste actions are disabled during wall drawing
+    assertActionsEnabled(controller, false, false, false, false);    
     tester.actionClick(planComponent, 100, 25, InputEvent.BUTTON1_MASK, 2);
 
     // 6. Use Dimension creation mode
     controller.getPlanController().setMode(PlanController.Mode.DIMENSION_LINE_CREATION);
-    // Check Cut, Copy, Paste actions are disabled
-    assertActionsEnabled(controller, false, false, false, false);
+    // Check Cut, Copy, Paste actions are enabled
+    assertActionsEnabled(controller, true, true, false, true);
     // 7. Create a dimension line between points (25, 35) and (100, 35)
     tester.actionClick(planComponent, 25, 35);
+    // Check Cut, Copy, Paste actions are disabled during dimension line drawing
+    assertActionsEnabled(controller, false, false, false, false);    
     tester.actionClick(planComponent, 100, 35, InputEvent.BUTTON1_MASK, 2);
     // Use Selection mode 
     controller.getPlanController().setMode(PlanController.Mode.SELECTION);

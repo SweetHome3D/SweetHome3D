@@ -70,7 +70,7 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class PlanController extends FurnitureController implements Controller {
-  public enum Property {MODE}
+  public enum Property {MODE, MODIFICATION_STATE}
   
   public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION, LABEL_CREATION}
   
@@ -93,7 +93,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       rectangleSelectionState;
   private final ControllerState       selectionMoveState;
   private final ControllerState       wallCreationState;
-  private final ControllerState       newWallState;
+  private final ControllerState       wallDrawingState;
   private final ControllerState       wallResizeState;
   private final ControllerState       pieceOfFurnitureRotationState;
   private final ControllerState       pieceOfFurnitureElevationState;
@@ -103,11 +103,11 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       cameraYawRotationState;
   private final ControllerState       cameraPitchRotationState;
   private final ControllerState       dimensionLineCreationState;
-  private final ControllerState       newDimensionLineState;
+  private final ControllerState       dimensionLineDrawingState;
   private final ControllerState       dimensionLineResizeState;
   private final ControllerState       dimensionLineOffsetState;
   private final ControllerState       roomCreationState;
-  private final ControllerState       newRoomState;
+  private final ControllerState       roomDrawingState;
   private final ControllerState       roomResizeState;
   private final ControllerState       roomAreaOffsetState;
   private final ControllerState       roomNameOffsetState;
@@ -151,7 +151,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.selectionMoveState = new SelectionMoveState();
     this.rectangleSelectionState = new RectangleSelectionState();
     this.wallCreationState = new WallCreationState();
-    this.newWallState = new NewWallState();
+    this.wallDrawingState = new WallDrawingState();
     this.wallResizeState = new WallResizeState();
     this.pieceOfFurnitureRotationState = new PieceOfFurnitureRotationState();
     this.pieceOfFurnitureElevationState = new PieceOfFurnitureElevationState();
@@ -161,11 +161,11 @@ public class PlanController extends FurnitureController implements Controller {
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
     this.dimensionLineCreationState = new DimensionLineCreationState();
-    this.newDimensionLineState = new NewDimensionLineState();
+    this.dimensionLineDrawingState = new DimensionLineDrawingState();
     this.dimensionLineResizeState = new DimensionLineResizeState();
     this.dimensionLineOffsetState = new DimensionLineOffsetState();
     this.roomCreationState = new RoomCreationState();
-    this.newRoomState = new NewRoomState();
+    this.roomDrawingState = new RoomDrawingState();
     this.roomResizeState = new RoomResizeState();
     this.roomAreaOffsetState = new RoomAreaOffsetState();
     this.roomNameOffsetState = new RoomNameOffsetState();
@@ -198,10 +198,18 @@ public class PlanController extends FurnitureController implements Controller {
    * Changes current state of controller.
    */
   protected void setState(ControllerState state) {
+    boolean oldModificationState = false;
     if (this.state != null) {
       this.state.exit();
+      oldModificationState = this.state.isModificationState();
     }
+    
     this.state = state;
+    if (oldModificationState != state.isModificationState()) {
+      this.propertyChangeSupport.firePropertyChange(Property.MODIFICATION_STATE.name(), 
+          oldModificationState, !oldModificationState);
+    }
+    
     this.state.enter();
   }
   
@@ -235,6 +243,14 @@ public class PlanController extends FurnitureController implements Controller {
       this.state.setMode(mode);
       this.propertyChangeSupport.firePropertyChange(Property.MODE.name(), oldMode, mode);
     }
+  }
+
+  /**
+   * Returns <code>true</code> if the interactions in the current mode may modify 
+   * the state of a home. 
+   */
+  public boolean isModificationState() {
+    return this.state.isModificationState();
   }
 
   /**
@@ -336,10 +352,10 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns the new wall state.
+   * Returns the wall drawing state.
    */
-  protected ControllerState getNewWallState() {
-    return this.newWallState;
+  protected ControllerState getWallDrawingState() {
+    return this.wallDrawingState;
   }
   
   /**
@@ -406,10 +422,10 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns the new dimension line state.
+   * Returns the dimension line drawing state.
    */
-  public ControllerState getNewDimensionLineState() {
-    return this.newDimensionLineState;
+  public ControllerState getDimensionLineDrawingState() {
+    return this.dimensionLineDrawingState;
   }
 
   /**
@@ -434,10 +450,10 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Returns the new room state.
+   * Returns the room drawing state.
    */
-  protected ControllerState getNewRoomState() {
-    return this.newRoomState;
+  protected ControllerState getRoomDrawingState() {
+    return this.roomDrawingState;
   }
   
   /**
@@ -3074,6 +3090,10 @@ public class PlanController extends FurnitureController implements Controller {
     public void setMode(Mode mode) {
     }
 
+    public boolean isModificationState() {
+      return false;
+    }
+
     public void deleteSelection() {
     }
 
@@ -3126,6 +3146,20 @@ public class PlanController extends FurnitureController implements Controller {
           break;
       } 
     }
+
+    @Override
+    public void deleteSelection() {
+      deleteItems(home.getSelectedItems());
+      // Compute again feedback 
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+
+    @Override
+    public void moveSelection(float dx, float dy) {
+      moveAndShowSelectedItems(dx, dy);
+      // Compute again feedback 
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
   }
   
   /**
@@ -3145,23 +3179,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
-    public void deleteSelection() {
-      deleteItems(home.getSelectedItems());
-      updateCursor(getXLastMouseMove(), getYLastMouseMove());
-    }
-
-    @Override
-    public void moveSelection(float dx, float dy) {
-      moveAndShowSelectedItems(dx, dy);
-      updateCursor(getXLastMouseMove(), getYLastMouseMove());
-    }
-
-    @Override
     public void moveMouse(float x, float y) {
-      updateCursor(x, y);
-    }
-
-    private void updateCursor(float x, float y) {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
@@ -3272,6 +3290,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -3402,6 +3425,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       Selectable itemUnderCursor = 
           getItemAt(getXLastMousePress(), getYLastMousePress());
@@ -3520,7 +3548,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
     }
-
+    
     @Override
     public void moveMouse(float x, float y) {
       getView().setAlignmentFeedback(Wall.class, null, x, y, false);
@@ -3529,8 +3557,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
-      // Change state to NewWallState
-      setState(getNewWallState());
+      // Change state to WallDrawingState
+      setState(getWallDrawingState());
     }
 
     @Override
@@ -3559,9 +3587,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * New wall state. This state manages wall creation at each mouse press. 
+   * Wall drawing state. This state manages wall creation at each mouse press. 
    */
-  private class NewWallState extends AbstractWallState {
+  private class WallDrawingState extends AbstractWallState {
     private float            xStart;
     private float            yStart;
     private float            xLastEnd;
@@ -3579,6 +3607,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.WALL_CREATION;
+    }
+ 
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -3778,6 +3811,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       super.enter();
       this.selectedWall = (Wall)home.getSelectedItems().get(0);
@@ -3872,6 +3910,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.rotationToolTipFeedback = resource.getString("rotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
@@ -3959,6 +4002,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.elevationToolTipFeedback = resource.getString("elevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
@@ -4041,6 +4089,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4132,6 +4185,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4246,6 +4304,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.oldNameXOffset = this.selectedPiece.getNameXOffset();
@@ -4299,6 +4362,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4363,6 +4431,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4440,10 +4513,10 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
-      // Ignore double clicks (may happen when state is activated returning from NewDimensionLineState) 
+      // Ignore double clicks (may happen when state is activated returning from DimensionLineDrawingState) 
       if (clickCount == 1) {
-        // Change state to NewDimensionLineState
-        setState(getNewDimensionLineState());
+        // Change state to DimensionLineDrawingState
+        setState(getDimensionLineDrawingState());
       }
     }
 
@@ -4454,9 +4527,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * New dimension line state. This state manages dimension line creation at mouse press. 
+   * Dimension line drawing state. This state manages dimension line creation at mouse press. 
    */
-  private class NewDimensionLineState extends ControllerState {
+  private class DimensionLineDrawingState extends ControllerState {
     private float            xStart;
     private float            yStart;
     private DimensionLine    newDimensionLine;
@@ -4467,6 +4540,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.DIMENSION_LINE_CREATION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4614,6 +4692,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -4812,6 +4895,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.selectedDimensionLine = (DimensionLine)home.getSelectedItems().get(0);
       this.oldOffset = this.selectedDimensionLine.getOffset();
@@ -4868,7 +4956,7 @@ public class PlanController extends FurnitureController implements Controller {
    * other modes, and initial room creation.
    */
   private class RoomCreationState extends AbstractModeChangeState {
-    private boolean                magnetismEnabled;
+    private boolean magnetismEnabled;
     
     @Override
     public Mode getMode() {
@@ -4898,8 +4986,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
-      // Change state to NewRoomState
-      setState(getNewRoomState());
+      // Change state to RoomDrawingState
+      setState(getRoomDrawingState());
     }
 
     @Override
@@ -4918,9 +5006,9 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * New room state. This state manages room creation at mouse press. 
+   * Room drawing state. This state manages room creation at mouse press. 
    */
-  private class NewRoomState extends ControllerState {
+  private class RoomDrawingState extends ControllerState {
     private Collection<Room>       rooms;
     private float                  xPreviousPoint;
     private float                  yPreviousPoint;
@@ -4932,6 +5020,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.ROOM_CREATION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
@@ -5230,6 +5323,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       super.enter();
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
@@ -5328,6 +5426,11 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
     public void enter() {
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
       this.oldNameXOffset = this.selectedRoom.getNameXOffset();
@@ -5382,6 +5485,11 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
     }
     
     @Override
