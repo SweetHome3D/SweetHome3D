@@ -38,7 +38,7 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, DISPLAYED_ACTION_TIPS}  
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP}  
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
@@ -323,7 +323,7 @@ public abstract class UserPreferences {
    * By default it just notifies listeners of this change. 
    */
   public void setActionTipIgnored(String actionKey) {    
-    this.propertyChangeSupport.firePropertyChange(Property.DISPLAYED_ACTION_TIPS.name(), null, actionKey);
+    this.propertyChangeSupport.firePropertyChange(Property.IGNORED_ACTION_TIP.name(), null, actionKey);
   }
   
   /**
@@ -342,7 +342,7 @@ public abstract class UserPreferences {
    * By default it just notifies listeners of this change. 
    */
   public void resetIgnoredActionTips() {    
-    this.propertyChangeSupport.firePropertyChange(Property.DISPLAYED_ACTION_TIPS.name(), null, null);
+    this.propertyChangeSupport.firePropertyChange(Property.IGNORED_ACTION_TIP.name(), null, null);
   }
   
   /**
