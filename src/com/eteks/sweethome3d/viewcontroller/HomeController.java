@@ -1547,7 +1547,7 @@ public class HomeController implements Controller {
       // Display the tip message dialog matching mode
       if (actionKey != null 
           && !this.preferences.isActionTipIgnored(actionKey)) {
-        if (!getView().showActionTipMessage(actionKey)) {
+        if (getView().showActionTipMessage(actionKey)) {
           this.preferences.setActionTipIgnored(actionKey);
         }
       }

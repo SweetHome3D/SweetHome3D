@@ -691,7 +691,7 @@ public class FileUserPreferences extends UserPreferences {
   @Override
   public boolean isActionTipIgnored(String actionKey) {
     Boolean ignoredActionTip = this.ignoredActionTips.get(actionKey);
-    return ignoredActionTip == null || !ignoredActionTip.booleanValue();
+    return ignoredActionTip != null && ignoredActionTip.booleanValue();
   }
   
   /**
