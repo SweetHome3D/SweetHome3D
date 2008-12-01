@@ -443,7 +443,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("pageSetup.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, this.pageFormatButton) == JOptionPane.OK_OPTION
+            this, dialogTitle, this.pageFormatButton) == JOptionPane.OK_OPTION
         && this.controller != null) {
           this.controller.modifyPageSetup();
     }

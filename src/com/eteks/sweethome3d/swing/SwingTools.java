@@ -149,8 +149,8 @@ public class SwingTools {
    * Displays <code>messageComponent</code> in a modal dialog box, giving focus to ones of its component. 
    */
   public static int showConfirmDialog(JComponent parentComponent,
-                                      String title,
                                       JComponent messageComponent,
+                                      String title,
                                       final JComponent focusedComponent) {
     JOptionPane optionPane = new JOptionPane(messageComponent, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
@@ -172,5 +172,28 @@ public class SwingTools {
     } else {
       return JOptionPane.CLOSED_OPTION;
     }
+  }
+
+  /**
+   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to ones of its component. 
+   */
+  public static void showMessageDialog(JComponent parentComponent,
+                                       JComponent messageComponent,
+                                       String title,
+                                       int messageType,
+                                       final JComponent focusedComponent) {
+    JOptionPane optionPane = new JOptionPane(messageComponent, 
+        messageType, JOptionPane.DEFAULT_OPTION);
+    final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parentComponent), title);
+    // Add a listener that transfer focus to focusedComponent when dialog is shown
+    dialog.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent ev) {
+          focusedComponent.requestFocusInWindow();
+          dialog.removeComponentListener(this);
+        }
+      });
+    dialog.setVisible(true);    
+    dialog.dispose();
   }
 }

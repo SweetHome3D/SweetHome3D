@@ -142,7 +142,7 @@ public class LabelPanel extends JPanel implements DialogView {
         ? "labelModification.title"
         : "labelCreation.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, this.textTextField) == JOptionPane.OK_OPTION
+            this, dialogTitle, this.textTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       if (this.labelModification) {
         this.controller.modifyLabels();

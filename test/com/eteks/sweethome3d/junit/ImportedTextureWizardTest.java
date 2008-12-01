@@ -82,7 +82,12 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
   public void testImportedTextureWizard() throws ComponentSearchException, InterruptedException, 
       NoSuchFieldException, IllegalAccessException, InvocationTargetException {
     String language = Locale.getDefault().getLanguage();
-    final UserPreferences preferences = new FileUserPreferences();
+    final UserPreferences preferences = new FileUserPreferences() {
+        @Override
+        public boolean isActionTipIgnored(String actionKey) {
+          return true;
+        }
+      };
     // Ensure we use default language and centimeter unit
     preferences.setLanguage(language);
     preferences.setUnit(LengthUnit.CENTIMETER);

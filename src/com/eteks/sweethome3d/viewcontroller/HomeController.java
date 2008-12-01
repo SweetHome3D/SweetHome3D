@@ -61,6 +61,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginManager;
+import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
  * A MVC controller for the home view.
@@ -385,11 +386,11 @@ public class HomeController implements Controller {
    * Super class of catalog listeners that writes preferences each time a piece of furniture or a texture
    * is deleted or added in furniture or textures catalog.
    */
-  private static abstract class UserPreferencesChangeListener {
+  private abstract static class UserPreferencesChangeListener {
     // Stores the currently writing preferences 
     private static Set<UserPreferences> writingPreferences = new HashSet<UserPreferences>();
     
-    protected void writePreferences(final HomeController controller) {
+    public void writePreferences(final HomeController controller) {
       if (!writingPreferences.contains(controller.preferences)) {
         writingPreferences.add(controller.preferences);
         // Write preferences later once all catalog modifications are notified 
@@ -1520,6 +1521,38 @@ public class HomeController implements Controller {
   public void editPreferences() {
     new UserPreferencesController(this.preferences, 
         this.viewFactory, this.contentManager).displayView(getView());
+  }
+  
+  /**
+   * Displays a tip message dialog depending on the given mode and 
+   * sets the active mode of the plan controller. 
+   */
+  public void setMode(Mode mode) {
+    if (getPlanController().getMode() != mode) {
+      String actionKey = null;
+      switch (mode) {
+        case WALL_CREATION :
+          actionKey = HomeView.ActionType.CREATE_WALLS.name();
+          break;
+        case ROOM_CREATION :
+          actionKey = HomeView.ActionType.CREATE_ROOMS.name();
+          break;
+        case DIMENSION_LINE_CREATION :
+          actionKey = HomeView.ActionType.CREATE_DIMENSION_LINES.name();
+          break;
+        case LABEL_CREATION :
+          actionKey = HomeView.ActionType.CREATE_LABELS.name();
+          break;
+      }
+      // Display the tip message dialog matching mode
+      if (actionKey != null 
+          && !this.preferences.isActionTipIgnored(actionKey)) {
+        if (!getView().showActionTipMessage(actionKey)) {
+          this.preferences.setActionTipIgnored(actionKey);
+        }
+      }
+      getPlanController().setMode(mode);
+    }
   }
 
   /**

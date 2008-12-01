@@ -27,6 +27,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -73,6 +75,7 @@ import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
@@ -81,6 +84,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JRootPane;
@@ -336,15 +340,15 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, furnitureController, "toggleFurnitureVisibleProperty", 
         HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
     
-    createAction(ActionType.SELECT, controller.getPlanController(), "setMode", 
+    createAction(ActionType.SELECT, controller, "setMode", 
         PlanController.Mode.SELECTION);
-    createAction(ActionType.CREATE_WALLS, controller.getPlanController(), "setMode",
+    createAction(ActionType.CREATE_WALLS, controller, "setMode",
         PlanController.Mode.WALL_CREATION);
-    createAction(ActionType.CREATE_ROOMS, controller.getPlanController(), "setMode",
+    createAction(ActionType.CREATE_ROOMS, controller, "setMode",
         PlanController.Mode.ROOM_CREATION);
-    createAction(ActionType.CREATE_DIMENSION_LINES, controller.getPlanController(), "setMode",
+    createAction(ActionType.CREATE_DIMENSION_LINES, controller, "setMode",
         PlanController.Mode.DIMENSION_LINE_CREATION);
-    createAction(ActionType.CREATE_LABELS, controller.getPlanController(), "setMode",
+    createAction(ActionType.CREATE_LABELS, controller, "setMode",
         PlanController.Mode.LABEL_CREATION);
     createAction(ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
@@ -352,14 +356,14 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getPlanController(), "modifySelectedWalls");
     createAction(ActionType.MODIFY_ROOM, 
         controller.getPlanController(), "modifySelectedRooms");
-    createAction(ActionType.TOGGLE_BOLD_STYLE, 
-        controller.getPlanController(), "toggleBoldStyle");
-    createAction(ActionType.TOGGLE_ITALIC_STYLE, 
-        controller.getPlanController(), "toggleItalicStyle");
     createAction(ActionType.INCREASE_TEXT_SIZE, 
         controller.getPlanController(), "increaseTextSize");
     createAction(ActionType.DECREASE_TEXT_SIZE, 
         controller.getPlanController(), "decreaseTextSize");
+    createAction(ActionType.TOGGLE_BOLD_STYLE, 
+        controller.getPlanController(), "toggleBoldStyle");
+    createAction(ActionType.TOGGLE_ITALIC_STYLE, 
+        controller.getPlanController(), "toggleItalicStyle");
     createAction(ActionType.MODIFY_LABEL, 
         controller.getPlanController(), "modifySelectedLabels");
     createAction(ActionType.REVERSE_WALL_DIRECTION, 
@@ -886,6 +890,9 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu modifyTextStyleMenu = new JMenu(
         this.menuActionMap.get(MenuActionType.MODIFY_TEXT_STYLE));
     
+    modifyTextStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
+    modifyTextStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
+    modifyTextStyleMenu.addSeparator();
     JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
     // Use a special model for bold check box menu item that is selected if
     // texts in home selected items are all bold 
@@ -979,9 +986,6 @@ public class HomePane extends JRootPane implements HomeView {
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     italicMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
     modifyTextStyleMenu.add(italicMenuItem);
-    modifyTextStyleMenu.addSeparator();
-    modifyTextStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
-    modifyTextStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
     return modifyTextStyleMenu;
   }
   
@@ -1754,6 +1758,41 @@ public class HomePane extends JRootPane implements HomeView {
         JOptionPane.INFORMATION_MESSAGE);
   }
 
+  /**
+   * Displays the tip matching <code>actionTipKey</code> and 
+   * returns <code>true</code> if the user chose not to display again the tip.
+   */
+  public boolean showActionTipMessage(String actionTipKey) {
+    String title = this.resource.getString(actionTipKey + ".tipTitle");
+    String message = this.resource.getString(actionTipKey + ".tipMessage");
+    if (message.length() > 0) {
+      JPanel tipPanel = new JPanel(new GridBagLayout());
+      
+      JLabel messageLabel = new JLabel(message);
+      tipPanel.add(messageLabel, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, 
+          GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+      
+      // Add a check box that lets user choose whether he wants to display again the tip or not
+      JCheckBox doNotDisplayTipCheckBox = new JCheckBox(
+          this.resource.getString("doNotDisplayTipCheckBox.text"));
+      if (!OperatingSystem.isMacOSX()) {
+        doNotDisplayTipCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+            this.resource.getString("doNotDisplayTipCheckBox.mnemonic")).getKeyCode());
+      }
+      tipPanel.add(doNotDisplayTipCheckBox, new GridBagConstraints(
+          0, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+      
+      SwingTools.showMessageDialog(this, tipPanel, title, 
+          JOptionPane.INFORMATION_MESSAGE, doNotDisplayTipCheckBox);
+      return doNotDisplayTipCheckBox.isSelected();
+    } else {
+      // Ignore untranslated tips
+      return true;
+    }
+  }
+  
   /**
    * Displays a dialog that lets user choose whether he wants to save
    * the current home or not.

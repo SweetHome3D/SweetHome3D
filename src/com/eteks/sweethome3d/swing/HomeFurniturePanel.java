@@ -519,7 +519,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("homeFurniture.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, this.nameTextField) == JOptionPane.OK_OPTION) {
+            this, dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyFurniture();
     }
   }

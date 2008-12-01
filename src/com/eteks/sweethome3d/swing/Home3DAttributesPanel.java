@@ -405,7 +405,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     JFormattedTextField observerFieldOfViewSpinnerTextField = 
         ((JSpinner.DefaultEditor)this.observerFieldOfViewSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, observerFieldOfViewSpinnerTextField) == JOptionPane.OK_OPTION
+            this, dialogTitle, observerFieldOfViewSpinnerTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modify3DAttributes();
     }

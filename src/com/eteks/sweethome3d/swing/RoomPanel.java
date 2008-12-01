@@ -418,7 +418,7 @@ public class RoomPanel extends JPanel implements DialogView {
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("room.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, this.nameTextField) == JOptionPane.OK_OPTION
+            this, dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyRooms();
     }

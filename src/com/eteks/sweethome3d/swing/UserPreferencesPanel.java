@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -34,6 +35,7 @@ import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -77,6 +79,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newWallHeightLabel;
   private JSpinner       newWallHeightSpinner;
+  private JButton        resetDisplayedActionTipsButton;
   
   /**
    * Creates a preferences panel that layouts the editable properties
@@ -236,6 +239,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
           }
         });
+    
+    this.resetDisplayedActionTipsButton = new JButton(
+        new ResourceAction(this.resource, "RESET_DISPLAYED_ACTION_TIPS", true) {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            controller.resetDisplayedActionTips();
+          }
+        });
   }
   
   /**
@@ -322,10 +333,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Seventh row
     add(this.newWallHeightLabel, new GridBagConstraints(
         0, 6, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.newWallHeightSpinner, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    // Last row
+    add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
+        0, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**
@@ -334,7 +349,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   public void displayView(View parentView) {
     String dialogTitle = resource.getString("preferences.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, this.languageComboBox) == JOptionPane.OK_OPTION
+            this, dialogTitle, this.languageComboBox) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyUserPreferences();
     }

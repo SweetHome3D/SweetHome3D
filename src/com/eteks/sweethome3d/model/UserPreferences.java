@@ -38,7 +38,7 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES}  
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, DISPLAYED_ACTION_TIPS}  
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
@@ -315,6 +315,34 @@ public abstract class UserPreferences {
       this.propertyChangeSupport.firePropertyChange(Property.RECENT_HOMES.name(), 
           oldRecentHomes, getRecentHomes());
     }
+  }
+  
+  /**
+   * Sets which action tip should be ignored.
+   * <br>This method should be overridden to store the ignore information.
+   * By default it just notifies listeners of this change. 
+   */
+  public void setActionTipIgnored(String actionKey) {    
+    this.propertyChangeSupport.firePropertyChange(Property.DISPLAYED_ACTION_TIPS.name(), null, actionKey);
+  }
+  
+  /**
+   * Returns whether an action tip should be ignored or not. 
+   * <br>This method should be overridden to return the the display information
+   * stored in {@link #setActionTipIgnored(String, boolean) setActionTipDisplayed}.
+   * By default it returns <code>true</code>. 
+   */
+  public boolean isActionTipIgnored(String actionKey) {
+    return true;
+  }
+  
+  /**
+   * Resets the ignore flag of action tips.
+   * <br>This method should be overridden to clear all the display flags.
+   * By default it just notifies listeners of this change. 
+   */
+  public void resetIgnoredActionTips() {    
+    this.propertyChangeSupport.firePropertyChange(Property.DISPLAYED_ACTION_TIPS.name(), null, null);
   }
   
   /**

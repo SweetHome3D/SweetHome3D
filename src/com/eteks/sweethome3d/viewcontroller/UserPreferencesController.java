@@ -242,4 +242,11 @@ public class UserPreferencesController implements Controller {
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
   }
+
+  /**
+   * Resets the displayed flags of action tips.
+   */
+  public void resetDisplayedActionTips() {
+    this.preferences.resetIgnoredActionTips();
+  }
 }

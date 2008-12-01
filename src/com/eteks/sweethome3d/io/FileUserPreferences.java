@@ -33,11 +33,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -48,10 +51,10 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
-import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -72,6 +75,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT             = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS          = "newWallThickness";
   private static final String RECENT_HOMES                = "recentHomes#";
+  private static final String IGNORED_ACTION_TIP          = "ignoredActionTip#";
 
   private static final String FURNITURE_NAME              = "furnitureName#";
   private static final String FURNITURE_CATEGORY          = "furnitureCategory#";
@@ -104,6 +108,8 @@ public class FileUserPreferences extends UserPreferences {
   
   private static final String EDITOR_SUB_FOLDER; 
   private static final String APPLICATION_SUB_FOLDER; 
+  
+  private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   
   static {
     Content dummyURLContent = null;
@@ -167,6 +173,15 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     setRecentHomes(recentHomes);
+    // Read ignored action tips
+    for (int i = 1; ; i++) {
+      String ignoredActionTip = preferences.get(IGNORED_ACTION_TIP + i, "");
+      if (ignoredActionTip.length() == 0) {
+        break;
+      } else {
+        this.ignoredActionTips.put(ignoredActionTip, true);
+      }
+    }
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
@@ -374,6 +389,19 @@ public class FileUserPreferences extends UserPreferences {
     // Remove obsolete keys
     for ( ; i <= 4; i++) {
       preferences.remove(RECENT_HOMES + i);
+    }
+    // Write ignored action tips
+    i = 1;
+    for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
+         it.hasNext(); ) {
+      Entry<String, Boolean> ignoredActionTipEntry = it.next();
+      if (ignoredActionTipEntry.getValue()) {
+        preferences.put(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
+      } 
+    }
+    // Remove obsolete keys
+    for ( ; i <= this.ignoredActionTips.size(); i++) {
+      preferences.remove(IGNORED_ACTION_TIP + i);
     }
     
     try {
@@ -646,6 +674,33 @@ public class FileUserPreferences extends UserPreferences {
    */
   protected Preferences getPreferences() {
     return Preferences.userNodeForPackage(FileUserPreferences.class);
+  }
+
+  /**
+   * Sets which action tip should be ignored.
+   */
+  @Override
+  public void setActionTipIgnored(String actionKey) {   
+    this.ignoredActionTips.put(actionKey, true);
+    super.setActionTipIgnored(actionKey);
+  }
+  
+  /**
+   * Returns whether an action tip should be ignored or not. 
+   */
+  @Override
+  public boolean isActionTipIgnored(String actionKey) {
+    Boolean ignoredActionTip = this.ignoredActionTips.get(actionKey);
+    return ignoredActionTip == null || !ignoredActionTip.booleanValue();
+  }
+  
+  /**
+   * Resets the display flag of action tips.
+   */
+  @Override
+  public void resetIgnoredActionTips() {
+    this.ignoredActionTips.clear();
+    super.resetIgnoredActionTips();
   }
 
   /**

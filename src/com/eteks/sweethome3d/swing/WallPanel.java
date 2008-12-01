@@ -726,7 +726,7 @@ public class WallPanel extends JPanel implements DialogView {
     JFormattedTextField thicknessTextField = 
         ((JSpinner.DefaultEditor)thicknessSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            dialogTitle, this, thicknessTextField) == JOptionPane.OK_OPTION) {
+            this, dialogTitle, thicknessTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyWalls();
     }
   }

@@ -54,7 +54,7 @@ public interface HomeView extends View {
       ALIGN_FURNITURE_ON_TOP, ALIGN_FURNITURE_ON_BOTTOM, ALIGN_FURNITURE_ON_LEFT, ALIGN_FURNITURE_ON_RIGHT,
       SELECT, CREATE_WALLS, CREATE_ROOMS, CREATE_DIMENSION_LINES, CREATE_LABELS, DELETE_SELECTION, 
       MODIFY_WALL, REVERSE_WALL_DIRECTION, SPLIT_WALL, MODIFY_ROOM, MODIFY_LABEL,
-      TOGGLE_BOLD_STYLE, TOGGLE_ITALIC_STYLE, INCREASE_TEXT_SIZE, DECREASE_TEXT_SIZE,
+      INCREASE_TEXT_SIZE, DECREASE_TEXT_SIZE, TOGGLE_BOLD_STYLE, TOGGLE_ITALIC_STYLE,
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, ZOOM_OUT, ZOOM_IN,  
       VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES, EXPORT_TO_OBJ,
       HELP, ABOUT}
@@ -139,6 +139,12 @@ public interface HomeView extends View {
    */
   public abstract void showMessage(String message);
 
+  /**
+   * Displays the tip matching <code>actionTipKey</code> and 
+   * returns <code>true</code> if the user chose not to display again the tip.
+   */
+  public abstract boolean showActionTipMessage(String actionTipKey);
+  
   /**
    * Displays an about dialog.
    */
