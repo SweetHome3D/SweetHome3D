@@ -3572,15 +3572,44 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private abstract class AbstractWallState extends ControllerState {
     private String wallLengthToolTipFeedback;
+    private String wallAngleToolTipFeedback;
     
     @Override
     public void enter() {
       this.wallLengthToolTipFeedback = resource.getString("wallLengthToolTipFeedback");
+      this.wallAngleToolTipFeedback = resource.getString("wallAngleToolTipFeedback");
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
       float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
           wall.getXEnd(), wall.getYEnd());
+      Wall wallAtStart = wall.getWallAtStart();
+      if (wallAtStart != null) {
+        float wallAtStartLength = (float)Point2D.distance(
+            wallAtStart.getXStart(), wallAtStart.getYStart(), 
+            wallAtStart.getXEnd(), wallAtStart.getYEnd());
+        if (length != 0 && wallAtStartLength != 0) {
+          // Compute the angle between the wall and its wall at start
+          float xWallVector = (wall.getXEnd() - wall.getXStart()) / length;
+          float yWallVector = (wall.getYEnd() - wall.getYStart()) / length;
+          float xWallAtStartVector = (wallAtStart.getXEnd() - wallAtStart.getXStart()) / wallAtStartLength;
+          float yWallAtStartVector = (wallAtStart.getYEnd() - wallAtStart.getYStart()) / wallAtStartLength;
+          if (wallAtStart.getWallAtStart() == wall) {
+            // Reverse wall at start direction
+            xWallAtStartVector = -xWallAtStartVector;
+            yWallAtStartVector = -yWallAtStartVector;
+          }
+          int wallAngle = (int)Math.round(180 - Math.toDegrees(Math.atan2(
+              yWallVector * xWallAtStartVector - xWallVector * yWallAtStartVector,
+              xWallVector * xWallAtStartVector + yWallVector * yWallAtStartVector)));
+          if (wallAngle > 180) {
+            wallAngle -= 360;
+          }
+          return "<html>" + String.format(this.wallLengthToolTipFeedback, 
+              preferences.getLengthUnit().getFormatWithUnit().format(length))
+          + "<br>" + String.format(this.wallAngleToolTipFeedback, wallAngle);
+        }
+      }
       return String.format(this.wallLengthToolTipFeedback, 
           preferences.getLengthUnit().getFormatWithUnit().format(length));
     }
@@ -5307,7 +5336,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Room resize state. This state manages room resizing. 
    */
-  private class RoomResizeState extends AbstractWallState {
+  private class RoomResizeState extends ControllerState {
     private Collection<Room> rooms;
     private Room             selectedRoom;
     private int              roomPointIndex;
