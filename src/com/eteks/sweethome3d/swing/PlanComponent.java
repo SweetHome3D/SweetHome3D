@@ -657,7 +657,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       @Override
       public void mouseDragged(MouseEvent ev) {
-        if (isEnabled() && ev.getButton() == MouseEvent.BUTTON1) {
+        if (isEnabled()) {
           mouseMoved(ev);
         }
       }
