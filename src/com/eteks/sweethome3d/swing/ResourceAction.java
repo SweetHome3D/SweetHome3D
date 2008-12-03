@@ -249,4 +249,22 @@ public class ResourceAction extends AbstractAction {
       return super.getValue(key);
     }
   }
+
+  /**
+   * An action decorator for  buttons.  
+   */
+  public static class ButtonAction extends AbstractDecoratedAction {
+    public ButtonAction(Action action) {
+      super(action);
+    }
+
+    public Object getValue(String key) {
+      // Avoid mnemonics in Mac OS X menus
+      if (OperatingSystem.isMacOSX()
+          && key.equals(MNEMONIC_KEY)) {
+        return null;
+      }
+      return super.getValue(key);
+    }
+  }
 }

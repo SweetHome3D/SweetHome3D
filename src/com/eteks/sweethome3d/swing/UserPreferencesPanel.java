@@ -240,13 +240,13 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           }
         });
     
-    this.resetDisplayedActionTipsButton = new JButton(
+    this.resetDisplayedActionTipsButton = new JButton(new ResourceAction.ButtonAction(
         new ResourceAction(this.resource, "RESET_DISPLAYED_ACTION_TIPS", true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             controller.resetDisplayedActionTips();
           }
-        });
+        }));
   }
   
   /**
