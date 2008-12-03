@@ -445,13 +445,13 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(this.nameLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets componentInsets = new Insets(0, 0, 10, 10);
+    Insets componentInsets = new Insets(0, 0, 10, 15);
     add(this.nameTextField, new GridBagConstraints(
-        1, 0, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
+        1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.nameVisibleCheckBox, new GridBagConstraints(
-        4, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     // Second row
     add(this.xLabel, new GridBagConstraints(
@@ -460,23 +460,17 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(this.xSpinner, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
-    add(this.yLabel, new GridBagConstraints(
+    add(this.widthLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.ySpinner, new GridBagConstraints(
+    add(this.widthSpinner, new GridBagConstraints(
         3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
-    add(this.elevationLabel, new GridBagConstraints(
-        4, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.elevationSpinner, new GridBagConstraints(
-        5, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -10, 0));
+        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
     // Third row
-    add(this.widthLabel, new GridBagConstraints(
+    add(this.yLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.widthSpinner, new GridBagConstraints(
+    add(this.ySpinner, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
     add(this.depthLabel, new GridBagConstraints(
@@ -484,33 +478,41 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.depthSpinner, new GridBagConstraints(
         3, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
+        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
+    // Forth row
+    add(this.elevationLabel, new GridBagConstraints(
+        0, 3, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.elevationSpinner, new GridBagConstraints(
+        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, componentInsets, -10, 0));
     add(this.heightLabel, new GridBagConstraints(
-        4, 2, 1, 1, 0, 0, labelAlignment, 
+        2, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.heightSpinner, new GridBagConstraints(
-        5, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -15, 0));
+        3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, -10, 0));
+    // Fifth row
+    add(this.angleLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.angleSpinner, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
+    add(this.mirroredModelCheckBox, new GridBagConstraints(
+        3, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     // Last row
     Insets lastRowInsets = new Insets(0, 0, 0, 5);
     add(this.colorLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
+        0, 5, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, lastRowInsets, 0, 0));
     add(this.colorButton, new GridBagConstraints(
-        1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-    add(this.mirroredModelCheckBox, new GridBagConstraints(
-        2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, lastRowInsets, 0, 0));
     add(this.visibleCheckBox, new GridBagConstraints(
-        3, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, lastRowInsets, 0, 0));
-    add(this.angleLabel, new GridBagConstraints(
-        4, 3, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, lastRowInsets, 0, 0));
-    add(this.angleSpinner, new GridBagConstraints(
-        5, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -15, 0));
+        3, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**
