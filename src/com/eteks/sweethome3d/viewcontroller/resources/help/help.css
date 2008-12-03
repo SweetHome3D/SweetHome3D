@@ -4,6 +4,12 @@ p  {
 	text-decoration: none;
 	margin-bottom: 7px;
 }
+
+td  {
+	font-size: 12px;
+	font-family: "Lucida Grande";
+	text-decoration: none;
+}
 	
 ul  {
 	margin-top: 0px;
