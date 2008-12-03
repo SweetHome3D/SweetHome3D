@@ -28,16 +28,33 @@
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
   <tr>
     <td><p>To print a home, choose <i>File &gt; Print...</i>.<br>
-      This menu displays the print dialog of your system that lets you choose the printer, the printed pages numbers, print
-          quality...</p>
+      This menu displays the print dialog box of your system that lets you choose the printer, the printed pages numbers,
+          print quality...</p>
       <p>By default, Sweet Home 3D prints the furniture list, the plan and the current 3D view of a home, using default paper
         size, margins and orientation.<br>
         If you want to modify these parameters, choose <i>File &gt; Page setup...</i>.</p>
-      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="190" height="152"></p>
+      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="253" height="261"></p>
       <p>          In the page setup pane, you may change paper size and orientation by clicking on the <i>Page format</i> button.
-        You can choose also if the furniture list, the plan and the 3D view of a home should be printed or not.</p>
-      <p>To preview your page setup at screen, choose <i>File &gt; Print preview...</i>.</p>
-      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="313" height="294"></p>
+        You can choose also if the furniture list, the plan and the 3D view of a home should be printed or not. If you don't
+        want to use the scale of the plan computed automatically to fit paper  at best, you may choose an other scale in
+        the <i>Scale</i> field.<br>
+        You may also choose the header and/or the footer of your choice that will appear on each printed page. The<i> Header</i> and <i>Footer </i>text
+        fields accepts free texts and also some variables that will be replaced
+        by their value at printing time. Here are the 7 following variables available at this time:</p>
+      <ul>
+        <li><i>$pageNumber</i> for page number,</li>
+        <li><i>$pageCount</i> for the total page count,</li>
+        <li><i>$planScale</i> for the plan scale (either the one automatically computed, or the one you entered in <i>Scale</i> field),</li>
+        <li><i>$date</i> for the date when you will launch print,</li>
+        <li><i>$time</i> for the time when you will launch print,</li>
+        <li><i>$name</i> for the name of your home,</li>
+        <li><i>$file</i> for the file path of your home file.</li>
+        </ul>      
+      <p>To avoid you typing the exact name of a variable, use the <i>Variables</i> buttons displayed under the <i>Header</i> and <i>Footer </i>text
+        fields. As the $ sign is reserved for variables, you should use the <i>$$</i> code to print a $ sign. </p>      
+      <p>Before printing your home, you may preview your page setup at screen, by choosing <i>File &gt; Print
+          preview...</i> out of the menu.</p>
+      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="312" height="294"></p>
       <p>In the print preview pane, you can see how a home will be printed page by page. To change the previewed
         page, click on the arrows at the top of the pane or press the arrow keys.</p></td>
   </tr>
@@ -67,15 +84,15 @@
             <td width="16"><p>&#149;</p>
             </td>
             <td>
-              <p>The plan and the 3D view of a home are printed in such a way that they fill
-                one page, excepted paper margins. The 3D view is printed at a 150 dpi resolution.</p>
+              <p>The  3D view of a home is always printed at a 150 dpi resolution and in such a way that it fill
+                one page, excepted paper margins..</p>
             </td>
           </tr>
           <tr valign="top">
             <td><p>&#149;</p>
             </td>
             <td>
-              <p>If you want to print the scale of the plan on paper, draw a  <a href="drawingDimensions.html">dimension</a>  measuring
+              <p>You can show also the scale of the plan on paper by drawing a  <a href="drawingDimensions.html">dimension</a>  measuring
                 a standard length (1 meter for example) somewhere on the border of the plan.</p>
             </td>
           </tr>
