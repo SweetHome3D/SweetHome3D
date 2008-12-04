@@ -2080,8 +2080,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.drawString(lengthText, 
           (dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
           dimensionLine.getOffset() <= 0 
-              ? -lengthFontMetrics.getDescent() - 1 / planScale
-              : lengthFontMetrics.getAscent() + 1 / planScale);
+              ? -lengthFontMetrics.getDescent() - 1
+              : lengthFontMetrics.getAscent() + 1);
       
       g2D.setTransform(previousTransform);
     }
