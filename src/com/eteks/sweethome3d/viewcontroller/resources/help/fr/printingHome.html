@@ -31,13 +31,30 @@
       <p>Par d&eacute;faut, Sweet Home 3D imprime la liste des meubles, le plan et la vue 3D en cours d'un logement, en utilisant
         la taille de papier, les marges et l'orientation par d&eacute;faut.<br>
         Si vous voulez modifier ce param&eacute;trage, choisissez <i>Fichier &gt; Mise en page...</i>.</p>
-      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="189" height="141"></p>
+      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="271" height="262"></p>
       <p>          Dans le panneau de mise en page, vous pouvez modifier la taille et l'orientation du papier en cliquant
         sur le bouton <i>Format d'impression</i>.
         Vous pouvez choisir aussi si la liste des meubles, le plan et la vue 3D d'un logement 
-        seront imprim&eacute;s ou non.</p>
+        seront imprim&eacute;s ou non. Si vous ne voulez pas utliser l'&eacute;chelle calcul&eacute;e automatiquement pour remplir une
+        page, vous pouvez choisir une autre &eacute;chelle dans le champ de saisie <i>Echelle</i>.<br>
+Vous pouvez aussi choisir un en-t&ecirc;te et/ou un pied de page qui appara&icirc;tra sur chaque page imprim&eacute;e.
+Il est possible de saisir un texte libre dans les champs de saisie <i>En-t&ecirc;te</i> et <i>Pied de page </i>ainsi que
+des variables qui seront remplac&eacute;es par leur valeur au moment de l'impression. Voici les 7 variables disponibles actuellement:</p>
+      <ul>
+        <li><i>$pageNumber</i> pour le num&eacute;ro de page,</li>
+        <li><i>$pageCount</i> pour le nombre total de pages,</li>
+        <li><i>$planScale</i> pour l'&eacute;chelle du plan (soit celle calcul&eacute;e automatiquement,
+          ou celle que vous avez saisie dans le champ <i>Echelle</i>),</li>
+        <li><i>$date</i> pour la date de l'instant o&ugrave; vous lancerez l'impression,</li>
+        <li><i>$time</i> pour l'heure de l'instant o&ugrave; vous lancerez l'impression,</li>
+        <li><i>$name</i> pour le nom du logement,</li>
+        <li><i>$file</i> pour le fichier complet du logement.</li>
+      </ul>
+      <p>Pour vous &eacute;viter de saisir le nom exact d'une variable, utilisez les boutons <i>Variables</i> affich&eacute;s sous
+        les champs de saisie <i>En-t&ecirc;te</i> et <i>Pied de page</i>. Comme le signe $ est r&eacute;serv&eacute; pour les variables,
+        utilisez le code <i>$$</i> si vous voulez imprimer un signe $ dans le texte en-t&ecirc;te ou en pied de page.</p>
       <p>Pour pr&eacute;visualiser votre mise en page &agrave; l'&eacute;cran, choisissez <i>Fichier &gt; Aper&ccedil;u avant impression...</i>.</p>
-      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="299" height="282"></p>
+      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="314" height="295"></p>
       <p>Dans le panneau d'aper&ccedil;u avant impression, vous pouvez voir comment un logement sera imprim&eacute; page par page. Pour
         passer d'une page &agrave; l'autre, cliquez sur les fl&egrave;ches en haut du panneau ou utilisez les  fl&egrave;ches du clavier.</p></td>
   </tr>
@@ -68,16 +85,17 @@
             <td width="16"><p>&#149;</p>
             </td>
             <td>
-              <p>Le plan et la vue 3D d'un logement sont imprim&eacute;s de telle fa&ccedil;on qu'ils remplissent
-                une page, marges except&eacute;es. La vue 3D est imprim&eacute;e &agrave; une r&eacute;solution de 150 dpi.</p>
+              <p>La vue 3D d'un logement est imprim&eacute;e &agrave; une r&eacute;solution de 150 dpi de telle fa&ccedil;on
+                qu'elle remplisse une page, marges except&eacute;es.</p>
             </td>
           </tr>
           <tr valign="top">
             <td><p>&#149;</p>
             </td>
             <td>
-              <p>Si vous voulez imprimez l'&eacute;chelle du plan sur papier, dessinez une <a href="drawingDimensions.html">cote</a> mesurant une longueur standard (1
-                m&egrave;tre par exemple) sur un bord du plan.</p>
+              <p>Pour r&eacute;pr&eacute;senter  l'&eacute;chelle du plan sur papier, vous pouvez aussi dessiner dans le
+                plan une <a href="drawingDimensions.html">cote</a> mesurant
+                une longueur standard (1 m&egrave;tre par exemple).</p>
             </td>
           </tr>
           <tr valign="top">
