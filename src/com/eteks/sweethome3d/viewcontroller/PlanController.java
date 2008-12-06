@@ -2714,13 +2714,24 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private float [][] getPathPoints(GeneralPath roomPath) {
     List<float []> pathPoints = new ArrayList<float[]>();
+    float [] previousPathPoint = null;
     for (PathIterator it = roomPath.getPathIterator(null); !it.isDone(); ) {
       float [] pathPoint = new float[2];
-      if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+      if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE
+          && (previousPathPoint == null
+              || !Arrays.equals(pathPoint, previousPathPoint))) {
         pathPoints.add(pathPoint);
+        previousPathPoint = pathPoint;
       }
       it.next();
     }      
+    
+    // Remove last point if it's equal to first point
+    if (pathPoints.size() > 1
+        && Arrays.equals(pathPoints.get(0), pathPoints.get(pathPoints.size() - 1))) {
+      pathPoints.remove(pathPoints.size() - 1);
+    }
+    
     return pathPoints.toArray(new float [pathPoints.size()][]);
   }
 
