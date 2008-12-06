@@ -1353,6 +1353,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
      */
     private Geometry [] createWallGeometries(int wallSide, HomeTexture texture) {
       Shape wallShape = HomeComponent3D.getShape(getWallSidePoints(wallSide));
+      Area wallArea = new Area(wallShape);
       float wallHeightAtStart = getWallHeightAtStart();
       float wallHeightAtEnd = getWallHeightAtEnd();
       float maxWallHeight = Math.max(wallHeightAtStart, wallHeightAtEnd);
@@ -1375,27 +1376,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       }
       
       // Search which doors or windows intersect with this wall side
-      Map<HomePieceOfFurniture, Area> intersections = new HashMap<HomePieceOfFurniture, Area>();
+      Map<HomePieceOfFurniture, Area> windowIntersections = new HashMap<HomePieceOfFurniture, Area>();
       for (HomePieceOfFurniture piece : this.home.getFurniture()) {
         if (piece.isDoorOrWindow() 
             && piece.getElevation() < maxWallHeight) {
           Shape pieceShape = HomeComponent3D.getShape(piece.getPoints());
-          Area wallArea = new Area(wallShape);
-          wallArea.intersect(new Area(pieceShape));
-          boolean wallPieceIntersectionEmpty = wallArea.isEmpty();
-          if (!wallPieceIntersectionEmpty) {
-            intersections.put(piece, wallArea);
+          Area pieceArea = new Area(pieceShape);
+          Area intersectionArea = new Area(wallShape);
+          intersectionArea.intersect(pieceArea);
+          if (!intersectionArea.isEmpty()) {
+            windowIntersections.put(piece, intersectionArea);
+            // Remove from wall area the piece shape
+            wallArea.subtract(pieceArea);
           }
         }
       }
       List<Geometry> wallGeometries = new ArrayList<Geometry>();
       List<float[]> wallPoints = new ArrayList<float[]>(4);
-      // Get wall shape excluding window intersections
-      Area wallArea = new Area(wallShape);
-      for (HomePieceOfFurniture piece : intersections.keySet()) {
-        wallArea.subtract(new Area(HomeComponent3D.getShape(piece.getPoints())));
-      }
-      
       // Generate geometry for each wall part that doesn't contain a window
       float [] previousWallPoint = null;
       for (PathIterator it = wallArea.getPathIterator(null, 0.1f); !it.isDone(); ) {
@@ -1428,7 +1425,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       
       // Generate geometry for each wall part above and below a window
       previousWallPoint = null;
-      for (Map.Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
+      for (Map.Entry<HomePieceOfFurniture, Area> windowIntersection : windowIntersections.entrySet()) {
         for (PathIterator it = windowIntersection.getValue().getPathIterator(null, 0.1f); !it.isDone(); ) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
