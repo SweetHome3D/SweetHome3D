@@ -18,6 +18,7 @@
      - macosxInstaller  : Builds SweetHome3D-version-macosx.dmg file in install directory
      - linuxInstaller   : Builds SweetHome3D-version-linux-x86.tgz file in install directory
      - sourceArchive    : Builds SweetHome3D-version-src.zip file in install directory
+     - javadoc          : Builds SweetHome3D-version-javadoc.zip file install directory 
      
      - jdepend : Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest 
 -->
@@ -33,11 +34,7 @@
   	     during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
     <javac srcdir="src" destdir="build/classes"
     	   includes="com/eteks/sweethome3d/applet/SweetHome3DApplet.*"
-    	   encoding="ISO-8859-1" target="1.1" source="1.2">
-      <classpath>
-        <pathelement path="build/classes"/>
-      </classpath>
-    </javac>
+    	   encoding="ISO-8859-1" target="1.1" source="1.2"/>      
   	<!-- Compile other classes -->
     <javac srcdir="src" destdir="build/classes"
     	   encoding="ISO-8859-1" target="1.5">
@@ -553,7 +550,41 @@
 
     <echo message="install/SweetHome3D-${version}-src.zip ready for ftp"/>
   </target>
+	
+  <!-- Builds install/SweetHome3D-version-javadoc.zip archive that contains 
+       SweetHome3D source files in directory named SweetHome3D-version-src -->
+  <target name="javadoc">
+    <mkdir dir="install/javadoc/SweetHome3D-${version}-javadoc"/>
+  	<javadoc sourcepath="src" destdir="install/javadoc/SweetHome3D-${version}-javadoc" 
+             encoding="ISO-8859-1" version="true" author="true" use="true"
+  	         windowtitle="Sweet Home 3D ${version} API">
+      <doctitle><![CDATA[<img src='http://www.sweethome3d.eu/SweetHome3DIcon.gif' width='48' height='48' alt='Sweet Home 3D' align='absmiddle'> Sweet Home 3D ${version} API]]></doctitle>
+      <header><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></header>
+      <footer><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
+      <bottom><![CDATA[<table align='center'><tr>
+      	               <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.eu/images/eteks.gif'><a></td>
+      	               <td>© Copyrights 2006-2008 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
+      	                   <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
+      <link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
+      <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>
+  	  <group title="Base classes" packages="*"/>
+  	  <group title="Application and Applet" packages="com.eteks.sweethome3d:com.eteks.sweethome3d.applet"/>
+      <classpath>
+        <fileset dir="lib"/>
+        <pathelement location="libtest/AppleJavaExtensions.jar"/>
+        <pathelement location="libtest/jnlp.jar"/>
+  	  </classpath>
+    </javadoc>
+  	
+  	<zip destfile="install/SweetHome3D-${version}-javadoc.zip" basedir="install/javadoc"
+  		 includes="SweetHome3D-${version}-javadoc/**" />
 
+  	<!-- Clean build directory -->
+    <delete dir="install/javadoc"/>
+
+    <echo message="install/SweetHome3D-${version}-javadoc.zip ready for ftp"/>
+  </target>
+	
   <!-- Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest test -->
   <target name="jdepend" depends="build">
   	<!-- Create jdepend.properties file in build directory that specifies ignored Java packages -->
