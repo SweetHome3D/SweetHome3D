@@ -1496,7 +1496,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     /**
      * Returns the vertical rectangles that join each point of <code>points</code>
-     * and spread from <code>yMin</code> to a top line described by <code>topLineAlpha</code>
+     * and spread from <code>yMin</code> to a top line (y = ax + ß) described by <code>topLineAlpha</code>
      * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
      * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
      */
