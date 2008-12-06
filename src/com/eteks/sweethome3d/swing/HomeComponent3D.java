@@ -1392,63 +1392,83 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       List<float[]> wallPoints = new ArrayList<float[]>(4);
       // Get wall shape excluding window intersections
       Area wallArea = new Area(wallShape);
-      for (Area intersection : intersections.values()) {
-        wallArea.exclusiveOr(intersection);
+      for (HomePieceOfFurniture piece : intersections.keySet()) {
+        wallArea.subtract(new Area(HomeComponent3D.getShape(piece.getPoints())));
       }
       
       // Generate geometry for each wall part that doesn't contain a window
-      for (PathIterator it = wallArea.getPathIterator(null); !it.isDone(); ) {
+      float [] previousWallPoint = null;
+      for (PathIterator it = wallArea.getPathIterator(null, 0.1f); !it.isDone(); ) {
         float [] wallPoint = new float[2];
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
-          float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
-          // Compute geometry for vertical part
-          wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
-          // Compute geometry for bottom part
-          wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
-          // Compute geometry for top part
-          wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+          if (wallPoints.size() > 2) {
+            // Remove last point if it's equal to first point
+            if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
+              wallPoints.remove(wallPoints.size() - 1);
+            }
+            float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+            // Compute geometry for vertical part
+            wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
+            // Compute geometry for bottom part
+            wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
+            // Compute geometry for top part
+            wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+          }
           wallPoints.clear();
-        } else {
+          previousWallPoint = null;
+        } else if (previousWallPoint == null
+                   || !Arrays.equals(wallPoint, previousWallPoint)) {
           wallPoints.add(wallPoint);
+          previousWallPoint = wallPoint;
         }
         it.next();
       }
       
       // Generate geometry for each wall part above and below a window
+      previousWallPoint = null;
       for (Map.Entry<HomePieceOfFurniture, Area> windowIntersection : intersections.entrySet()) {
-        for (PathIterator it = windowIntersection.getValue().getPathIterator(null); !it.isDone(); ) {
+        for (PathIterator it = windowIntersection.getValue().getPathIterator(null, 0.1f); !it.isDone(); ) {
           float [] wallPoint = new float[2];
           if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
-            float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
-            HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
-            float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
-            // Compute the minimum vertical position of wallPartPoints
-            double minTopY = maxWallHeight;
-            for (int i = 0; i < wallPartPoints.length; i++) {
-              double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
-              minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
-            }            
-            // Generate geometry for wall part above window
-            if (doorOrWindowTop < minTopY) {
-              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
-                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
-              wallGeometries.add(createWallHorizontalPartGeometry(
-                  wallPartPoints, doorOrWindowTop));
-              wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
-            }
-            // Generate geometry for wall part below window
-            if (doorOrWindow.getElevation() > 0) {
-              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
-                  cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture));
-              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
-              wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
+            if (wallPoints.size() > 2) {
+              // Remove last point if it's equal to first point
+              if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
+                wallPoints.remove(wallPoints.size() - 1);
+              }
+              float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+              HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
+              float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
+              // Compute the minimum vertical position of wallPartPoints
+              double minTopY = maxWallHeight;
+              for (int i = 0; i < wallPartPoints.length; i++) {
+                double xTopPointWithZeroYaw = cosWallYawAngle * wallPartPoints[i][0] + sinWallYawAngle * wallPartPoints[i][1];
+                minTopY = Math.min(minTopY, topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
+              }            
+              // Generate geometry for wall part above window
+              if (doorOrWindowTop < minTopY) {
+                wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
+                wallGeometries.add(createWallHorizontalPartGeometry(
+                    wallPartPoints, doorOrWindowTop));
+                wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+                    cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+              }
+              // Generate geometry for wall part below window
+              if (doorOrWindow.getElevation() > 0) {
+                wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
+                    cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
+                wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
+              }
             }
             wallPoints.clear();
-          } else {
+            previousWallPoint = null;
+          } else if (previousWallPoint == null
+                     || !Arrays.equals(wallPoint, previousWallPoint)) {
             wallPoints.add(wallPoint);
+            previousWallPoint = wallPoint;
           }
           it.next();
         }
