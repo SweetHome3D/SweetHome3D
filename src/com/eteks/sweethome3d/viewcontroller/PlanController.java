@@ -403,28 +403,28 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the camera yaw rotation state.
    */
-  public ControllerState getCameraYawRotationState() {
+  protected ControllerState getCameraYawRotationState() {
     return this.cameraYawRotationState;
   }
 
   /**
    * Returns the camera pitch rotation state.
    */
-  public ControllerState getCameraPitchRotationState() {
+  protected ControllerState getCameraPitchRotationState() {
     return this.cameraPitchRotationState;
   }
 
   /**
    * Returns the dimension line creation state.
    */
-  public ControllerState getDimensionLineCreationState() {
+  protected ControllerState getDimensionLineCreationState() {
     return this.dimensionLineCreationState;
   }
 
   /**
    * Returns the dimension line drawing state.
    */
-  public ControllerState getDimensionLineDrawingState() {
+  protected ControllerState getDimensionLineDrawingState() {
     return this.dimensionLineDrawingState;
   }
 
@@ -761,7 +761,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Controls the creation of new labels.
    */
-  public void createNewLabel(float x, float y) {
+  private void createNewLabel(float x, float y) {
     new LabelController(this.home, x, y, this.preferences, this.viewFactory,
         this.undoSupport).displayView(getView());
   }
@@ -2284,8 +2284,8 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable operation about duplication <code>items</code>.
    */
-  public void postItemsDuplication(final List<Selectable> items,
-                                   final List<Selectable> oldSelectedItems) {
+  private void postItemsDuplication(final List<Selectable> items,
+                                    final List<Selectable> oldSelectedItems) {
     // Delete furniture and add it again in a compound edit
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
     deleteFurniture(furniture);
@@ -2403,8 +2403,8 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable operation about <code>room</code> name offset change.
    */
-  public void postRoomNameOffset(final Room room, final float oldNameXOffset, 
-                                 final float oldNameYOffset) {
+  private void postRoomNameOffset(final Room room, final float oldNameXOffset, 
+                                  final float oldNameYOffset) {
     final float newNameXOffset = room.getNameXOffset();
     final float newNameYOffset = room.getNameYOffset();
     if (newNameXOffset != oldNameXOffset
@@ -2438,8 +2438,8 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable operation about <code>room</code> area offset change.
    */
-  public void postRoomAreaOffset(final Room room, final float oldAreaXOffset, 
-                                 final float oldAreaYOffset) {
+  private void postRoomAreaOffset(final Room room, final float oldAreaXOffset, 
+                                  final float oldAreaYOffset) {
     final float newAreaXOffset = room.getAreaXOffset();
     final float newAreaYOffset = room.getAreaYOffset();
     if (newAreaXOffset != oldAreaXOffset
@@ -2607,9 +2607,9 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable operation about <code>piece</code> name offset change.
    */
-  public void postPieceOfFurnitureNameOffset(final HomePieceOfFurniture piece, 
-                                             final float oldNameXOffset, 
-                                             final float oldNameYOffset) {
+  private void postPieceOfFurnitureNameOffset(final HomePieceOfFurniture piece, 
+                                              final float oldNameXOffset, 
+                                              final float oldNameYOffset) {
     final float newNameXOffset = piece.getNameXOffset();
     final float newNameYOffset = piece.getNameYOffset();
     if (newNameXOffset != oldNameXOffset
@@ -2682,7 +2682,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable operation about <code>dimensionLine</code> offset change.
    */
-  public void postDimensionLineOffset(final DimensionLine dimensionLine, final float oldOffset) {
+  private void postDimensionLineOffset(final DimensionLine dimensionLine, final float oldOffset) {
     final float newOffset = dimensionLine.getOffset();
     if (newOffset != oldOffset) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
