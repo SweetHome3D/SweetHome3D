@@ -117,6 +117,8 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.Plugin;
@@ -149,13 +151,16 @@ public class HomePane extends JRootPane implements HomeView {
   private final Home                            home;
   private final HomeController                  controller;
   private ResourceBundle                        resource;
-  // Button models shared by Select, Create walls, Create rooms and Create dimensions menu items
-  // and the matching tool bar buttons
+  // Button models shared by Select, Create walls, Create rooms, Create dimensions 
+  // and Create labels menu items and their matching tool bar buttons
   private final JToggleButton.ToggleButtonModel selectToggleModel;
   private final JToggleButton.ToggleButtonModel createWallsToggleModel;
   private final JToggleButton.ToggleButtonModel createRoomsToggleModel;
   private final JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
   private final JToggleButton.ToggleButtonModel createLabelsToggleModel;
+  // Button models shared by Bold and Italic menu items and their matching tool bar buttons
+  private final JToggleButton.ToggleButtonModel boldStyleToggleModel;
+  private final JToggleButton.ToggleButtonModel italicStyleToggleModel;
   // Button models shared by View from top and View from observer menu items and
   // the matching tool bar buttons
   private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
@@ -175,9 +180,9 @@ public class HomePane extends JRootPane implements HomeView {
     this.home = home;
     this.controller = controller;
     this.resource = ResourceBundle.getBundle(HomePane.class.getName());
-    // Create unique toggle button models for Selection / Wall creation / Dimension line creation states
-    // so Select, Create walls and Create Dimension lines menu items and tool bar buttons 
-    // always reflect the same toggle state at screen
+    // Create unique toggle button models for Selection / Wall creation / Room creation / 
+    // Dimension line creation / Label creation states
+    // so the matching menu items and tool bar buttons always reflect the same toggle state at screen
     this.selectToggleModel = new JToggleButton.ToggleButtonModel();
     this.selectToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.SELECTION);
@@ -193,6 +198,10 @@ public class HomePane extends JRootPane implements HomeView {
     this.createLabelsToggleModel = new JToggleButton.ToggleButtonModel();
     this.createLabelsToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.LABEL_CREATION);
+    // Use special models for bold and italic check box menu items and tool bar buttons 
+    // that are selected texts in home selected items are all bold or italic
+    this.boldStyleToggleModel = createBoldStyleToggleModel(home, preferences);
+    this.italicStyleToggleModel = createItalicStyleToggleModel(home, preferences);
     // Create unique toggle button models for top and observer cameras
     // so View from top and View from observer creation menu items and tool bar buttons 
     // always reflect the same toggle state at screen
@@ -214,7 +223,7 @@ public class HomePane extends JRootPane implements HomeView {
     JMenuBar homeMenuBar = createHomeMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
-    contentPane.add(createToolBar(), BorderLayout.NORTH);
+    contentPane.add(createToolBar(home), BorderLayout.NORTH);
     contentPane.add(createMainPane(home, preferences, controller));
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Under Mac OS X 10.5, add some dummy labels at left and right borders
@@ -894,48 +903,7 @@ public class HomePane extends JRootPane implements HomeView {
     modifyTextStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
     modifyTextStyleMenu.addSeparator();
     JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
-    // Use a special model for bold check box menu item that is selected if
-    // texts in home selected items are all bold 
-    boldMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
-        @Override
-        public boolean isSelected() {
-          // Find if selected items are all bold or not
-          Boolean selectionBoldStyle = null;
-          for (Selectable item : home.getSelectedItems()) {
-            Boolean bold;
-            if (item instanceof Label) {
-              bold = isItemTextBold(item, ((Label)item).getStyle());
-            } else if (item instanceof HomePieceOfFurniture
-                && ((HomePieceOfFurniture)item).isVisible()) {
-              bold = isItemTextBold(item, ((HomePieceOfFurniture)item).getNameStyle());
-            } else if (item instanceof Room) {
-              Room room = (Room)item;
-              bold = isItemTextBold(room, room.getNameStyle());
-              if (bold != isItemTextBold(room, room.getAreaStyle())) {
-                bold = null;
-              }
-            } else if (item instanceof DimensionLine) {
-              bold = isItemTextBold(item, ((DimensionLine)item).getLengthStyle());
-            } else {
-              continue;
-            }
-            if (selectionBoldStyle == null) {
-              selectionBoldStyle = bold;
-            } else if (bold == null || !selectionBoldStyle.equals(bold)) {
-              selectionBoldStyle = null;
-              break;
-            }
-          }
-          return selectionBoldStyle != null && selectionBoldStyle;
-        }
-        
-        private boolean isItemTextBold(Selectable item, TextStyle textStyle) {
-          if (textStyle == null) {
-            textStyle = preferences.getDefaultTextStyle(item.getClass());              
-          }          
-          return textStyle.isBold();
-        }
-      }); 
+    boldMenuItem.setModel(this.boldStyleToggleModel); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     boldMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
     modifyTextStyleMenu.add(boldMenuItem);
@@ -943,50 +911,124 @@ public class HomePane extends JRootPane implements HomeView {
     JCheckBoxMenuItem italicMenuItem = new JCheckBoxMenuItem();
     // Use a special model for italic check box menu item that is selected if
     // texts in home selected items are all italic 
-    italicMenuItem.setModel(new JToggleButton.ToggleButtonModel() {
-        @Override
-        public boolean isSelected() {
-          // Find if selected items are all italic or not
-          Boolean selectionItalicStyle = null;
-          for (Selectable item : home.getSelectedItems()) {
-            Boolean italic;
-            if (item instanceof Label) {
-              italic = isItemTextItalic(item, ((Label)item).getStyle());
-            } else if (item instanceof HomePieceOfFurniture
-                && ((HomePieceOfFurniture)item).isVisible()) {
-              italic = isItemTextItalic(item, ((HomePieceOfFurniture)item).getNameStyle());
-            } else if (item instanceof Room) {
-              Room room = (Room)item;
-              italic = isItemTextItalic(room, room.getNameStyle());
-              if (italic != isItemTextItalic(room, room.getAreaStyle())) {
-                italic = null;
-              }
-            } else if (item instanceof DimensionLine) {
-              italic = isItemTextItalic(item, ((DimensionLine)item).getLengthStyle());
-            } else {
-              continue;
-            }
-            if (selectionItalicStyle == null) {
-              selectionItalicStyle = italic;
-            } else if (italic == null || !selectionItalicStyle.equals(italic)) {
-              selectionItalicStyle = null;
-              break;
-            }
-          }
-          return selectionItalicStyle != null && selectionItalicStyle;
-        }
-        
-        private boolean isItemTextItalic(Selectable item, TextStyle textStyle) {
-          if (textStyle == null) {
-            textStyle = preferences.getDefaultTextStyle(item.getClass());              
-          }          
-          return textStyle.isItalic();
-        }
-      }); 
+    italicMenuItem.setModel(this.italicStyleToggleModel); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
     italicMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
     modifyTextStyleMenu.add(italicMenuItem);
     return modifyTextStyleMenu;
+  }
+
+  /**
+   * Creates a toggle button model that is selected when all the text of the 
+   * selected items in <code>home</code> use bold style.  
+   */
+  private JToggleButton.ToggleButtonModel createBoldStyleToggleModel(final Home home, 
+                                                                     final UserPreferences preferences) {
+    return new JToggleButton.ToggleButtonModel() {
+      {
+        home.addSelectionListener(new SelectionListener() {
+          public void selectionChanged(SelectionEvent ev) {
+            fireStateChanged();
+          }
+        });
+      }
+      
+      @Override
+      public boolean isSelected() {
+        // Find if selected items are all bold or not
+        Boolean selectionBoldStyle = null;
+        for (Selectable item : home.getSelectedItems()) {
+          Boolean bold;
+          if (item instanceof Label) {
+            bold = isItemTextBold(item, ((Label)item).getStyle());
+          } else if (item instanceof HomePieceOfFurniture
+              && ((HomePieceOfFurniture)item).isVisible()) {
+            bold = isItemTextBold(item, ((HomePieceOfFurniture)item).getNameStyle());
+          } else if (item instanceof Room) {
+            Room room = (Room)item;
+            bold = isItemTextBold(room, room.getNameStyle());
+            if (bold != isItemTextBold(room, room.getAreaStyle())) {
+              bold = null;
+            }
+          } else if (item instanceof DimensionLine) {
+            bold = isItemTextBold(item, ((DimensionLine)item).getLengthStyle());
+          } else {
+            continue;
+          }
+          if (selectionBoldStyle == null) {
+            selectionBoldStyle = bold;
+          } else if (bold == null || !selectionBoldStyle.equals(bold)) {
+            selectionBoldStyle = null;
+            break;
+          }
+        }
+        return selectionBoldStyle != null && selectionBoldStyle;
+      }
+      
+      private boolean isItemTextBold(Selectable item, TextStyle textStyle) {
+        if (textStyle == null) {
+          textStyle = preferences.getDefaultTextStyle(item.getClass());              
+        }
+        
+        return textStyle.isBold();
+      }        
+    };
+  }
+
+  /**
+   * Creates a toggle button model that is selected when all the text of the 
+   * selected items in <code>home</code> use italic style.  
+   */
+  private JToggleButton.ToggleButtonModel createItalicStyleToggleModel(final Home home,
+                                                                       final UserPreferences preferences) {
+    return new JToggleButton.ToggleButtonModel() {
+      {
+        home.addSelectionListener(new SelectionListener() {
+          public void selectionChanged(SelectionEvent ev) {
+            fireStateChanged();
+          }
+        });
+      }
+      
+      @Override
+      public boolean isSelected() {
+        // Find if selected items are all italic or not
+        Boolean selectionItalicStyle = null;
+        for (Selectable item : home.getSelectedItems()) {
+          Boolean italic;
+          if (item instanceof Label) {
+            italic = isItemTextItalic(item, ((Label)item).getStyle());
+          } else if (item instanceof HomePieceOfFurniture
+              && ((HomePieceOfFurniture)item).isVisible()) {
+            italic = isItemTextItalic(item, ((HomePieceOfFurniture)item).getNameStyle());
+          } else if (item instanceof Room) {
+            Room room = (Room)item;
+            italic = isItemTextItalic(room, room.getNameStyle());
+            if (italic != isItemTextItalic(room, room.getAreaStyle())) {
+              italic = null;
+            }
+          } else if (item instanceof DimensionLine) {
+            italic = isItemTextItalic(item, ((DimensionLine)item).getLengthStyle());
+          } else {
+            continue;
+          }
+          if (selectionItalicStyle == null) {
+            selectionItalicStyle = italic;
+          } else if (italic == null || !selectionItalicStyle.equals(italic)) {
+            selectionItalicStyle = null;
+            break;
+          }
+        }
+        return selectionItalicStyle != null && selectionItalicStyle;
+      }
+      
+      private boolean isItemTextItalic(Selectable item, TextStyle textStyle) {
+        if (textStyle == null) {
+          textStyle = preferences.getDefaultTextStyle(item.getClass());              
+        }          
+        return textStyle.isItalic();
+      }
+    };
   }
   
   /**
@@ -1126,7 +1168,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Returns the tool bar displayed in this pane.
    */
-  private JToolBar createToolBar() {
+  private JToolBar createToolBar(Home home) {
     final JToolBar toolBar = new JToolBar();
     toolBar.add(getToolBarAction(ActionType.NEW_HOME));
     toolBar.add(getToolBarAction(ActionType.OPEN));
@@ -1145,11 +1187,6 @@ public class HomePane extends JRootPane implements HomeView {
 
     toolBar.add(getToolBarAction(ActionType.ADD_HOME_FURNITURE));
     toolBar.add(getToolBarAction(ActionType.IMPORT_FURNITURE));
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_TOP));
-    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
-    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
-    toolBar.add(getToolBarAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
     toolBar.addSeparator();
    
     JToggleButton selectToggleButton = 
@@ -1164,7 +1201,7 @@ public class HomePane extends JRootPane implements HomeView {
     toolBar.add(createWallsToggleButton);
     JToggleButton createRoomsToggleButton = 
         new JToggleButton(getToolBarAction(ActionType.CREATE_ROOMS));
-    // Use the same model as Create walls menu item
+    // Use the same model as Create rooms menu item
     createRoomsToggleButton.setModel(this.createRoomsToggleModel);
     toolBar.add(createRoomsToggleButton);
     JToggleButton createDimensionLinesToggleButton = 
@@ -1174,7 +1211,7 @@ public class HomePane extends JRootPane implements HomeView {
     toolBar.add(createDimensionLinesToggleButton);
     JToggleButton createLabelsToggleButton = 
         new JToggleButton(getToolBarAction(ActionType.CREATE_LABELS));
-    // Use the same model as Create dimensions menu item
+    // Use the same model as Create labels menu item
     createLabelsToggleButton.setModel(this.createLabelsToggleModel);
     toolBar.add(createLabelsToggleButton);
     // Add Select, Create Walls and Create dimensions buttons to radio group 
@@ -1184,6 +1221,20 @@ public class HomePane extends JRootPane implements HomeView {
     group.add(createRoomsToggleButton);
     group.add(createDimensionLinesToggleButton);
     group.add(createLabelsToggleButton);
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    
+    toolBar.add(getToolBarAction(ActionType.INCREASE_TEXT_SIZE));
+    toolBar.add(getToolBarAction(ActionType.DECREASE_TEXT_SIZE));
+    JToggleButton boldToggleButton = 
+        new JToggleButton(getToolBarAction(ActionType.TOGGLE_BOLD_STYLE));
+    // Use the same model as Toggle bold style menu item
+    boldToggleButton.setModel(this.boldStyleToggleModel); 
+    toolBar.add(boldToggleButton);
+    JToggleButton italicToggleButton = 
+        new JToggleButton(getToolBarAction(ActionType.TOGGLE_ITALIC_STYLE));
+    // Use the same model as Toggle italic style menu item
+    italicToggleButton.setModel(this.italicStyleToggleModel); 
+    toolBar.add(italicToggleButton);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     toolBar.add(getToolBarAction(ActionType.ZOOM_IN));
@@ -2148,7 +2199,7 @@ public class HomePane extends JRootPane implements HomeView {
 
   private static final Border UNFOCUSED_BORDER;
   private static final Border FOCUSED_BORDER;
-  
+
   static {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       UNFOCUSED_BORDER = BorderFactory.createCompoundBorder(
