@@ -80,17 +80,25 @@ import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
  * @author Emmanuel Puybaret
  */
 public class AppletApplication extends HomeApplication {
+  private static final String FURNITURE_CATALOG_URLS_PARAMETER = "furnitureCatalogURLs";
+  private static final String TEXTURES_CATALOG_URLS_PARAMETER  = "texturesCatalogURLs";
+  private static final String PLUGIN_URLS_PARAMETER            = "pluginURLs";
+  private static final String WRITE_HOME_URL_PARAMETER         = "writeHomeURL";
+  private static final String READ_HOME_URL_PARAMETER          = "readHomeURL";
+  private static final String LIST_HOMES_URL_PARAMETER         = "listHomesURL";
+  private static final String DEFAULT_HOME_PARAMETER           = "defaultHome";
+  
   private final HomeRecorder         homeRecorder;
   private final UserPreferences      userPreferences;
 
   public AppletApplication(final JApplet applet) {
-    final String furnitureCatalogURLs = getAppletParameter(applet, "furnitureCatalogURLs", "catalog.zip");
-    final String texturesCatalogURLs = getAppletParameter(applet, "texturesCatalogURLs", "catalog.zip");
-    final String pluginURLs = getAppletParameter(applet, "pluginURLs", "");
-    final String writeHomeURL = getAppletParameter(applet, "writeHomeURL", "writeHome.php");    
-    final String readHomeURL = getAppletParameter(applet, "readHomeURL", "readHome.php?home=%s");
-    final String listHomesURL = getAppletParameter(applet, "listHomesURL", "listHomes.php");
-    final String defaultHome = getAppletParameter(applet, "defaultHome", "");    
+    final String furnitureCatalogURLs = getAppletParameter(applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
+    final String texturesCatalogURLs = getAppletParameter(applet, TEXTURES_CATALOG_URLS_PARAMETER, "catalog.zip");
+    final String pluginURLs = getAppletParameter(applet, PLUGIN_URLS_PARAMETER, "");
+    final String writeHomeURL = getAppletParameter(applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
+    final String readHomeURL = getAppletParameter(applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
+    final String listHomesURL = getAppletParameter(applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+    final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
 
     this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, listHomesURL);
     this.userPreferences = new AppletUserPreferences(

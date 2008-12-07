@@ -19,8 +19,20 @@
  */
 package com.eteks.sweethome3d.applet;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.swing.JApplet;
 import javax.swing.JLabel;
@@ -52,6 +64,9 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <li><code>pluginURLs</code> specifies the URLs of the actions available to users through 
  *     {@link com.eteks.sweethome3d.plugin.Plugin plugins}.These URLs are comma or space separated, 
  *     and if they are not absolute URLs, they will be considered as relative to applet codebase. 
+ *     If some classes of a plugin needs to access to resources protected by applet sandbox,
+ *     its JAR file should be signed, added to <code>archive</code> applet attribute and
+ *     and in a <code>jar</code> element of applet JNLP file.
  *     <br>By default, the value of this parameter is empty. If one of the URLs specified by 
  *     this parameter doesn't exist, it will be ignored.</li>
  *     
@@ -174,8 +189,7 @@ public class SweetHome3DApplet extends JApplet {
           "libjogl.jnilib",
           "libjogl_awt.jnilib",
           "libjogl_cg.jnilib"};
-      String [] applicationPackages = {
-          "com.domusventures.floorplanner",
+      List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
           "javax.media.j3d",
           "javax.vecmath",
@@ -183,10 +197,13 @@ public class SweetHome3DApplet extends JApplet {
           "com.sun.opengl",
           "com.sun.gluegen.runtime",
           "javax.media.opengl",
-          "com.microcrowd.loader.java3d"};
+          "com.microcrowd.loader.java3d"}));
+      applicationPackages.addAll(getPluginsPackages());
+      
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
           sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
-          java3DFiles, applicationPackages);
+          java3DFiles, (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
+      
       // Call application constructor with reflection
       String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
@@ -202,4 +219,51 @@ public class SweetHome3DApplet extends JApplet {
       ex.printStackTrace();
     }
   }  
+  
+  /**
+   * Returns the collection of packages that are found in plugins. 
+   */
+  private Collection getPluginsPackages() {
+    String pluginURLs = getParameter("pluginURLs");
+    if (pluginURLs != null) {        
+      Set pluginPackages = new HashSet();
+      // Add to pluginPackages all the packages contained in the plugin URLs
+      String [] urlStrings = pluginURLs.split("\\s|,");
+      for (int i = 0; i < urlStrings.length; i++) {
+        try {
+          URL pluginUrl = new URL(getCodeBase(), urlStrings [i]);
+          ZipInputStream zipIn = null;
+          try {
+            // Open a zip input from pluginUrl
+            zipIn = new ZipInputStream(pluginUrl.openStream());
+            // Try directories in current zip stream  
+            for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+              String zipEntryName = entry.getName();
+              int lastIndex = zipEntryName.lastIndexOf('/');
+              if (zipEntryName.endsWith(".class")) {
+                if (lastIndex == -1) {
+                  pluginPackages.add(""); // Add empty package
+                } else {
+                  pluginPackages.add(zipEntryName.substring(0, lastIndex).replace('/', '.'));
+                }
+              }
+            }
+          } catch (IOException ex) {
+            // Ignore furniture plugin 
+          } finally {
+            if (zipIn != null) {
+              try {
+                zipIn.close();
+              } catch (IOException ex) {
+              }
+            }
+          }
+        } catch (MalformedURLException ex) {
+          // Ignore malformed URLs
+        }
+      }
+      return pluginPackages;
+    }
+    return Collections.EMPTY_SET;
+  }
 }

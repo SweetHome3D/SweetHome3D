@@ -28,9 +28,9 @@ import com.eteks.sweethome3d.model.UserPreferences;
  * The super class of a plug-in.
  * Subclasses should implement {@link #getActions() getActions} method
  * to return the actions that will be available to user.
- * This class should be packed in a JAR file with a property file at its root
- * named <code>ApplicationPlugin.properties</code> that describes a plug-in 
- * with the following keys (all of them are mandatory):
+ * This class should be packed in a JAR file with a family of properties file named 
+ * <code>ApplicationPlugin.properties</code> at its root or in one of its subdirectories. 
+ * This file describes a plug-in with the following keys (all of them are mandatory):
  * <ul><li>The <code>name</code> key specifies the name of the plug-in.</li>
  *     <li>The <code>class</code> key specifies the fully qualified class name
  *     of the plug-in.</li>

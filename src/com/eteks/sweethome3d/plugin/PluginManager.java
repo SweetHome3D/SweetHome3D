@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.plugin;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
@@ -35,6 +36,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.swing.undo.UndoableEditSupport;
 
@@ -60,6 +63,9 @@ public class PluginManager {
 
   private static final String APPLICATION_PLUGIN_FAMILY   = "ApplicationPlugin";
 
+  private static final String DEFAULT_APPLICATION_PLUGIN_PROPERTIES_FILE = 
+      APPLICATION_PLUGIN_FAMILY + ".properties";
+
   private final Map<String, PluginDefinition> pluginDefinitions = 
       new HashMap<String, PluginDefinition>();
   
@@ -83,15 +89,9 @@ public class PluginManager {
         Arrays.sort(pluginFiles, Collections.reverseOrder());
         for (File pluginFile : pluginFiles) {
           try {
-            // Try do load plugin property file from current file  
-            URL pluginUrl = pluginFile.toURI().toURL();
-            ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
-            readPlugin(ResourceBundle.getBundle(APPLICATION_PLUGIN_FAMILY, Locale.getDefault(), classLoader), 
-                pluginUrl, classLoader);
+            loadPlugins(pluginFile.toURI().toURL());
           } catch (MalformedURLException ex) {
-            // Ignore furniture plugin 
-          } catch (MissingResourceException ex) {
-            // Ignore malformed plugins
+            // Files are supposed to exist !
           }
         }
       }
@@ -103,22 +103,54 @@ public class PluginManager {
    */
   public PluginManager(URL [] pluginUrls) {
     for (URL pluginUrl : pluginUrls) {
-      try {
-        // Try do load plugin property file from url  
-        ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
-        readPlugin(ResourceBundle.getBundle(APPLICATION_PLUGIN_FAMILY, Locale.getDefault(), classLoader), 
-            pluginUrl, classLoader);
-      } catch (MissingResourceException ex) {
-        // Ignore malformed plugins
-      }
+      loadPlugins(pluginUrl);
     }
   }
 
   /**
+   * Loads the plug-ins that may be available in the given URL.
+   */
+  private void loadPlugins(URL pluginUrl) {
+    ZipInputStream zipIn = null;
+    try {
+      // Open a zip input from pluginUrl
+      zipIn = new ZipInputStream(pluginUrl.openStream());
+      // Try do find a plugin properties file in current zip stream  
+      for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+        String zipEntryName = entry.getName();
+        int lastIndex = zipEntryName.lastIndexOf(DEFAULT_APPLICATION_PLUGIN_PROPERTIES_FILE);
+        if (lastIndex != -1
+            && (lastIndex == 0
+                || zipEntryName.charAt(lastIndex - 1) == '/')) {
+          try {
+            // Build application plugin family with its package 
+            String applicationPluginFamily = zipEntryName.substring(0, lastIndex);
+            applicationPluginFamily += APPLICATION_PLUGIN_FAMILY;
+            ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
+            readPlugin(ResourceBundle.getBundle(applicationPluginFamily.toString(), Locale.getDefault(), classLoader), 
+                "jar:" + pluginUrl.toString() + "!/" + zipEntryName, classLoader);
+          } catch (MissingResourceException ex) {
+            // Ignore malformed plugins
+          }
+        }
+      }
+    } catch (IOException ex) {
+      // Ignore furniture plugin 
+    } finally {
+      if (zipIn != null) {
+        try {
+          zipIn.close();
+        } catch (IOException ex) {
+        }
+      }
+    }
+  }
+  
+  /**
    * Reads the plug-in properties from the given <code>resource</code>.
    */
   private void readPlugin(ResourceBundle resource,
-                          URL            pluginUrl,
+                          String         pluginLocation,
                           ClassLoader    pluginClassLoader) {
     try {
       String name = resource.getString(NAME);
@@ -126,14 +158,14 @@ public class PluginManager {
       // Check Java and application versions
       String javaMinimumVersion = resource.getString(JAVA_MINIMUM_VERSION);
       if (!isJavaVersionSuperiorTo(javaMinimumVersion)) {
-        System.err.println("Invalid plug-in " + pluginUrl + ":\n" 
+        System.err.println("Invalid plug-in " + pluginLocation + ":\n" 
             + "Not compatible Java version " + System.getProperty("java.version"));
         return;
       }
       
       String applicationMinimumVersion = resource.getString(APPLICATION_MINIMUM_VERSION);
       if (!isApplicationVersionSuperiorTo(applicationMinimumVersion)) {
-        System.err.println("Invalid plug-in " + pluginUrl + ":\n" 
+        System.err.println("Invalid plug-in " + pluginLocation + ":\n" 
             + "Not compatible application version");
         return;
       }
@@ -152,9 +184,9 @@ public class PluginManager {
             name, pluginClass, pluginClassLoader, description, version, license, provider));
       }      
     } catch (MissingResourceException ex) {
-      System.err.println("Invalid plug-in " + pluginUrl + ":\n" + ex.getMessage());
+      System.err.println("Invalid plug-in " + pluginLocation + ":\n" + ex.getMessage());
     } catch (IllegalArgumentException ex) {
-      System.err.println("Invalid plug-in " + pluginUrl + ":\n" + ex.getMessage());
+      System.err.println("Invalid plug-in " + pluginLocation + ":\n" + ex.getMessage());
     } 
   }
   
