@@ -338,9 +338,12 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Last row
-    add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-        0, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    if (this.resetDisplayedActionTipsButton.getText().length() > 0) {
+      // Display reset button only if its text isn't empty 
+      add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
+          0, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    }
   }
 
   /**
