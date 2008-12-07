@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -224,42 +225,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       this.availableTexturesLabel = new JLabel(this.resource.getString("availableTexturesLabel.text"));
       this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      this.availableTexturesList.setCellRenderer(new DefaultListCellRenderer() {
-          @Override
-          public Component getListCellRendererComponent(final JList list, Object value, 
-              int index, boolean isSelected, boolean cellHasFocus) {
-            final CatalogTexture texture = (CatalogTexture)value;
-            value = texture.getName();
-            value = texture.getCategory().getName() + " - " + value;
-            Component component = super.getListCellRendererComponent(
-                list, value, index, isSelected, cellHasFocus);
-            setIcon(new Icon() {
-                public int getIconWidth() {
-                  return 16;
-                }
-          
-                public int getIconHeight() {
-                  return 16;
-                }
-          
-                public void paintIcon(Component c, Graphics g, int x, int y) {
-                  Icon icon = IconManager.getInstance().getIcon(
-                      texture.getImage(), getIconHeight(), list);
-                  if (icon.getIconWidth() != icon.getIconHeight()) {
-                    Graphics2D g2D = (Graphics2D)g;
-                    AffineTransform previousTransform = g2D.getTransform();
-                    g2D.translate(x, y);
-                    g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
-                    icon.paintIcon(c, g2D, 0, 0);
-                    g2D.setTransform(previousTransform);
-                  } else {
-                    icon.paintIcon(c, g, x, y);
-                  }
-                }
-              });
-            return component;
-          }
-        });
+      this.availableTexturesList.setCellRenderer(new TextureListCellRenderer());
       this.availableTexturesList.getSelectionModel().addListSelectionListener(
           new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent ev) {
@@ -317,6 +283,58 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         });
       
       preferences.getTexturesCatalog().addTexturesListener(new TexturesCatalogListener(this));
+    }
+
+    /**
+     * Renderer used to display the textures in list. 
+     */
+    private static class TextureListCellRenderer extends DefaultListCellRenderer {
+      private Font defaultFont;
+      private Font modifiablePieceFont;
+
+      @Override
+      public Component getListCellRendererComponent(final JList list, Object value, 
+          int index, boolean isSelected, boolean cellHasFocus) {
+        // Initialize fonts if not done
+        if (this.defaultFont == null) {
+          this.defaultFont = getFont();
+          this.modifiablePieceFont = 
+              new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
+          
+        }
+        
+        final CatalogTexture texture = (CatalogTexture)value;
+        value = texture.getName();
+        value = texture.getCategory().getName() + " - " + value;
+        Component component = super.getListCellRendererComponent(
+            list, value, index, isSelected, cellHasFocus);
+        setIcon(new Icon() {
+            public int getIconWidth() {
+              return 16;
+            }
+      
+            public int getIconHeight() {
+              return 16;
+            }
+      
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+              Icon icon = IconManager.getInstance().getIcon(
+                  texture.getImage(), getIconHeight(), list);
+              if (icon.getIconWidth() != icon.getIconHeight()) {
+                Graphics2D g2D = (Graphics2D)g;
+                AffineTransform previousTransform = g2D.getTransform();
+                g2D.translate(x, y);
+                g2D.scale((float)icon.getIconHeight() / icon.getIconWidth(), 1);
+                icon.paintIcon(c, g2D, 0, 0);
+                g2D.setTransform(previousTransform);
+              } else {
+                icon.paintIcon(c, g, x, y);
+              }
+            }
+          });
+        setFont(texture.isModifiable() ? this.modifiablePieceFont : this.defaultFont);
+        return component;
+      }
     }
 
     /**
