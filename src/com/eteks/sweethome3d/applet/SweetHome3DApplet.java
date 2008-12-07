@@ -172,41 +172,48 @@ public class SweetHome3DApplet extends JApplet {
    */
   private void createAppletApplication() {
     try {
-      Class sweetHome3DAppletClass = SweetHome3DApplet.class;
-      String [] java3DFiles = {
-          "j3dcore.jar", // Main Java 3D jars
-          "vecmath.jar",
-          "j3dutils.jar",
-          "j3dcore-d3d.dll", // Windows DLLs
-          "j3dcore-ogl.dll",
-          "j3dcore-ogl-cg.dll",
-          "j3dcore-ogl-chk.dll",
-          "libj3dcore-ogl.so", // Linux DLLs
-          "libj3dcore-ogl-cg.so",
-          "gluegen-rt.jar", // Mac OS X jars and DLLs
-          "jogl.jar",
-          "libgluegen-rt.jnilib",
-          "libjogl.jnilib",
-          "libjogl_awt.jnilib",
-          "libjogl_cg.jnilib"};
-      List applicationPackages = new ArrayList(Arrays.asList(new String [] {
-          "com.eteks.sweethome3d",
-          "javax.media.j3d",
-          "javax.vecmath",
-          "com.sun.j3d",
-          "com.sun.opengl",
-          "com.sun.gluegen.runtime",
-          "javax.media.opengl",
-          "com.microcrowd.loader.java3d"}));
-      applicationPackages.addAll(getPluginsPackages());
-      
-      ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
-          sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
-          java3DFiles, (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
+      ClassLoader appletApplicationClassLoader;      
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+        // Under Mac OS X, use applet class loader with default Java 3D 1.3.1
+        // because browsers are blocked when the user tries to reload applet page 
+        appletApplicationClassLoader = getClass().getClassLoader();
+      } else {
+        Class sweetHome3DAppletClass = SweetHome3DApplet.class;
+        String [] java3DFiles = {
+            "j3dcore.jar", // Main Java 3D jars
+            "vecmath.jar",
+            "j3dutils.jar",
+            "j3dcore-d3d.dll", // Windows DLLs
+            "j3dcore-ogl.dll",
+            "j3dcore-ogl-cg.dll",
+            "j3dcore-ogl-chk.dll",
+            "libj3dcore-ogl.so", // Linux DLLs
+            "libj3dcore-ogl-cg.so",
+            "gluegen-rt.jar", // Mac OS X jars and DLLs
+            "jogl.jar",
+            "libgluegen-rt.jnilib",
+            "libjogl.jnilib",
+            "libjogl_awt.jnilib",
+            "libjogl_cg.jnilib"};
+        List applicationPackages = new ArrayList(Arrays.asList(new String [] {
+            "com.eteks.sweethome3d",
+            "javax.media.j3d",
+            "javax.vecmath",
+            "com.sun.j3d",
+            "com.sun.opengl",
+            "com.sun.gluegen.runtime",
+            "javax.media.opengl",
+            "com.microcrowd.loader.java3d"}));
+        applicationPackages.addAll(getPluginsPackages());
+        
+        appletApplicationClassLoader = new ExtensionsClassLoader(
+            sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
+            java3DFiles, (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
+      }
       
       // Call application constructor with reflection
       String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
-      Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
+      Class applicationClass = appletApplicationClassLoader.loadClass(applicationClassName);
       Constructor applicationConstructor = 
           applicationClass.getConstructor(new Class [] {JApplet.class});
       applicationConstructor.newInstance(new Object [] {this});

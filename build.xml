@@ -188,26 +188,6 @@
                   excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**"/>
     </zip>
 	 
-  	<!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
-  	     (this library is used for Java versions older than Java SE 6 update 10) -->
-    <zip destfile="deploy/lib/java3d.jar">
-      <fileset dir="lib/windows">
-        <include name="*.dll"/>
-      </fileset>
-      <fileset dir="lib/linux/i386">
-        <include name="*.so"/>
-      </fileset>
-      <fileset dir="lib/macosx">
-        <include name="*.jnilib"/>
-        <include name="*.jar"/>
-      </fileset>
-      <fileset dir="lib">
-        <include name="j3dcore.jar"/>
-        <include name="j3dutils.jar"/>
-        <include name="vecmath.jar"/>
-      </fileset>
-    </zip>
-
     <!-- Copy other jar files -->
     <copy todir="deploy/lib">
       <fileset dir="lib">
