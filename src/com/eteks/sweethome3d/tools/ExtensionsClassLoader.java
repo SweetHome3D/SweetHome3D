@@ -233,7 +233,11 @@ public class ExtensionsClassLoader extends ClassLoader {
         // Try to find if class belongs to one of the application packages
         for (int i = 0; i < this.applicationPackages.length; i++) {
           String applicationPackage = this.applicationPackages [i];
-          if (name.startsWith(applicationPackage)) {
+          int applicationPackageLength = applicationPackage.length();
+          if (   (applicationPackageLength == 0 
+                 && name.indexOf('.') == 0)
+              || (applicationPackageLength > 0
+                 && name.startsWith(applicationPackage))) {
             loadedClass = findClass(name);
             break;
           }
