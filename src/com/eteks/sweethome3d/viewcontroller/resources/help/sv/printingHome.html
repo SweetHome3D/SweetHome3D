@@ -29,11 +29,22 @@
       Detta menyalternativ visar en dialogruta för skrivaren för ditt system och låter dig välja skrivare, vilka sidor du vill skriva ut och i vilken kvalitet...</p>
       <p>Som standard skriver Sweet Home 3D ut möbellistan, planlösningen och den aktuella 3D-vyn av hemmet, på vanlig papperstorlek, marginaler och pappersvridning.<br>
         Om du vill ändra dessa inställningar väljer du <i>Arkiv &gt; Utskriftsinställning...</i>.</p>
-      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="194" height="145"></p>
+      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="257" height="261"></p>
       <p>I rutan för utskriftsinställningar kan du ändra papperstorlek och papprets vridning genom att klicka på knappen <i>Sidformat</i>.
-        Du kan även välja om möbellista, planlösningen och 3D-vyn ska skrivas ut eller ej.</p>
+        Du kan även välja om möbellista, planlösningen och 3D-vyn ska skrivas ut eller ej. Om du inte vill använda den automatiskt uträknade skalan för att anpassa utskriften efter pappersstorleken, kan du välja en annan skala i <i>Skala</i>-fältet.<br>
+Du kan också välja sidhuvudet och/eller sidfoten som ska visas på varje utskrivet papper. I textfälten för <i>Sidhuvud</i> och <i>Sidfot</i> kan du skriva vilken textsnutt som helst och även en del variabler som ersätts med deras värden vid utskriften. Följande är de 7 variabler som är tillgängliga för tillfället:</p>
+      <ul>
+        <li><i>$pageNumber</i> för sidnumret,</li>
+        <li><i>$pageCount</i> för totala sidantalet,</li>
+        <li><i>$planScale</i> för planlösningens skala (endera den som räknas ut automatiskt, eller den som skrivs in i <i>Skala</i>-fältet),</li>
+        <li><i>$date</i> för datumet du börjar skriva ut,</li>
+        <li><i>$time</i> för klockslaget du börjar skriva ut,</li>
+        <li><i>$name</i> för namnet på ditt hem,</li>
+        <li><i>$file</i> för sökvägen till hemmets fil.</li>
+      </ul>
+      <p>Använd <i>Variabler</i>-knapparna som visas under <i>Sidhuvud</i>- och <i>Sidfot</i>-textfälten för att få till variabelnamnen exakt. Eftersom $-tecknet är reserverat för variabler använder du koden <i>$$</i> för att skriva ett $-tecken.</p>
       <p>För att förhandsgranska din utskriftsinställning på skärmen väljer du <i>Arkiv &gt; Förhandsgranska...</i>.</p>
-      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="300" height="285"></p>
+      <p align="center"><img src="images/printPreview.png" alt="Print preview" width="312" height="294"></p>
       <p>I rutan för förhandsgranskning kan du se hur ditt hem kommer skrivas ut sida för sida. För att byta sida som förhandsgranskas använder du dig av pilarna i toppen av rutan eller trycker på piltangenterna.</p></td>
   </tr>
 </table>
@@ -60,14 +71,14 @@
             <td width="16"><p>&#149;</p>
             </td>
             <td>
-              <p>Planlösningen och 3D-vyn av hemmet skrivs ut på ett sådant sätt att de fyller upp en sida förutom marginalerna. 3D-vyn skrivs ut i upplösningen 150 dpi.</p>
+              <p>3D-vyn av hemmet skrivs alltid ut i upplösningen 150 dpi på ett sådant sätt att den fyller upp en sida förutom marginalerna.</p>
             </td>
           </tr>
           <tr valign="top">
             <td><p>&#149;</p>
             </td>
             <td>
-              <p>Om du vill skriva ut skalan på planlösningen på pappret kan du rita ut en <a href="drawingDimensions.html">måttsättning</a> som visar en standardlängd (en meter som exempel) på någon av planlösningens kanter.</p>
+              <p>Du kan också visa skalan på planlösningen på pappret genom att <a href="drawingDimensions.html">rita ut en måttsättning</a> som visar en standardlängd (en meter som exempel) på någon av planlösningens kanter.</p>
             </td>
           </tr>
           <tr valign="top">
