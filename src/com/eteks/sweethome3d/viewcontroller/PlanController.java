@@ -1399,30 +1399,56 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns the item at (<code>x</code>, <code>y</code>) point.
+   * Returns the item that will be selected by a click at (<code>x</code>, <code>y</code>) point.
    */
-  private Selectable getItemAt(float x, float y) {
+  private Selectable getSelectableItemAt(float x, float y) {
+    List<Selectable> selectableItems = getSelectableItemsAt(x, y, true);
+    if (selectableItems.size() != 0) {
+      return selectableItems.get(0);
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Returns the selectable items at (<code>x</code>, <code>y</code>) point.
+   */
+  private List<Selectable> getSelectableItemsAt(float x, float y, 
+                                                boolean stopAtFirstItem) {
+    List<Selectable> items = new ArrayList<Selectable>();
     float margin = PIXEL_MARGIN / getView().getScale();
     float textMargin = PIXEL_MARGIN / 2 / getView().getScale();
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null
         && camera == this.home.getCamera()
         && camera.containsPoint(x, y, margin)) {
-      return camera;
+      items.add(camera);
+      if (stopAtFirstItem) {
+        return items;
+      }
     }
     
     for (Label label : this.home.getLabels()) {
       if (label.containsPoint(x, y, margin)) {
-        return label;
+        items.add(label);
+        if (stopAtFirstItem) {
+          return items;
+        }
       } else if (isItemTextAt(label, label.getText(), label.getStyle(), 
           label.getX(), label.getY(), x, y, textMargin)) {
-        return label;
+        items.add(label);
+        if (stopAtFirstItem) {
+          return items;
+        }
       }
     }    
     
     for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
       if (dimensionLine.containsPoint(x, y, margin)) {
-        return dimensionLine;
+        items.add(dimensionLine);
+        if (stopAtFirstItem) {
+          return items;
+        }
       }
     }    
     
@@ -1433,10 +1459,12 @@ public class PlanController extends FurnitureController implements Controller {
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
       if (piece.isVisible()) {
-        if (piece.containsPoint(x, y, margin)
-            && (foundPiece == null
-                || piece.getElevation() > foundPiece.getElevation())) {
-          foundPiece = piece;
+        if (piece.containsPoint(x, y, margin)) {
+          items.add(piece);
+          if (foundPiece == null
+              || piece.getElevation() > foundPiece.getElevation()) {
+            foundPiece = piece;
+          }
         } else if (foundPiece == null) { 
           // Search if piece name contains point in case it is drawn outside of the piece
           String pieceName = piece.getName();
@@ -1445,17 +1473,22 @@ public class PlanController extends FurnitureController implements Controller {
               && isItemTextAt(piece, pieceName, piece.getNameStyle(), 
                   piece.getX() + piece.getNameXOffset(), 
                   piece.getY() + piece.getNameYOffset(), x, y, textMargin)) {
+            items.add(piece);
             foundPiece = piece;
           }
         }
       }
     }
-    if (foundPiece != null) {
-      return foundPiece;
+    if (foundPiece != null
+        && stopAtFirstItem) {
+      return Arrays.asList(new Selectable [] {foundPiece});
     } else {
       for (Wall wall : this.home.getWalls()) {
         if (wall.containsPoint(x, y, margin)) {
-          return wall;
+          items.add(wall);
+          if (stopAtFirstItem) {
+            return items;
+          }
         }
       }    
 
@@ -1465,10 +1498,12 @@ public class PlanController extends FurnitureController implements Controller {
       Room foundRoom = null;
       for (int i = rooms.size() - 1; i >= 0; i--) {
         Room room = rooms.get(i);
-        if (room.containsPoint(x, y, margin)
-            && (foundRoom == null
-                || room.isCeilingVisible() && !foundRoom.isCeilingVisible())) {
-          foundRoom = room;
+        if (room.containsPoint(x, y, margin)) {
+          items.add(room);
+           if (foundRoom == null
+               || room.isCeilingVisible() && !foundRoom.isCeilingVisible()) {
+             foundRoom = room;
+           }
         } else { 
           // Search if room name contains point in case it is drawn outside of the room
           String roomName = room.getName();
@@ -1476,6 +1511,7 @@ public class PlanController extends FurnitureController implements Controller {
               && isItemTextAt(room, roomName, room.getNameStyle(), 
                 room.getXCenter() + room.getNameXOffset(), 
                 room.getYCenter() + room.getNameYOffset(), x, y, textMargin)) {
+            items.add(room);
             foundRoom = room;
           }
           // Search if room area contains point in case its text is drawn outside of the room 
@@ -1484,12 +1520,18 @@ public class PlanController extends FurnitureController implements Controller {
             if (isItemTextAt(room, areaText, room.getAreaStyle(), 
                 room.getXCenter() + room.getAreaXOffset(), 
                 room.getYCenter() + room.getAreaYOffset(), x, y, textMargin)) {
+              items.add(room);
               foundRoom = room;
             }
           }
         }
-      }    
-      return foundRoom;
+      }
+      if (foundRoom != null
+          && stopAtFirstItem) {
+        return Arrays.asList(new Selectable [] {foundRoom});
+      } else {
+        return items;
+      }
     }
   }
 
@@ -3250,7 +3292,7 @@ public class PlanController extends FurnitureController implements Controller {
         } else if (getPieceOfFurnitureNameAt(x, y) != null) {
           setState(getPieceOfFurnitureNameOffsetState());
         } else {
-          Selectable item = getItemAt(x, y);
+          Selectable item = getSelectableItemAt(x, y);
           // If shift isn't pressed, and an item is under cursor position
           if (!shiftDown && item != null) {
             // Change state to SelectionMoveState
@@ -3262,7 +3304,7 @@ public class PlanController extends FurnitureController implements Controller {
           
         }
       } else if (clickCount == 2) {
-        Selectable item = getItemAt(x, y);
+        Selectable item = getSelectableItemAt(x, y);
         // If shift isn't pressed, and an item is under cursor position
         if (!shiftDown && item != null) {
           // Modify selected item on a double click
@@ -3313,13 +3355,13 @@ public class PlanController extends FurnitureController implements Controller {
       this.xLastMouseMove = getXLastMousePress();
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
-      Selectable itemUnderCursor = getItemAt(getXLastMousePress(),
-          getYLastMousePress());
+      List<Selectable> selectableItemsUnderCursor = 
+          getSelectableItemsAt(getXLastMousePress(), getYLastMousePress(), false);
       this.movedItems = home.getSelectedItems();
-      // If the item under the cursor doesn't belong to selection
-      if (itemUnderCursor != null && !this.movedItems.contains(itemUnderCursor)) {
-        // Select only the item under cursor position
-        selectItem(itemUnderCursor);
+      // If no selectable item under the cursor belongs to selection
+      if (Collections.disjoint(selectableItemsUnderCursor, this.movedItems)) {
+        // Select only the item with highest priority under cursor position
+        selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress()));
         this.movedItems = home.getSelectedItems();
       }
       this.duplicatedItems = null;
@@ -3351,7 +3393,7 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        Selectable itemUnderCursor = getItemAt(x, y);
+        Selectable itemUnderCursor = getSelectableItemAt(x, y);
         if (itemUnderCursor != null) {
           // Select only the item under cursor position
           selectItem(itemUnderCursor);
@@ -3445,7 +3487,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       Selectable itemUnderCursor = 
-          getItemAt(getXLastMousePress(), getYLastMousePress());
+          getSelectableItemAt(getXLastMousePress(), getYLastMousePress());
       // If no item under cursor and shift wasn't down, deselect all
       if (itemUnderCursor == null && !wasShiftDownLastMousePress()) {
         deselectAll();
@@ -3472,7 +3514,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void releaseMouse(float x, float y) {
       // If cursor didn't move
       if (!this.mouseMoved) {
-        Selectable itemUnderCursor = getItemAt(x, y);
+        Selectable itemUnderCursor = getSelectableItemAt(x, y);
         // Toggle selection of the item under cursor 
         if (itemUnderCursor != null) {
           if (this.selectedItemsMousePressed.contains(itemUnderCursor)) {
