@@ -127,7 +127,7 @@ public class PluginManager {
             String applicationPluginFamily = zipEntryName.substring(0, lastIndex);
             applicationPluginFamily += APPLICATION_PLUGIN_FAMILY;
             ClassLoader classLoader = new URLClassLoader(new URL [] {pluginUrl}, getClass().getClassLoader());
-            readPlugin(ResourceBundle.getBundle(applicationPluginFamily.toString(), Locale.getDefault(), classLoader), 
+            readPlugin(ResourceBundle.getBundle(applicationPluginFamily, Locale.getDefault(), classLoader), 
                 "jar:" + pluginUrl.toString() + "!/" + zipEntryName, classLoader);
           } catch (MissingResourceException ex) {
             // Ignore malformed plugins
