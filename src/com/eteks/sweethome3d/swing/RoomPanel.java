@@ -53,9 +53,10 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class RoomPanel extends JPanel implements DialogView {
   private final RoomController controller;
+  private ResourceBundle       resource;
   private JLabel               nameLabel;
   private JTextField           nameTextField;
-  private ResourceBundle       resource;
+  private NullableCheckBox     areaVisibleCheckBox;
   private NullableCheckBox     floorVisibleCheckBox;
   private JRadioButton         floorColorRadioButton;
   private ColorButton          floorColorButton;
@@ -66,7 +67,6 @@ public class RoomPanel extends JPanel implements DialogView {
   private ColorButton          ceilingColorButton;
   private JRadioButton         ceilingTextureRadioButton;
   private JComponent           ceilingTextureComponent;
-  private NullableCheckBox     areaVisibleCheckBox;
 
   /**
    * Creates a panel that displays room data according to the units set in
