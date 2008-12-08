@@ -531,6 +531,7 @@
       	<!-- Do not include generated files that may belong to 
       	     deploy and install directories -->
         <include name="deploy/SweetHome3D*.*"/>
+        <include name="deploy/*.php"/>
         <include name="install/macosx/**"/>
         <include name="install/windows/**"/>
         <include name="install/linux/**"/>
