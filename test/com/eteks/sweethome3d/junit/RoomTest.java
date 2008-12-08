@@ -23,7 +23,6 @@ import java.awt.event.InputEvent;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
