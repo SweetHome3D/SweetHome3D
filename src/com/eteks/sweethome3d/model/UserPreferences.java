@@ -55,7 +55,7 @@ public abstract class UserPreferences {
   private TexturesCatalog  texturesCatalog;
   private String           language;
   private String           currency;
-  private LengthUnit             unit;
+  private LengthUnit       unit;
   private boolean          magnetismEnabled = true;
   private boolean          rulersVisible    = true;
   private boolean          gridVisible      = true;
