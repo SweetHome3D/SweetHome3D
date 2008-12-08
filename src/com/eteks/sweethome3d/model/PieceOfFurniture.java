@@ -32,6 +32,11 @@ public interface PieceOfFurniture {
   public abstract String getName();
 
   /**
+   * Returns the description of this piece of furniture.
+   */
+  public abstract String getDescription();
+  
+  /**
    * Returns the depth of this piece of furniture.
    */
   public abstract float getDepth();

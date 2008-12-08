@@ -34,6 +34,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   private final String     id;
   private final String     name;
+  private final String     description;
   private final Content    icon;
   private final Content    model;
   private final float      width;
@@ -71,32 +72,15 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, 
                                  boolean movable, boolean doorOrWindow) {
-    this(name, icon, model, width, depth, height, 0, movable, doorOrWindow);
+    this(null, name, null, icon, model, width, depth, height, 0, movable, doorOrWindow, null, 
+        INDENTITY_ROTATION, null, false, true, null, null, (float)Math.PI / 8, true, false);
   }
 
   /**
    * Creates an unmodifiable catalog piece of furniture of the default catalog.
-   * @param name  the name of the new piece
-   * @param icon an URL to the icon file of the new piece
-   * @param model an URL to the 3D model file of the new piece
-   * @param width  the width in centimeters of the new piece
-   * @param depth  the depth in centimeters of the new piece
-   * @param height  the height in centimeters of the new piece
-   * @param elevation  the elevation in centimeters of the new piece
-   * @param movable if <code>true</code>, the new piece is movable
-   * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
-   */
-  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
-                                 float width, float depth, float height, float elevation, 
-                                 boolean movable, boolean doorOrWindow) {
-    this(null, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
-        INDENTITY_ROTATION, null, false, true, null, null, (float)Math.PI / 8, true, false);
-  }
-         
-  /**
-   * Creates an unmodifiable catalog piece of furniture of the default catalog.
    * @param id    the id of the new piece or <code>null</code>
    * @param name  the name of the new piece
+   * @param description the description of the new piece 
    * @param icon an URL to the icon file of the new piece
    * @param model an URL to the 3D model file of the new piece
    * @param width  the width in centimeters of the new piece
@@ -112,12 +96,12 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new piece of <code>null</code> 
    */
-  public CatalogPieceOfFurniture(String id, String name, Content icon, Content model, 
+  public CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow, 
                                  float [][] modelRotation, String creator,
                                  boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
-    this(id, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
+    this(id, name, description, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
         modelRotation, creator, false, resizable, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
   }
          
@@ -143,11 +127,11 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                  boolean movable, boolean doorOrWindow, Integer color,
                                  float [][] modelRotation, boolean backFaceShown,
                                  float iconYaw, boolean proportional) {
-    this(null, name, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
+    this(null, name, null, icon, model, width, depth, height, elevation, movable, doorOrWindow, 
         color, modelRotation, null, backFaceShown, true, null, null, iconYaw, proportional, true);
   }
   
-  private CatalogPieceOfFurniture(String id, String name, Content icon, Content model, 
+  private CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
                                   float width, float depth, float height, float elevation, 
                                   boolean movable, boolean doorOrWindow, Integer color,
                                   float [][] modelRotation, String creator, boolean backFaceShown,
@@ -155,6 +139,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;
     this.name = name;
+    this.description = description;
     this.icon = icon;
     this.model = model;
     this.width = width;
@@ -189,8 +174,16 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
   /**
    * Returns the name of this piece of furniture.
    */
-   public String getName() {
+  public String getName() {
     return this.name;
+  }
+
+  /**
+   * Returns the description of this piece of furniture.
+   * The returned value may be <code>null</code>.
+   */
+  public String getDescription() {
+    return this.description;
   }
 
   /**

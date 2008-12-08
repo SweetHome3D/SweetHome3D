@@ -50,6 +50,7 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String ID               = "id#";
   private static final String NAME             = "name#";
+  private static final String DESCRIPTION      = "description#";
   private static final String CATEGORY         = "category#";
   private static final String ICON             = "icon#";
   private static final String MODEL            = "model#";
@@ -175,6 +176,12 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         // Stop the loop when a key name# doesn't exist
         break;
       }
+      String description = null;
+      try {
+        description = resource.getString(DESCRIPTION + i);
+      } catch (MissingResourceException ex) {
+        // Don't take into account furniture that don't have an ID
+      }
       String category = resource.getString(CATEGORY + i);
       Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
       boolean multiPartModel = false;
@@ -237,7 +244,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
 
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(id, name, icon, model,
+      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
           width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator, 
           resizable, price, valueAddedTaxPercentage);
       add(pieceCategory, piece, furnitureHomonymsCounter);
@@ -268,8 +275,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
       // Try to add piece again to catalog with a suffix indicating its sequence
       piece = new CatalogPieceOfFurniture(piece.getId(),
-          String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter), 
-          piece.getIcon(), piece.getModel(),
+          String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter),
+          piece.getDescription(), piece.getIcon(), piece.getModel(),
           piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
           piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator(),
           piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());

@@ -48,7 +48,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-    WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -191,6 +191,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private float      nameXOffset;
   private float      nameYOffset;
   private TextStyle  nameStyle;
+  private String     description;
   private Content    icon;
   private Content    model;
   private float      width;
@@ -220,6 +221,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public HomePieceOfFurniture(PieceOfFurniture piece) {
     this.name = piece.getName();
+    this.description = piece.getDescription();
     this.icon = piece.getIcon();
     this.model = piece.getModel();
     this.width = piece.getWidth();
@@ -385,6 +387,27 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
   }
   
+  /**
+   * Returns the description of this piece of furniture.
+   * The returned value may be <code>null</code>.
+   */
+  public String getDescription() {
+    return this.description;
+  }
+
+  /**
+   * Sets the description of this piece of furniture. Once this piece is updated, 
+   * listeners added to this piece will receive a change notification.
+   */
+  public void setDescription(String description) {
+    if (description != this.description
+        || (description != null && !description.equals(this.description))) {
+      String oldDescription = this.description;
+      this.description = description;
+      this.propertyChangeSupport.firePropertyChange(Property.DESCRIPTION.name(), oldDescription, description);
+    }
+  }
+   
   /**
    * Returns the depth of this piece of furniture.
    */
