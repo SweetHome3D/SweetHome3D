@@ -3380,7 +3380,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void activateDuplication(boolean duplicationActivated) {
       if (!(this.movedItems.get(0) instanceof Camera)) {
-        if (duplicationActivated) {
+        if (duplicationActivated
+            && this.duplicatedItems == null) {
           // Duplicate original items and add them to home
           this.duplicatedItems = this.movedItems;          
           this.movedItems = Home.duplicate(this.movedItems);          
@@ -3403,7 +3404,8 @@ public class PlanController extends FurnitureController implements Controller {
               getXLastMousePress() - this.xLastMouseMove, 
               getYLastMousePress() - this.yLastMouseMove);
           getView().setCursor(PlanView.CursorType.DUPLICATION);
-        } else if (this.duplicatedItems != null) {
+        } else if (!duplicationActivated
+                   && this.duplicatedItems != null) {
           // Delete moved items 
           doDeleteItems(this.movedItems);
           
