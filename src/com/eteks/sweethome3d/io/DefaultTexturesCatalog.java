@@ -52,7 +52,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
 
   /**
-   * Creates a default textures catalog read from resources in <code>resourcePackage</code>.
+   * Creates a default textures catalog read from resources.
    */
   public DefaultTexturesCatalog() {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 

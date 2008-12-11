@@ -81,7 +81,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
-   * Creates a default furniture catalog read from resources in <code>resourcePackage</code> and 
+   * Creates a default furniture catalog read from resources in  
    * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(File furniturePluginFolder) {
@@ -92,8 +92,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
         null, furnitureHomonymsCounter, identifiedFurniture);
     
-    String classPackage = DefaultFurnitureCatalog.class.getName();
-    classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
+    String classPackage = DefaultFurnitureCatalog.class.getPackage().getName();
     try {
       // Try do load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
       readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
