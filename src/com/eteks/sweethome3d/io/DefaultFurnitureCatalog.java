@@ -92,7 +92,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
         null, furnitureHomonymsCounter, identifiedFurniture);
     
-    String classPackage = DefaultFurnitureCatalog.class.getPackage().getName();
+    String classPackage = DefaultFurnitureCatalog.class.getName();
+    classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
     try {
       // Try do load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
       readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
