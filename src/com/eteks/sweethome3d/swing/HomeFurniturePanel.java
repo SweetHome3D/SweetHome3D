@@ -24,7 +24,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -50,7 +49,6 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class HomeFurniturePanel extends JPanel implements DialogView {
   private final HomeFurnitureController controller;
-  private ResourceBundle          resource;
   private JLabel                  nameLabel;
   private JTextField              nameTextField;
   private NullableCheckBox        nameVisibleCheckBox;
@@ -72,6 +70,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private ColorButton             colorButton;
   private NullableCheckBox        visibleCheckBox;
   private NullableCheckBox        mirroredModelCheckBox;
+  private String                  dialogTitle;
 
   /**
    * Creates a panel that displays home furniture data according to the units 
@@ -83,10 +82,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
                             HomeFurnitureController controller) {
     super(new GridBagLayout());
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(
-        HomeFurniturePanel.class.getName());
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents();
   }
 
@@ -99,7 +96,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     String unitName = preferences.getLengthUnit().getName();
     
     // Create name label and its text field bound to NAME controller property
-    this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
+    this.nameLabel = new JLabel(preferences.getLocalizedString(HomeFurniturePanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
@@ -132,7 +129,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
         
     // Create name visible check box bound to NAME_VISIBLE controller property
-    this.nameVisibleCheckBox = new NullableCheckBox(this.resource.getString("nameVisibleCheckBox.text"));
+    this.nameVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "nameVisibleCheckBox.text"));
     this.nameVisibleCheckBox.setNullable(controller.getNameVisible() == null);
     this.nameVisibleCheckBox.setValue(controller.getNameVisible());
     final PropertyChangeListener nameVisibleChangeListener = new PropertyChangeListener() {
@@ -151,7 +149,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create X label and its spinner bound to X controller property
-    this.xLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    this.xLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "xLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel xSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.xSpinner = new NullableSpinner(xSpinnerModel);
@@ -173,7 +172,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create Y label and its spinner bound to Y controller property
-    this.yLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    this.yLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel ySpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.ySpinner = new NullableSpinner(ySpinnerModel);
@@ -195,7 +195,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create elevation label and its spinner bound to ELEVATION controller property
-    this.elevationLabel = new JLabel(String.format(this.resource.getString("elevationLabel.text"), unitName));
+    this.elevationLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "elevationLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000f);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
@@ -220,7 +221,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create angle label and its spinner bound to ANGLE_IN_DEGREES controller property
-    this.angleLabel = new JLabel(this.resource.getString("angleLabel.text"));
+    this.angleLabel = new JLabel(preferences.getLocalizedString(HomeFurniturePanel.class, "angleLabel.text"));
     final NullableSpinner.NullableSpinnerNumberModel angleSpinnerModel = 
         new NullableSpinner.NullableSpinnerNumberModel(0, 0, 360, 1);
     this.angleSpinner = new NullableSpinner(angleSpinnerModel);
@@ -249,7 +250,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
    
     // Create width label and its spinner bound to WIDTH controller property
-    this.widthLabel = new JLabel(String.format(this.resource.getString("widthLabel.text"), unitName));
+    this.widthLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "widthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
     this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
@@ -271,7 +273,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create depth label and its spinner bound to DEPTH controller property
-    this.depthLabel = new JLabel(String.format(this.resource.getString("depthLabel.text"), unitName));
+    this.depthLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "depthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
@@ -293,7 +296,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create height label and its spinner bound to HEIGHT controller property
-    this.heightLabel = new JLabel(String.format(this.resource.getString("heightLabel.text"), unitName));
+    this.heightLabel = new JLabel(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "heightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
@@ -315,9 +319,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create color label and its button bound to COLOR controller property
-    this.colorLabel = new JLabel(this.resource.getString("colorLabel.text"));
+    this.colorLabel = new JLabel(preferences.getLocalizedString(HomeFurniturePanel.class, "colorLabel.text"));
     this.colorButton = new ColorButton();
-    this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
+    this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "colorDialog.title"));
     this.colorButton.setColor(controller.getColor());
     this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
@@ -333,7 +338,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         });
 
     // Create visible check box bound to VISIBLE controller property
-    this.visibleCheckBox = new NullableCheckBox(this.resource.getString("visibleCheckBox.text"));
+    this.visibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "visibleCheckBox.text"));
     this.visibleCheckBox.setNullable(controller.getVisible() == null);
     this.visibleCheckBox.setValue(controller.getVisible());
     final PropertyChangeListener visibleChangeListener = new PropertyChangeListener() {
@@ -352,7 +358,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       });
     
     // Create mirror check box bound to MODEL_MIRRORED controller property
-    this.mirroredModelCheckBox = new NullableCheckBox(this.resource.getString("mirroredModelCheckBox.text"));
+    this.mirroredModelCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        HomeFurniturePanel.class, "mirroredModelCheckBox.text"));
     this.mirroredModelCheckBox.setNullable(controller.getModelMirrored() == null);
     this.mirroredModelCheckBox.setValue(controller.getModelMirrored());
     final PropertyChangeListener mirroredModelChangeListener = new PropertyChangeListener() {
@@ -378,6 +385,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             updateSizeComponents(controller);     
           }
         });
+    
+    this.dialogTitle = preferences.getLocalizedString(HomeFurniturePanel.class, "homeFurniture.title");
   }
   
   /**
@@ -397,39 +406,39 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.nameLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("nameLabel.mnemonic")).getKeyCode());
+      this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "nameLabel.mnemonic")).getKeyCode());
       this.nameLabel.setLabelFor(this.nameTextField);
-      this.xLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("xLabel.mnemonic")).getKeyCode());
+      this.xLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "xLabel.mnemonic")).getKeyCode());
       this.xLabel.setLabelFor(this.xSpinner);
-      this.yLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
+      this.yLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "yLabel.mnemonic")).getKeyCode());
       this.yLabel.setLabelFor(this.ySpinner);
-      this.elevationLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("elevationLabel.mnemonic")).getKeyCode());
+      this.elevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "elevationLabel.mnemonic")).getKeyCode());
       this.elevationLabel.setLabelFor(this.elevationSpinner);
-      this.angleLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("angleLabel.mnemonic")).getKeyCode());
+      this.angleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "angleLabel.mnemonic")).getKeyCode());
       this.angleLabel.setLabelFor(this.angleSpinner);
-      this.widthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("widthLabel.mnemonic")).getKeyCode());
+      this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "widthLabel.mnemonic")).getKeyCode());
       this.widthLabel.setLabelFor(this.widthSpinner);
-      this.depthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("depthLabel.mnemonic")).getKeyCode());
+      this.depthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "depthLabel.mnemonic")).getKeyCode());
       this.depthLabel.setLabelFor(this.depthSpinner);
-      this.heightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("heightLabel.mnemonic")).getKeyCode());
+      this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.colorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("colorLabel.mnemonic")).getKeyCode());
+      this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
-      this.visibleCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("visibleCheckBox.mnemonic")).getKeyCode());
-      this.mirroredModelCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("mirroredModelCheckBox.mnemonic")).getKeyCode());
+      this.visibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "visibleCheckBox.mnemonic")).getKeyCode());
+      this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "mirroredModelCheckBox.mnemonic")).getKeyCode());
     }
   }
   
@@ -519,9 +528,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("homeFurniture.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION) {
+            this, this.dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyFurniture();
     }
   }

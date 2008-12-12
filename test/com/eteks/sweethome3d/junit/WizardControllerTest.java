@@ -34,6 +34,8 @@ import javax.swing.JPanel;
 import junit.framework.TestCase;
 import abbot.finder.ComponentSearchException;
 
+import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.swing.WizardPane;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -49,7 +51,7 @@ public class WizardControllerTest extends TestCase {
       throws NoSuchFieldException, IllegalAccessException, ComponentSearchException {
     // 1. Create a wizard controller test waiting for finish call
     final boolean [] finished = {false};
-    WizardController controller = new ControllerTest(new SwingViewFactory()) {
+    WizardController controller = new ControllerTest(new DefaultUserPreferences(), new SwingViewFactory()) {
       @Override
       public void finish() {
         finished [0] = true;
@@ -118,7 +120,7 @@ public class WizardControllerTest extends TestCase {
   
   public static void main(String [] args) {
     // Display the wizard controlled by ControllerTest
-    new ControllerTest(new SwingViewFactory()).displayView(null);
+    new ControllerTest(new DefaultUserPreferences(), new SwingViewFactory()).displayView(null);
   }
 
   /**
@@ -127,8 +129,8 @@ public class WizardControllerTest extends TestCase {
   private static class ControllerTest extends WizardController {
     private static URL stepIcon = WizardController.class.getResource("resources/backgroundImageWizard.png");
     
-    public ControllerTest(ViewFactory viewFactory) {
-      super(viewFactory);
+    public ControllerTest(UserPreferences preferences, ViewFactory viewFactory) {
+      super(preferences, viewFactory);
       // Choose step to display
       setStepState(new FirstStep());            
     }

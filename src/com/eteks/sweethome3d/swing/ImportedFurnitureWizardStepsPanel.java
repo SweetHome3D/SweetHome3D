@@ -55,7 +55,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
@@ -138,7 +137,6 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class ImportedFurnitureWizardStepsPanel extends JPanel 
                                                implements ImportedFurnitureWizardStepsView {
   private final ImportedFurnitureWizardController controller;
-  private ResourceBundle                    resource;
   private CardLayout                        cardLayout;
   private JLabel                            modelChoiceOrChangeLabel;
   private JButton                           modelChoiceOrChangeButton;
@@ -188,14 +186,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                            UserPreferences preferences, 
                                            final ImportedFurnitureWizardController controller) {
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
     this.modelLoader = Executors.newSingleThreadExecutor();
     createComponents(importHomePiece, preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents();
-    updateController(piece);
+    updateController(piece, preferences);
     if (modelName != null) {
-      updateController(modelName, controller.getContentManager(),  
+      updateController(modelName, preferences, controller.getContentManager(),  
           importHomePiece 
               ? null 
               : preferences.getFurnitureCatalog().getCategories().get(0), true);
@@ -227,13 +224,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             : preferences.getFurnitureCatalog().getCategories().get(0);
     this.modelChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          String modelName = showModelChoiceDialog(controller.getContentManager());
+          String modelName = showModelChoiceDialog(preferences, controller.getContentManager());
           if (modelName != null) {
-            updateController(modelName, controller.getContentManager(), defaultModelCategory, false);
+            updateController(modelName, preferences, 
+                controller.getContentManager(), defaultModelCategory, false);
           }
         }
       });
-    this.findModelsButton = new JButton(this.resource.getString("findModelsButton.text"));
+    this.findModelsButton = new JButton(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "findModelsButton.text"));
     BasicService basicService = null;
     try { 
       // Lookup the javax.jnlp.BasicService object 
@@ -252,7 +251,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           if (service != null) {
             try { 
               // Display Find models page in browser
-              final URL findModelsUrl = new URL(resource.getString("findModelsButton.url"));
+              final URL findModelsUrl = new URL(preferences.getLocalizedString(
+                  ImportedFurnitureWizardStepsPanel.class, "findModelsButton.url"));
               documentShown = service.showDocument(findModelsUrl); 
             } catch (MalformedURLException ex) {
               // Document isn't shown
@@ -261,18 +261,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           if (!documentShown) {
             // If the document wasn't shown, display a message 
             // with a copiable URL in a message box 
-            JTextArea findModelsMessageTextArea = new JTextArea( 
-                resource.getString("findModelsMessage.text"));
+            JTextArea findModelsMessageTextArea = new JTextArea(preferences.getLocalizedString(
+                ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.text"));
+            String findModelsTitle = preferences.getLocalizedString(
+                ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.title");
             findModelsMessageTextArea.setEditable(false);
             findModelsMessageTextArea.setOpaque(false);
             JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
-                findModelsMessageTextArea, 
-                resource.getString("findModelsMessage.title"), 
+                findModelsMessageTextArea, findModelsTitle, 
                 JOptionPane.INFORMATION_MESSAGE);
           }
         }
       });
-    this.modelChoiceErrorLabel = new JLabel(this.resource.getString("modelChoiceErrolLabel.text"));
+    this.modelChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrolLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occurred during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
     this.modelPreviewComponent = new ModelPreviewComponent();
@@ -289,7 +291,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
             String modelName = files.get(0).getAbsolutePath();
-            updateController(modelName, controller.getContentManager(), defaultModelCategory, false);
+            updateController(modelName, preferences, 
+                controller.getContentManager(), defaultModelCategory, false);
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
@@ -297,7 +300,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
           if (!success) {
             JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
-                resource.getString("modelChoiceError"));
+                preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceError"));
           }
           return success;
         }
@@ -305,8 +308,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.modelPreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
    
     // Orientation panel components
-    this.orientationLabel = new JLabel(this.resource.getString("orientationLabel.text"));
-    this.turnLeftButton = new JButton(new ResourceAction(this.resource, "TURN_LEFT", true) {
+    this.orientationLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "orientationLabel.text"));
+    this.turnLeftButton = new JButton(new ResourceAction(preferences, 
+            ImportedFurnitureWizardStepsPanel.class, "TURN_LEFT", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
@@ -316,7 +321,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           updateModelRotation(leftRotation);
         }
       });
-    this.turnRightButton = new JButton(new ResourceAction(this.resource, "TURN_RIGHT", true) {
+    this.turnRightButton = new JButton(new ResourceAction(preferences, 
+            ImportedFurnitureWizardStepsPanel.class, "TURN_RIGHT", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
@@ -326,7 +332,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           updateModelRotation(rightRotation);
         }
       });
-    this.turnUpButton = new JButton(new ResourceAction(this.resource, "TURN_UP", true) {
+    this.turnUpButton = new JButton(new ResourceAction(preferences, 
+            ImportedFurnitureWizardStepsPanel.class, "TURN_UP", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
@@ -336,7 +343,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           updateModelRotation(upRotation);
         }
       });
-    this.turnDownButton = new JButton(new ResourceAction(this.resource, "TURN_DOWN", true) {
+    this.turnDownButton = new JButton(new ResourceAction(preferences, 
+            ImportedFurnitureWizardStepsPanel.class, "TURN_DOWN", true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           Transform3D oldTransform = getModelRotationTransform();
@@ -346,8 +354,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           updateModelRotation(downRotation);
         }
       });
-    this.backFaceShownLabel = new JLabel(this.resource.getString("backFaceShownLabel.text"));
-    this.backFaceShownCheckBox = new JCheckBox(this.resource.getString("backFaceShownCheckBox.text"));
+    this.backFaceShownLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "backFaceShownLabel.text"));
+    this.backFaceShownCheckBox = new JCheckBox(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "backFaceShownCheckBox.text"));
     this.backFaceShownCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setBackFaceShown(backFaceShownCheckBox.isSelected());
@@ -360,11 +370,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             backFaceShownCheckBox.setSelected(controller.isBackFaceShown());
           }
         });
-    this.rotationPreviewComponent = new RotationPreviewComponent(controller);
+    this.rotationPreviewComponent = new RotationPreviewComponent(preferences, controller);
     
     // Attributes panel components
-    this.attributesLabel = new JLabel(this.resource.getString("attributesLabel.text"));
-    this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
+    this.attributesLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "attributesLabel.text"));
+    this.nameLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(10);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
@@ -397,7 +409,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
 
-    this.addToCatalogCheckBox = new JCheckBox(this.resource.getString("addToCatalogCheckBox.text"));
+    this.addToCatalogCheckBox = new JCheckBox(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "addToCatalogCheckBox.text"));
     // Propose the add to catalog option only for home furniture import
     this.addToCatalogCheckBox.setVisible(importHomePiece);
     this.addToCatalogCheckBox.addItemListener(new ItemListener() {
@@ -411,7 +424,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         }
       });
-    this.categoryLabel = new JLabel(this.resource.getString("categoryLabel.text")); 
+    this.categoryLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "categoryLabel.text")); 
     this.categoryComboBox = new JComboBox(preferences.getFurnitureCatalog().getCategories().toArray());
     // The piece category isn't enabled by default for home furniture import
     this.categoryComboBox.setEnabled(!importHomePiece);
@@ -487,8 +501,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       this.categoryComboBox.setSelectedIndex(0);
     }
 
-    this.widthLabel = new JLabel(
-        String.format(this.resource.getString("widthLabel.text"), unitName)); 
+    this.widthLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
@@ -508,8 +522,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.depthLabel = new JLabel(
-        String.format(this.resource.getString("depthLabel.text"), unitName)); 
+    this.depthLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "depthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
@@ -529,8 +543,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.heightLabel = new JLabel(
-        String.format(this.resource.getString("heightLabel.text"), unitName)); 
+    this.heightLabel = new JLabel(preferences.getLocalizedString(
+            ImportedFurnitureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
@@ -549,8 +563,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             heightSpinnerModel.setLength(controller.getHeight());
           }
         });
-    this.keepProportionsCheckBox = new JCheckBox(
-        this.resource.getString("keepProportionsCheckBox.text"));
+    this.keepProportionsCheckBox = new JCheckBox(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "keepProportionsCheckBox.text"));
     this.keepProportionsCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setProportional(keepProportionsCheckBox.isSelected());
@@ -564,8 +578,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.elevationLabel = new JLabel(
-        String.format(this.resource.getString("elevationLabel.text"), unitName)); 
+    this.elevationLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "elevationLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 500f);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
@@ -584,7 +598,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.movableCheckBox = new JCheckBox(this.resource.getString("movableCheckBox.text"));
+    this.movableCheckBox = new JCheckBox(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "movableCheckBox.text"));
     this.movableCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setMovable(movableCheckBox.isSelected());
@@ -598,7 +613,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
 
-    this.doorOrWindowCheckBox = new JCheckBox(this.resource.getString("doorOrWindowCheckBox.text"));
+    this.doorOrWindowCheckBox = new JCheckBox(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "doorOrWindowCheckBox.text"));
     this.doorOrWindowCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setDoorOrWindow(doorOrWindowCheckBox.isSelected());
@@ -613,16 +629,19 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         });
 
     this.colorLabel = new JLabel(
-        String.format(this.resource.getString("colorLabel.text"), unitName));
+        String.format(preferences.getLocalizedString(
+            ImportedFurnitureWizardStepsPanel.class, "colorLabel.text"), unitName));
     this.colorButton = new ColorButton();
-    this.colorButton.setColorDialogTitle(this.resource.getString("colorDialog.title"));
+    this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "colorDialog.title"));
     this.colorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setColor(colorButton.getColor());
           }
         });
-    this.clearColorButton = new JButton(this.resource.getString("clearColorButton.text"));
+    this.clearColorButton = new JButton(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "clearColorButton.text"));
     this.clearColorButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           controller.setColor(null);
@@ -641,50 +660,51 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.attributesPreviewComponent = new AttributesPreviewComponent(controller);
 
     // Icon panel components
-    this.iconLabel = new JLabel(this.resource.getString("iconLabel.text"));
+    this.iconLabel = new JLabel(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "iconLabel.text"));
     this.iconPreviewComponent = new IconPreviewComponent(this.controller);
   }
 
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.findModelsButton.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("findModelsButton.mnemonic")).getKeyCode());
-      this.backFaceShownCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("backFaceShownCheckBox.mnemonic")).getKeyCode());
-      this.nameLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("nameLabel.mnemonic")).getKeyCode());
+      this.findModelsButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "findModelsButton.mnemonic")).getKeyCode());
+      this.backFaceShownCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "backFaceShownCheckBox.mnemonic")).getKeyCode());
+      this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "nameLabel.mnemonic")).getKeyCode());
       this.nameLabel.setLabelFor(this.nameTextField);
-      this.categoryLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("categoryLabel.mnemonic")).getKeyCode());
+      this.categoryLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "categoryLabel.mnemonic")).getKeyCode());
       this.categoryLabel.setLabelFor(this.categoryComboBox);
-      this.addToCatalogCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("addToCatalogCheckBox.mnemonic")).getKeyCode());;
-      this.widthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("widthLabel.mnemonic")).getKeyCode());
+      this.addToCatalogCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "addToCatalogCheckBox.mnemonic")).getKeyCode());;
+      this.widthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "widthLabel.mnemonic")).getKeyCode());
       this.widthLabel.setLabelFor(this.widthSpinner);
-      this.depthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("depthLabel.mnemonic")).getKeyCode());
+      this.depthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "depthLabel.mnemonic")).getKeyCode());
       this.depthLabel.setLabelFor(this.depthSpinner);
-      this.heightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("heightLabel.mnemonic")).getKeyCode());
+      this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.keepProportionsCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("keepProportionsCheckBox.mnemonic")).getKeyCode());
-      this.elevationLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("elevationLabel.mnemonic")).getKeyCode());
+      this.keepProportionsCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "keepProportionsCheckBox.mnemonic")).getKeyCode());
+      this.elevationLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "elevationLabel.mnemonic")).getKeyCode());
       this.elevationLabel.setLabelFor(this.elevationSpinner);
-      this.movableCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("movableCheckBox.mnemonic")).getKeyCode());;
-      this.doorOrWindowCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("doorOrWindowCheckBox.mnemonic")).getKeyCode());;
-      this.colorLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("colorLabel.mnemonic")).getKeyCode());
+      this.movableCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "movableCheckBox.mnemonic")).getKeyCode());;
+      this.doorOrWindowCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "doorOrWindowCheckBox.mnemonic")).getKeyCode());;
+      this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
-      this.clearColorButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("clearColorButton.mnemonic")).getKeyCode());
+      this.clearColorButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "clearColorButton.mnemonic")).getKeyCode());
     }
   }
   
@@ -883,12 +903,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Updates controller initial values from <code>piece</code>. 
    */
-  private void updateController(final CatalogPieceOfFurniture piece) {
+  private void updateController(final CatalogPieceOfFurniture piece,
+                                final UserPreferences preferences) {
     if (piece == null) {
-      setModelChoiceTexts();
+      setModelChoiceTexts(preferences);
       updatePreviewComponentsModel(null);
     } else {
-      setModelChangeTexts();
+      setModelChangeTexts(preferences);
       // Read model in modelLoader executor
       this.modelLoader.execute(new Runnable() {
           public void run() {
@@ -919,7 +940,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                     controller.setProportional(piece.isProportional());
                   } else {
                     controller.setModel(null);
-                    setModelChoiceTexts();
+                    setModelChoiceTexts(preferences);
                     modelChoiceErrorLabel.setVisible(true);
                   }
                 } 
@@ -934,6 +955,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    * Reads model from <code>modelName</code> and updates controller values.
    */
   private void updateController(final String modelName,
+                                final UserPreferences preferences,
                                 final ContentManager contentManager,
                                 final FurnitureCategory defaultCategory,
                                 final boolean ignoreException) {
@@ -955,7 +977,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
                     JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
-                        String.format(resource.getString("modelChoiceError"), modelName));
+                        preferences.getLocalizedString(
+                            ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
                   }
                 });
             }
@@ -1015,7 +1038,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
               public void run() {
                 if (readModel != null) {
                   controller.setModel(readContent);
-                  setModelChangeTexts();
+                  setModelChangeTexts(preferences);
                   modelChoiceErrorLabel.setVisible(false);
                   controller.setModelRotation(new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}});
                   controller.setBackFaceShown(false);
@@ -1034,9 +1057,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                   controller.setProportional(true);
                 } else if (isShowing()) {
                   controller.setModel(null);
-                  setModelChoiceTexts();
+                  setModelChoiceTexts(preferences);
                   JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
-                      resource.getString("modelChoiceFormatError"));
+                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
                 }
               }
             });
@@ -1095,33 +1118,41 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   /**
    * Sets the texts of label and button of model panel with change texts. 
    */
-  private void setModelChangeTexts() {
-    this.modelChoiceOrChangeLabel.setText(this.resource.getString("modelChangeLabel.text")); 
-    this.modelChoiceOrChangeButton.setText(this.resource.getString("modelChangeButton.text"));
+  private void setModelChangeTexts(UserPreferences preferences) {
+    this.modelChoiceOrChangeLabel.setText(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "modelChangeLabel.text")); 
+    this.modelChoiceOrChangeButton.setText(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "modelChangeButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("modelChangeButton.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              ImportedFurnitureWizardStepsPanel.class, "modelChangeButton.mnemonic")).getKeyCode());
     }
   }
 
   /**
    * Sets the texts of label and button of model panel with choice texts. 
    */
-  private void setModelChoiceTexts() {
-    this.modelChoiceOrChangeLabel.setText(this.resource.getString("modelChoiceLabel.text")); 
-    this.modelChoiceOrChangeButton.setText(this.resource.getString("modelChoiceButton.text"));
+  private void setModelChoiceTexts(UserPreferences preferences) {
+    this.modelChoiceOrChangeLabel.setText(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "modelChoiceLabel.text")); 
+    this.modelChoiceOrChangeButton.setText(preferences.getLocalizedString(
+        ImportedFurnitureWizardStepsPanel.class, "modelChoiceButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("modelChoiceButton.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              ImportedFurnitureWizardStepsPanel.class, "modelChoiceButton.mnemonic")).getKeyCode());
     }
   }
   
   /**
    * Returns the model name chosen for a file chooser dialog.
    */
-  private String showModelChoiceDialog(ContentManager contentManager) {
+  private String showModelChoiceDialog(UserPreferences preferences,
+                                       ContentManager contentManager) {
     return contentManager.showOpenDialog(this, 
-        this.resource.getString("modelChoiceDialog.title"), 
+        preferences.getLocalizedString(
+            ImportedFurnitureWizardStepsPanel.class, "modelChoiceDialog.title"), 
         ContentManager.ContentType.MODEL);
   }
   
@@ -1797,27 +1828,29 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private Canvas3D topViewCanvas;
     private JLabel   perspectiveViewLabel;
 
-    public RotationPreviewComponent(final ImportedFurnitureWizardController controller) {
+    public RotationPreviewComponent(UserPreferences preferences, 
+                                    final ImportedFurnitureWizardController controller) {
       addRotationListener(controller);
-      createComponents();
+      createComponents(preferences);
       layoutComponents();
     }
 
     /**
      * Creates components displayed by this panel.
      */
-    private void createComponents() {
-      ResourceBundle resource = 
-          ResourceBundle.getBundle(ImportedFurnitureWizardStepsPanel.class.getName());
-
-      this.frontViewLabel = new JLabel(resource.getString("frontViewLabel.text"));
+    private void createComponents(UserPreferences preferences) {
+      this.frontViewLabel = new JLabel(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "frontViewLabel.text"));
       Component3DManager canvas3DManager = Component3DManager.getInstance();
       this.frontViewCanvas = canvas3DManager.getOnscreenCanvas3D();
-      this.sideViewLabel = new JLabel(resource.getString("sideViewLabel.text"));
+      this.sideViewLabel = new JLabel(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "sideViewLabel.text"));
       this.sideViewCanvas = canvas3DManager.getOnscreenCanvas3D();
-      this.topViewLabel = new JLabel(resource.getString("topViewLabel.text"));
+      this.topViewLabel = new JLabel(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "topViewLabel.text"));
       this.topViewCanvas = canvas3DManager.getOnscreenCanvas3D();
-      this.perspectiveViewLabel = new JLabel(resource.getString("perspectiveViewLabel.text"));
+      this.perspectiveViewLabel = new JLabel(preferences.getLocalizedString(
+          ImportedFurnitureWizardStepsPanel.class, "perspectiveViewLabel.text"));
       
       setBorder(null);
       // Add a hierarchy listener to link canvases to universe once this component is made visible 

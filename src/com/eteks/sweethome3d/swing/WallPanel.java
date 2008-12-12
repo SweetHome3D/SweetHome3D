@@ -24,7 +24,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -54,7 +53,6 @@ import com.eteks.sweethome3d.viewcontroller.WallController;
  */
 public class WallPanel extends JPanel implements DialogView {
   private final WallController controller;
-  private ResourceBundle resource;
   private JLabel         xStartLabel;
   private JSpinner       xStartSpinner;
   private JLabel         yStartLabel;
@@ -84,6 +82,7 @@ public class WallPanel extends JPanel implements DialogView {
   private JLabel         thicknessLabel;
   private JSpinner       thicknessSpinner;
   private JLabel         wallOrientationLabel;
+  private String         dialogTitle;
 
   /**
    * Creates a panel that displays wall data according to the units set in
@@ -95,9 +94,8 @@ public class WallPanel extends JPanel implements DialogView {
                    WallController controller) {
     super(new GridBagLayout());
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(WallPanel.class.getName());
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents(preferences, controller);
   }
 
@@ -110,7 +108,8 @@ public class WallPanel extends JPanel implements DialogView {
     String unitName = preferences.getLengthUnit().getName();
     
     // Create X start label and its spinner bound to X_START controller property
-    this.xStartLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    this.xStartLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "xLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel xStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.xStartSpinner = new NullableSpinner(xStartSpinnerModel);
@@ -132,7 +131,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create Y start label and its spinner bound to Y_START controller property
-    this.yStartLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    this.yStartLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel yStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.yStartSpinner = new NullableSpinner(yStartSpinnerModel);
@@ -154,7 +154,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create X end label and its spinner bound to X_END controller property
-    this.xEndLabel = new JLabel(String.format(this.resource.getString("xLabel.text"), unitName));
+    this.xEndLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "xLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel xEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.xEndSpinner = new NullableSpinner(xEndSpinnerModel);
@@ -176,7 +177,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create Y end label and its spinner bound to Y_END controller property
-    this.yEndLabel = new JLabel(String.format(this.resource.getString("yLabel.text"), unitName));
+    this.yEndLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel yEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
     this.yEndSpinner = new NullableSpinner(yEndSpinnerModel);
@@ -198,7 +200,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Create length label and its spinner bound to LENGTH controller property
-    this.lengthLabel = new JLabel(String.format(this.resource.getString("lengthLabel.text"), unitName));
+    this.lengthLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "lengthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel lengthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
     this.lengthSpinner = new NullableSpinner(lengthSpinnerModel);
@@ -223,7 +226,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Left side color and texture buttons bound to left side controller properties
-    this.leftSideColorRadioButton = new JRadioButton(this.resource.getString("leftSideColorRadioButton.text"));
+    this.leftSideColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "leftSideColorRadioButton.text"));
     this.leftSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (leftSideColorRadioButton.isSelected()) {
@@ -239,7 +243,8 @@ public class WallPanel extends JPanel implements DialogView {
         });
     
     this.leftSideColorButton = new ColorButton();
-    this.leftSideColorButton.setColorDialogTitle(this.resource.getString("leftSideColorDialog.title"));
+    this.leftSideColorButton.setColorDialogTitle(preferences.getLocalizedString(
+        WallPanel.class, "leftSideColorDialog.title"));
     this.leftSideColorButton.setColor(controller.getLeftSideColor());
     this.leftSideColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
@@ -254,7 +259,8 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
 
-    this.leftSideTextureRadioButton = new JRadioButton(this.resource.getString("leftSideTextureRadioButton.text"));
+    this.leftSideTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "leftSideTextureRadioButton.text"));
     this.leftSideTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (leftSideTextureRadioButton.isSelected()) {
@@ -271,7 +277,8 @@ public class WallPanel extends JPanel implements DialogView {
     updateLeftSideRadioButtons(controller);
     
     // Right side color and texture buttons bound to right side controller properties
-    this.rightSideColorRadioButton = new JRadioButton(this.resource.getString("rightSideColorRadioButton.text"));
+    this.rightSideColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "rightSideColorRadioButton.text"));
     this.rightSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
           if (rightSideColorRadioButton.isSelected()) {
@@ -288,7 +295,8 @@ public class WallPanel extends JPanel implements DialogView {
 
     this.rightSideColorButton = new ColorButton();
     this.rightSideColorButton.setColor(controller.getRightSideColor());
-    this.rightSideColorButton.setColorDialogTitle(this.resource.getString("rightSideColorDialog.title"));
+    this.rightSideColorButton.setColorDialogTitle(preferences.getLocalizedString(
+        WallPanel.class, "rightSideColorDialog.title"));
     this.rightSideColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
@@ -302,7 +310,8 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
     
-    this.rightSideTextureRadioButton = new JRadioButton(this.resource.getString("rightSideTextureRadioButton.text"));
+    this.rightSideTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "rightSideTextureRadioButton.text"));
     this.rightSideTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
           if (rightSideTextureRadioButton.isSelected()) {
@@ -318,8 +327,8 @@ public class WallPanel extends JPanel implements DialogView {
     rightSideButtonGroup.add(this.rightSideTextureRadioButton);
     updateRightSideRadioButtons(controller);
 
-    this.rectangularWallRadioButton = new JRadioButton(
-        this.resource.getString("rectangularWallRadioButton.text"));
+    this.rectangularWallRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "rectangularWallRadioButton.text"));
     this.rectangularWallRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (rectangularWallRadioButton.isSelected()) {
@@ -335,8 +344,8 @@ public class WallPanel extends JPanel implements DialogView {
         });
 
     // Create height label and its spinner bound to RECTANGULAR_WALL_HEIGHT controller property
-    this.rectangularWallHeightLabel = new JLabel(
-        String.format(this.resource.getString("rectangularWallHeightLabel.text"), unitName));
+    this.rectangularWallHeightLabel = new JLabel(preferences.getLocalizedString(
+            WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
     this.rectangularWallHeightSpinner = new NullableSpinner(rectangularWallHeightSpinnerModel);
@@ -360,8 +369,8 @@ public class WallPanel extends JPanel implements DialogView {
         }
       });
    
-    this.slopingWallRadioButton = new JRadioButton(
-        this.resource.getString("slopingWallRadioButton.text"));
+    this.slopingWallRadioButton = new JRadioButton(preferences.getLocalizedString(
+        WallPanel.class, "slopingWallRadioButton.text"));
     this.slopingWallRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (slopingWallRadioButton.isSelected()) {
@@ -375,7 +384,8 @@ public class WallPanel extends JPanel implements DialogView {
     updateWallShapeRadioButtons(controller);
 
     // Create height at start label and its spinner bound to SLOPING_WALL_HEIGHT_AT_START controller property
-    this.slopingWallHeightAtStartLabel = new JLabel(this.resource.getString("slopingWallHeightAtStartLabel.text"));
+    this.slopingWallHeightAtStartLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "slopingWallHeightAtStartLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
     this.slopingWallHeightAtStartSpinner = new NullableSpinner(slopingWallHeightAtStartSpinnerModel);
@@ -400,7 +410,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create height at end label and its spinner bound to SLOPING_WALL_HEIGHT_AT_END controller property
-    this.slopingWallHeightAtEndLabel = new JLabel(this.resource.getString("slopingWallHeightAtEndLabel.text"));
+    this.slopingWallHeightAtEndLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "slopingWallHeightAtEndLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
     this.slopingWallHeightAtEndSpinner = new NullableSpinner(slopingWallHeightAtEndSpinnerModel);
@@ -425,7 +436,8 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Create thickness label and its spinner bound to THICKNESS controller property
-    this.thicknessLabel = new JLabel(String.format(this.resource.getString("thicknessLabel.text"), unitName));
+    this.thicknessLabel = new JLabel(preferences.getLocalizedString(
+        WallPanel.class, "thicknessLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
@@ -450,12 +462,14 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // wallOrientationLabel shows an HTML explanation of wall orientation with an image URL in resource
-    this.wallOrientationLabel = new JLabel(
-        String.format(this.resource.getString("wallOrientationLabel.text"), 
+    this.wallOrientationLabel = new JLabel(preferences.getLocalizedString(
+            WallPanel.class, "wallOrientationLabel.text", 
             new ResourceURLContent(WallPanel.class, "resources/wallOrientation.png").getURL()), 
         JLabel.CENTER);
     // Use same font for label as tooltips
     this.wallOrientationLabel.setFont(UIManager.getFont("ToolTip.font"));
+    
+    this.dialogTitle = preferences.getLocalizedString(WallPanel.class, "wall.title");
   }
 
   /**
@@ -500,49 +514,49 @@ public class WallPanel extends JPanel implements DialogView {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.xStartLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("xLabel.mnemonic")).getKeyCode());
+      this.xStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "xLabel.mnemonic")).getKeyCode());
       this.xStartLabel.setLabelFor(this.xStartSpinner);
-      this.yStartLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
+      this.yStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "yLabel.mnemonic")).getKeyCode());
       this.yStartLabel.setLabelFor(this.yStartSpinner);
-      this.xEndLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("xLabel.mnemonic")).getKeyCode());
+      this.xEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "xLabel.mnemonic")).getKeyCode());
       this.xEndLabel.setLabelFor(this.xEndSpinner);
-      this.yEndLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("yLabel.mnemonic")).getKeyCode());
+      this.yEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "yLabel.mnemonic")).getKeyCode());
       this.yEndLabel.setLabelFor(this.yEndSpinner);
-      this.lengthLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("lengthLabel.mnemonic")).getKeyCode());
+      this.lengthLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "lengthLabel.mnemonic")).getKeyCode());
       this.lengthLabel.setLabelFor(this.lengthSpinner);
 
-      this.leftSideColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("leftSideColorRadioButton.mnemonic")).getKeyCode());
-      this.leftSideTextureRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("leftSideTextureRadioButton.mnemonic")).getKeyCode());
-      this.rightSideColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rightSideColorRadioButton.mnemonic")).getKeyCode());
-      this.rightSideTextureRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rightSideTextureRadioButton.mnemonic")).getKeyCode());
+      this.leftSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "leftSideColorRadioButton.mnemonic")).getKeyCode());
+      this.leftSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "leftSideTextureRadioButton.mnemonic")).getKeyCode());
+      this.rightSideColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rightSideColorRadioButton.mnemonic")).getKeyCode());
+      this.rightSideTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rightSideTextureRadioButton.mnemonic")).getKeyCode());
       
-      this.rectangularWallRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rectangularWallRadioButton.mnemonic")).getKeyCode());
-      this.rectangularWallHeightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rectangularWallHeightLabel.mnemonic")).getKeyCode());
+      this.rectangularWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rectangularWallRadioButton.mnemonic")).getKeyCode());
+      this.rectangularWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "rectangularWallHeightLabel.mnemonic")).getKeyCode());
       this.rectangularWallHeightLabel.setLabelFor(this.rectangularWallHeightSpinner);
-      this.slopingWallRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("slopingWallRadioButton.mnemonic")).getKeyCode());
-      this.slopingWallHeightAtStartLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("slopingWallHeightAtStartLabel.mnemonic")).getKeyCode());
+      this.slopingWallRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingWallRadioButton.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtStartLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingWallHeightAtStartLabel.mnemonic")).getKeyCode());
       this.slopingWallHeightAtStartLabel.setLabelFor(this.slopingWallHeightAtStartSpinner);
-      this.slopingWallHeightAtEndLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("slopingWallHeightAtEndLabel.mnemonic")).getKeyCode());
+      this.slopingWallHeightAtEndLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "slopingWallHeightAtEndLabel.mnemonic")).getKeyCode());
       this.slopingWallHeightAtEndLabel.setLabelFor(this.slopingWallHeightAtEndSpinner);
       
-      this.thicknessLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("thicknessLabel.mnemonic")).getKeyCode());
+      this.thicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(WallPanel.class, "thicknessLabel.mnemonic")).getKeyCode());
       this.thicknessLabel.setLabelFor(this.thicknessSpinner);
     }
   }
@@ -557,7 +571,7 @@ public class WallPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     // First row
     final JPanel startPointPanel = createTitledPanel(
-        this.resource.getString("startPointPanel.title"),
+        preferences.getLocalizedString(WallPanel.class, "startPointPanel.title"),
         new JComponent [] {this.xStartLabel, this.xStartSpinner, 
                            this.yStartLabel, this.yStartSpinner}, true);
     Insets rowInsets;
@@ -572,7 +586,7 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Second row
     final JPanel endPointPanel = createTitledPanel(
-        this.resource.getString("endPointPanel.title"),
+        preferences.getLocalizedString(WallPanel.class, "endPointPanel.title"),
         new JComponent [] {this.xEndLabel, this.xEndSpinner, 
                            this.yEndLabel, this.yEndSpinner}, true);
     // Add length label and spinner at the end of second row of endPointPanel
@@ -588,21 +602,22 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));    
     // Third row
     JPanel leftSidePanel = createTitledPanel(
-        this.resource.getString("leftSidePanel.title"),
+        preferences.getLocalizedString(WallPanel.class, "leftSidePanel.title"),
         new JComponent [] {this.leftSideColorRadioButton, this.leftSideColorButton, 
                            this.leftSideTextureRadioButton, this.leftSideTextureComponent}, false);
     add(leftSidePanel, new GridBagConstraints(
         0, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     JPanel rightSidePanel = createTitledPanel(
-        this.resource.getString("rightSidePanel.title"),
+        preferences.getLocalizedString(WallPanel.class, "rightSidePanel.title"),
         new JComponent [] {this.rightSideColorRadioButton, this.rightSideColorButton, 
                            this.rightSideTextureRadioButton, this.rightSideTextureComponent}, false);
     add(rightSidePanel, new GridBagConstraints(
         1, 2, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Fourth row
-    JPanel heightPanel = createTitledPanel(this.resource.getString("heightPanel.title"));   
+    JPanel heightPanel = createTitledPanel(
+        preferences.getLocalizedString(WallPanel.class, "heightPanel.title"));   
     // First row of height panel
     heightPanel.add(this.rectangularWallRadioButton, new GridBagConstraints(
         0, 0, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -722,11 +737,10 @@ public class WallPanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("wall.title");
     JFormattedTextField thicknessTextField = 
         ((JSpinner.DefaultEditor)thicknessSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, dialogTitle, thicknessTextField) == JOptionPane.OK_OPTION) {
+            this, this.dialogTitle, thicknessTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyWalls();
     }
   }

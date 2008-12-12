@@ -22,17 +22,12 @@ package com.eteks.sweethome3d;
 import java.awt.EventQueue;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ResourceBundle;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -48,7 +43,6 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
@@ -156,7 +150,7 @@ class MacOSXConfiguration {
       try {
         // Call setDockIconImage by reflection
         Method setDockIconImageMethod = Application.class.getMethod("setDockIconImage", Image.class);
-        String iconPath = ResourceBundle.getBundle(HomePane.class.getName()).getString("about.icon");
+        String iconPath = homeApplication.getUserPreferences().getLocalizedString(HomePane.class, "about.icon");
         Image icon = ImageIO.read(HomePane.class.getResource(iconPath));
         setDockIconImageMethod.invoke(application, icon);
       } catch (NoSuchMethodException ex) {
@@ -175,20 +169,22 @@ class MacOSXConfiguration {
   private static void addWindowMenuToFrame(final JFrame frame, 
                                            final SweetHome3D application,
                                            boolean defaultFrame) {
-    ResourceBundle resource = ResourceBundle.getBundle(MacOSXConfiguration.class.getName());    
+    UserPreferences preferences = application.getUserPreferences();
     JMenuBar menuBar = frame.getJMenuBar();
     final JMenu windowMenu = new JMenu(
-        new ResourceAction(resource, "WINDOW_MENU", true));
+        new ResourceAction(preferences, MacOSXConfiguration.class, "WINDOW_MENU", true));
     // Add Window menu before Help menu
     menuBar.add(windowMenu, menuBar.getComponentCount() - 1);
     windowMenu.add(new JMenuItem(
-        new ResourceAction(resource, "MINIMIZE", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "MINIMIZE", !defaultFrame) {
+            @Override
             public void actionPerformed(ActionEvent ev) {
               frame.setState(JFrame.ICONIFIED);
             }
           }));
     windowMenu.add(new JMenuItem(
-        new ResourceAction(resource, "ZOOM", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "ZOOM", !defaultFrame) {
+            @Override
             public void actionPerformed(ActionEvent ev) {
               if ((frame.getExtendedState() & JFrame.MAXIMIZED_BOTH) != 0) {
                 frame.setExtendedState(frame.getExtendedState() & ~JFrame.MAXIMIZED_BOTH);
@@ -199,7 +195,8 @@ class MacOSXConfiguration {
           }));
     windowMenu.addSeparator();
     windowMenu.add(new JMenuItem(
-        new ResourceAction(resource, "BRING_ALL_TO_FRONT", !defaultFrame) {
+        new ResourceAction(preferences, MacOSXConfiguration.class, "BRING_ALL_TO_FRONT", !defaultFrame) {
+            @Override
             public void actionPerformed(ActionEvent ev) {
               // Avoid blinking while bringing other windows to front
               frame.setAlwaysOnTop(true);
@@ -251,44 +248,5 @@ class MacOSXConfiguration {
           menuDeselected(ev);
         }
       });
-
-    // Add a property change listener to preferences to update
-    // window menu and its items when preferred language changes.
-    application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
-        new LanguageChangeListener(windowMenu));
-  }
-
-  /**
-   * Preferences property listener bound to frame with a weak reference to avoid
-   * strong link between preferences and that frame.  
-   */
-  private static class LanguageChangeListener implements PropertyChangeListener {
-    private WeakReference<JMenu> windowMenu;
-
-    public LanguageChangeListener(JMenu windowMenu) {
-      this.windowMenu = new WeakReference<JMenu>(windowMenu);
-    }
-    
-    public void propertyChange(PropertyChangeEvent ev) {
-      // If window menu was garbage collected, remove this listener from preferences
-      JMenu windowMenu = this.windowMenu.get();
-      if (windowMenu == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
-            UserPreferences.Property.LANGUAGE, this);
-      } else {
-        // Updates menu and its items from the current default locale 
-        ResourceBundle resource = ResourceBundle.getBundle(MacOSXConfiguration.class.getName());
-        ((ResourceAction)windowMenu.getAction()).setResource(resource);
-        for (int i = 0, n = windowMenu.getMenuComponentCount(); i < n; i++) {
-          JMenuItem menuItem = windowMenu.getItem(i);
-          if (menuItem != null) {
-            Action menuItemAction = menuItem.getAction();
-            if (menuItemAction instanceof ResourceAction) {
-              ((ResourceAction)menuItemAction).setResource(resource);
-            }
-          }
-        }
-      }
-    }
   }
 }

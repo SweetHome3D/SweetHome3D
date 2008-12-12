@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -71,16 +70,18 @@ import com.eteks.sweethome3d.viewcontroller.HelpView;
 public class HelpPane extends JRootPane implements HelpView {
   private enum ActionType {SHOW_PREVIOUS, SHOW_NEXT, SEARCH, CLOSE}
 
-  private JFrame      frame;
-  private JLabel      searchLabel;
-  private JTextField  searchTextField;
-  private JEditorPane helpEditorPane;
+  private final UserPreferences preferences;
+  private JFrame                frame;
+  private JLabel                searchLabel;
+  private JTextField            searchTextField;
+  private JEditorPane           helpEditorPane;
   
   public HelpPane(UserPreferences preferences, 
                   final HelpController controller) {
-    createActions(controller);
-    createComponents();
-    setMnemonics();
+    this.preferences = preferences;
+    createActions(preferences, controller);
+    createComponents(preferences);
+    setMnemonics(preferences);
     layoutComponents();
     addLanguageListener(preferences);
     if (controller != null) {
@@ -106,12 +107,12 @@ public class HelpPane extends JRootPane implements HelpView {
   /** 
    * Creates actions bound to <code>controller</code>.
    */
-  private void createActions(final HelpController controller) {
-    ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());    
+  private void createActions(UserPreferences preferences, 
+                             final HelpController controller) {
     ActionMap actions = getActionMap();    
     try {
       final ControllerAction showPreviousAction = new ControllerAction(
-          resource, ActionType.SHOW_PREVIOUS.name(), controller, "showPrevious");
+          preferences, HelpPane.class, ActionType.SHOW_PREVIOUS.name(), controller, "showPrevious");
       showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
       controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED, 
           new PropertyChangeListener() {
@@ -122,7 +123,7 @@ public class HelpPane extends JRootPane implements HelpView {
       actions.put(ActionType.SHOW_PREVIOUS, showPreviousAction);
       
       final ControllerAction showNextAction = new ControllerAction(
-          resource, ActionType.SHOW_NEXT.name(), controller, "showNext");
+          preferences, HelpPane.class, ActionType.SHOW_NEXT.name(), controller, "showNext");
       showNextAction.setEnabled(controller.isNextPageEnabled());
       controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED, 
           new PropertyChangeListener() {
@@ -132,7 +133,7 @@ public class HelpPane extends JRootPane implements HelpView {
           });
       actions.put(ActionType.SHOW_NEXT, showNextAction);
       
-      actions.put(ActionType.SEARCH, new ResourceAction(resource, ActionType.SEARCH.name()) {
+      actions.put(ActionType.SEARCH, new ResourceAction(preferences, HelpPane.class, ActionType.SEARCH.name()) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             final Cursor previousCursor = getCursor();
@@ -151,7 +152,7 @@ public class HelpPane extends JRootPane implements HelpView {
       throw new RuntimeException(ex);
     }
     actions.put(ActionType.CLOSE, new ResourceAction(
-            resource, ActionType.CLOSE.name(), true) {
+          preferences, HelpPane.class, ActionType.CLOSE.name(), true) {
         @Override
         public void actionPerformed(ActionEvent ev) {
           frame.setVisible(false);
@@ -182,35 +183,29 @@ public class HelpPane extends JRootPane implements HelpView {
     public void propertyChange(PropertyChangeEvent ev) {
       // If help pane was garbage collected, remove this listener from preferences
       HelpPane helpPane = this.helpPane.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
       if (helpPane == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+        preferences.removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        // Update actions from current default locale
-        ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
-        ActionMap actions = helpPane.getActionMap();    
-        for (ActionType actionType : ActionType.values()) {
-          ((ResourceAction)actions.get(actionType)).setResource(resource);
-        }
-        // Update frame title and search label
+        // Update frame title and search label with new locale
         if (helpPane.frame != null) {
-          helpPane.frame.setTitle(resource.getString("helpFrame.title"));
+          helpPane.frame.setTitle(preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
           helpPane.frame.applyComponentOrientation(
               ComponentOrientation.getOrientation(Locale.getDefault()));
         }
-        helpPane.searchLabel.setText(resource.getString("searchLabel.text"));
+        helpPane.searchLabel.setText(preferences.getLocalizedString(HelpPane.class, "searchLabel.text"));
         helpPane.searchTextField.setText("");
-        helpPane.setMnemonics();
+        helpPane.setMnemonics(preferences);
       }
     }
   }
   
   /**
    * Creates the components displayed by this view.
-   */
-  private void createComponents() {
-    ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
-    this.searchLabel = new JLabel(resource.getString("searchLabel.text"));
+  */
+  private void createComponents(UserPreferences preferences) {
+    this.searchLabel = new JLabel(preferences.getLocalizedString(HelpPane.class, "searchLabel.text"));
     this.searchTextField = new JTextField(12);
     // Under Mac OS 10.5 use client properties to use search text field look and feel
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
@@ -251,11 +246,10 @@ public class HelpPane extends JRootPane implements HelpView {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
-      this.searchLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(resource.getString("searchLabel.mnemonic")).getKeyCode());
+      this.searchLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HelpPane.class, "searchLabel.mnemonic")).getKeyCode());
       this.searchLabel.setLabelFor(this.searchTextField);
     }
   }
@@ -367,11 +361,10 @@ public class HelpPane extends JRootPane implements HelpView {
             setRootPane(HelpPane.this);
           }
         };
-      ResourceBundle resource = ResourceBundle.getBundle(HelpPane.class.getName());
       // Update frame image and title 
-      this.frame.setIconImage(new ImageIcon(
-          HelpPane.class.getResource(resource.getString("helpFrame.icon"))).getImage());
-      this.frame.setTitle(resource.getString("helpFrame.title"));
+      this.frame.setIconImage(new ImageIcon(HelpPane.class.getResource(
+          this.preferences.getLocalizedString(HelpPane.class, "helpFrame.icon"))).getImage());
+      this.frame.setTitle(this.preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
       this.frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
       // Compute frame size and location
       computeFrameBounds(this.frame);

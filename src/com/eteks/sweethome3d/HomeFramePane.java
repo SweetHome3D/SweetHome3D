@@ -37,7 +37,6 @@ import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -75,7 +74,6 @@ public class HomeFramePane extends JRootPane implements View {
   private final HomeFrameController     controller;
   private static int                    newHomeCount;
   private int                           newHomeNumber;
-  private ResourceBundle                resource;
   
   public HomeFramePane(Home home,
                        HomeApplication application,
@@ -85,7 +83,6 @@ public class HomeFramePane extends JRootPane implements View {
     this.controller = controller;
     this.application = application;
     this.contentManager = contentManager;
-    this.resource = ResourceBundle.getBundle(HomeFramePane.class.getName());
     // If home is unnamed, give it a number
     if (home.getName() == null) {
       this.newHomeNumber = ++newHomeCount;
@@ -107,7 +104,7 @@ public class HomeFramePane extends JRootPane implements View {
     // Update frame image and title 
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
-    updateFrameTitle(homeFrame, this.home);
+    updateFrameTitle(homeFrame, this.home, this.application.getUserPreferences());
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       HomeController homeController = this.controller.getHomeController();
@@ -238,7 +235,7 @@ public class HomeFramePane extends JRootPane implements View {
     frame.addWindowStateListener(windowListener);    
     // Add a listener to preferences to apply component orientation to frame matching current language
     application.getUserPreferences().addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
-        new LanguageChangeListener(frame));
+        new LanguageChangeListener(frame, this));
     // Dispose window when a home is deleted 
     application.addHomesListener(new CollectionListener<Home>() {
         public void collectionChanged(CollectionEvent<Home> ev) {
@@ -252,12 +249,12 @@ public class HomeFramePane extends JRootPane implements View {
     // Update title when the name or the modified state of home changes
     home.addPropertyChangeListener(Home.Property.NAME, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateFrameTitle(frame, home);
+          updateFrameTitle(frame, home, application.getUserPreferences());
         }
       });
     home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateFrameTitle(frame, home);
+          updateFrameTitle(frame, home, application.getUserPreferences());
         }
       });
   }
@@ -267,20 +264,24 @@ public class HomeFramePane extends JRootPane implements View {
    * strong link between preferences and this component.  
    */
   private static class LanguageChangeListener implements PropertyChangeListener {
-    private WeakReference<JFrame> frame;
+    private WeakReference<JFrame>        frame;
+    private WeakReference<HomeFramePane> homeFramePane;
 
-    public LanguageChangeListener(JFrame frame) {
+    public LanguageChangeListener(JFrame frame, HomeFramePane homeFramePane) {
       this.frame = new WeakReference<JFrame>(frame);
+      this.homeFramePane = new WeakReference<HomeFramePane>(homeFramePane);
     }
     
     public void propertyChange(PropertyChangeEvent ev) {
       // If frame was garbage collected, remove this listener from preferences
-      JFrame frame = this.frame.get();
-      if (frame == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+      HomeFramePane homeFramePane = this.homeFramePane.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
+      if (homeFramePane == null) {
+        preferences.removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+        this.frame.get().applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+        homeFramePane.updateFrameTitle(this.frame.get(), homeFramePane.home, preferences);
       }
     }
   }
@@ -340,11 +341,13 @@ public class HomeFramePane extends JRootPane implements View {
   /**
    * Updates <code>frame</code> title from <code>home</code> name.
    */
-  private void updateFrameTitle(JFrame frame, Home home) {
+  private void updateFrameTitle(JFrame frame, 
+                                Home home,
+                                UserPreferences preferences) {
     String homeName = home.getName();
     String homeDisplayedName;
     if (homeName == null) {
-      homeDisplayedName = this.resource.getString("untitled"); 
+      homeDisplayedName = preferences.getLocalizedString(HomeFramePane.class, "untitled"); 
       if (newHomeNumber > 1) {
         homeDisplayedName += " " + newHomeNumber;
       }
@@ -372,7 +375,7 @@ public class HomeFramePane extends JRootPane implements View {
         }
       }
     } else {
-      title += " - " + resource.getString("applicationName"); 
+      title += " - " + preferences.getLocalizedString(HomeFramePane.class, "applicationName"); 
       if (home.isModified()) {
         title = "* " + title;
       }

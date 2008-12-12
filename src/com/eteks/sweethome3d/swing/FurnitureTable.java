@@ -44,7 +44,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -580,7 +579,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       for (HomePieceOfFurniture.SortableProperty columnProperty : HomePieceOfFurniture.SortableProperty.values()) {
         TableColumn tableColumn = new TableColumn();
         tableColumn.setIdentifier(columnProperty);
-        tableColumn.setHeaderValue(getColumnName(columnProperty));
+        tableColumn.setHeaderValue(getColumnName(columnProperty, preferences));
         tableColumn.setCellRenderer(getColumnRenderer(columnProperty, preferences));
         tableColumn.setHeaderRenderer(headerRenderer);
         this.availableColumns.put(columnProperty, tableColumn);
@@ -623,17 +622,18 @@ public class FurnitureTable extends JTable implements View, Printable {
       public void propertyChange(PropertyChangeEvent ev) {
         // If furniture table column model was garbage collected, remove this listener from preferences
         FurnitureTableColumnModel furnitureTableColumnModel = this.furnitureTableColumnModel.get();
+        UserPreferences preferences = (UserPreferences)ev.getSource();
         if (furnitureTableColumnModel == null) {
-          ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+          preferences.removePropertyChangeListener(
               UserPreferences.Property.LANGUAGE, this);
         } else {          
           // Change column name and renderer from current locale
           for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
             tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(
-                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier()));
+                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier(), preferences));
             tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(
                 (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier(),
-                (UserPreferences)ev.getSource()));
+                preferences));
           }
         }
       }
@@ -670,43 +670,43 @@ public class FurnitureTable extends JTable implements View, Printable {
     /**
      * Returns localized column names.
      */
-    private String getColumnName(HomePieceOfFurniture.SortableProperty property) {
-      ResourceBundle resource = ResourceBundle.getBundle(FurnitureTable.class.getName());
+    private String getColumnName(HomePieceOfFurniture.SortableProperty property, 
+                                 UserPreferences preferences) {
       switch (property) {
         case CATALOG_ID :
-          return resource.getString("catalogIdColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "catalogIdColumn");
         case NAME :
-          return resource.getString("nameColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "nameColumn");
         case WIDTH :
-          return resource.getString("widthColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "widthColumn");
         case DEPTH :
-          return resource.getString("depthColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "depthColumn");
         case HEIGHT : 
-          return resource.getString("heightColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "heightColumn");
         case X : 
-          return resource.getString("xColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "xColumn");
         case Y :
-          return resource.getString("yColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "yColumn");
         case ELEVATION : 
-          return resource.getString("elevationColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "elevationColumn");
         case ANGLE :
-          return resource.getString("angleColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "angleColumn");
         case COLOR :
-          return resource.getString("colorColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "colorColumn");
         case MOVABLE :
-          return resource.getString("movableColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "movableColumn");
         case DOOR_OR_WINDOW : 
-          return resource.getString("doorOrWindowColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "doorOrWindowColumn");
         case VISIBLE :
-          return resource.getString("visibleColumn");
+          return preferences.getLocalizedString(FurnitureTable.class, "visibleColumn");
         case PRICE :
-          return resource.getString("priceColumn");          
+          return preferences.getLocalizedString(FurnitureTable.class, "priceColumn");          
         case VALUE_ADDED_TAX_PERCENTAGE :
-          return resource.getString("valueAddedTaxPercentageColumn");          
+          return preferences.getLocalizedString(FurnitureTable.class, "valueAddedTaxPercentageColumn");          
         case VALUE_ADDED_TAX :
-          return resource.getString("valueAddedTaxColumn");          
+          return preferences.getLocalizedString(FurnitureTable.class, "valueAddedTaxColumn");          
         case PRICE_VALUE_ADDED_TAX_INCLUDED :
-          return resource.getString("priceValueAddedTaxIncludedColumn");          
+          return preferences.getLocalizedString(FurnitureTable.class, "priceValueAddedTaxIncludedColumn");          
         default :
           throw new IllegalArgumentException("Unknown column name " + property);
       }

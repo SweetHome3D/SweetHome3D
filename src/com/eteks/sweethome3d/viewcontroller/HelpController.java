@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.swing.text.BadLocationException;
@@ -263,8 +262,7 @@ public class HelpController implements Controller {
    * Returns the URL of the help index page.
    */
   private URL getHelpIndexPageURL() {
-    String helpIndex = ResourceBundle.getBundle(HelpController.class.getName()).
-        getString("helpIndex");
+    String helpIndex = this.preferences.getLocalizedString(HelpController.class, "helpIndex");
     // Build URL of index page with ResourceURLContent because of bug #6746185 
     return new ResourceURLContent(HelpController.class, helpIndex).getURL();
   }
@@ -274,7 +272,6 @@ public class HelpController implements Controller {
    * the result.
    */
   public void search(String searchedText) {
-    ResourceBundle resource = ResourceBundle.getBundle(HelpController.class.getName());
     URL helpIndex = getHelpIndexPageURL();
     String [] searchedWords = searchedText.split("\\s");
     for (int i = 0; i < searchedWords.length; i++) {
@@ -287,7 +284,8 @@ public class HelpController implements Controller {
         + new ResourceURLContent(HelpController.class, "resources/help/help.css").getURL()
         + "' rel='stylesheet'></head><body bgcolor='#ffffff'>\n"
         + "<div id='banner'><div id='helpheader'>"
-        + "  <a class='bread' href='" + helpIndex + "'> " + resource.getString("helpTitle") + "</a>"
+        + "  <a class='bread' href='" + helpIndex + "'> " 
+        +        this.preferences.getLocalizedString(HelpController.class, "helpTitle") + "</a>"
         + "</div></div>"
         + "<div id='mainbox' align='left'>"
         + "  <table width='100%' border='0' cellspacing='0' cellpadding='0'>"
@@ -297,17 +295,18 @@ public class HelpController implements Controller {
         + new ResourceURLContent(HelpController.class, "resources/help/images/sweethome3dIcon32.png").getURL() 
         + "' height='32' width='32'></td>"
         + "      <td width='8' height='32'>&nbsp;&nbsp;</td>"
-        + "      <td valign='bottom' height='32'><font id='topic'>" + resource.getString("searchResult") + "</font></td>"
+        + "      <td valign='bottom' height='32'><font id='topic'>" 
+        +            this.preferences.getLocalizedString(HelpController.class, "searchResult") + "</font></td>"
         + "    </tr>"
         + "    <tr height='10'><td colspan='4' height='10'>&nbsp;</td></tr>"
         + "  </table>"
         + "  <table width='100%' border='0' cellspacing='0' cellpadding='3'>");
     
     if (helpDocuments.size() == 0) {
-      String searchNotFound = String.format(resource.getString("searchNotFound"), searchedText); 
+      String searchNotFound = this.preferences.getLocalizedString(HelpController.class, "searchNotFound", searchedText); 
       htmlText.append("<tr><td><p>" + searchNotFound + "</td></tr>");
     } else {
-      String searchFound = String.format(resource.getString("searchFound"), searchedText); 
+      String searchFound = this.preferences.getLocalizedString(HelpController.class, "searchFound", searchedText); 
       htmlText.append("<tr><td colspan='2'><p>" + searchFound + "</td></tr>");
       
       URL searchRelevanceImage = new ResourceURLContent(HelpController.class, "resources/searchRelevance.gif").getURL();

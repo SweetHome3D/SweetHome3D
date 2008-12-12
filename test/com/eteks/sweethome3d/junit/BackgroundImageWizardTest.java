@@ -119,8 +119,8 @@ public class BackgroundImageWizardTest extends ComponentTestFixture {
         }
       });
     // Wait for import furniture view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        BackgroundImageWizardController.class.getName()).getString("wizard.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        BackgroundImageWizardController.class, "wizard.title"));
     // Check dialog box is displayed
     JDialog wizardDialog = (JDialog)TestUtilities.findComponent(frame, JDialog.class);
     assertTrue("Wizard view dialog not showing", wizardDialog.isShowing());

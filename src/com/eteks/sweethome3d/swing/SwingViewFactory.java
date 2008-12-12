@@ -64,9 +64,9 @@ public class SwingViewFactory implements ViewFactory {
    * Returns a new view that displays furniture <code>catalog</code>.
    */
   public View createFurnitureCatalogView(FurnitureCatalog catalog,
-                                  UserPreferences preferences,
-                                  FurnitureCatalogController furnitureCatalogController) {
-    return new FurnitureCatalogTree(catalog, furnitureCatalogController);
+                                         UserPreferences preferences,
+                                         FurnitureCatalogController furnitureCatalogController) {
+    return new FurnitureCatalogTree(catalog, preferences, furnitureCatalogController);
   }
   
   /**
@@ -104,8 +104,9 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays a wizard. 
    */
-  public DialogView createWizardView(WizardController wizardController) {
-    return new WizardPane(wizardController);
+  public DialogView createWizardView(UserPreferences preferences,
+                                     WizardController wizardController) {
+    return new WizardPane(preferences, wizardController);
   }
 
   /**
@@ -145,8 +146,9 @@ public class SwingViewFactory implements ViewFactory {
    * Returns a new view that displays message for a threaded task.
    */
   public ThreadedTaskView createThreadedTaskView(String taskMessage,
+                                                 UserPreferences preferences,
                                                  ThreadedTaskController threadedTaskController) {
-    return new ThreadedTaskPanel(taskMessage, threadedTaskController);
+    return new ThreadedTaskPanel(taskMessage, preferences, threadedTaskController);
   }
 
   /**
@@ -218,9 +220,10 @@ public class SwingViewFactory implements ViewFactory {
    * Returns a new view that displays <code>home</code> print preview. 
    */
   public DialogView createPrintPreviewView(Home home,
+                                           UserPreferences preferences,
                                            HomeController homeController,
                                            PrintPreviewController printPreviewController) {
-    return new PrintPreviewPanel(home, homeController, printPreviewController);
+    return new PrintPreviewPanel(home, preferences, homeController, printPreviewController);
   }
   
   /**

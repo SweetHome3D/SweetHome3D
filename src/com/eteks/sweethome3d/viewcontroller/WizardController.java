@@ -24,6 +24,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
 
+import com.eteks.sweethome3d.model.UserPreferences;
+
 /**
  * An abstract MVC for a wizard view. Subclasses should create a set of wizard steps
  * with subclasses of <code>WizardControllerStepState</code> and
@@ -39,6 +41,7 @@ public abstract class WizardController implements Controller {
   public enum Property {BACK_STEP_ENABLED, NEXT_STEP_ENABLED, LAST_STEP, 
       STEP_VIEW, STEP_ICON, TITLE, RESIZABLE}
   
+  private final UserPreferences        preferences;
   private final ViewFactory            viewFactory;
   private final PropertyChangeSupport  propertyChangeSupport;
   private final PropertyChangeListener stepStatePropertyChangeListener;
@@ -56,7 +59,9 @@ public abstract class WizardController implements Controller {
   private boolean resizable;
 
   
-  public WizardController(ViewFactory viewFactory) {
+  public WizardController(UserPreferences preferences,
+                          ViewFactory viewFactory) {
+    this.preferences = preferences;
     this.viewFactory = viewFactory;
     // Create a listener used to track changes in current step state
     this.stepStatePropertyChangeListener = new PropertyChangeListener () {
@@ -84,7 +89,7 @@ public abstract class WizardController implements Controller {
   public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.wizardView == null) {
-      this.wizardView = this.viewFactory.createWizardView(this);
+      this.wizardView = this.viewFactory.createWizardView(this.preferences, this);
     }
     return this.wizardView;
   }

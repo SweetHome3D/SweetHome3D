@@ -26,11 +26,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
+import com.eteks.sweethome3d.model.UserPreferences;
+
 /**
  * A MVC controller used to execute a particular task in a separated thread.
  * @author Emmanuel Puybaret
  */
 public class ThreadedTaskController implements Controller {
+  private final UserPreferences  preferences;
   private final ViewFactory      viewFactory;
   private final Callable<Void>   threadedTask;
   private final String           taskMessage;
@@ -45,10 +48,12 @@ public class ThreadedTaskController implements Controller {
    * interruptions with <code>Thread</code> methods that the user may provoke 
    * when he wants to cancel a threaded task. 
    */
-  public ThreadedTaskController(ViewFactory viewFactory,
-                                Callable<Void> threadedTask,
-                                String taskMessage, 
-                                ExceptionHandler exceptionHandler) {
+  public ThreadedTaskController(Callable<Void> threadedTask,
+                                String taskMessage,
+                                ExceptionHandler exceptionHandler,
+                                UserPreferences preferences, 
+                                ViewFactory viewFactory) {
+    this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.threadedTask = threadedTask;
     this.taskMessage = taskMessage;
@@ -62,7 +67,7 @@ public class ThreadedTaskController implements Controller {
   public ThreadedTaskView getView() {
     // Create view lazily only once it's needed
     if (this.view == null) {
-      this.view = this.viewFactory.createThreadedTaskView(this.taskMessage, this);
+      this.view = this.viewFactory.createThreadedTaskView(this.taskMessage, this.preferences, this);
     }
     return this.view;
   }

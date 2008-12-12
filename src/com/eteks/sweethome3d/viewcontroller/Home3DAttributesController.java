@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -94,10 +93,10 @@ public class Home3DAttributesController implements Controller {
    */
   public TextureChoiceController getGroundTextureController() {
     // Create sub controller lazily only once it's needed
-    if (this.groundTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
+    if (this.groundTextureController == null) {      
       this.groundTextureController = new TextureChoiceController(
-          resource.getString("groundTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(Home3DAttributesController.class, "groundTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.groundTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -114,9 +113,9 @@ public class Home3DAttributesController implements Controller {
   public TextureChoiceController getSkyTextureController() {
     // Create sub controller lazily only once it's needed
     if (this.skyTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(Home3DAttributesController.class.getName());
       this.skyTextureController = new TextureChoiceController(
-          resource.getString("skyTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(Home3DAttributesController.class, "skyTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.skyTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -366,7 +365,8 @@ public class Home3DAttributesController implements Controller {
     doModify3DAttributes(home, observerCameraFieldOfView, observerCameraZ, 
         groundColor, groundTexture, skyColor, skyTexture, lightColor, wallsAlpha); 
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(this.home,
+      UndoableEdit undoableEdit = new Home3DAttributesModificationUndoableEdit(
+          this.home, this.preferences,
           oldObserverCameraFieldOfView, oldObserverCameraZ,
           oldGroundColor, oldGroundTexture, oldSkyColor,
           oldSkyTexture, oldLightColor, oldWallsAlpha, observerCameraFieldOfView,
@@ -381,25 +381,27 @@ public class Home3DAttributesController implements Controller {
    * being bound to controller and its view.
    */
   private static class Home3DAttributesModificationUndoableEdit extends AbstractUndoableEdit {
-    private final Home        home;
-    private final float       oldObserverCameraFieldOfView;
-    private final float       oldObserverCameraZ;
-    private final int         oldGroundColor;
-    private final HomeTexture oldGroundTexture;
-    private final int         oldSkyColor;
-    private final HomeTexture oldSkyTexture;
-    private final int         oldLightColor;
-    private final float       oldWallsAlpha;
-    private final float       observerCameraFieldOfView;
-    private final float       observerCameraZ;
-    private final int         groundColor;
-    private final HomeTexture groundTexture;
-    private final int         skyColor;
-    private final HomeTexture skyTexture;
-    private final int         lightColor;
-    private final float       wallsAlpha;
+    private final Home            home;
+    private final UserPreferences preferences;
+    private final float           oldObserverCameraFieldOfView;
+    private final float           oldObserverCameraZ;
+    private final int             oldGroundColor;
+    private final HomeTexture     oldGroundTexture;
+    private final int             oldSkyColor;
+    private final HomeTexture     oldSkyTexture;
+    private final int             oldLightColor;
+    private final float           oldWallsAlpha;
+    private final float           observerCameraFieldOfView;
+    private final float           observerCameraZ;
+    private final int             groundColor;
+    private final HomeTexture     groundTexture;
+    private final int             skyColor;
+    private final HomeTexture     skyTexture;
+    private final int             lightColor;
+    private final float           wallsAlpha;
 
     private Home3DAttributesModificationUndoableEdit(Home home,
+                                                     UserPreferences preferences,
                                                      float oldObserverCameraFieldOfView,
                                                      float oldObserverCameraZ,
                                                      int oldGroundColor,
@@ -417,6 +419,7 @@ public class Home3DAttributesController implements Controller {
                                                      int lightColor,
                                                      float wallsAlpha) {
       this.home = home;
+      this.preferences = preferences;
       this.oldObserverCameraFieldOfView = oldObserverCameraFieldOfView;
       this.oldObserverCameraZ = oldObserverCameraZ;
       this.oldGroundColor = oldGroundColor;
@@ -451,8 +454,8 @@ public class Home3DAttributesController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(Home3DAttributesController.class.getName()).
-          getString("undoModify3DAttributesName");
+      return this.preferences.getLocalizedString(
+          Home3DAttributesController.class, "undoModify3DAttributesName");
     }
   }
 

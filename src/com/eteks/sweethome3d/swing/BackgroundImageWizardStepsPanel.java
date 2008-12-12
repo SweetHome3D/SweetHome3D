@@ -52,7 +52,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -88,7 +87,6 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   private final BackgroundImageWizardController controller;
   private final Executor                        imageLoader;
-  private ResourceBundle                        resource;
   private CardLayout                            cardLayout;
   private JLabel                                imageChoiceOrChangeLabel;
   private JButton                               imageChoiceOrChangeButton;
@@ -113,12 +111,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                                          UserPreferences preferences, 
                                          final BackgroundImageWizardController controller) {
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(BackgroundImageWizardStepsPanel.class.getName());
     this.imageLoader = Executors.newSingleThreadExecutor();
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents();
-    updateController(backgroundImage);
+    updateController(backgroundImage, preferences);
 
     controller.addPropertyChangeListener(BackgroundImageWizardController.Property.STEP, 
         new PropertyChangeListener() {
@@ -131,7 +128,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   /**
    * Creates components displayed by this panel.
    */
-  private void createComponents(UserPreferences preferences, 
+  private void createComponents(final UserPreferences preferences, 
                                 final BackgroundImageWizardController controller) {
     // Get unit name matching current unit 
     String unitName = preferences.getLengthUnit().getName();
@@ -141,13 +138,14 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.imageChoiceOrChangeButton = new JButton();
     this.imageChoiceOrChangeButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
-          String imageName = showImageChoiceDialog(controller.getContentManager());
+          String imageName = showImageChoiceDialog(preferences, controller.getContentManager());
           if (imageName != null) {
-            updateController(imageName, controller.getContentManager());
+            updateController(imageName, preferences, controller.getContentManager());
           }
         }
       });
-    this.imageChoiceErrorLabel = new JLabel(resource.getString("imageChoiceErrolLabel.text"));
+    this.imageChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "imageChoiceErrolLabel.text"));
     // Make imageChoiceErrorLabel visible only if an error occurred during image content loading
     this.imageChoiceErrorLabel.setVisible(false);
     this.imageChoicePreviewComponent = new ScaledImageComponent();
@@ -163,7 +161,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            updateController(files.get(0).getAbsolutePath(), controller.getContentManager());
+            updateController(files.get(0).getAbsolutePath(), preferences, controller.getContentManager());
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
@@ -171,7 +169,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           }
           if (!success) {
             JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
-                resource.getString("imageChoiceError"));
+                preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "imageChoiceError"));
           }
           return success;
         }
@@ -179,9 +177,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.imageChoicePreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
     
     // Image scale panel components
-    this.scaleLabel = new JLabel(this.resource.getString("scaleLabel.text"));
-    this.scaleDistanceLabel = new JLabel(
-        String.format(this.resource.getString("scaleDistanceLabel.text"), unitName));
+    this.scaleLabel = new JLabel(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "scaleLabel.text"));
+    this.scaleDistanceLabel = new JLabel(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "scaleDistanceLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel scaleDistanceSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.99f, 1000000f);
     this.scaleDistanceSpinner = new NullableSpinner(scaleDistanceSpinnerModel);
@@ -203,11 +202,12 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     this.scalePreviewComponent = new ScaleImagePreviewComponent(controller);
     
     // Image origin panel components
-    this.originLabel = new JLabel(this.resource.getString("originLabel.text"));
-    this.xOriginLabel = new JLabel(
-        String.format(this.resource.getString("xOriginLabel.text"), unitName)); 
-    this.yOriginLabel = new JLabel(
-        String.format(this.resource.getString("yOriginLabel.text"), unitName)); 
+    this.originLabel = new JLabel(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "originLabel.text"));
+    this.xOriginLabel = new JLabel(preferences.getLocalizedString(
+            BackgroundImageWizardStepsPanel.class, "xOriginLabel.text", unitName)); 
+    this.yOriginLabel = new JLabel(preferences.getLocalizedString(
+            BackgroundImageWizardStepsPanel.class, "yOriginLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
     this.xOriginSpinner = new NullableSpinner(xOriginSpinnerModel);
@@ -243,16 +243,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
       this.scaleDistanceLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("scaleDistanceLabel.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              BackgroundImageWizardStepsPanel.class, "scaleDistanceLabel.mnemonic")).getKeyCode());
       this.scaleDistanceLabel.setLabelFor(this.scaleDistanceSpinner);
       this.xOriginLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("xOriginLabel.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              BackgroundImageWizardStepsPanel.class, "xOriginLabel.mnemonic")).getKeyCode());
       this.xOriginLabel.setLabelFor(this.xOriginSpinner);
       this.yOriginLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("yOriginLabel.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              BackgroundImageWizardStepsPanel.class, "yOriginLabel.mnemonic")).getKeyCode());
       this.yOriginLabel.setLabelFor(this.yOriginSpinner);
     }
   }
@@ -346,18 +349,19 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   /**
    * Updates controller initial values from <code>backgroundImage</code>. 
    */
-  private void updateController(final BackgroundImage backgroundImage) {
+  private void updateController(final BackgroundImage backgroundImage,
+                                final UserPreferences preferences) {
     if (backgroundImage == null) {
-      setImageChoiceTexts();
+      setImageChoiceTexts(preferences);
       updatePreviewComponentsImage(null);
     } else {
-      setImageChangeTexts();
+      setImageChangeTexts(preferences);
       // Read image in imageLoader executor
       this.imageLoader.execute(new Runnable() {
           public void run() {
             BufferedImage image = null;
             try {
-              image = readImage(backgroundImage.getImage());
+              image = readImage(backgroundImage.getImage(), preferences);
             } catch (IOException ex) {
               // image is null
             }
@@ -374,12 +378,11 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                     controller.setOrigin(backgroundImage.getXOrigin(), backgroundImage.getYOrigin());
                   } else {
                     controller.setImage(null);
-                    setImageChoiceTexts();
+                    setImageChoiceTexts(preferences);
                     imageChoiceErrorLabel.setVisible(true);
                   }
                 } 
-              });
-            
+              });            
           } 
         });
     }
@@ -389,6 +392,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Reads image from <code>imageName</code> and updates controller values.
    */
   private void updateController(final String imageName,
+                                final UserPreferences preferences,
                                 final ContentManager contentManager) {
     // Read image in imageLoader executor
     this.imageLoader.execute(new Runnable() {
@@ -407,7 +411,8 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
                   JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
-                      String.format(resource.getString("imageChoiceError"), imageName));
+                      preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, 
+                          "imageChoiceError", imageName));
                 }
               });
             return;
@@ -415,7 +420,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
 
           BufferedImage image = null;
           try {
-            image = readImage(imageContent);
+            image = readImage(imageContent, preferences);
           } catch (IOException ex) {
             // image is null
           }
@@ -427,7 +432,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
               public void run() {
                 if (readImage != null) {
                   controller.setImage(readContent);
-                  setImageChangeTexts();
+                  setImageChangeTexts(preferences);
                   imageChoiceErrorLabel.setVisible(false);
                   // Initialize distance and origin with default values
                   controller.setScaleDistance(null);
@@ -439,9 +444,10 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                   controller.setOrigin(0, 0);
                 } else if (isShowing()){
                   controller.setImage(null);
-                  setImageChoiceTexts();
+                  setImageChoiceTexts(preferences);
                   JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
-                      resource.getString("imageChoiceFormatError"));
+                      preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, 
+                          "imageChoiceFormatError"));
                 }
               }
             });
@@ -453,12 +459,13 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Reads image from <code>imageContent</code>. 
    * Caution : this method must be thread safe because it's called from image loader executor. 
    */
-  private BufferedImage readImage(Content imageContent) throws IOException {
+  private BufferedImage readImage(Content imageContent, 
+                                  UserPreferences preferences) throws IOException {
     try {
       // Display a waiting image while loading
       if (waitImage == null) {
         waitImage = ImageIO.read(BackgroundImageWizardStepsPanel.class.
-            getResource(resource.getString("waitIcon")));
+            getResource(preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "waitIcon")));
       }
       updatePreviewComponentsImage(waitImage);
       
@@ -492,12 +499,15 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Sets the texts of label and button of image choice panel with
    * change texts. 
    */
-  private void setImageChangeTexts() {
-    this.imageChoiceOrChangeLabel.setText(this.resource.getString("imageChangeLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(this.resource.getString("imageChangeButton.text"));
+  private void setImageChangeTexts(UserPreferences preferences) {
+    this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "imageChangeLabel.text")); 
+    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "imageChangeButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("imageChangeButton.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              BackgroundImageWizardStepsPanel.class, "imageChangeButton.mnemonic")).getKeyCode());
     }
   }
 
@@ -505,21 +515,24 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
    * Sets the texts of label and button of image choice panel with
    * choice texts. 
    */
-  private void setImageChoiceTexts() {
-    this.imageChoiceOrChangeLabel.setText(this.resource.getString("imageChoiceLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(this.resource.getString("imageChoiceButton.text"));
+  private void setImageChoiceTexts(UserPreferences preferences) {
+    this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "imageChoiceLabel.text")); 
+    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+        BackgroundImageWizardStepsPanel.class, "imageChoiceButton.text"));
     if (!OperatingSystem.isMacOSX()) {
-      this.imageChoiceOrChangeButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("imageChoiceButton.mnemonic")).getKeyCode());
+      this.imageChoiceOrChangeButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+         BackgroundImageWizardStepsPanel.class, "imageChoiceButton.mnemonic")).getKeyCode());
     }
   }
   
   /**
    * Returns an image chosen for a content chooser dialog.
    */
-  private String showImageChoiceDialog(ContentManager contentManager) {
-    return contentManager.showOpenDialog(this, 
-        this.resource.getString("imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
+  private String showImageChoiceDialog(UserPreferences preferences, 
+                                       ContentManager contentManager) {
+    return contentManager.showOpenDialog(this,preferences.getLocalizedString(
+       BackgroundImageWizardStepsPanel.class, "imageChoiceDialog.title"), ContentManager.ContentType.IMAGE);
   }
 
   /**

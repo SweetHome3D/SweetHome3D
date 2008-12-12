@@ -65,7 +65,8 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays a wizard. 
    */
-  public abstract DialogView createWizardView(WizardController wizardController);
+  public abstract DialogView createWizardView(UserPreferences preferences,
+                                              WizardController wizardController);
 
   /**
    * Returns a new view that displays the different steps that helps the user to choose a background image. 
@@ -96,6 +97,7 @@ public interface ViewFactory {
    * Returns a new view that displays message for a threaded task.
    */
   public abstract ThreadedTaskView createThreadedTaskView(String taskMessage,
+                                                          UserPreferences userPreferences, 
                                                           ThreadedTaskController threadedTaskController);
 
   /**
@@ -151,8 +153,9 @@ public interface ViewFactory {
    * Returns a new view that displays home print preview. 
    */
   public abstract DialogView createPrintPreviewView(Home home,
-                                                 HomeController homeController,
-                                                 PrintPreviewController printPreviewController);
+                                                    UserPreferences preferences,
+                                                    HomeController homeController,
+                                                    PrintPreviewController printPreviewController);
 
   /**
    * Returns a new view that displays Sweet Home 3D help.

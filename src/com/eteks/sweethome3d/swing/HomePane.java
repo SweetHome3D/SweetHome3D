@@ -60,7 +60,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.Callable;
 
 import javax.jnlp.BasicService;
@@ -149,8 +148,8 @@ public class HomePane extends JRootPane implements HomeView {
   private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
   
   private final Home                            home;
+  private final UserPreferences                 preferences;
   private final HomeController                  controller;
-  private ResourceBundle                        resource;
   // Button models shared by Select, Create walls, Create rooms, Create dimensions 
   // and Create labels menu items and their matching tool bar buttons
   private final JToggleButton.ToggleButtonModel selectToggleModel;
@@ -178,8 +177,8 @@ public class HomePane extends JRootPane implements HomeView {
   public HomePane(Home home, UserPreferences preferences, 
                   HomeController controller) {
     this.home = home;
+    this.preferences = preferences;
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
     // Create unique toggle button models for Selection / Wall creation / Room creation / 
     // Dimension line creation / Label creation states
     // so the matching menu items and tool bar buttons always reflect the same toggle state at screen
@@ -213,8 +212,8 @@ public class HomePane extends JRootPane implements HomeView {
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
     
-    createActions(controller);
-    createMenuActions(controller);   
+    createActions(preferences, controller);
+    createMenuActions(preferences, controller);   
     createPluginActions(controller.getPlugins());
     createTransferHandlers(home, controller);
     addHomeListener(home);
@@ -242,172 +241,178 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Create the actions map of this component.
    */
-  private void createActions(final HomeController controller) {
-    createAction(ActionType.NEW_HOME, controller, "newHome");
-    createAction(ActionType.OPEN, controller, "open");
-    createAction(ActionType.DELETE_RECENT_HOMES, controller, "deleteRecentHomes");
-    createAction(ActionType.CLOSE, controller, "close");
-    createAction(ActionType.SAVE, controller, "save");
-    createAction(ActionType.SAVE_AS, controller, "saveAs");
-    createAction(ActionType.PAGE_SETUP, controller, "setupPage");
-    createAction(ActionType.PRINT_PREVIEW, controller, "previewPrint");
-    createAction(ActionType.PRINT, controller, "print");
-    createAction(ActionType.PRINT_TO_PDF, controller, "printToPDF");
-    createAction(ActionType.PREFERENCES, controller, "editPreferences");
-    createAction(ActionType.EXIT, controller, "exit");
+  private void createActions(UserPreferences preferences, 
+                             HomeController controller) {
+    createAction(preferences, ActionType.NEW_HOME, controller, "newHome");
+    createAction(preferences, ActionType.OPEN, controller, "open");
+    createAction(preferences, ActionType.DELETE_RECENT_HOMES, controller, "deleteRecentHomes");
+    createAction(preferences, ActionType.CLOSE, controller, "close");
+    createAction(preferences, ActionType.SAVE, controller, "save");
+    createAction(preferences, ActionType.SAVE_AS, controller, "saveAs");
+    createAction(preferences, ActionType.PAGE_SETUP, controller, "setupPage");
+    createAction(preferences, ActionType.PRINT_PREVIEW, controller, "previewPrint");
+    createAction(preferences, ActionType.PRINT, controller, "print");
+    createAction(preferences, ActionType.PRINT_TO_PDF, controller, "printToPDF");
+    createAction(preferences, ActionType.PREFERENCES, controller, "editPreferences");
+    createAction(preferences, ActionType.EXIT, controller, "exit");
     
-    createAction(ActionType.UNDO, controller, "undo");
-    createAction(ActionType.REDO, controller, "redo");
-    createClipboardAction(ActionType.CUT, TransferHandler.getCutAction());
-    createClipboardAction(ActionType.COPY, TransferHandler.getCopyAction());
-    createClipboardAction(ActionType.PASTE, TransferHandler.getPasteAction());
-    createAction(ActionType.DELETE, controller, "delete");
-    createAction(ActionType.SELECT_ALL, controller, "selectAll");
+    createAction(preferences, ActionType.UNDO, controller, "undo");
+    createAction(preferences, ActionType.REDO, controller, "redo");
+    createClipboardAction(preferences, ActionType.CUT, TransferHandler.getCutAction());
+    createClipboardAction(preferences, ActionType.COPY, TransferHandler.getCopyAction());
+    createClipboardAction(preferences, ActionType.PASTE, TransferHandler.getPasteAction());
+    createAction(preferences, ActionType.DELETE, controller, "delete");
+    createAction(preferences, ActionType.SELECT_ALL, controller, "selectAll");
     
-    createAction(ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
+    createAction(preferences, ActionType.ADD_HOME_FURNITURE, controller, "addHomeFurniture");
     FurnitureController furnitureController = controller.getFurnitureController();
-    createAction(ActionType.DELETE_HOME_FURNITURE,
+    createAction(preferences, ActionType.DELETE_HOME_FURNITURE,
         furnitureController, "deleteSelection");
-    createAction(ActionType.MODIFY_FURNITURE, controller, "modifySelectedFurniture");
-    createAction(ActionType.IMPORT_FURNITURE, controller, "importFurniture");
-    createAction(ActionType.IMPORT_FURNITURE_LIBRARY, controller, "importFurnitureLibrary");
-    createAction(ActionType.ALIGN_FURNITURE_ON_TOP, 
+    createAction(preferences, ActionType.MODIFY_FURNITURE, controller, "modifySelectedFurniture");
+    createAction(preferences, ActionType.IMPORT_FURNITURE, controller, "importFurniture");
+    createAction(preferences, ActionType.IMPORT_FURNITURE_LIBRARY, controller, "importFurnitureLibrary");
+    createAction(preferences, ActionType.ALIGN_FURNITURE_ON_TOP, 
         furnitureController, "alignSelectedFurnitureOnTop");
-    createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, 
+    createAction(preferences, ActionType.ALIGN_FURNITURE_ON_BOTTOM, 
         furnitureController, "alignSelectedFurnitureOnBottom");
-    createAction(ActionType.ALIGN_FURNITURE_ON_LEFT, 
+    createAction(preferences, ActionType.ALIGN_FURNITURE_ON_LEFT, 
         furnitureController, "alignSelectedFurnitureOnLeft");
-    createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, 
+    createAction(preferences, ActionType.ALIGN_FURNITURE_ON_RIGHT, 
         furnitureController, "alignSelectedFurnitureOnRight");
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.CATALOG_ID);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.NAME);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_WIDTH, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.WIDTH);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_DEPTH, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.DEPTH);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.HEIGHT);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_X, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.X);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_Y, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.Y);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_ELEVATION, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.ELEVATION);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_ANGLE, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.ANGLE);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.COLOR);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.MOVABLE);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.VISIBLE);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.PRICE);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED, furnitureController, "toggleFurnitureSort", 
-        HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
-    createAction(ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, furnitureController, "toggleFurnitureSortOrder");
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_CATALOG_ID, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.CATALOG_ID);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_NAME, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.NAME);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_WIDTH, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.WIDTH);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_DEPTH, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.DEPTH);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_HEIGHT, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.HEIGHT);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_X, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.X);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_Y, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.Y);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_ELEVATION, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.ELEVATION);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_ANGLE, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.ANGLE);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.COLOR);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.MOVABLE);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.VISIBLE);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.PRICE);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
-    createAction(ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, furnitureController, "toggleFurnitureVisibleProperty", 
-        HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_NAME, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.NAME);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_WIDTH, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.WIDTH);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_DEPTH, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.DEPTH);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_HEIGHT, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.HEIGHT);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_X, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.X);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_Y, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.Y);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_ELEVATION, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ELEVATION);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_ANGLE, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ANGLE);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_COLOR, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.COLOR);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.MOVABLE);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_TYPE, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_VISIBILITY, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.VISIBLE);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_PRICE, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.PRICE);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX_PERCENTAGE, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_VALUE_ADDED_TAX, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_PRICE_VALUE_ADDED_TAX_INCLUDED, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
+    createAction(preferences, ActionType.SORT_HOME_FURNITURE_BY_DESCENDING_ORDER, 
+        furnitureController, "toggleFurnitureSortOrder");
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_CATALOG_ID, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_NAME, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.NAME);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_WIDTH, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.WIDTH);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_DEPTH, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.DEPTH);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_HEIGHT, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.HEIGHT);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_X, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.X);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_Y, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.Y);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_ELEVATION, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ELEVATION);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_ANGLE, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ANGLE);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_COLOR, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.COLOR);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.MOVABLE);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_VISIBLE, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.VISIBLE);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_PRICE, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.PRICE);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX_PERCENTAGE, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX);
+    createAction(preferences, ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED);
     
-    createAction(ActionType.SELECT, controller, "setMode", 
+    createAction(preferences, ActionType.SELECT, controller, "setMode", 
         PlanController.Mode.SELECTION);
-    createAction(ActionType.CREATE_WALLS, controller, "setMode",
+    createAction(preferences, ActionType.CREATE_WALLS, controller, "setMode",
         PlanController.Mode.WALL_CREATION);
-    createAction(ActionType.CREATE_ROOMS, controller, "setMode",
+    createAction(preferences, ActionType.CREATE_ROOMS, controller, "setMode",
         PlanController.Mode.ROOM_CREATION);
-    createAction(ActionType.CREATE_DIMENSION_LINES, controller, "setMode",
+    createAction(preferences, ActionType.CREATE_DIMENSION_LINES, controller, "setMode",
         PlanController.Mode.DIMENSION_LINE_CREATION);
-    createAction(ActionType.CREATE_LABELS, controller, "setMode",
+    createAction(preferences, ActionType.CREATE_LABELS, controller, "setMode",
         PlanController.Mode.LABEL_CREATION);
-    createAction(ActionType.DELETE_SELECTION, 
+    createAction(preferences, ActionType.DELETE_SELECTION, 
         controller.getPlanController(), "deleteSelection");
-    createAction(ActionType.MODIFY_WALL, 
+    createAction(preferences, ActionType.MODIFY_WALL, 
         controller.getPlanController(), "modifySelectedWalls");
-    createAction(ActionType.MODIFY_ROOM, 
+    createAction(preferences, ActionType.MODIFY_ROOM, 
         controller.getPlanController(), "modifySelectedRooms");
-    createAction(ActionType.INCREASE_TEXT_SIZE, 
+    createAction(preferences, ActionType.INCREASE_TEXT_SIZE, 
         controller.getPlanController(), "increaseTextSize");
-    createAction(ActionType.DECREASE_TEXT_SIZE, 
+    createAction(preferences, ActionType.DECREASE_TEXT_SIZE, 
         controller.getPlanController(), "decreaseTextSize");
-    createAction(ActionType.TOGGLE_BOLD_STYLE, 
+    createAction(preferences, ActionType.TOGGLE_BOLD_STYLE, 
         controller.getPlanController(), "toggleBoldStyle");
-    createAction(ActionType.TOGGLE_ITALIC_STYLE, 
+    createAction(preferences, ActionType.TOGGLE_ITALIC_STYLE, 
         controller.getPlanController(), "toggleItalicStyle");
-    createAction(ActionType.MODIFY_LABEL, 
+    createAction(preferences, ActionType.MODIFY_LABEL, 
         controller.getPlanController(), "modifySelectedLabels");
-    createAction(ActionType.REVERSE_WALL_DIRECTION, 
+    createAction(preferences, ActionType.REVERSE_WALL_DIRECTION, 
         controller.getPlanController(), "reverseSelectedWallsDirection");
-    createAction(ActionType.SPLIT_WALL, 
+    createAction(preferences, ActionType.SPLIT_WALL, 
         controller.getPlanController(), "splitSelectedWall");
-    createAction(ActionType.IMPORT_BACKGROUND_IMAGE, 
+    createAction(preferences, ActionType.IMPORT_BACKGROUND_IMAGE, 
         controller, "importBackgroundImage");
-    createAction(ActionType.MODIFY_BACKGROUND_IMAGE, 
+    createAction(preferences, ActionType.MODIFY_BACKGROUND_IMAGE, 
         controller, "modifyBackgroundImage");
-    createAction(ActionType.DELETE_BACKGROUND_IMAGE, 
+    createAction(preferences, ActionType.DELETE_BACKGROUND_IMAGE, 
         controller, "deleteBackgroundImage");
-    createAction(ActionType.ZOOM_IN, controller, "zoomIn");
-    createAction(ActionType.ZOOM_OUT, controller, "zoomOut");
+    createAction(preferences, ActionType.ZOOM_IN, controller, "zoomIn");
+    createAction(preferences, ActionType.ZOOM_OUT, controller, "zoomOut");
     
-    createAction(ActionType.VIEW_FROM_TOP, 
+    createAction(preferences, ActionType.VIEW_FROM_TOP, 
         controller.getHomeController3D(), "viewFromTop");
-    createAction(ActionType.VIEW_FROM_OBSERVER, 
+    createAction(preferences, ActionType.VIEW_FROM_OBSERVER, 
         controller.getHomeController3D(), "viewFromObserver");
-    createAction(ActionType.MODIFY_3D_ATTRIBUTES, 
+    createAction(preferences, ActionType.MODIFY_3D_ATTRIBUTES, 
         controller.getHomeController3D(), "modifyAttributes");
-    createAction(ActionType.EXPORT_TO_OBJ, controller, "exportToOBJ");
+    createAction(preferences, ActionType.EXPORT_TO_OBJ, controller, "exportToOBJ");
     
-    createAction(ActionType.HELP, controller, "help");
-    createAction(ActionType.ABOUT, controller, "about");
+    createAction(preferences, ActionType.HELP, controller, "help");
+    createAction(preferences, ActionType.ABOUT, controller, "about");
   }
 
   /**
    * Creates a <code>ControllerAction</code> object that calls on <code>controller</code> a given
    * <code>method</code> with its <code>parameters</code>.
    */
-  private void createAction(ActionType action, Object controller, String method, Object ... parameters) {
+  private void createAction(UserPreferences preferences,
+                            ActionType action,                            
+                            Object controller, 
+                            String method, 
+                            Object ... parameters) {
     try {
       getActionMap().put(action, new ControllerAction(
-          this.resource, action.name(), controller, method, parameters));
+          preferences, HomePane.class, action.name(), controller, method, parameters));
     } catch (NoSuchMethodException ex) {
       throw new RuntimeException(ex);
     }
@@ -418,10 +423,11 @@ public class HomePane extends JRootPane implements HomeView {
    * <code>actionPerfomed</code> method on a given 
    * existing <code>clipboardAction</code> with a source equal to focused component.
    */
-  private void createClipboardAction(ActionType actionType, 
+  private void createClipboardAction(UserPreferences preferences,
+                                     ActionType actionType, 
                                      final Action clipboardAction) {
     getActionMap().put(actionType,
-        new ResourceAction (this.resource, actionType.name()) {
+        new ResourceAction (preferences, HomePane.class, actionType.name()) {
           public void actionPerformed(ActionEvent ev) {
             ev = new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, null);
             clipboardAction.actionPerformed(ev);
@@ -432,26 +438,28 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Create the actions map used to create menus of this component.
    */
-  private void createMenuActions(HomeController controller) {
+  private void createMenuActions(UserPreferences preferences, 
+                                 HomeController controller) {
     this.menuActionMap = new ActionMap();
-    createMenuAction(MenuActionType.FILE_MENU);
-    createMenuAction(MenuActionType.EDIT_MENU);
-    createMenuAction(MenuActionType.FURNITURE_MENU);
-    createMenuAction(MenuActionType.PLAN_MENU);
-    createMenuAction(MenuActionType.VIEW_3D_MENU);
-    createMenuAction(MenuActionType.HELP_MENU);
-    createMenuAction(MenuActionType.OPEN_RECENT_HOME_MENU);
-    createMenuAction(MenuActionType.SORT_HOME_FURNITURE_MENU);
-    createMenuAction(MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
-    createMenuAction(MenuActionType.MODIFY_TEXT_STYLE);
+    createMenuAction(preferences, MenuActionType.FILE_MENU);
+    createMenuAction(preferences, MenuActionType.EDIT_MENU);
+    createMenuAction(preferences, MenuActionType.FURNITURE_MENU);
+    createMenuAction(preferences, MenuActionType.PLAN_MENU);
+    createMenuAction(preferences, MenuActionType.VIEW_3D_MENU);
+    createMenuAction(preferences, MenuActionType.HELP_MENU);
+    createMenuAction(preferences, MenuActionType.OPEN_RECENT_HOME_MENU);
+    createMenuAction(preferences, MenuActionType.SORT_HOME_FURNITURE_MENU);
+    createMenuAction(preferences, MenuActionType.DISPLAY_HOME_FURNITURE_PROPERTY_MENU);
+    createMenuAction(preferences, MenuActionType.MODIFY_TEXT_STYLE);
   }
   
   /**
    * Creates a <code>ResourceAction</code> object stored in menu action map.
    */
-  private void createMenuAction(MenuActionType action) {
+  private void createMenuAction(UserPreferences preferences, 
+                                MenuActionType action) {
     this.menuActionMap.put(action, new ResourceAction(
-          this.resource, action.name(), true));
+        preferences, HomePane.class, action.name(), true));
   }
 
   /**
@@ -525,28 +533,11 @@ public class HomePane extends JRootPane implements HomeView {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        homePane.setResourceLanguage((UserPreferences)ev.getSource());
+        SwingTools.updateSwingResourceLanguage();
       }
     }
   }
   
-  /**
-   * Sets the resource bundle from the preferred language, 
-   * and updates actions accordingly. 
-   */
-  private void setResourceLanguage(UserPreferences preferences) {
-    this.resource = ResourceBundle.getBundle(HomePane.class.getName());
-    ActionMap actions = getActionMap();    
-    for (ActionType actionType : ActionType.values()) {
-      ((ResourceAction)actions.get(actionType)).setResource(this.resource);
-    }
-    for (MenuActionType menuActionType : MenuActionType.values()) {
-      ((ResourceAction)this.menuActionMap.get(menuActionType)).setResource(this.resource);
-    }
-    
-    SwingTools.updateSwingResourceLanguage();
-  }
-
   /**
    * Adds a property change listener to <code>planController</code> to update
    * Select and Create walls toggle models according to current mode.
@@ -1752,7 +1743,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public String showOpenDialog() {
     return this.controller.getContentManager().showOpenDialog(this, 
-        this.resource.getString("openHomeDialog.title"), 
+        this.preferences.getLocalizedString(HomePane.class, "openHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D);
   }
 
@@ -1761,7 +1752,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public String showImportFurnitureLibraryDialog() {
     return this.controller.getContentManager().showOpenDialog(this, 
-        this.resource.getString("importFurnitureLibraryDialog.title"), 
+        this.preferences.getLocalizedString(HomePane.class, "importFurnitureLibraryDialog.title"), 
         ContentManager.ContentType.FURNITURE_LIBRARY);
   }
 
@@ -1771,11 +1762,11 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public boolean confirmReplaceFurnitureLibrary(String furnitureLibraryName) {
     // Retrieve displayed text in buttons and message
-    String messageFormat = this.resource.getString("confirmReplaceFurnitureLibrary.message");
-    String message = String.format(messageFormat, new File(furnitureLibraryName).getName());
-    String title = this.resource.getString("confirmReplaceFurnitureLibrary.title");
-    String replace = this.resource.getString("confirmReplaceFurnitureLibrary.replace");
-    String doNotReplace = this.resource.getString("confirmReplaceFurnitureLibrary.doNotReplace");
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.message", 
+        new File(furnitureLibraryName).getName());
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.title");
+    String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.replace");
+    String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.doNotReplace");
         
     return JOptionPane.showOptionDialog(this, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -1787,7 +1778,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public String showSaveDialog(String homeName) {
     return this.controller.getContentManager().showSaveDialog(this,
-        this.resource.getString("saveHomeDialog.title"), 
+        this.preferences.getLocalizedString(HomePane.class, "saveHomeDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D, homeName);
   }
   
@@ -1795,7 +1786,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays <code>message</code> in an error message box.
    */
   public void showError(String message) {
-    String title = this.resource.getString("error.title");
+    String title = this.preferences.getLocalizedString(HomePane.class, "error.title");
     JOptionPane.showMessageDialog(this, message, title, 
         JOptionPane.ERROR_MESSAGE);
   }
@@ -1804,7 +1795,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays <code>message</code> in a message box.
    */
   public void showMessage(String message) {
-    String title = this.resource.getString("message.title");
+    String title = this.preferences.getLocalizedString(HomePane.class, "message.title");
     JOptionPane.showMessageDialog(this, message, title, 
         JOptionPane.INFORMATION_MESSAGE);
   }
@@ -1814,8 +1805,8 @@ public class HomePane extends JRootPane implements HomeView {
    * returns <code>true</code> if the user chose not to display again the tip.
    */
   public boolean showActionTipMessage(String actionTipKey) {
-    String title = this.resource.getString(actionTipKey + ".tipTitle");
-    String message = this.resource.getString(actionTipKey + ".tipMessage");
+    String title = this.preferences.getLocalizedString(HomePane.class, actionTipKey + ".tipTitle");
+    String message = this.preferences.getLocalizedString(HomePane.class, actionTipKey + ".tipMessage");
     if (message.length() > 0) {
       JPanel tipPanel = new JPanel(new GridBagLayout());
       
@@ -1826,10 +1817,10 @@ public class HomePane extends JRootPane implements HomeView {
       
       // Add a check box that lets user choose whether he wants to display again the tip or not
       JCheckBox doNotDisplayTipCheckBox = new JCheckBox(
-          this.resource.getString("doNotDisplayTipCheckBox.text"));
+          this.preferences.getLocalizedString(HomePane.class, "doNotDisplayTipCheckBox.text"));
       if (!OperatingSystem.isMacOSX()) {
         doNotDisplayTipCheckBox.setMnemonic(KeyStroke.getKeyStroke(
-            this.resource.getString("doNotDisplayTipCheckBox.mnemonic")).getKeyCode());
+            this.preferences.getLocalizedString(HomePane.class, "doNotDisplayTipCheckBox.mnemonic")).getKeyCode());
       }
       tipPanel.add(doNotDisplayTipCheckBox, new GridBagConstraints(
           0, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, 
@@ -1856,19 +1847,18 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public SaveAnswer confirmSave(String homeName) {
     // Retrieve displayed text in buttons and message
-    String messageFormat = this.resource.getString("confirmSave.message");
     String message;
     if (homeName != null) {
-      message = String.format(messageFormat, 
+      message = this.preferences.getLocalizedString(HomePane.class, "confirmSave.message", 
           "\"" + this.controller.getContentManager().getPresentationName(
               homeName, ContentManager.ContentType.SWEET_HOME_3D) + "\"");
     } else {
-      message = String.format(messageFormat, "");
+      message = this.preferences.getLocalizedString(HomePane.class, "confirmSave.message", "");
     }
-    String title = this.resource.getString("confirmSave.title");
-    String save = this.resource.getString("confirmSave.save");
-    String doNotSave = this.resource.getString("confirmSave.doNotSave");
-    String cancel = this.resource.getString("confirmSave.cancel");
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmSave.title");
+    String save = this.preferences.getLocalizedString(HomePane.class, "confirmSave.save");
+    String doNotSave = this.preferences.getLocalizedString(HomePane.class, "confirmSave.doNotSave");
+    String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmSave.cancel");
 
     switch (JOptionPane.showOptionDialog(this, message, title, 
         JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -1888,12 +1878,12 @@ public class HomePane extends JRootPane implements HomeView {
    * @return <code>true</code> if user confirmed to save.
    */
   public boolean confirmSaveNewerHome(String homeName) {
-    String message = String.format(this.resource.getString("confirmSaveNewerHome.message"), 
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.message", 
         this.controller.getContentManager().getPresentationName(
             homeName, ContentManager.ContentType.SWEET_HOME_3D));
-    String title = this.resource.getString("confirmSaveNewerHome.title");
-    String save = this.resource.getString("confirmSaveNewerHome.save");
-    String doNotSave = this.resource.getString("confirmSaveNewerHome.doNotSave");
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.title");
+    String save = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.save");
+    String doNotSave = this.preferences.getLocalizedString(HomePane.class, "confirmSaveNewerHome.doNotSave");
     
     return JOptionPane.showOptionDialog(this, message, title, 
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -1906,10 +1896,10 @@ public class HomePane extends JRootPane implements HomeView {
    * @return <code>true</code> if user confirmed to exit.
    */
   public boolean confirmExit() {
-    String message = this.resource.getString("confirmExit.message");
-    String title = this.resource.getString("confirmExit.title");
-    String quit = this.resource.getString("confirmExit.quit");
-    String doNotQuit = this.resource.getString("confirmExit.doNotQuit");
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmExit.message");
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmExit.title");
+    String quit = this.preferences.getLocalizedString(HomePane.class, "confirmExit.quit");
+    String doNotQuit = this.preferences.getLocalizedString(HomePane.class, "confirmExit.doNotQuit");
     
     return JOptionPane.showOptionDialog(this, message, title, 
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
@@ -1920,8 +1910,8 @@ public class HomePane extends JRootPane implements HomeView {
    * Displays an about dialog.
    */
   public void showAboutDialog() {
-    String messageFormat = this.resource.getString("about.message");
-    String aboutVersion = this.resource.getString("about.version");
+    String messageFormat = this.preferences.getLocalizedString(HomePane.class, "about.message");
+    String aboutVersion = this.preferences.getLocalizedString(HomePane.class, "about.version");
     String message = String.format(messageFormat, aboutVersion, 
         System.getProperty("java.version"));
     // Use an uneditable editor pane to let user select text in dialog
@@ -1946,9 +1936,9 @@ public class HomePane extends JRootPane implements HomeView {
       // Too bad : service is unavailable             
     } 
     
-    String title = this.resource.getString("about.title");
+    String title = this.preferences.getLocalizedString(HomePane.class, "about.title");
     Icon   icon  = new ImageIcon(HomePane.class.getResource(
-        this.resource.getString("about.icon")));
+        this.preferences.getLocalizedString(HomePane.class, "about.icon")));
     JOptionPane.showMessageDialog(this, messagePane, title,  
         JOptionPane.INFORMATION_MESSAGE, icon);
   }
@@ -1988,7 +1978,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public String showPrintToPDFDialog(String homeName) {
     return this.controller.getContentManager().showSaveDialog(this,
-        this.resource.getString("printToPDFDialog.title"), 
+        this.preferences.getLocalizedString(HomePane.class, "printToPDFDialog.title"), 
         ContentManager.ContentType.PDF, homeName);
   }
   
@@ -2022,7 +2012,7 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public String showExportToOBJDialog(String homeName) {
     return this.controller.getContentManager().showSaveDialog(this,
-        this.resource.getString("exportToOBJDialog.title"), 
+        this.preferences.getLocalizedString(HomePane.class, "exportToOBJDialog.title"), 
         ContentManager.ContentType.OBJ, homeName);
   }
   
@@ -2045,10 +2035,10 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public boolean confirmDeleteCatalogSelection() {
     // Retrieve displayed text in buttons and message
-    String message = this.resource.getString("confirmDeleteCatalogSelection.message");
-    String title = this.resource.getString("confirmDeleteCatalogSelection.title");
-    String delete = this.resource.getString("confirmDeleteCatalogSelection.delete");
-    String cancel = this.resource.getString("confirmDeleteCatalogSelection.cancel");
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.message");
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.title");
+    String delete = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.delete");
+    String cancel = this.preferences.getLocalizedString(HomePane.class, "confirmDeleteCatalogSelection.cancel");
     
     return JOptionPane.showOptionDialog(this, message, title, 
         JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,

@@ -30,7 +30,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -52,6 +51,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -61,6 +61,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalogTree extends JTree implements View {
+  private final UserPreferences preferences;
   private TreeSelectionListener treeSelectionListener;
 
   /**
@@ -76,6 +77,17 @@ public class FurnitureCatalogTree extends JTree implements View {
    */
   public FurnitureCatalogTree(FurnitureCatalog catalog, 
                               FurnitureCatalogController controller) {
+    this(catalog, null, controller);
+  }
+  
+  /**
+   * Creates a tree controlled by <code>controller</code> that displays 
+   * <code>catalog</code> content and its selection.
+   */
+  public FurnitureCatalogTree(FurnitureCatalog catalog, 
+                              UserPreferences preferences, 
+                              FurnitureCatalogController controller) {
+    this.preferences = preferences;
     setModel(new CatalogTreeModel(catalog));
     setRootVisible(false);
     setShowsRootHandles(true);
@@ -175,14 +187,14 @@ public class FurnitureCatalogTree extends JTree implements View {
   @Override
   public String getToolTipText(MouseEvent ev) {
     TreePath path = getPathForLocation(ev.getX(), ev.getY());
-    if (path != null
+    if (this.preferences != null
+        && path != null
         && path.getPathCount() == 3) {
       CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
       String tooltip = "<html><center>&nbsp;<b>" + piece.getName() + "</b>&nbsp;";
       if (piece.getCreator() != null) {
-        String creatorFormat = 
-            ResourceBundle.getBundle(FurnitureCatalogTree.class.getName()).getString("tooltipCreator");
-        tooltip += "<br>" + String.format(creatorFormat, piece.getCreator());
+        tooltip += "<br>" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
+            "tooltipCreator", piece.getCreator());
       }
       if (piece.getIcon() instanceof URLContent) {
         tooltip += "<br><img width='128' height='128' src='" 

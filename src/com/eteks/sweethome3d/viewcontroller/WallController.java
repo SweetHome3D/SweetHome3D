@@ -24,7 +24,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -109,9 +108,9 @@ public class WallController implements Controller {
   public TextureChoiceController getLeftSideTextureController() {
     // Create sub controller lazily only once it's needed
     if (this.leftSideTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
       this.leftSideTextureController = new TextureChoiceController(
-          resource.getString("leftSideTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(WallController.class, "leftSideTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.leftSideTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -128,9 +127,9 @@ public class WallController implements Controller {
   public TextureChoiceController getRightSideTextureController() {
     // Create sub controller lazily only once it's needed
     if (this.rightSideTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(WallController.class.getName());
       this.rightSideTextureController = new TextureChoiceController(
-          resource.getString("rightSideTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(WallController.class, "rightSideTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.rightSideTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -737,7 +736,8 @@ public class WallController implements Controller {
           leftSideColor, leftSideTexture, rightSideColor, rightSideTexture, 
           height, heightAtEnd, thickness);      
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, oldSelection,
+        UndoableEdit undoableEdit = new WallsModificationUndoableEdit(this.home, 
+            this.preferences, oldSelection,
             modifiedWalls, xStart, yStart, xEnd, yEnd,
             leftSideColor, leftSideTexture, rightSideColor,
             rightSideTexture, thickness, height,
@@ -753,6 +753,7 @@ public class WallController implements Controller {
    */
   private static class WallsModificationUndoableEdit extends AbstractUndoableEdit {
     private final Home             home;
+    private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
     private final ModifiedWall []  modifiedWalls;
     private final Float            xStart;
@@ -768,6 +769,7 @@ public class WallController implements Controller {
     private final Float            heightAtEnd;
 
     private WallsModificationUndoableEdit(Home home,
+                                          UserPreferences preferences,
                                           List<Selectable> oldSelection,
                                           ModifiedWall [] modifiedWalls,
                                           Float xStart, Float yStart,
@@ -779,9 +781,10 @@ public class WallController implements Controller {
                                           Float thickness,
                                           Float height,
                                           Float heightAtEnd) {
-      this.xStart = xStart;
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
+      this.xStart = xStart;
       this.yStart = yStart;
       this.xEnd = xEnd;
       this.yEnd = yEnd;
@@ -813,8 +816,7 @@ public class WallController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(WallController.class.getName()).
-          getString("undoModifyWallsName");
+      return this.preferences.getLocalizedString(WallController.class, "undoModifyWallsName");
     }
   }
 

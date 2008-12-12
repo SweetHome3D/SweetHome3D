@@ -29,7 +29,6 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
@@ -63,7 +62,6 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class UserPreferencesPanel extends JPanel implements DialogView {
   private final UserPreferencesController controller;
-  private ResourceBundle resource;
   private JLabel         languageLabel;
   private JComboBox      languageComboBox;
   private JLabel         unitLabel;
@@ -80,6 +78,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JLabel         newWallHeightLabel;
   private JSpinner       newWallHeightSpinner;
   private JButton        resetDisplayedActionTipsButton;
+  private String         dialogTitle;
   
   /**
    * Creates a preferences panel that layouts the editable properties
@@ -89,10 +88,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                               UserPreferencesController controller) {
     super(new GridBagLayout());
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(
-            UserPreferencesPanel.class.getName());
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents();
   }
   
@@ -102,7 +99,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences,
                                 final UserPreferencesController controller) {
     // Create language label and combo box bound to controller LANGUAGE property
-    this.languageLabel = new JLabel(this.resource.getString("languageLabel.text"));    
+    this.languageLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "languageLabel.text"));    
     this.languageComboBox = new JComboBox(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
     this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
@@ -130,10 +128,13 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
     
     // Create unit label and radio buttons bound to controller UNIT property
-    this.unitLabel = new JLabel(this.resource.getString("unitLabel.text"));
-    this.centimeterRadioButton = new JRadioButton(this.resource.getString("centimeterRadioButton.text"), 
+    this.unitLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "unitLabel.text"));
+    this.centimeterRadioButton = new JRadioButton(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "centimeterRadioButton.text"), 
         controller.getUnit() == LengthUnit.CENTIMETER);
-    this.inchRadioButton = new JRadioButton(this.resource.getString("inchRadioButton.text"), 
+    this.inchRadioButton = new JRadioButton(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "inchRadioButton.text"), 
         controller.getUnit() == LengthUnit.INCH);
     ButtonGroup unitButtonGroup = new ButtonGroup();
     unitButtonGroup.add(this.centimeterRadioButton);
@@ -156,8 +157,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
 
     // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
-    this.magnetismEnabledLabel = new JLabel(this.resource.getString("magnetismLabel.text"));
-    this.magnetismCheckBox = new JCheckBox(this.resource.getString("magnetismCheckBox.text"), 
+    this.magnetismEnabledLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "magnetismLabel.text"));
+    this.magnetismCheckBox = new JCheckBox(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "magnetismCheckBox.text"), 
         controller.isMagnetismEnabled());
     this.magnetismCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -172,8 +175,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
 
     // Create rulers label and check box bound to controller RULERS_VISIBLE property
-    this.rulersVisibleLabel = new JLabel(this.resource.getString("rulersLabel.text"));
-    this.rulersCheckBox = new JCheckBox(this.resource.getString("rulersCheckBox.text"),
+    this.rulersVisibleLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "rulersLabel.text"));
+    this.rulersCheckBox = new JCheckBox(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "rulersCheckBox.text"),
         controller.isRulersVisible());
     this.rulersCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -188,8 +193,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
     
     // Create grid label and check box bound to controller GRID_VISIBLE property
-    this.gridVisibleLabel = new JLabel(this.resource.getString("gridLabel.text"));
-    this.gridCheckBox = new JCheckBox(this.resource.getString("gridCheckBox.text"),
+    this.gridVisibleLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "gridLabel.text"));
+    this.gridCheckBox = new JCheckBox(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "gridCheckBox.text"),
         controller.isGridVisible());
     this.gridCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -204,7 +211,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
     
     // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
-    this.newWallThicknessLabel = new JLabel(this.resource.getString("newWallThicknessLabel.text"));
+    this.newWallThicknessLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "newWallThicknessLabel.text"));
     final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
         0.5f, 0.125f, this.centimeterRadioButton);
     this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
@@ -223,7 +231,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     
     
     // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
-    this.newWallHeightLabel = new JLabel(this.resource.getString("newWallHeightLabel.text"));
+    this.newWallHeightLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "newWallHeightLabel.text"));
     final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
         10f, 2f, this.centimeterRadioButton);
     this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
@@ -241,37 +250,39 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
     
     this.resetDisplayedActionTipsButton = new JButton(new ResourceAction.ButtonAction(
-        new ResourceAction(this.resource, "RESET_DISPLAYED_ACTION_TIPS", true) {
+        new ResourceAction(preferences, UserPreferencesPanel.class, "RESET_DISPLAYED_ACTION_TIPS", true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
             controller.resetDisplayedActionTips();
           }
         }));
+    
+    this.dialogTitle = preferences.getLocalizedString(UserPreferencesPanel.class, "preferences.title");
   }
   
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.languageLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("languageLabel.mnemonic")).getKeyCode());
+      this.languageLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "languageLabel.mnemonic")).getKeyCode());
       this.languageLabel.setLabelFor(this.languageComboBox);
-      this.centimeterRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("centimeterRadioButton.mnemonic")).getKeyCode());
-      this.inchRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("inchRadioButton.mnemonic")).getKeyCode());
-      this.magnetismCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("magnetismCheckBox.mnemonic")).getKeyCode());
-      this.rulersCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("rulersCheckBox.mnemonic")).getKeyCode());
-      this.gridCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("gridCheckBox.mnemonic")).getKeyCode());
-      this.newWallThicknessLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("newWallThicknessLabel.mnemonic")).getKeyCode());
+      this.centimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "centimeterRadioButton.mnemonic")).getKeyCode());
+      this.inchRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "inchRadioButton.mnemonic")).getKeyCode());
+      this.magnetismCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "magnetismCheckBox.mnemonic")).getKeyCode());
+      this.rulersCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "rulersCheckBox.mnemonic")).getKeyCode());
+      this.gridCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "gridCheckBox.mnemonic")).getKeyCode());
+      this.newWallThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "newWallThicknessLabel.mnemonic")).getKeyCode());
       this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
-      this.newWallHeightLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("newWallHeightLabel.mnemonic")).getKeyCode());
+      this.newWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "newWallHeightLabel.mnemonic")).getKeyCode());
       this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
     }
   }
@@ -350,9 +361,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    * Displays this panel in a dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("preferences.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, dialogTitle, this.languageComboBox) == JOptionPane.OK_OPTION
+            this, this.dialogTitle, this.languageComboBox) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyUserPreferences();
     }

@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -82,7 +81,6 @@ public class HomeController implements Controller {
   private PlanController             planController;
   private HomeController3D           homeController3D;
   private static HelpController      helpController;  // Only one help controller 
-  private ResourceBundle             resource;
   private int                        saveUndoLevel;
   private View                       focusedView;
 
@@ -142,7 +140,7 @@ public class HomeController implements Controller {
   }
 
   private HomeController(final Home home, 
-                         UserPreferences preferences,
+                         final UserPreferences preferences,
                          ViewFactory    viewFactory,
                          ContentManager contentManager,
                          HomeApplication application,
@@ -165,7 +163,6 @@ public class HomeController implements Controller {
       };
     this.undoManager = new UndoManager();
     this.undoSupport.addUndoableEditListener(this.undoManager);
-    this.resource = ResourceBundle.getBundle(HomeController.class.getName());
     
     // Update recent homes list
     if (home.getName() != null) {
@@ -179,7 +176,8 @@ public class HomeController implements Controller {
         // Warn the user that view will display a home created with a more recent version 
         getView().invokeLater(new Runnable() { 
             public void run() {
-              String message = String.format(resource.getString("moreRecentVersionHome"), home.getName());
+              String message = preferences.getLocalizedString(HomeController.class, 
+                  "moreRecentVersionHome", home.getName());
               getView().showMessage(message);
             }
           });
@@ -400,8 +398,8 @@ public class HomeController implements Controller {
                 controller.preferences.write();
                 writingPreferences.remove(controller.preferences);
               } catch (RecorderException ex) {
-                controller.getView().showError(
-                      controller.resource.getString("savePreferencesError"));
+                controller.getView().showError(controller.preferences.getLocalizedString(
+                    HomeController.class, "savePreferencesError"));
               }
             }
           });
@@ -520,8 +518,6 @@ public class HomeController implements Controller {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
             UserPreferences.Property.LANGUAGE, this);
       } else {
-        homeController.resource = ResourceBundle.getBundle(
-            HomeController.class.getName());
         // Update undo and redo name
         homeController.getView().setUndoRedoName(
             homeController.undoManager.canUndo() 
@@ -907,7 +903,8 @@ public class HomeController implements Controller {
         this.preferences.addFurnitureLibrary(furnitureLibraryName);
       }
     } catch (RecorderException ex) {
-      String message = String.format(resource.getString("importFurnitureLibraryError"), furnitureLibraryName);
+      String message = this.preferences.getLocalizedString(HomeController.class, 
+          "importFurnitureLibraryError", furnitureLibraryName);
       getView().showError(message);
     }
   }
@@ -962,7 +959,7 @@ public class HomeController implements Controller {
     undoSupport.postEdit(new AbstractUndoableEdit() { 
         @Override
         public String getPresentationName() {
-          return resource.getString("undoCutName");
+          return preferences.getLocalizedString(HomeController.class, "undoCutName");
         }      
       });
     // End compound edit
@@ -1025,7 +1022,7 @@ public class HomeController implements Controller {
   
           @Override
           public String getPresentationName() {
-            return resource.getString(presentationNameKey);
+            return preferences.getLocalizedString(HomeController.class, presentationNameKey);
           }      
         });
      
@@ -1075,7 +1072,7 @@ public class HomeController implements Controller {
   
           @Override
           public String getPresentationName() {
-            return resource.getString("undoDropName");
+            return preferences.getLocalizedString(HomeController.class, "undoDropName");
           }      
         });
     }
@@ -1152,7 +1149,8 @@ public class HomeController implements Controller {
     // Check if requested home isn't already opened
     for (Home home : this.application.getHomes()) {
       if (homeName.equals(home.getName())) {
-        String message = String.format(this.resource.getString("alreadyOpen"), homeName);
+        String message = this.preferences.getLocalizedString(
+            HomeController.class, "alreadyOpen", homeName);
         getView().showMessage(message);
         return;
       }
@@ -1173,7 +1171,8 @@ public class HomeController implements Controller {
           public void handleException(Exception ex) {
             if (!(ex instanceof InterruptedRecorderException)) {
               if (ex instanceof RecorderException) {
-                String message = String.format(resource.getString("openError"), homeName);
+                String message = preferences.getLocalizedString(
+                    HomeController.class, "openError", homeName);
                 getView().showError(message);
               } else {
                 ex.printStackTrace();
@@ -1181,8 +1180,9 @@ public class HomeController implements Controller {
             }
           }
         };
-    new ThreadedTaskController(this.viewFactory, exportToObjTask, 
-        this.resource.getString("openMessage"), exceptionHandler).executeTask(getView());
+    new ThreadedTaskController(exportToObjTask, 
+        this.preferences.getLocalizedString(HomeController.class, "openMessage"), exceptionHandler, 
+        this.preferences, this.viewFactory).executeTask(getView());
   }
   
   /**
@@ -1351,7 +1351,8 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 if (ex instanceof RecorderException) {
-                  String message = String.format(resource.getString("saveError"), homeName);
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "saveError", homeName);
                   getView().showError(message);
                 } else {
                   ex.printStackTrace();
@@ -1359,8 +1360,9 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(this.viewFactory, exportToObjTask, 
-          this.resource.getString("saveMessage"), exceptionHandler).executeTask(getView());
+      new ThreadedTaskController(exportToObjTask, 
+          this.preferences.getLocalizedString(HomeController.class, "saveMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
     }
   }
   
@@ -1409,7 +1411,8 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 if (ex instanceof RecorderException) {
-                  String message = String.format(resource.getString("exportToOBJError"), objName);
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "exportToOBJError", objName);
                   getView().showError(message);
                 } else {
                   ex.printStackTrace();
@@ -1417,8 +1420,9 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(this.viewFactory, exportToObjTask, 
-          this.resource.getString("exportToOBJMessage"), exceptionHandler).executeTask(getView());
+      new ThreadedTaskController(exportToObjTask, 
+          preferences.getLocalizedString(HomeController.class, "exportToOBJMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
     }
   }
   
@@ -1434,7 +1438,8 @@ public class HomeController implements Controller {
    * Controls the print preview.
    */
   public void previewPrint() {
-    new PrintPreviewController(this.home, this, this.viewFactory).displayView(getView());
+    new PrintPreviewController(this.home, this.preferences, 
+        this, this.viewFactory).displayView(getView());
   }
 
   /**
@@ -1449,7 +1454,8 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 if (ex instanceof RecorderException) {
-                  String message = String.format(resource.getString("printError"), home.getName());
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "printError", home.getName());
                   getView().showError(message);
                 } else {
                   ex.printStackTrace();
@@ -1457,8 +1463,9 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(this.viewFactory, printTask, 
-        this.resource.getString("printMessage"), exceptionHandler).executeTask(getView());      
+      new ThreadedTaskController(printTask, 
+          this.preferences.getLocalizedString(HomeController.class, "printMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());      
     }
   }
 
@@ -1480,7 +1487,8 @@ public class HomeController implements Controller {
             public void handleException(Exception ex) {
               if (!(ex instanceof InterruptedRecorderException)) {
                 if (ex instanceof RecorderException) {
-                  String message = String.format(resource.getString("printToPDFError"), pdfName);
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "printToPDFError", pdfName);
                   getView().showError(message);
                 } else {
                   ex.printStackTrace();
@@ -1488,8 +1496,9 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(this.viewFactory, printToPdfTask, 
-          this.resource.getString("printToPDFMessage"), exceptionHandler).executeTask(getView());
+      new ThreadedTaskController(printToPdfTask, 
+          preferences.getLocalizedString(HomeController.class, "printToPDFMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
     }
   }
 
@@ -1608,7 +1617,7 @@ public class HomeController implements Controller {
       
       @Override
       public String getPresentationName() {
-        return resource.getString("undoDeleteBackgroundImageName");
+        return preferences.getLocalizedString(HomeController.class, "undoDeleteBackgroundImageName");
       }
     };
     getUndoableEditSupport().postEdit(undoableEdit);

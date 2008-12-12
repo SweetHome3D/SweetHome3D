@@ -25,7 +25,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -34,6 +33,7 @@ import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
@@ -44,44 +44,6 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class FileContentManager implements ContentManager {
-  private static final String SWEET_HOME_3D_EXTENSION;
-  /**
-   * Supported Sweet Home 3D file filters.
-   */
-  private static final FileFilter [] SWEET_HOME_3D_FILTER = {
-      new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          // Accept directories and .sh3d files
-          return file.isDirectory()
-              || file.getName().toLowerCase().endsWith(SWEET_HOME_3D_EXTENSION);
-        }
-        
-        @Override
-        public String getDescription() {
-          return ResourceBundle.getBundle(FileContentManager.class.getName()).
-              getString("homeDescription");
-        }
-      }};
-  private static final String FURNITURE_LIBRARY_EXTENSION;
-  /**
-   * Supported Sweet Home 3D file filters.
-   */
-  private static final FileFilter [] FURNITURE_CATALOG_FILTER = {
-      new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          // Accept directories and .sh3f files
-          return file.isDirectory()
-              || file.getName().toLowerCase().endsWith(FURNITURE_LIBRARY_EXTENSION);
-        }
-        
-        @Override
-        public String getDescription() {
-          return ResourceBundle.getBundle(FileContentManager.class.getName()).
-              getString("furnitureLibraryDescription");
-        }
-      }};
   private static final String OBJ_EXTENSION = ".obj";
   /**
    * Supported OBJ filter.
@@ -221,32 +183,60 @@ public class FileContentManager implements ContentManager {
           return "PDF";
         }
       }};
-
   
-  static {
-    // Retrieve application document file extensions
-    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
-    SWEET_HOME_3D_EXTENSION = resource.getString("homeExtension");
-    FURNITURE_LIBRARY_EXTENSION = resource.getString("furnitureLibraryExtension");
-  }
-  
+  private final UserPreferences           preferences;
+  private final String                    sweetHome3DFileExtension;
+  private final String                    furnitureLibraryFileExtension;
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
   private Map<ContentType, String>        defaultFileExtensions;
 
-  public FileContentManager() {  
+  public FileContentManager(final UserPreferences preferences) {  
+    this.preferences = preferences;
+    sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
+    furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
+    
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
-    this.fileFilters.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_FILTER);
-    this.fileFilters.put(ContentType.FURNITURE_LIBRARY, FURNITURE_CATALOG_FILTER);
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
+    this.fileFilters.put(ContentType.SWEET_HOME_3D, new FileFilter [] {
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories and .sh3d files
+            return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(sweetHome3DFileExtension);
+          }
+          
+          @Override
+          public String getDescription() {
+            return preferences.getLocalizedString(FileContentManager.class, "homeDescription");
+          }
+        }
+      });
+    this.fileFilters.put(ContentType.FURNITURE_LIBRARY, new FileFilter [] {
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories and .sh3f files
+            return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(furnitureLibraryFileExtension);
+          }
+          
+          @Override
+          public String getDescription() {
+            return preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryDescription");
+          }
+        }
+      });
+
     // Fill file default extension map
     this.defaultFileExtensions = new HashMap<ContentType, String>();
-    this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, SWEET_HOME_3D_EXTENSION);
-    this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, FURNITURE_LIBRARY_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, sweetHome3DFileExtension);
+    this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }
@@ -426,7 +416,7 @@ public class FileContentManager implements ContentManager {
     }
 
     if (dialogTitle == null) {
-      dialogTitle = getDefaultFileDialogTitle(save);
+      dialogTitle = getFileDialogTitle(save);
     }
     fileDialog.setTitle(dialogTitle);
     
@@ -476,7 +466,7 @@ public class FileContentManager implements ContentManager {
     }
     
     if (dialogTitle == null) {
-      dialogTitle = getDefaultFileDialogTitle(save);
+      dialogTitle = getFileDialogTitle(save);
     }
     fileChooser.setDialogTitle(dialogTitle);
     
@@ -499,15 +489,14 @@ public class FileContentManager implements ContentManager {
   /**
    * Returns default file dialog title.
    */
-  private String getDefaultFileDialogTitle(boolean save) {
-    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
+  protected String getFileDialogTitle(boolean save) {
     if (save) {
-      return resource.getString("saveDialog.title");
+      return this.preferences.getLocalizedString(FileContentManager.class, "saveDialog.title");
     } else {
-      return resource.getString("openDialog.title");
+      return this.preferences.getLocalizedString(FileContentManager.class, "openDialog.title");
     }
   }
-  
+    
   /**
    * Displays a dialog that let user choose whether he wants to overwrite 
    * file <code>fileName</code> or not.
@@ -515,12 +504,10 @@ public class FileContentManager implements ContentManager {
    */
   protected boolean confirmOverwrite(View parentView, String fileName) {
     // Retrieve displayed text in buttons and message
-    ResourceBundle resource = ResourceBundle.getBundle(FileContentManager.class.getName());
-    String messageFormat = resource.getString("confirmOverwrite.message");
-    String message = String.format(messageFormat, fileName);
-    String title = resource.getString("confirmOverwrite.title");
-    String replace = resource.getString("confirmOverwrite.overwrite");
-    String cancel = resource.getString("confirmOverwrite.cancel");
+    String message = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.message", fileName);
+    String title = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.title");
+    String replace = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.overwrite");
+    String cancel = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.cancel");
     
     return JOptionPane.showOptionDialog((JComponent)parentView, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,

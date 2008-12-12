@@ -25,7 +25,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.Action;
 import javax.swing.JButton;
@@ -53,9 +52,9 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
-import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.ColorButton;
 import com.eteks.sweethome3d.swing.HomePane;
@@ -148,8 +147,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         }
       });
     // Wait for import furniture view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        ImportedFurnitureWizardController.class.getName()).getString("importFurnitureWizard.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        ImportedFurnitureWizardController.class, "importFurnitureWizard.title"));
     // Check dialog box is displayed
     JDialog wizardDialog = (JDialog)TestUtilities.findComponent(frame, JDialog.class);
     assertTrue("Wizard view dialog not showing", wizardDialog.isShowing());
@@ -359,8 +358,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         }
       });
     // Wait for confirm dialog to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        HomePane.class.getName()).getString("confirmDeleteCatalogSelection.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        HomePane.class, "confirmDeleteCatalogSelection.title"));
     // Find displayed dialog box
     JDialog confirmDeleteCatalogSelectionDialog = (JDialog)new BasicFinder().find(frame, 
         new ClassMatcher (JDialog.class, true));
@@ -370,8 +369,8 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     tester.invokeAndWait(new Runnable() {
         public void run() {
           // Select delete option to hide dialog box in Event Dispatch Thread
-          optionPane.setValue(ResourceBundle.getBundle(
-              HomePane.class.getName()).getString("confirmDeleteCatalogSelection.delete")); 
+          optionPane.setValue(preferences.getLocalizedString(
+              HomePane.class, "confirmDeleteCatalogSelection.delete")); 
         }
       });
     // Check selection is empty

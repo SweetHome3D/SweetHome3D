@@ -24,7 +24,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ResourceBundle;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -52,21 +51,21 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class RoomPanel extends JPanel implements DialogView {
-  private final RoomController controller;
-  private ResourceBundle       resource;
-  private JLabel               nameLabel;
-  private JTextField           nameTextField;
-  private NullableCheckBox     areaVisibleCheckBox;
-  private NullableCheckBox     floorVisibleCheckBox;
-  private JRadioButton         floorColorRadioButton;
-  private ColorButton          floorColorButton;
-  private JRadioButton         floorTextureRadioButton;
-  private JComponent           floorTextureComponent;
-  private NullableCheckBox     ceilingVisibleCheckBox;
-  private JRadioButton         ceilingColorRadioButton;
-  private ColorButton          ceilingColorButton;
-  private JRadioButton         ceilingTextureRadioButton;
-  private JComponent           ceilingTextureComponent;
+  private final RoomController  controller;
+  private JLabel                nameLabel;
+  private JTextField            nameTextField;
+  private NullableCheckBox      areaVisibleCheckBox;
+  private NullableCheckBox      floorVisibleCheckBox;
+  private JRadioButton          floorColorRadioButton;
+  private ColorButton           floorColorButton;
+  private JRadioButton          floorTextureRadioButton;
+  private JComponent            floorTextureComponent;
+  private NullableCheckBox      ceilingVisibleCheckBox;
+  private JRadioButton          ceilingColorRadioButton;
+  private ColorButton           ceilingColorButton;
+  private JRadioButton          ceilingTextureRadioButton;
+  private JComponent            ceilingTextureComponent;
+  private String                dialogTitle;
 
   /**
    * Creates a panel that displays room data according to the units set in
@@ -78,9 +77,8 @@ public class RoomPanel extends JPanel implements DialogView {
                    RoomController controller) {
     super(new GridBagLayout());
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(RoomPanel.class.getName());
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents(preferences, controller);
   }
 
@@ -90,7 +88,7 @@ public class RoomPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences, 
                                 final RoomController controller) {
     // Create name label and its text field bound to NAME controller property
-    this.nameLabel = new JLabel(this.resource.getString("nameLabel.text"));
+    this.nameLabel = new JLabel(preferences.getLocalizedString(RoomPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
@@ -123,7 +121,8 @@ public class RoomPanel extends JPanel implements DialogView {
       });
     
     // Create area visible check box bound to AREA_VISIBLE controller property
-    this.areaVisibleCheckBox = new NullableCheckBox(this.resource.getString("areaVisibleCheckBox.text"));
+    this.areaVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        RoomPanel.class, "areaVisibleCheckBox.text"));
     this.areaVisibleCheckBox.setNullable(controller.getAreaVisible() == null);
     this.areaVisibleCheckBox.setValue(controller.getAreaVisible());
     final PropertyChangeListener visibleChangeListener = new PropertyChangeListener() {
@@ -142,7 +141,8 @@ public class RoomPanel extends JPanel implements DialogView {
       });
 
     // Create floor visible check box bound to FLOOR_VISIBLE controller property
-    this.floorVisibleCheckBox = new NullableCheckBox(this.resource.getString("floorVisibleCheckBox.text"));
+    this.floorVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        RoomPanel.class, "floorVisibleCheckBox.text"));
     this.floorVisibleCheckBox.setNullable(controller.getFloorVisible() == null);
     this.floorVisibleCheckBox.setValue(controller.getFloorVisible());
     final PropertyChangeListener floorVisibleChangeListener = new PropertyChangeListener() {
@@ -161,7 +161,8 @@ public class RoomPanel extends JPanel implements DialogView {
       });
     
     // Floor color and texture buttons bound to floor controller properties
-    this.floorColorRadioButton = new JRadioButton(this.resource.getString("floorColorRadioButton.text"));
+    this.floorColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+        RoomPanel.class, "floorColorRadioButton.text"));
     this.floorColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (floorColorRadioButton.isSelected()) {
@@ -177,7 +178,8 @@ public class RoomPanel extends JPanel implements DialogView {
         });
     
     this.floorColorButton = new ColorButton();
-    this.floorColorButton.setColorDialogTitle(this.resource.getString("floorColorDialog.title"));
+    this.floorColorButton.setColorDialogTitle(preferences.getLocalizedString(
+        RoomPanel.class, "floorColorDialog.title"));
     this.floorColorButton.setColor(controller.getFloorColor());
     this.floorColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
@@ -192,7 +194,8 @@ public class RoomPanel extends JPanel implements DialogView {
           }
         });
 
-    this.floorTextureRadioButton = new JRadioButton(this.resource.getString("floorTextureRadioButton.text"));
+    this.floorTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+        RoomPanel.class, "floorTextureRadioButton.text"));
     this.floorTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (floorTextureRadioButton.isSelected()) {
@@ -209,7 +212,8 @@ public class RoomPanel extends JPanel implements DialogView {
     updateFloorRadioButtons(controller);
     
     // Create ceiling visible check box bound to CEILING_VISIBLE controller property
-    this.ceilingVisibleCheckBox = new NullableCheckBox(this.resource.getString("ceilingVisibleCheckBox.text"));
+    this.ceilingVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+        RoomPanel.class, "ceilingVisibleCheckBox.text"));
     this.ceilingVisibleCheckBox.setNullable(controller.getCeilingVisible() == null);
     this.ceilingVisibleCheckBox.setValue(controller.getCeilingVisible());
     final PropertyChangeListener ceilingVisibleChangeListener = new PropertyChangeListener() {
@@ -228,7 +232,8 @@ public class RoomPanel extends JPanel implements DialogView {
       });
 
     // Ceiling color and texture buttons bound to ceiling controller properties
-    this.ceilingColorRadioButton = new JRadioButton(this.resource.getString("ceilingColorRadioButton.text"));
+    this.ceilingColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+        RoomPanel.class, "ceilingColorRadioButton.text"));
     this.ceilingColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
           if (ceilingColorRadioButton.isSelected()) {
@@ -245,7 +250,8 @@ public class RoomPanel extends JPanel implements DialogView {
 
     this.ceilingColorButton = new ColorButton();
     this.ceilingColorButton.setColor(controller.getCeilingColor());
-    this.ceilingColorButton.setColorDialogTitle(this.resource.getString("ceilingColorDialog.title"));
+    this.ceilingColorButton.setColorDialogTitle(preferences.getLocalizedString(
+        RoomPanel.class, "ceilingColorDialog.title"));
     this.ceilingColorButton.addPropertyChangeListener(ColorButton.COLOR_PROPERTY, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
@@ -259,7 +265,8 @@ public class RoomPanel extends JPanel implements DialogView {
           }
         });
     
-    this.ceilingTextureRadioButton = new JRadioButton(this.resource.getString("ceilingTextureRadioButton.text"));
+    this.ceilingTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+        RoomPanel.class, "ceilingTextureRadioButton.text"));
     this.ceilingTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
           if (ceilingTextureRadioButton.isSelected()) {
@@ -274,6 +281,8 @@ public class RoomPanel extends JPanel implements DialogView {
     ceilingButtonGroup.add(this.ceilingColorRadioButton);
     ceilingButtonGroup.add(this.ceilingTextureRadioButton);
     updateCeilingRadioButtons(controller);
+
+    this.dialogTitle = preferences.getLocalizedString(RoomPanel.class, "room.title");
   }
 
   /**
@@ -305,25 +314,25 @@ public class RoomPanel extends JPanel implements DialogView {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.nameLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("nameLabel.mnemonic")).getKeyCode());
+      this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "nameLabel.mnemonic")).getKeyCode());
       this.nameLabel.setLabelFor(this.nameTextField);
-      this.areaVisibleCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("areaVisibleCheckBox.mnemonic")).getKeyCode());
-      this.floorVisibleCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("floorVisibleCheckBox.mnemonic")).getKeyCode());
-      this.floorColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("floorColorRadioButton.mnemonic")).getKeyCode());
-      this.floorTextureRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("floorTextureRadioButton.mnemonic")).getKeyCode());
-      this.ceilingVisibleCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("ceilingVisibleCheckBox.mnemonic")).getKeyCode());
-      this.ceilingColorRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("ceilingColorRadioButton.mnemonic")).getKeyCode());
-      this.ceilingTextureRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("ceilingTextureRadioButton.mnemonic")).getKeyCode());
+      this.areaVisibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "areaVisibleCheckBox.mnemonic")).getKeyCode());
+      this.floorVisibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "floorVisibleCheckBox.mnemonic")).getKeyCode());
+      this.floorColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "floorColorRadioButton.mnemonic")).getKeyCode());
+      this.floorTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "floorTextureRadioButton.mnemonic")).getKeyCode());
+      this.ceilingVisibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "ceilingVisibleCheckBox.mnemonic")).getKeyCode());
+      this.ceilingColorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "ceilingColorRadioButton.mnemonic")).getKeyCode());
+      this.ceilingTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(RoomPanel.class, "ceilingTextureRadioButton.mnemonic")).getKeyCode());
     }
   }
   
@@ -337,8 +346,8 @@ public class RoomPanel extends JPanel implements DialogView {
         : GridBagConstraints.LINE_START;
     // First row
     Insets rowInsets;
-    JPanel nameAndAreaPanel = createTitledPanel(
-        this.resource.getString("nameAndAreaPanel.title"));
+    JPanel nameAndAreaPanel = createTitledPanel(preferences.getLocalizedString(
+        RoomPanel.class, "nameAndAreaPanel.title"));
     nameAndAreaPanel.add(this.nameLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 8, 0, 5), 0, 0));
@@ -358,16 +367,16 @@ public class RoomPanel extends JPanel implements DialogView {
         0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
     // Last row
-    JPanel floorPanel = createVerticalTitledPanel(
-        this.resource.getString("floorPanel.title"),
+    JPanel floorPanel = createVerticalTitledPanel(preferences.getLocalizedString(
+        RoomPanel.class, "floorPanel.title"),
         new JComponent [] {this.floorVisibleCheckBox, null,
                            this.floorColorRadioButton, this.floorColorButton, 
                            this.floorTextureRadioButton, this.floorTextureComponent});
     add(floorPanel, new GridBagConstraints(
         0, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START,
         GridBagConstraints.HORIZONTAL, rowInsets, 0, 0));
-    JPanel ceilingPanel = createVerticalTitledPanel(
-        this.resource.getString("ceilingPanel.title"),
+    JPanel ceilingPanel = createVerticalTitledPanel(preferences.getLocalizedString(
+        RoomPanel.class, "ceilingPanel.title"),
         new JComponent [] {this.ceilingVisibleCheckBox, null,
                            this.ceilingColorRadioButton, this.ceilingColorButton, 
                            this.ceilingTextureRadioButton, this.ceilingTextureComponent});
@@ -416,9 +425,8 @@ public class RoomPanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("room.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION
+            this, this.dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {
       this.controller.modifyRooms();
     }

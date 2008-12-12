@@ -24,7 +24,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.Collections;
-import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
@@ -95,17 +94,17 @@ public class ImportedTextureWizardController extends WizardController
                                           UserPreferences preferences,
                                           ViewFactory    viewFactory,
                                           ContentManager contentManager) {
-    super(viewFactory);
+    super(preferences, viewFactory);
     this.texture = texture;
     this.textureName = textureName;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    ResourceBundle resource = ResourceBundle.getBundle(ImportedTextureWizardController.class.getName());
-    setTitle(resource.getString(texture == null 
-        ? "importTextureWizard.title" 
-        : "modifyTextureWizard.title"));    
+    setTitle(this.preferences.getLocalizedString(ImportedTextureWizardController.class, 
+        texture == null 
+          ? "importTextureWizard.title" 
+          : "modifyTextureWizard.title"));    
     // Initialize states
     this.textureImageStepState = new TextureImageStepState();
     this.textureAttributesStepState = new TextureAttributesStepState();

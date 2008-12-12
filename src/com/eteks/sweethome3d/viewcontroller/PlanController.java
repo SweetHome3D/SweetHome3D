@@ -30,7 +30,6 @@ import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +37,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.TreeMap;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -86,7 +84,6 @@ public class PlanController extends FurnitureController implements Controller {
   private final UndoableEditSupport   undoSupport;
   private final PropertyChangeSupport propertyChangeSupport;
   private PlanView                    planView;
-  private ResourceBundle              resource;
   private SelectionListener           selectionListener;
   // Possibles states
   private final ControllerState       selectionState;
@@ -144,7 +141,6 @@ public class PlanController extends FurnitureController implements Controller {
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
-    this.resource  = ResourceBundle.getBundle(PlanController.class.getName());
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     // Initialize states
     this.selectionState = new SelectionState();
@@ -174,7 +170,6 @@ public class PlanController extends FurnitureController implements Controller {
     setState(this.selectionState);
     
     addModelListeners();
-    addLanguageListener(preferences);
     
     // Restore previous scale if it exists
     Float scale = (Float)home.getVisualProperty(SCALE_VISUAL_PROPERTY);
@@ -572,7 +567,8 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return resource.getString("undoReverseWallsDirectionName");
+        return preferences.getLocalizedString(
+            PlanController.class, "undoReverseWallsDirectionName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -742,7 +738,8 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return resource.getString("undoSplitWallName");
+        return preferences.getLocalizedString(
+            PlanController.class, "undoSplitWallName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -1030,7 +1027,8 @@ public class PlanController extends FurnitureController implements Controller {
 
       @Override
       public String getPresentationName() {
-        return resource.getString("undoModifyTextStyleName");
+        return preferences.getLocalizedString(
+            PlanController.class, "undoModifyTextStyleName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -1154,39 +1152,6 @@ public class PlanController extends FurnitureController implements Controller {
       });
   }
 
-  /**
-   * Adds a property change listener to <code>preferences</code> to update
-   * resource bundle when preferred language changes.
-   */
-  private void addLanguageListener(UserPreferences preferences) {
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
-        new LanguageChangeListener(this));
-  }
-
-  /**
-   * Preferences property listener bound to this component with a weak reference to avoid
-   * strong link between preferences and this component.  
-   */
-  private static class LanguageChangeListener implements PropertyChangeListener {
-    private WeakReference<PlanController> planController;
-
-    public LanguageChangeListener(PlanController helpPane) {
-      this.planController = new WeakReference<PlanController>(helpPane);
-    }
-    
-    public void propertyChange(PropertyChangeEvent ev) {
-      // If plan controller was garbage collected, remove this listener from preferences
-      PlanController planController = this.planController.get();
-      if (planController == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
-            UserPreferences.Property.LANGUAGE, this);
-      } else {
-        // Update resource from current default locale
-        planController.resource = ResourceBundle.getBundle(PlanController.class.getName());
-      }
-    }
-  }
-  
   /**
    * Returns a new wall instance between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>)
@@ -1815,7 +1780,8 @@ public class PlanController extends FurnitureController implements Controller {
       
       @Override
       public String getPresentationName() {
-        return resource.getString("undoDeleteSelectionName");
+        return preferences.getLocalizedString(
+            PlanController.class, "undoDeleteSelectionName");
       }      
     };
     this.undoSupport.postEdit(undoableEdit);
@@ -2029,7 +1995,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoCreateWallsName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCreateWallsName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2119,7 +2086,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoCreateRoomsName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCreateRoomsName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2196,7 +2164,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoCreateDimensionLinesName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCreateDimensionLinesName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2255,7 +2224,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoCreateLabelsName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoCreateLabelsName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2305,7 +2275,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoMoveSelectionName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoMoveSelectionName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2360,7 +2331,8 @@ public class PlanController extends FurnitureController implements Controller {
 
         @Override
         public String getPresentationName() {
-          return resource.getString("undoDuplicateSelectionName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoDuplicateSelectionName");
         }      
       });
    
@@ -2402,7 +2374,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoWallResizeName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoWallResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2435,7 +2408,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoRoomResizeName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoRoomResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2470,7 +2444,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoRoomNameOffsetName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoRoomNameOffsetName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2505,7 +2480,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoRoomAreaOffsetName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoRoomAreaOffsetName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2535,7 +2511,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureRotationName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureRotationName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2565,9 +2542,10 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {          
-          return resource.getString(oldElevation < newElevation 
-              ? "undoPieceOfFurnitureRaiseName"
-              : "undoPieceOfFurnitureLowerName");
+          return preferences.getLocalizedString(PlanController.class, 
+              oldElevation < newElevation 
+                  ? "undoPieceOfFurnitureRaiseName"
+                  : "undoPieceOfFurnitureLowerName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2597,7 +2575,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureHeightResizeName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureHeightResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2639,7 +2618,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureWidthAndDepthResizeName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureWidthAndDepthResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2675,7 +2655,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoPieceOfFurnitureNameOffsetName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoPieceOfFurnitureNameOffsetName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2714,7 +2695,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoDimensionLineResizeName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoDimensionLineResizeName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -2744,7 +2726,8 @@ public class PlanController extends FurnitureController implements Controller {
   
         @Override
         public String getPresentationName() {
-          return resource.getString("undoDimensionLineOffsetName");
+          return preferences.getLocalizedString(
+              PlanController.class, "undoDimensionLineOffsetName");
         }      
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -3631,8 +3614,10 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.wallLengthToolTipFeedback = resource.getString("wallLengthToolTipFeedback");
-      this.wallAngleToolTipFeedback = resource.getString("wallAngleToolTipFeedback");
+      this.wallLengthToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "wallLengthToolTipFeedback");
+      this.wallAngleToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "wallAngleToolTipFeedback");
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
@@ -4000,7 +3985,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.rotationToolTipFeedback = resource.getString("rotationToolTipFeedback");
+      this.rotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "rotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
@@ -4092,7 +4078,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.elevationToolTipFeedback = resource.getString("elevationToolTipFeedback");
+      this.elevationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "elevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
       this.deltaYToElevationPoint = getYLastMousePress() - elevationPoint [1];
@@ -4182,7 +4169,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.resizeToolTipFeedback = resource.getString("heightResizeToolTipFeedback");
+      this.resizeToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "heightResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [3];
       this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
@@ -4278,8 +4266,10 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.widthResizeToolTipFeedback = resource.getString("widthResizeToolTipFeedback");
-      this.depthResizeToolTipFeedback = resource.getString("depthResizeToolTipFeedback");
+      this.widthResizeToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "widthResizeToolTipFeedback");
+      this.depthResizeToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "depthResizeToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] resizePoint = this.selectedPiece.getPoints() [2];
       this.deltaXToResizePoint = getXLastMousePress() - resizePoint [0];
@@ -4455,7 +4445,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.rotationToolTipFeedback = resource.getString("cameraYawRotationToolTipFeedback");
+      this.rotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "cameraYawRotationToolTipFeedback");
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedCamera.getX()); 
@@ -4524,7 +4515,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void enter() {
-      this.rotationToolTipFeedback = resource.getString("cameraPitchRotationToolTipFeedback");
+      this.rotationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "cameraPitchRotationToolTipFeedback");
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
       this.oldPitch = this.selectedCamera.getPitch();
       PlanView planView = getView();

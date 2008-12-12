@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.applet;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -40,6 +39,8 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletController extends HomeController {
+  private final HomeApplication application;
+
   public HomeAppletController(Home home, 
                               HomeApplication application, 
                               ViewFactory viewFactory,
@@ -50,6 +51,7 @@ public class HomeAppletController extends HomeController {
                               boolean saveEnabled, 
                               boolean saveAsEnabled) {
     super(home, application, viewFactory, contentManager, pluginManager);
+    this.application = application;
     
     HomePane view = (HomePane)getView();
     view.setEnabled(HomePane.ActionType.EXIT, false);
@@ -91,7 +93,7 @@ public class HomeAppletController extends HomeController {
     try { 
       // Lookup the javax.jnlp.BasicService object 
       final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
-      String helpIndex = ResourceBundle.getBundle(HomeAppletController.class.getName()).getString("helpIndex");
+      String helpIndex = application.getUserPreferences().getLocalizedString(HomeAppletController.class, "helpIndex");
       service.showDocument(new URL(helpIndex)); 
     } catch (UnavailableServiceException ex) {
       // Too bad : service is unavailable             

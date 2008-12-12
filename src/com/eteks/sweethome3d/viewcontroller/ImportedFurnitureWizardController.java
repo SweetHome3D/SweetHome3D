@@ -26,7 +26,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -150,7 +149,7 @@ public class ImportedFurnitureWizardController extends WizardController
                                             ViewFactory    viewFactory,
                                             ContentManager contentManager,
                                             UndoableEditSupport undoSupport) {
-    super(viewFactory);
+    super(preferences, viewFactory);
     this.home = home;
     this.piece = piece;
     this.modelName = modelName;
@@ -159,10 +158,10 @@ public class ImportedFurnitureWizardController extends WizardController
     this.undoSupport = undoSupport;
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    ResourceBundle resource = ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName());
-    setTitle(resource.getString(piece == null 
-        ? "importFurnitureWizard.title" 
-        : "modifyFurnitureWizard.title"));    
+    setTitle(this.preferences.getLocalizedString(ImportedFurnitureWizardController.class,
+        piece == null 
+            ? "importFurnitureWizard.title" 
+            : "modifyFurnitureWizard.title"));    
     // Initialize states
     this.furnitureModelStepState = new FurnitureModelStepState();
     this.furnitureOrientationStepState = new FurnitureOrientationStepState();
@@ -206,13 +205,13 @@ public class ImportedFurnitureWizardController extends WizardController
   public void addPieceOfFurniture(HomePieceOfFurniture piece) {
     List<Selectable> oldSelection = this.home.getSelectedItems(); 
     // Get index of the piece added to home
-    int pieceIndex = home.getFurniture().size();
+    int pieceIndex = this.home.getFurniture().size();
     
-    home.addPieceOfFurniture(piece, pieceIndex);
-    home.setSelectedItems(Arrays.asList(piece)); 
+    this.home.addPieceOfFurniture(piece, pieceIndex);
+    this.home.setSelectedItems(Arrays.asList(piece)); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new PieceOfFurnitureImportationUndoableEdit(
-          home, oldSelection, piece, pieceIndex);
+          this.home, this.preferences, oldSelection, piece, pieceIndex);
       this.undoSupport.postEdit(undoableEdit);
     }
   }
@@ -223,15 +222,18 @@ public class ImportedFurnitureWizardController extends WizardController
    */
   private static class PieceOfFurnitureImportationUndoableEdit extends AbstractUndoableEdit {
     private final Home                 home;
+    private final UserPreferences      preferences;
     private final List<Selectable>     oldSelection;
     private final HomePieceOfFurniture piece;
     private final int                  pieceIndex;
 
     private PieceOfFurnitureImportationUndoableEdit(Home home,
+                                                    UserPreferences preferences, 
                                                     List<Selectable> oldSelection,
                                                     HomePieceOfFurniture piece,
                                                     int pieceIndex) {
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.piece = piece;
       this.pieceIndex = pieceIndex;
@@ -253,8 +255,8 @@ public class ImportedFurnitureWizardController extends WizardController
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(ImportedFurnitureWizardController.class.getName()).
-          getString("undoImportFurnitureName");
+      return this.preferences.getLocalizedString(ImportedFurnitureWizardController.class, 
+          "undoImportFurnitureName");
     }
   }
 

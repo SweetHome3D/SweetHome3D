@@ -21,7 +21,6 @@ package com.eteks.sweethome3d.viewcontroller;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -125,8 +124,8 @@ public class PageSetupController implements Controller {
     HomePrint oldHomePrint = this.home.getPrint();
     HomePrint homePrint = getPrint();
     this.home.setPrint(homePrint);
-    UndoableEdit undoableEdit = 
-        new HomePrintModificationUndoableEdit(this.home, oldHomePrint, homePrint);
+    UndoableEdit undoableEdit = new HomePrintModificationUndoableEdit(
+        this.home, this.preferences,oldHomePrint, homePrint);
     this.undoSupport.postEdit(undoableEdit);
   }
 
@@ -135,14 +134,17 @@ public class PageSetupController implements Controller {
    * being bound to controller and its view.
    */
   private static class HomePrintModificationUndoableEdit extends AbstractUndoableEdit {
-    private final Home      home;
-    private final HomePrint oldHomePrint;
-    private final HomePrint homePrint;
+    private final Home            home;
+    private final UserPreferences preferences;
+    private final HomePrint       oldHomePrint;
+    private final HomePrint       homePrint;
 
     private HomePrintModificationUndoableEdit(Home home,
+                                              UserPreferences preferences,
                                               HomePrint oldHomePrint,
                                               HomePrint homePrint) {
       this.home = home;
+      this.preferences = preferences;
       this.oldHomePrint = oldHomePrint;
       this.homePrint = homePrint;
     }
@@ -161,8 +163,7 @@ public class PageSetupController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(PageSetupController.class.getName()).
-          getString("undoPageSetupName");
+      return this.preferences.getLocalizedString(PageSetupController.class, "undoPageSetupName");
     }
   }
 }

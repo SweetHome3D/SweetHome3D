@@ -23,8 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
@@ -34,10 +32,10 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
+import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
-import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -62,15 +60,17 @@ public class AppletUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
  
     // Read other preferences from resource bundle
-    ResourceBundle resource = ResourceBundle.getBundle(DefaultUserPreferences.class.getName());
-    LengthUnit defaultUnit = LengthUnit.valueOf(resource.getString("unit").toUpperCase());
+    LengthUnit defaultUnit = LengthUnit.valueOf(getLocalizedString(
+        DefaultUserPreferences.class, "unit").toUpperCase());
     setUnit(defaultUnit);
-    setNewWallThickness(Float.parseFloat(resource.getString("newWallThickness")));
-    setNewWallHeight(Float.parseFloat(resource.getString("newHomeWallHeight")));
+    setNewWallThickness(Float.parseFloat(getLocalizedString(
+        DefaultUserPreferences.class, "newWallThickness")));
+    setNewWallHeight(Float.parseFloat(getLocalizedString(
+        DefaultUserPreferences.class, "newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
     try {
-      setCurrency(resource.getString("currency"));
-    } catch (MissingResourceException ex) {
+      setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
+    } catch (IllegalArgumentException ex) {
       // Don't use currency and prices in program
     }
     

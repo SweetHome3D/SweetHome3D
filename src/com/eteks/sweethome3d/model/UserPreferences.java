@@ -24,8 +24,11 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -50,6 +53,7 @@ public abstract class UserPreferences {
   }
   
   private final PropertyChangeSupport propertyChangeSupport;
+  private final Map<Class<?>, LocalizedStringResource> localizedStringResources;
 
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
@@ -65,6 +69,7 @@ public abstract class UserPreferences {
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.localizedStringResources = new HashMap<Class<?>, LocalizedStringResource>();
     
     final Locale defaultLocale = Locale.getDefault();
     this.language = defaultLocale.getLanguage();
@@ -153,6 +158,7 @@ public abstract class UserPreferences {
       String oldLanguage = this.language;
       this.language = language;      
       Locale.setDefault(new Locale(language, Locale.getDefault().getCountry()));
+      this.localizedStringResources.clear();
       this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
           oldLanguage, language);
     }
@@ -165,6 +171,66 @@ public abstract class UserPreferences {
     return SUPPORTED_LANGUAGES;
   }
 
+  /**
+   * Returns the string matching <code>resourceKey</code> in current language in the 
+   * context of <code>resourceClass</code>.
+   * If <code>resourceParameters</code> isn't empty the string is considered
+   * as a format string, and the returned string will be formatted with these parameters. 
+   * This implementation searches first the key in a properties file named as 
+   * <code>resourceClass</code>, then if this file doesn't exist, it searches 
+   * the key prefixed by <code>resourceClass</code> name and a dot in a package.properties file 
+   * in the directory matching the package of <code>resourceClass</code>, 
+   * @exception IllegalArgumentException if no string for the given key can be found
+   */
+  public String getLocalizedString(Class<?> resourceClass,
+                                   String   resourceKey, 
+                                   Object ... resourceParameters) {
+    LocalizedStringResource localizedStringResource = 
+        this.localizedStringResources.get(resourceClass);
+    ResourceBundle resourceBundle;
+    if (localizedStringResource == null) {
+      try {      
+        resourceBundle = ResourceBundle.getBundle(resourceClass.getName());
+        localizedStringResource = new LocalizedStringResource(resourceBundle, null);
+        this.localizedStringResources.put(resourceClass, localizedStringResource);
+      } catch (MissingResourceException ex) {
+        try {
+          String className = resourceClass.getName();
+          int lastIndex = className.lastIndexOf(".");
+          String familyName;
+          if (lastIndex != -1) {
+            familyName = className.substring(0, lastIndex) + ".package";
+          } else {
+            familyName = "package";
+          }
+          resourceBundle = ResourceBundle.getBundle(familyName);
+          localizedStringResource = new LocalizedStringResource(resourceBundle, 
+              resourceClass.getSimpleName() + ".");
+          this.localizedStringResources.put(resourceClass, localizedStringResource);
+        } catch (MissingResourceException ex2) {
+          throw new IllegalArgumentException(
+              "Can't find resource bundle for " + resourceClass, ex);
+        }
+      }
+    } else {
+      resourceBundle = localizedStringResource.getResourceBundle();
+    }
+
+    if (localizedStringResource.getKeyPrefix() != null) {
+      resourceKey = localizedStringResource.getKeyPrefix() + resourceKey;
+    }
+    
+    try {
+      String localizedString = resourceBundle.getString(resourceKey);
+      if (resourceParameters.length > 0) {
+        localizedString = String.format(localizedString, resourceParameters);
+      }
+      return localizedString;
+    } catch (MissingResourceException ex) {
+      throw new IllegalArgumentException("Unknown key " + resourceKey);
+    }
+  }
+  
   /**
    * Returns the currency in use, noted with ISO 4217 code, or <code>null</code> 
    * if prices aren't used in application.
@@ -368,4 +434,27 @@ public abstract class UserPreferences {
    * @param furnitureLibraryName the name of the resource to check
    */
   public abstract boolean furnitureLibraryExists(String furnitureLibraryName) throws RecorderException;
+
+  /**
+   * Stores the resource bundle of a class and the prefix that may be 
+   * added to resource key.
+   */
+  private static class LocalizedStringResource {
+    private ResourceBundle resourceBundle;
+    private String         keyPrefix;
+
+    public LocalizedStringResource(ResourceBundle resourceBundle,
+                                   String keyPrefix) {
+      this.resourceBundle = resourceBundle;
+      this.keyPrefix = keyPrefix;
+    }
+    
+    public ResourceBundle getResourceBundle() {
+      return this.resourceBundle;
+    }
+    
+    public String getKeyPrefix() {
+      return this.keyPrefix;
+    }
+  }
 }

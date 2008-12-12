@@ -99,7 +99,7 @@ public class RoomTest extends ComponentTestFixture {
     assertEquals("Wrong room area", 69273.02f, room.getArea());
     
     // 4. Edit created room
-    JDialog attributesDialog = showRoomPanel(frame.homeController, frame, tester);
+    JDialog attributesDialog = showRoomPanel(frame.preferences, frame.homeController, frame, tester);
     // Retrieve RoomPanel components
     RoomPanel wallPanel = (RoomPanel)TestUtilities.findComponent(
         attributesDialog, RoomPanel.class);
@@ -206,7 +206,8 @@ public class RoomTest extends ComponentTestFixture {
   /**
    * Returns the dialog that displays room attributes. 
    */
-  private JDialog showRoomPanel(final HomeController controller, 
+  private JDialog showRoomPanel(UserPreferences preferences,
+                                final HomeController controller, 
                                 JFrame parent, JComponentTester tester) 
             throws ComponentSearchException {
     tester.invokeLater(new Runnable() { 
@@ -216,8 +217,8 @@ public class RoomTest extends ComponentTestFixture {
         }
       });
     // Wait for wall view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        RoomPanel.class.getName()).getString("room.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        RoomPanel.class, "room.title"));
     // Check dialog box is displayed
     JDialog attributesDialog = (JDialog)new BasicFinder().find(parent, 
         new ClassMatcher (JDialog.class, true));
@@ -247,7 +248,7 @@ public class RoomTest extends ComponentTestFixture {
           }
         };
       ViewFactory viewFactory = new SwingViewFactory();
-      FileContentManager contentManager = new FileContentManager();
+      FileContentManager contentManager = new FileContentManager(this.preferences);
       this.homeController = new HomeController(this.home, this.preferences, viewFactory, contentManager);
       setRootPane((JRootPane)this.homeController.getView());
       pack();

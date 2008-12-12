@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -176,7 +175,8 @@ public class LabelController implements Controller {
       Label label = new Label(text, x, y);
       doAddLabel(this.home, label); 
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new LabelCreationUndoableEdit(this.home, oldSelection, label);
+        UndoableEdit undoableEdit = new LabelCreationUndoableEdit(
+            this.home, this.preferences, oldSelection, label);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -188,12 +188,16 @@ public class LabelController implements Controller {
    */
   private static class LabelCreationUndoableEdit extends AbstractUndoableEdit {
     private final Home             home;
+    private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
     private final Label            label;
 
     private LabelCreationUndoableEdit(Home home,
-                                      List<Selectable> oldSelection, Label label) {
+                                      UserPreferences preferences, 
+                                      List<Selectable> oldSelection, 
+                                      Label label) {
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.label = label;
     }
@@ -213,8 +217,7 @@ public class LabelController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(LabelController.class.getName()).
-          getString("undoCreateLabelName");
+      return this.preferences.getLocalizedString(LabelController.class, "undoCreateLabelName");
     }
   }
 
@@ -250,8 +253,8 @@ public class LabelController implements Controller {
       // Apply modification
       doModifyLabels(modifiedLabels, text); 
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new LabelModificationUndoableEdit(home, 
-            oldSelection, modifiedLabels, text);
+        UndoableEdit undoableEdit = new LabelModificationUndoableEdit(this.home, 
+            this.preferences, oldSelection, modifiedLabels, text);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -263,15 +266,18 @@ public class LabelController implements Controller {
    */
   private static class LabelModificationUndoableEdit extends AbstractUndoableEdit {
     private final Home             home;
+    private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
     private final ModifiedLabel [] modifiedLabels;
     private final String           text;
 
     private LabelModificationUndoableEdit(Home home,
+                                          UserPreferences preferences, 
                                           List<Selectable> oldSelection,
                                           ModifiedLabel [] modifiedLabels,
                                           String text) {
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedLabels = modifiedLabels;
       this.text = text;
@@ -293,8 +299,8 @@ public class LabelController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(LabelController.class.getName()).
-          getString("undoModifyLabelsName");
+      return this.preferences.getLocalizedString(LabelController.class, 
+          "undoModifyLabelsName");
     }
   }
 

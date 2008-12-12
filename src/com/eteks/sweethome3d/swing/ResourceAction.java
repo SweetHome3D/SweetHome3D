@@ -22,8 +22,7 @@ package com.eteks.sweethome3d.swing;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
+import java.lang.ref.WeakReference;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -31,6 +30,7 @@ import javax.swing.ImageIcon;
 import javax.swing.KeyStroke;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
 /**
@@ -39,71 +39,103 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  */
 public class ResourceAction extends AbstractAction {
   public static final String POPUP = "Popup";
-  
-  private final String actionPrefix;
-  
+    
   /**
    * Creates a disabled action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.
-   * @param resource a resource bundle
+   * @param preferences   user preferences used to retrieve localized properties of the action 
+   * @param resourceClass the class used as a context to retrieve localized properties of the action
    * @param actionPrefix  prefix used in resource bundle to search action properties
    */
-  public ResourceAction(ResourceBundle resource, String actionPrefix) {
-    this(resource, actionPrefix, false);
+  public ResourceAction(UserPreferences preferences, 
+                        Class<?> resourceClass, 
+                        String actionPrefix) {
+    this(preferences, resourceClass, actionPrefix, false);
   }
   
   /**
    * Creates an action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.
-   * @param resource a resource bundle
+   * @param preferences   user preferences used to retrieve localized description of the action
+   * @param resourceClass the class used as a context to retrieve localized properties of the action
    * @param actionPrefix  prefix used in resource bundle to search action properties
    * @param enabled <code>true</code> if the action should be enabled at creation.
    */
-  public ResourceAction(ResourceBundle resource, String actionPrefix, boolean enabled) {
-    this.actionPrefix = actionPrefix;
-    readActionProperties(resource, actionPrefix);    
+  public ResourceAction(UserPreferences preferences, 
+                        Class<?> resourceClass, 
+                        String actionPrefix, 
+                        boolean enabled) {
+    readActionProperties(preferences, resourceClass, actionPrefix);    
     setEnabled(enabled);
+    
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new LanguageChangeListener(this, resourceClass, actionPrefix));
   }
     
   /**
-   * Changes the resource from which properties action are read.
+   * Preferences property listener bound to this action with a weak reference to avoid
+   * strong link between preferences and this action.  
    */
-  public void setResource(ResourceBundle resource) {
-    readActionProperties(resource, this.actionPrefix);
-  }
+  private static class LanguageChangeListener implements PropertyChangeListener {
+    private final WeakReference<ResourceAction> resourceAction;
+    private final Class<?>                      resourceClass;
+    private final String                        actionPrefix;
 
+    public LanguageChangeListener(ResourceAction resourceAction,
+                                  Class<?> resourceClass,
+                                  String actionPrefix) {
+      this.resourceAction = new WeakReference<ResourceAction>(resourceAction);
+      this.resourceClass = resourceClass;
+      this.actionPrefix = actionPrefix;
+    }
+
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If action was garbage collected, remove this listener from preferences
+      ResourceAction resourceAction = this.resourceAction.get();
+      if (resourceAction == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.LANGUAGE, this);
+      } else {
+        resourceAction.readActionProperties((UserPreferences)ev.getSource(), 
+            this.resourceClass, this.actionPrefix);
+      }
+    }
+  }
+  
   /**
-   * Reads from <code>resource</code> bundle the properties of this action.
+   * Reads from the properties of this action.
    */
-  private void readActionProperties(ResourceBundle resource, String actionPrefix) {
+  private void readActionProperties(UserPreferences preferences, 
+                                    Class<?> resourceClass, 
+                                    String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
-    putValue(NAME, getOptionalString(resource, propertyPrefix + NAME));
+    putValue(NAME, getOptionalString(preferences, resourceClass, propertyPrefix + NAME));
     putValue(DEFAULT, getValue(NAME));
-    putValue(POPUP, getOptionalString(resource, propertyPrefix + POPUP));
+    putValue(POPUP, getOptionalString(preferences, resourceClass, propertyPrefix + POPUP));
     
     putValue(SHORT_DESCRIPTION, 
-        getOptionalString(resource, propertyPrefix + SHORT_DESCRIPTION));
+        getOptionalString(preferences, resourceClass, propertyPrefix + SHORT_DESCRIPTION));
     putValue(LONG_DESCRIPTION, 
-        getOptionalString(resource, propertyPrefix + LONG_DESCRIPTION));
+        getOptionalString(preferences, resourceClass, propertyPrefix + LONG_DESCRIPTION));
     
-    String smallIcon = getOptionalString(resource, propertyPrefix + SMALL_ICON);
+    String smallIcon = getOptionalString(preferences, resourceClass, propertyPrefix + SMALL_ICON);
     if (smallIcon != null) {
       putValue(SMALL_ICON, new ImageIcon(getClass().getResource(smallIcon)));
     }
 
     String propertyKey = propertyPrefix + ACCELERATOR_KEY;
     // Search first if there's a key for this OS
-    String acceleratorKey = getOptionalString(resource, 
-        propertyKey + "." + System.getProperty("os.name"));
+    String acceleratorKey = getOptionalString(preferences, 
+        resourceClass, propertyKey + "." + System.getProperty("os.name"));
     if (acceleratorKey == null) {
       // Then search default value
-      acceleratorKey = getOptionalString(resource, propertyKey);
+      acceleratorKey = getOptionalString(preferences, resourceClass, propertyKey);
     }
     if (acceleratorKey !=  null) {
       putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(acceleratorKey));
     }
     
-    String mnemonicKey = getOptionalString(resource, propertyPrefix + MNEMONIC_KEY);
+    String mnemonicKey = getOptionalString(preferences, resourceClass, propertyPrefix + MNEMONIC_KEY);
     if (mnemonicKey != null) {
       putValue(MNEMONIC_KEY, Integer.valueOf(KeyStroke.getKeyStroke(mnemonicKey).getKeyCode()));
     }
@@ -113,10 +145,12 @@ public class ResourceAction extends AbstractAction {
    * Returns the value of <code>propertyKey</code> in <code>resource</code>, 
    * or <code>null</code> if the property doesn't exist.
    */
-  private String getOptionalString(ResourceBundle resource, String propertyKey) {
+  private String getOptionalString(UserPreferences preferences, 
+                                   Class<?> resourceClass, 
+                                   String propertyKey) {
     try {
-      return resource.getString(propertyKey);
-    } catch (MissingResourceException ex) {
+      return preferences.getLocalizedString(resourceClass, propertyKey);
+    } catch (IllegalArgumentException ex) {
       return null;
     }
   }
@@ -184,6 +218,10 @@ public class ResourceAction extends AbstractAction {
     public final void setEnabled(boolean enabled) {
       this.action.setEnabled(enabled);
     }
+    
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+      this.propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
   }
   
   /**
@@ -212,6 +250,16 @@ public class ResourceAction extends AbstractAction {
   public static class PopupMenuItemAction extends MenuItemAction {
     public PopupMenuItemAction(Action action) {
       super(action);
+      // Add a listener on POPUP value changes because the value of the 
+      // POPUP key replaces the one matching NAME if it exists       
+      addPropertyChangeListener(new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            if (POPUP.equals(ev.getPropertyName())
+                && (ev.getOldValue() != null || ev.getNewValue() != null)) {
+              firePropertyChange(NAME, ev.getOldValue(), ev.getNewValue());
+            }
+          }
+        });
     }
 
     public Object getValue(String key) {

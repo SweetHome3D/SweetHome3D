@@ -23,7 +23,6 @@ import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ResourceBundle;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -33,6 +32,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -42,6 +42,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  * @author Emmanuel Puybaret
  */
 public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
+  private final UserPreferences        preferences;
   private final ThreadedTaskController controller;
   private JLabel                 taskLabel;
   private JProgressBar           taskProgressBar;
@@ -49,8 +50,10 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
   private boolean                taskRunning;
 
   public ThreadedTaskPanel(String taskMessage, 
-                          ThreadedTaskController controller) {
+                           UserPreferences preferences, 
+                           ThreadedTaskController controller) {
     super(new BorderLayout(5, 5));
+    this.preferences = preferences;
     this.controller = controller;
     createComponents(taskMessage);
     layoutComponents();
@@ -88,9 +91,10 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
   public void setTaskRunning(boolean taskRunning, View executingView) {
     this.taskRunning = taskRunning;
     if (taskRunning && this.dialog == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(ThreadedTaskPanel.class.getName());
-      String dialogTitle = resource.getString("threadedTask.title");
-      final JButton cancelButton = new JButton(resource.getString("cancelButton.text"));
+      String dialogTitle = this.preferences.getLocalizedString(
+          ThreadedTaskPanel.class, "threadedTask.title");
+      final JButton cancelButton = new JButton(this.preferences.getLocalizedString(
+          ThreadedTaskPanel.class, "cancelButton.text"));
       
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
           JOptionPane.DEFAULT_OPTION, null, new Object [] {cancelButton});

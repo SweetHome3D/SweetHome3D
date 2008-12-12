@@ -23,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -96,9 +95,9 @@ public class RoomController implements Controller {
   public TextureChoiceController getFloorTextureController() {
     // Create sub controller lazily only once it's needed
     if (this.floorTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(RoomController.class.getName());
       this.floorTextureController = new TextureChoiceController(
-          resource.getString("floorTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(RoomController.class, "floorTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.floorTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -115,9 +114,9 @@ public class RoomController implements Controller {
   public TextureChoiceController getCeilingTextureController() {
     // Create sub controller lazily only once it's needed
     if (this.ceilingTextureController == null) {
-      ResourceBundle resource = ResourceBundle.getBundle(RoomController.class.getName());
       this.ceilingTextureController = new TextureChoiceController(
-          resource.getString("ceilingTextureTitle"), this.preferences, this.viewFactory, this.contentManager);
+          this.preferences.getLocalizedString(RoomController.class, "ceilingTextureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
       this.ceilingTextureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
@@ -461,7 +460,8 @@ public class RoomController implements Controller {
           floorVisible, floorColor, floorTexture, 
           ceilingVisible, ceilingColor, ceilingTexture);       
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new RoomsModificationUndoableEdit(this.home, oldSelection,
+        UndoableEdit undoableEdit = new RoomsModificationUndoableEdit(
+            this.home, this.preferences, oldSelection,
             modifiedRooms, name, areaVisible, floorColor,
             floorTexture, floorVisible, ceilingColor, ceilingTexture,
             ceilingVisible);
@@ -476,6 +476,7 @@ public class RoomController implements Controller {
    */
   private static class RoomsModificationUndoableEdit extends AbstractUndoableEdit {
     private final Home             home;
+    private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
     private final ModifiedRoom []  modifiedRooms;
     private final String           name;
@@ -488,6 +489,7 @@ public class RoomController implements Controller {
     private final Boolean          ceilingVisible;
 
     private RoomsModificationUndoableEdit(Home home,
+                                          UserPreferences preferences,
                                           List<Selectable> oldSelection,
                                           ModifiedRoom [] modifiedRooms,
                                           String name,
@@ -499,6 +501,7 @@ public class RoomController implements Controller {
                                           HomeTexture ceilingTexture,
                                           Boolean ceilingVisible) {
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedRooms = modifiedRooms;
       this.name = name;
@@ -529,8 +532,7 @@ public class RoomController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(RoomController.class.getName()).
-          getString("undoModifyRoomsName");
+      return this.preferences.getLocalizedString(RoomController.class, "undoModifyRoomsName");
     }
   }
 

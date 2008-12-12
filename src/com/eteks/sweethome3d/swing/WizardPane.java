@@ -33,7 +33,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -47,6 +46,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.BevelBorder;
 
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -57,8 +57,8 @@ import com.eteks.sweethome3d.viewcontroller.WizardController;
  * @author Emmanuel Puybaret
  */
 public class WizardPane extends JOptionPane implements DialogView {
+  private final UserPreferences  preferences;
   private final WizardController controller;
-  private ResourceBundle   resource;
   private JButton          backOptionButton;
   private JButton          nextFinishOptionButton;
   private String           defaultTitle;
@@ -67,16 +67,17 @@ public class WizardPane extends JOptionPane implements DialogView {
   /**
    * Creates a wizard view controlled by <code>controller</code>.
    */
-  public WizardPane(final WizardController controller) {
+  public WizardPane(UserPreferences preferences,
+                    final WizardController controller) {
+    this.preferences = preferences;
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(WizardPane.class.getName());
-    this.defaultTitle = resource.getString("wizard.title");
+    this.defaultTitle = preferences.getLocalizedString(WizardPane.class, "wizard.title");
     
     setMessage(new JPanel(new BorderLayout(10, 0)));
     
-    createOptionButtons(controller);    
+    createOptionButtons(preferences, controller);    
     setOptionType(DEFAULT_OPTION);
-    String cancelOption = resource.getString("cancelOption");
+    String cancelOption = preferences.getLocalizedString(WizardPane.class, "cancelOption");
     // Make backOptionButton appear at left of nextFinishOptionButton
     if (UIManager.getBoolean("OptionPane.isYesLast")
         || OperatingSystem.isMacOSX()) {
@@ -102,10 +103,12 @@ public class WizardPane extends JOptionPane implements DialogView {
             updateStepIcon(controller);
           }
         });
- }
+  }
 
-  private void createOptionButtons(final WizardController controller) {
-    this.backOptionButton = new JButton(resource.getString("backOptionButton.text"));
+  private void createOptionButtons(UserPreferences preferences, 
+                                   final WizardController controller) {
+    this.backOptionButton = new JButton(preferences.getLocalizedString(
+        WizardPane.class, "backOptionButton.text"));
     this.backOptionButton.setEnabled(controller.isBackStepEnabled());
     controller.addPropertyChangeListener(WizardController.Property.BACK_STEP_ENABLED, 
         new PropertyChangeListener() {
@@ -115,7 +118,8 @@ public class WizardPane extends JOptionPane implements DialogView {
         });
     if (!OperatingSystem.isMacOSX()) {
       this.backOptionButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("backOptionButton.mnemonic")).getKeyCode());
+          KeyStroke.getKeyStroke(preferences.getLocalizedString(
+              WizardPane.class, "backOptionButton.mnemonic")).getKeyCode());
     }
 
     this.nextFinishOptionButton = new JButton();
@@ -162,14 +166,16 @@ public class WizardPane extends JOptionPane implements DialogView {
    * Sets whether this wizard view is displaying the last step or not.
    */
   private void updateNextFinishOptionButton(WizardController controller) {
-    this.nextFinishOptionButton.setText(resource.getString(controller.isLastStep() 
-        ? "finishOptionButton.text" 
-        : "nextOptionButton.text"));
+    this.nextFinishOptionButton.setText(this.preferences.getLocalizedString(WizardPane.class, 
+        controller.isLastStep() 
+            ? "finishOptionButton.text" 
+            : "nextOptionButton.text"));
     if (!OperatingSystem.isMacOSX()) {
-      this.nextFinishOptionButton.setMnemonic(KeyStroke.getKeyStroke(this.resource.getString(
-          controller.isLastStep() 
-              ? "finishOptionButton.mnemonic" 
-              : "nextOptionButton.mnemonic")).getKeyCode());
+      this.nextFinishOptionButton.setMnemonic(KeyStroke.getKeyStroke(
+          this.preferences.getLocalizedString(WizardPane.class, 
+              controller.isLastStep() 
+                  ? "finishOptionButton.mnemonic" 
+                  : "nextOptionButton.mnemonic")).getKeyCode());
     }
   }
   

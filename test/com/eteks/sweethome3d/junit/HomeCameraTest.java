@@ -24,7 +24,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -252,7 +251,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         3.2156f, 0.2339f, home.getCamera());
     
     // 11. Edit 3D view modal dialog box
-    JDialog attributesDialog = showHome3DAttributesPanel(controller, frame, tester);
+    JDialog attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
     // Retrieve Home3DAttributesPanel components
     Home3DAttributesPanel panel = (Home3DAttributesPanel)TestUtilities.findComponent(
         attributesDialog, Home3DAttributesPanel.class);
@@ -318,7 +317,7 @@ public class HomeCameraTest extends ComponentTestFixture {
         0xFFFFFF, null, 0x000000, 0x808080, 1 / 255f * 128f, home);
     
     // 14. Edit 3D view modal dialog box to change ground texture
-    attributesDialog = showHome3DAttributesPanel(controller, frame, tester);
+    attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
     panel = (Home3DAttributesPanel)TestUtilities.findComponent(
         attributesDialog, Home3DAttributesPanel.class);
     panelController = (Home3DAttributesController)TestUtilities.getField(panel, "controller");
@@ -342,8 +341,8 @@ public class HomeCameraTest extends ComponentTestFixture {
         }
       });
     // Wait for 3D view to be shown
-    String groundTextureTitle = ResourceBundle.getBundle(
-        Home3DAttributesController.class.getName()).getString("groundTextureTitle");
+    String groundTextureTitle = preferences.getLocalizedString(
+        Home3DAttributesController.class, "groundTextureTitle");
     tester.waitForFrameShowing(new AWTHierarchy(), groundTextureTitle);
     // Check texture dialog box is displayed
     JDialog textureDialog = (JDialog)new BasicFinder().find(attributesDialog, 
@@ -376,7 +375,8 @@ public class HomeCameraTest extends ComponentTestFixture {
   /**
    * Returns the dialog that displays home 3D attributes. 
    */
-  private JDialog showHome3DAttributesPanel(final HomeController controller, 
+  private JDialog showHome3DAttributesPanel(UserPreferences preferences,
+                                            final HomeController controller, 
                                             JFrame parent, JComponentTester tester) 
             throws ComponentSearchException {
     tester.invokeLater(new Runnable() { 
@@ -386,8 +386,8 @@ public class HomeCameraTest extends ComponentTestFixture {
         }
       });
     // Wait for 3D view to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        Home3DAttributesPanel.class.getName()).getString("home3DAttributes.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        Home3DAttributesPanel.class, "home3DAttributes.title"));
     // Check dialog box is displayed
     JDialog attributesDialog = (JDialog)new BasicFinder().find(parent, 
         new ClassMatcher (JDialog.class, true));

@@ -150,7 +150,8 @@ public class WallPanelTest extends TestCase {
     wall1.setRightSideColor(0xFFFF00);
     home.setSelectedItems(Arrays.asList(new Wall [] {wall1}));
     
-    new WallController(home, new DefaultUserPreferences(), 
-          new SwingViewFactory(), new FileContentManager(), null).displayView(null);
+    DefaultUserPreferences preferences = new DefaultUserPreferences();
+    new WallController(home, preferences, 
+          new SwingViewFactory(), new FileContentManager(preferences), null).displayView(null);
   }
 }

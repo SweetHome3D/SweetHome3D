@@ -35,7 +35,6 @@ import java.awt.print.Paper;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ResourceBundle;
 
 import javax.swing.ActionMap;
 import javax.swing.ButtonGroup;
@@ -72,7 +71,6 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private static final int DEFAULT_SCALE = 10;
   
   private final PageSetupController controller;
-  private ResourceBundle      resource;
   private PageFormat          pageFormat;
   private JButton             pageFormatButton;
   private JCheckBox           furniturePrintedCheckBox;
@@ -86,7 +84,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
   private JLabel              footerFormatLabel;
   private JTextField          footerFormatTextField;
   private JLabel              variablesLabel;
-  private JToolBar            variableButtonsToolBar;  
+  private JToolBar            variableButtonsToolBar;
+  private String              dialogTitle;
 
   /**
    * Creates a panel that displays page setup.
@@ -96,23 +95,21 @@ public class PageSetupPanel extends JPanel implements DialogView {
                         PageSetupController controller) {
     super(new GridBagLayout());
     this.controller = controller;
-    this.resource = ResourceBundle.getBundle(
-        PageSetupPanel.class.getName());
-    createActions();
+    createActions(preferences);
     createComponents(preferences, controller);
-    setMnemonics();
+    setMnemonics(preferences);
     layoutComponents();
   }
 
   /**
    * Creates actions for variables.
    */
-  private void createActions() {
+  private void createActions(UserPreferences preferences) {
     ActionMap actions = getActionMap();
     for (final HomePrintableComponent.Variable variable : 
                       HomePrintableComponent.Variable.values()) {
       actions.put(variable, 
-          new ResourceAction(this.resource, "INSERT_" + variable.name()) {
+          new ResourceAction(preferences, PageSetupPanel.class, "INSERT_" + variable.name()) {
             @Override
             public void actionPerformed(ActionEvent ev) {
               insertVariable(variable.getUserCode());
@@ -146,7 +143,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
       }
     };
 
-    this.pageFormatButton = new JButton(this.resource.getString("pageFormatButton.text"));
+    this.pageFormatButton = new JButton(preferences.getLocalizedString(
+        PageSetupPanel.class, "pageFormatButton.text"));
     this.pageFormatButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
           // Show the page setup dialog
@@ -155,23 +153,23 @@ public class PageSetupPanel extends JPanel implements DialogView {
           updateController(controller);
         }
       });
-    this.furniturePrintedCheckBox = new JCheckBox(
-        this.resource.getString("furniturePrintedCheckBox.text"));
+    this.furniturePrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+        PageSetupPanel.class, "furniturePrintedCheckBox.text"));
     ItemListener itemListener = new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           updateController(controller);
         }
       };
     this.furniturePrintedCheckBox.addItemListener(itemListener);
-    this.planPrintedCheckBox = new JCheckBox(
-        this.resource.getString("planPrintedCheckBox.text")); 
+    this.planPrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+        PageSetupPanel.class, "planPrintedCheckBox.text")); 
     this.planPrintedCheckBox.addItemListener(itemListener);
 
     // Create scale radio buttons and user's scale spinner
-    this.bestFitPlanScaleRadioButton = new JRadioButton(
-        this.resource.getString("bestFitPlanScaleRadioButton.text"));
-    this.userPlanScaleRadioButton = new JRadioButton(
-        this.resource.getString("userPlanScaleRadioButton.text"));
+    this.bestFitPlanScaleRadioButton = new JRadioButton(preferences.getLocalizedString(
+        PageSetupPanel.class, "bestFitPlanScaleRadioButton.text"));
+    this.userPlanScaleRadioButton = new JRadioButton(preferences.getLocalizedString(
+        PageSetupPanel.class, "userPlanScaleRadioButton.text"));
     ButtonGroup scaleButtonsGroup = new ButtonGroup();
     scaleButtonsGroup.add(this.bestFitPlanScaleRadioButton);
     scaleButtonsGroup.add(this.userPlanScaleRadioButton);
@@ -199,11 +197,12 @@ public class PageSetupPanel extends JPanel implements DialogView {
         }
       });    
 
-    this.view3DPrintedCheckBox = new JCheckBox(
-        this.resource.getString("view3DPrintedCheckBox.text")); 
+    this.view3DPrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+        PageSetupPanel.class, "view3DPrintedCheckBox.text")); 
     this.view3DPrintedCheckBox.addItemListener(itemListener);
 
-    this.headerFormatLabel = new JLabel(this.resource.getString("headerFormatLabel.text"));
+    this.headerFormatLabel = new JLabel(preferences.getLocalizedString(
+        PageSetupPanel.class, "headerFormatLabel.text"));
     this.headerFormatTextField = new JTextField(20);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.headerFormatTextField);
@@ -241,7 +240,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
       };
     this.headerFormatTextField.addFocusListener(textFieldFocusListener);
     
-    this.footerFormatLabel = new JLabel(this.resource.getString("footerFormatLabel.text"));
+    this.footerFormatLabel = new JLabel(preferences.getLocalizedString(
+        PageSetupPanel.class, "footerFormatLabel.text"));
     this.footerFormatTextField = new JTextField(20);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.footerFormatTextField);
@@ -250,7 +250,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.footerFormatTextField.addFocusListener(textFieldFocusListener);
 
     // Create variables buttons tool bar
-    this.variablesLabel = new JLabel(this.resource.getString("variablesLabel.text"));
+    this.variablesLabel = new JLabel(preferences.getLocalizedString(
+        PageSetupPanel.class, "variablesLabel.text"));
     this.variableButtonsToolBar = new JToolBar();
     this.variableButtonsToolBar.setFloatable(false);
     ActionMap actions = getActionMap();
@@ -269,6 +270,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
     
     controller.addPropertyChangeListener(PageSetupController.Property.PRINT, printChangeListener);
     updateComponents(controller.getPrint());    
+
+    this.dialogTitle = preferences.getLocalizedString(PageSetupPanel.class, "pageSetup.title");
   }
   
   /**
@@ -349,25 +352,25 @@ public class PageSetupPanel extends JPanel implements DialogView {
   /**
    * Sets components mnemonics and label / component associations.
    */
-  private void setMnemonics() {
+  private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.pageFormatButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("pageFormatButton.mnemonic")).getKeyCode());
-      this.furniturePrintedCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("furniturePrintedCheckBox.mnemonic")).getKeyCode());
-      this.planPrintedCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("planPrintedCheckBox.mnemonic")).getKeyCode());
-      this.view3DPrintedCheckBox.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("view3DPrintedCheckBox.mnemonic")).getKeyCode());
-      this.bestFitPlanScaleRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("bestFitPlanScaleRadioButton.mnemonic")).getKeyCode());
-      this.userPlanScaleRadioButton.setMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("userPlanScaleRadioButton.mnemonic")).getKeyCode());
-      this.headerFormatLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("headerFormatLabel.mnemonic")).getKeyCode());
+      this.pageFormatButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "pageFormatButton.mnemonic")).getKeyCode());
+      this.furniturePrintedCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "furniturePrintedCheckBox.mnemonic")).getKeyCode());
+      this.planPrintedCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "planPrintedCheckBox.mnemonic")).getKeyCode());
+      this.view3DPrintedCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "view3DPrintedCheckBox.mnemonic")).getKeyCode());
+      this.bestFitPlanScaleRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "bestFitPlanScaleRadioButton.mnemonic")).getKeyCode());
+      this.userPlanScaleRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "userPlanScaleRadioButton.mnemonic")).getKeyCode());
+      this.headerFormatLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "headerFormatLabel.mnemonic")).getKeyCode());
       this.headerFormatLabel.setLabelFor(this.headerFormatTextField);
-      this.footerFormatLabel.setDisplayedMnemonic(
-          KeyStroke.getKeyStroke(this.resource.getString("footerFormatLabel.mnemonic")).getKeyCode());
+      this.footerFormatLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PageSetupPanel.class, "footerFormatLabel.mnemonic")).getKeyCode());
       this.footerFormatLabel.setLabelFor(this.footerFormatTextField);
     }
   }
@@ -441,9 +444,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
    * Displays this panel in a modal dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("pageSetup.title");
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
-            this, dialogTitle, this.pageFormatButton) == JOptionPane.OK_OPTION
+            this, this.dialogTitle, this.pageFormatButton) == JOptionPane.OK_OPTION
         && this.controller != null) {
           this.controller.modifyPageSetup();
     }

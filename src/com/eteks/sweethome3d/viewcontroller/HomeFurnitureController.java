@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -533,7 +532,7 @@ public class HomeFurnitureController implements Controller {
           name, nameVisible, x, y, width, depth, height, elevation, angle, color, visible, modelMirrored); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
-            this.home, oldSelection, modifiedFurniture, 
+            this.home, this.preferences, oldSelection, modifiedFurniture, 
             name, nameVisible, x, y, width, depth, height, 
             elevation, angle, color, modelMirrored, visible);
         this.undoSupport.postEdit(undoableEdit);
@@ -547,6 +546,7 @@ public class HomeFurnitureController implements Controller {
    */
   private static class FurnitureModificationUndoableEdit extends AbstractUndoableEdit {
     private final Home                        home;
+    private final UserPreferences             preferences;
     private final ModifiedPieceOfFurniture [] modifiedFurniture;
     private final List<Selectable>            oldSelection;
     private final String                      name;
@@ -563,6 +563,7 @@ public class HomeFurnitureController implements Controller {
     private final Boolean                     visible;
 
     private FurnitureModificationUndoableEdit(Home home,
+                                              UserPreferences preferences, 
                                               List<Selectable> oldSelection,
                                               ModifiedPieceOfFurniture [] modifiedFurniture,
                                               String name, Boolean nameVisible, 
@@ -573,6 +574,7 @@ public class HomeFurnitureController implements Controller {
                                               Boolean modelMirrored,
                                               Boolean visible) {
       this.home = home;
+      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedFurniture = modifiedFurniture;
       this.name = name;
@@ -607,8 +609,8 @@ public class HomeFurnitureController implements Controller {
 
     @Override
     public String getPresentationName() {
-      return ResourceBundle.getBundle(HomeFurnitureController.class.getName()).
-          getString("undoModifyFurnitureName");
+      return this.preferences.getLocalizedString(HomeFurnitureController.class, 
+          "undoModifyFurnitureName");
     }
   }
 

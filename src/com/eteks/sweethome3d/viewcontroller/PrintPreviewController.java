@@ -20,24 +20,28 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * A MVC controller for home print preview view.
  * @author Emmanuel Puybaret
  */
 public class PrintPreviewController implements Controller {
-  private final Home           home;
-  private final HomeController homeController;
-  private final ViewFactory    viewFactory;
-  private DialogView           printPreviewView;
+  private final Home            home;
+  private final UserPreferences preferences;
+  private final HomeController  homeController;
+  private final ViewFactory     viewFactory;
+  private DialogView            printPreviewView;
 
   /**
    * Creates the controller of print preview with undo support.
    */
   public PrintPreviewController(Home home,
+                                UserPreferences preferences,
                                 HomeController homeController,
                                 ViewFactory viewFactory) {
     this.home = home;
+    this.preferences = preferences;
     this.homeController = homeController;
     this.viewFactory = viewFactory;
   }
@@ -48,7 +52,8 @@ public class PrintPreviewController implements Controller {
   public DialogView getView() {
     // Create view lazily only once it's needed
     if (this.printPreviewView == null) {
-      this.printPreviewView = this.viewFactory.createPrintPreviewView(this.home, this.homeController, this);
+      this.printPreviewView = this.viewFactory.createPrintPreviewView(this.home, 
+          this.preferences, this.homeController, this);
     }
     return this.printPreviewView;
   }

@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.TreeMap;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -140,8 +139,7 @@ public class FurnitureController implements Controller {
         
         @Override
         public String getPresentationName() {
-          return ResourceBundle.getBundle(FurnitureController.class.getName()).
-              getString("undoAddFurnitureName");
+          return preferences.getLocalizedString(FurnitureController.class, "undoAddFurnitureName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -202,8 +200,7 @@ public class FurnitureController implements Controller {
         
         @Override
         public String getPresentationName() {
-          return ResourceBundle.getBundle(FurnitureController.class.getName()).
-              getString("undoDeleteSelectionName");
+          return preferences.getLocalizedString(FurnitureController.class, "undoDeleteSelectionName");
         }
       };
       this.undoSupport.postEdit(undoableEdit);
@@ -393,8 +390,7 @@ public class FurnitureController implements Controller {
           
           @Override
           public String getPresentationName() {
-            return ResourceBundle.getBundle(FurnitureController.class.getName()).
-                getString("undoAlignName");
+            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -452,8 +448,7 @@ public class FurnitureController implements Controller {
           
           @Override
           public String getPresentationName() {
-            return ResourceBundle.getBundle(FurnitureController.class.getName()).
-                getString("undoAlignName");
+            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -499,8 +494,7 @@ public class FurnitureController implements Controller {
           
           @Override
           public String getPresentationName() {
-            return ResourceBundle.getBundle(FurnitureController.class.getName()).
-                getString("undoAlignName");
+            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);
@@ -546,8 +540,7 @@ public class FurnitureController implements Controller {
           
           @Override
           public String getPresentationName() {
-            return ResourceBundle.getBundle(FurnitureController.class.getName()).
-                getString("undoAlignName");
+            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
           }
         };
         this.undoSupport.postEdit(undoableEdit);

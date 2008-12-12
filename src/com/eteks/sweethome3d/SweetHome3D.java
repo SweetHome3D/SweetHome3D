@@ -97,7 +97,7 @@ public class SweetHome3D extends HomeApplication {
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
     this.userPreferences = new FileUserPreferences();
-    this.contentManager = new FileContentManager();
+    this.contentManager = new FileContentManager(this.userPreferences);
     this.viewFactory = new SwingViewFactory();
     this.homeFrames = new HashMap<Home, JFrame>();    
   }
@@ -245,8 +245,8 @@ public class SweetHome3D extends HomeApplication {
     System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     if (OperatingSystem.isMacOSX()) {
       // Change Mac OS X application menu name
-      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-      String applicationName = resource.getString("applicationName");
+      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getPackage().getName() + "." + "package");
+      String applicationName = resource.getString("SweetHome3D.applicationName");
       System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
       // Use Mac OS X screen menu bar for frames menu bar
       System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -477,9 +477,8 @@ public class SweetHome3D extends HomeApplication {
    * Displays in a 3D error message.
    */
   private void show3DError() {
-    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-    String message = resource.getString("3DError.message");
-    String title = resource.getString("3DError.title");
+    String message = getUserPreferences().getLocalizedString(SweetHome3D.class, "3DError.message");
+    String title = getUserPreferences().getLocalizedString(SweetHome3D.class, "3DError.title");
     JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
         message, title, JOptionPane.ERROR_MESSAGE);
   }
@@ -490,11 +489,10 @@ public class SweetHome3D extends HomeApplication {
    * @return <code>true</code> if user confirmed to save.
    */
   private boolean confirmSaveAfter3DError() {
-    ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getName());
-    String message = resource.getString("confirmSaveAfter3DError.message");
-    String title = resource.getString("confirmSaveAfter3DError.title");
-    String save = resource.getString("confirmSaveAfter3DError.save");
-    String doNotSave = resource.getString("confirmSaveAfter3DError.doNotSave");
+    String message = getUserPreferences().getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.message");
+    String title = getUserPreferences().getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.title");
+    String save = getUserPreferences().getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.save");
+    String doNotSave = getUserPreferences().getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.doNotSave");
     
     return JOptionPane.showOptionDialog(
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title, 

@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -73,7 +72,7 @@ public class PrintTest extends ComponentTestFixture {
     ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
     final HomeController controller = 
-        new HomeController(home, preferences, viewFactory, new FileContentManager());
+        new HomeController(home, preferences, viewFactory, new FileContentManager(preferences));
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home Print Test");    
@@ -100,8 +99,8 @@ public class PrintTest extends ComponentTestFixture {
         }
       });
     // Wait for page setup to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        PageSetupPanel.class.getName()).getString("pageSetup.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        PageSetupPanel.class, "pageSetup.title"));
     // Check dialog box is displayed
     JDialog pageSetupDialog = (JDialog)TestUtilities.findComponent(
         frame, JDialog.class);
@@ -153,8 +152,8 @@ public class PrintTest extends ComponentTestFixture {
         }
       });
     // Wait for print preview to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        PrintPreviewPanel.class.getName()).getString("printPreview.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        PrintPreviewPanel.class, "printPreview.title"));
     // Check dialog box is displayed
     JDialog printPreviewDialog = (JDialog)new BasicFinder().find(frame, 
         new ClassMatcher (JDialog.class, true));
@@ -204,8 +203,8 @@ public class PrintTest extends ComponentTestFixture {
         }
       });
     // Wait for print to PDF file chooser to be shown
-    tester.waitForFrameShowing(new AWTHierarchy(), ResourceBundle.getBundle(
-        HomePane.class.getName()).getString("printToPDFDialog.title"));
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        HomePane.class, "printToPDFDialog.title"));
     // Check dialog box is displayed
     final Dialog printToPdfDialog = (Dialog)new BasicFinder().find(frame, 
         new ClassMatcher (Dialog.class, true));

@@ -35,7 +35,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ResourceBundle;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -106,7 +105,7 @@ public class AppletApplication extends HomeApplication {
         getURLs(applet.getCodeBase(), texturesCatalogURLs));
     
     final ViewFactory viewFactory = new SwingViewFactory();
-    final ContentManager contentManager = new AppletContentManager(this.homeRecorder);
+    final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
     final PluginManager  pluginManager  = new PluginManager(
         getURLs(applet.getCodeBase(), pluginURLs));
 
@@ -421,9 +420,8 @@ public class AppletApplication extends HomeApplication {
    * Displays a message to user about a 3D error. 
    */
   private void show3DError() {
-    ResourceBundle resource = ResourceBundle.getBundle(AppletApplication.class.getName());
-    String message = resource.getString("3DError.message");
-    String title = resource.getString("3DError.title");
+    String message = getUserPreferences().getLocalizedString(AppletApplication.class, "3DError.message");
+    String title = getUserPreferences().getLocalizedString(AppletApplication.class, "3DError.title");
     JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), 
         message, title, JOptionPane.ERROR_MESSAGE);
   }

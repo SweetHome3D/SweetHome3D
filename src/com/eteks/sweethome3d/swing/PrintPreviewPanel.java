@@ -29,7 +29,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -47,6 +46,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.AbstractBorder;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -60,7 +60,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class PrintPreviewPanel extends JPanel implements DialogView {
   private enum ActionType {SHOW_PREVIOUS_PAGE, SHOW_NEXT_PAGE}
 
-  private ResourceBundle         resource;
+  private final UserPreferences  preferences;
   private JToolBar               toolBar;
   private HomePrintableComponent printableComponent;
   private JLabel                 pageLabel;
@@ -68,15 +68,17 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   /**
    * Creates a panel that displays print preview.
    * @param home home previewed by this panel
+   * @param preferences the user preferences from which localized data is retrieved
    * @param homeController the controller of <code>home</code>
    * @param printPreviewController the controller of this panel
    */
   public PrintPreviewPanel(Home home,
+                           UserPreferences preferences, 
                            HomeController homeController,
                            PrintPreviewController printPreviewController) {
     super(new ProportionalLayout());
-    this.resource = ResourceBundle.getBundle(PrintPreviewPanel.class.getName());
-    createActions();
+    this.preferences = preferences;
+    createActions(preferences);
     installKeyboardActions();
     createComponents(home, homeController);
     layoutComponents();
@@ -86,10 +88,11 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   /**
    * Creates actions.  
    */
-  private void createActions() {
+  private void createActions(UserPreferences preferences) {
     // Show previous page action
     Action showPreviousPageAction = new ResourceAction(
-            this.resource, ActionType.SHOW_PREVIOUS_PAGE.name()) {
+          preferences, PrintPreviewPanel.class, ActionType.SHOW_PREVIOUS_PAGE.name()) {
+        @Override
         public void actionPerformed(ActionEvent e) {
           printableComponent.setPage(printableComponent.getPage() - 1);
           updateComponents();
@@ -97,7 +100,8 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
       };
     // Show next page action
     Action showNextPageAction = new ResourceAction(
-            this.resource, ActionType.SHOW_NEXT_PAGE.name()) {
+          preferences, PrintPreviewPanel.class, ActionType.SHOW_NEXT_PAGE.name()) {
+        @Override
         public void actionPerformed(ActionEvent e) {
           printableComponent.setPage(printableComponent.getPage() + 1);
           updateComponents();
@@ -216,7 +220,8 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
     actions.get(ActionType.SHOW_PREVIOUS_PAGE).setEnabled(this.printableComponent.getPage() > 0);
     actions.get(ActionType.SHOW_NEXT_PAGE).setEnabled(
         this.printableComponent.getPage() < this.printableComponent.getPageCount() - 1);
-    this.pageLabel.setText(String.format(this.resource.getString("pageLabel.text"), 
+    this.pageLabel.setText(preferences.getLocalizedString(
+        PrintPreviewPanel.class, "pageLabel.text", 
         this.printableComponent.getPage() + 1, this.printableComponent.getPageCount()));
   }
 
@@ -224,7 +229,8 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
    * Displays this panel in a modal resizable dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = resource.getString("printPreview.title");
+    String dialogTitle = preferences.getLocalizedString(
+        PrintPreviewPanel.class, "printPreview.title");
     JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
     JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    

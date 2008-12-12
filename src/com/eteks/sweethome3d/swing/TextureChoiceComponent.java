@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
@@ -86,11 +85,14 @@ import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
  * on this button a dialog appears to let him choose an other texture.
  */
 public class TextureChoiceComponent extends JButton implements TextureChoiceView {
+  private final UserPreferences preferences;
+
   /**
    * Creates a texture button.
    */
   public TextureChoiceComponent(final UserPreferences preferences,
                                 final TextureChoiceController controller) {
+    this.preferences = preferences;
     JLabel dummyLabel = new JLabel("Text");
     Dimension iconDimension = dummyLabel.getPreferredSize();
     final int iconHeight = iconDimension.height;
@@ -178,11 +180,14 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
    */
   public boolean confirmDeleteSelectedCatalogTexture() {
     // Retrieve displayed text in buttons and message
-    ResourceBundle resource = ResourceBundle.getBundle(TextureChoiceComponent.class.getName());
-    String message = resource.getString("confirmDeleteSelectedCatalogTexture.message");
-    String title = resource.getString("confirmDeleteSelectedCatalogTexture.title");
-    String delete = resource.getString("confirmDeleteSelectedCatalogTexture.delete");
-    String cancel = resource.getString("confirmDeleteSelectedCatalogTexture.cancel");
+    String message = this.preferences.getLocalizedString(
+        TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.message");
+    String title = this.preferences.getLocalizedString(
+        TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.title");
+    String delete = this.preferences.getLocalizedString(
+        TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.delete");
+    String cancel = this.preferences.getLocalizedString(
+        TextureChoiceComponent.class, "confirmDeleteSelectedCatalogTexture.cancel");
     
     return JOptionPane.showOptionDialog(
         KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title, 
@@ -197,7 +202,6 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     private static final int PREVIEW_ICON_HEIGHT = 64; 
     
     private TextureChoiceController controller;
-    private ResourceBundle          resource;
     
     private TextureImage            previewTexture;
     private JLabel                  chosenTextureLabel;
@@ -212,9 +216,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                         TextureChoiceController controller) {
       super(new GridBagLayout());
       this.controller = controller;
-      this.resource = ResourceBundle.getBundle(TextureChoiceComponent.class.getName());
       createComponents(preferences);
-      setMnemonics();
+      setMnemonics(preferences);
       layoutComponents();
     }
 
@@ -222,7 +225,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
      * Creates and initializes components.
      */
     private void createComponents(final UserPreferences preferences) {
-      this.availableTexturesLabel = new JLabel(this.resource.getString("availableTexturesLabel.text"));
+      this.availableTexturesLabel = new JLabel(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "availableTexturesLabel.text"));
       this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       this.availableTexturesList.setCellRenderer(new TextureListCellRenderer());
@@ -236,7 +240,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             }
           });
 
-      this.chosenTextureLabel = new JLabel(this.resource.getString("chosenTextureLabel.text"));
+      this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "chosenTextureLabel.text"));
       this.texturePreviewLabel = new JLabel();
       this.texturePreviewLabel.setBorder(BorderFactory.createLoweredBevelBorder());
       // Add to label a transfer handler to let user drag and drop a file on it 
@@ -261,20 +266,23 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           }
         });
       
-      this.importTextureButton = new JButton(this.resource.getString("importTextureButton.text"));
+      this.importTextureButton = new JButton(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "importTextureButton.text"));
       this.importTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             controller.importTexture();
           }
         });
-      this.modifyTextureButton = new JButton(this.resource.getString("modifyTextureButton.text"));
+      this.modifyTextureButton = new JButton(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "modifyTextureButton.text"));
       this.modifyTextureButton.setEnabled(false);
       this.modifyTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             controller.modifyTexture((CatalogTexture)availableTexturesList.getSelectedValue());
           }
         });    
-      this.deleteTextureButton = new JButton(this.resource.getString("deleteTextureButton.text"));
+      this.deleteTextureButton = new JButton(preferences.getLocalizedString(
+          TextureChoiceComponent.class, "deleteTextureButton.text"));
       this.deleteTextureButton.setEnabled(false);
       this.deleteTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
@@ -372,17 +380,17 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     /**
      * Sets components mnemonics and label / component associations.
      */
-    private void setMnemonics() {
+    private void setMnemonics(UserPreferences preferences) {
       if (!OperatingSystem.isMacOSX()) {
-        this.availableTexturesLabel.setDisplayedMnemonic(
-            KeyStroke.getKeyStroke(this.resource.getString("availableTexturesLabel.mnemonic")).getKeyCode());
+        this.availableTexturesLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "availableTexturesLabel.mnemonic")).getKeyCode());
         this.availableTexturesLabel.setLabelFor(this.availableTexturesList);
-        this.importTextureButton.setMnemonic(
-            KeyStroke.getKeyStroke(this.resource.getString("importTextureButton.mnemonic")).getKeyCode());
-        this.modifyTextureButton.setMnemonic(
-            KeyStroke.getKeyStroke(this.resource.getString("modifyTextureButton.mnemonic")).getKeyCode());
-        this.deleteTextureButton.setMnemonic(
-            KeyStroke.getKeyStroke(this.resource.getString("deleteTextureButton.mnemonic")).getKeyCode());
+        this.importTextureButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "importTextureButton.mnemonic")).getKeyCode());
+        this.modifyTextureButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "modifyTextureButton.mnemonic")).getKeyCode());
+        this.deleteTextureButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            TextureChoiceComponent.class, "deleteTextureButton.mnemonic")).getKeyCode());
       }
     }
     

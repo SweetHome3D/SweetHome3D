@@ -22,7 +22,8 @@ package com.eteks.sweethome3d.swing;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ResourceBundle;
+
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * An action which <code>actionPerformed</code> method 
@@ -37,7 +38,8 @@ public class ControllerAction extends ResourceAction {
   /**
    * Creates an action with properties retrieved from a resource bundle 
    * in which key starts with <code>actionPrefix</code>.
-   * @param resource     a resource bundle
+   * @param preferences   user preferences used to retrieve localized description of the action
+   * @param resourceClass the class used as a context to retrieve localized properties of the action
    * @param actionPrefix prefix used in resource bundle to search action properties
    * @param controller   the controller on which the method will be called
    * @param method       the name of the controller method that will be invoked
@@ -46,16 +48,18 @@ public class ControllerAction extends ResourceAction {
    * @throws NoSuchMethodException if <code>method</code> with a
    *           matching <code>parameters</code> list doesn't exist
    */
-  public ControllerAction(ResourceBundle resource, String actionPrefix, 
+  public ControllerAction(UserPreferences preferences, 
+                          Class<?> resourceClass, 
+                          String actionPrefix, 
                           Object controller, 
                           String method, 
                           Object ... parameters)
                      throws NoSuchMethodException {
-    super(resource, actionPrefix);
+    super(preferences, resourceClass, actionPrefix);
     this.controller = controller;
     this.parameters = parameters;
     // Get parameters class
-    Class [] parametersClass = new Class [parameters.length];
+    Class<?> [] parametersClass = new Class [parameters.length];
     for(int i = 0; i < parameters.length; i++)
       parametersClass [i] = parameters [i].getClass();
     
