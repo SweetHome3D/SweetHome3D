@@ -219,7 +219,7 @@ public class HomePane extends JRootPane implements HomeView {
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
-    JMenuBar homeMenuBar = createHomeMenuBar(home, preferences, controller);
+    JMenuBar homeMenuBar = createMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
     contentPane.add(createToolBar(home), BorderLayout.NORTH);
@@ -563,9 +563,9 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Returns the menu bar displayed in this pane.
    */
-  private JMenuBar createHomeMenuBar(final Home home, 
-                                     UserPreferences preferences,
-                                     final HomeController controller) {
+  private JMenuBar createMenuBar(final Home home, 
+                                 UserPreferences preferences,
+                                 final HomeController controller) {
     // Create File menu
     JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
     fileMenu.add(getMenuItemAction(ActionType.NEW_HOME));
@@ -1960,7 +1960,7 @@ public class HomePane extends JRootPane implements HomeView {
     OutputStream outputStream = null;
     try {
       outputStream = new FileOutputStream(pdfFile);
-      new HomePDFPrinter(this.home, this.controller, getFont())
+      new HomePDFPrinter(this.home, this.preferences, this.controller, getFont())
           .write(outputStream);
     } catch (InterruptedIOException ex) {
       throw new InterruptedRecorderException("Print interrupted");

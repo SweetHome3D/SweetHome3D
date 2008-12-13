@@ -90,7 +90,7 @@ public class SwingViewFactory implements ViewFactory {
    */
   public View createView3D(Home home, UserPreferences preferences,
                            HomeController3D homeController3D) {
-    return new HomeComponent3D(home, homeController3D);
+    return new HomeComponent3D(home, preferences, homeController3D);
   }
 
   /**

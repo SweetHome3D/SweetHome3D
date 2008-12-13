@@ -52,7 +52,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -110,6 +109,7 @@ import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.sun.j3d.utils.geometry.Box;
@@ -129,6 +129,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
   
   private final Home                               home;
+  private final UserPreferences                    preferences;
   private final Map<Selectable, ObjectBranch>      homeObjects = new HashMap<Selectable, ObjectBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
   private SimpleUniverse                           universe;
@@ -152,19 +153,34 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private BufferedImage                            printedImage;
 
   /**
-   * Creates a 3D component that displays <code>home</code> walls and furniture, 
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
    * with no controller.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *             by this component couldn't be created.
    */
   public HomeComponent3D(Home home) {
     this(home, null);  
   }
   
   /**
-   * Creates a 3D component that displays <code>home</code> walls and furniture.
-   * @throws IllegalRenderingStateException  if the canvas 3D displayed by this component couldn't be created.
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *             by this component couldn't be created.
    */
   public HomeComponent3D(Home home, HomeController3D controller) {
+    this(home, null, null);
+  }
+
+  /**
+   * Creates a 3D component that displays <code>home</code> walls, rooms  and furniture.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *            by this component couldn't be created.
+   */
+  public HomeComponent3D(Home home,
+                         UserPreferences  preferences,
+                         HomeController3D controller) {
     this.home = home;
+    this.preferences = preferences;
     
     // Create the Java 3D canvas that will display home 
     Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();    
@@ -880,9 +896,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    */
   public void exportToOBJ(String objName) throws RecorderException {
     try {
-      String headerFormat = ResourceBundle.getBundle(HomeComponent3D.class.getName()).
-          getString("exportToOBJ.header");      
-      OBJWriter writer = new OBJWriter(objName, String.format(headerFormat, new Date()), -1);
+      String header = this.preferences != null
+          ? this.preferences.getLocalizedString(HomeComponent3D.class, 
+                                                "exportToOBJ.header", new Date())
+          : "";      
+      OBJWriter writer = new OBJWriter(objName, header, -1);
 
       if (this.home.getWalls().size() > 0) {
         // Create a not alive new ground to be able to explore its coordinates without setting capabilities
