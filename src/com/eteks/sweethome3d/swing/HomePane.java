@@ -633,15 +633,20 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
-    JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(false);
+    JRadioButtonMenuItem selectRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.selectToggleModel, ActionType.SELECT, false);
     planMenu.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createWallsToggleModel, ActionType.CREATE_WALLS, false);
     planMenu.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = createCreateRoomsRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, ActionType.CREATE_ROOMS, false);
     planMenu.add(createRoomsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, ActionType.CREATE_DIMENSION_LINES, false);
     planMenu.add(createDimensionLinesRadioButtonMenuItem);
-    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = createCreateLabelsRadioButtonMenuItem(false);
+    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createLabelsToggleModel, ActionType.CREATE_LABELS, false);
     planMenu.add(createLabelsRadioButtonMenuItem);
     // Add Select, Create Walls and Create dimensions menu items to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -656,7 +661,7 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.add(getMenuItemAction(ActionType.SPLIT_WALL));
     planMenu.add(getMenuItemAction(ActionType.MODIFY_ROOM));
     planMenu.add(getMenuItemAction(ActionType.MODIFY_LABEL));
-    planMenu.add(createTextStyleMenu(home, preferences));
+    planMenu.add(createTextStyleMenu(home, preferences, false));
     planMenu.addSeparator();
     planMenu.add(createImportModifyBackgroundImageMenuItem(home));
     planMenu.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
@@ -666,9 +671,11 @@ public class HomePane extends JRootPane implements HomeView {
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = createViewFromTopRadioButtonMenuItem(false);
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, ActionType.VIEW_FROM_TOP, false);
     preview3DMenu.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = createViewFromObserverRadioButtonMenuItem(false);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, ActionType.VIEW_FROM_OBSERVER, false);
     preview3DMenu.add(viewFromObserverRadioButtonMenuItem);
     // Add View from top and View from observer menu items to radio group  
     group = new ButtonGroup();
@@ -886,17 +893,24 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns text style menu.
    */
   private JMenu createTextStyleMenu(final Home home,
-                                    final UserPreferences preferences) {
+                                    final UserPreferences preferences,
+                                    boolean popup) {
     JMenu modifyTextStyleMenu = new JMenu(
         this.menuActionMap.get(MenuActionType.MODIFY_TEXT_STYLE));
     
-    modifyTextStyleMenu.add(getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
-    modifyTextStyleMenu.add(getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
+    modifyTextStyleMenu.add(popup
+        ? getPopupMenuItemAction(ActionType.INCREASE_TEXT_SIZE)
+        : getMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
+    modifyTextStyleMenu.add(popup 
+        ? getPopupMenuItemAction(ActionType.DECREASE_TEXT_SIZE)
+        : getMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
     modifyTextStyleMenu.addSeparator();
     JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
     boldMenuItem.setModel(this.boldStyleToggleModel); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    boldMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
+    boldMenuItem.setAction(popup
+        ? getPopupMenuItemAction(ActionType.TOGGLE_BOLD_STYLE)
+        : getMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
     modifyTextStyleMenu.add(boldMenuItem);
     
     JCheckBoxMenuItem italicMenuItem = new JCheckBoxMenuItem();
@@ -904,7 +918,9 @@ public class HomePane extends JRootPane implements HomeView {
     // texts in home selected items are all italic 
     italicMenuItem.setModel(this.italicStyleToggleModel); 
     // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    italicMenuItem.setAction(getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
+    italicMenuItem.setAction(popup 
+        ? getPopupMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE)
+        : getMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
     modifyTextStyleMenu.add(italicMenuItem);
     return modifyTextStyleMenu;
   }
@@ -1087,61 +1103,8 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Returns a radio button menu item for Select action. 
+   * Returns a new radio menu item with the given <code>model</code>.
    */
-  private JRadioButtonMenuItem getSelectRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.selectToggleModel, 
-        ActionType.SELECT, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for Create walls action. 
-   */
-  private JRadioButtonMenuItem createCreateWallsRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.createWallsToggleModel, 
-        ActionType.CREATE_WALLS, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for Create rooms action. 
-   */
-  private JRadioButtonMenuItem createCreateRoomsRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, 
-        ActionType.CREATE_ROOMS, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for Create dimensions action. 
-   */
-  private JRadioButtonMenuItem createCreateDimensionLinesRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, 
-        ActionType.CREATE_DIMENSION_LINES, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for Create labels action. 
-   */
-  private JRadioButtonMenuItem createCreateLabelsRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.createLabelsToggleModel, 
-        ActionType.CREATE_LABELS, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for View from top action. 
-   */
-  private JRadioButtonMenuItem createViewFromTopRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, 
-        ActionType.VIEW_FROM_TOP, popup);
-  }
-  
-  /**
-   * Returns a radio button menu item for View from observer action. 
-   */
-  private JRadioButtonMenuItem createViewFromObserverRadioButtonMenuItem(boolean popup) {
-    return createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, 
-        ActionType.VIEW_FROM_OBSERVER, popup);
-  }
-  
   private JRadioButtonMenuItem createRadioButtonMenuItemFromModel(
                                    JToggleButton.ToggleButtonModel model,
                                    ActionType action,
@@ -1564,15 +1527,20 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.add(getPopupMenuItemAction(ActionType.DELETE));
     planViewPopup.add(getPopupMenuItemAction(ActionType.SELECT_ALL));
     planViewPopup.addSeparator();
-    JRadioButtonMenuItem selectRadioButtonMenuItem = getSelectRadioButtonMenuItem(true);
+    JRadioButtonMenuItem selectRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.selectToggleModel, ActionType.SELECT, true);
     planViewPopup.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = createCreateWallsRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createWallsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createWallsToggleModel, ActionType.CREATE_WALLS, true);
     planViewPopup.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = createCreateRoomsRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, ActionType.CREATE_ROOMS, true);
     planViewPopup.add(createRoomsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = createCreateDimensionLinesRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, ActionType.CREATE_DIMENSION_LINES, true);
     planViewPopup.add(createDimensionLinesRadioButtonMenuItem);
-    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = createCreateLabelsRadioButtonMenuItem(true);
+    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.createLabelsToggleModel, ActionType.CREATE_LABELS, true);
     planViewPopup.add(createLabelsRadioButtonMenuItem);
     // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -1588,7 +1556,7 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.add(getPopupMenuItemAction(ActionType.SPLIT_WALL));
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_ROOM));
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_LABEL));
-    planViewPopup.add(createTextStyleMenu(home, preferences));
+    planViewPopup.add(createTextStyleMenu(home, preferences, true));
     planViewPopup.addSeparator();
     planViewPopup.add(createImportModifyBackgroundImageMenuItem(home));
     planViewPopup.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
@@ -1604,9 +1572,11 @@ public class HomePane extends JRootPane implements HomeView {
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = createViewFromTopRadioButtonMenuItem(true);
+    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, ActionType.VIEW_FROM_TOP, true);
     view3DPopup.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = createViewFromObserverRadioButtonMenuItem(true);
+    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = 
+        createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, ActionType.VIEW_FROM_OBSERVER, true);
     view3DPopup.add(viewFromObserverRadioButtonMenuItem);
     // Add View from top and View from observer menu items to radio group 
     group = new ButtonGroup();
