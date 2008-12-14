@@ -38,7 +38,7 @@ import java.util.jar.JarFile;
 
 /**
  * Class loader able to load classes and DLLs with a higher priority from a given set of JARs. 
- * It's Java 1.1 compatible to be loadable by old JVMs.
+ * Its bytecode is Java 1.1 compatible to be loadable by old JVMs.
  * @author Emmanuel Puybaret
  */
 public class ExtensionsClassLoader extends ClassLoader {

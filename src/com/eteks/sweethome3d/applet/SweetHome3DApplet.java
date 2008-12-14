@@ -104,7 +104,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     URL of the home file or its URL relative to applet codebase in <code>defaultHome</code> 
  *     parameter.</li></ul>
  * 
- * <p>This class is Java 1.1 compatible and to be able to notify to users that 
+ * <p>The bytecode of this class is Java 1.1 compatible and to be able to notify to users that 
  * it requires Java 5 when it's run under an old JVM.
  *     
  * @author Emmanuel Puybaret
