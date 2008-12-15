@@ -149,10 +149,10 @@ public abstract class PluginAction {
     putPropertyValue(Property.SHORT_DESCRIPTION, 
         getOptionalString(resource, propertyPrefix + Property.SHORT_DESCRIPTION));
     String smallIcon = getOptionalString(resource, propertyPrefix + Property.SMALL_ICON);
-    if (smallIcon.startsWith("/")) {
-      smallIcon = smallIcon.substring(1);
-    }
     if (smallIcon != null) {
+      if (smallIcon.startsWith("/")) {
+        smallIcon = smallIcon.substring(1);
+      }
       putPropertyValue(Property.SMALL_ICON, 
           new ResourceURLContent(pluginClassLoader, smallIcon));
     }
