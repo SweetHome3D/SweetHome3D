@@ -411,6 +411,8 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.nameLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "nameLabel.mnemonic")).getKeyCode());
       this.nameLabel.setLabelFor(this.nameTextField);
+      this.nameVisibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          HomeFurniturePanel.class, "nameVisibleCheckBox.mnemonic")).getKeyCode());
       this.xLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "xLabel.mnemonic")).getKeyCode());
       this.xLabel.setLabelFor(this.xSpinner);
