@@ -303,8 +303,8 @@ public class PageSetupPanel extends JPanel implements DialogView {
     } else {
       this.furniturePrintedCheckBox.setSelected(true);
       this.planPrintedCheckBox.setSelected(true);
+      this.bestFitPlanScaleRadioButton.setEnabled(true);
       this.bestFitPlanScaleRadioButton.setSelected(true);
-      this.bestFitPlanScaleRadioButton.setEnabled(false);
       this.userPlanScaleRadioButton.setEnabled(true);
       this.userPlanScaleSpinner.setEnabled(false);      
       this.view3DPrintedCheckBox.setSelected(offscreenCanvas3DSupported);
