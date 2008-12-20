@@ -28,7 +28,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
@@ -48,15 +48,14 @@ public class IconManager {
   private final Content                          errorIconContent;
   // Icon used while an image content is loaded
   private final Content                          waitIconContent;
-  // Executor used by IconProxy to load images
-  private final Executor                         iconsLoader;
   // Map storing loaded icons
   private final Map<Content, Map<Integer, Icon>> icons;
+  // Executor used by IconProxy to load images
+  private ExecutorService                        iconsLoader;
 
   private IconManager() {
     this.errorIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-missing.png");
     this.waitIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-loading.png");
-    this.iconsLoader = Executors.newFixedThreadPool(5);
     this.icons = new WeakHashMap<Content, Map<Integer, Icon>>();
   }
   
@@ -70,6 +69,18 @@ public class IconManager {
     return instance;
   }
 
+  /**
+   * Clears the loaded resources cache and shutdowns the multithreaded service 
+   * that load icons. 
+   */
+  public void clear() {
+    if (this.iconsLoader != null) {
+      this.iconsLoader.shutdownNow();
+      this.iconsLoader = null;
+    }
+    this.icons.clear();
+  }
+  
   /**
    * Returns an icon read from <code>content</code> and rescaled at a given <code>height</code>.
    * @param content an objet containing an image
@@ -135,7 +146,10 @@ public class IconManager {
     public IconProxy(final Content content, final int height,
                      final Component waitingComponent,
                      final Icon errorIcon, Icon waitIcon) {
-      this.icon = waitIcon; 
+      this.icon = waitIcon;
+      if (iconsLoader == null) {
+        iconsLoader = Executors.newFixedThreadPool(5);
+      }
       // Load the icon in a different thread
       iconsLoader.execute(new Runnable () {
           public void run() {

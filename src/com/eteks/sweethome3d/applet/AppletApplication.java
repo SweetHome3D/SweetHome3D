@@ -34,7 +34,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -64,9 +66,11 @@ import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.Component3DManager;
 import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.IconManager;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.swing.TextureManager;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
@@ -87,8 +91,9 @@ public class AppletApplication extends HomeApplication {
   private static final String LIST_HOMES_URL_PARAMETER         = "listHomesURL";
   private static final String DEFAULT_HOME_PARAMETER           = "defaultHome";
   
-  private final HomeRecorder         homeRecorder;
-  private final UserPreferences      userPreferences;
+  private final HomeRecorder              homeRecorder;
+  private final UserPreferences           userPreferences;
+  private final Map<Home, HomeController> homeControllers;
 
   public AppletApplication(final JApplet applet) {
     final String furnitureCatalogURLs = getAppletParameter(applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
@@ -103,6 +108,7 @@ public class AppletApplication extends HomeApplication {
     this.userPreferences = new AppletUserPreferences(
         getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
         getURLs(applet.getCodeBase(), texturesCatalogURLs));
+    this.homeControllers = new HashMap<Home, HomeController>();
     
     final ViewFactory viewFactory = new SwingViewFactory();
     final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
@@ -124,9 +130,9 @@ public class AppletApplication extends HomeApplication {
         private boolean firstHome = true;
         
         public void collectionChanged(CollectionEvent<Home> ev) {
+          Home home = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              Home home = ev.getItem();
               try {
                 // Create a home controller for new home
                 boolean newHomeEnabled = 
@@ -141,6 +147,7 @@ public class AppletApplication extends HomeApplication {
                 final HomeAppletController controller = new HomeAppletController(
                     home, AppletApplication.this, viewFactory, contentManager, pluginManager,
                     newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
+                homeControllers.put(home, controller);
                 
                 // Display its view in applet
                 updateAppletView(applet, controller);
@@ -156,6 +163,9 @@ public class AppletApplication extends HomeApplication {
                 show3DError();
               }
               break;
+            case DELETE :
+              homeControllers.remove(home);
+              break;
           }
         }
       });
@@ -168,6 +178,18 @@ public class AppletApplication extends HomeApplication {
           addHome(new Home());
         }
       });
+  }
+  
+  /**
+   * Closes open homes and clears all the resources used by this application.
+   * This method is called when an applet is destroyed.  
+   */
+  public void destroy() {
+    for (Home home : getHomes()) {
+      this.homeControllers.get(home).close();
+    }
+    IconManager.getInstance().clear();
+    TextureManager.getInstance().clear();
   }
   
   /**
@@ -202,7 +224,8 @@ public class AppletApplication extends HomeApplication {
   /**
    * Updates the applet content pane with <code>controller</code> view. 
    */
-  private void updateAppletView(final JApplet applet, final HomeController controller) {
+  private void updateAppletView(final JApplet applet, 
+                                final HomeController controller) {
     HomePane homeView = (HomePane)controller.getView();
     // Remove menu bar
     homeView.setJMenuBar(null);

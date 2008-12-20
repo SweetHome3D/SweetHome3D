@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
@@ -47,15 +47,14 @@ public class TextureManager {
   private final Texture               errorTexture;
   // Image used while an image content is loaded
   private final Texture               waitTexture;
-  // Executor used to load images
-  private final Executor              texturesLoader;
   // Map storing loaded images
   private final Map<Content, Texture> textures;
+  // Executor used to load images
+  private ExecutorService             texturesLoader;
 
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.texturesLoader = Executors.newSingleThreadExecutor();
     this.textures = new WeakHashMap<Content, Texture>();
   }
 
@@ -69,6 +68,17 @@ public class TextureManager {
     return instance;
   }
 
+  /**
+   * Shutdowns the multithreaded service that load textures. 
+   */
+  public void clear() {
+    if (this.texturesLoader != null) {
+      this.texturesLoader.shutdownNow();
+      this.texturesLoader = null;
+    }
+    this.textures.clear();
+  }
+  
   /**
    * Returns a texture image of one pixel of the given <code>color</code>. 
    */
@@ -95,6 +105,9 @@ public class TextureManager {
     if (texture == null) {
       // Notify wait texture to observer
       textureObserver.textureUpdated(waitTexture);
+      if (this.texturesLoader == null) {
+        this.texturesLoader = Executors.newSingleThreadExecutor();
+      }
       // Load the image in a different thread
       this.texturesLoader.execute(new Runnable () {
           public void run() {

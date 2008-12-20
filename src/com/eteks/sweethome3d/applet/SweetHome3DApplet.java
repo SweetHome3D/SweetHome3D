@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.applet;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -114,6 +115,8 @@ public class SweetHome3DApplet extends JApplet {
     initSystemProperties();
   }
   
+  private Object appletApplication;
+  
   /**
    * Sets various <code>System</code> properties required to be set before Applet is displayed.
    */
@@ -141,6 +144,20 @@ public class SweetHome3DApplet extends JApplet {
     }
   }
 
+  public void destroy() {
+    if (this.appletApplication != null) {
+      try {
+        Method destroyMethod = this.appletApplication.getClass().getMethod("destroy", new Class [0]);
+        destroyMethod.invoke(this.appletApplication, new Object [0]);
+      } catch (Exception ex) {
+        // Can't do better than print stack trace when applet is destroyed
+        ex.printStackTrace();
+      }
+    }
+    this.appletApplication = null;
+    System.gc();
+  }
+  
   /**
    * Returns <code>true</code> if current JVM version is 5+. 
    */
@@ -168,7 +185,7 @@ public class SweetHome3DApplet extends JApplet {
   }
   
   /**
-   * Creates an <code>AppletApplication</code> instance that manages this applet content.
+   * Creates a new <code>AppletApplication</code> instance that manages this applet content.
    */
   private void createAppletApplication() {
     try {
@@ -209,7 +226,7 @@ public class SweetHome3DApplet extends JApplet {
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
       Constructor applicationConstructor = 
           applicationClass.getConstructor(new Class [] {JApplet.class});
-      applicationConstructor.newInstance(new Object [] {this});
+      this.appletApplication = applicationConstructor.newInstance(new Object [] {this});
     } catch (Throwable ex) {
       if (ex instanceof InvocationTargetException) {
         ex = ((InvocationTargetException)ex).getCause();
