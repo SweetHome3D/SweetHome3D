@@ -933,7 +933,7 @@ public class OBJWriter extends FilterWriter {
    * An <code>Appearance</code> wrapper able to compare 
    * if two appearances are equal for MTL format.  
    */
-  public static class ComparableAppearance {
+  private static class ComparableAppearance {
     private Appearance appearance;
     
     public ComparableAppearance(Appearance appearance) {
