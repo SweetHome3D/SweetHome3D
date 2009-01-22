@@ -65,7 +65,11 @@ public class ModelManager {
    * <code>Shape3D</code> user data prefix for window pane shapes. 
    */
   public static final String WINDOW_PANE_SHAPE_PREFIX = "sweethome3d_window_pane";
-  
+  /**
+   * <code>Shape3D</code> user data prefix for mirror shapes. 
+   */
+  public static final String MIRROR_SHAPE_PREFIX = "sweethome3d_window_mirror";
+
   private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
   
