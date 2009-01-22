@@ -3,4 +3,4 @@ Please, read COPYING.TXT file for more details about GNU General Public License.
 
 
 This software includes also materials developed by third parties.
-Please, read the files named THIRDPARTY-LICENSE for more details about third parties materials licences.
+Please, read the files named THIRDPARTY-LICENSE for more details about third parties materials licenses.
