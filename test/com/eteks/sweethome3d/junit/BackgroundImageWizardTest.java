@@ -23,7 +23,6 @@ import java.awt.KeyboardFocusManager;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.ResourceBundle;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -40,8 +39,8 @@ import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
-import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.BackgroundImageWizardStepsPanel;
 import com.eteks.sweethome3d.swing.HomePane;
