@@ -43,6 +43,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -56,6 +57,8 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -107,6 +110,11 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 
+import com.eteks.sweethome3d.j3d.Ground3D;
+import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
+import com.eteks.sweethome3d.j3d.OBJWriter;
+import com.eteks.sweethome3d.j3d.Room3D;
+import com.eteks.sweethome3d.j3d.Wall3D;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
@@ -120,6 +128,7 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.TextStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.plugin.Plugin;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -1990,12 +1999,88 @@ public class HomePane extends JRootPane implements HomeView {
    * Exports the objects of the 3D view to the given OBJ file.
    */
   public void exportToOBJ(String objFile) throws RecorderException {
-    View home3DView = this.controller.getHomeController3D().getView();
-    if (home3DView instanceof HomeComponent3D) {
-      ((HomeComponent3D)home3DView).exportToOBJ(objFile);
-    } else {
-      new HomeComponent3D(this.home).exportToOBJ(objFile);
+    try {
+      String header = this.preferences != null
+          ? this.preferences.getLocalizedString(HomePane.class, 
+                                                "exportToOBJ.header", new Date())
+          : "";      
+      OBJWriter writer = new OBJWriter(objFile, header, -1);
+
+      if (this.home.getWalls().size() > 0) {
+        // Create a not alive new ground to be able to explore its coordinates without setting capabilities
+        Rectangle2D homeBounds = getExportedHomeBounds();
+        Ground3D groundNode = new Ground3D(this.home, 
+            (float)homeBounds.getX(), (float)homeBounds.getY(), 
+            (float)homeBounds.getWidth(), (float)homeBounds.getHeight());
+        writer.writeNode(groundNode, "ground");
+      }
+      
+      // Write 3D walls 
+      int i = 0;
+      for (Wall wall : this.home.getWalls()) {
+        // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
+        Wall3D wallNode = new Wall3D(wall, this.home, true);
+        writer.writeNode(wallNode, "wall_" + ++i);
+      }
+      // Write 3D furniture 
+      i = 0;
+      for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+        if (piece.isVisible()) {
+          // Create a not alive new piece to be able to explore its coordinates without setting capabilities
+          HomePieceOfFurniture3D pieceNode = new HomePieceOfFurniture3D(piece, this.home, true, true);
+          writer.writeNode(pieceNode, "piece_" + ++i);
+        }
+      }
+      // Write 3D rooms 
+      i = 0;
+      for (Room room : this.home.getRooms()) {
+        // Create a not alive new room to be able to explore its coordinates without setting capabilities 
+        Room3D roomNode = new Room3D(room, this.home, false, true);
+        writer.writeNode(roomNode, "room_" + ++i);
+      }
+      writer.close();
+    } catch (InterruptedIOException ex) {
+      throw new InterruptedRecorderException("Export to " + objFile + " interrupted");
+    } catch (IOException ex) {
+      throw new RecorderException("Failed to export to " + objFile, ex);
+    } 
+  }
+  
+  /**
+   * Returns home bounds. 
+   */
+  private Rectangle2D getExportedHomeBounds() {
+    // Compute bounds that include walls and furniture
+    Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        for (float [] point : piece.getPoints()) {
+          if (homeBounds == null) {
+            homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            homeBounds.add(point [0], point [1]);
+          }
+        }
+      }
     }
+    return updateObjectsBounds(homeBounds, this.home.getRooms());
+  }
+  
+  /**
+   * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+   */
+  private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
+                                          Collection<? extends Selectable> objects) {
+    for (Selectable wall : objects) {
+      for (float [] point : wall.getPoints()) {
+        if (objectBounds == null) {
+          objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        } else {
+          objectBounds.add(point [0], point [1]);
+        }
+      }
+    }
+    return objectBounds;
   }
 
   /**

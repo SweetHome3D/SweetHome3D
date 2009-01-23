@@ -35,11 +35,12 @@ public class PackageDependenciesTest extends TestCase {
 
     DependencyConstraint constraint = new DependencyConstraint();
     // Sweet Home 3D packages
-    JavaPackage sweetHome3dModel = constraint.addPackage("com.eteks.sweethome3d.model");
+    JavaPackage sweetHome3DModel = constraint.addPackage("com.eteks.sweethome3d.model");
     JavaPackage sweetHome3DTools = constraint.addPackage("com.eteks.sweethome3d.tools");
     JavaPackage sweetHome3DPlugin = constraint.addPackage("com.eteks.sweethome3d.plugin");
     JavaPackage sweetHome3DViewController = constraint.addPackage("com.eteks.sweethome3d.viewcontroller");
     JavaPackage sweetHome3DSwing = constraint.addPackage("com.eteks.sweethome3d.swing");
+    JavaPackage sweetHome3DJava3D = constraint.addPackage("com.eteks.sweethome3d.j3d");
     JavaPackage sweetHome3DIO = constraint.addPackage("com.eteks.sweethome3d.io");
     JavaPackage sweetHome3DApplication = constraint.addPackage("com.eteks.sweethome3d");
     JavaPackage sweetHome3DApplet = constraint.addPackage("com.eteks.sweethome3d.applet");
@@ -68,43 +69,52 @@ public class PackageDependenciesTest extends TestCase {
     // Describe dependencies : model don't have any dependency on
     // other packages, IO and View/Controller packages ignore each other
     // and Swing components and Java 3D use is isolated in sweetHome3DSwing
-    sweetHome3DTools.dependsUpon(sweetHome3dModel);
+    sweetHome3DTools.dependsUpon(sweetHome3DModel);
     
-    sweetHome3DPlugin.dependsUpon(sweetHome3dModel);
+    sweetHome3DPlugin.dependsUpon(sweetHome3DModel);
     sweetHome3DPlugin.dependsUpon(sweetHome3DTools);
     
-    sweetHome3DViewController.dependsUpon(sweetHome3dModel);
+    sweetHome3DViewController.dependsUpon(sweetHome3DModel);
     sweetHome3DViewController.dependsUpon(sweetHome3DTools);
     sweetHome3DViewController.dependsUpon(sweetHome3DPlugin);   
     
-    sweetHome3DSwing.dependsUpon(sweetHome3dModel);
+    sweetHome3DJava3D.dependsUpon(sweetHome3DModel);
+    sweetHome3DJava3D.dependsUpon(sweetHome3DTools);
+    sweetHome3DJava3D.dependsUpon(java3d);
+    sweetHome3DJava3D.dependsUpon(vecmath);
+    sweetHome3DJava3D.dependsUpon(sun3dLoaders);
+    sweetHome3DJava3D.dependsUpon(sun3dLoadersLw3d);
+    sweetHome3DJava3D.dependsUpon(sun3dLoadersObj);
+    sweetHome3DJava3D.dependsUpon(sun3dUtilsImage);
+    sweetHome3DJava3D.dependsUpon(sun3dUtilsUniverse);
+    sweetHome3DJava3D.dependsUpon(loader3ds);
+    sweetHome3DJava3D.dependsUpon(imageio);
+    
+    sweetHome3DSwing.dependsUpon(sweetHome3DModel);
     sweetHome3DSwing.dependsUpon(sweetHome3DTools);
     sweetHome3DSwing.dependsUpon(sweetHome3DPlugin);   
     sweetHome3DSwing.dependsUpon(sweetHome3DViewController);
+    sweetHome3DSwing.dependsUpon(sweetHome3DJava3D);
     sweetHome3DSwing.dependsUpon(swing);
     sweetHome3DSwing.dependsUpon(imageio);
     sweetHome3DSwing.dependsUpon(java3d);
     sweetHome3DSwing.dependsUpon(vecmath);
-    sweetHome3DSwing.dependsUpon(sun3dLoaders);
-    sweetHome3DSwing.dependsUpon(sun3dLoadersLw3d);
-    sweetHome3DSwing.dependsUpon(sun3dLoadersObj);
     sweetHome3DSwing.dependsUpon(sun3dUtilsGeometry);
-    sweetHome3DSwing.dependsUpon(sun3dUtilsImage);
     sweetHome3DSwing.dependsUpon(sun3dUtilsUniverse);
-    sweetHome3DSwing.dependsUpon(loader3ds);
     sweetHome3DSwing.dependsUpon(iText);
     sweetHome3DSwing.dependsUpon(iTextPdf);
     sweetHome3DSwing.dependsUpon(jnlp);
     
-    sweetHome3DIO.dependsUpon(sweetHome3dModel);
+    sweetHome3DIO.dependsUpon(sweetHome3DModel);
     sweetHome3DIO.dependsUpon(sweetHome3DTools);
     sweetHome3DIO.dependsUpon(eio);
 
     // Describe application and applet assembly packages
-    sweetHome3DApplication.dependsUpon(sweetHome3dModel);
+    sweetHome3DApplication.dependsUpon(sweetHome3DModel);
     sweetHome3DApplication.dependsUpon(sweetHome3DTools);
     sweetHome3DApplication.dependsUpon(sweetHome3DPlugin);
     sweetHome3DApplication.dependsUpon(sweetHome3DViewController);
+    sweetHome3DApplication.dependsUpon(sweetHome3DJava3D);
     sweetHome3DApplication.dependsUpon(sweetHome3DSwing);
     sweetHome3DApplication.dependsUpon(sweetHome3DIO);
     sweetHome3DApplication.dependsUpon(swing);
@@ -113,10 +123,11 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DApplication.dependsUpon(eawt);
     sweetHome3DApplication.dependsUpon(jnlp);
     
-    sweetHome3DApplet.dependsUpon(sweetHome3dModel);
+    sweetHome3DApplet.dependsUpon(sweetHome3DModel);
     sweetHome3DApplet.dependsUpon(sweetHome3DTools);
     sweetHome3DApplet.dependsUpon(sweetHome3DPlugin);
     sweetHome3DApplet.dependsUpon(sweetHome3DViewController);
+    sweetHome3DApplet.dependsUpon(sweetHome3DJava3D);
     sweetHome3DApplet.dependsUpon(sweetHome3DSwing);
     sweetHome3DApplet.dependsUpon(sweetHome3DIO);
     sweetHome3DApplet.dependsUpon(swing);

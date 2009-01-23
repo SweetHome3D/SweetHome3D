@@ -29,12 +29,12 @@ import javax.vecmath.Vector3f;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
-import com.eteks.sweethome3d.swing.OBJWriter;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
@@ -42,7 +42,7 @@ import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Sphere;
 
 /**
- * Test {@link com.eteks.sweethome3d.swing.OBJWriter OBJ writer} features.
+ * Test {@link com.eteks.sweethome3d.j3d.OBJWriter OBJ writer} features.
  * @author Emmanuel Puybaret
  */
 public class OBJWriterTest extends TestCase {
