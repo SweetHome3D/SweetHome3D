@@ -146,7 +146,7 @@ public class SwingTools {
   }
   
   /**
-   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to ones of its component. 
+   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to one of its components. 
    */
   public static int showConfirmDialog(JComponent parentComponent,
                                       JComponent messageComponent,
@@ -175,7 +175,7 @@ public class SwingTools {
   }
 
   /**
-   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to ones of its component. 
+   * Displays <code>messageComponent</code> in a modal dialog box, giving focus to one of its components. 
    */
   public static void showMessageDialog(JComponent parentComponent,
                                        JComponent messageComponent,
