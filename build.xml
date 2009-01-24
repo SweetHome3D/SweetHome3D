@@ -25,19 +25,19 @@
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
   <property name="version" value="1.5.1"/>
-	
+
   <!-- Builds build/SweetHome3D.jar with all its classes -->
   <target name="build">
     <!-- Compile Sweet Home 3D -->
     <mkdir dir="build/classes"/>
-  	<!-- Compile Sweet Home 3D applet first with javac 1.1 to be able to detect current Java version
-  	     during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
+    <!-- Compile Sweet Home 3D applet first with javac 1.1 to be able to detect current Java version
+         during applet launch (otherwise Java 1.1 to 1.4 plug-ins refuse to load Applet class) -->
     <javac srcdir="src" destdir="build/classes"
-    	   includes="com/eteks/sweethome3d/applet/SweetHome3DApplet.*"
-    	   encoding="ISO-8859-1" target="1.1" source="1.2"/>      
-  	<!-- Compile other classes -->
+           includes="com/eteks/sweethome3d/applet/SweetHome3DApplet.*"
+           encoding="ISO-8859-1" target="1.1" source="1.2"/>      
+    <!-- Compile other classes -->
     <javac srcdir="src" destdir="build/classes"
-    	   encoding="ISO-8859-1" target="1.5">
+           encoding="ISO-8859-1" target="1.5">
       <!-- Use lib as an extension directory to override default Java 3D libraries -->
       <extdirs>
         <pathelement location="lib"/>
@@ -58,7 +58,7 @@
         <exclude name="com/eteks/sweethome3d/io/resources/**"/>
         <exclude name="com/eteks/sweethome3d/swing/resources/icons/jfc/*.*"/>
         <exclude name="**/help/**"/> 
-      	<exclude name="com/sun/**"/>
+        <exclude name="com/sun/**"/>
       </fileset>
     </copy>
     
@@ -72,9 +72,9 @@
   <target name="application" depends="build">
     <zip destfile="build/SweetHome3DStandalone.jar">
       <zipfileset src="build/SweetHome3D.jar" 
-      	          excludes="com/eteks/sweethome3d/applet/**"/>
+                  excludes="com/eteks/sweethome3d/applet/**"/>
     </zip>
-  	<move file="build/SweetHome3DStandalone.jar" tofile="build/SweetHome3D.jar"/>
+    <move file="build/SweetHome3DStandalone.jar" tofile="build/SweetHome3D.jar"/>
   </target>
 
   <!-- Builds build/Furniture.jar that contains the furniture files -->
@@ -83,27 +83,27 @@
       <include name="com/eteks/sweethome3d/io/*FurnitureCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/**"/>
       <exclude name="com/eteks/sweethome3d/io/resources/textures/**"/>
-  	</zip>
+    </zip>
   </target>
-	
+
   <!-- Builds build/Textures.jar that contains the textures files -->
   <target name="textures">
     <zip destfile="build/Textures.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*TexturesCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/textures/**"/>
-	</zip>
+    </zip>
   </target>
-	
+
   <!-- Builds build/Help.jar that contains the help files -->
   <target name="help">
     <zip destfile="build/Help.jar" basedir="src">
       <include name="**/help/**"/>
-  	</zip>
+    </zip>
   </target>
 
   <!-- Builds JNLP Java 3D libraries in deploy/lib subdirectories -->
   <target name="java3dLibraries">
-  	<!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
+    <!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows"/>
     <zip destfile="deploy/lib/windows/java3d.jar">
       <fileset dir="lib/windows">
@@ -131,7 +131,7 @@
  
     <!-- Create java3d.jar containing Mac OS X Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/macosx"/>
-  	<zip destfile="deploy/lib/macosx/java3d.jar">
+    <zip destfile="deploy/lib/macosx/java3d.jar">
       <fileset dir="lib/macosx">
         <include name="*.jnilib"/>
         <include name="*.jar"/>
@@ -143,7 +143,7 @@
       </fileset>
     </zip>
   </target>
-		
+
   <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
   <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries">
     <!-- Build SweetHome3D.jar file from the content of built jars -->
@@ -154,7 +154,7 @@
       <zipfileset src="build/Textures.jar"/>
       <zipfileset src="build/Help.jar"/>
     </zip>
-  	
+
     <!-- Copy other jar files -->
     <copy todir="deploy/lib">
       <fileset dir="lib">
@@ -164,8 +164,8 @@
         <exclude name="vecmath.jar"/>
       </fileset>
     </copy>
-  	
-  	<!-- Clean build directory -->
+
+    <!-- Clean build directory -->
     <delete dir="build"/>
     
     <input message="Enter Passphrase for keystore:" 
@@ -184,14 +184,14 @@
   <!-- Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet -->
   <target name="applet" depends="build,java3dLibraries">
     <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
-  	<mkdir dir="deploy/lib"/>
+    <mkdir dir="deploy/lib"/>
     <zip destfile="deploy/lib/SweetHome3DApplet.jar">
       <zipfileset src="build/SweetHome3D.jar" 
                   excludes="com/eteks/sweethome3d/*.*, com/eteks/sweethome3d/resources/**"/>
     </zip>
-	 
-  	<!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
-  	     (this library is used for Java versions older than Java SE 6 update 11) -->
+ 
+    <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
+         (this library is used for Java versions older than Java SE 6 update 11) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
@@ -217,13 +217,13 @@
         <exclude name="j3dcore.jar"/>
         <exclude name="j3dutils.jar"/>
         <exclude name="vecmath.jar"/>
-      	<!-- No Print to PDF in applet -->
-      	<exclude name="itext-2.0.4.jar"/>
+        <!-- No Print to PDF in applet -->
+        <exclude name="itext-2.0.4.jar"/>
       </fileset>
     </copy>
     <copy todir="deploy/lib" file="libtest/jnlp.jar"/>
-  	
-  	<!-- Clean build directory -->
+
+    <!-- Clean build directory -->
     <delete dir="build"/>
 
     <input message="Enter Passphrase for keystore:" 
@@ -241,8 +241,8 @@
 
   <!-- Builds install/SweetHome3D-version.jar executable Jar -->
   <target name="jarExecutable" depends="application,furniture,textures,help">
-  	<!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
-  	     and other DLLs and jars -->
+    <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
+         and other DLLs and jars -->
     <jar destfile="install/SweetHome3D-${version}.jar" 
          manifest="install/jar/MANIFEST.MF">
       <zipfileset src="build/SweetHome3D.jar"/>
@@ -268,15 +268,15 @@
       <fileset dir=".">
         <include name="LICENSE.TXT"/>
         <include name="COPYING.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
+        <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-ITEXT.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-TANGO.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"/>
+        <include name="THIRDPARTY-LICENSE-ITEXT.TXT"/>
+        <include name="THIRDPARTY-LICENSE-TANGO.TXT"/>
+        <include name="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"/>
       </fileset>
     </jar>
  
-  	<!-- Clean build directory -->
+    <!-- Clean build directory -->
     <delete dir="build"/>
 
     <echo message="install/SweetHome3D-${version}.jar ready for ftp"/>
@@ -369,7 +369,7 @@
       <arg value="${basedir}\install\windows\installerInnoSetup.iss"/>
     </exec>  
 
-  	<!-- Clean build directories -->
+    <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/windows/tmp"/>
 
@@ -402,8 +402,8 @@
         <exclude name="j3dcore.jar"/>
         <exclude name="j3dutils.jar"/>
         <exclude name="vecmath.jar"/>
-      	<!-- Print to PDF menu item isn't available under Mac OS X as it's already in standard print dialog -->
-      	<exclude name="iText-2.1.2u.jar"/>
+        <!-- Print to PDF menu item isn't available under Mac OS X as it's already in standard print dialog -->
+        <exclude name="iText-2.1.2u.jar"/>
       </fileset>
     </copy>
     <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
@@ -437,7 +437,7 @@
       <arg value="install/SweetHome3D-${version}-macosx.dmg"/>
     </exec>
 
-  	<!-- Clean build directories -->
+    <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/macosx/SweetHome3D-${version}"/>
 
@@ -453,8 +453,8 @@
     <mkdir dir="install/linux/i386/SweetHome3D-${version}/lib"/>
     <!-- Copy SweetHome3D command -->
     <copy todir="install/linux/i386/SweetHome3D-${version}/" 
-    	  file="install/linux/SweetHome3D"/>
-  	
+          file="install/linux/SweetHome3D"/>
+
     <!-- Copy SweetHome3D JARs and its direct libs 
          to install/linux/i386/SweetHome3D-version/lib -->
     <move file="build/SweetHome3D.jar" todir="install/linux/i386/SweetHome3D-${version}/lib" />
@@ -476,8 +476,8 @@
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />  	
-  	
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
+
     <!-- Copy JRE to install/linux/i386/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
     <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_11">
@@ -511,7 +511,7 @@
       </tarfileset>
     </tar>
 
-  	<!-- Clean build directories -->
+    <!-- Clean build directories -->
     <delete dir="build"/>
     <delete dir="install/linux/i386"/>
 
@@ -522,87 +522,87 @@
        SweetHome3D source files in directory named SweetHome3D-version-src -->
   <target name="sourceArchive">
     <mkdir dir="install/source/SweetHome3D-${version}-src"/>
-  	<copy todir="install/source/SweetHome3D-${version}-src">
+    <copy todir="install/source/SweetHome3D-${version}-src">
       <fileset dir=".">
-      	<include name="build.xml"/>
-      	<include name="*.TXT"/>
+        <include name="build.xml"/>
+        <include name="*.TXT"/>
         <include name="src/**"/>
         <include name="test/**"/>
         <include name="lib/**"/>
         <include name="libtest/**"/>
-      	<!-- Do not include generated files that may belong to 
-      	     deploy and install directories -->
+        <!-- Do not include generated files that may belong to 
+             deploy and install directories -->
         <include name="deploy/SweetHome3D*.*"/>
         <include name="deploy/*.php"/>
         <include name="install/macosx/**"/>
         <include name="install/windows/**"/>
         <include name="install/linux/**"/>
         <include name="install/jar/**"/>
-      	<!-- Eclipse project files -->
+        <!-- Eclipse project files -->
         <include name=".settings/**"/>
         <include name=".classpath"/>
         <include name=".project"/>
       </fileset>
     </copy>
 
-  	<zip destfile="install/SweetHome3D-${version}-src.zip" basedir="install/source"
-  		 includes="SweetHome3D-${version}-src/**" />
+    <zip destfile="install/SweetHome3D-${version}-src.zip" basedir="install/source"
+         includes="SweetHome3D-${version}-src/**" />
 
-  	<!-- Clean build directory -->
+    <!-- Clean build directory -->
     <delete dir="install/source"/>
 
     <echo message="install/SweetHome3D-${version}-src.zip ready for ftp"/>
   </target>
-	
+
   <!-- Builds install/SweetHome3D-version-javadoc.zip archive that contains 
        SweetHome3D source files in directory named SweetHome3D-version-src -->
   <target name="javadoc">
     <mkdir dir="install/javadoc/SweetHome3D-${version}-javadoc"/>
-  	<javadoc sourcepath="src" destdir="install/javadoc/SweetHome3D-${version}-javadoc" 
+    <javadoc sourcepath="src" destdir="install/javadoc/SweetHome3D-${version}-javadoc" 
              encoding="ISO-8859-1" version="true" author="true" use="true"
-  	         windowtitle="Sweet Home 3D ${version} API">
+             windowtitle="Sweet Home 3D ${version} API">
       <doctitle><![CDATA[<img src='http://www.sweethome3d.eu/SweetHome3DIcon.gif' width='48' height='48' alt='Sweet Home 3D' align='absmiddle'> Sweet Home 3D ${version} API]]></doctitle>
       <header><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></header>
       <footer><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
       <bottom><![CDATA[<table align='center'><tr>
-      	               <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.eu/images/eteks.gif' border='0'><a></td>
-      	               <td>© Copyrights 2006-2008 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
-      	                   <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
+                       <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.eu/images/eteks.gif' border='0'><a></td>
+                       <td>© Copyrights 2006-2008 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
+                           <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
       <link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
       <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>
-  	  <group title="Base classes" packages="*"/>
-  	  <group title="Application and Applet" packages="com.eteks.sweethome3d:com.eteks.sweethome3d.applet"/>
+      <group title="Base classes" packages="*"/>
+      <group title="Application and Applet" packages="com.eteks.sweethome3d:com.eteks.sweethome3d.applet"/>
       <classpath>
         <fileset dir="lib"/>
         <pathelement location="libtest/AppleJavaExtensions.jar"/>
         <pathelement location="libtest/jnlp.jar"/>
-  	  </classpath>
+      </classpath>
     </javadoc>
-  	
-  	<zip destfile="install/SweetHome3D-${version}-javadoc.zip" basedir="install/javadoc"
-  		 includes="SweetHome3D-${version}-javadoc/**" />
 
-  	<!-- Clean build directory -->
+    <zip destfile="install/SweetHome3D-${version}-javadoc.zip" basedir="install/javadoc"
+         includes="SweetHome3D-${version}-javadoc/**" />
+
+    <!-- Clean build directory -->
     <delete dir="install/javadoc"/>
 
     <echo message="install/SweetHome3D-${version}-javadoc.zip ready for ftp"/>
   </target>
-	
+
   <!-- Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest test -->
   <target name="jdepend" depends="build">
-  	<!-- Create jdepend.properties file in build directory that specifies ignored Java packages -->
+    <!-- Create jdepend.properties file in build directory that specifies ignored Java packages -->
     <concat destfile="build/jdepend.properties">ignore.java=java.*,javax.swing.*</concat>
 
-  	<!-- Run JDepend UI -->
+    <!-- Run JDepend UI -->
     <java classname="jdepend.swingui.JDepend" fork="true">
       <classpath>
         <pathelement location="libtest/jdepend-2.9.jar"/>
         <pathelement location="build"/>
       </classpath>
       <arg value="build"/>
-  	</java>
-  	
-  	<!-- Clean build directory -->
+    </java>
+
+    <!-- Clean build directory -->
     <delete dir="build"/>
   </target>
 </project>
