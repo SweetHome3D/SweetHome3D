@@ -70,7 +70,15 @@ public class Wall3D extends Object3DBranch {
   /**
    * Creates the 3D wall matching the given home <code>wall</code>.
    */
-  public Wall3D(Wall wall, Home home, boolean ignoreDrawingMode) {
+  public Wall3D(Wall wall, Home home) {
+    this(wall, home, false, false);
+  }
+  
+  /**
+   * Creates the 3D wall matching the given home <code>wall</code>.
+   */
+  public Wall3D(Wall wall, Home home, boolean ignoreDrawingMode, 
+                boolean waitTextureLoadingEnd) {
     setUserData(wall);
     this.home = home;
 
@@ -89,7 +97,7 @@ public class Wall3D extends Object3DBranch {
     }
     // Set wall shape geometry and appearance
     updateWallGeometry();
-    updateWallAppearance();
+    updateWallAppearance(waitTextureLoadingEnd);
   }
 
   /**
@@ -135,7 +143,7 @@ public class Wall3D extends Object3DBranch {
   @Override
   public void update() {
     updateWallGeometry();
-    updateWallAppearance();
+    updateWallAppearance(false);
   }
   
   /**
@@ -443,12 +451,12 @@ public class Wall3D extends Object3DBranch {
   /**
    * Sets wall appearance with its color, texture and transparency.
    */
-  private void updateWallAppearance() {
+  private void updateWallAppearance(boolean waitTextureLoadingEnd) {
     Wall wall = (Wall)getUserData();
     updateFilledWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE)).getAppearance(), 
-        wall.getLeftSideTexture(), wall.getLeftSideColor());
+        wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor());
     updateFilledWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE)).getAppearance(), 
-        wall.getRightSideTexture(), wall.getRightSideColor());
+        wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor());
     if (numChildren() > 2) {
       updateOutlineWallSideAppearance(((Shape3D)getChild(LEFT_WALL_SIDE + 2)).getAppearance());
       updateOutlineWallSideAppearance(((Shape3D)getChild(RIGHT_WALL_SIDE + 2)).getAppearance());
@@ -460,6 +468,7 @@ public class Wall3D extends Object3DBranch {
    */
   private void updateFilledWallSideAppearance(final Appearance wallSideAppearance, 
                                               final HomeTexture wallSideTexture,
+                                              boolean waitTextureLoadingEnd,
                                               Integer wallSideColor) {
     if (wallSideTexture == null) {
       wallSideAppearance.setMaterial(getMaterial(wallSideColor));
@@ -468,7 +477,7 @@ public class Wall3D extends Object3DBranch {
       // Update material and texture of wall side
       wallSideAppearance.setMaterial(DEFAULT_MATERIAL);
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(wallSideTexture.getImage(), 
+      textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 wallSideAppearance.setTexture(texture);

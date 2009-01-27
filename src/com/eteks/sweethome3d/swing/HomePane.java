@@ -2011,7 +2011,7 @@ public class HomePane extends JRootPane implements HomeView {
         Rectangle2D homeBounds = getExportedHomeBounds();
         Ground3D groundNode = new Ground3D(this.home, 
             (float)homeBounds.getX(), (float)homeBounds.getY(), 
-            (float)homeBounds.getWidth(), (float)homeBounds.getHeight());
+            (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
         writer.writeNode(groundNode, "ground");
       }
       
@@ -2019,7 +2019,7 @@ public class HomePane extends JRootPane implements HomeView {
       int i = 0;
       for (Wall wall : this.home.getWalls()) {
         // Create a not alive new wall to be able to explore its coordinates without setting capabilities 
-        Wall3D wallNode = new Wall3D(wall, this.home, true);
+        Wall3D wallNode = new Wall3D(wall, this.home, true, true);
         writer.writeNode(wallNode, "wall_" + ++i);
       }
       // Write 3D furniture 
@@ -2035,7 +2035,7 @@ public class HomePane extends JRootPane implements HomeView {
       i = 0;
       for (Room room : this.home.getRooms()) {
         // Create a not alive new room to be able to explore its coordinates without setting capabilities 
-        Room3D roomNode = new Room3D(room, this.home, false, true);
+        Room3D roomNode = new Room3D(room, this.home, false, true, true);
         writer.writeNode(roomNode, "room_" + ++i);
       }
       writer.close();

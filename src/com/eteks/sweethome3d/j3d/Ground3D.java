@@ -55,7 +55,8 @@ public class Ground3D extends Object3DBranch {
                   float groundOriginX,
                   float groundOriginY,
                   float groundWidth,
-                  float groundDepth) {
+                  float groundDepth, 
+                  boolean waitTextureLoadingEnd) {
     setUserData(home);
     this.originX = groundOriginX;
     this.originY = groundOriginY;
@@ -78,7 +79,7 @@ public class Ground3D extends Object3DBranch {
     
     addChild(groundShape);
 
-    update();    
+    update(waitTextureLoadingEnd);    
   }
   
   /**
@@ -86,6 +87,13 @@ public class Ground3D extends Object3DBranch {
    */
   @Override
   public void update() {
+    update(false);
+  }
+  
+  /**
+   * Updates ground coloring and texture attributes from home ground color and texture.
+   */
+  private void update(boolean waitTextureLoadingEnd) {
     Home home = (Home)getUserData();
     Shape3D groundShape = (Shape3D)getChild(0);
     
@@ -95,7 +103,7 @@ public class Ground3D extends Object3DBranch {
     HomeTexture groundTexture = home.getEnvironment().getGroundTexture();
     if (groundTexture != null) {
       final TextureManager imageManager = TextureManager.getInstance();
-      imageManager.loadTexture(groundTexture.getImage(), 
+      imageManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 groundAppearance.setTexture(texture);

@@ -70,7 +70,7 @@ public class Room3D extends Object3DBranch {
    * Creates the 3D room matching the given home <code>room</code>.
    */
   public Room3D(Room room, Home home) {
-    this(room, home, false, false);
+    this(room, home, false, false, false);
   }
 
   /**
@@ -78,7 +78,8 @@ public class Room3D extends Object3DBranch {
    */
   public Room3D(Room room, Home home,
                 boolean ignoreCeilingPart, 
-                boolean ignoreInvisiblePart) {
+                boolean ignoreInvisiblePart,
+                boolean waitTextureLoadingEnd) {
     setUserData(room);
     this.home = home;
 
@@ -92,7 +93,7 @@ public class Room3D extends Object3DBranch {
     addChild(createRoomPartShape());
     // Set room shape geometry and appearance
     updateRoomGeometry();
-    updateRoomAppearance();
+    updateRoomAppearance(waitTextureLoadingEnd);
     
     if (ignoreCeilingPart
         || (ignoreInvisiblePart
@@ -136,7 +137,7 @@ public class Room3D extends Object3DBranch {
   @Override
   public void update() {
     updateRoomGeometry();
-    updateRoomAppearance();
+    updateRoomAppearance(false);
   }
   
   /**
@@ -290,12 +291,12 @@ public class Room3D extends Object3DBranch {
   /**
    * Sets room appearance with its color, texture.
    */
-  private void updateRoomAppearance() {
+  private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
     updateRoomSideAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
-        room.getFloorTexture(), room.getFloorColor(), room.isFloorVisible());
+        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.isFloorVisible());
     updateRoomSideAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
-        room.getCeilingTexture(), room.getCeilingColor(), room.isCeilingVisible());
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.isCeilingVisible());
   }
   
   /**
@@ -303,6 +304,7 @@ public class Room3D extends Object3DBranch {
    */
   private void updateRoomSideAppearance(final Appearance roomSideAppearance, 
                                         final HomeTexture roomSideTexture,
+                                        boolean waitTextureLoadingEnd,
                                         Integer roomSideColor,
                                         boolean visible) {
     if (roomSideTexture == null) {
@@ -312,7 +314,7 @@ public class Room3D extends Object3DBranch {
       // Update material and texture of room side
       roomSideAppearance.setMaterial(DEFAULT_MATERIAL);
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(roomSideTexture.getImage(), 
+      textureManager.loadTexture(roomSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
                 roomSideAppearance.setTexture(texture);

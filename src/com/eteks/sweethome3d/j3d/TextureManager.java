@@ -56,6 +56,7 @@ public class TextureManager {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.textures = new WeakHashMap<Content, Texture>();
+    this.texturesLoader = Executors.newSingleThreadExecutor();
   }
 
   /**
@@ -92,59 +93,91 @@ public class TextureManager {
   }
   
   /**
-   * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>. 
+   * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>
    * If the texture isn't loaded in cache yet, a one pixel white image texture will be notified 
    * immediately to the given <code>textureObserver</code>, then a second notification will 
-   * be given once the image texture is loaded in Event Dispatch Thread . If the texture is in cache, 
+   * be given once the image texture is loaded in Event Dispatch Thread. If the texture is in cache, 
    * it will be notified immediately to the given <code>textureObserver</code>.
    * @param content an object containing an image
    * @param textureObserver the observer that will be notified once the texture is available
    */
   public void loadTexture(final Content content, final TextureObserver textureObserver) {
+    loadTexture(content, false, textureObserver);
+  }
+  
+  /**
+   * Reads a texture image from <code>content</code> notified to <code>textureObserver</code>. 
+   * If the texture isn't loaded in cache yet and <code>synchronous</code> is false, a one pixel 
+   * white image texture will be notified immediately to the given <code>textureObserver</code>, 
+   * then a second notification will be given once the image texture is loaded in Event Dispatch Thread. 
+   * If the texture is in cache, it will be notified immediately to the given <code>textureObserver</code>.
+   * If <code>synchronous</code> is <code>true</code>, 
+   * @param content an object containing an image
+   * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
+   * @param textureObserver the observer that will be notified once the texture is available
+   */
+  public void loadTexture(final Content content,
+                          boolean synchronous,
+                          final TextureObserver textureObserver) {
     Texture texture = this.textures.get(content);
     if (texture == null) {
-      // Notify wait texture to observer
-      textureObserver.textureUpdated(waitTexture);
-      if (this.texturesLoader == null) {
-        this.texturesLoader = Executors.newSingleThreadExecutor();
-      }
-      // Load the image in a different thread
-      this.texturesLoader.execute(new Runnable () {
-          public void run() {
-            BufferedImage image = null;
-            try {
-              // Read the image 
-              InputStream contentStream = content.openStream();
-              image = ImageIO.read(contentStream);
-              contentStream.close();
-            } catch (IOException ex) {
-              // Too bad, we'll use errorImage
-            }            
-            final Texture texture;
-            if (image == null) {
-              texture = errorTexture;
-            } else {
-              texture = new TextureLoader(image).getTexture();
-              texture.setMinFilter(Texture.NICEST);
-              texture.setMagFilter(Texture.NICEST);
-              texture.setCapability(Texture.ALLOW_IMAGE_READ);
-              texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+      if (synchronous) {
+        texture = readTexture(content);
+        this.textures.put(content, texture);
+        // Notify loaded texture to observer
+        textureObserver.textureUpdated(texture);
+      } else {
+        // Notify wait texture to observer
+        textureObserver.textureUpdated(waitTexture);
+        if (this.texturesLoader == null) {
+          this.texturesLoader = Executors.newSingleThreadExecutor();
+        }
+        // Load the image in a different thread
+        this.texturesLoader.execute(new Runnable () {
+            public void run() {
+              final Texture texture = readTexture(content);
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    textures.put(content, texture);
+                    // Notify loaded or error texture to observer
+                    textureObserver.textureUpdated(texture);
+                  }
+                });
             }
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  textures.put(content, texture);
-                  // Notify loaded or error texture to observer
-                  textureObserver.textureUpdated(texture);
-                }
-              });
-          }
-        });
+          });
+      }
     } else {
       // Notify cached texture to observer
       textureObserver.textureUpdated(texture);
     }
   }
-  
+
+  /**
+   * Returns a texture created from the image from <code>content</code>. 
+   */
+  private Texture readTexture(final Content content) {
+    BufferedImage image = null;
+    try {
+      // Read the image 
+      InputStream contentStream = content.openStream();
+      image = ImageIO.read(contentStream);
+      contentStream.close();
+    } catch (IOException ex) {
+      // Too bad, we'll use errorTexture
+    }            
+    final Texture texture;
+    if (image == null) {
+      texture = errorTexture;
+    } else {
+      texture = new TextureLoader(image).getTexture();
+      texture.setMinFilter(Texture.NICEST);
+      texture.setMagFilter(Texture.NICEST);
+      texture.setCapability(Texture.ALLOW_IMAGE_READ);
+      texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+    }
+    return texture;
+  }
+
   /**
    * An observer that receives texture loading notifications. 
    */

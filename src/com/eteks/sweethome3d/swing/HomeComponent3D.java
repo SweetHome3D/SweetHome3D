@@ -671,7 +671,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                 final float groundOriginY,
                                 final float groundWidth,
                                 final float groundDepth) {
-    final Ground3D ground3D = new Ground3D(home, groundOriginX, groundOriginY, groundWidth, groundDepth);
+    final Ground3D ground3D = new Ground3D(home, 
+        groundOriginX, groundOriginY, groundWidth, groundDepth, false);
     
     // Add a listener on ground color and texture properties change 
     this.groundColorAndTextureListener = new PropertyChangeListener() {
@@ -909,7 +910,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds to <code>homeRoot</code> a wall branch matching <code>wall</code>.
    */
   private void addWall(Group homeRoot, Wall wall, Home home) {
-    Wall3D wall3D = new Wall3D(wall, home, false);
+    Wall3D wall3D = new Wall3D(wall, home);
     this.homeObjects.put(wall, wall3D);
     homeRoot.addChild(wall3D);
     clearPrintedImageCache();
