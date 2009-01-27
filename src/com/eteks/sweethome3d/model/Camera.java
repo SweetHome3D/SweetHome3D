@@ -137,14 +137,14 @@ public class Camera implements Serializable {
   }
 
   /**
-   * Returns the abcissa of this camera.
+   * Returns the abscissa of this camera.
    */
   public float getX() {
     return this.x;
   }
 
   /**
-   * Sets the abcissa of this camera.
+   * Sets the abscissa of this camera.
    */
   public void setX(float x) {
     if (x != this.x) {
