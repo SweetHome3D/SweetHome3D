@@ -315,7 +315,7 @@ public class Wall3D extends Object3DBranch {
 
   /**
    * Returns the vertical rectangles that join each point of <code>points</code>
-   * and spread from <code>yMin</code> to a top line (y = ax + ß) described by <code>topLineAlpha</code>
+   * and spread from <code>yMin</code> to a top line (y = ax + b) described by <code>topLineAlpha</code>
    * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
    * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
    */
