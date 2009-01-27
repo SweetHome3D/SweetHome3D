@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -67,7 +68,7 @@ public class PluginManager {
       APPLICATION_PLUGIN_FAMILY + ".properties";
 
   private final Map<String, PluginDefinition> pluginDefinitions = 
-      new HashMap<String, PluginDefinition>();
+      new TreeMap<String, PluginDefinition>();
   
   private final Map<Home, List<Plugin>> homePlugins = new HashMap<Home, List<Plugin>>();
   
