@@ -3226,7 +3226,7 @@ public class PlanController extends FurnitureController implements Controller {
           || getWidthAndDepthResizedPieceOfFurnitureAt(x, y) != null
           || getResizedWallStartAt(x, y) != null
           || getResizedWallEndAt(x, y) != null
-          ||getResizedRoomAt(x, y) != null) {
+          || getResizedRoomAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.RESIZE);
       } else if (getOffsetDimensionLineAt(x, y) != null
           || getHeightResizedPieceOfFurnitureAt(x, y) != null) {
