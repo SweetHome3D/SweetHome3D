@@ -174,6 +174,7 @@ public class TextureManager {
       texture.setMagFilter(Texture.NICEST);
       texture.setCapability(Texture.ALLOW_IMAGE_READ);
       texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+      texture.setUserData(content);
     }
     return texture;
   }
