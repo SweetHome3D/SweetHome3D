@@ -4429,8 +4429,10 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class CameraYawRotationState extends ControllerState {
     private ObserverCamera selectedCamera;
-    private float          angleMousePress;
     private float          oldYaw;
+    private float          xLastMouseMove;
+    private float          yLastMouseMove;
+    private float          angleLastMouseMove;
     private String         rotationToolTipFeedback;
 
     @Override
@@ -4448,9 +4450,11 @@ public class PlanController extends FurnitureController implements Controller {
       this.rotationToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "cameraYawRotationToolTipFeedback");
       this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
-      this.angleMousePress = (float)Math.atan2(this.selectedCamera.getY() - getYLastMousePress(), 
-          getXLastMousePress() - this.selectedCamera.getX()); 
       this.oldYaw = this.selectedCamera.getYaw();
+      this.xLastMouseMove = getXLastMousePress();
+      this.yLastMouseMove = getYLastMousePress();
+      this.angleLastMouseMove = (float)Math.atan2(this.selectedCamera.getY() - this.yLastMouseMove, 
+          this.xLastMouseMove - this.selectedCamera.getX());
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldYaw), 
@@ -4461,13 +4465,28 @@ public class PlanController extends FurnitureController implements Controller {
     public void moveMouse(float x, float y) {      
       // Compute the new angle of the camera
       float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
-          x - this.selectedCamera.getX()); 
-      float newYaw = this.oldYaw - angleMouseMove + this.angleMousePress;
+          x - this.selectedCamera.getX());
+
+      // Compute yaw angle with a delta that takes into account the direction
+      // of the rotation (clock wise or counter clock wise) 
+      float deltaYaw = angleLastMouseMove - angleMouseMove;
+      float orientation = Math.signum((y - this.selectedCamera.getY()) * (this.xLastMouseMove - this.selectedCamera.getX()) 
+          - (this.yLastMouseMove - this.selectedCamera.getY()) * (x- this.selectedCamera.getX()));
+      if (orientation < 0 && deltaYaw > 0) {
+        deltaYaw -= (float)(Math.PI * 2f);
+      } else if (orientation > 0 && deltaYaw < 0) {
+        deltaYaw += (float)(Math.PI * 2f);
+      }  
       
       // Update camera new yaw angle
+      float newYaw = this.selectedCamera.getYaw() + deltaYaw;
       this.selectedCamera.setYaw(newYaw); 
 
       getView().setToolTipFeedback(getToolTipFeedbackText(newYaw), x, y);
+
+      this.xLastMouseMove = x;
+      this.yLastMouseMove = y;      
+      this.angleLastMouseMove = angleMouseMove;      
     }
 
     @Override
