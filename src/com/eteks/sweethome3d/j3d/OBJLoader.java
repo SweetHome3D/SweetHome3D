@@ -1194,7 +1194,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           
           // Clone appearance to avoid sharing it
           if (appearance != null) {
-            appearance = (Appearance)appearance.cloneNodeComponent(true);
+            appearance = (Appearance)appearance.cloneNodeComponent(false);
             // Create texture coordinates if geometry doesn't define its own coordinates 
             // and appearance contains a texture 
             if (!firstFaceHasTextureCoordinateIndices
@@ -1597,11 +1597,15 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       
       if (imageFileName != null) {
-        BufferedImage textureImage = baseUrl != null
-             ? ImageIO.read(new URL(baseUrl, imageFileName))
-             : ImageIO.read(new File(imageFileName));
-        TextureLoader textureLoader = new TextureLoader(textureImage, TextureLoader.GENERATE_MIPMAP);
-        currentAppearance.setTexture(textureLoader.getTexture());
+        try {
+          BufferedImage textureImage = baseUrl != null
+               ? ImageIO.read(new URL(baseUrl, imageFileName))
+               : ImageIO.read(new File(imageFileName));
+          TextureLoader textureLoader = new TextureLoader(textureImage, TextureLoader.GENERATE_MIPMAP);
+          currentAppearance.setTexture(textureLoader.getTexture());
+        } catch (Exception ex) {
+          // Ignore images not found 
+        }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());
       }
