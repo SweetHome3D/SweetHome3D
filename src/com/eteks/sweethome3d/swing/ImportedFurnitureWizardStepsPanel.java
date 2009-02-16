@@ -47,7 +47,10 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
@@ -59,6 +62,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.jnlp.BasicService;
@@ -118,6 +122,7 @@ import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
@@ -967,13 +972,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           Content modelContent = null;
           try {
             // Copy model content to a temporary content
-            modelContent = TemporaryURLContent.copyToTemporaryURLContent(
-                contentManager.getContent(modelName));
+            modelContent = contentManager.getContent(modelName);
           } catch (RecorderException ex) {
             // Error message displayed below 
-          } catch (IOException ex) {
-            // Error message displayed below 
-          }
+          } 
           if (modelContent == null) {
             if (!ignoreException) {
               EventQueue.invokeLater(new Runnable() {
@@ -990,12 +992,15 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           BranchGroup model = null;
           try {
             model = readModel(modelContent);
+            // Copy model to a temporary OBJ content with materials and textures
+            modelContent = copyToTemporaryOBJContent(model, modelName);
           } catch (IOException ex) {
             // If content couldn't be loaded, try to load model as a zipped file
             if (modelContent instanceof URLContent) {
-              URLContent urlContent = (URLContent)modelContent;
               ZipInputStream zipIn = null;
               try {
+                URLContent urlContent = TemporaryURLContent.
+                    copyToTemporaryURLContent((URLContent)modelContent);
                 // Open zipped stream
                 zipIn = new ZipInputStream(urlContent.openStream());
                 // Parse entries to see if one is readable
@@ -1070,7 +1075,74 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   }
 
   /**
-   * Reads image from <code>imageContent</code>.
+   * Returns a copy of a given <code>model</code> as a zip content at OBJ format.
+   */
+  private Content copyToTemporaryOBJContent(BranchGroup model, String modelName) throws IOException {
+    // Try to create a temporary folder
+    File tempFolder = null;
+    for (int i = 0; i < 10 && tempFolder == null; i++) { 
+      tempFolder = File.createTempFile("urlContent", "tmp");
+      tempFolder.delete();
+      if (!tempFolder.mkdirs()) {
+        tempFolder = null;
+      }
+    }
+    if (tempFolder == null) {
+      throw new IOException("Couldn't create a temporary folder");
+    }
+            
+    String objFile = new File(modelName).getName();
+    if (!objFile.toLowerCase().endsWith(".obj")) {
+      objFile += ".obj";
+    }
+    ZipOutputStream tempZipOut = null;
+    try {
+      // Write model in an OBJ file
+      OBJWriter writer = new OBJWriter(new File(tempFolder, objFile), "3D model import " + modelName, -1);
+      writer.writeNode(model);
+      writer.close();
+      // Create an uncompressed ZIP file containing temp folder files (OBJ + MTL + texture files)
+      File tempZipFile = File.createTempFile("urlContent", "tmp");
+      tempZipFile.deleteOnExit();
+      tempZipOut = new ZipOutputStream(new FileOutputStream(tempZipFile));
+      tempZipOut.setLevel(0);
+      for (File tempFile : tempFolder.listFiles()) {
+        if (tempFile.isFile()) {
+          InputStream tempIn = null;
+          try {
+            tempZipOut.putNextEntry(new ZipEntry(tempFile.getName()));
+            tempIn = new FileInputStream(tempFile);
+            byte [] buffer = new byte [8096];
+            int size; 
+            while ((size = tempIn.read(buffer)) != -1) {
+              tempZipOut.write(buffer, 0, size);
+            }
+            tempZipOut.closeEntry();
+          } finally {
+            if (tempIn != null) {
+              tempIn.close();
+            }
+          }
+          
+        }
+      }
+      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURL() + "!/" + objFile));
+    } finally {
+      if (tempZipOut != null) {
+        tempZipOut.close();
+      }
+      // Empty tempFolder
+      for (File tempFile : tempFolder.listFiles()) {
+        if (tempFile.isFile()) {
+          tempFile.delete();
+        }
+      }
+      tempFolder.delete();
+    }
+  }
+
+  /**
+   * Reads image from <code>modelContent</code>.
    * Caution : this method must be thread safe because it's called from image loader executor. 
    */
   private BranchGroup readModel(Content modelContent) throws IOException {
