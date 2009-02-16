@@ -52,7 +52,6 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage vecmath = constraint.addPackage("javax.vecmath");
     JavaPackage sun3dLoaders = constraint.addPackage("com.sun.j3d.loaders");
     JavaPackage sun3dLoadersLw3d = constraint.addPackage("com.sun.j3d.loaders.lw3d");
-    JavaPackage sun3dLoadersObj = constraint.addPackage("com.sun.j3d.loaders.objectfile");
     JavaPackage sun3dUtilsGeometry = constraint.addPackage("com.sun.j3d.utils.geometry");
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
@@ -84,7 +83,6 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(vecmath);
     sweetHome3DJava3D.dependsUpon(sun3dLoaders);
     sweetHome3DJava3D.dependsUpon(sun3dLoadersLw3d);
-    sweetHome3DJava3D.dependsUpon(sun3dLoadersObj);
     sweetHome3DJava3D.dependsUpon(sun3dUtilsImage);
     sweetHome3DJava3D.dependsUpon(sun3dUtilsUniverse);
     sweetHome3DJava3D.dependsUpon(loader3ds);
