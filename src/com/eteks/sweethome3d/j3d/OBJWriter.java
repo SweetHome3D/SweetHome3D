@@ -30,6 +30,8 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -73,6 +75,8 @@ import javax.vecmath.Vector3f;
  * @author Emmanuel Puybaret
  */
 public class OBJWriter extends FilterWriter {
+  private final NumberFormat defaultNumberFormat = 
+      new DecimalFormat("0.#######", new DecimalFormatSymbols(Locale.US));
   private final NumberFormat numberFormat;  
   private final String  header;
   
@@ -83,7 +87,7 @@ public class OBJWriter extends FilterWriter {
   private int normalOffset = 1;
   private int textureCoordinatesOffset = 1;
   private Map<ComparableAppearance, String> appearances = 
-    new LinkedHashMap<ComparableAppearance, String>();
+      new LinkedHashMap<ComparableAppearance, String>();
   
   /**
    * Create an OBJ writer for the given file, with no header and default precision.
@@ -602,16 +606,30 @@ public class OBJWriter extends FilterWriter {
       vertexIndexSubstitutes [index] = vertexIndices.size();
       vertexIndices.put(vertex, vertexIndexSubstitutes [index]);
       // Write only once unique vertices
-      if (this.numberFormat != null) {
-        this.out.write("v " + this.numberFormat.format(vertex.x) 
-            + " " + this.numberFormat.format(vertex.y) 
-            + " " + this.numberFormat.format(vertex.z) + "\n");
-      } else {
-        this.out.write("v " + vertex.x + " " + vertex.y + " " + vertex.z + "\n");
-      }
+     this.out.write("v " + format(vertex.x) 
+          + " " + format(vertex.y) 
+          + " " + format(vertex.z) + "\n");
     } else {
       vertexIndexSubstitutes [index] = vertexIndex;
     }
+  }
+  
+  /**
+   * Formats a float number to a string as fast as possible depending on the
+   * format chosen in constructor.
+   */
+  private String format(float number) {
+    if (this.numberFormat != null) {
+      return this.numberFormat.format(number);
+    } else {
+      String numberString = String.valueOf((float)number);
+      if (numberString.indexOf('E') != -1) {
+        // Avoid scientific notation
+        return this.defaultNumberFormat.format(number);
+      } else {
+        return numberString;
+      }
+    }      
   }
 
   /**
@@ -622,19 +640,18 @@ public class OBJWriter extends FilterWriter {
                            Vector3f normal, int index,
                            Map<Vector3f, Integer> normalIndices,
                            int [] normalIndexSubstitutes) throws IOException {
-    transformationToParent.transform(normal);
+    if (normal.x != 0 || normal.y != 0 || normal.z != 0) {
+      transformationToParent.transform(normal);
+      normal.normalize();
+    }
     Integer normalIndex = normalIndices.get(normal);
     if (normalIndex == null) {
       normalIndexSubstitutes [index] = normalIndices.size();
       normalIndices.put(normal, normalIndexSubstitutes [index]);
       // Write only once unique normals
-      if (this.numberFormat != null) {
-        this.out.write("vn " + this.numberFormat.format(normal.x) 
-            + " " + this.numberFormat.format(normal.y) 
-            + " " + this.numberFormat.format(normal.z) + "\n");
-      } else {
-        this.out.write("vn " + normal.x + " " + normal.y + " " + normal.z + "\n");
-      }
+      this.out.write("vn " + format(normal.x) 
+          + " " + format(normal.y) 
+          + " " + format(normal.z) + "\n");
     } else {
       normalIndexSubstitutes [index] = normalIndex;
     }
@@ -652,12 +669,8 @@ public class OBJWriter extends FilterWriter {
       textureCoordinatesIndexSubstitutes [index] = textureCoordinatesIndices.size();
       textureCoordinatesIndices.put(textureCoordinates, textureCoordinatesIndexSubstitutes [index]);
       // Write only once unique texture coordinates
-      if (this.numberFormat != null) {
-        this.out.write("vt " + this.numberFormat.format(textureCoordinates.x) 
-            + " " + this.numberFormat.format(textureCoordinates.y) + " 0\n");
-      } else {
-        this.out.write("vt " + textureCoordinates.x + " " + textureCoordinates.y + " 0\n");
-      }
+      this.out.write("vt " + format(textureCoordinates.x) 
+          + " " + format(textureCoordinates.y) + " 0\n");
     } else {
       textureCoordinatesIndexSubstitutes [index] = textureCoordinatesIndex;
     }
@@ -888,30 +901,50 @@ public class OBJWriter extends FilterWriter {
         writer.write("\nnewmtl " + appearanceName + "\n");
         Material material = appearance.getMaterial();
         if (material != null) {
-          writer.write("illum 1\n");
+          if (material instanceof OBJMaterial
+              && ((OBJMaterial)material).isIlluminationModelSet()) {
+            writer.write("illum " + ((OBJMaterial)material).getIlluminationModel() + "\n");
+          } else if (material.getShininess() > 1) {
+            writer.write("illum 2\n");
+          } else if (material.getLightingEnable()) {  
+            writer.write("illum 1\n");
+          } else {
+            writer.write("illum 0\n");
+          }
           Color3f color = new Color3f();
           material.getAmbientColor(color);          
-          writer.write("Ka " + color.x + " " + color.y + " " + color.z + "\n");
+          writer.write("Ka " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
           material.getDiffuseColor(color);          
-          writer.write("Kd " + color.x + " " + color.y + " " + color.z + "\n");
+          writer.write("Kd " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
           material.getSpecularColor(color);          
-          writer.write("Ks " + color.x + " " + color.y + " " + color.z + "\n");
-          writer.write("Ns " + material.getShininess() + "\n");
+          writer.write("Ks " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
+          writer.write("Ns " + format(material.getShininess()) + "\n");
+          if (material instanceof OBJMaterial) {
+            OBJMaterial objMaterial = (OBJMaterial)material;
+            if (objMaterial.isOpticalDensitySet()) {
+              writer.write("Ni " + format(objMaterial.getOpticalDensity()) + "\n");
+            }
+            if (objMaterial.isSharpnessSet()) {
+              writer.write("sharpness " + format(objMaterial.getSharpness()) + "\n");
+            }
+          }
         } else {
           ColoringAttributes coloringAttributes = appearance.getColoringAttributes();
           if (coloringAttributes != null) {
             writer.write("illum 0\n");
             Color3f color = new Color3f();
             coloringAttributes.getColor(color);          
-            writer.write("Ka " + color.x + " " + color.y + " " + color.z + "\n");
-            writer.write("Kd " + color.x + " " + color.y + " " + color.z + "\n");
-            writer.write("Ks " + color.x + " " + color.y + " " + color.z + "\n");
+            writer.write("Ka " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
+            writer.write("Kd " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
+            writer.write("Ks " + format(color.x) + " " + format(color.y) + " " + format(color.z) + "\n");
           }
         }
         TransparencyAttributes transparency = appearance.getTransparencyAttributes();
         if (transparency != null) {
-          writer.write("Ni 1\n");
-          writer.write("d " + (1f - transparency.getTransparency()) + "\n");
+          if (!(material instanceof OBJMaterial)) {
+            writer.write("Ni 1\n");
+          }
+          writer.write("d " + format(1f - transparency.getTransparency()) + "\n");
         }
         Texture texture = appearance.getTexture();
         if (texture != null) {
@@ -995,6 +1028,27 @@ public class OBJWriter extends FilterWriter {
                   return false;
                 } else if (material1.getShininess() != material2.getShininess()) {
                   return false;
+                } else if (material1.getClass() != material2.getClass()) {
+                  return false;
+                } else if (material1.getClass() == OBJMaterial.class) {
+                  OBJMaterial objMaterial1 = (OBJMaterial)material1;
+                  OBJMaterial objMaterial2 = (OBJMaterial)material2;
+                  if (objMaterial1.isOpticalDensitySet() ^ objMaterial2.isOpticalDensitySet()) {
+                    return false;
+                  } else if (objMaterial1.isOpticalDensitySet() && objMaterial2.isOpticalDensitySet()
+                            && objMaterial1.getOpticalDensity() != objMaterial2.getOpticalDensity()) {
+                    return false;
+                  } else if (objMaterial1.isIlluminationModelSet() ^ objMaterial2.isIlluminationModelSet()) {
+                    return false;
+                  } else if (objMaterial1.isIlluminationModelSet() && objMaterial2.isIlluminationModelSet()
+                            && objMaterial1.getIlluminationModel() != objMaterial2.getIlluminationModel()) {
+                    return false;
+                  } else if (objMaterial1.isSharpnessSet() ^ objMaterial2.isSharpnessSet()) {
+                    return false;
+                  } else if (objMaterial1.isSharpnessSet() && objMaterial2.isSharpnessSet()
+                            && objMaterial1.getSharpness() != objMaterial2.getSharpness()) {
+                    return false;
+                  }
                 }
               }
             }
