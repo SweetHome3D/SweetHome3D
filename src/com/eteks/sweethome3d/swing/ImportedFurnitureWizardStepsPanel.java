@@ -966,6 +966,8 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                 final ContentManager contentManager,
                                 final FurnitureCategory defaultCategory,
                                 final boolean ignoreException) {
+    // Cancel current model
+    this.controller.setModel(null);
     // Read model in modelLoader executor
     this.modelLoader.execute(new Runnable() {
         public void run() {
@@ -1076,8 +1078,10 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
 
   /**
    * Returns a copy of a given <code>model</code> as a zip content at OBJ format.
+   * Caution : this method must be thread safe because it's called from model loader executor. 
    */
   private Content copyToTemporaryOBJContent(BranchGroup model, String modelName) throws IOException {
+    setReadingState();
     // Try to create a temporary folder
     File tempFolder = null;
     for (int i = 0; i < 10 && tempFolder == null; i++) { 
@@ -1138,23 +1142,19 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         }
       }
       tempFolder.delete();
+      setDefaultState();
     }
   }
 
   /**
-   * Reads image from <code>modelContent</code>.
-   * Caution : this method must be thread safe because it's called from image loader executor. 
+   * Reads 3D model from <code>modelContent</code>.
+   * Caution : this method must be thread safe because it's called from model loader executor. 
    */
   private BranchGroup readModel(Content modelContent) throws IOException {
     try {
+      setReadingState();
       EventQueue.invokeLater(new Runnable() {
           public void run() {
-            modelChoiceOrChangeButton.setEnabled(false);
-            Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
-            if (defaultCursor == null) {
-              defaultCursor = rootPane.getCursor();
-            }
-            rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             updatePreviewComponentsModel(null);
           }
         });
@@ -1170,13 +1170,36 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         });
       return modelNode;
     } finally {
-      EventQueue.invokeLater(new Runnable() {
-          public void run() {
-            modelChoiceOrChangeButton.setEnabled(true);
-            SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(defaultCursor);
-          }
-        });
+      setDefaultState();
     } 
+  }
+
+  /**
+   * Sets the cursor to wait cursor and disables model choice button.
+   */
+  private void setReadingState() {
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          modelChoiceOrChangeButton.setEnabled(false);
+          Component rootPane = SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this);
+          if (defaultCursor == null) {
+            defaultCursor = rootPane.getCursor();
+          }
+          rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        }
+      });
+  }
+
+  /**
+   * Sets the default cursor and enables model choice button.
+   */
+  private void setDefaultState() {
+    EventQueue.invokeLater(new Runnable() {
+        public void run() {
+          modelChoiceOrChangeButton.setEnabled(true);
+          SwingUtilities.getRoot(ImportedFurnitureWizardStepsPanel.this).setCursor(defaultCursor);
+        }
+      });
   }
   
   /**
