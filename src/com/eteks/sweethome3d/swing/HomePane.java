@@ -141,6 +141,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.HomeView.ActionType;
 
 /**
  * The MVC view that edits a home. 
@@ -675,7 +676,7 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.add(getMenuItemAction(ActionType.MODIFY_LABEL));
     planMenu.add(createTextStyleMenu(home, preferences, false));
     planMenu.addSeparator();
-    planMenu.add(createImportModifyBackgroundImageMenuItem(home));
+    planMenu.add(createImportModifyBackgroundImageMenuItem(home, false));
     planMenu.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
     planMenu.addSeparator();
     planMenu.add(getMenuItemAction(ActionType.ZOOM_IN));
@@ -1053,23 +1054,32 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Returns Import / Modify background image menu item.
    */
-  private JMenuItem createImportModifyBackgroundImageMenuItem(final Home home) {
-    final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem( 
-        getMenuItemAction(home.getBackgroundImage() == null 
-            ? ActionType.IMPORT_BACKGROUND_IMAGE
-            : ActionType.MODIFY_BACKGROUND_IMAGE));
+  private JMenuItem createImportModifyBackgroundImageMenuItem(final Home home, 
+                                                              final boolean popup) {
+    final JMenuItem importModifyBackgroundImageMenuItem = new JMenuItem(
+        getImportModifyBackgroundImageAction(home, popup));
     // Add a listener to home on backgroundImage property change to 
     // switch action according to backgroundImage change
     home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             importModifyBackgroundImageMenuItem.setAction(
-                getMenuItemAction(home.getBackgroundImage() == null 
-                    ? ActionType.IMPORT_BACKGROUND_IMAGE
-                    : ActionType.MODIFY_BACKGROUND_IMAGE));
+                getImportModifyBackgroundImageAction(home, popup));
           }
         });    
     return importModifyBackgroundImageMenuItem;
+  }
+  
+  /**
+   * Returns the action active on import / modify menu.
+   */
+  private Action getImportModifyBackgroundImageAction(Home home, boolean popup) {
+    ActionType backgroundImageActionType = home.getBackgroundImage() == null 
+        ? ActionType.IMPORT_BACKGROUND_IMAGE
+        : ActionType.MODIFY_BACKGROUND_IMAGE;
+    return popup 
+        ? getPopupMenuItemAction(backgroundImageActionType)
+        : getMenuItemAction(backgroundImageActionType);
   }
   
   /**
@@ -1572,8 +1582,8 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.add(getPopupMenuItemAction(ActionType.MODIFY_LABEL));
     planViewPopup.add(createTextStyleMenu(home, preferences, true));
     planViewPopup.addSeparator();
-    planViewPopup.add(createImportModifyBackgroundImageMenuItem(home));
-    planViewPopup.add(getMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
+    planViewPopup.add(createImportModifyBackgroundImageMenuItem(home, true));
+    planViewPopup.add(getPopupMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
     planViewPopup.addSeparator();
     planViewPopup.add(getPopupMenuItemAction(ActionType.ZOOM_OUT));
     planViewPopup.add(getPopupMenuItemAction(ActionType.ZOOM_IN));
@@ -1600,9 +1610,9 @@ public class HomePane extends JRootPane implements HomeView {
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
     view3DPopup.addSeparator();
-    view3DPopup.add(getMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
+    view3DPopup.add(getPopupMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
     view3DPopup.addSeparator();
-    view3DPopup.add(getMenuItemAction(ActionType.EXPORT_TO_OBJ));
+    view3DPopup.add(getPopupMenuItemAction(ActionType.EXPORT_TO_OBJ));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
