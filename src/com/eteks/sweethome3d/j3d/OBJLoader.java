@@ -65,7 +65,7 @@ import com.sun.j3d.utils.image.TextureLoader;
 /**
  * An OBJ + MTL loader. 
  * It supports the same features as {@link com.sun.j3d.loaders.objectfile.ObjectFile ObjectFile}
- * Java 3D class, expected for texture images format (supports only BMP, GIF, JPEG and PNG format).
+ * Java 3D class, expected for texture images format (supports only BMP, WBMP, GIF, JPEG and PNG format).
  * Compared to <code>ObjectFile</code>, this class supports transparency as defined in
  * <a href="http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/">MTL file format</code> 
  * specifications, and doesn't oblige to define texture coordinate on all vertices 
@@ -1597,14 +1597,17 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       
       if (imageFileName != null) {
+        BufferedImage textureImage = null;
         try {
-          BufferedImage textureImage = baseUrl != null
+          textureImage = baseUrl != null
                ? ImageIO.read(new URL(baseUrl, imageFileName))
                : ImageIO.read(new File(imageFileName));
+        } catch (IOException ex) {
+          // Ignore images at other format
+        }
+        if (textureImage != null) {
           TextureLoader textureLoader = new TextureLoader(textureImage, TextureLoader.GENERATE_MIPMAP);
           currentAppearance.setTexture(textureLoader.getTexture());
-        } catch (Exception ex) {
-          // Ignore images not found 
         }
       } else {
         throw new IncorrectFormatException("Expected image file name at line " + tokenizer.lineno());
