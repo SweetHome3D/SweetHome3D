@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 1.5.1 Copyright 2007-2008 eTeks</string>
+	<string>Sweet Home 3D 1.6 Copyright 2007-2009 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>1.5.1</string>
+	<string>1.6</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.5.1</string>
+	<string>1.6</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -33,7 +33,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3D</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://sweethome3d.sourceforge.net/</string>
+	 		<string>http://www.sweethome3d.eu/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Document</string>
 			<key>UTTypeIconFile</key>
@@ -57,7 +57,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3DFurnitureCatalog</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://sweethome3d.sourceforge.net/</string>
+	 		<string>http://www.sweethome3d.eu/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Furniture Catalog</string>
 			<key>UTTypeIconFile</key>
@@ -74,6 +74,30 @@
 				<key>public.filename-extension</key>
 				<array>
 					<string>sh3f</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.eteks.sweethome3d.SweetHome3DPlugin</string>
+			<key>UTTypeReferenceURL</key>
+	 		<string>http://www.sweethome3d.eu/</string>
+			<key>UTTypeDescription</key>
+			<string>Sweet Home 3D Plugin</string>
+			<key>UTTypeIconFile</key>
+			<string>SweetHome3DPlugin.icns</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>com.apple.ostype</key>
+				<string>SH3F</string>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sh3p</string>
 				</array>
 			</dict>
 		</dict>
@@ -102,7 +126,19 @@
 			<key>CFBundleTypeName</key>
 			<string>Sweet Home 3D Furniture Catalog Format</string>
 			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.eteks.sweethome3d.SweetHome3DPlugin</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>SweetHome3DPlugin.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Sweet Home 3D Plugin Format</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
 		</dict>
 	</array>
 

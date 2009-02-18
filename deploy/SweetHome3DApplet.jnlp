@@ -17,6 +17,7 @@
     <jar href="lib/Loader3DS1_2.jar"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="sun.swing.enableImprovedDragGesture" value="true"/>
+    <property name="com.eteks.sweethome3d.deploymentInformation" value="On-line"/>
   </resources>
  
   <resources os="Windows">
