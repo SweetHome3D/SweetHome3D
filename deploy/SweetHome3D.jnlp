@@ -15,7 +15,7 @@
       <desktop/>
       <menu submenu="eTeks Sweet Home 3D"/>
     </shortcut>
-    <association extensions="sh3d sh3f" 
+    <association extensions="sh3d sh3f sh3p" 
                  mime-type="application/SweetHome3D"/>
   </information>
   <information locale="fr">
@@ -60,6 +60,7 @@
     <property name="apple.laf.useScreenMenuBar" value="true"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="sun.swing.enableImprovedDragGesture" value="true"/>
+    <property name="com.eteks.sweethome3d.deploymentInformation" value="Java Web Start"/>
   </resources>
  
   <resources os="Windows">
