@@ -187,14 +187,16 @@ public class FileContentManager implements ContentManager {
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
   private final String                    furnitureLibraryFileExtension;
+  private final String                    pluginFileExtension;
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
   private Map<ContentType, String>        defaultFileExtensions;
 
   public FileContentManager(final UserPreferences preferences) {  
     this.preferences = preferences;
-    sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
-    furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
+    this.sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
+    this.furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
+    this.pluginFileExtension = preferences.getLocalizedString(FileContentManager.class, "pluginExtension");
     
     // Fill file filters map
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
@@ -232,11 +234,27 @@ public class FileContentManager implements ContentManager {
           }
         }
       });
+    this.fileFilters.put(ContentType.PLUGIN, new FileFilter [] {
+       new FileFilter() {
+         @Override
+         public boolean accept(File file) {
+           // Accept directories and .sh3f files
+           return file.isDirectory()
+               || file.getName().toLowerCase().endsWith(pluginFileExtension);
+         }
+         
+         @Override
+         public String getDescription() {
+           return preferences.getLocalizedString(FileContentManager.class, "pluginDescription");
+         }
+       }
+     });
 
     // Fill file default extension map
     this.defaultFileExtensions = new HashMap<ContentType, String>();
     this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, sweetHome3DFileExtension);
     this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
+    this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }

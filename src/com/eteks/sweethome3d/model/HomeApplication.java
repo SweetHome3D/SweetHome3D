@@ -90,4 +90,21 @@ public abstract class HomeApplication {
    * Returns user preferences.
    */
   public abstract UserPreferences getUserPreferences();
+  
+  /**
+   * Returns the name of this application. Default implementation returns <i>Sweet Home 3D</i>. 
+   * @since 1.6
+   */
+  public String getName() {
+    return "Sweet Home 3D";
+  }
+  
+  /**
+   * Returns information about the version of this application.
+   * Default implementation returns an empty string.
+   * @since 1.6
+   */
+  public String getVersion() {
+    return "";
+  }
 }

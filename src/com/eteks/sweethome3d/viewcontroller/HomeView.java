@@ -95,6 +95,12 @@ public interface HomeView extends View {
   public abstract boolean confirmReplaceFurnitureLibrary(String furnitureLibraryName);
 
   /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing plug-in or not. 
+   */
+  public abstract boolean confirmReplacePlugin(String pluginName);
+
+  /**
    * Displays a content chooser save dialog to choose the name of a home.
    */
   public abstract String showSaveDialog(String homeName);

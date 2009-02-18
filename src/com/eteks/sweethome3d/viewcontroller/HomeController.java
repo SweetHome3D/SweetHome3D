@@ -910,6 +910,26 @@ public class HomeController implements Controller {
   }
 
   /**
+   * Imports a given plugin.
+   */
+  public void importPlugin(String pluginName) {
+    if (this.pluginManager != null) {
+      try {
+        if (!this.pluginManager.pluginExists(pluginName) 
+            || getView().confirmReplacePlugin(pluginName)) {
+          this.pluginManager.addPlugin(pluginName);
+          getView().showMessage(this.preferences.getLocalizedString(HomeController.class, 
+              "importedPluginMessage"));
+        }
+      } catch (RecorderException ex) {
+        String message = this.preferences.getLocalizedString(HomeController.class, 
+            "importPluginError", pluginName);
+        getView().showError(message);
+      }
+    }
+  }
+  
+  /**
    * Undoes last operation.
    */
   public void undo() {
@@ -1238,6 +1258,17 @@ public class HomeController implements Controller {
       return Collections.unmodifiableList(recentHomes);
     } else {
       return new ArrayList<String>();
+    }
+  }
+  
+  /**
+   * Returns the version of the application.
+   */
+  public String getVersion() {
+    if (this.application != null) {
+      return this.application.getVersion();
+    } else {
+      return "";
     }
   }
   

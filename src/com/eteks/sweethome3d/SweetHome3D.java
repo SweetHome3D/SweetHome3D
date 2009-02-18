@@ -61,9 +61,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
+import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
@@ -91,6 +91,7 @@ public class SweetHome3D extends HomeApplication {
   private final FileUserPreferences userPreferences;
   private final ContentManager      contentManager;
   private final ViewFactory         viewFactory;
+  private final PluginManager       pluginManager;
   private final Map<Home, JFrame>   homeFrames;
 
 
@@ -99,6 +100,11 @@ public class SweetHome3D extends HomeApplication {
     this.userPreferences = new FileUserPreferences();
     this.contentManager = new FileContentManager(this.userPreferences);
     this.viewFactory = new SwingViewFactory();
+    // Create the plug-in manager that will search plug-in files in plugins folder
+    File applicationPluginsFolder = getApplicationPluginsFolder();
+    this.pluginManager = applicationPluginsFolder != null 
+        ? new PluginManager(applicationPluginsFolder)
+        : null;
     this.homeFrames = new HashMap<Home, JFrame>();    
   }
 
@@ -116,6 +122,26 @@ public class SweetHome3D extends HomeApplication {
   @Override
   public UserPreferences getUserPreferences() {
     return this.userPreferences;
+  }
+  
+  /**
+   * Returns the name of this application read from resources. 
+   */
+  @Override
+  public String getName() {
+    return this.userPreferences.getLocalizedString(SweetHome3D.class, "applicationName");
+  }
+  
+  /**
+   * Returns information about the version of this application.
+   */
+  public String getVersion() {
+    String applicationVersion = this.userPreferences.getLocalizedString(SweetHome3D.class, "applicationVersion");
+    String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
+    if (versionInformation != null) {
+      applicationVersion += " " + versionInformation;
+    }
+    return applicationVersion;
   }
   
   /**
@@ -201,6 +227,16 @@ public class SweetHome3D extends HomeApplication {
               // Import furniture library with a dummy controller 
               new HomeFrameController(new Home(), application, application.viewFactory, application.contentManager, null).
                   getHomeController().importFurnitureLibrary(furnitureLibraryName);
+            }
+          });
+      } else if (application.contentManager.isAcceptable(args [1], ContentManager.ContentType.PLUGIN)) {
+        runApplication(new String [0]);
+        final String pluginName = args [1];
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Import furniture library with a dummy controller 
+              new HomeFrameController(new Home(), application, application.viewFactory, application.contentManager, application.pluginManager).
+                  getHomeController().importPlugin(pluginName);
             }
           });
       }
@@ -300,13 +336,7 @@ public class SweetHome3D extends HomeApplication {
           
     // Create the application that manages homes 
     final SweetHome3D application = new SweetHome3D();    
-    
-    // Create the plug-in manager that will search plug-in files in plugins folder
-    File applicationPluginsFolder = application.getApplicationPluginsFolder();
-    final PluginManager pluginManager = applicationPluginsFolder != null 
-        ? new PluginManager(applicationPluginsFolder)
-        : null;
-    
+        
     // Add a listener that opens a frame when a home is added to application
     application.addHomesListener(new CollectionListener<Home>() {
         private boolean firstApplicationHomeAdded;
@@ -318,7 +348,7 @@ public class SweetHome3D extends HomeApplication {
               try {
                 HomeFrameController controller = 
                     new HomeFrameController(home, application, application.viewFactory, 
-                        application.contentManager, pluginManager);
+                        application.contentManager, application.pluginManager);
                 controller.displayView();
                 if (!this.firstApplicationHomeAdded) {
                   application.addNewHomeCloseListener(home, controller);

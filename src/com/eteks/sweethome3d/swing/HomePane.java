@@ -141,7 +141,6 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.View;
-import com.eteks.sweethome3d.viewcontroller.HomeView.ActionType;
 
 /**
  * The MVC view that edits a home. 
@@ -1770,6 +1769,23 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing plug-in or not. 
+   */
+  public boolean confirmReplacePlugin(String pluginName) {
+    // Retrieve displayed text in buttons and message
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.message", 
+        new File(pluginName).getName());
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.title");
+    String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.replace");
+    String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplacePlugin.doNotReplace");
+        
+    return JOptionPane.showOptionDialog(this, 
+        message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
    * Displays a content chooser save dialog to choose the name of a home.
    */
   public String showSaveDialog(String homeName) {
@@ -1907,9 +1923,8 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void showAboutDialog() {
     String messageFormat = this.preferences.getLocalizedString(HomePane.class, "about.message");
-    String aboutVersion = this.preferences.getLocalizedString(HomePane.class, "about.version");
-    String message = String.format(messageFormat, aboutVersion, 
-        System.getProperty("java.version"));
+    String aboutVersion = this.controller.getVersion();
+    String message = String.format(messageFormat, aboutVersion, System.getProperty("java.version"));
     // Use an uneditable editor pane to let user select text in dialog
     JEditorPane messagePane = new JEditorPane("text/html", message);
     messagePane.setOpaque(false);

@@ -104,7 +104,7 @@ public class HomeFramePane extends JRootPane implements View {
     // Update frame image and title 
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
-    updateFrameTitle(homeFrame, this.home, this.application.getUserPreferences());
+    updateFrameTitle(homeFrame, this.home, this.application);
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
       HomeController homeController = this.controller.getHomeController();
@@ -249,12 +249,12 @@ public class HomeFramePane extends JRootPane implements View {
     // Update title when the name or the modified state of home changes
     home.addPropertyChangeListener(Home.Property.NAME, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateFrameTitle(frame, home, application.getUserPreferences());
+          updateFrameTitle(frame, home, application);
         }
       });
     home.addPropertyChangeListener(Home.Property.MODIFIED, new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateFrameTitle(frame, home, application.getUserPreferences());
+          updateFrameTitle(frame, home, application);
         }
       });
   }
@@ -281,7 +281,7 @@ public class HomeFramePane extends JRootPane implements View {
             UserPreferences.Property.LANGUAGE, this);
       } else {
         this.frame.get().applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-        homeFramePane.updateFrameTitle(this.frame.get(), homeFramePane.home, preferences);
+        homeFramePane.updateFrameTitle(this.frame.get(), homeFramePane.home, homeFramePane.application);
       }
     }
   }
@@ -339,15 +339,15 @@ public class HomeFramePane extends JRootPane implements View {
   }
   
   /**
-   * Updates <code>frame</code> title from <code>home</code> name.
+   * Updates <code>frame</code> title from <code>home</code> and <code>application</code> name.
    */
   private void updateFrameTitle(JFrame frame, 
                                 Home home,
-                                UserPreferences preferences) {
+                                HomeApplication application) {
     String homeName = home.getName();
     String homeDisplayedName;
     if (homeName == null) {
-      homeDisplayedName = preferences.getLocalizedString(HomeFramePane.class, "untitled"); 
+      homeDisplayedName = application.getUserPreferences().getLocalizedString(HomeFramePane.class, "untitled"); 
       if (newHomeNumber > 1) {
         homeDisplayedName += " " + newHomeNumber;
       }
@@ -375,7 +375,7 @@ public class HomeFramePane extends JRootPane implements View {
         }
       }
     } else {
-      title += " - " + preferences.getLocalizedString(HomeFramePane.class, "applicationName"); 
+      title += " - " + application.getName(); 
       if (home.isModified()) {
         title = "* " + title;
       }

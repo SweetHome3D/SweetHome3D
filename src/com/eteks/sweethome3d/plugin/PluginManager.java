@@ -19,9 +19,14 @@
  */
 package com.eteks.sweethome3d.plugin;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
@@ -46,6 +51,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -67,15 +73,16 @@ public class PluginManager {
   private static final String DEFAULT_APPLICATION_PLUGIN_PROPERTIES_FILE = 
       APPLICATION_PLUGIN_FAMILY + ".properties";
 
+  private final File pluginFolder;
   private final Map<String, PluginDefinition> pluginDefinitions = 
       new TreeMap<String, PluginDefinition>();
-  
   private final Map<Home, List<Plugin>> homePlugins = new HashMap<Home, List<Plugin>>();
   
   /**
    * Reads application plug-ins from resources in the given plug-in folder.
    */
   public PluginManager(File pluginFolder) {
+    this.pluginFolder = pluginFolder;
     if (pluginFolder != null) {
       // Try to load plugin files from plugin folder
       File [] pluginFiles = pluginFolder.listFiles(new FileFilter () {
@@ -103,6 +110,7 @@ public class PluginManager {
    * Reads application plug-ins from resources in the given URLs.
    */
   public PluginManager(URL [] pluginUrls) {
+    this.pluginFolder = null;
     for (URL pluginUrl : pluginUrls) {
       loadPlugins(pluginUrl);
     }
@@ -331,6 +339,58 @@ public class PluginManager {
     }
   }
   
+  /**
+   * Returns <code>true</code> if a plug-in with the given file name already exists.
+   * @throws RecorderException if no plug-ins folder is associated to this manager.
+   */
+  public boolean pluginExists(String pluginName) throws RecorderException {
+    if (this.pluginFolder == null) {
+      throw new RecorderException("Can't access to plugins folder");
+    } else {
+      String pluginFileName = new File(pluginName).getName();
+      return new File(this.pluginFolder, pluginFileName).exists();
+    }
+  }
+
+  /**
+   * Adds the file <code>pluginName</code> to plug-ins folder if it exists.
+   * Once added, the plug-in will be available at next application start. 
+   * @throws RecorderException if no plug-ins folder is associated to this manager.
+   */
+  public void addPlugin(String pluginName) throws RecorderException {
+    try {
+      if (this.pluginFolder == null) {
+        throw new RecorderException("Can't access to plugins folder");
+      }
+      String pluginFileName = new File(pluginName).getName();
+      File destinationFile = new File(this.pluginFolder, pluginFileName);
+
+      // Copy furnitureCatalogFile to furniture plugin folder
+      InputStream tempIn = null;
+      OutputStream tempOut = null;
+      try {
+        tempIn = new BufferedInputStream(new FileInputStream(pluginName));
+        this.pluginFolder.mkdirs();
+        tempOut = new FileOutputStream(destinationFile);          
+        byte [] buffer = new byte [8096];
+        int size; 
+        while ((size = tempIn.read(buffer)) != -1) {
+          tempOut.write(buffer, 0, size);
+        }
+      } finally {
+        if (tempIn != null) {
+          tempIn.close();
+        }
+        if (tempOut != null) {
+          tempOut.close();
+        }
+      }
+    } catch (IOException ex) {
+      throw new RecorderException(
+          "Can't write " + pluginName +  " in furniture libraries plugin folder", ex);
+    }
+  }
+
   /**
    * The properties required to instantiate a plug-in.
    */

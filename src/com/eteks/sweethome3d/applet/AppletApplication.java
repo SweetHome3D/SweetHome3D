@@ -399,6 +399,19 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
+   * Returns information about the version of this applet application.
+   */
+  public String getVersion() {
+    String applicationVersion = this.userPreferences.getLocalizedString(
+        AppletApplication.class, "applicationVersion");
+    String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
+    if (versionInformation != null) {
+      applicationVersion += " " + versionInformation;
+    }
+    return applicationVersion;
+  }
+  
+  /**
    * Sets application look and feel.
    */
   private void initLookAndFeel() {

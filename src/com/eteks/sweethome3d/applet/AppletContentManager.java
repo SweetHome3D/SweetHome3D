@@ -65,7 +65,8 @@ public class AppletContentManager extends FileContentManager {
     if (contentType == ContentType.SWEET_HOME_3D) {
       return true;
     } else {
-      return super.isAcceptable(contentName, contentType);
+      return contentType != ContentType.PLUGIN 
+          && super.isAcceptable(contentName, contentType);
     }    
   }
   
