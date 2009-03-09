@@ -142,7 +142,7 @@ public class ResourceAction extends AbstractAction {
   }
 
   /**
-   * Returns the value of <code>propertyKey</code> in <code>resource</code>, 
+   * Returns the value of <code>propertyKey</code> in <code>preferences</code>, 
    * or <code>null</code> if the property doesn't exist.
    */
   private String getOptionalString(UserPreferences preferences, 
