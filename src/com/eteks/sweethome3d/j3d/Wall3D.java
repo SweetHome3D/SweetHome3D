@@ -230,15 +230,17 @@ public class Wall3D extends Object3DBranch {
           if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
             wallPoints.remove(wallPoints.size() - 1);
           }
-          float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
-          // Compute geometry for vertical part
-          wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
-          // Compute geometry for bottom part
-          wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
-          // Compute geometry for top part
-          wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
-              cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+          if (wallPoints.size() > 2) {
+            float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
+            // Compute geometry for vertical part
+            wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
+            // Compute geometry for bottom part
+            wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
+            // Compute geometry for top part
+            wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta));
+          }
         }
         wallPoints.clear();
         previousWallPoint = null;
