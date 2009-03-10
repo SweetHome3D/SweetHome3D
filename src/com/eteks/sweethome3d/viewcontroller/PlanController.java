@@ -3920,7 +3920,9 @@ public class PlanController extends FurnitureController implements Controller {
               this.yLastMouseMove - getYLastMousePress());
           this.movedItems = this.duplicatedItems;
           this.duplicatedItems = null;
-          this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
+          if (this.movedPieceOfFurniture != null) {
+            this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
+          }
           getView().setCursor(PlanView.CursorType.SELECTION);
         }
         
