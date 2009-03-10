@@ -120,10 +120,11 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
 
   /**
    * Returns <code>true</code> if flavors contains 
-   * {@link HomeTransferableList#HOME_FLAVOR LIST_FLAVOR} flavor.
+   * {@link HomeTransferableList#HOME_FLAVOR HOME_FLAVOR} flavor
+   * or <code>DataFlavor.javaFileListFlavor</code> flavor.
    */
   @Override
-  public boolean canImport(JComponent destination, DataFlavor [] flavors) {
+  public boolean canImportFlavor(DataFlavor [] flavors) {
     List<DataFlavor> flavorList = Arrays.asList(flavors);
     return flavorList.contains(HomeTransferableList.HOME_FLAVOR)
         || flavorList.contains(DataFlavor.javaFileListFlavor);
@@ -134,7 +135,7 @@ public class FurnitureTransferHandler extends LocatedTransferHandler {
    */
   @Override
   public boolean importData(JComponent destination, Transferable transferable) {
-    if (canImport(destination, transferable.getTransferDataFlavors())) {
+    if (canImportFlavor(transferable.getTransferDataFlavors())) {
       try {
         List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
         if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {

@@ -33,12 +33,16 @@ import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
+import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -175,15 +179,26 @@ public class ImportedFurnitureWizardController extends WizardController
    */
   @Override
   public void finish() {
-    CatalogPieceOfFurniture newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), 
-        getWidth(), getDepth(), getHeight(), getElevation(), 
-        isMovable(), isDoorOrWindow(), getColor(), 
-        getModelRotation(), isBackFaceShown(), 
-        getIconYaw(), isProportional());
+    CatalogPieceOfFurniture newPiece;
+    if (isDoorOrWindow()) {
+      newPiece = new CatalogDoorOrWindow(getName(), getIcon(), getModel(), 
+          getWidth(), getDepth(), getHeight(), getElevation(), 
+          isMovable(), 1, 0, new Sash [0], getColor(), 
+          getModelRotation(), isBackFaceShown(), 
+          getIconYaw(), isProportional());
+    } else {
+      newPiece = new CatalogPieceOfFurniture(getName(), getIcon(), getModel(), 
+          getWidth(), getDepth(), getHeight(), getElevation(), 
+          isMovable(), getColor(), 
+          getModelRotation(), isBackFaceShown(), 
+          getIconYaw(), isProportional());
+    }
     
     if (this.home != null) {
       // Add new piece to home
-      addPieceOfFurniture(new HomePieceOfFurniture(newPiece));
+      addPieceOfFurniture(isDoorOrWindow() 
+          ? new HomeDoorOrWindow((DoorOrWindow)newPiece)
+          : new HomePieceOfFurniture(newPiece));
     }
     // Remove the edited piece from catalog
     FurnitureCatalog catalog = this.preferences.getFurnitureCatalog();
@@ -613,7 +628,7 @@ public class ImportedFurnitureWizardController extends WizardController
       return true;
     }
     CatalogPieceOfFurniture temporaryPiece = 
-        new CatalogPieceOfFurniture(this.name, null, null, 0, 0, 0, false, false);
+        new CatalogPieceOfFurniture(this.name, null, null, 0, 0, 0, 0, false, null, null, false, 0, false);
     if (this.piece != null
         && this.category == this.piece.getCategory()
         // Check piece names are equal with binary search to keep locale dependence

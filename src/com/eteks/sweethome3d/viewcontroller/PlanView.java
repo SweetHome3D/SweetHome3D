@@ -19,6 +19,9 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.util.List;
+
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.TextStyle;
 
@@ -34,11 +37,6 @@ public interface PlanView extends View {
    */
   public abstract void setRectangleFeedback(float x0, float y0,
                                             float x1, float y1);
-
-  /**
-   * Deletes rectangle feed back.
-   */
-  public abstract void deleteRectangleFeedback();
 
   /**
    * Ensures selected items are visible at screen and moves
@@ -117,9 +115,21 @@ public interface PlanView extends View {
                                             float y, 
                                             boolean showPoint);
   /**
-   * Deletes the alignment feedback. 
+   * Sets the feedback of dragged items drawn during a drag and drop operation, 
+   * initiated from outside of plan view.
    */
-  public abstract void deleteAlignmentFeedback();
+  public abstract void setDraggedItemsFeedback(List<Selectable> draggedItems);
+
+  /**
+   * Sets the given dimension lines to be drawn as feedback.
+   */
+  public abstract void setDimensionLinesFeedback(List<DimensionLine> dimensionLines);
+
+  /**
+   * Deletes all elements shown as feedback.
+   */
+  public abstract void deleteFeedback();
+
 
   /**
    * Returns the component used as an horizontal ruler for this plan.

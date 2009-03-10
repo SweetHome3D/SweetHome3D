@@ -41,13 +41,16 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
+import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
@@ -698,8 +701,7 @@ public class HomeController implements Controller {
   public void enablePasteAction() {
     HomeView view = getView();
     if (this.focusedView == getFurnitureController().getView()
-        || this.focusedView == getPlanController().getView()
-        || this.focusedView == getHomeController3D().getView()) {
+        || this.focusedView == getPlanController().getView()) {
       view.setEnabled(HomeView.ActionType.PASTE,
           !getPlanController().isModificationState() && !view.isClipboardEmpty());
     } else {
@@ -836,7 +838,12 @@ public class HomeController implements Controller {
       List<HomePieceOfFurniture> newFurniture = 
           new ArrayList<HomePieceOfFurniture>();
       for (CatalogPieceOfFurniture piece : selectedFurniture) {
-        HomePieceOfFurniture homePiece = new HomePieceOfFurniture(piece);
+        HomePieceOfFurniture homePiece;
+        if (piece instanceof CatalogDoorOrWindow) {
+          homePiece = new HomeDoorOrWindow((DoorOrWindow)piece);
+        } else {
+          homePiece = new HomePieceOfFurniture(piece);
+        }
         // If magnetism is enabled, adjust piece size and elevation
         if (this.preferences.isMagnetismEnabled()) {
           if (homePiece.isResizable()) {
@@ -987,29 +994,38 @@ public class HomeController implements Controller {
   }
   
   /**
-   * Adds items to home and post a paste operation to undo support.
+   * Adds items to home and posts a paste operation to undo support.
    */
   public void paste(final List<? extends Selectable> items) {
-    addItems(items, 20, 20, "undoPasteName");
+    addItems(items, 20, 20, false, "undoPasteName");
   }
 
   /**
    * Adds items to home, moves them of (dx, dy) 
-   * and post a drop operation to undo support.
+   * and posts a drop operation to undo support.
    */
   public void drop(final List<? extends Selectable> items, float dx, float dy) {
-    addItems(items, dx, dy, "undoDropName");
+    drop(items, null, dx, dy);
+  }
+
+  /**
+   * Adds items to home, moves them of (dx, dy) 
+   * and posts a drop operation to undo support.
+   */
+  public void drop(final List<? extends Selectable> items, View destinationView, float dx, float dy) {
+    addItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
   }
 
   /**
    * Adds items to home.
    */
   private void addItems(final List<? extends Selectable> items, 
-                        float dx, float dy, final String presentationNameKey) {
+                        float dx, float dy, final boolean isDropInPlanView, 
+                        final String presentationNameKey) {
     if (!items.isEmpty()) {
       // Always use selection mode after a drop or a paste operation
       getPlanController().setMode(PlanController.Mode.SELECTION);
-      // Start a compound edit that adds walls, furniture and dimension lines to home
+      // Start a compound edit that adds walls, furniture, rooms, dimension lines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
@@ -1024,12 +1040,19 @@ public class HomeController implements Controller {
           piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
         }
       }
+      getPlanController().moveItems(items, dx, dy);
+      if (isDropInPlanView 
+          && this.preferences.isMagnetismEnabled()
+          && items.size() == 1
+          && addedFurniture.size() == 1) {
+        // Adjust piece when it's dropped in plan view  
+        getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
+      } 
       getPlanController().addFurniture(addedFurniture);
       getPlanController().addWalls(Home.getWallsSubList(items));
       getPlanController().addRooms(Home.getRoomsSubList(items));
       getPlanController().addDimensionLines(Home.getDimensionLinesSubList(items));
       getPlanController().addLabels(Home.getLabelsSubList(items));
-      getPlanController().moveItems(items, dx, dy);
       this.home.setSelectedItems(items);
   
       // Add a undoable edit that will select all the items at redo

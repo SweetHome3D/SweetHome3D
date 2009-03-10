@@ -44,6 +44,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseEvent;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
@@ -96,11 +98,13 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -129,23 +133,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final UserPreferences preferences;
   private float                 scale  = 0.5f;
 
-  private PlanRulerComponent horizontalRuler;
-  private PlanRulerComponent verticalRuler;
+  private PlanRulerComponent    horizontalRuler;
+  private PlanRulerComponent    verticalRuler;
   
-  private final Cursor       rotationCursor;
-  private final Cursor       elevationCursor;
-  private final Cursor       heightCursor;
-  private final Cursor       resizeCursor;
-  private final Cursor       duplicationCursor;
-  private Rectangle2D        rectangleFeedback;
+  private final Cursor          rotationCursor;
+  private final Cursor          elevationCursor;
+  private final Cursor          heightCursor;
+  private final Cursor          resizeCursor;
+  private final Cursor          duplicationCursor;
+  private Rectangle2D           rectangleFeedback;
   private Class<? extends Selectable> alignedObjectClass;
-  private Selectable         alignedObjectFeedback;
-  private Point2D            locationFeeback;
-  private boolean            showPointFeedback;
-  private boolean            selectionScrollUpdated;
-  private JToolTip           toolTip;
-  private JWindow            toolTipWindow;
-  private boolean            resizeIndicatorVisible;
+  private Selectable            alignedObjectFeedback;
+  private Point2D               locationFeeback;
+  private boolean               showPointFeedback;
+  private List<Selectable>      draggedItemsFeedback;
+  private List<DimensionLine>   dimensionLinesFeedback;
+  private boolean               selectionScrollUpdated;
+  private JToolTip              toolTip;
+  private JWindow               toolTipWindow;
+  private boolean               resizeIndicatorVisible;
   
   private List<HomePieceOfFurniture>  sortedHomeFurniture;
   private List<Room>                  sortedHomeRooms;
@@ -156,6 +162,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private boolean            planBoundsCacheValid;  
   private BufferedImage      backgroundImageCache;
   private Area               wallsAreaCache;
+
+
 
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
@@ -324,7 +332,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Set JComponent default properties
     setOpaque(true);
     // Add listeners
-    addModelListeners(home, preferences);
+    addModelListeners(home, preferences, controller);
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
@@ -351,7 +359,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Adds home items and selection listeners on this component to receive  
    * changes notifications from home. 
    */
-  private void addModelListeners(Home home, UserPreferences preferences) {
+  private void addModelListeners(Home home, UserPreferences preferences, 
+                                 final PlanController controller) {
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
@@ -889,6 +898,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             itemBounds.add(point [0], point [1]);
           }
         }
+        if (item instanceof HomeDoorOrWindow) {
+          HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
+          // Add to bounds door and window sashes 
+          for (Sash sash : doorOrWindow.getSashes()) {
+            itemBounds.add(getDoorOrWindowSashShape(doorOrWindow, sash).getBounds2D());
+          }
+        }
       }
       if (item instanceof Room) {
         // Add to bounds the displayed name and area bounds of each room 
@@ -1296,11 +1312,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float mainGridSize;
     float [] gridSizes;
     if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
-      // Use a grid in inch and foot with a minimun grid increment of 1 inch
+      // Use a grid in inch and foot with a minimum grid increment of 1 inch
       mainGridSize = 2.54f * 12; // 1 foot
       gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
     } else {
-      // Use a grid in cm and meters with a minimun grid increment of 1 cm
+      // Use a grid in cm and meters with a minimum grid increment of 1 cm
       mainGridSize = 100;
       gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100};
     }
@@ -1347,6 +1363,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
+    
     Color selectionColor = getSelectionColor(); 
     Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
         selectionColor.getBlue(), 128);
@@ -1358,28 +1375,49 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
         new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
     
+    if (this.sortedHomeFurniture == null) {
+      // Sort home furniture in elevation order
+      this.sortedHomeFurniture = 
+          new ArrayList<HomePieceOfFurniture>(this.home.getFurniture());
+      Collections.sort(this.sortedHomeFurniture,
+          new Comparator<HomePieceOfFurniture>() {
+            public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+              float elevationDelta = piece1.getElevation() - piece2.getElevation();
+              if (elevationDelta < 0) {
+                return -1;
+              } else if (elevationDelta > 0) {
+                return 1;
+              } else {
+                return 0;
+              }
+            }
+          });
+    }
+    
     paintRooms(g2D, selectedItems, planScale, foregroundColor, paintMode);
     paintWalls(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
-    paintFurniture(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
-    paintDimensionLines(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
-        locationFeedbackStroke, planScale, foregroundColor, paintMode);
+    paintFurniture(g2D, this.sortedHomeFurniture, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
+    paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
+        selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
+        locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
     // Paint rooms text, furniture name and labels last to ensure they are not hidden
     paintRoomsNameAndArea(g2D, selectedItems, planScale, foregroundColor, paintMode);
-    paintFurnitureName(g2D, selectedItems, planScale, foregroundColor, paintMode);
-    paintLabels(g2D, selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+    paintFurnitureName(g2D, this.sortedHomeFurniture, selectedItems, planScale, foregroundColor, paintMode);
+    paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
         planScale, foregroundColor, paintMode);
     
     if (paintMode == PaintMode.PAINT) {
-      paintSelectedRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
-      paintSelectedWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
-      paintSelectedFurnitureOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+      paintFurnitureOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
       
       paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, backgroundColor, foregroundColor);
       
+      // Paint alignment feedback depending on aligned object class
       if (this.alignedObjectClass != null) {
         if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
           paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, 
@@ -1393,6 +1431,29 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               selectionColor, locationFeedbackStroke, planScale);
         }
       }
+      if (this.dimensionLinesFeedback != null) {
+        List<Selectable> emptySelection = Collections.emptyList();        
+        paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection, 
+            null, null, null, locationFeedbackStroke, planScale, 
+            backgroundColor, selectionColor, paintMode, true);
+      }
+      
+      if (this.draggedItemsFeedback != null) {
+        paintDimensionLines(g2D, Home.getDimensionLinesSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null, 
+            locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
+        paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+            planScale, foregroundColor, paintMode);
+        paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+        paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, foregroundColor, paintMode);
+        paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+      }
+      
       paintRectangleFeedback(g2D, selectionColor, planScale);
     }
   }
@@ -1514,41 +1575,47 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints selected rooms outline. 
+   * Paints the outline of rooms among <code>items</code> and indicators if 
+   * <code>items</code> contains only one room and indicator paint isn't <code>null</code>. 
    */
-  private void paintSelectedRoomsOutline(Graphics2D g2D, List<Selectable> selectedItems,   
+  private void paintRoomsOutline(Graphics2D g2D, List<Selectable> items,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, float planScale, Color foregroundColor) {
-    Collection<Room> selectedRooms = Home.getRoomsSubList(selectedItems);
+    Collection<Room> rooms = Home.getRoomsSubList(items);
     AffineTransform previousTransform = g2D.getTransform();
     float scaleInverse = 1 / planScale;
     // Draw selection border
-    for (Room room : selectedRooms) {
+    for (Room room : rooms) {
       g2D.setPaint(selectionOutlinePaint);
       g2D.setStroke(selectionOutlineStroke);
       g2D.draw(getShape(room.getPoints()));
 
-      // Draw points of the room
-      for (float [] point : room.getPoints()) {
-        g2D.translate(point [0], point [1]);
-        g2D.scale(scaleInverse, scaleInverse);
+      if (indicatorPaint != null) {
         g2D.setPaint(indicatorPaint);         
-        g2D.setStroke(POINT_STROKE);
-        g2D.fill(WALL_POINT);
-        g2D.setTransform(previousTransform);
+        // Draw points of the room
+        for (float [] point : room.getPoints()) {
+          g2D.translate(point [0], point [1]);
+          g2D.scale(scaleInverse, scaleInverse);
+          g2D.setStroke(POINT_STROKE);
+          g2D.fill(WALL_POINT);
+          g2D.setTransform(previousTransform);
+        }
       }
     }
     
     // Draw rooms area
     g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
-    for (Room room : selectedRooms) { 
+    for (Room room : rooms) { 
       g2D.draw(getShape(room.getPoints()));
     }
 
-    // Paint resize indicators of selected room
-    if (selectedRooms.size() == 1) {
-      Room selectedRoom = selectedRooms.iterator().next();
+    // Paint resize indicators of the room if indicator paint exists
+    if (items.size() == 1 
+        && rooms.size() == 1 
+        && indicatorPaint != null) {
+      Room selectedRoom = rooms.iterator().next();
+      g2D.setPaint(indicatorPaint);         
       paintRoomResizeIndicators(g2D, selectedRoom, indicatorPaint, planScale);
       paintRoomNameOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
       paintRoomAreaOffsetIndicator(g2D, selectedRoom, indicatorPaint, planScale);
@@ -1674,64 +1741,69 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints selected walls outline. 
+   * Paints the outline of walls among <code>items</code> and a resize indicator if 
+   * <code>items</code> contains only one wall and indicator paint isn't <code>null</code>. 
    */
-  private void paintSelectedWallsOutline(Graphics2D g2D, List<Selectable> selectedItems,   
+  private void paintWallsOutline(Graphics2D g2D, List<Selectable> items,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, float planScale, Color foregroundColor) {
     float scaleInverse = 1 / planScale;
-    Collection<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
-    Shape wallsArea = getWallsArea(selectedWalls);
+    Collection<Wall> walls = Home.getWallsSubList(items);
+    Shape wallsArea = getWallsArea(walls);
     AffineTransform previousTransform = g2D.getTransform();
-    for (Wall wall : selectedWalls) {
+    for (Wall wall : walls) {
       // Draw selection border
       g2D.setPaint(selectionOutlinePaint);
       g2D.setStroke(selectionOutlineStroke);
       g2D.draw(getShape(wall.getPoints()));
       
-      // Draw start point of the wall
-      g2D.translate(wall.getXStart(), wall.getYStart());
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.setPaint(indicatorPaint);         
-      g2D.setStroke(POINT_STROKE);
-      g2D.fill(WALL_POINT);
+      if (indicatorPaint != null) {
+        // Draw start point of the wall
+        g2D.translate(wall.getXStart(), wall.getYStart());
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.setPaint(indicatorPaint);         
+        g2D.setStroke(POINT_STROKE);
+        g2D.fill(WALL_POINT);
       
-      double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
-          wall.getXEnd() - wall.getXStart());
-      double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
-          wall.getXEnd(), wall.getYEnd()) * planScale;
-      g2D.rotate(wallAngle);
-      // If the distance between start and end points is < 30
-      if (distanceAtScale < 30) { 
-        // Draw only one orientation indicator between the two points
-        g2D.translate(distanceAtScale / 2, 0);
-      } else {
-        // Draw orientation indicator at start of the wall
-        g2D.translate(8, 0);
-      }
-      g2D.draw(WALL_ORIENTATION_INDICATOR);
-      g2D.setTransform(previousTransform);
-      
-      // Draw end point of the wall
-      g2D.translate(wall.getXEnd(), wall.getYEnd());
-      g2D.scale(scaleInverse, scaleInverse);
-      g2D.fill(WALL_POINT);
-      if (distanceAtScale >= 30) { 
-        // Draw orientation indicator at end of the wall
+        double wallAngle = Math.atan2(wall.getYEnd() - wall.getYStart(), 
+            wall.getXEnd() - wall.getXStart());
+        double distanceAtScale = Point2D.distance(wall.getXStart(), wall.getYStart(), 
+            wall.getXEnd(), wall.getYEnd()) * planScale;
         g2D.rotate(wallAngle);
-        g2D.translate(-10, 0);
+        // If the distance between start and end points is < 30
+        if (distanceAtScale < 30) { 
+          // Draw only one orientation indicator between the two points
+          g2D.translate(distanceAtScale / 2, 0);
+        } else {
+          // Draw orientation indicator at start of the wall
+          g2D.translate(8, 0);
+        }
         g2D.draw(WALL_ORIENTATION_INDICATOR);
-      }        
-      g2D.setTransform(previousTransform);
+        g2D.setTransform(previousTransform);
+        
+        // Draw end point of the wall
+        g2D.translate(wall.getXEnd(), wall.getYEnd());
+        g2D.scale(scaleInverse, scaleInverse);
+        g2D.fill(WALL_POINT);
+        if (distanceAtScale >= 30) { 
+          // Draw orientation indicator at end of the wall
+          g2D.rotate(wallAngle);
+          g2D.translate(-10, 0);
+          g2D.draw(WALL_ORIENTATION_INDICATOR);
+        }        
+        g2D.setTransform(previousTransform);
+      }      
     }
     // Draw walls area
     g2D.setPaint(foregroundColor);
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
     g2D.draw(wallsArea);
     
-    // Paint resize indicator of selected wall
-    if (selectedWalls.size() == 1) {
-      paintWallResizeIndicator(g2D, selectedWalls.iterator().next(), indicatorPaint, planScale);
+    // Paint resize indicator of the wall if indicator paint exists
+    if (items.size() == 1 
+        && walls.size() == 1 
+        && indicatorPaint != null) {
+      paintWallResizeIndicator(g2D, walls.iterator().next(), indicatorPaint, planScale);
     }
   }
 
@@ -1806,58 +1878,121 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints home furniture.
    */
-  private void paintFurniture(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
-                              Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
-    if (this.sortedHomeFurniture == null) {
-      // Sort home furniture in elevation order
-      this.sortedHomeFurniture = 
-          new ArrayList<HomePieceOfFurniture>(this.home.getFurniture());
-      Collections.sort(this.sortedHomeFurniture,
-          new Comparator<HomePieceOfFurniture>() {
-            public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-              float elevationDelta = piece1.getElevation() - piece2.getElevation();
-              if (elevationDelta < 0) {
-                return -1;
-              } else if (elevationDelta > 0) {
-                return 1;
-              } else {
-                return 0;
-              }
-            }
-          });
-    }
+  private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture, 
+                              List<Selectable> selectedItems, float planScale, 
+                              Color backgroundColor, Color foregroundColor, PaintMode paintMode) {    
     BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
     // Draw furniture
-    for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
+    for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()) {
         boolean selectedPiece = selectedItems.contains(piece);
         // In clipboard paint mode, paint piece only if it is selected
         if (paintMode != PaintMode.CLIPBOARD
             || selectedPiece) {
           Shape pieceShape = getShape(piece.getPoints());
-          // Fill piece area
-          g2D.setPaint(backgroundColor);
-          g2D.fill(pieceShape);
-          // Draw its icon
-          paintPieceOfFurnitureIcon(g2D, piece, pieceShape, planScale);
+          Shape pieceShape2D;
+          if (piece instanceof HomeDoorOrWindow) {
+            HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+            pieceShape2D = getDoorOrWindowShapeAtWallIntersection(doorOrWindow);
+            paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor);
+          } else {
+            pieceShape2D = pieceShape;
+          }
+          if (backgroundColor != null) {
+            // Fill piece area
+            g2D.setPaint(backgroundColor);
+            g2D.fill(pieceShape2D);
+            // Draw its icon
+            paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale);
+          }
           // Draw its border
           g2D.setPaint(foregroundColor);
           g2D.setStroke(pieceBorderStroke);
-          g2D.draw(pieceShape);
+          g2D.draw(pieceShape2D);
+          if (piece instanceof HomeDoorOrWindow
+              && paintMode == PaintMode.PAINT) {
+            // Draw outline rectangle
+            Composite oldComposite = g2D.getComposite();
+            g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+            g2D.draw(pieceShape);
+            g2D.setComposite(oldComposite);
+          } 
         }
       }
     }
   }
 
   /**
+   * Returns the shape of a door or a window at wall intersection.
+   */
+  private Shape getDoorOrWindowShapeAtWallIntersection(HomeDoorOrWindow doorOrWindow) {
+    // For doors and windows, compute rectangle at wall intersection 
+    float wallThickness = doorOrWindow.getDepth() * doorOrWindow.getWallThickness(); 
+    float wallDistance  = doorOrWindow.getDepth() * doorOrWindow.getWallDistance(); 
+    Rectangle2D doorOrWindowRectangle = new Rectangle2D.Float(
+        doorOrWindow.getX() - doorOrWindow.getWidth() / 2,
+        doorOrWindow.getY() - doorOrWindow.getDepth() / 2 + wallDistance,
+        doorOrWindow.getWidth(), wallThickness);
+    // Apply rotation to the rectangle
+    AffineTransform rotation = new AffineTransform();
+    rotation.setToRotation(doorOrWindow.getAngle(), doorOrWindow.getX(), doorOrWindow.getY());
+    PathIterator it = doorOrWindowRectangle.getPathIterator(rotation);
+    GeneralPath doorOrWindowShape = new GeneralPath();
+    doorOrWindowShape.append(it, false);
+    return doorOrWindowShape;
+  }
+
+  /**
+   * Paints the sashes of a door or a window.
+   */
+  private void paintDoorOrWindowSashes(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
+                                        Color foregroundColor) {
+    BasicStroke sashBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+    g2D.setPaint(foregroundColor);
+    g2D.setStroke(sashBorderStroke);
+    for (Sash sash : doorOrWindow.getSashes()) {
+      g2D.draw(getDoorOrWindowSashShape(doorOrWindow, sash));
+    }  
+  }
+
+  /**
+   * Returns the shape of a sash of a door or a window. 
+   */
+  private GeneralPath getDoorOrWindowSashShape(HomeDoorOrWindow doorOrWindow, 
+                                               Sash sash) {
+    float modelMirroredSign = doorOrWindow.isModelMirrored() ? -1 : 1;
+    float xAxis = modelMirroredSign * sash.getXAxis() * doorOrWindow.getWidth();
+    float yAxis = sash.getYAxis() * doorOrWindow.getDepth();
+    float sashWidth = sash.getWidth() * doorOrWindow.getWidth();
+    float startAngle = (float)Math.toDegrees(sash.getStartAngle());
+    if (doorOrWindow.isModelMirrored()) {
+      startAngle = 180 - startAngle;
+    }
+    float extentAngle = modelMirroredSign * (float)Math.toDegrees(sash.getEndAngle() - sash.getStartAngle());
+    
+    Arc2D arc = new Arc2D.Float(xAxis - sashWidth, yAxis - sashWidth, 
+        2 * sashWidth, 2 * sashWidth, 
+        startAngle, extentAngle, Arc2D.PIE);
+    AffineTransform transformation = new AffineTransform();
+    transformation.translate(doorOrWindow.getX(), doorOrWindow.getY());
+    transformation.rotate(doorOrWindow.getAngle());
+    transformation.translate(modelMirroredSign * -doorOrWindow.getWidth() / 2, -doorOrWindow.getDepth() / 2);
+    PathIterator it = arc.getPathIterator(transformation);
+    GeneralPath sashShape = new GeneralPath();
+    sashShape.append(it, false);
+    return sashShape;
+  }
+
+  /**
    * Paints home furniture visible name.
    */
-  private void paintFurnitureName(Graphics2D g2D, List<Selectable> selectedItems, float planScale, 
+  private void paintFurnitureName(Graphics2D g2D, List<HomePieceOfFurniture> furniture,
+                                  List<Selectable> selectedItems, float planScale, 
                                   Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
     // Draw furniture name
-    for (HomePieceOfFurniture piece : this.sortedHomeFurniture) {
+    for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()
           && piece.isNameVisible()) {
         boolean selectedPiece = selectedItems.contains(piece);
@@ -1885,17 +2020,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Paints selected furniture outline.
+   * Paints the outline of furniture among <code>items</code> and indicators if 
+   * <code>items</code> contains only one piece and indicator paint isn't <code>null</code>. 
    */
-  private void paintSelectedFurnitureOutline(Graphics2D g2D, List<Selectable> selectedItems,  
-                                             Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
-                                             Paint indicatorPaint, float planScale, 
-                                             Color foregroundColor) {
+  private void paintFurnitureOutline(Graphics2D g2D, List<Selectable> items,  
+                                     Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
+                                     Paint indicatorPaint, float planScale, 
+                                     Color foregroundColor) {
     BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-    for (HomePieceOfFurniture piece : Home.getFurnitureSubList(selectedItems)) {
-      if (piece.isVisible()
-          && selectedItems.contains(piece)) {
-        Shape pieceShape = getShape(piece.getPoints());
+    BasicStroke pieceFrontBorderStroke = new BasicStroke(4 * BORDER_STROKE_WIDTH / planScale, 
+        BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+    for (HomePieceOfFurniture piece : Home.getFurnitureSubList(items)) {
+      if (piece.isVisible()) {
+        float [][] points = piece.getPoints();
+        Shape pieceShape = getShape(points);
         
         // Draw selection border
         g2D.setPaint(selectionOutlinePaint);
@@ -1907,8 +2045,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setStroke(pieceBorderStroke);
         g2D.draw(pieceShape);
         
-        if (selectedItems.size() == 1 
-            && selectedItems.get(0) == piece) {
+        // Draw its front face with a thicker line
+        g2D.setStroke(pieceFrontBorderStroke);
+        g2D.draw(new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]));
+        
+        if (items.size() == 1 && indicatorPaint != null) {
           paintPieceOFFurnitureIndicators(g2D, piece, indicatorPaint, planScale);
         }
       }
@@ -1919,17 +2060,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
   private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, 
-                                         Shape pieceShape, float planScale) {
+                                         Shape pieceShape2D, float planScale) {
     Shape previousClip = g2D.getClip();
     // Clip icon drawing into piece shape
-    g2D.clip(pieceShape);
+    g2D.clip(pieceShape2D);
     AffineTransform previousTransform = g2D.getTransform();
     // Get piece icon
     Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
     // Translate to piece center
-    g2D.translate(piece.getX(), piece.getY());
+    final Rectangle bounds = pieceShape2D.getBounds();
+    g2D.translate(bounds.getCenterX(), bounds.getCenterY());
+    float pieceDepth = piece.getDepth();
+    if (piece instanceof HomeDoorOrWindow) {
+      pieceDepth *= ((HomeDoorOrWindow)piece).getWallThickness(); 
+    } 
     // Scale icon to fit in its area
-    float minDimension = Math.min(piece.getWidth(), piece.getDepth());
+    float minDimension = Math.min(piece.getWidth(), pieceDepth);
     float iconScale = Math.min(1 / planScale, minDimension / icon.getIconHeight());
     // If piece model is mirrored, inverse x scale
     if (piece.isModelMirrored()) {
@@ -2010,16 +2156,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints dimension lines. 
    */
-  private void paintDimensionLines(Graphics2D g2D, List<Selectable> selectedItems,   
+  private void paintDimensionLines(Graphics2D g2D, 
+                          Collection<DimensionLine> dimensionLines, List<Selectable> selectedItems,   
                           Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                           Paint indicatorPaint, Stroke extensionLineStroke, float planScale, 
-                          Color foregroundColor, PaintMode paintMode) {
-    Collection<DimensionLine> paintedDimensionLines;
-    if (paintMode != PaintMode.CLIPBOARD) {
-      paintedDimensionLines = this.home.getDimensionLines();
-    } else {
-      // In clipboard paint mode, paint only selected dimension lines
-      paintedDimensionLines = Home.getDimensionLinesSubList(selectedItems);
+                          Color backgroundColor, Color foregroundColor, 
+                          PaintMode paintMode, boolean feedback) {
+    // In clipboard paint mode, paint only selected dimension lines
+    if (paintMode == PaintMode.CLIPBOARD) {
+      dimensionLines = Home.getDimensionLinesSubList(selectedItems);
     }
 
     // Draw dimension lines
@@ -2027,7 +2172,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     BasicStroke dimensionLineStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
     // Change font size
     Font previousFont = g2D.getFont();
-    for (DimensionLine dimensionLine : paintedDimensionLines) {
+    Composite previousComposite = g2D.getComposite();
+    for (DimensionLine dimensionLine : dimensionLines) {
       AffineTransform previousTransform = g2D.getTransform();
       double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
           dimensionLine.getXEnd() - dimensionLine.getXStart());
@@ -2068,20 +2214,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
       g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
       
-      String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
+      float displayedValue = feedback
+          ? this.preferences.getLengthUnit().getMagnetizedLength(dimensionLineLength, getPixelLength())
+          : dimensionLineLength;
+      String lengthText = this.preferences.getLengthUnit().getFormat().format(displayedValue);
       TextStyle lengthStyle = dimensionLine.getLengthStyle();
       if (lengthStyle == null) {
         lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
       }          
-      FontMetrics lengthFontMetrics = getFontMetrics(previousFont, lengthStyle);
-      Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g2D);      
-      // Draw dimension length in middle
-      g2D.setFont(getFont(previousFont, lengthStyle));
-      g2D.drawString(lengthText, 
-          (dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
+      if (feedback) {
+        // Use default for feedback
+        lengthStyle = lengthStyle.deriveStyle(getFont().getSize() / getScale());
+      }
+      Font font = getFont(previousFont, lengthStyle);
+      FontMetrics lengthFontMetrics = getFontMetrics(font, lengthStyle);
+      Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g2D);
+      int fontAscent = lengthFontMetrics.getAscent();
+      g2D.translate((dimensionLineLength - (float)lengthTextBounds.getWidth()) / 2, 
           dimensionLine.getOffset() <= 0 
               ? -lengthFontMetrics.getDescent() - 1
-              : lengthFontMetrics.getAscent() + 1);
+              : fontAscent + 1);
+      if (feedback) {
+        // Draw text outline with half transparent background color
+        g2D.setPaint(backgroundColor);
+        g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f)); 
+        g2D.setStroke(new BasicStroke(3 / planScale));
+        FontRenderContext fontRenderContext = g2D.getFontRenderContext();
+        TextLayout textLayout = new TextLayout(lengthText, font, fontRenderContext);
+        g2D.draw(textLayout.getOutline(new AffineTransform()));
+        g2D.setComposite(previousComposite);
+        g2D.setPaint(foregroundColor);
+      }
+      // Draw dimension length in middle
+      g2D.setFont(font);
+      g2D.drawString(lengthText, 0, 0);
       
       g2D.setTransform(previousTransform);
     }
@@ -2090,7 +2256,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Paint resize indicator of selected dimension line
     if (selectedItems.size() == 1 
         && selectedItems.get(0) instanceof DimensionLine
-        && paintMode == PaintMode.PAINT) {
+        && paintMode == PaintMode.PAINT
+        && indicatorPaint != null) {
       paintDimensionLineResizeIndicator(g2D, (DimensionLine)selectedItems.get(0), indicatorPaint, planScale);
     }
   }
@@ -2144,13 +2311,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints home labels.
    */
-  private void paintLabels(Graphics2D g2D, List<Selectable> selectedItems, 
+  private void paintLabels(Graphics2D g2D, Collection<Label> labels, List<Selectable> selectedItems, 
                            Paint selectionOutlinePaint, Stroke selectionOutlineStroke, 
                            float planScale, Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
     // Draw labels
-    for (Label label : this.home.getLabels()) {
+    for (Label label : labels) {
       boolean selectedLabel = selectedItems.contains(label);
       // In clipboard paint mode, paint label only if it is selected
       if (paintMode != PaintMode.CLIPBOARD
@@ -2497,7 +2664,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                            Color backgroundColor, Color foregroundColor) {
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera == this.home.getCamera()) {
-      AffineTransform oldTransform = g2D.getTransform();
+      AffineTransform previousTransform = g2D.getTransform();
       g2D.translate(camera.getX(), camera.getY());
       g2D.rotate(camera.getYaw());
   
@@ -2547,7 +2714,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       cameraFieldOfViewAngle.moveTo(-xStartAngle, yStartAngle);
       cameraFieldOfViewAngle.lineTo(-xEndAngle, yEndAngle);
       g2D.draw(cameraFieldOfViewAngle);
-      g2D.setTransform(oldTransform);
+      g2D.setTransform(previousTransform);
   
       // Paint resize indicator of selected camera
       if (selectedItems.size() == 1 
@@ -2620,14 +2787,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     repaint();
   }
   
-  /**
-   * Deletes rectangle feed back.
-   */
-  public void deleteRectangleFeedback() {
-    this.rectangleFeedback = null;
-    repaint();
-  }
-
   /**
    * Ensures selected items are visible at screen and moves
    * scroll bars if needed.
@@ -2900,15 +3059,40 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Deletes the alignment feedback. 
+   * Sets the feedback of dragged items drawn during a drag and drop operation, 
+   * initiated from outside of plan view.
    */
-  public void deleteAlignmentFeedback() {
-    this.alignedObjectClass = null;
-    this.alignedObjectFeedback = null;
-    this.locationFeeback = null;
+  public void setDraggedItemsFeedback(List<Selectable> draggedItems) {
+    this.draggedItemsFeedback = draggedItems;
     repaint();
   }
 
+  /**
+   * Sets the given dimension lines to be drawn as feedback.
+   */
+  public void setDimensionLinesFeedback(List<DimensionLine> dimensionLines) {
+    this.dimensionLinesFeedback = dimensionLines;
+    repaint();
+  }
+
+  /**
+   * Deletes all elements shown as feedback.
+   */
+  public void deleteFeedback() {
+    deleteToolTipFeedback();
+    this.rectangleFeedback = null;
+    
+    this.alignedObjectClass = null;
+    this.alignedObjectFeedback = null;
+    this.locationFeeback = null;
+    
+    this.draggedItemsFeedback = null;
+
+    this.dimensionLinesFeedback = null;
+    repaint();
+  }
+
+  
   // Scrollable implementation
   public Dimension getPreferredScrollableViewportSize() {
     return getPreferredSize();

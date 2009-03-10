@@ -32,31 +32,32 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   private static final float [][] INDENTITY_ROTATION = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
-  private final String     id;
-  private final String     name;
-  private final String     description;
-  private final Content    icon;
-  private final Content    model;
-  private final float      width;
-  private final float      depth;
-  private final float      height;
-  private final boolean    proportional;
-  private final float      elevation;
-  private final boolean    movable;
-  private final boolean    doorOrWindow;
-  private final float [][] modelRotation;
-  private final String     creator;
-  private final boolean    backFaceShown;
-  private final Integer    color;
-  private final float      iconYaw;
-  private final boolean    modifiable;
-  private final boolean    resizable;
-  private final BigDecimal price;
-  private final BigDecimal valueAddedTaxPercentage;
+  private final String                 id;
+  private final String                 name;
+  private final String                 description;
+  private final Content                icon;
+  private final Content                model;
+  private final float                  width;
+  private final float                  depth;
+  private final float                  height;
+  private final boolean                proportional;
+  private final float                  elevation;
+  private final boolean                movable;
+  private final boolean                doorOrWindow;
+  private final float [][]             modelRotation;
+  private final String                 creator;
+  private final boolean                backFaceShown;
+  private final Integer                color;
+  private final float                  iconYaw;
+  private final boolean                modifiable;
+  private final boolean                resizable;
+  private final BigDecimal             price;
+  private final BigDecimal             valueAddedTaxPercentage;
 
-  private FurnitureCategory  category;
+  private FurnitureCategory            category;
 
   private static final Collator COMPARATOR = Collator.getInstance();
+
 
   /**
    * Creates a catalog piece of furniture.
@@ -68,11 +69,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param height  the height in centimeters of the new piece
    * @param movable if <code>true</code>, the new piece is movable
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
+   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   *             parameter since a catalog door and window is supposed to be an instance 
+   *             of {@link CatalogDoorOrWindow} 
    */
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, 
                                  boolean movable, boolean doorOrWindow) {
-    this(null, name, null, icon, model, width, depth, height, 0, movable, doorOrWindow, null, 
+    this(null, name, null, icon, model, width, depth, height, 0, movable, doorOrWindow, null,
         INDENTITY_ROTATION, null, false, true, null, null, (float)Math.PI / 8, true, false);
   }
 
@@ -92,16 +96,47 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
    * @param creator the creator of the model
    * @param resizable if <code>true</code>, the size of the new piece may be edited
-   * @param price the price of the new piece of <code>null</code> 
+   * @param price the price of the new piece or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
-   *             price of the new piece of <code>null</code> 
+   *             price of the new piece or <code>null</code>
+   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   *             parameter since a catalog door and window is supposed to be an instance 
+   *             of {@link CatalogDoorOrWindow} 
    */
   public CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
                                  boolean movable, boolean doorOrWindow, 
                                  float [][] modelRotation, String creator,
                                  boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
-    this(id, name, description, icon, model, width, depth, height, elevation, movable, doorOrWindow, null, 
+    this(id, name, description, icon, model, width, depth, height, elevation, movable, doorOrWindow, null,
+        modelRotation, creator, false, resizable, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
+  }
+         
+  /**
+   * Creates an unmodifiable catalog piece of furniture of the default catalog.
+   * @param id    the id of the new piece or <code>null</code>
+   * @param name  the name of the new piece
+   * @param description the description of the new piece 
+   * @param icon an URL to the icon file of the new piece
+   * @param model an URL to the 3D model file of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new piece may be edited
+   * @param price the price of the new piece or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new piece or <code>null</code> 
+   * @since 1.6
+   */
+  public CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
+                                 float width, float depth, float height, float elevation, 
+                                 boolean movable, float [][] modelRotation, String creator,
+                                 boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+    this(id, name, description, icon, model, width, depth, height, elevation, movable, false, null,
         modelRotation, creator, false, resizable, price, valueAddedTaxPercentage, (float)Math.PI / 8, true, false);
   }
          
@@ -121,6 +156,9 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param backFaceShown <code>true</code> if back face should be shown
    * @param iconYaw the yaw angle used to create the piece icon
    * @param proportional if <code>true</code>, size proportions will be kept 
+   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   *             parameter since a catalog door and window is supposed to be an instance 
+   *             of {@link CatalogDoorOrWindow} 
    */
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
@@ -131,10 +169,36 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
         color, modelRotation, null, backFaceShown, true, null, null, iconYaw, proportional, true);
   }
   
+  /**
+   * Creates a modifiable catalog piece of furniture with all its values.
+   * @param name  the name of the new piece
+   * @param icon an URL to the icon file of the new piece
+   * @param model an URL to the 3D model file of the new piece
+   * @param width  the width in centimeters of the new piece
+   * @param depth  the depth in centimeters of the new piece
+   * @param height  the height in centimeters of the new piece
+   * @param elevation  the elevation in centimeters of the new piece
+   * @param movable if <code>true</code>, the new piece is movable
+   * @param color the color of the piece as RGB code or <code>null</code> if piece color is unchanged
+   * @param modelRotation the rotation 3 by 3 matrix applied to the piece model
+   * @param backFaceShown <code>true</code> if back face should be shown
+   * @param iconYaw the yaw angle used to create the piece icon
+   * @param proportional if <code>true</code>, size proportions will be kept
+   * @since 1.6 
+   */
+  public CatalogPieceOfFurniture(String name, Content icon, Content model, 
+                                 float width, float depth, float height, float elevation, 
+                                 boolean movable, Integer color,
+                                 float [][] modelRotation, boolean backFaceShown,
+                                 float iconYaw, boolean proportional) {
+    this(null, name, null, icon, model, width, depth, height, elevation, movable, false, 
+        color, modelRotation, null, backFaceShown, true, null, null, iconYaw, proportional, true);
+  }
+  
   private CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
                                   float width, float depth, float height, float elevation, 
-                                  boolean movable, boolean doorOrWindow, Integer color,
-                                  float [][] modelRotation, String creator, boolean backFaceShown,
+                                  boolean movable, boolean doorOrWindow, 
+                                  Integer color, float [][] modelRotation, String creator, boolean backFaceShown,
                                   boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage,
                                   float iconYaw, boolean proportional, boolean modifiable) {
     this.id = id;
@@ -223,11 +287,14 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
 
   /**
    * Returns <code>true</code> if this piece of furniture is a door or a window.
+   * As this method existed before {@linkplain CatalogDoorOrWindow CatalogDoorOrWindow} class,
+   * you shouldn't rely on the value returned by this method to guess if a piece
+   * is an instance of <code>DoorOrWindow</code> class.
    */
   public boolean isDoorOrWindow() {
     return this.doorOrWindow;
   }
-
+  
   /**
    * Returns the icon of this piece of furniture.
    */

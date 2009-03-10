@@ -45,6 +45,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
+import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.Content;
@@ -53,6 +54,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -267,9 +269,16 @@ public class FileUserPreferences extends UserPreferences {
       boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + i, true);
 
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(name, icon, model,
-          width, depth, height, elevation, movable, doorOrWindow,
-          color, modelRotation, backFaceShown, iconYaw, proportional);
+      CatalogPieceOfFurniture piece;
+      if (doorOrWindow) {
+        piece = new CatalogDoorOrWindow(name, icon, model,
+            width, depth, height, elevation, movable, 1, 0, new Sash [0],
+            color, modelRotation, backFaceShown, iconYaw, proportional);
+      } else {
+        piece = new CatalogPieceOfFurniture(name, icon, model,
+            width, depth, height, elevation, movable, 
+            color, modelRotation, backFaceShown, iconYaw, proportional);
+      }
       try {        
         getFurnitureCatalog().add(pieceCategory, piece);
       } catch (IllegalHomonymException ex) {

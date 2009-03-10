@@ -63,6 +63,9 @@ public interface PieceOfFurniture {
 
   /**
    * Returns <code>true</code> if this piece of furniture is a door or a window.
+   * As this method existed before {@linkplain DoorOrWindow DoorOrWindow} interface,
+   * you shouldn't rely on the value returned by this method to guess if a piece
+   * is an instance of <code>DoorOrWindow</code> class.
    */
   public abstract boolean isDoorOrWindow();
 

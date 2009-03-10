@@ -33,6 +33,8 @@ import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
@@ -2137,8 +2139,10 @@ public class HomePane extends JRootPane implements HomeView {
    * components are able to handle.
    */
   public boolean isClipboardEmpty() {
-    return !getToolkit().getSystemClipboard().
-        isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR);
+    Clipboard clipboard = getToolkit().getSystemClipboard();
+    return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
+        || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
+    
   }
 
   /**

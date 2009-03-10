@@ -662,7 +662,11 @@ public class Wall implements Serializable, Selectable {
    * with a given <code>margin</code>.
    */
   private boolean containsShapeAtWithMargin(Shape shape, float x, float y, float margin) {
-    return shape.intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    if (margin == 0) {
+      return shape.contains(x, y);
+    } else {
+      return shape.intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    }
   }
 
   /**

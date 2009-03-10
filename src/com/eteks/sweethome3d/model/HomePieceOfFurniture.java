@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A piece of furniture in {@link Home home}.
+ * A piece of furniture in {@linkplain Home home}.
  * @author Emmanuel Puybaret
  */
 public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable {
@@ -185,32 +185,32 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     }
   }
   
-  private String     catalogId;
-  private String     name;
-  private boolean    nameVisible;
-  private float      nameXOffset;
-  private float      nameYOffset;
-  private TextStyle  nameStyle;
-  private String     description;
-  private Content    icon;
-  private Content    model;
-  private float      width;
-  private float      depth;
-  private float      height;
-  private float      elevation;
-  private boolean    movable;
-  private boolean    doorOrWindow;
-  private Integer    color;
-  private float [][] modelRotation;
-  private boolean    backFaceShown;
-  private boolean    resizable;
-  private BigDecimal price;
-  private BigDecimal valueAddedTaxPercentage;
-  private boolean    visible;
-  private float      x;
-  private float      y;
-  private float      angle;
-  private boolean    modelMirrored;
+  private String                 catalogId;
+  private String                 name;
+  private boolean                nameVisible;
+  private float                  nameXOffset;
+  private float                  nameYOffset;
+  private TextStyle              nameStyle;
+  private String                 description;
+  private Content                icon;
+  private Content                model;
+  private float                  width;
+  private float                  depth;
+  private float                  height;
+  private float                  elevation;
+  private boolean                movable;
+  private boolean                doorOrWindow;
+  private Integer                color;
+  private float [][]             modelRotation;
+  private boolean                backFaceShown;
+  private boolean                resizable;
+  private BigDecimal             price;
+  private BigDecimal             valueAddedTaxPercentage;
+  private boolean                visible;
+  private float                  x;
+  private float                  y;
+  private float                  angle;
+  private boolean                modelMirrored;
 
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
@@ -511,6 +511,9 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   /**
    * Returns <code>true</code> if this piece of furniture is a door or a window.
+   * As this method existed before {@linkplain HomeDoorOrWindow HomeDoorOrWindow} class,
+   * you shouldn't rely on the value returned by this method to guess if a piece
+   * is an instance of <code>DoorOrWindow</code> class.
    */
   public boolean isDoorOrWindow() {
     return this.doorOrWindow;
@@ -748,7 +751,11 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * with a given <code>margin</code>.
    */
   public boolean containsPoint(float x, float y, float margin) {
-    return getShape().intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    if (margin == 0) {
+      return getShape().contains(x, y);
+    } else {
+      return getShape().intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    }
   }
   
   /**

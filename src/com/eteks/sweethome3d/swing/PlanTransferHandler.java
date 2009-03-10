@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Plan transfer handler.
@@ -50,7 +51,8 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   private final HomeController homeController;
   private List<Selectable>     copiedItems;
   private BufferedImage        copiedImage;
-
+  private boolean              isDragging;
+  
   /**
    * Creates a handler able to transfer furniture and walls in plan.
    */
@@ -121,24 +123,80 @@ public class PlanTransferHandler extends LocatedTransferHandler {
   }
 
   /**
-   * Returns <code>true</code> if flavors contains 
-   * {@link HomeTransferableList#HOME_FLAVOR LIST_FLAVOR} flavor
+   * Returns <code>true</code> if <code>flavors</code> contains 
+   * {@link HomeTransferableList#HOME_FLAVOR HOME_FLAVOR} flavor
    * or <code>DataFlavor.javaFileListFlavor</code> flavor.
    */
   @Override
-  public boolean canImport(JComponent destination, DataFlavor [] flavors) {
+  protected boolean canImportFlavor(DataFlavor [] flavors) {
     List<DataFlavor> flavorList = Arrays.asList(flavors);
     return flavorList.contains(HomeTransferableList.HOME_FLAVOR)
         || flavorList.contains(DataFlavor.javaFileListFlavor);
   }
-
+  
   /**
-   * Add to home items contained in <code>transferable</code>.
+   * Notifies home controller that a drag operation started if 
+   * <code>transferable</code> data contains {@link HomeTransferableList#HOME_FLAVOR HOME_FLAVOR} 
+   * flavor and destination is a plan.  
+   */
+  @Override
+  protected void dragEntered(JComponent destination, Transferable transferable) {
+    if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
+        && destination instanceof PlanComponent
+        && this.homeController.getPlanController() != null) {
+      try {
+        List<Selectable> transferedItems = 
+            (List<Selectable>)transferable.getTransferData(HomeTransferableList.HOME_FLAVOR);
+        Point2D dropLocation = getDropModelLocation(destination);
+        this.homeController.getPlanController().startDraggedItems(transferedItems, 
+            (float)dropLocation.getX(), (float)dropLocation.getY());
+        this.isDragging = true;
+      } catch (UnsupportedFlavorException ex) {
+        throw new RuntimeException("Can't import", ex);
+      } catch (IOException ex) {
+        throw new RuntimeException("Can't access to data", ex);
+      }
+    }
+  }
+  
+  /**
+   * Called when <code>transferable</code> data moved in <code>destination</code> component
+   * during a drag and drop operation. Subclasses should override this method if they are
+   * interested by this event.  
+   */
+  @Override
+  protected void dragMoved(JComponent destination, Transferable transferable) {
+    if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
+        && destination instanceof PlanComponent
+        && this.homeController.getPlanController() != null) {
+        Point2D dropLocation = getDropModelLocation(destination);
+      this.homeController.getPlanController().moveMouse( 
+          (float)dropLocation.getX(), (float)dropLocation.getY());
+    }
+  }
+  
+  /**
+   * Called once the cursor left <code>destination</code> component during a drag and drop operation. 
+   * Subclasses should override this method if they are interested by this event.  
+   */
+  @Override
+  protected void dragExited(JComponent destination) {
+    if (this.isDragging) {
+      this.homeController.getPlanController().stopDraggedItems();
+      this.isDragging = false;
+    }
+  }
+  
+  /**
+   * Adds items contained in <code>transferable</code> to home.
    */
   @Override
   public boolean importData(JComponent destination, Transferable transferable) {
-    if (canImport(destination, transferable.getTransferDataFlavors())) {
+    if (canImportFlavor(transferable.getTransferDataFlavors())) {
       try {
+        if (this.isDragging) {
+          dragExited(destination);
+        }
         List<DataFlavor> flavorList = Arrays.asList(transferable.getTransferDataFlavors());
         if (flavorList.contains(HomeTransferableList.HOME_FLAVOR)) {
           return importHomeTransferableList(destination, 
@@ -155,23 +213,26 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     } else {
       return false;
     }
-  }
+  }  
 
-  private boolean importHomeTransferableList(JComponent       destination, 
-                                             List<Selectable> transferedItems) {
+  private boolean importHomeTransferableList(final JComponent destination, 
+                                             final List<Selectable> transferedItems) {
     if (isDrop()) {
       Point2D dropLocation = getDropModelLocation(destination);
-      this.homeController.drop(transferedItems, 
-          (float)dropLocation.getX(), (float)dropLocation.getY());
+      if (destination instanceof View) {
+        this.homeController.drop(transferedItems, (View)destination, 
+            (float)dropLocation.getX(), (float)dropLocation.getY());
+      } else {
+        this.homeController.drop(transferedItems,  
+            (float)dropLocation.getX(), (float)dropLocation.getY());
+      }
     } else {
       this.homeController.paste(transferedItems);
     }
     return true;
   }
   
-  private boolean importFileList(JComponent destination, List<File> files) {
-    // isDrop current implementation doesn't work under Java 5 
-    // for a drag operation coming from outside JVM
+  private boolean importFileList(final JComponent destination, List<File> files) {
     final Point2D dropLocation = isDrop() 
         ? getDropModelLocation(destination)
         : new Point2D.Float();
@@ -184,7 +245,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
       });
     return !importableModels.isEmpty();
   }
-  
+
   /**
    * Returns the drop location converted in model coordinates space.
    */
@@ -193,7 +254,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
     float y = 0;
     if (destination instanceof PlanComponent) {
       PlanComponent planView = (PlanComponent)destination;
-      Point dropLocation = getDropLocation();
+      Point dropLocation = getDropLocation(); 
       SwingUtilities.convertPointFromScreen(dropLocation, planView);
       x = planView.convertXPixelToModel(dropLocation.x);
       y = planView.convertYPixelToModel(dropLocation.y);

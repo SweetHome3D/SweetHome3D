@@ -44,7 +44,9 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1500;
+  public static final long CURRENT_VERSION = 1700;
+  
+  private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
   /**
    * The properties of a home that may change. <code>PropertyChangeListener</code>s added 
@@ -90,6 +92,9 @@ public class Home implements Serializable {
   // The two following fields aren't transient for backward compatibility reasons 
   private HomePieceOfFurniture.SortableProperty       furnitureSortedProperty;
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
+  // The following field is a temporary copy of furniture containing HomeDoorOrWindow instances
+  // created at serialization time for backward compatibility reasons
+  private List<HomePieceOfFurniture>                  furnitureWithDoorsAndWindows; 
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -136,35 +141,45 @@ public class Home implements Serializable {
     init();
     in.defaultReadObject();
     
-    // Restore furnitureSortedProperty from furnitureSortedPropertyName
-    if (this.furnitureSortedPropertyName != null) {
-      try {
-        this.furnitureSortedProperty = 
-            HomePieceOfFurniture.SortableProperty.valueOf(this.furnitureSortedPropertyName);
-      } catch (IllegalArgumentException ex) {
-        // Ignore malformed enum constant 
-      }
-      this.furnitureSortedPropertyName = null;
-    }
-    // Restore furnitureVisibleProperties from furnitureVisiblePropertyNames
-    if (this.furnitureVisiblePropertyNames != null) {
-      this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
-      for (String furnitureVisiblePropertyName : this.furnitureVisiblePropertyNames) {
+    if (KEEP_BACKWARD_COMPATIBLITY) {
+      // Restore furnitureSortedProperty from furnitureSortedPropertyName
+      if (this.furnitureSortedPropertyName != null) {
         try {
-          this.furnitureVisibleProperties.add(
-              HomePieceOfFurniture.SortableProperty.valueOf(furnitureVisiblePropertyName));
+          this.furnitureSortedProperty = 
+              HomePieceOfFurniture.SortableProperty.valueOf(this.furnitureSortedPropertyName);
         } catch (IllegalArgumentException ex) {
-          // Ignore malformed enum constants 
+          // Ignore malformed enum constant 
         }
+        this.furnitureSortedPropertyName = null;
       }
-      this.furnitureVisiblePropertyNames = null;
+      // Restore furnitureVisibleProperties from furnitureVisiblePropertyNames
+      if (this.furnitureVisiblePropertyNames != null) {
+        this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+        for (String furnitureVisiblePropertyName : this.furnitureVisiblePropertyNames) {
+          try {
+            this.furnitureVisibleProperties.add(
+                HomePieceOfFurniture.SortableProperty.valueOf(furnitureVisiblePropertyName));
+          } catch (IllegalArgumentException ex) {
+            // Ignore malformed enum constants 
+          }
+        }
+        this.furnitureVisiblePropertyNames = null;
+      }
+  
+      // Restore referenced HomeDoorOrWindow instances stored in a separate field 
+      // for backward compatibility reasons
+      if (this.furnitureWithDoorsAndWindows != null) {
+        this.furniture = this.furnitureWithDoorsAndWindows;
+        this.furnitureWithDoorsAndWindows = null;
+      }
+
+      // Restore environment fields from home fields for compatibility reasons
+      this.environment.setGroundColor(this.groundColor);
+      this.environment.setGroundTexture(this.groundTexture);
+      this.environment.setSkyColor(this.skyColor);
+      this.environment.setLightColor(this.lightColor);
+      this.environment.setWallsAlpha(this.wallsAlpha);
     }
-    // Restore environment fields from home fields for compatibility reasons
-    this.environment.setGroundColor(this.groundColor);
-    this.environment.setGroundTexture(this.groundTexture);
-    this.environment.setSkyColor(this.skyColor);
-    this.environment.setLightColor(this.lightColor);
-    this.environment.setWallsAlpha(this.wallsAlpha);
   }
 
   private void init() {
@@ -213,42 +228,63 @@ public class Home implements Serializable {
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     this.version = CURRENT_VERSION;
         
-    HomePieceOfFurniture.SortableProperty currentFurnitureSortedProperty = this.furnitureSortedProperty;
-    if (this.furnitureSortedProperty != null) {
-      this.furnitureSortedPropertyName = this.furnitureSortedProperty.name();
-      // Store in furnitureSortedProperty only backward compatible property
-      if (!isFurnitureSortedPropertyBackwardCompatible(this.furnitureSortedProperty)) {
-        this.furnitureSortedProperty = null;
+    if (KEEP_BACKWARD_COMPATIBLITY) {
+      HomePieceOfFurniture.SortableProperty currentFurnitureSortedProperty = this.furnitureSortedProperty;
+      if (this.furnitureSortedProperty != null) {
+        this.furnitureSortedPropertyName = this.furnitureSortedProperty.name();
+        // Store in furnitureSortedProperty only backward compatible property
+        if (!isFurnitureSortedPropertyBackwardCompatible(this.furnitureSortedProperty)) {
+          this.furnitureSortedProperty = null;
+        }
       }
-    }
-    
-    this.furnitureVisiblePropertyNames = new ArrayList<String>();
-    // Store in furnitureVisibleProperties only backward compatible properties
-    List<HomePieceOfFurniture.SortableProperty> currentFurnitureVisibleProperties = this.furnitureVisibleProperties;
-    this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
-    for (HomePieceOfFurniture.SortableProperty visibleProperty : currentFurnitureVisibleProperties) {
-      this.furnitureVisiblePropertyNames.add(visibleProperty.name());
-      if (isFurnitureSortedPropertyBackwardCompatible(visibleProperty)) {
-        this.furnitureVisibleProperties.add(visibleProperty);
+      
+      this.furnitureVisiblePropertyNames = new ArrayList<String>();
+      // Store in furnitureVisibleProperties only backward compatible properties
+      List<HomePieceOfFurniture.SortableProperty> currentFurnitureVisibleProperties = this.furnitureVisibleProperties;
+      this.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>();
+      for (HomePieceOfFurniture.SortableProperty visibleProperty : currentFurnitureVisibleProperties) {
+        this.furnitureVisiblePropertyNames.add(visibleProperty.name());
+        if (isFurnitureSortedPropertyBackwardCompatible(visibleProperty)) {
+          this.furnitureVisibleProperties.add(visibleProperty);
+        }
       }
+    
+      // Store referenced HomeDoorOrWindow instances in a separate field 
+      // for backward compatibility reasons (version < 1.7)
+      this.furnitureWithDoorsAndWindows = this.furniture;
+      // Serialize a furniture field that contains only HomePieceOfFurniture instances
+      this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
+      for (HomePieceOfFurniture piece : this.furnitureWithDoorsAndWindows) {
+        if (piece.getClass() == HomePieceOfFurniture.class) {
+          this.furniture.add(piece);
+        } else {
+          // Create backward compatible instances
+          this.furniture.add(new HomePieceOfFurniture(piece));
+        }
+      }
+
+      // Store environment fields in home fields for compatibility reasons
+      this.groundColor = this.environment.getGroundColor();
+      this.groundTexture = this.environment.getGroundTexture();
+      this.skyColor = this.environment.getSkyColor();
+      this.lightColor = this.environment.getLightColor();
+      this.wallsAlpha = this.environment.getWallsAlpha();
+
+      out.defaultWriteObject();
+    
+      // Restore current values
+      this.furniture = this.furnitureWithDoorsAndWindows;
+      this.furnitureWithDoorsAndWindows = null;
+    
+      this.furnitureSortedProperty = currentFurnitureSortedProperty;
+      this.furnitureVisibleProperties = currentFurnitureVisibleProperties;
+      // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
+      // (they are used only for serialization)
+      this.furnitureSortedPropertyName = null;
+      this.furnitureVisiblePropertyNames = null;
+    } else {
+      out.defaultWriteObject();
     }
-    
-    // Store environment fields in home fields for compatibility reasons
-    this.groundColor = this.environment.getGroundColor();
-    this.groundTexture = this.environment.getGroundTexture();
-    this.skyColor = this.environment.getSkyColor();
-    this.lightColor = this.environment.getLightColor();
-    this.wallsAlpha = this.environment.getWallsAlpha();
-    
-    out.defaultWriteObject();
-    
-    // Restore current values
-    this.furnitureSortedProperty = currentFurnitureSortedProperty;
-    this.furnitureVisibleProperties = currentFurnitureVisibleProperties;
-    // Set furnitureSortedPropertyName and furnitureVisiblePropertyNames to null
-    // (they are used only for serialization)
-    this.furnitureSortedPropertyName = null;
-    this.furnitureVisiblePropertyNames = null;
   }
   
   /**

@@ -25,8 +25,8 @@
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
 	<tr>
-	<td><p>Pour ajouter du mobilier &agrave; votre logement, glissez-d&eacute;posez un ou plusieurs meubles du catalogue vers le plan du logement
-	    ou la liste des meubles. </p>
+	<td><p>Pour ajouter des portes, des fen&ecirc;tres ou des meubles &agrave; votre logement, glissez-d&eacute;posez un ou
+	    plusieurs meubles du catalogue vers le plan du logement ou la liste des meubles. </p>
 	  <p align="center"><img src="images/addingFurniture.png" alt="Adding furniture" width="432" height="179"></p>
 	  <p align="left">Vous pouvez aussi s&eacute;lectionner des meubles dans le catalogue, puis choisir <i>Meubles &gt; Ajouter
       au logement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </i>	    ou
@@ -35,14 +35,18 @@
 	    <p align="left"><img src="../images/addToHomeTool.png" alt="Add to home tool" width="24" height="24" align="absmiddle">&nbsp;Outil <i>Ajouter
 	        au logement</i></p>
 	    </blockquote>	  
-	  <p align="left">Quand les meubles sont d&eacute;pos&eacute;s dans le plan, la position de leur coin sup&eacute;rieur gauche
-	    est au point o&ugrave; vous rel&acirc;chez le bouton de la souris.<br>
-	      Quand les meubles sont d&eacute;pos&eacute;s dans la liste des meubles ou ajout&eacute;s avec le menu <i>Meubles &gt; Ajouter
-	      au logement</i>,
-      la position de leur coin sup&eacute;rieur gauche est au point (0, 0).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </p>
-	    <p align="left">Les meubles ajout&eacute;s au logement sont s&eacute;lectionn&eacute;s et dessin&eacute;s simultan&eacute;ment dans la liste des meubles,
-	      dans le plan et dans la vue 3D. Pendant la dur&eacute;e de chargement du mod&egrave;le 3D des meubles ajout&eacute;s, ces meubles sont
-	      repr&eacute;sent&eacute;s sous la forme d'une bo&icirc;te blanche dans la vue 3D. </p></td>
+	  <p align="left">Quand les meubles sont d&eacute;pos&eacute;s dans la liste des meubles ou ajout&eacute;s avec le menu <i>Meubles &gt; Ajouter
+      au logement                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </i>, la position de leur coin sup&eacute;rieur
+      gauche est au point (0, 0). <br>
+      Quand les meubles sont d&eacute;pos&eacute;s dans le plan, la position de leur coin sup&eacute;rieur gauche
+	      est au point o&ugrave; vous rel&acirc;chez le bouton de la souris. Quand <b>un</b> meuble est d&eacute;pos&eacute;e avec
+	      le curseur de la souris sur un mur, son orientation et sa profondeur s'adaptent automatiquement
+	       &agrave; l'orientation et &agrave; l'&eacute;paisseur du mur si c'est une porte et une fen&ecirc;tre, tandis qu'un
+       meuble d'un autre type est orient&eacute; de telle fa&ccedil;on que sa face arri&egrave;re soit contre le mur.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </p>
+	  <p align="left">Les meubles ajout&eacute;s au logement sont s&eacute;lectionn&eacute;s et dessin&eacute;s simultan&eacute;ment
+	      dans la liste des meubles, dans le plan et dans la vue 3D. Pendant la dur&eacute;e de chargement du mod&egrave;le
+	      3D des meubles ajout&eacute;s, ces meubles sont repr&eacute;sent&eacute;s sous la forme d'une bo&icirc;te blanche
+	      dans la vue 3D. </p></td>
 	</tr>
 </table>
 <div id="taskbox">
@@ -68,6 +72,25 @@
               <p>Un meuble de type porte ou fen&ecirc;tre indique &agrave; Sweet Home 3D de trouer automatiquement les murs
                 &agrave; l'endroit de leur intersection avec les portes ou fen&ecirc;tres.
                 Ce calcul n'est pas effectu&eacute; pour les autres types de meubles. </td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>Si un objet est d&eacute;pos&eacute; sur un autre, son &eacute;l&eacute;vation sera calcul&eacute;e pour
+                que cet objet apparaisse  sur le dessus du second, quand son rectangle de s&eacute;lection est inclus dans
+                celui de l'autre objet et que son &eacute;l&eacute;vation par d&eacute;faut est nulle (au niveau du sol).</td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
+              <p>L'orientation, la profondeur et l'&eacute;l&eacute;vation d'un meuble ajout&eacute; n'est calcul&eacute;e
+                que quand le magn&eacute;tisme
+                dans le panneau des <a href="editingPreferences.html">pr&eacute;f&eacute;rences</a> est activ&eacute;.</p>
+            </td>
           </tr>
           <tr valign="top">
             <td>

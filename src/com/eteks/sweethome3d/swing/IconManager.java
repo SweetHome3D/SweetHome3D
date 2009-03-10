@@ -86,7 +86,8 @@ public class IconManager {
    * Returns an icon read from <code>content</code> and rescaled at a given <code>height</code>.
    * @param content an objet containing an image
    * @param height  the desired height of the returned icon
-   * @param waitingComponent a waiting component
+   * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
+   *            be read immediately in the current thread.
    */
   public Icon getIcon(Content content, int height, Component waitingComponent) {
     Map<Integer, Icon> contentIcons = this.icons.get(content);
@@ -98,8 +99,12 @@ public class IconManager {
     if (icon == null) {
       if (content == this.errorIconContent ||
           content == this.waitIconContent) {
-        // Load icon immediately in this thread 
+        // Load error and wait icons immediately in this thread 
         icon = createIcon(content, height, null); 
+      } else if (waitingComponent == null) {
+        // Load icon immediately in this thread 
+        icon = createIcon(content, height, 
+            getIcon(this.errorIconContent, height, null)); 
       } else {
         // For content different from error icon and wait icon, 
         // laod it in a different thread with a virtual proxy 

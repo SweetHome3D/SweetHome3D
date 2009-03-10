@@ -35,11 +35,13 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
+import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -48,24 +50,31 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultFurnitureCatalog extends FurnitureCatalog {
-  private static final String ID               = "id#";
-  private static final String NAME             = "name#";
-  private static final String DESCRIPTION      = "description#";
-  private static final String CATEGORY         = "category#";
-  private static final String ICON             = "icon#";
-  private static final String MODEL            = "model#";
-  private static final String MULTI_PART_MODEL = "multiPartModel#";
-  private static final String WIDTH            = "width#";
-  private static final String DEPTH            = "depth#";
-  private static final String HEIGHT           = "height#";
-  private static final String MOVABLE          = "movable#";
-  private static final String DOOR_OR_WINDOW   = "doorOrWindow#";
-  private static final String ELEVATION        = "elevation#";
-  private static final String MODEL_ROTATION   = "modelRotation#";
-  private static final String CREATOR          = "creator#";
-  private static final String RESIZABLE        = "resizable#";
-  private static final String PRICE            = "price#";
-  private static final String VALUE_ADDED_TAX_PERCENTAGE = "valueAddedTaxPercentage#";
+  private static final String ID                              = "id#";
+  private static final String NAME                            = "name#";
+  private static final String DESCRIPTION                     = "description#";
+  private static final String CATEGORY                        = "category#";
+  private static final String ICON                            = "icon#";
+  private static final String MODEL                           = "model#";
+  private static final String MULTI_PART_MODEL                = "multiPartModel#";
+  private static final String WIDTH                           = "width#";
+  private static final String DEPTH                           = "depth#";
+  private static final String HEIGHT                          = "height#";
+  private static final String MOVABLE                         = "movable#";
+  private static final String DOOR_OR_WINDOW                  = "doorOrWindow#";
+  private static final String DOOR_OR_WINDOW_WALL_THICKNESS   = "doorOrWindowWallThickness#";
+  private static final String DOOR_OR_WINDOW_WALL_DISTANCE    = "doorOrWindowWallDistance#";
+  private static final String DOOR_OR_WINDOW_SASH_X_AXIS      = "doorOrWindowSashXAxis#";
+  private static final String DOOR_OR_WINDOW_SASH_Y_AXIS      = "doorOrWindowSashYAxis#";
+  private static final String DOOR_OR_WINDOW_SASH_WIDTH       = "doorOrWindowSashWidth#";
+  private static final String DOOR_OR_WINDOW_SASH_START_ANGLE = "doorOrWindowSashStartAngle#";
+  private static final String DOOR_OR_WINDOW_SASH_END_ANGLE   = "doorOrWindowSashEndAngle#";
+  private static final String ELEVATION                       = "elevation#";
+  private static final String MODEL_ROTATION                  = "modelRotation#";
+  private static final String CREATOR                         = "creator#";
+  private static final String RESIZABLE                       = "resizable#";
+  private static final String PRICE                           = "price#";
+  private static final String VALUE_ADDED_TAX_PERCENTAGE      = "valueAddedTaxPercentage#";
   
   private static final String CONTRIBUTED_FURNITURE_CATALOG_FAMILY = "ContributedFurnitureCatalog";
   private static final String ADDITIONAL_FURNITURE_CATALOG_FAMILY  = "AdditionalFurnitureCatalog";
@@ -176,12 +185,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         // Stop the loop when a key name# doesn't exist
         break;
       }
-      String description = null;
-      try {
-        description = resource.getString(DESCRIPTION + i);
-      } catch (MissingResourceException ex) {
-        // Don't take into account furniture that don't have an ID
-      }
+      String description = getOptionalString(resource, DESCRIPTION + i, null);
       String category = resource.getString(CATEGORY + i);
       Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
       boolean multiPartModel = false;
@@ -195,24 +199,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       float depth = Float.parseFloat(resource.getString(DEPTH + i));
       float height = Float.parseFloat(resource.getString(HEIGHT + i));
       boolean movable = Boolean.parseBoolean(resource.getString(MOVABLE + i));
-      boolean doorOrWindow = Boolean.parseBoolean(
-          resource.getString(DOOR_OR_WINDOW + i));
-      float elevation = 0;
-      try {
-        elevation = Float.parseFloat(resource.getString(ELEVATION + i));
-      } catch (MissingResourceException ex) {
-        // By default elevation is null
-      }
+      boolean doorOrWindow = Boolean.parseBoolean(resource.getString(DOOR_OR_WINDOW + i));
+      float elevation = getOptionalFloat(resource, ELEVATION + i, 0);
       float [][] modelRotation = getModelRotation(resource, MODEL_ROTATION + i);
-      String creator = "eTeks";
-      try {
-        creator = resource.getString(CREATOR + i);
-      } catch (MissingResourceException ex) {
-        // By default creator is eTeks
-      }
-      String id = null;
-      try {
-        id = resource.getString(ID + i);
+      // By default creator is eTeks
+      String creator = getOptionalString(resource, CREATOR + i, "eTeks");
+      String id = getOptionalString(resource, ID + i, null);
+      if (id != null) {
+        // Take into account only furniture that have an ID
         if (identifiedFurniture.contains(id)) {
           continue;
         } else {
@@ -221,8 +215,6 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           // in different furniture properties files)
           identifiedFurniture.add(id);
         }
-      } catch (MissingResourceException ex) {
-        // Don't take into account furniture that don't have an ID
       }
       boolean resizable = true;
       try {
@@ -244,9 +236,22 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
 
       FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
-          width, depth, height, elevation, movable, doorOrWindow, modelRotation, creator, 
-          resizable, price, valueAddedTaxPercentage);
+      CatalogPieceOfFurniture piece;
+      if (doorOrWindow) {
+        float wallThicknessPercentage = getOptionalFloat(
+            resource, DOOR_OR_WINDOW_WALL_THICKNESS + i, depth) / depth;
+        float wallDistancePercentage = getOptionalFloat(
+            resource, DOOR_OR_WINDOW_WALL_DISTANCE + i, 0) / depth;
+        Sash [] sashes = getDoorOrWindowSashes(resource, i, width, depth);
+        piece = new CatalogDoorOrWindow(id, name, description, icon, model,
+            width, depth, height, elevation, movable, 
+            wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
+            resizable, price, valueAddedTaxPercentage);
+      } else {
+        piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
+            width, depth, height, elevation, movable, modelRotation, creator, 
+            resizable, price, valueAddedTaxPercentage);
+      }
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
@@ -274,12 +279,24 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
       categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
       // Try to add piece again to catalog with a suffix indicating its sequence
-      piece = new CatalogPieceOfFurniture(piece.getId(),
-          String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter),
-          piece.getDescription(), piece.getIcon(), piece.getModel(),
-          piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
-          piece.isMovable(), piece.isDoorOrWindow(), piece.getModelRotation(), piece.getCreator(),
-          piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());
+      if (piece instanceof CatalogDoorOrWindow) {
+        CatalogDoorOrWindow doorOrWindow = (CatalogDoorOrWindow) piece;
+        piece = new CatalogDoorOrWindow(doorOrWindow.getId(),
+            String.format(HOMONYM_FURNITURE_FORMAT, doorOrWindow.getName(), pieceHomonymCounter),
+            doorOrWindow.getDescription(), doorOrWindow.getIcon(), doorOrWindow.getModel(),
+            doorOrWindow.getWidth(), doorOrWindow.getDepth(), doorOrWindow.getHeight(), doorOrWindow.getElevation(), 
+            doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
+            doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
+            doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
+            doorOrWindow.isResizable(), doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
+      } else {
+        piece = new CatalogPieceOfFurniture(piece.getId(),
+            String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter),
+            piece.getDescription(), piece.getIcon(), piece.getModel(),
+            piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
+            piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
+            piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());
+      }
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
@@ -319,27 +336,104 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * Returns model rotation parsed from key value.
    */
   private float [][] getModelRotation(ResourceBundle resource, String key) {
-      try {
-        String modelRotationString = resource.getString(key);
-        String [] values = modelRotationString.split(" ", 9);
-        
-        if (values.length == 9) {
-          return new float [][] {{Float.parseFloat(values [0]), 
-                                  Float.parseFloat(values [1]), 
-                                  Float.parseFloat(values [2])}, 
-                                 {Float.parseFloat(values [3]), 
-                                  Float.parseFloat(values [4]), 
-                                  Float.parseFloat(values [5])}, 
-                                 {Float.parseFloat(values [6]), 
-                                  Float.parseFloat(values [7]), 
-                                  Float.parseFloat(values [8])}};
-        } else {
-          return null;
-        }
-      } catch (MissingResourceException ex) {
-        return null;
-      } catch (NumberFormatException ex) {
+    try {
+      String modelRotationString = resource.getString(key);
+      String [] values = modelRotationString.split(" ", 9);
+      
+      if (values.length == 9) {
+        return new float [][] {{Float.parseFloat(values [0]), 
+                                Float.parseFloat(values [1]), 
+                                Float.parseFloat(values [2])}, 
+                               {Float.parseFloat(values [3]), 
+                                Float.parseFloat(values [4]), 
+                                Float.parseFloat(values [5])}, 
+                               {Float.parseFloat(values [6]), 
+                                Float.parseFloat(values [7]), 
+                                Float.parseFloat(values [8])}};
+      } else {
         return null;
       }
+    } catch (MissingResourceException ex) {
+      return null;
+    } catch (NumberFormatException ex) {
+      return null;
+    }
+  }
+  
+  /**
+   * Returns optional door or windows sashes.
+   */
+  private Sash [] getDoorOrWindowSashes(ResourceBundle resource, int index, 
+                                        float doorOrWindowWidth, 
+                                        float doorOrWindowDepth) throws MissingResourceException {
+    Sash [] sashes;
+    String sashXAxisString = getOptionalString(resource, DOOR_OR_WINDOW_SASH_X_AXIS + index, null);
+    if (sashXAxisString != null) {
+      String [] sashXAxisValues = sashXAxisString.split(" ");
+      // If doorOrWindowHingesX#i key exists the 3 other keys with the same count of numbers must exist too
+      String [] sashYAxisValues = resource.getString(DOOR_OR_WINDOW_SASH_Y_AXIS + index).split(" ");
+      if (sashYAxisValues.length != sashXAxisValues.length) {
+        throw new IllegalArgumentException(
+            "Expected " + sashXAxisValues.length + " values in " + DOOR_OR_WINDOW_SASH_Y_AXIS + index + " key");
+      }
+      String [] sashWidths = resource.getString(DOOR_OR_WINDOW_SASH_WIDTH + index).split(" ");
+      if (sashWidths.length != sashXAxisValues.length) {
+        throw new IllegalArgumentException(
+            "Expected " + sashXAxisValues.length + " values in " + DOOR_OR_WINDOW_SASH_WIDTH + index + " key");
+      }
+      String [] sashStartAngles = resource.getString(DOOR_OR_WINDOW_SASH_START_ANGLE + index).split(" ");
+      if (sashStartAngles.length != sashXAxisValues.length) {
+        throw new IllegalArgumentException(
+            "Expected " + sashXAxisValues.length + " values in " + DOOR_OR_WINDOW_SASH_START_ANGLE + index + " key");
+      }
+      String [] sashEndAngles = resource.getString(DOOR_OR_WINDOW_SASH_END_ANGLE + index).split(" ");
+      if (sashEndAngles.length != sashXAxisValues.length) {
+        throw new IllegalArgumentException(
+            "Expected " + sashXAxisValues.length + " values in " + DOOR_OR_WINDOW_SASH_END_ANGLE + index + " key");
+      }
+      
+      sashes = new Sash [sashXAxisValues.length];
+      for (int i = 0; i < sashes.length; i++) {
+        // Create the matching leave, converting cm to percentage of width or depth, and degrees to radians
+        sashes [i] = new Sash(Float.parseFloat(sashXAxisValues [i]) / doorOrWindowWidth, 
+            Float.parseFloat(sashYAxisValues [i]) / doorOrWindowDepth, 
+            Float.parseFloat(sashWidths [i]) / doorOrWindowWidth, 
+            (float)Math.toRadians(Float.parseFloat(sashStartAngles [i])), 
+            (float)Math.toRadians(Float.parseFloat(sashEndAngles [i])));
+      }
+    } else {
+      sashes = new Sash [0];
+    }
+    
+    return sashes;
+  }
+
+  /**
+   * Returns the value of <code>propertyKey</code> in <code>resource</code>, 
+   * or <code>defaultValue</code> if the property doesn't exist.
+   */
+  private String getOptionalString(ResourceBundle resource, 
+                                   String propertyKey,
+                                   String defaultValue) {
+    try {
+      return resource.getString(propertyKey);
+    } catch (MissingResourceException ex) {
+      return defaultValue;
+    }
+  }
+
+  /**
+   * Returns the value of <code>propertyKey</code> in <code>resource</code>, 
+   * or <code>defaultValue</code> if the property doesn't exist.
+   */
+  private float getOptionalFloat(ResourceBundle resource, 
+                                 String propertyKey,
+                                 float defaultValue) {
+    try {
+      return Float.parseFloat(resource.getString(propertyKey));
+    } catch (MissingResourceException ex) {
+      return defaultValue;
+    }
   }
 }
+

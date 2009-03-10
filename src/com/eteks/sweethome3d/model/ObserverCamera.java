@@ -131,7 +131,11 @@ public class ObserverCamera extends Camera implements Selectable {
    * with a given <code>margin</code>.
    */
   public boolean containsPoint(float x, float y, float margin) {
-    return getShape().intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    if (margin == 0) {
+      return getShape().contains(x, y);
+    } else {
+      return getShape().intersects(x - margin, y - margin, 2 * margin, 2 * margin);
+    }
   }
 
   /**
