@@ -38,7 +38,7 @@
   </classPath>
   <jre>
     <path>jre6</path>
-    <minVersion>1.6.0</minVersion>
+    <minVersion>1.7.0</minVersion>
     <maxVersion></maxVersion>
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
@@ -46,12 +46,12 @@
     <opt>-Djava.library.path=lib -Xmx384m</opt>
   </jre>
   <versionInfo>
-    <fileVersion>1.6.0.0</fileVersion>
-    <txtFileVersion>1.6</txtFileVersion>
+    <fileVersion>1.7.0.0</fileVersion>
+    <txtFileVersion>1.7</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2009 eTeks</copyright>
-    <productVersion>1.6.0.0</productVersion>
-    <txtProductVersion>1.6</txtProductVersion>
+    <productVersion>1.7.0.0</productVersion>
+    <txtProductVersion>1.7</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
