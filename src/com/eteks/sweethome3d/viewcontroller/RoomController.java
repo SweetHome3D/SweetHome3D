@@ -579,15 +579,7 @@ public class RoomController implements Controller {
    */
   private static void undoModifyRooms(ModifiedRoom [] modifiedRooms) {
     for (ModifiedRoom modifiedRoom : modifiedRooms) {
-      Room room = modifiedRoom.getRoom();
-      room.setName(modifiedRoom.getName());
-      room.setAreaVisible(modifiedRoom.isAreaVisible());
-      room.setFloorVisible(modifiedRoom.isFloorVisible());
-      room.setFloorColor(modifiedRoom.getFloorColor());
-      room.setFloorTexture(modifiedRoom.getFloorTexture());
-      room.setCeilingVisible(modifiedRoom.isCeilingVisible());
-      room.setCeilingColor(modifiedRoom.getCeilingColor());
-      room.setCeilingTexture(modifiedRoom.getCeilingTexture());
+      modifiedRoom.reset();
     }
   }
   
@@ -620,37 +612,16 @@ public class RoomController implements Controller {
     public Room getRoom() {
       return this.room;
     }
-
-    public String getName() {
-      return this.name;
-    }
     
-    public boolean isAreaVisible() {
-      return this.areaVisible;
-    }
-    
-    public boolean isFloorVisible() {
-      return this.floorVisible;
-    }
-    
-    public Integer getFloorColor() {
-      return this.floorColor;
-    }
-    
-    public HomeTexture getFloorTexture() {
-      return this.floorTexture;
-    }
-
-    public boolean isCeilingVisible() {
-      return this.ceilingVisible;
-    }
-    
-    public Integer getCeilingColor() {
-      return this.ceilingColor;
-    }
-    
-    public HomeTexture getCeilingTexture() {
-      return this.ceilingTexture;
-    }
+    public void reset() {
+      this.room.setName(this.name);
+      this.room.setAreaVisible(this.areaVisible);
+      this.room.setFloorVisible(this.floorVisible);
+      this.room.setFloorColor(this.floorColor);
+      this.room.setFloorTexture(this.floorTexture);
+      this.room.setCeilingVisible(this.ceilingVisible);
+      this.room.setCeilingColor(this.ceilingColor);
+      this.room.setCeilingTexture(this.ceilingTexture);
+    }    
   }
 }

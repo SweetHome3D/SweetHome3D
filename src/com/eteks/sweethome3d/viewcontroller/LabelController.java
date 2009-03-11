@@ -321,8 +321,7 @@ public class LabelController implements Controller {
    */
   private static void undoModifyLabels(ModifiedLabel [] modifiedLabels) {
     for (ModifiedLabel modifiedPiece : modifiedLabels) {
-      Label label = modifiedPiece.getLabel();
-      label.setText(modifiedPiece.getText());      
+      modifiedPiece.reset();
     }
   }
 
@@ -342,8 +341,8 @@ public class LabelController implements Controller {
       return this.label;
     }
     
-    public String getText() {
-      return this.text;
+    public void reset() {
+      this.label.setText(this.text);         
     }
   }
 }
