@@ -30,6 +30,7 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   private final float   wallThickness;
   private final float   wallDistance;
   private final Sash [] sashes;
+  private boolean boundToWall;
 
   /**
    * Creates a home door or window from an existing one.
@@ -71,6 +72,70 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
 
   /**
+   * Returns <code>true</code> if the location and the size of this door or window 
+   * were bound to a wall, last time they were updated. 
+   */
+  public boolean isBoundToWall() {
+    return this.boundToWall;
+  }
+  
+  /**
+   * Sets whether the location and the size of this door or window 
+   * were bound to a wall, last time they were updated. 
+   */
+  public void setBoundToWall(boolean boundToWall) {
+    this.boundToWall = boundToWall;
+  }
+
+  /**
+   * Sets the abscissa of this door or window and 
+   * resets its {@link #isBoundToWall() boundToWall} flag if the abscissa changed. 
+   */
+  @Override
+  public void setX(float x) {
+    if (getX() != x) {
+      this.boundToWall = false;
+    }
+    super.setX(x);
+  }
+
+  /**
+   * Sets the ordinate of this door or window and 
+   * resets its {@link #isBoundToWall() boundToWall} flag if the ordinate changed. 
+   */
+  @Override
+  public void setY(float y) {
+    if (getY() != y) {
+      this.boundToWall = false;
+    }
+    super.setY(y);
+  }
+
+  /**
+   * Sets the angle of this door or window and 
+   * resets its {@link #isBoundToWall() boundToWall} flag if the angle changed. 
+   */
+  @Override
+  public void setAngle(float angle) {
+    if (getAngle() != angle) {
+      this.boundToWall = false;
+    }
+    super.setAngle(angle);
+  }
+  
+  /**
+   * Sets the depth of this door or window and 
+   * resets its {@link #isBoundToWall() boundToWall} flag if the depth changed. 
+   */
+  @Override
+  public void setDepth(float depth) {
+    if (getDepth() != depth) {
+      this.boundToWall = false;
+    }
+    super.setDepth(depth);
+  }
+  
+  /**
    * Returns always <code>true</code>.
    */
   @Override
@@ -83,6 +148,8 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
    */
   @Override
   public HomeDoorOrWindow clone() {
-    return (HomeDoorOrWindow)super.clone();
+    HomeDoorOrWindow clone = (HomeDoorOrWindow)super.clone();
+    clone.boundToWall = false;
+    return clone;    
   }
 }

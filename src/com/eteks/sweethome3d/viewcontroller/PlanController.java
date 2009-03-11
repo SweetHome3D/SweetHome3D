@@ -1272,7 +1272,7 @@ public class PlanController extends FurnitureController implements Controller {
           HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow) piece;
           piece.setDepth(thicknessEpsilon 
               + wallAtPoint.getThickness() / doorOrWindow.getWallThickness());
-          wallDistance += piece.getDepth() * doorOrWindow.getWallDistance(); 
+          wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();           
         } 
         float halfDepth = piece.getDepth() / 2;
         if (distanceToRightSide < distanceToLeftSide) {
@@ -1335,6 +1335,9 @@ public class PlanController extends FurnitureController implements Controller {
       piece.setAngle((float)angle);
       piece.setX((float)xPiece);
       piece.setY((float)yPiece);
+      if (piece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)piece).setBoundToWall(true);
+      }
     }    
     return wallAtPoint;
   }
@@ -2662,7 +2665,8 @@ public class PlanController extends FurnitureController implements Controller {
                                         final float dx, final float dy,
                                         final float oldAngle, 
                                         final float oldDepth,
-                                        final float oldElevation) {
+                                        final float oldElevation,
+                                        final boolean oldDoorOrWindowBoundToWall) {
     final float newAngle = piece.getAngle();
     final float newDepth = piece.getDepth();
     final float newElevation = piece.getElevation();
@@ -2678,6 +2682,9 @@ public class PlanController extends FurnitureController implements Controller {
           piece.setAngle(oldAngle);
           piece.setDepth(oldDepth);
           piece.setElevation(oldElevation);
+          if (piece instanceof HomeDoorOrWindow) {
+            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
+          }
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
         
@@ -2898,7 +2905,9 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Post to undo support an angle change on <code>piece</code>. 
    */
-  private void postPieceOfFurnitureRotation(final HomePieceOfFurniture piece, final float oldAngle) {
+  private void postPieceOfFurnitureRotation(final HomePieceOfFurniture piece, 
+                                            final float oldAngle, 
+                                            final boolean oldDoorOrWindowBoundToWall) {
     final float newAngle = piece.getAngle();
     if (newAngle != oldAngle) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
@@ -2906,6 +2915,9 @@ public class PlanController extends FurnitureController implements Controller {
         public void undo() throws CannotUndoException {
           super.undo();
           piece.setAngle(oldAngle);
+          if (piece instanceof HomeDoorOrWindow) {
+            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
+          }
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
         
@@ -2992,10 +3004,12 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Post to undo support a width and depth change on <code>piece</code>. 
+   * @param b 
    */
   private void postPieceOfFurnitureWidthAndDepthResize(final HomePieceOfFurniture piece, 
                                           final float oldX, final float oldY,
-                                          final float oldWidth, final float oldDepth) {
+                                          final float oldWidth, final float oldDepth, 
+                                          final boolean oldDoorOrWindowBoundToWall) {
     final float newX = piece.getX();
     final float newY = piece.getY();
     final float newWidth = piece.getWidth();
@@ -3010,6 +3024,9 @@ public class PlanController extends FurnitureController implements Controller {
           piece.setY(oldY);
           piece.setWidth(oldWidth);
           piece.setDepth(oldDepth);
+          if (piece instanceof HomeDoorOrWindow) {
+            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
+          }
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }
         
@@ -3750,6 +3767,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                elevationMovedPieceOfFurniture;
     private float                xMovedPieceOfFurniture;
     private float                yMovedPieceOfFurniture;
+    private boolean              movedDoorOrWindowBoundToWall;
     private boolean              magnetismEnabled;
 
     @Override
@@ -3785,6 +3803,8 @@ public class PlanController extends FurnitureController implements Controller {
         this.angleMovedPieceOfFurniture = this.movedPieceOfFurniture.getAngle(); 
         this.depthMovedPieceOfFurniture = this.movedPieceOfFurniture.getDepth(); 
         this.elevationMovedPieceOfFurniture = this.movedPieceOfFurniture.getElevation();
+        this.movedDoorOrWindowBoundToWall = this.movedPieceOfFurniture instanceof HomeDoorOrWindow 
+            && ((HomeDoorOrWindow)this.movedPieceOfFurniture).isBoundToWall();
       }
       this.duplicatedItems = null;
       activateDuplication(wasDuplicationActivatedLastMousePress());
@@ -3808,7 +3828,7 @@ public class PlanController extends FurnitureController implements Controller {
           } else {
             getView().setDimensionLinesFeedback(null);
           }
-        }
+        } 
       } else { 
         moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
       }
@@ -3832,7 +3852,8 @@ public class PlanController extends FurnitureController implements Controller {
                 this.movedPieceOfFurniture.getY() - this.yMovedPieceOfFurniture,
                 this.angleMovedPieceOfFurniture,
                 this.depthMovedPieceOfFurniture,
-                this.elevationMovedPieceOfFurniture);
+                this.elevationMovedPieceOfFurniture,
+                this.movedDoorOrWindowBoundToWall);
           } else {
             postItemsMove(this.movedItems,
                 this.xLastMouseMove - getXLastMousePress(), 
@@ -3856,9 +3877,12 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      // Compute again move piece as if mouse moved
+      // Compute again piece move as if mouse moved
       if (this.movedPieceOfFurniture != null) {
-        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());   
+        if (!this.magnetismEnabled) {
+          getView().deleteFeedback();
+        }
       }
     }
 
@@ -3876,6 +3900,10 @@ public class PlanController extends FurnitureController implements Controller {
           this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
+          if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
+            ((HomeDoorOrWindow)this.movedPieceOfFurniture).setBoundToWall(
+                this.movedDoorOrWindowBoundToWall);
+          }          
         } else {
           moveItems(this.movedItems, 
               getXLastMousePress() - this.xLastMouseMove, 
@@ -4551,6 +4579,7 @@ public class PlanController extends FurnitureController implements Controller {
     private HomePieceOfFurniture selectedPiece;
     private float                angleMousePress;
     private float                oldAngle;
+    private boolean              doorOrWindowBoundToWall;
     private String               rotationToolTipFeedback;
 
     @Override
@@ -4571,6 +4600,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
       this.oldAngle = this.selectedPiece.getAngle();
+      this.doorOrWindowBoundToWall = this.selectedPiece instanceof HomeDoorOrWindow 
+          && ((HomeDoorOrWindow)this.selectedPiece).isBoundToWall();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
       PlanView planView = getView();
@@ -4603,7 +4634,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureRotation(this.selectedPiece, this.oldAngle);
+      postPieceOfFurnitureRotation(this.selectedPiece, this.oldAngle, this.doorOrWindowBoundToWall);
       setState(getSelectionState());
     }
 
@@ -4619,6 +4650,9 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void escape() {
       this.selectedPiece.setAngle(this.oldAngle);
+      if (this.selectedPiece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)this.selectedPiece).setBoundToWall(this.doorOrWindowBoundToWall);
+      }
       setState(getSelectionState());
     }
     
@@ -4831,6 +4865,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                oldY;
     private float                oldWidth;
     private float                oldDepth;
+    private boolean              doorOrWindowBoundToWall;
     private String               widthResizeToolTipFeedback;
     private String               depthResizeToolTipFeedback;
 
@@ -4860,6 +4895,8 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldDepth = this.selectedPiece.getDepth();
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
+      this.doorOrWindowBoundToWall = this.selectedPiece instanceof HomeDoorOrWindow 
+          && ((HomeDoorOrWindow)this.selectedPiece).isBoundToWall();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
@@ -4878,23 +4915,37 @@ public class PlanController extends FurnitureController implements Controller {
       float deltaX = x - this.deltaXToResizePoint - topLeftPoint[0];
       float deltaY = y - this.deltaYToResizePoint - topLeftPoint[1];
       float newWidth =  (float)(deltaY * sin + deltaX * cos);
-      float newDepth =  (float)(deltaY * cos - deltaX * sin);
-
       if (this.magnetismEnabled) {
         newWidth = preferences.getLengthUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
-        newDepth = preferences.getLengthUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
       }
       newWidth = Math.max(newWidth, preferences.getLengthUnit().getMinimumLength());
-      newDepth = Math.max(newDepth, preferences.getLengthUnit().getMinimumLength());
+      
+      float newDepth;
+      if (!this.doorOrWindowBoundToWall
+          || !this.magnetismEnabled) {
+        // Update piece depth if it's not a door a window 
+        // or if it's a a door a window unbound to a wall when magnetism is enabled
+        newDepth = (float)(deltaY * cos - deltaX * sin);
+        if (this.magnetismEnabled) {
+          newDepth = preferences.getLengthUnit().getMagnetizedLength(newDepth, planView.getPixelLength());
+        }
+        newDepth = Math.max(newDepth, preferences.getLengthUnit().getMinimumLength());
+      } else {
+        newDepth = this.oldDepth;
+      }
 
       // Update piece new location
       float newX = (float)(topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
       float newY = (float)(topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
       this.selectedPiece.setX(newX);
       this.selectedPiece.setY(newY);
-      // Update piece new dimension
-      this.selectedPiece.setWidth(newWidth);
+      // Update piece size
       this.selectedPiece.setDepth(newDepth);
+      this.selectedPiece.setWidth(newWidth);
+      if (this.doorOrWindowBoundToWall) {
+        // Maintain boundToWall flag
+        ((HomeDoorOrWindow)this.selectedPiece).setBoundToWall(this.magnetismEnabled);
+      }
 
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
@@ -4904,7 +4955,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void releaseMouse(float x, float y) {
       postPieceOfFurnitureWidthAndDepthResize(this.selectedPiece, this.oldX, this.oldY, 
-          this.oldWidth, this.oldDepth);
+          this.oldWidth, this.oldDepth, this.doorOrWindowBoundToWall);
       setState(getSelectionState());
     }
 
@@ -4923,6 +4974,9 @@ public class PlanController extends FurnitureController implements Controller {
       this.selectedPiece.setY(this.oldY);
       this.selectedPiece.setWidth(this.oldWidth);
       this.selectedPiece.setDepth(this.oldDepth);
+      if (this.selectedPiece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)this.selectedPiece).setBoundToWall(this.doorOrWindowBoundToWall);
+      }
       setState(getSelectionState());
     }
 
@@ -4935,10 +4989,14 @@ public class PlanController extends FurnitureController implements Controller {
     }  
     
     private String getToolTipFeedbackText(float width, float depth) {
-      return "<html>" + String.format(this.widthResizeToolTipFeedback,  
-              preferences.getLengthUnit().getFormatWithUnit().format(width))
-          + "<br>" + String.format(this.depthResizeToolTipFeedback,
-              preferences.getLengthUnit().getFormatWithUnit().format(depth));
+      String toolTipFeedbackText = "<html>" + String.format(this.widthResizeToolTipFeedback,  
+          preferences.getLengthUnit().getFormatWithUnit().format(width));
+      if (!(this.selectedPiece instanceof HomeDoorOrWindow) 
+          || !((HomeDoorOrWindow)this.selectedPiece).isBoundToWall()) {
+        toolTipFeedbackText += "<br>" + String.format(this.depthResizeToolTipFeedback,
+            preferences.getLengthUnit().getFormatWithUnit().format(depth));
+      }
+      return toolTipFeedbackText;
     }
   }
 

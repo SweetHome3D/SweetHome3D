@@ -30,6 +30,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -525,7 +526,12 @@ public class HomeFurnitureController implements Controller {
       ModifiedPieceOfFurniture [] modifiedFurniture = 
           new ModifiedPieceOfFurniture [selectedFurniture.size()]; 
       for (int i = 0; i < modifiedFurniture.length; i++) {
-        modifiedFurniture [i] = new ModifiedPieceOfFurniture(selectedFurniture.get(i));
+        HomePieceOfFurniture piece = selectedFurniture.get(i);
+        if (piece instanceof HomeDoorOrWindow) {
+          modifiedFurniture [i] = new ModifiedDoorOrWindow((HomeDoorOrWindow)piece);
+        } else {
+          modifiedFurniture [i] = new ModifiedPieceOfFurniture(piece);
+        }
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
@@ -658,28 +664,14 @@ public class HomeFurnitureController implements Controller {
    */
   private static void undoModifyFurniture(ModifiedPieceOfFurniture [] modifiedFurniture) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
-      HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
-      piece.setName(modifiedPiece.getName());
-      piece.setNameVisible(modifiedPiece.isNameVisible());
-      piece.setX(modifiedPiece.getX());
-      piece.setY(modifiedPiece.getY());
-      piece.setElevation(modifiedPiece.getElevation());
-      piece.setAngle(modifiedPiece.getAngle());
-      if (piece.isResizable()) {
-        piece.setWidth(modifiedPiece.getWidth());
-        piece.setDepth(modifiedPiece.getDepth());
-        piece.setHeight(modifiedPiece.getHeight());
-        piece.setModelMirrored(modifiedPiece.isModelMirrored());
-      }
-      piece.setColor(modifiedPiece.getColor());
-      piece.setVisible(modifiedPiece.isVisible());
+      modifiedPiece.reset();
     }
   }
 
   /**
    * Stores the current properties values of a modified piece of furniture.
    */
-  private static final class ModifiedPieceOfFurniture {
+  private static class ModifiedPieceOfFurniture {
     private final HomePieceOfFurniture piece;
     private final String  name;
     private final boolean nameVisible;
@@ -713,53 +705,39 @@ public class HomeFurnitureController implements Controller {
     public HomePieceOfFurniture getPieceOfFurniture() {
       return this.piece;
     }
+        
+    public void reset() {
+      this.piece.setName(this.name);
+      this.piece.setNameVisible(this.nameVisible);
+      this.piece.setX(this.x);
+      this.piece.setY(this.y);
+      this.piece.setElevation(this.elevation);
+      this.piece.setAngle(this.angle);
+      if (this.piece.isResizable()) {
+        this.piece.setWidth(this.width);
+        this.piece.setDepth(this.depth);
+        this.piece.setHeight(this.height);
+        this.piece.setModelMirrored(modelMirrored);
+      }
+      this.piece.setColor(this.color);
+      this.piece.setVisible(this.visible);
+    }
+  }
+  
+  /**
+   * Stores the current properties values of a modified door or window.
+   */
+  private static class ModifiedDoorOrWindow extends ModifiedPieceOfFurniture {
+    private final boolean boundToWall;
     
-    public String getName() {
-      return this.name;
-    }
-    
-    public boolean isNameVisible() {
-      return this.nameVisible;
+    public ModifiedDoorOrWindow(HomeDoorOrWindow doorOrWindow) {
+      super(doorOrWindow);
+      this.boundToWall = doorOrWindow.isBoundToWall();
     }
 
-    public float getDepth() {
-      return this.depth;
-    }
-
-    public float getHeight() {
-      return this.height;
-    }
-
-    public float getWidth() {
-      return this.width;
-    }
-
-    public Integer getColor() {
-      return this.color;
-    }
-
-    public boolean isVisible() {
-      return this.visible;
-    }
-    
-    public float getX() {
-      return this.x;
-    }
-
-    public float getY() {
-      return this.y;
-    }
-
-    public float getElevation() {
-      return this.elevation;
-    }
-
-    public float getAngle() {
-      return this.angle;
-    }
-
-    public boolean isModelMirrored() {
-      return this.modelMirrored;
+    public void reset() {
+      super.reset();
+      ((HomeDoorOrWindow)getPieceOfFurniture()).setBoundToWall(this.boundToWall);
     }
   }
 }
