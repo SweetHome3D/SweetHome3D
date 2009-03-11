@@ -1229,7 +1229,7 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
     if (wallAtPoint == null) {
-      float margin = PIXEL_WALL_MARGIN / getScale();
+      float margin = PIXEL_MARGIN / getScale();
       // If not found search if point (x, y) is contained in home walls with a margin
       for (Wall wall : this.home.getWalls()) {
         if (wall.containsPoint(x, y, margin)) {
