@@ -3828,6 +3828,7 @@ public class PlanController extends FurnitureController implements Controller {
           } else {
             getView().setDimensionLinesFeedback(null);
           }
+          adjustPieceOfFurnitureElevationAt(this.movedPieceOfFurniture);
         } 
       } else { 
         moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
