@@ -1502,7 +1502,6 @@ public class PlanController extends FurnitureController implements Controller {
             if (elevation > highestElevation) {
               highestElevation = elevation;
               highestSurroundingPiece = homePiece;
-              break;
             }
           }
         }
