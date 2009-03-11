@@ -43,6 +43,8 @@ import java.util.Map;
 public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Selectable {
   private static final long serialVersionUID = 1L;
   
+  private static final double TWICE_PI = 2 * Math.PI;
+  
   /**
    * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
@@ -668,6 +670,8 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * listeners added to this piece will receive a change notification.
    */
   public void setAngle(float angle) {
+    // Ensure angle is always positive and between 0 and 2 PI
+    angle = (float)((angle % TWICE_PI + TWICE_PI) % TWICE_PI);
     if (angle != this.angle) {
       float oldAngle = this.angle;
       this.angle = angle;
