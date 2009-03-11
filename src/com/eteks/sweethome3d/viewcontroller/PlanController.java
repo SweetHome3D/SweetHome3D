@@ -1409,7 +1409,8 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
-    boolean reverse = Math.cos(piece.getAngle()) < 0;
+    float angle = piece.getAngle();
+    boolean reverse = angle > Math.PI / 2 && angle <= 3 * Math.PI / 2;
     if (wallEndPointJoinedToPieceLeftPoint != null) {
       float offset = (float)Point2D.distance(pieceLeftPoint [0], pieceLeftPoint [1], 
           piecePoints [3][0], piecePoints [3][1]) + 10 / getView().getScale();
