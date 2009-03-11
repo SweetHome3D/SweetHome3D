@@ -1239,21 +1239,27 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
-    if (wallAtPoint != null) {
-      float [][] piecePoints = piece.getPoints();
+    if (wallAtPoint != null) {      
       double wallAngle = Math.atan2(wallAtPoint.getYEnd() - wallAtPoint.getYStart(), 
           wallAtPoint.getXEnd() - wallAtPoint.getXStart());
       boolean magnetizedAtRight = wallAngle > -Math.PI / 2 && wallAngle <= Math.PI / 2; 
       double cosAngle = Math.cos(wallAngle);
       double sinAngle = Math.sin(wallAngle);
-      
       float [][] wallPoints = wallAtPoint.getPoints();
       double distanceToLeftSide = Line2D.ptLineDist(
           wallPoints [0][0], wallPoints [0][1], wallPoints [1][0], wallPoints [1][1], x, y);
       double distanceToRightSide = Line2D.ptLineDist(
           wallPoints [2][0], wallPoints [2][1], wallPoints [3][0], wallPoints [3][1], x, y);
-      double distanceToPieceSide = Line2D.ptLineDist(
+      
+      float [][] piecePoints = piece.getPoints();
+      float pieceAngle = piece.getAngle();
+      double distanceToPieceLeftSide = Line2D.ptLineDist(
           piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
+      double distanceToPieceRightSide = Line2D.ptLineDist(
+          piecePoints [1][0], piecePoints [1][1], piecePoints [2][0], piecePoints [2][1], x, y);
+      double distanceToPieceSide = pieceAngle > (3 * Math.PI / 2 + 1E-6) || pieceAngle < (Math.PI / 2 + 1E-6)
+          ? distanceToPieceLeftSide
+          : distanceToPieceRightSide;
       
       double angle;
       double xPiece;
@@ -1285,7 +1291,6 @@ public class PlanController extends FurnitureController implements Controller {
           angle = wallAngle + Math.PI;
           xPiece = x - sinAngle * (distanceToRightSide + wallDistance);
           yPiece = y + cosAngle * (distanceToRightSide + wallDistance);
-          
           if (magnetizedAtRight) {
             xPiece += cosAngle * (halfWidth - distanceToPieceSide) + sinAngle * halfDepth;
             yPiece += sinAngle * (halfWidth - distanceToPieceSide) - cosAngle * halfDepth;
@@ -3823,8 +3828,8 @@ public class PlanController extends FurnitureController implements Controller {
             postItemsDuplication(this.movedItems, this.duplicatedItems);
           } else if (this.movedPieceOfFurniture != null) {
             postPieceOfFurnitureMove(this.movedPieceOfFurniture,
-                this.xLastMouseMove - getXLastMousePress(), 
-                this.yLastMouseMove - getYLastMousePress(),
+                this.movedPieceOfFurniture.getX() - this.xMovedPieceOfFurniture, 
+                this.movedPieceOfFurniture.getY() - this.yMovedPieceOfFurniture,
                 this.angleMovedPieceOfFurniture,
                 this.depthMovedPieceOfFurniture,
                 this.elevationMovedPieceOfFurniture);
@@ -3865,9 +3870,17 @@ public class PlanController extends FurnitureController implements Controller {
         selectItems(this.duplicatedItems);
       } else if (this.mouseMoved) {
         // Put items back to their initial location
-        moveItems(this.movedItems, 
-            getXLastMousePress() - this.xLastMouseMove, 
-            getYLastMousePress() - this.yLastMouseMove);
+        if (this.movedPieceOfFurniture != null) {
+          this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+          this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
+        } else {
+          moveItems(this.movedItems, 
+              getXLastMousePress() - this.xLastMouseMove, 
+              getYLastMousePress() - this.yLastMouseMove);
+        }
       }
       // Change the state to SelectionState
       setState(getSelectionState());
