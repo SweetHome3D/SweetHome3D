@@ -42,6 +42,7 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
+import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
@@ -51,9 +52,11 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
+import com.eteks.sweethome3d.model.Light;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -841,6 +844,8 @@ public class HomeController implements Controller {
         HomePieceOfFurniture homePiece;
         if (piece instanceof CatalogDoorOrWindow) {
           homePiece = new HomeDoorOrWindow((DoorOrWindow)piece);
+        } else if (piece instanceof CatalogLight) {
+          homePiece = new HomeLight((Light)piece);
         } else {
           homePiece = new HomePieceOfFurniture(piece);
         }

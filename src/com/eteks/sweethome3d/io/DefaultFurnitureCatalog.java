@@ -36,11 +36,13 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
+import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
+import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
@@ -69,6 +71,10 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String DOOR_OR_WINDOW_SASH_WIDTH       = "doorOrWindowSashWidth#";
   private static final String DOOR_OR_WINDOW_SASH_START_ANGLE = "doorOrWindowSashStartAngle#";
   private static final String DOOR_OR_WINDOW_SASH_END_ANGLE   = "doorOrWindowSashEndAngle#";
+  private static final String LIGHT_SOURCE_X                  = "lightSourceX#";
+  private static final String LIGHT_SOURCE_Y                  = "lightSourceY#";
+  private static final String LIGHT_SOURCE_Z                  = "lightSourceZ#";
+  private static final String LIGHT_SOURCE_COLOR              = "lightSourceColor#";
   private static final String ELEVATION                       = "elevation#";
   private static final String MODEL_ROTATION                  = "modelRotation#";
   private static final String CREATOR                         = "creator#";
@@ -248,9 +254,16 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
             resizable, price, valueAddedTaxPercentage);
       } else {
-        piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
-            width, depth, height, elevation, movable, modelRotation, creator, 
-            resizable, price, valueAddedTaxPercentage);
+        LightSource [] lightSources = getLightSources(resource, i, width, depth, height);
+        if (lightSources != null) {
+          piece = new CatalogLight(id, name, description, icon, model,
+              width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
+              resizable, price, valueAddedTaxPercentage);
+        } else {
+          piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
+              width, depth, height, elevation, movable, modelRotation, creator, 
+              resizable, price, valueAddedTaxPercentage);
+        }
       }
       add(pieceCategory, piece, furnitureHomonymsCounter);
     }
@@ -279,19 +292,26 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       }
       categoryFurnitureHomonymsCounter.put(piece, ++pieceHomonymCounter);
       // Try to add piece again to catalog with a suffix indicating its sequence
+      String suffixedName = String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter);
       if (piece instanceof CatalogDoorOrWindow) {
-        CatalogDoorOrWindow doorOrWindow = (CatalogDoorOrWindow) piece;
-        piece = new CatalogDoorOrWindow(doorOrWindow.getId(),
-            String.format(HOMONYM_FURNITURE_FORMAT, doorOrWindow.getName(), pieceHomonymCounter),
+        CatalogDoorOrWindow doorOrWindow = (CatalogDoorOrWindow)piece;
+        piece = new CatalogDoorOrWindow(doorOrWindow.getId(), suffixedName,
             doorOrWindow.getDescription(), doorOrWindow.getIcon(), doorOrWindow.getModel(),
             doorOrWindow.getWidth(), doorOrWindow.getDepth(), doorOrWindow.getHeight(), doorOrWindow.getElevation(), 
             doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
             doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
             doorOrWindow.getModelRotation(), doorOrWindow.getCreator(),
             doorOrWindow.isResizable(), doorOrWindow.getPrice(), doorOrWindow.getValueAddedTaxPercentage());
+      } else if (piece instanceof CatalogLight) {
+        CatalogLight light = (CatalogLight)piece;
+        piece = new CatalogLight(light.getId(), suffixedName,
+            light.getDescription(), light.getIcon(), light.getModel(),
+            light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
+            light.isMovable(), light.getLightSources(), 
+            light.getModelRotation(), light.getCreator(),
+            light.isResizable(), light.getPrice(), light.getValueAddedTaxPercentage());
       } else {
-        piece = new CatalogPieceOfFurniture(piece.getId(),
-            String.format(HOMONYM_FURNITURE_FORMAT, piece.getName(), pieceHomonymCounter),
+        piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
             piece.getDescription(), piece.getIcon(), piece.getModel(),
             piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
             piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
@@ -394,7 +414,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       
       sashes = new Sash [sashXAxisValues.length];
       for (int i = 0; i < sashes.length; i++) {
-        // Create the matching leave, converting cm to percentage of width or depth, and degrees to radians
+        // Create the matching sash, converting cm to percentage of width or depth, and degrees to radians
         sashes [i] = new Sash(Float.parseFloat(sashXAxisValues [i]) / doorOrWindowWidth, 
             Float.parseFloat(sashYAxisValues [i]) / doorOrWindowDepth, 
             Float.parseFloat(sashWidths [i]) / doorOrWindowWidth, 
@@ -406,6 +426,49 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     }
     
     return sashes;
+  }
+
+  /**
+   * Returns optional light sources.
+   */
+  private LightSource [] getLightSources(ResourceBundle resource, int index, 
+                                         float lightWidth, 
+                                         float lightDepth,
+                                         float lightHeight) throws MissingResourceException {
+    LightSource [] lightSources = null;
+    String lightSourceXString = getOptionalString(resource, LIGHT_SOURCE_X + index, null);
+    if (lightSourceXString != null) {
+      String [] lightSourceX = lightSourceXString.split(" ");
+      // If doorOrWindowHingesX#i key exists the 3 other keys with the same count of numbers must exist too
+      String [] lightSourceY = resource.getString(LIGHT_SOURCE_Y + index).split(" ");
+      if (lightSourceY.length != lightSourceX.length) {
+        throw new IllegalArgumentException(
+            "Expected " + lightSourceX.length + " values in " + LIGHT_SOURCE_Y + index + " key");
+      }
+      String [] lightSourceZ = resource.getString(LIGHT_SOURCE_Z + index).split(" ");
+      if (lightSourceZ.length != lightSourceX.length) {
+        throw new IllegalArgumentException(
+            "Expected " + lightSourceX.length + " values in " + LIGHT_SOURCE_Z + index + " key");
+      }
+      String [] lightSourceColors = resource.getString(LIGHT_SOURCE_COLOR + index).split(" ");
+      if (lightSourceColors.length != lightSourceX.length) {
+        throw new IllegalArgumentException(
+            "Expected " + lightSourceX.length + " values in " + LIGHT_SOURCE_COLOR + index + " key");
+      }
+      
+      lightSources = new LightSource [lightSourceX.length];
+      for (int i = 0; i < lightSources.length; i++) {
+        int color = lightSourceColors [i].startsWith("#")
+            ? Integer.parseInt(lightSourceColors [i].substring(1), 16)
+            : Integer.parseInt(lightSourceColors [i]);
+        // Create the matching light source, converting cm to percentage of width, depth and height
+        lightSources [i] = new LightSource(Float.parseFloat(lightSourceX [i]) / lightWidth, 
+            Float.parseFloat(lightSourceY [i]) / lightDepth, 
+            Float.parseFloat(lightSourceZ [i]) / lightHeight, 
+            color);
+      }
+    }     
+    return lightSources;
   }
 
   /**

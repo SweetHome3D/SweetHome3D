@@ -51,10 +51,13 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
+import com.eteks.sweethome3d.model.CatalogLight;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.Light;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
@@ -146,6 +149,8 @@ public class FurnitureCatalogTransferHandler extends TransferHandler {
     for (CatalogPieceOfFurniture piece : selectedCatalogFurniture) {
       if (piece instanceof CatalogDoorOrWindow) {
         transferedFurniture.add(new HomeDoorOrWindow((DoorOrWindow)piece));
+      } else if (piece instanceof CatalogLight) {
+        transferedFurniture.add(new HomeLight((Light)piece));
       } else {
         transferedFurniture.add(new HomePieceOfFurniture(piece));
       }
