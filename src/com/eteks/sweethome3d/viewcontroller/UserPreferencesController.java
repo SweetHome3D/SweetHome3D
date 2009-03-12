@@ -53,8 +53,8 @@ public class UserPreferencesController implements Controller {
    * Creates the controller of user preferences view.
    */
   public UserPreferencesController(UserPreferences preferences,
-                        ViewFactory viewFactory, 
-                        ContentManager contentManager) {
+                                   ViewFactory viewFactory, 
+                                   ContentManager contentManager) {
     this.preferences = preferences;
     this.viewFactory = viewFactory;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
