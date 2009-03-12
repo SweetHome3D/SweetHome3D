@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
@@ -63,7 +64,9 @@ public abstract class LocatedTransferHandler extends TransferHandler {
         this.currentDestination.getDropTarget().removeDropTargetListener(this.destinationDropTargetListener);
       }
       try {
-         this.destinationDropTargetListener = new DropTargetAdapter() {
+        this.destinationDropTargetListener = new DropTargetAdapter() {
+            private boolean acceptedDragAction;
+           
             public void drop(DropTargetDropEvent ev) {
               removeDropTargetListener();
             }
@@ -73,8 +76,10 @@ public abstract class LocatedTransferHandler extends TransferHandler {
               dropLocation = ev.getLocation();
               SwingUtilities.convertPointToScreen(dropLocation, ev.getDropTargetContext().getComponent());
               Component component = ev.getDropTargetContext().getComponent();
-              if (component instanceof JComponent) {
-                dragEntered((JComponent)component, ev.getTransferable());
+              if (component instanceof JComponent
+                  && acceptDropAction(ev.getSourceActions(), ev.getDropAction())) {
+                this.acceptedDragAction = true;
+                dragEntered((JComponent)component, ev.getTransferable(), ev.getDropAction());
               }
             }
             
@@ -84,7 +89,18 @@ public abstract class LocatedTransferHandler extends TransferHandler {
               SwingUtilities.convertPointToScreen(dropLocation, ev.getDropTargetContext().getComponent());
               Component component = ev.getDropTargetContext().getComponent();
               if (component instanceof JComponent) {
-                dragMoved((JComponent)component, ev.getTransferable());
+                if (acceptDropAction(ev.getSourceActions(), ev.getDropAction()) ^ this.acceptedDragAction) {
+                  // Simulate a drag enter or exit when accept status changes 
+                  this.acceptedDragAction = !this.acceptedDragAction;
+                  if (this.acceptedDragAction) {
+                    dragEntered((JComponent)component, ev.getTransferable(), ev.getDropAction());
+                  } else {
+                    dragExited((JComponent)component);
+                  }
+                }
+                if (this.acceptedDragAction) {
+                  dragMoved((JComponent)component, ev.getTransferable(), ev.getDropAction());
+                }
               }
             }
             
@@ -97,10 +113,15 @@ public abstract class LocatedTransferHandler extends TransferHandler {
               }
             }
             
+            private boolean acceptDropAction(int sourceActions, int dropAction) {
+              return dropAction != DnDConstants.ACTION_NONE && (sourceActions & dropAction) == dropAction;                  
+            }
+            
             private void removeDropTargetListener() {
               currentDestination.getDropTarget().removeDropTargetListener(destinationDropTargetListener);
               destinationDropTargetListener = null;
               currentDestination = null;
+              acceptedDragAction = false;
               // The drop method of this listener will be invoked after the drop method of 
               // TransferHandler$SwingDropTarget that calls importData method.
               // As drop location is useful only in importData, reseting dropLocation 
@@ -123,16 +144,20 @@ public abstract class LocatedTransferHandler extends TransferHandler {
    * Called once <code>transferable</code> data entered in <code>destination</code> component
    * during a drag and drop operation. Subclasses should override this method if they are
    * interested by this event.  
+   * @param dragAction the current drag action (<code>TransferHandler.COPY</code>, <code>TransferHandler.MOVE</code>
+   *    or <code>TransferHandler.LINK</code>) 
    */
-  protected void dragEntered(JComponent destination, Transferable transferable) {
+  protected void dragEntered(JComponent destination, Transferable transferable, int dragAction) {
   }
   
   /**
    * Called when <code>transferable</code> data moved in <code>destination</code> component
    * during a drag and drop operation. Subclasses should override this method if they are
    * interested by this event.  
+   * @param dragAction the current drag action (<code>TransferHandler.COPY</code>, <code>TransferHandler.MOVE</code>
+   *    or <code>TransferHandler.LINK</code>) 
    */
-  protected void dragMoved(JComponent destination, Transferable transferable) {
+  protected void dragMoved(JComponent destination, Transferable transferable, int dragAction) {
   }
   
   /**

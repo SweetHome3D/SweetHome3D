@@ -140,7 +140,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
    * flavor and destination is a plan.  
    */
   @Override
-  protected void dragEntered(JComponent destination, Transferable transferable) {
+  protected void dragEntered(JComponent destination, Transferable transferable, int dragAction) {
     if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
         && destination instanceof PlanComponent
         && this.homeController.getPlanController() != null) {
@@ -165,7 +165,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
    * interested by this event.  
    */
   @Override
-  protected void dragMoved(JComponent destination, Transferable transferable) {
+  protected void dragMoved(JComponent destination, Transferable transferable, int dragAction) {
     if (transferable.isDataFlavorSupported(HomeTransferableList.HOME_FLAVOR)
         && destination instanceof PlanComponent
         && this.homeController.getPlanController() != null) {
