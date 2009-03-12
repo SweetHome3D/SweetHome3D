@@ -39,9 +39,13 @@
 				<SPAN>Lo strumento</SPAN> <I>Aggiungi
 				alla casa</I> 
 				</BLOCKQUOTE>
-				<P ALIGN=LEFT>Quando i pezzi vengono rilasciati nella piantina, la posizione del loro angolo superiore sinistro sarà nel punto in cui hai
-				  rilasciato il pulsante del mouse.<br>
-			  Quando i pezzi sono rilasciati nella lista arredamento o aggiunti tramite la voce di menù <i>Mobilio &gt; Aggiungi alla casa</i>, la posizione del loro angolo superiore sinistro è al punto (0, 0).</P>
+			  <P ALIGN=LEFT>Quando i pezzi sono rilasciati nella lista arredamento o aggiunti tramite la voce di menù <i>Mobilio &gt; Aggiungi alla casa</i>, la posizione del loro angolo superiore sinistro è al punto (0, 0).<br>
+			    Quando i pezzi vengono rilasciati nella piantina, la posizione del loro angolo superiore sinistro sarà nel punto in cui hai
+				  rilasciato il pulsante del mouse. Quando <b>un</b> pezzo è rilasciato con il puntatore del mouse sopra un muro,
+			    esso sarà automaticamente ruotato e ridimensionato a seconda dell'orientamento e dello spessore di questo
+			    muro se il pezzo è una porta o una finestra, considerando che un pezzo di altro tipo sarà ruotato in maniera
+			    tale che il retro
+		    sia avanti al muro.</P>
 				<P ALIGN=LEFT>I pezzi aggiunti alla casa sono selezionati e disegnati simultaneamente nella lista arredamento, nella piantina e nella vista
 				  3D. Durante il caricamento del modello 3D dei pezzi aggiunti, questi pezzi sono rappresentati come quadrati
 				  bianchi nella vista 3D. 
@@ -73,6 +77,25 @@
 							  con la porta o la finestra. Questa operazione non viene fatta per altri tipi di arredamento.</P>
 						  </TD>
 						</TR>
+						<TR VALIGN=TOP>
+                          <TD>
+                            <P>•</P>
+                          </TD>
+                          <TD>
+                            <P>Se un oggetto è rilasciato su di un altro, sarà elevato per apparire sulla cima del posteriore, quando il suo rettangolo
+                              di selezione è incluso in uno dei posteriori e la sua elevazione di default è uguale a zero
+                            (a livello del piano).</P>
+                          </TD>
+					  </TR>
+						<TR VALIGN=TOP>
+                          <TD>
+                            <P>•</P>
+                          </TD>
+                          <TD>
+                            <P>L'angolo, la profondità e  l'altezza da terra del pezzo aggiunto sono automaticamente calcolate solo se il magnetismo è
+                            abilitato nel pannello <a href="editingPreferences.html">preferenze</a>.</P>
+                          </TD>
+					  </TR>
 						<TR VALIGN=TOP>
 							<TD>
 								<P>•</P>
