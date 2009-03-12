@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 /**
  * A piece of furniture used as a door or a window.
  * @author Emmanuel Puybaret
- * @since  1.6
+ * @since  1.7
  */
 public interface DoorOrWindow extends PieceOfFurniture {
   /**

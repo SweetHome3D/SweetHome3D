@@ -24,7 +24,7 @@ import java.math.BigDecimal;
 /**
  * A door or a window of the catalog.
  * @author Emmanuel Puybaret
- * @since  1.6
+ * @since  1.7
  */
 public class CatalogDoorOrWindow extends CatalogPieceOfFurniture implements DoorOrWindow {
   private static final long serialVersionUID = 1L;

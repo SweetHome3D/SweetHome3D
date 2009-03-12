@@ -24,7 +24,7 @@ import java.io.Serializable;
 /**
  * A sash (moving part) of a door or a window. 
  * @author Emmanuel Puybaret
- * @since  1.6
+ * @since  1.7
  */
 public class Sash implements Serializable {
   private static final long serialVersionUID = 1L;

@@ -22,7 +22,7 @@ package com.eteks.sweethome3d.model;
 /**
  * A door or a window in {@linkplain Home home}.
  * @author Emmanuel Puybaret
- * @since  1.6
+ * @since  1.7
  */
 public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWindow {
   private static final long serialVersionUID = 1L;
