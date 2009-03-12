@@ -369,8 +369,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   }
 
   private static class SpinnerLengthModel extends SpinnerNumberModel {
-    private LengthUnit unit = 
-      LengthUnit.CENTIMETER;
+    private LengthUnit unit = LengthUnit.CENTIMETER;
 
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
@@ -384,17 +383,15 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           public void stateChanged(ChangeEvent ev) {
             if (centimeterButton.isSelected()) {
               if (unit == LengthUnit.INCH) {
-                setStepSize(centimeterStepSize);
-                setValue(LengthUnit.inchToCentimeter(
-                    getNumber().floatValue()));
                 unit = LengthUnit.CENTIMETER;
+                setStepSize(centimeterStepSize);
+                setValue(LengthUnit.inchToCentimeter(getNumber().floatValue()));
               }
             } else {
               if (unit == LengthUnit.CENTIMETER) {
-                setStepSize(inchStepSize);
-                setValue(LengthUnit.centimeterToInch(
-                    getNumber().floatValue()));
                 unit = LengthUnit.INCH;
+                setStepSize(inchStepSize);
+                setValue(LengthUnit.centimeterToInch(getNumber().floatValue()));
               }
             }
           }
