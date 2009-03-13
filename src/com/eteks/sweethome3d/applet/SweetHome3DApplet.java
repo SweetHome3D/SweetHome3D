@@ -126,8 +126,6 @@ public class SweetHome3DApplet extends JApplet {
       // a tree element without selecting it before :
       // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
       System.setProperty("sun.swing.enableImprovedDragGesture", "true");
-      // Use Quartz renderer under Mac OS X
-      System.setProperty("apple.awt.graphics.UseQuartz", "true");
     } catch (SecurityException ex) {
       // Too bad Java refuses access to system properties
     }

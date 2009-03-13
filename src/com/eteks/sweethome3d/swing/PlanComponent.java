@@ -1326,12 +1326,39 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       gridSize = gridSizes [i];
     }
     
-    Rectangle2D planBounds = getPlanBounds();    
+    Rectangle2D planBounds = getPlanBounds();
     float xMin = (float)planBounds.getMinX() - MARGIN;
     float yMin = (float)planBounds.getMinY() - MARGIN;
     float xMax = convertXPixelToModel(getWidth());
     float yMax = convertYPixelToModel(getHeight());
+    if (OperatingSystem.isMacOSX()
+        && System.getProperty("apple.awt.graphics.UseQuartz", "false").equals("false")) {
+      // Draw grid with an image texture in under Mac OS X, because default 2D rendering engine 
+      // is too slow and can't be replaced by Quartz engine in applet environment 
+      int imageWidth = Math.round(mainGridSize * gridScale);
+      BufferedImage gridImage = new BufferedImage(imageWidth, imageWidth, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D imageGraphics = (Graphics2D)gridImage.getGraphics();
+      setRenderingHints(imageGraphics);
+      imageGraphics.scale(gridScale, gridScale);
+      
+      paintGridLines(imageGraphics, gridScale, 0, mainGridSize, 0, mainGridSize, gridSize, mainGridSize);    
+      imageGraphics.dispose();
+      
+      g2D.setPaint(new TexturePaint(gridImage, new Rectangle2D.Float(0, 0, mainGridSize, mainGridSize)));
+      
+      g2D.fill(new Rectangle2D.Float(xMin, yMin, xMax - xMin, yMax - yMin));
+    } else {
+      paintGridLines(g2D, gridScale, xMin, xMax, yMin, yMax, gridSize, mainGridSize);          
+    }
+  }
 
+  /**
+   * Paints background grid lines from <code>xMin</code> to <code>xMax</code> 
+   * and <code>yMin</code> to <code>yMax</code>.
+   */
+  private void paintGridLines(Graphics2D g2D, float gridScale, 
+                              float xMin, float xMax, float yMin, float yMax, 
+                              float gridSize, float mainGridSize) {
     g2D.setColor(UIManager.getColor("controlShadow"));
     g2D.setStroke(new BasicStroke(0.5f / gridScale));
     // Draw vertical lines
