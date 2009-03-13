@@ -63,7 +63,10 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
          
   /**
    * Returns the sources managed by this light. Each light source point
-   * is a percentage of the width, the depth and the height of this light.  
+   * is a percentage of the width, the depth and the height of this light,
+   * with the abscissa origin at the left side of the piece,
+   * the ordinate origin at the front side of the piece
+   * and the elevation origin at the bottom side of the piece.
    * @return a copy of light sources array.
    */
   public LightSource [] getLightSources() {
