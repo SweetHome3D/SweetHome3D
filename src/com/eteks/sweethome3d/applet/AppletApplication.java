@@ -34,9 +34,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -93,7 +91,6 @@ public class AppletApplication extends HomeApplication {
   
   private final HomeRecorder              homeRecorder;
   private final UserPreferences           userPreferences;
-  private final Map<Home, HomeController> homeControllers;
 
   public AppletApplication(final JApplet applet) {
     final String furnitureCatalogURLs = getAppletParameter(applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
@@ -108,7 +105,6 @@ public class AppletApplication extends HomeApplication {
     this.userPreferences = new AppletUserPreferences(
         getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
         getURLs(applet.getCodeBase(), texturesCatalogURLs));
-    this.homeControllers = new HashMap<Home, HomeController>();
     
     final ViewFactory viewFactory = new SwingViewFactory();
     final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
@@ -147,7 +143,6 @@ public class AppletApplication extends HomeApplication {
                 final HomeAppletController controller = new HomeAppletController(
                     home, AppletApplication.this, viewFactory, contentManager, pluginManager,
                     newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
-                homeControllers.put(home, controller);
                 
                 // Display its view in applet
                 updateAppletView(applet, controller);
@@ -162,9 +157,6 @@ public class AppletApplication extends HomeApplication {
                 ex.printStackTrace();
                 show3DError();
               }
-              break;
-            case DELETE :
-              homeControllers.remove(home);
               break;
           }
         }
@@ -181,13 +173,18 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
-   * Closes open homes and clears all the resources used by this application.
+   * Deletes open homes and clears all the resources used by this application.
    * This method is called when an applet is destroyed.  
    */
   public void destroy() {
     for (Home home : getHomes()) {
-      this.homeControllers.get(home).close();
+      // Delete directly home without closing it because when an applet is destroyed 
+      // we can't control how long a warning dialog about unsaved home will be displayed 
+      deleteHome(home);
     }
+    // Collect all objects in case the applet is being reloaded (seems to be required under Mac OS X)
+    System.gc();
+    // Stop managers threads
     IconManager.getInstance().clear();
     TextureManager.getInstance().clear();
   }
@@ -333,6 +330,9 @@ public class AppletApplication extends HomeApplication {
         toolBar.add(pluginButton);
       }
     }
+    
+    toolBar.addSeparator();
+    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ABOUT));
     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
