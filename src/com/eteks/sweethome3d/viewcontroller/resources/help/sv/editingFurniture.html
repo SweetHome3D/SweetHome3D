@@ -28,7 +28,11 @@
     <td><p>Du kan ändra position, storlek och vinkel på hemmets möbler endera med hjälp av musen eller med menyn <i>Möbler &gt; Ändra...</i><br>
           För att ändra möbler med musen väljer du dem i planlösningen eller i möbellistan först.
           Du väljer möblerna genom att klicka på dem. För att välja flera kan du rita en markeringsrektangel runt dem eller klicka på flera möbler och medan du håller nere Shift-tangenten.<br>
-          För att flytta valda möbler placerar du muspekaren i markeringens ruta och drar och släpper, eller använder tangentbordets piltangenter.</p>
+          För att flytta valda möbler placerar du muspekaren i markeringens ruta och drar och släpper, eller använder tangentbordets
+          piltangenter. N&auml;r muspekaren &auml;r &ouml;ver en v&auml;gg medan <b>en</b> m&ouml;bel flyttas, kommer den m&ouml;beln
+          automatiskt rotera och &auml;ndra storlek beroende p&aring; orienteringen och tjockleken p&aring; v&auml;ggen,
+          f&ouml;rutsatt att det &auml;r en d&ouml;rr eller ett f&ouml;nster. &Auml;r det en annan typ av m&ouml;bel kommer
+          den orienteras s&aring; att dess baksida ligger l&auml;ngsmed v&auml;ggen.</p>
       <p>          När <b>en</b> möbel är vald i planlösningen kan du också ändra dess storlek, upplyftning eller vinkel med en av de fyra markörer som dyker upp i hörnen på den valda möbeln.</p>      
       <p align="center"><img src="../images/furnitureCorners.png" alt="Furniture corners" width="110" height="110"></p>
       </td>
@@ -117,6 +121,16 @@
               <p>&#149;</p>
             </td>
             <td>
+              <p>N&auml;r ett objekt sl&auml;pps p&aring; ett annat objekt kommer det h&ouml;jas upp s&aring; att det f&ouml;refaller
+                st&aring; p&aring; det andra, om dess markeringsrektangel &auml;r inom det andra objektets samt att dess
+                upph&ouml;jning &auml;r lika med noll (i golvniv&aring;).</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td>
+              <p>&#149;</p>
+            </td>
+            <td>
               <p>Om valda objekt innehåller väggar, rum, möbler, måttsättningar och texter kommer alla dessa objekt att flyttas
                 när du drar och släpper, eller använder tangentbordets piltangenter. Om du håller nere Ctrl-tangenten (eller
               Alt-tangenten under Mac OS X) medan du drar och släpper dessa objekt så kommer de att klonas.</td>
@@ -126,7 +140,10 @@
               <p>&#149;</p>
             </td>
             <td>
-              <p>Möblernas vinklar är som standard en multipel av 15&deg;. Du kan inaktivera denna magnetism-funktion genom att hålla ner Shift-tangenten eller genom att ta bort magnetism-funktionen i <a href="editingPreferences.html">inställnings</a>-rutan.</p>
+              <p>Möblernas vinklar är som standard en multipel av 15&deg;. Du kan inaktivera denna magnetism-funktion genom
+                att hålla ner Shift-tangenten eller genom att ta bort magnetism-funktionen i <a href="editingPreferences.html">inställnings</a>-rutan.
+                P&aring; samma s&auml;tt kan vinkeln samt djupet p&aring; och upph&ouml;jningen av en flyttad m&ouml;bel
+                uppdateras automatiskt om magnetism &auml;r p&aring;slaget.</p>
             </td>
           </tr>
           <tr valign="top">
