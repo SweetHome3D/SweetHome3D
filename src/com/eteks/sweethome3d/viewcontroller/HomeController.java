@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1002,7 +1003,29 @@ public class HomeController implements Controller {
    * Adds items to home and posts a paste operation to undo support.
    */
   public void paste(final List<? extends Selectable> items) {
-    addItems(items, 20, 20, false, "undoPasteName");
+    // Check if pasted items and currently selected items overlap 
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    float pastedItemsDelta = 0;
+    if (items.size() == selectedItems.size()) {
+      // The default delta used to be able to distinguish dropped items from previous selection
+      pastedItemsDelta = 20; 
+      for (Selectable pastedItem : items) {      
+        // Search which item of selected items it may overlap
+        float [][] pastedItemPoints = pastedItem.getPoints();
+        boolean pastedItemOverlapSelectedItem = false;
+        for (Selectable selectedItem : selectedItems) {
+          if (Arrays.deepEquals(pastedItemPoints, selectedItem.getPoints())) {
+            pastedItemOverlapSelectedItem = true;
+            break;
+          }
+        }
+        if (!pastedItemOverlapSelectedItem) {
+          pastedItemsDelta = 0;
+          break;
+        }
+      }
+    }
+    addItems(items, pastedItemsDelta, pastedItemsDelta, false, "undoPasteName");
   }
 
   /**
