@@ -19,11 +19,15 @@
  */
 package com.eteks.sweethome3d.model;
 
+import java.io.Serializable;
+
 /**
  * A light source of a {@linkplain Light light}. 
  * @author Emmanuel Puybaret
  */
-public class LightSource {
+public class LightSource implements Serializable {
+  private static final long serialVersionUID = 1L;
+  
   private float x;
   private float y;
   private float z;
