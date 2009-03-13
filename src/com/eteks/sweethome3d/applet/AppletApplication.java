@@ -182,7 +182,7 @@ public class AppletApplication extends HomeApplication {
       // we can't control how long a warning dialog about unsaved home will be displayed 
       deleteHome(home);
     }
-    // Collect all objects in case the applet is being reloaded (seems to be required under Mac OS X)
+    // Collect deleted objects (seems to be required under Mac OS X when the applet is being reloaded)
     System.gc();
     // Stop managers threads
     IconManager.getInstance().clear();
