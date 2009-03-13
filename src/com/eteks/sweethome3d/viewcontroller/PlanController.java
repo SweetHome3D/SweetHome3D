@@ -4861,6 +4861,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                deltaXToResizePoint;
     private float                deltaYToResizePoint;
     private HomePieceOfFurniture selectedPiece;
+    private float []             topLeftPoint;
     private float                oldX;
     private float                oldY;
     private float                oldWidth;
@@ -4893,6 +4894,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldY = this.selectedPiece.getY();
       this.oldWidth = this.selectedPiece.getWidth();
       this.oldDepth = this.selectedPiece.getDepth();
+      this.topLeftPoint = this.selectedPiece.getPoints() [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ wasShiftDownLastMousePress();
       this.doorOrWindowBoundToWall = this.selectedPiece instanceof HomeDoorOrWindow 
@@ -4911,9 +4913,8 @@ public class PlanController extends FurnitureController implements Controller {
       float angle = this.selectedPiece.getAngle();
       double cos = Math.cos(angle); 
       double sin = Math.sin(angle); 
-      float [] topLeftPoint = this.selectedPiece.getPoints() [0];
-      float deltaX = x - this.deltaXToResizePoint - topLeftPoint[0];
-      float deltaY = y - this.deltaYToResizePoint - topLeftPoint[1];
+      float deltaX = x - this.deltaXToResizePoint - this.topLeftPoint [0];
+      float deltaY = y - this.deltaYToResizePoint - this.topLeftPoint [1];
       float newWidth =  (float)(deltaY * sin + deltaX * cos);
       if (this.magnetismEnabled) {
         newWidth = preferences.getLengthUnit().getMagnetizedLength(newWidth, planView.getPixelLength());
@@ -4935,8 +4936,8 @@ public class PlanController extends FurnitureController implements Controller {
       }
 
       // Update piece new location
-      float newX = (float)(topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
-      float newY = (float)(topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
+      float newX = (float)(this.topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
+      float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
       this.selectedPiece.setX(newX);
       this.selectedPiece.setY(newY);
       // Update piece size
