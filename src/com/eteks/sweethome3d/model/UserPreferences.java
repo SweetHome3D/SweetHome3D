@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.model;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -75,18 +74,39 @@ public abstract class UserPreferences {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.localizedStringResources = new HashMap<Class<?>, LocalizedStringResource>();
     
-    Locale defaultLocale = Locale.getDefault();
-    this.language = defaultLocale.getLanguage();
-    // If current default locale isn't supported in Sweet Home 3D, 
-    // let's use English as default language
-    List<String> supportedLanguages = Arrays.asList(SUPPORTED_LANGUAGES);
-    if (!supportedLanguages.contains(this.language)
-        && !supportedLanguages.contains(this.language + "_" + DEFAULT_COUNTRY)) {
+    String defaultLanguage = Locale.getDefault().getLanguage();
+    // Find closest language among supported languages in Sweet Home 3D
+    // For example, use simplified Chinese even for Chinese users (zh_?) not from China (zh_CN)
+    // unless their exact locale is supported (as in Taiwan)
+    for (String supportedLanguage : SUPPORTED_LANGUAGES) {
+      if (supportedLanguage.equals(defaultLanguage + "_" + DEFAULT_COUNTRY)) {
+        this.language = supportedLanguage;
+        break; // Found the exact supported language
+      } else if (this.language == null 
+                 && supportedLanguage.startsWith(defaultLanguage)) {
+        this.language = supportedLanguage; // Found a supported language
+      }
+    }
+    // If no language was found, let's use English by default
+    if (this.language == null) {
       this.language = "en";
     }
-    Locale.setDefault(new Locale(this.language, DEFAULT_COUNTRY));
+    updateDefaultLocale();
   }
-  
+
+  /**
+   * Updates default locale from preferences language.
+   */
+  private void updateDefaultLocale() {
+    int underscoreIndex = this.language.indexOf("_");
+    if (underscoreIndex != -1) {
+      Locale.setDefault(new Locale(this.language.substring(0, underscoreIndex), 
+          this.language.substring(underscoreIndex + 1)));
+    } else {
+      Locale.setDefault(new Locale(this.language, DEFAULT_COUNTRY));
+    }
+  }
+
   /**
    * Writes user preferences.
    * @throws RecorderException if user preferences couldn'y be saved.
@@ -166,13 +186,7 @@ public abstract class UserPreferences {
     if (!language.equals(this.language)) {
       String oldLanguage = this.language;
       this.language = language;      
-      int underscoreIndex = language.indexOf("_");
-      if (underscoreIndex != -1) {
-        Locale.setDefault(new Locale(language.substring(0, underscoreIndex), 
-            language.substring(underscoreIndex + 1)));
-      } else {
-        Locale.setDefault(new Locale(language, DEFAULT_COUNTRY));
-      }
+      updateDefaultLocale();
       this.localizedStringResources.clear();
       this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
           oldLanguage, language);
