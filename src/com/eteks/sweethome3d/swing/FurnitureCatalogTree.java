@@ -193,8 +193,8 @@ public class FurnitureCatalogTree extends JTree implements View {
       CatalogPieceOfFurniture piece = (CatalogPieceOfFurniture)path.getLastPathComponent();
       String tooltip = "<html><center>&nbsp;<b>" + piece.getName() + "</b>&nbsp;";
       if (piece.getCreator() != null) {
-        tooltip += "<br>" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
-            "tooltipCreator", piece.getCreator());
+        tooltip += "<br>&nbsp;" + this.preferences.getLocalizedString(FurnitureCatalogTree.class, 
+            "tooltipCreator", piece.getCreator() + "&nbsp;");
       }
       if (piece.getIcon() instanceof URLContent) {
         tooltip += "<br><img width='128' height='128' src='" 
