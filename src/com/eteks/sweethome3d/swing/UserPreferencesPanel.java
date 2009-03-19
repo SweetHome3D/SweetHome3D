@@ -106,7 +106,15 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         @Override
         public Component getListCellRendererComponent(JList list, 
             Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          Locale locale = new Locale((String)value);
+          String language = (String)value;
+          Locale locale;
+          int underscoreIndex = language.indexOf("_");
+          if (underscoreIndex != -1) {
+            locale = new Locale(language.substring(0, underscoreIndex), 
+                language.substring(underscoreIndex + 1));
+          } else {
+            locale = new Locale(language);
+          }
           String displayedValue = locale.getDisplayLanguage(locale);
           displayedValue = Character.toUpperCase(displayedValue.charAt(0)) + displayedValue.substring(1);
           return super.getListCellRendererComponent(list, displayedValue, index, isSelected,

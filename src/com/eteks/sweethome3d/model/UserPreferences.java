@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -58,6 +60,7 @@ public abstract class UserPreferences {
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
   private String           language;
+  private String           defaultCountry;
   private String           currency;
   private LengthUnit       unit;
   private boolean          magnetismEnabled = true;
@@ -67,18 +70,20 @@ public abstract class UserPreferences {
   private float            newWallHeight;
   private List<String>     recentHomes;
 
+
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.localizedStringResources = new HashMap<Class<?>, LocalizedStringResource>();
     
-    final Locale defaultLocale = Locale.getDefault();
+    Locale defaultLocale = Locale.getDefault();
     this.language = defaultLocale.getLanguage();
+    this.defaultCountry = defaultLocale.getCountry();
     // If current default locale isn't supported in Sweet Home 3D, 
     // let's use English as default language
     if (!Arrays.asList(SUPPORTED_LANGUAGES).contains(this.language)) {
       this.language = "en";
     }
-    Locale.setDefault(new Locale(this.language, defaultLocale.getCountry()));
+    Locale.setDefault(new Locale(this.language, this.defaultCountry));
   }
   
   /**
@@ -143,7 +148,8 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Returns the preferred language to display information, noted with ISO 639 code. 
+   * Returns the preferred language to display information, noted with an ISO 639 code
+   * that may be followed by an underscore and an ISO 3166 code. 
    */
   public String getLanguage() {
     return this.language;
@@ -157,7 +163,13 @@ public abstract class UserPreferences {
     if (!language.equals(this.language)) {
       String oldLanguage = this.language;
       this.language = language;      
-      Locale.setDefault(new Locale(language, Locale.getDefault().getCountry()));
+      int underscoreIndex = language.indexOf("_");
+      if (underscoreIndex != -1) {
+        Locale.setDefault(new Locale(language.substring(0, underscoreIndex), 
+            language.substring(underscoreIndex + 1)));
+      } else {
+        Locale.setDefault(new Locale(language, this.defaultCountry));
+      }
       this.localizedStringResources.clear();
       this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
           oldLanguage, language);
@@ -225,6 +237,26 @@ public abstract class UserPreferences {
       if (resourceParameters.length > 0) {
         localizedString = String.format(localizedString, resourceParameters);
       }
+      
+      // Under Mac OS X, remove bracketed upper case roman letter used in oriental languages to indicate mnemonic 
+      String language = Locale.getDefault().getLanguage();
+      if (OperatingSystem.isMacOSX()
+          && (language.equals(Locale.CHINESE.getLanguage())
+              || language.equals(Locale.JAPANESE.getLanguage())
+              || language.equals(Locale.KOREAN.getLanguage()))) {
+        int openingBracketIndex = localizedString.indexOf('(');
+        if (openingBracketIndex != -1) {
+          int closingBracketIndex = localizedString.indexOf(')');
+          if (openingBracketIndex == closingBracketIndex - 2) {
+            char c = localizedString.charAt(openingBracketIndex + 1);
+            if (c >= 'A' && c <= 'Z') {
+              localizedString = localizedString.substring(0, openingBracketIndex) 
+                  + localizedString.substring(closingBracketIndex + 1);
+            }
+          }
+        }
+      }
+      
       return localizedString;
     } catch (MissingResourceException ex) {
       throw new IllegalArgumentException("Unknown key " + resourceKey);
