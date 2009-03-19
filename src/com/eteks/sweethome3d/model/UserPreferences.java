@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import com.eteks.sweethome3d.tools.OperatingSystem;
-
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -43,13 +41,16 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP}  
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP} 
+  
+  private static final String    DEFAULT_COUNTRY;
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
   private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f);
 
   static {
+    DEFAULT_COUNTRY = Locale.getDefault().getCountry();
     ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
     SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
   }
@@ -60,7 +61,6 @@ public abstract class UserPreferences {
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
   private String           language;
-  private String           defaultCountry;
   private String           currency;
   private LengthUnit       unit;
   private boolean          magnetismEnabled = true;
@@ -77,13 +77,14 @@ public abstract class UserPreferences {
     
     Locale defaultLocale = Locale.getDefault();
     this.language = defaultLocale.getLanguage();
-    this.defaultCountry = defaultLocale.getCountry();
     // If current default locale isn't supported in Sweet Home 3D, 
     // let's use English as default language
-    if (!Arrays.asList(SUPPORTED_LANGUAGES).contains(this.language)) {
+    List<String> supportedLanguages = Arrays.asList(SUPPORTED_LANGUAGES);
+    if (!supportedLanguages.contains(this.language)
+        && !supportedLanguages.contains(this.language + "_" + DEFAULT_COUNTRY)) {
       this.language = "en";
     }
-    Locale.setDefault(new Locale(this.language, this.defaultCountry));
+    Locale.setDefault(new Locale(this.language, DEFAULT_COUNTRY));
   }
   
   /**
@@ -158,6 +159,8 @@ public abstract class UserPreferences {
   /**
    * Sets the preferred language to display information, changes current default locale accordingly 
    * and notifies listeners of this change.
+   * @param language an ISO 639 code that may be followed by an underscore and an ISO 3166 code
+   *            (for example fr, de, it, en_US, zh_CN). 
    */
   public void setLanguage(String language) {
     if (!language.equals(this.language)) {
@@ -168,7 +171,7 @@ public abstract class UserPreferences {
         Locale.setDefault(new Locale(language.substring(0, underscoreIndex), 
             language.substring(underscoreIndex + 1)));
       } else {
-        Locale.setDefault(new Locale(language, this.defaultCountry));
+        Locale.setDefault(new Locale(language, DEFAULT_COUNTRY));
       }
       this.localizedStringResources.clear();
       this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
