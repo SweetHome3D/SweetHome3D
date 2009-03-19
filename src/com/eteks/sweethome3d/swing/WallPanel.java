@@ -108,7 +108,7 @@ public class WallPanel extends JPanel implements DialogView {
     String unitName = preferences.getLengthUnit().getName();
     
     // Create X start label and its spinner bound to X_START controller property
-    this.xStartLabel = new JLabel(preferences.getLocalizedString(
+    this.xStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "xLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel xStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -131,7 +131,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create Y start label and its spinner bound to Y_START controller property
-    this.yStartLabel = new JLabel(preferences.getLocalizedString(
+    this.yStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel yStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -154,7 +154,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create X end label and its spinner bound to X_END controller property
-    this.xEndLabel = new JLabel(preferences.getLocalizedString(
+    this.xEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "xLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel xEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -177,7 +177,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create Y end label and its spinner bound to Y_END controller property
-    this.yEndLabel = new JLabel(preferences.getLocalizedString(
+    this.yEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "yLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel yEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, -100000f, 100000f);
@@ -200,7 +200,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Create length label and its spinner bound to LENGTH controller property
-    this.lengthLabel = new JLabel(preferences.getLocalizedString(
+    this.lengthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "lengthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel lengthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
@@ -226,7 +226,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Left side color and texture buttons bound to left side controller properties
-    this.leftSideColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.leftSideColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "leftSideColorRadioButton.text"));
     this.leftSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -259,7 +259,7 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
 
-    this.leftSideTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.leftSideTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "leftSideTextureRadioButton.text"));
     this.leftSideTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -277,7 +277,7 @@ public class WallPanel extends JPanel implements DialogView {
     updateLeftSideRadioButtons(controller);
     
     // Right side color and texture buttons bound to right side controller properties
-    this.rightSideColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.rightSideColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "rightSideColorRadioButton.text"));
     this.rightSideColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -310,7 +310,7 @@ public class WallPanel extends JPanel implements DialogView {
           }
         });
     
-    this.rightSideTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.rightSideTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "rightSideTextureRadioButton.text"));
     this.rightSideTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -327,7 +327,7 @@ public class WallPanel extends JPanel implements DialogView {
     rightSideButtonGroup.add(this.rightSideTextureRadioButton);
     updateRightSideRadioButtons(controller);
 
-    this.rectangularWallRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.rectangularWallRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "rectangularWallRadioButton.text"));
     this.rectangularWallRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -344,7 +344,7 @@ public class WallPanel extends JPanel implements DialogView {
         });
 
     // Create height label and its spinner bound to RECTANGULAR_WALL_HEIGHT controller property
-    this.rectangularWallHeightLabel = new JLabel(preferences.getLocalizedString(
+    this.rectangularWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
@@ -369,7 +369,7 @@ public class WallPanel extends JPanel implements DialogView {
         }
       });
    
-    this.slopingWallRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.slopingWallRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallRadioButton.text"));
     this.slopingWallRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -384,7 +384,7 @@ public class WallPanel extends JPanel implements DialogView {
     updateWallShapeRadioButtons(controller);
 
     // Create height at start label and its spinner bound to SLOPING_WALL_HEIGHT_AT_START controller property
-    this.slopingWallHeightAtStartLabel = new JLabel(preferences.getLocalizedString(
+    this.slopingWallHeightAtStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtStartLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
@@ -410,7 +410,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
     
     // Create height at end label and its spinner bound to SLOPING_WALL_HEIGHT_AT_END controller property
-    this.slopingWallHeightAtEndLabel = new JLabel(preferences.getLocalizedString(
+    this.slopingWallHeightAtEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtEndLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
@@ -436,7 +436,7 @@ public class WallPanel extends JPanel implements DialogView {
       });
 
     // Create thickness label and its spinner bound to THICKNESS controller property
-    this.thicknessLabel = new JLabel(preferences.getLocalizedString(
+    this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "thicknessLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f);

@@ -88,7 +88,8 @@ public class RoomPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences, 
                                 final RoomController controller) {
     // Create name label and its text field bound to NAME controller property
-    this.nameLabel = new JLabel(preferences.getLocalizedString(RoomPanel.class, "nameLabel.text"));
+    this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        RoomPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
@@ -121,7 +122,7 @@ public class RoomPanel extends JPanel implements DialogView {
       });
     
     // Create area visible check box bound to AREA_VISIBLE controller property
-    this.areaVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+    this.areaVisibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "areaVisibleCheckBox.text"));
     this.areaVisibleCheckBox.setNullable(controller.getAreaVisible() == null);
     this.areaVisibleCheckBox.setValue(controller.getAreaVisible());
@@ -141,7 +142,7 @@ public class RoomPanel extends JPanel implements DialogView {
       });
 
     // Create floor visible check box bound to FLOOR_VISIBLE controller property
-    this.floorVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+    this.floorVisibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "floorVisibleCheckBox.text"));
     this.floorVisibleCheckBox.setNullable(controller.getFloorVisible() == null);
     this.floorVisibleCheckBox.setValue(controller.getFloorVisible());
@@ -161,7 +162,7 @@ public class RoomPanel extends JPanel implements DialogView {
       });
     
     // Floor color and texture buttons bound to floor controller properties
-    this.floorColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.floorColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "floorColorRadioButton.text"));
     this.floorColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -194,7 +195,7 @@ public class RoomPanel extends JPanel implements DialogView {
           }
         });
 
-    this.floorTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.floorTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "floorTextureRadioButton.text"));
     this.floorTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -212,7 +213,7 @@ public class RoomPanel extends JPanel implements DialogView {
     updateFloorRadioButtons(controller);
     
     // Create ceiling visible check box bound to CEILING_VISIBLE controller property
-    this.ceilingVisibleCheckBox = new NullableCheckBox(preferences.getLocalizedString(
+    this.ceilingVisibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "ceilingVisibleCheckBox.text"));
     this.ceilingVisibleCheckBox.setNullable(controller.getCeilingVisible() == null);
     this.ceilingVisibleCheckBox.setValue(controller.getCeilingVisible());
@@ -232,7 +233,7 @@ public class RoomPanel extends JPanel implements DialogView {
       });
 
     // Ceiling color and texture buttons bound to ceiling controller properties
-    this.ceilingColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.ceilingColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "ceilingColorRadioButton.text"));
     this.ceilingColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {
@@ -265,7 +266,7 @@ public class RoomPanel extends JPanel implements DialogView {
           }
         });
     
-    this.ceilingTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.ceilingTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "ceilingTextureRadioButton.text"));
     this.ceilingTextureRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent e) {

@@ -225,7 +225,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
      * Creates and initializes components.
      */
     private void createComponents(final UserPreferences preferences) {
-      this.availableTexturesLabel = new JLabel(preferences.getLocalizedString(
+      this.availableTexturesLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "availableTexturesLabel.text"));
       this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
       this.availableTexturesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -266,14 +266,14 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           }
         });
       
-      this.importTextureButton = new JButton(preferences.getLocalizedString(
+      this.importTextureButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "importTextureButton.text"));
       this.importTextureButton.addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             controller.importTexture();
           }
         });
-      this.modifyTextureButton = new JButton(preferences.getLocalizedString(
+      this.modifyTextureButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "modifyTextureButton.text"));
       this.modifyTextureButton.setEnabled(false);
       this.modifyTextureButton.addActionListener(new ActionListener() {
@@ -281,7 +281,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             controller.modifyTexture((CatalogTexture)availableTexturesList.getSelectedValue());
           }
         });    
-      this.deleteTextureButton = new JButton(preferences.getLocalizedString(
+      this.deleteTextureButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "deleteTextureButton.text"));
       this.deleteTextureButton.setEnabled(false);
       this.deleteTextureButton.addActionListener(new ActionListener() {

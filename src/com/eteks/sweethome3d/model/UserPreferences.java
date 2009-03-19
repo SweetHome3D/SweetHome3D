@@ -238,25 +238,6 @@ public abstract class UserPreferences {
         localizedString = String.format(localizedString, resourceParameters);
       }
       
-      // Under Mac OS X, remove bracketed upper case roman letter used in oriental languages to indicate mnemonic 
-      String language = Locale.getDefault().getLanguage();
-      if (OperatingSystem.isMacOSX()
-          && (language.equals(Locale.CHINESE.getLanguage())
-              || language.equals(Locale.JAPANESE.getLanguage())
-              || language.equals(Locale.KOREAN.getLanguage()))) {
-        int openingBracketIndex = localizedString.indexOf('(');
-        if (openingBracketIndex != -1) {
-          int closingBracketIndex = localizedString.indexOf(')');
-          if (openingBracketIndex == closingBracketIndex - 2) {
-            char c = localizedString.charAt(openingBracketIndex + 1);
-            if (c >= 'A' && c <= 'Z') {
-              localizedString = localizedString.substring(0, openingBracketIndex) 
-                  + localizedString.substring(closingBracketIndex + 1);
-            }
-          }
-        }
-      }
-      
       return localizedString;
     } catch (MissingResourceException ex) {
       throw new IllegalArgumentException("Unknown key " + resourceKey);

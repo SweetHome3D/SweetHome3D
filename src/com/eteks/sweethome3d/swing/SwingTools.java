@@ -41,6 +41,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.text.JTextComponent;
 
+import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.OperatingSystem;
+
 /**
  * Gathers some useful tools for Swing.
  * @author Emmanuel Puybaret
@@ -71,6 +74,35 @@ public class SwingTools {
         UIManager.put(property, resource.getString(property));
       }      
     };
+  }
+  
+  /**
+   * Returns a localized text for menus items and labels depending on the system.
+   */
+  public static String getLocalizedLabelText(UserPreferences preferences,
+                                             Class<?> resourceClass,
+                                             String   resourceKey, 
+                                             Object ... resourceParameters) {
+    String localizedString = preferences.getLocalizedString(resourceClass, resourceKey, resourceParameters);
+    // Under Mac OS X, remove bracketed upper case roman letter used in oriental languages to indicate mnemonic 
+    String language = Locale.getDefault().getLanguage();
+    if (OperatingSystem.isMacOSX()
+        && (language.equals(Locale.CHINESE.getLanguage())
+            || language.equals(Locale.JAPANESE.getLanguage())
+            || language.equals(Locale.KOREAN.getLanguage()))) {
+      int openingBracketIndex = localizedString.indexOf('(');
+      if (openingBracketIndex != -1) {
+        int closingBracketIndex = localizedString.indexOf(')');
+        if (openingBracketIndex == closingBracketIndex - 2) {
+          char c = localizedString.charAt(openingBracketIndex + 1);
+          if (c >= 'A' && c <= 'Z') {
+            localizedString = localizedString.substring(0, openingBracketIndex) 
+                + localizedString.substring(closingBracketIndex + 1);
+          }
+        }
+      }
+    }
+    return localizedString;
   }
   
   /**

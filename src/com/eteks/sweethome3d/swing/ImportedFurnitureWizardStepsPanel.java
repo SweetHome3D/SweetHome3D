@@ -238,7 +238,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         }
       });
-    this.findModelsButton = new JButton(preferences.getLocalizedString(
+    this.findModelsButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "findModelsButton.text"));
     BasicService basicService = null;
     try { 
@@ -363,7 +363,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       });
     this.backFaceShownLabel = new JLabel(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "backFaceShownLabel.text"));
-    this.backFaceShownCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.backFaceShownCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "backFaceShownCheckBox.text"));
     this.backFaceShownCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -382,7 +382,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     // Attributes panel components
     this.attributesLabel = new JLabel(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "attributesLabel.text"));
-    this.nameLabel = new JLabel(preferences.getLocalizedString(
+    this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(10);
     if (!OperatingSystem.isMacOSX()) {
@@ -416,7 +416,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
 
-    this.addToCatalogCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.addToCatalogCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "addToCatalogCheckBox.text"));
     // Propose the add to catalog option only for home furniture import
     this.addToCatalogCheckBox.setVisible(importHomePiece);
@@ -431,7 +431,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         }
       });
-    this.categoryLabel = new JLabel(preferences.getLocalizedString(
+    this.categoryLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "categoryLabel.text")); 
     this.categoryComboBox = new JComboBox(preferences.getFurnitureCatalog().getCategories().toArray());
     // The piece category isn't enabled by default for home furniture import
@@ -508,7 +508,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       this.categoryComboBox.setSelectedIndex(0);
     }
 
-    this.widthLabel = new JLabel(preferences.getLocalizedString(
+    this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
@@ -529,7 +529,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.depthLabel = new JLabel(preferences.getLocalizedString(
+    this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "depthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
@@ -550,7 +550,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.heightLabel = new JLabel(preferences.getLocalizedString(
+    this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
@@ -570,7 +570,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             heightSpinnerModel.setLength(controller.getHeight());
           }
         });
-    this.keepProportionsCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.keepProportionsCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "keepProportionsCheckBox.text"));
     this.keepProportionsCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -585,7 +585,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.elevationLabel = new JLabel(preferences.getLocalizedString(
+    this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "elevationLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 500f);
@@ -605,7 +605,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
     
-    this.movableCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.movableCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "movableCheckBox.text"));
     this.movableCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -620,7 +620,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
         });
 
-    this.doorOrWindowCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.doorOrWindowCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "doorOrWindowCheckBox.text"));
     this.doorOrWindowCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
@@ -636,7 +636,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         });
 
     this.colorLabel = new JLabel(
-        String.format(preferences.getLocalizedString(
+        String.format(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "colorLabel.text"), unitName));
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
@@ -647,7 +647,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             controller.setColor(colorButton.getColor());
           }
         });
-    this.clearColorButton = new JButton(preferences.getLocalizedString(
+    this.clearColorButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "clearColorButton.text"));
     this.clearColorButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent ev) {
@@ -1218,7 +1218,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private void setModelChangeTexts(UserPreferences preferences) {
     this.modelChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "modelChangeLabel.text")); 
-    this.modelChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.modelChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "modelChangeButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(
@@ -1233,7 +1233,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
   private void setModelChoiceTexts(UserPreferences preferences) {
     this.modelChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         ImportedFurnitureWizardStepsPanel.class, "modelChoiceLabel.text")); 
-    this.modelChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.modelChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "modelChoiceButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.modelChoiceOrChangeButton.setMnemonic(

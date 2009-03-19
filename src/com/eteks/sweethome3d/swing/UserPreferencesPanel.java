@@ -99,7 +99,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private void createComponents(UserPreferences preferences,
                                 final UserPreferencesController controller) {
     // Create language label and combo box bound to controller LANGUAGE property
-    this.languageLabel = new JLabel(preferences.getLocalizedString(
+    this.languageLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "languageLabel.text"));    
     this.languageComboBox = new JComboBox(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
     this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
@@ -138,10 +138,10 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create unit label and radio buttons bound to controller UNIT property
     this.unitLabel = new JLabel(preferences.getLocalizedString(
         UserPreferencesPanel.class, "unitLabel.text"));
-    this.centimeterRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.centimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "centimeterRadioButton.text"), 
         controller.getUnit() == LengthUnit.CENTIMETER);
-    this.inchRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.inchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "inchRadioButton.text"), 
         controller.getUnit() == LengthUnit.INCH);
     ButtonGroup unitButtonGroup = new ButtonGroup();
@@ -167,9 +167,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
     this.magnetismEnabledLabel = new JLabel(preferences.getLocalizedString(
         UserPreferencesPanel.class, "magnetismLabel.text"));
-    this.magnetismCheckBox = new JCheckBox(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "magnetismCheckBox.text"), 
-        controller.isMagnetismEnabled());
+    this.magnetismCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "magnetismCheckBox.text"), controller.isMagnetismEnabled());
     this.magnetismCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setMagnetismEnabled(magnetismCheckBox.isSelected());
@@ -185,9 +184,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create rulers label and check box bound to controller RULERS_VISIBLE property
     this.rulersVisibleLabel = new JLabel(preferences.getLocalizedString(
         UserPreferencesPanel.class, "rulersLabel.text"));
-    this.rulersCheckBox = new JCheckBox(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "rulersCheckBox.text"),
-        controller.isRulersVisible());
+    this.rulersCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "rulersCheckBox.text"), controller.isRulersVisible());
     this.rulersCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setRulersVisible(rulersCheckBox.isSelected());
@@ -203,9 +201,8 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create grid label and check box bound to controller GRID_VISIBLE property
     this.gridVisibleLabel = new JLabel(preferences.getLocalizedString(
         UserPreferencesPanel.class, "gridLabel.text"));
-    this.gridCheckBox = new JCheckBox(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "gridCheckBox.text"),
-        controller.isGridVisible());
+    this.gridCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "gridCheckBox.text"), controller.isGridVisible());
     this.gridCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setGridVisible(gridCheckBox.isSelected());
@@ -219,7 +216,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         });
     
     // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
-    this.newWallThicknessLabel = new JLabel(preferences.getLocalizedString(
+    this.newWallThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "newWallThicknessLabel.text"));
     final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
         0.5f, 0.125f, this.centimeterRadioButton);
@@ -239,7 +236,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     
     
     // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
-    this.newWallHeightLabel = new JLabel(preferences.getLocalizedString(
+    this.newWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "newWallHeightLabel.text"));
     final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
         10f, 2f, this.centimeterRadioButton);

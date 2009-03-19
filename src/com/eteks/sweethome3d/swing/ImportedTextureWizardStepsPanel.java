@@ -186,7 +186,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     // Attributes panel components
     this.attributesLabel = new JLabel(preferences.getLocalizedString(
         ImportedTextureWizardStepsPanel.class, "attributesLabel.text"));
-    this.nameLabel = new JLabel(preferences.getLocalizedString(
+    this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedTextureWizardStepsPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(10);
     if (!OperatingSystem.isMacOSX()) {
@@ -220,7 +220,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           }
         });
 
-    this.categoryLabel = new JLabel(preferences.getLocalizedString(
+    this.categoryLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "categoryLabel.text")); 
     this.categoryComboBox = new JComboBox(preferences.getTexturesCatalog().getCategories().toArray());
     this.categoryComboBox.setEditable(true); 
@@ -292,7 +292,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           }
         });
 
-    this.widthLabel = new JLabel(preferences.getLocalizedString(
+    this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
@@ -313,7 +313,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           }
         });
     
-    this.heightLabel = new JLabel(preferences.getLocalizedString(
+    this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             ImportedTextureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
@@ -626,7 +626,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private void setImageChangeTexts(UserPreferences preferences) {
     this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         ImportedTextureWizardStepsPanel.class, "imageChangeLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.imageChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "imageChangeButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(
@@ -642,7 +642,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private void setImageChoiceTexts(UserPreferences preferences) {
     this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         ImportedTextureWizardStepsPanel.class, "imageChoiceLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.imageChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "imageChoiceButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(

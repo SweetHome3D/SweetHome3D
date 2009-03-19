@@ -194,7 +194,7 @@ public class HelpPane extends JRootPane implements HelpView {
           helpPane.frame.applyComponentOrientation(
               ComponentOrientation.getOrientation(Locale.getDefault()));
         }
-        helpPane.searchLabel.setText(preferences.getLocalizedString(HelpPane.class, "searchLabel.text"));
+        helpPane.searchLabel.setText(SwingTools.getLocalizedLabelText(preferences, HelpPane.class, "searchLabel.text"));
         helpPane.searchTextField.setText("");
         helpPane.setMnemonics(preferences);
       }
@@ -205,7 +205,7 @@ public class HelpPane extends JRootPane implements HelpView {
    * Creates the components displayed by this view.
   */
   private void createComponents(UserPreferences preferences) {
-    this.searchLabel = new JLabel(preferences.getLocalizedString(HelpPane.class, "searchLabel.text"));
+    this.searchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HelpPane.class, "searchLabel.text"));
     this.searchTextField = new JTextField(12);
     // Under Mac OS 10.5 use client properties to use search text field look and feel
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {

@@ -95,7 +95,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     String unitName = preferences.getLengthUnit().getName();
     
     // Create observer field of view label and spinner bound to OBSERVER_FIELD_OF_VIEW_IN_DEGREES controller property
-    this.observerFieldOfViewLabel = new JLabel(preferences.getLocalizedString(
+    this.observerFieldOfViewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "observerFieldOfViewLabel.text"));
     final SpinnerNumberModel observerFieldOfViewSpinnerModel = new SpinnerNumberModel(10, 10, 120, 1);
     this.observerFieldOfViewSpinner = new AutoCommitSpinner(observerFieldOfViewSpinnerModel);
@@ -114,7 +114,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         });
     
     // Create observer height label and spinner bound to OBSERVER_HEIGHT controller property
-    this.observerHeightLabel = new JLabel(String.format(preferences.getLocalizedString(
+    this.observerHeightLabel = new JLabel(String.format(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "observerHeightLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel observerHeightSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f);
@@ -133,7 +133,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         });
     
     // Ground color and texture buttons bound to ground controller properties
-    this.groundColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.groundColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "groundColorRadioButton.text"));
     this.groundColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -166,7 +166,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           }
         });
     
-    this.groundTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.groundTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "groundTextureRadioButton.text"));
     this.groundTextureRadioButton.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent ev) {
@@ -184,7 +184,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     updateGroundRadioButtons(controller);
     
     // Sky color and texture buttons bound to sky controller properties
-    this.skyColorRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.skyColorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "skyColorRadioButton.text"));
     this.skyColorRadioButton.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
@@ -217,7 +217,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           }
         });
     
-    this.skyTextureRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.skyTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "skyTextureRadioButton.text"));
     this.skyTextureRadioButton.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent ev) {
@@ -235,7 +235,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     updateSkyRadioButtons(controller);
     
     // Brightness label and slider bound to LIGHT_COLOR controller property
-    this.brightnessLabel = new JLabel(preferences.getLocalizedString(
+    this.brightnessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "brightnessLabel.text"));
     this.brightnessSlider = new JSlider(0, 255);
     JLabel darkLabel = new JLabel(preferences.getLocalizedString(
@@ -264,7 +264,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         });
     
     // Walls transparency label and slider bound to WALLS_ALPHA controller property
-    this.wallsTransparencyLabel = new JLabel(preferences.getLocalizedString(
+    this.wallsTransparencyLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "wallsTransparencyLabel.text"));
     this.wallsTransparencySlider = new JSlider(0, 255);
     JLabel opaqueLabel = new JLabel(preferences.getLocalizedString(

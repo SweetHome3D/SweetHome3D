@@ -138,17 +138,17 @@ public class PageSetupPanel extends JPanel implements DialogView {
    */
   private void createComponents(UserPreferences preferences, 
                                 final PageSetupController controller) {
-    this.pageFormatButton = new JButton(preferences.getLocalizedString(
+    this.pageFormatButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "pageFormatButton.text"));
-    this.furniturePrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.furniturePrintedCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "furniturePrintedCheckBox.text"));
-    this.planPrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.planPrintedCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "planPrintedCheckBox.text")); 
 
     // Create scale radio buttons and user's scale spinner
-    this.bestFitPlanScaleRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.bestFitPlanScaleRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "bestFitPlanScaleRadioButton.text"));
-    this.userPlanScaleRadioButton = new JRadioButton(preferences.getLocalizedString(
+    this.userPlanScaleRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "userPlanScaleRadioButton.text"));
     ButtonGroup scaleButtonsGroup = new ButtonGroup();
     scaleButtonsGroup.add(this.bestFitPlanScaleRadioButton);
@@ -157,17 +157,17 @@ public class PageSetupPanel extends JPanel implements DialogView {
         new NullableSpinner.NullableSpinnerNumberModel(10, 1, 10000, 10);
     this.userPlanScaleSpinner = new AutoCommitSpinner(userPlanScaleSpinnerModel);
 
-    this.view3DPrintedCheckBox = new JCheckBox(preferences.getLocalizedString(
+    this.view3DPrintedCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "view3DPrintedCheckBox.text")); 
 
-    this.headerFormatLabel = new JLabel(preferences.getLocalizedString(
+    this.headerFormatLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "headerFormatLabel.text"));
     this.headerFormatTextField = new JTextField(20);
     if (!OperatingSystem.isMacOSX()) {
       SwingTools.addAutoSelectionOnFocusGain(this.headerFormatTextField);
     }
     
-    this.footerFormatLabel = new JLabel(preferences.getLocalizedString(
+    this.footerFormatLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "footerFormatLabel.text"));
     this.footerFormatTextField = new JTextField(20);
     if (!OperatingSystem.isMacOSX()) {

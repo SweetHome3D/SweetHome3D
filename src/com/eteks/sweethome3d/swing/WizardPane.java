@@ -107,7 +107,7 @@ public class WizardPane extends JOptionPane implements DialogView {
 
   private void createOptionButtons(UserPreferences preferences, 
                                    final WizardController controller) {
-    this.backOptionButton = new JButton(preferences.getLocalizedString(
+    this.backOptionButton = new JButton(SwingTools.getLocalizedLabelText(preferences, 
         WizardPane.class, "backOptionButton.text"));
     this.backOptionButton.setEnabled(controller.isBackStepEnabled());
     controller.addPropertyChangeListener(WizardController.Property.BACK_STEP_ENABLED, 
@@ -166,7 +166,7 @@ public class WizardPane extends JOptionPane implements DialogView {
    * Sets whether this wizard view is displaying the last step or not.
    */
   private void updateNextFinishOptionButton(WizardController controller) {
-    this.nextFinishOptionButton.setText(this.preferences.getLocalizedString(WizardPane.class, 
+    this.nextFinishOptionButton.setText(SwingTools.getLocalizedLabelText(this.preferences, WizardPane.class, 
         controller.isLastStep() 
             ? "finishOptionButton.text" 
             : "nextOptionButton.text"));

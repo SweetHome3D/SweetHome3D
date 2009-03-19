@@ -1831,7 +1831,7 @@ public class HomePane extends JRootPane implements HomeView {
       
       // Add a check box that lets user choose whether he wants to display again the tip or not
       JCheckBox doNotDisplayTipCheckBox = new JCheckBox(
-          this.preferences.getLocalizedString(HomePane.class, "doNotDisplayTipCheckBox.text"));
+          SwingTools.getLocalizedLabelText(this.preferences, HomePane.class, "doNotDisplayTipCheckBox.text"));
       if (!OperatingSystem.isMacOSX()) {
         doNotDisplayTipCheckBox.setMnemonic(KeyStroke.getKeyStroke(
             this.preferences.getLocalizedString(HomePane.class, "doNotDisplayTipCheckBox.mnemonic")).getKeyCode());

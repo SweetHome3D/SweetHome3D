@@ -109,7 +109,11 @@ public class ResourceAction extends AbstractAction {
                                     Class<?> resourceClass, 
                                     String actionPrefix) {
     String propertyPrefix = actionPrefix + ".";
-    putValue(NAME, getOptionalString(preferences, resourceClass, propertyPrefix + NAME));
+    try {
+      putValue(NAME, SwingTools.getLocalizedLabelText(preferences, resourceClass, propertyPrefix + NAME));
+    } catch (IllegalArgumentException ex) {
+      // Ignore unknown resource
+    }
     putValue(DEFAULT, getValue(NAME));
     putValue(POPUP, getOptionalString(preferences, resourceClass, propertyPrefix + POPUP));
     

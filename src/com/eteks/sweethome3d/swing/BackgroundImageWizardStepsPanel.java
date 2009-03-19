@@ -179,7 +179,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     // Image scale panel components
     this.scaleLabel = new JLabel(preferences.getLocalizedString(
         BackgroundImageWizardStepsPanel.class, "scaleLabel.text"));
-    this.scaleDistanceLabel = new JLabel(preferences.getLocalizedString(
+    this.scaleDistanceLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         BackgroundImageWizardStepsPanel.class, "scaleDistanceLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel scaleDistanceSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.99f, 1000000f);
@@ -204,9 +204,9 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
     // Image origin panel components
     this.originLabel = new JLabel(preferences.getLocalizedString(
         BackgroundImageWizardStepsPanel.class, "originLabel.text"));
-    this.xOriginLabel = new JLabel(preferences.getLocalizedString(
+    this.xOriginLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             BackgroundImageWizardStepsPanel.class, "xOriginLabel.text", unitName)); 
-    this.yOriginLabel = new JLabel(preferences.getLocalizedString(
+    this.yOriginLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             BackgroundImageWizardStepsPanel.class, "yOriginLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel xOriginSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 1000000f);
@@ -502,7 +502,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   private void setImageChangeTexts(UserPreferences preferences) {
     this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         BackgroundImageWizardStepsPanel.class, "imageChangeLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.imageChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences,
         BackgroundImageWizardStepsPanel.class, "imageChangeButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(
@@ -518,7 +518,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
   private void setImageChoiceTexts(UserPreferences preferences) {
     this.imageChoiceOrChangeLabel.setText(preferences.getLocalizedString(
         BackgroundImageWizardStepsPanel.class, "imageChoiceLabel.text")); 
-    this.imageChoiceOrChangeButton.setText(preferences.getLocalizedString(
+    this.imageChoiceOrChangeButton.setText(SwingTools.getLocalizedLabelText(preferences,
         BackgroundImageWizardStepsPanel.class, "imageChoiceButton.text"));
     if (!OperatingSystem.isMacOSX()) {
       this.imageChoiceOrChangeButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
