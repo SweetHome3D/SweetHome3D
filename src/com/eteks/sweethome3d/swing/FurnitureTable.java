@@ -559,7 +559,7 @@ public class FurnitureTable extends JTable implements View, Printable {
   /**
    * Column table model used by this table.
    */
-  public static class FurnitureTableColumnModel extends DefaultTableColumnModel {
+  private static class FurnitureTableColumnModel extends DefaultTableColumnModel {
     private Map<HomePieceOfFurniture.SortableProperty, TableColumn> availableColumns;
 
     public FurnitureTableColumnModel(Home home, UserPreferences preferences) {
