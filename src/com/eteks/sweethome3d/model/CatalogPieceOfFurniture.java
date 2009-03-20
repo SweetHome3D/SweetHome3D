@@ -69,7 +69,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param height  the height in centimeters of the new piece
    * @param movable if <code>true</code>, the new piece is movable
    * @param doorOrWindow if <code>true</code>, the new piece is a door or a window
-   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code> 
    *             parameter since a catalog door and window is supposed to be an instance 
    *             of {@link CatalogDoorOrWindow} 
    */
@@ -99,7 +99,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param price the price of the new piece or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new piece or <code>null</code>
-   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code> 
    *             parameter since a catalog door and window is supposed to be an instance 
    *             of {@link CatalogDoorOrWindow} 
    */
@@ -130,7 +130,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param price the price of the new piece or <code>null</code> 
    * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
    *             price of the new piece or <code>null</code> 
-   * @since 1.6
+   * @since 1.7
    */
   public CatalogPieceOfFurniture(String id, String name, String description, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
@@ -156,7 +156,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param backFaceShown <code>true</code> if back face should be shown
    * @param iconYaw the yaw angle used to create the piece icon
    * @param proportional if <code>true</code>, size proportions will be kept 
-   * @deprecated As of version 1.6, use constructor without <code>doorOrWindow</code> 
+   * @deprecated As of version 1.7, use constructor without <code>doorOrWindow</code> 
    *             parameter since a catalog door and window is supposed to be an instance 
    *             of {@link CatalogDoorOrWindow} 
    */
@@ -184,7 +184,7 @@ public class CatalogPieceOfFurniture implements Comparable<CatalogPieceOfFurnitu
    * @param backFaceShown <code>true</code> if back face should be shown
    * @param iconYaw the yaw angle used to create the piece icon
    * @param proportional if <code>true</code>, size proportions will be kept
-   * @since 1.6 
+   * @since 1.7 
    */
   public CatalogPieceOfFurniture(String name, Content icon, Content model, 
                                  float width, float depth, float height, float elevation, 
