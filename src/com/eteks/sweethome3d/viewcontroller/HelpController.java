@@ -369,16 +369,16 @@ public class HelpController implements Controller {
 
         // Create an HTML document
         HelpDocument helpDocument = new HelpDocument(helpDocumentUrl, searchedWords);
-        // Parse HTML file first ignoring charset directive
+        // Parse HTML file first without ignoring charset directive
         helpDocument.putProperty("IgnoreCharsetDirective", Boolean.FALSE);
         try {
           html.read(urlReader, helpDocument, 0);
         } catch (ChangedCharSetException ex) {
-          urlReader.close();
           // Retrieve document real encoding
           String mimeType = ex.getCharSetSpec();
           String encoding = mimeType.substring(mimeType.indexOf("=") + 1).trim();
           // Restart reading document with its real encoding
+          urlReader.close();
           urlReader = new InputStreamReader(helpDocumentUrl.openStream(), encoding);
           helpDocument.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
           html.read(urlReader, helpDocument, 0);
