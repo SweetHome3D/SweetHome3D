@@ -21,13 +21,17 @@ package com.eteks.sweethome3d.model;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 /**
@@ -54,8 +58,9 @@ public abstract class UserPreferences {
     SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
   }
   
-  private final PropertyChangeSupport propertyChangeSupport;
-  private final Map<Class<?>, LocalizedStringResource> localizedStringResources;
+  private final PropertyChangeSupport          propertyChangeSupport;
+  private final Map<Class<?>, ResourceBundle>  classResourceBundles;
+  private final Map<String, ResourceBundle>    resourceBundles;
 
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
@@ -72,7 +77,8 @@ public abstract class UserPreferences {
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
-    this.localizedStringResources = new HashMap<Class<?>, LocalizedStringResource>();
+    this.classResourceBundles = new HashMap<Class<?>, ResourceBundle>();
+    this.resourceBundles = new HashMap<String, ResourceBundle>();
     
     String defaultLanguage = Locale.getDefault().getLanguage();
     // Find closest language among supported languages in Sweet Home 3D
@@ -187,7 +193,8 @@ public abstract class UserPreferences {
       String oldLanguage = this.language;
       this.language = language;      
       updateDefaultLocale();
-      this.localizedStringResources.clear();
+      this.classResourceBundles.clear();
+      this.resourceBundles.clear();
       this.propertyChangeSupport.firePropertyChange(Property.LANGUAGE.name(), 
           oldLanguage, language);
     }
@@ -214,15 +221,12 @@ public abstract class UserPreferences {
   public String getLocalizedString(Class<?> resourceClass,
                                    String   resourceKey, 
                                    Object ... resourceParameters) {
-    LocalizedStringResource localizedStringResource = 
-        this.localizedStringResources.get(resourceClass);
-    ResourceBundle resourceBundle;
-    if (localizedStringResource == null) {
+    ResourceBundle classResourceBundle = this.classResourceBundles.get(resourceClass);
+    if (classResourceBundle == null) {
       try {      
-        resourceBundle = ResourceBundle.getBundle(resourceClass.getName());
-        localizedStringResource = new LocalizedStringResource(resourceBundle, null);
-        this.localizedStringResources.put(resourceClass, localizedStringResource);
-      } catch (MissingResourceException ex) {
+        classResourceBundle = getResourceBundle(resourceClass.getName());
+        this.classResourceBundles.put(resourceClass, classResourceBundle);
+      } catch (IOException ex) {
         try {
           String className = resourceClass.getName();
           int lastIndex = className.lastIndexOf(".");
@@ -232,25 +236,18 @@ public abstract class UserPreferences {
           } else {
             familyName = "package";
           }
-          resourceBundle = ResourceBundle.getBundle(familyName);
-          localizedStringResource = new LocalizedStringResource(resourceBundle, 
+          classResourceBundle = new PrefixedResourceBundle(getResourceBundle(familyName), 
               resourceClass.getSimpleName() + ".");
-          this.localizedStringResources.put(resourceClass, localizedStringResource);
-        } catch (MissingResourceException ex2) {
+          this.classResourceBundles.put(resourceClass, classResourceBundle);
+        } catch (IOException ex2) {
           throw new IllegalArgumentException(
               "Can't find resource bundle for " + resourceClass, ex);
         }
       }
-    } else {
-      resourceBundle = localizedStringResource.getResourceBundle();
-    }
+    } 
 
-    if (localizedStringResource.getKeyPrefix() != null) {
-      resourceKey = localizedStringResource.getKeyPrefix() + resourceKey;
-    }
-    
     try {
-      String localizedString = resourceBundle.getString(resourceKey);
+      String localizedString = classResourceBundle.getString(resourceKey);
       if (resourceParameters.length > 0) {
         localizedString = String.format(localizedString, resourceParameters);
       }
@@ -258,6 +255,69 @@ public abstract class UserPreferences {
       return localizedString;
     } catch (MissingResourceException ex) {
       throw new IllegalArgumentException("Unknown key " + resourceKey);
+    }
+  }
+  
+  /**
+   * Returns a new resource bundle for the given <code>familyName</code> 
+   * that matches current default locale. The search will be done
+   * only among .properties files.
+   * @throws IOException if no .properties file was found
+   */
+  private ResourceBundle getResourceBundle(String familyName) throws IOException {
+    ResourceBundle localizedResourceBundle = this.resourceBundles.get(familyName);
+    if (localizedResourceBundle != null) {
+      return localizedResourceBundle;
+    }
+    Locale defaultLocale = Locale.getDefault();
+    String language = defaultLocale.getLanguage();
+    String country = defaultLocale.getCountry();
+    ClassLoader classLoader = getClass().getClassLoader();
+    familyName = familyName.replace('.', '/');
+    InputStream languageCountryProperties = 
+        classLoader.getResourceAsStream(familyName + "_" + language + "_" + country + ".properties");
+    InputStream languageProperties = 
+        classLoader.getResourceAsStream(familyName + "_" + language  + ".properties");
+    InputStream defaultProperties = 
+        classLoader.getResourceAsStream(familyName + ".properties");
+    ReparentableResourceBundle childResourceBundle = null;
+    try {
+      if (languageCountryProperties != null) {
+        localizedResourceBundle =
+        childResourceBundle = new ReparentableResourceBundle(languageCountryProperties);
+      }
+      if (languageProperties != null) {
+        ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(languageProperties);
+        if (childResourceBundle != null) {
+          childResourceBundle.setParent(resourceBundle);
+        } else {
+          localizedResourceBundle = resourceBundle;
+        }
+        childResourceBundle = resourceBundle;
+      }
+      if (defaultProperties != null) {
+        ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(defaultProperties);
+        if (childResourceBundle != null) {
+          childResourceBundle.setParent(resourceBundle);
+        } else {
+          localizedResourceBundle = resourceBundle;
+        }
+      }
+      if (localizedResourceBundle == null) {
+        throw new IOException("No available resource bundle for " + familyName);
+      } 
+      this.resourceBundles.put(familyName, localizedResourceBundle);
+      return localizedResourceBundle;
+    } finally {
+      if (languageCountryProperties != null) {
+        languageCountryProperties.close();
+      }
+      if (languageProperties != null) {
+        languageProperties.close();
+      }
+      if (defaultProperties != null) {
+        defaultProperties.close();
+      }
     }
   }
   
@@ -466,25 +526,47 @@ public abstract class UserPreferences {
   public abstract boolean furnitureLibraryExists(String furnitureLibraryName) throws RecorderException;
 
   /**
-   * Stores the resource bundle of a class and the prefix that may be 
-   * added to resource key.
+   * A reparentable resource bundle.
    */
-  private static class LocalizedStringResource {
+  private static class ReparentableResourceBundle extends PropertyResourceBundle {
+    public ReparentableResourceBundle(InputStream inputStream) throws IOException {
+      super(inputStream);
+    }
+    
+    // Increase <code>setParent</code> visibility. 
+    @Override
+    public void setParent(ResourceBundle parent) {
+      super.setParent(parent);
+    }    
+  }
+
+  /**
+   * A resource bundle with a prefix added to resource key.
+   */
+  private static class PrefixedResourceBundle extends ResourceBundle {
     private ResourceBundle resourceBundle;
     private String         keyPrefix;
 
-    public LocalizedStringResource(ResourceBundle resourceBundle,
-                                   String keyPrefix) {
+    public PrefixedResourceBundle(ResourceBundle resourceBundle, 
+                                  String keyPrefix) {
       this.resourceBundle = resourceBundle;
       this.keyPrefix = keyPrefix;
     }
     
-    public ResourceBundle getResourceBundle() {
-      return this.resourceBundle;
+    @Override
+    public Locale getLocale() {
+      return this.resourceBundle.getLocale();
     }
     
-    public String getKeyPrefix() {
-      return this.keyPrefix;
-    }
+    @Override
+    protected Object handleGetObject(String key) {
+      key = this.keyPrefix + key;
+      return this.resourceBundle.getObject(key);
+    }    
+
+    @Override
+    public Enumeration<String> getKeys() {
+      return this.resourceBundle.getKeys();
+    }    
   }
 }
