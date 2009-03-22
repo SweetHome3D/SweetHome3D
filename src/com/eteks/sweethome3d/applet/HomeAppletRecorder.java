@@ -29,6 +29,7 @@ import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
@@ -131,7 +132,7 @@ public class HomeAppletRecorder implements HomeRecorder {
     DefaultHomeInputStream in = null;
     try {
       // Open a home input stream to server 
-      connection = getURL(this.readHomeURL, name).openConnection();
+      connection = getURL(this.readHomeURL, URLEncoder.encode(name, "UTF-8")).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
       in = new DefaultHomeInputStream(connection.getInputStream());

@@ -33,6 +33,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -1432,7 +1433,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     InputStream in = null;
     try {
       if (baseUrl != null) {
-        in = new URL(baseUrl, file).openStream();
+        in = new URL(baseUrl, URLEncoder.encode(file, "UTF-8")).openStream();
       } else {
         in = new FileInputStream(file);
       }
