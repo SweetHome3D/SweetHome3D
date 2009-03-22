@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.ChangedCharSetException;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -275,7 +276,7 @@ public class HelpController implements Controller {
     URL helpIndex = getHelpIndexPageURL();
     String [] searchedWords = searchedText.split("\\s");
     for (int i = 0; i < searchedWords.length; i++) {
-      searchedWords [i] = searchedWords [i].toLowerCase();
+      searchedWords [i] = searchedWords [i].toLowerCase().trim();
     }
     List<HelpDocument> helpDocuments = searchInHelpDocuments(helpIndex, searchedWords);
     // Build dynamically the search result page
@@ -368,8 +369,20 @@ public class HelpController implements Controller {
 
         // Create an HTML document
         HelpDocument helpDocument = new HelpDocument(helpDocumentUrl, searchedWords);
-        // Parse HTML file
-        html.read(urlReader, helpDocument, 0);
+        // Parse HTML file first ignoring charset directive
+        helpDocument.putProperty("IgnoreCharsetDirective", Boolean.FALSE);
+        try {
+          html.read(urlReader, helpDocument, 0);
+        } catch (ChangedCharSetException ex) {
+          urlReader.close();
+          // Retrieve document real encoding
+          String mimeType = ex.getCharSetSpec();
+          String encoding = mimeType.substring(mimeType.indexOf("=") + 1).trim();
+          // Restart reading document with its real encoding
+          urlReader = new InputStreamReader(helpDocumentUrl.openStream(), encoding);
+          helpDocument.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+          html.read(urlReader, helpDocument, 0);
+        }
         // If searched text was found add it to returned documents list
         if (helpDocument.getRelevance() > 0) {
           helpDocuments.add(helpDocument);
@@ -418,7 +431,6 @@ public class HelpController implements Controller {
       this.searchedWords = searchedWords;
       // Store HTML file base
       setBase(helpDocument);
-      putProperty("IgnoreCharsetDirective", Boolean.TRUE);
     }
 
     public Set<URL> getReferencedDocuments() {
