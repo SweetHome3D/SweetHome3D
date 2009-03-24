@@ -254,11 +254,17 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_LABELS, true);
+    homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
+    homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_BACKGROUND_IMAGE, true);
-    homeView.setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, 
-        this.home.getBackgroundImage() != null);
-    homeView.setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, 
-        this.home.getBackgroundImage() != null);
+    BackgroundImage backgroundImage = this.home.getBackgroundImage();
+    boolean homeHasBackgroundImage = backgroundImage != null;
+    homeView.setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
+    homeView.setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
+        homeHasBackgroundImage && backgroundImage.isVisible());
+    homeView.setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
+        homeHasBackgroundImage && !backgroundImage.isVisible());
+    homeView.setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomeView.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
@@ -573,10 +579,14 @@ public class HomeController implements Controller {
       this.home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              getView().setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, 
-                  ev.getNewValue() != null);
-              getView().setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, 
-                  ev.getNewValue() != null);
+              BackgroundImage backgroundImage = (BackgroundImage)ev.getNewValue();
+              boolean homeHasBackgroundImage = backgroundImage != null;
+              getView().setEnabled(HomeView.ActionType.MODIFY_BACKGROUND_IMAGE, homeHasBackgroundImage);
+              getView().setEnabled(HomeView.ActionType.HIDE_BACKGROUND_IMAGE, 
+                  homeHasBackgroundImage && backgroundImage.isVisible());
+              getView().setEnabled(HomeView.ActionType.SHOW_BACKGROUND_IMAGE, 
+                  homeHasBackgroundImage && !backgroundImage.isVisible());
+              getView().setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
             }
           });
     }
@@ -1647,23 +1657,6 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Displays help window.
-   */
-  public void help() {
-    if (helpController == null) {
-      helpController = new HelpController(this.preferences, this.viewFactory);
-    }
-    helpController.displayView();
-  }
-
-  /**
-   * Displays about dialog.
-   */
-  public void about() {
-    getView().showAboutDialog();
-  }
-
-  /**
    * Displays the wizard that helps to import home background image. 
    */
   public void importBackgroundImage() {
@@ -1676,6 +1669,58 @@ public class HomeController implements Controller {
    */
   public void modifyBackgroundImage() {
     importBackgroundImage();
+  }
+  
+  /**
+   * Hides the home background image. 
+   */
+  public void hideBackgroundImage() {     
+    toggleBackgroundImageVisibility("undoHideBackgroundImageName");
+  }
+  
+  /**
+   * Shows the home background image. 
+   */
+  public void showBackgroundImage() {
+    toggleBackgroundImageVisibility("undoShowBackgroundImageName");
+  }
+  
+  /**
+   * Toggles visibility of the background image and posts an undoable operation.
+   */
+  private void toggleBackgroundImageVisibility(final String presentationName) {
+    doToggleBackgroundImageVisibility(); 
+    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+      @Override
+      public void undo() throws CannotUndoException {
+        super.undo();
+        doToggleBackgroundImageVisibility(); 
+      }
+      
+      @Override
+      public void redo() throws CannotRedoException {
+        super.redo();
+        doToggleBackgroundImageVisibility();
+      }
+      
+      @Override
+      public String getPresentationName() {
+        return preferences.getLocalizedString(HomeController.class, presentationName);
+      }
+    };
+    getUndoableEditSupport().postEdit(undoableEdit);
+  }
+
+  /**
+   * Toggles visibility of the background image.
+   */
+  private void doToggleBackgroundImageVisibility() {
+    BackgroundImage backgroundImage = this.home.getBackgroundImage();
+    this.home.setBackgroundImage(new BackgroundImage(backgroundImage.getImage(),
+        backgroundImage.getScaleDistance(), 
+        backgroundImage.getScaleDistanceXStart(), backgroundImage.getScaleDistanceYStart(), 
+        backgroundImage.getScaleDistanceXEnd(), backgroundImage.getScaleDistanceYEnd(),
+        backgroundImage.getXOrigin(), backgroundImage.getYOrigin(), !backgroundImage.isVisible()));
   }
   
   /**
@@ -1723,6 +1768,23 @@ public class HomeController implements Controller {
     float newScale = planController.getScale() * 1.5f;
     planController.setScale(newScale);
     enableZoomActions();
+  }
+
+  /**
+   * Displays help window.
+   */
+  public void help() {
+    if (helpController == null) {
+      helpController = new HelpController(this.preferences, this.viewFactory);
+    }
+    helpController.displayView();
+  }
+
+  /**
+   * Displays about dialog.
+   */
+  public void about() {
+    getView().showAboutDialog();
   }
 
   /**

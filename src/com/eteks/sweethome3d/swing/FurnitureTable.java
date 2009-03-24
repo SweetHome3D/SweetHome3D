@@ -82,6 +82,7 @@ import com.eteks.sweethome3d.viewcontroller.View;
  */
 public class FurnitureTable extends JTable implements View, Printable {
   private ListSelectionListener  tableSelectionListener;
+  private boolean selectionByUser;
 
   /**
    * Creates a table that displays furniture of <code>home</code>.
@@ -119,30 +120,26 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void addSelectionListeners(final Home home,
                                      final FurnitureController controller) {   
-    final SelectionListener homeSelectionListener  = 
-      new SelectionListener() {
+    final SelectionListener homeSelectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
           updateTableSelectedFurniture(home.getSelectedItems());        
         }
       };
-    this.tableSelectionListener = 
-      new ListSelectionListener () {
+    this.tableSelectionListener = new ListSelectionListener () {
         public void valueChanged(ListSelectionEvent ev) {
-          if (!ev.getValueIsAdjusting()) {
-            home.removeSelectionListener(homeSelectionListener);
-            int [] selectedRows = getSelectedRows();
-            // Build the list of selected furniture
-            List<HomePieceOfFurniture> selectedFurniture =
-                new ArrayList<HomePieceOfFurniture>(selectedRows.length);
-            FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
-            for (int index : selectedRows) {
-              // Add to selectedFurniture table model first column value that stores piece
-              selectedFurniture.add((HomePieceOfFurniture)tableModel.getValueAt(index, 0));
-            }
-            // Set the new selection in home with controller
-            controller.setSelectedFurniture(selectedFurniture);
-            home.addSelectionListener(homeSelectionListener);
+          selectionByUser = true;
+          int [] selectedRows = getSelectedRows();
+          // Build the list of selected furniture
+          List<HomePieceOfFurniture> selectedFurniture =
+              new ArrayList<HomePieceOfFurniture>(selectedRows.length);
+          FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+          for (int index : selectedRows) {
+            // Add to selectedFurniture table model first column value that stores piece
+            selectedFurniture.add((HomePieceOfFurniture)tableModel.getValueAt(index, 0));
           }
+          // Set the new selection in home with controller
+          controller.setSelectedFurniture(selectedFurniture);
+          selectionByUser = false;
         }
       };
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);
@@ -170,7 +167,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         }
       }
     }
-    if (minIndex != Integer.MIN_VALUE) {
+    if (!this.selectionByUser && minIndex != Integer.MIN_VALUE) {
       makeRowsVisible(minIndex, maxIndex);
     }
     getSelectionModel().addListSelectionListener(this.tableSelectionListener);

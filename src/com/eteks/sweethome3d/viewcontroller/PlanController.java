@@ -545,6 +545,106 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
+   * Locks home base plan.
+   */
+  public void lockBasePlan() {
+    if (!this.home.isBasePlanLocked()) {
+      List<Selectable> selection = this.home.getSelectedItems();
+      final Selectable [] oldSelectedItems = 
+          selection.toArray(new Selectable [selection.size()]);
+      
+      List<Selectable> newSelection = getItemsNotPartOfBasePlan(selection);
+      final Selectable [] newSelectedItems = 
+        newSelection.toArray(new Selectable [newSelection.size()]);
+      
+      this.home.setBasePlanLocked(true);
+      selectItems(newSelection);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setBasePlanLocked(false);
+          selectAndShowItems(Arrays.asList(oldSelectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setBasePlanLocked(true);
+          selectAndShowItems(Arrays.asList(newSelectedItems));
+        }      
+    
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoLockBasePlan");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> it the given <code>item</code> belongs
+   * to the base plan.
+   */
+  protected boolean isItemPartOfBasePlan(Selectable item) {
+    if (item instanceof HomePieceOfFurniture) {
+      return isPieceOfFurniturePartOfBasePlan((HomePieceOfFurniture)item);
+    } else {
+      return true;
+    }
+  }
+
+  /**
+   * Returns the items among the given list that are not part of the base plan.
+   */
+  private List<Selectable> getItemsNotPartOfBasePlan(List<? extends Selectable> items) {
+    List<Selectable> itemsNotPartOfBasePlan = new ArrayList<Selectable>();
+    for (Selectable item : items) {
+      if (!isItemPartOfBasePlan(item)) {
+        itemsNotPartOfBasePlan.add(item);
+      }
+    }
+    return itemsNotPartOfBasePlan;
+  }
+
+  /**
+   * Unlocks home base plan.
+   */
+  public void unlockBasePlan() {
+    if (this.home.isBasePlanLocked()) {
+      List<Selectable> selection = this.home.getSelectedItems();
+      final Selectable [] selectedItems = 
+          selection.toArray(new Selectable [selection.size()]);
+      
+      this.home.setBasePlanLocked(false);
+      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        @Override
+        public void undo() throws CannotUndoException {
+          super.undo();
+          home.setBasePlanLocked(true);
+          selectAndShowItems(Arrays.asList(selectedItems));
+        }
+        
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+          home.setBasePlanLocked(false);
+          selectAndShowItems(Arrays.asList(selectedItems));
+        }      
+    
+        @Override
+        public String getPresentationName() {
+          return preferences.getLocalizedString(
+              PlanController.class, "undoUnlockBasePlan");
+        }      
+      };
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
    * Controls the direction reverse of selected walls.
    */
   public void reverseSelectedWallsDirection() {
@@ -656,6 +756,7 @@ public class PlanController extends FurnitureController implements Controller {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
     if (selectedWalls.size() == 1) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
       Wall splitWall = selectedWalls.get(0);
       JoinedWall splitJoinedWall = new JoinedWall(splitWall);
       float xStart = splitWall.getXStart();
@@ -719,7 +820,7 @@ public class PlanController extends FurnitureController implements Controller {
       selectAndShowItems(Arrays.asList(new Wall [] {firstWall}));
       
       postSplitSelectedWall(splitJoinedWall, 
-          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems);
+          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems, basePlanLocked);
     }
   }
   
@@ -729,23 +830,25 @@ public class PlanController extends FurnitureController implements Controller {
   private void postSplitSelectedWall(final JoinedWall splitJoinedWall, 
                                      final JoinedWall firstJoinedWall, 
                                      final JoinedWall secondJoinedWall,
-                                     List<Selectable> oldSelection) {
+                                     List<Selectable> oldSelection,
+                                     final boolean oldBasePlanLocked) {
     final Selectable [] oldSelectedItems = 
         oldSelection.toArray(new Selectable [oldSelection.size()]);
+    final boolean newBasePlanLocked = this.home.isBasePlanLocked();
     UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doDeleteWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall});
-        doAddWalls(new JoinedWall [] {splitJoinedWall});
+        doDeleteWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, oldBasePlanLocked);
+        doAddWalls(new JoinedWall [] {splitJoinedWall}, oldBasePlanLocked);
         selectAndShowItems(Arrays.asList(oldSelectedItems));
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        doDeleteWalls(new JoinedWall [] {splitJoinedWall});
-        doAddWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall});
+        doDeleteWalls(new JoinedWall [] {splitJoinedWall}, newBasePlanLocked);
+        doAddWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, newBasePlanLocked);
         selectAndShowItems(Arrays.asList(new Wall [] {firstJoinedWall.getWall()}));
       }      
 
@@ -1099,7 +1202,11 @@ public class PlanController extends FurnitureController implements Controller {
         all.add(piece);
       }
     }
-    this.home.setSelectedItems(all);
+    if (this.home.isBasePlanLocked()) {
+      this.home.setSelectedItems(getItemsNotPartOfBasePlan(all));
+    } else {
+      this.home.setSelectedItems(all);
+    }
   }
   
   /**
@@ -1118,7 +1225,7 @@ public class PlanController extends FurnitureController implements Controller {
   
   private void addModelListeners() {
     this.selectionListener = new SelectionListener() {
-        public void selectionChanged(SelectionEvent selectionEvent) {
+        public void selectionChanged(SelectionEvent ev) {
           getView().makeSelectionVisible();
         }
       };
@@ -1755,23 +1862,29 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
     
+    boolean basePlanLocked = this.home.isBasePlanLocked();
     for (Label label : this.home.getLabels()) {
-      if (label.containsPoint(x, y, margin)) {
-        items.add(label);
-        if (stopAtFirstItem) {
-          return items;
-        }
-      } else if (isItemTextAt(label, label.getText(), label.getStyle(), 
-          label.getX(), label.getY(), x, y, textMargin)) {
-        items.add(label);
-        if (stopAtFirstItem) {
-          return items;
+      if (!basePlanLocked 
+          || !isItemPartOfBasePlan(label)) {
+        if (label.containsPoint(x, y, margin)) {
+          items.add(label);
+          if (stopAtFirstItem) {
+            return items;
+          }
+        } else if (isItemTextAt(label, label.getText(), label.getStyle(), 
+            label.getX(), label.getY(), x, y, textMargin)) {
+          items.add(label);
+          if (stopAtFirstItem) {
+            return items;
+          }
         }
       }
     }    
     
     for (DimensionLine dimensionLine : this.home.getDimensionLines()) {
-      if (dimensionLine.containsPoint(x, y, margin)) {
+      if ((!basePlanLocked 
+            || !isItemPartOfBasePlan(dimensionLine))
+          && dimensionLine.containsPoint(x, y, margin)) {
         items.add(dimensionLine);
         if (stopAtFirstItem) {
           return items;
@@ -1785,7 +1898,9 @@ public class PlanController extends FurnitureController implements Controller {
     HomePieceOfFurniture foundPiece = null;
     for (int i = furniture.size() - 1; i >= 0; i--) {
       HomePieceOfFurniture piece = furniture.get(i);
-      if (piece.isVisible()) {
+      if ((!basePlanLocked 
+            || !isItemPartOfBasePlan(piece))
+          && piece.isVisible()) {
         if (piece.containsPoint(x, y, margin)) {
           items.add(piece);
           if (foundPiece == null
@@ -1811,7 +1926,9 @@ public class PlanController extends FurnitureController implements Controller {
       return Arrays.asList(new Selectable [] {foundPiece});
     } else {
       for (Wall wall : this.home.getWalls()) {
-        if (wall.containsPoint(x, y, margin)) {
+        if ((!basePlanLocked 
+              || !isItemPartOfBasePlan(wall))
+            && wall.containsPoint(x, y, margin)) {
           items.add(wall);
           if (stopAtFirstItem) {
             return items;
@@ -1825,30 +1942,33 @@ public class PlanController extends FurnitureController implements Controller {
       Room foundRoom = null;
       for (int i = rooms.size() - 1; i >= 0; i--) {
         Room room = rooms.get(i);
-        if (room.containsPoint(x, y, margin)) {
-          items.add(room);
-           if (foundRoom == null
-               || room.isCeilingVisible() && !foundRoom.isCeilingVisible()) {
-             foundRoom = room;
-           }
-        } else { 
-          // Search if room name contains point in case it is drawn outside of the room
-          String roomName = room.getName();
-          if (roomName != null 
-              && isItemTextAt(room, roomName, room.getNameStyle(), 
-                room.getXCenter() + room.getNameXOffset(), 
-                room.getYCenter() + room.getNameYOffset(), x, y, textMargin)) {
+        if (!basePlanLocked 
+            || !isItemPartOfBasePlan(room)) {
+          if (room.containsPoint(x, y, margin)) {
             items.add(room);
-            foundRoom = room;
-          }
-          // Search if room area contains point in case its text is drawn outside of the room 
-          if (room.isAreaVisible()) {
-            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea());
-            if (isItemTextAt(room, areaText, room.getAreaStyle(), 
-                room.getXCenter() + room.getAreaXOffset(), 
-                room.getYCenter() + room.getAreaYOffset(), x, y, textMargin)) {
+             if (foundRoom == null
+                 || room.isCeilingVisible() && !foundRoom.isCeilingVisible()) {
+               foundRoom = room;
+             }
+          } else { 
+            // Search if room name contains point in case it is drawn outside of the room
+            String roomName = room.getName();
+            if (roomName != null 
+                && isItemTextAt(room, roomName, room.getNameStyle(), 
+                  room.getXCenter() + room.getNameXOffset(), 
+                  room.getYCenter() + room.getNameYOffset(), x, y, textMargin)) {
               items.add(room);
               foundRoom = room;
+            }
+            // Search if room area contains point in case its text is drawn outside of the room 
+            if (room.isAreaVisible()) {
+              String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea());
+              if (isItemTextAt(room, areaText, room.getAreaStyle(), 
+                  room.getXCenter() + room.getAreaXOffset(), 
+                  room.getYCenter() + room.getAreaYOffset(), x, y, textMargin)) {
+                items.add(room);
+                foundRoom = room;
+              }
             }
           }
         }
@@ -1889,8 +2009,12 @@ public class PlanController extends FurnitureController implements Controller {
     if (camera != null && camera.intersectsRectangle(x0, y0, x1, y1)) {
       items.add(camera);
     }
+    boolean basePlanLocked = this.home.isBasePlanLocked();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isVisible() && piece.intersectsRectangle(x0, y0, x1, y1)) {
+      if ((!basePlanLocked 
+            || !isItemPartOfBasePlan(piece))
+          && piece.isVisible() 
+          && piece.intersectsRectangle(x0, y0, x1, y1)) {
         items.add(piece);
       }
     }
@@ -1905,8 +2029,11 @@ public class PlanController extends FurnitureController implements Controller {
   private void updateRectangleItems(List<Selectable> rectangleItems,
                                     Collection<? extends Selectable> selectableItems,
                                     float x0, float y0, float x1, float y1) {
+    boolean basePlanLocked = this.home.isBasePlanLocked();
     for (Selectable item : selectableItems) {
-      if (item.intersectsRectangle(x0, y0, x1, y1)) {
+      if ((!basePlanLocked 
+            || !isItemPartOfBasePlan(item))
+          && item.intersectsRectangle(x0, y0, x1, y1)) {
         rectangleItems.add(item);
       }
     }
@@ -2076,7 +2203,7 @@ public class PlanController extends FurnitureController implements Controller {
       deletedOtherItems.addAll(Home.getLabelsSubList(items));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls and rooms index can't be stored       
-      postDeleteItems(deletedOtherItems);
+      postDeleteItems(deletedOtherItems, this.home.isBasePlanLocked());
       // Then delete items from plan
       doDeleteItems(deletedOtherItems);
 
@@ -2088,7 +2215,8 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Posts an undoable delete items operation about <code>deletedItems</code>.
    */
-  private void postDeleteItems(final List<? extends Selectable> deletedItems) {
+  private void postDeleteItems(final List<? extends Selectable> deletedItems,
+                               final boolean basePlanLocked) {
     // Manage walls
     List<Wall> deletedWalls = Home.getWallsSubList(deletedItems);
     // Get joined walls data for undo operation
@@ -2123,10 +2251,10 @@ public class PlanController extends FurnitureController implements Controller {
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doAddWalls(joinedDeletedWalls);       
-        doAddRooms(rooms, roomsIndex);
-        doAddDimensionLines(dimensionLines);
-        doAddLabels(labels);
+        doAddWalls(joinedDeletedWalls, basePlanLocked);       
+        doAddRooms(rooms, roomsIndex, basePlanLocked);
+        doAddDimensionLines(dimensionLines, basePlanLocked);
+        doAddLabels(labels, basePlanLocked);
         selectAndShowItems(deletedItems);
       }
       
@@ -2134,10 +2262,10 @@ public class PlanController extends FurnitureController implements Controller {
       public void redo() throws CannotRedoException {
         super.redo();
         selectItems(deletedItems);
-        doDeleteWalls(joinedDeletedWalls);       
-        doDeleteRooms(rooms);
-        doDeleteDimensionLines(dimensionLines);
-        doDeleteLabels(labels);
+        doDeleteWalls(joinedDeletedWalls, basePlanLocked);       
+        doDeleteRooms(rooms, basePlanLocked);
+        doDeleteDimensionLines(dimensionLines, basePlanLocked);
+        doDeleteLabels(labels, basePlanLocked);
       }      
       
       @Override
@@ -2153,6 +2281,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Deletes <code>items</code> from home.
    */
   private void doDeleteItems(List<Selectable> items) {
+    boolean basePlanLocked = this.home.isBasePlanLocked();
     for (Selectable item : items) {
       if (item instanceof Wall) {
         home.deleteWall((Wall)item);
@@ -2165,7 +2294,10 @@ public class PlanController extends FurnitureController implements Controller {
       } else if (item instanceof HomePieceOfFurniture) {
         home.deletePieceOfFurniture((HomePieceOfFurniture)item);
       }
+      // Unlock base plan if item is a part of it
+      basePlanLocked &= !isItemPartOfBasePlan(item);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
   
   /**
@@ -2324,15 +2456,27 @@ public class PlanController extends FurnitureController implements Controller {
   public void addWalls(List<Wall> walls) {
     for (Wall wall : walls) {
       this.home.addWall(wall);
-    }
-    postCreateWalls(walls, this.home.getSelectedItems());
+    }    
+    postCreateWalls(walls, this.home.getSelectedItems(), home.isBasePlanLocked());
   }
   
   /**
    * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
-  private void postCreateWalls(List<Wall> newWalls, List<Selectable> oldSelection) {
+  private void postCreateWalls(List<Wall> newWalls, 
+                               List<Selectable> oldSelection, 
+                               final boolean oldBasePlanLocked) {
     if (newWalls.size() > 0) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
+      if (basePlanLocked) {
+        for (Wall wall : newWalls) {
+          // Unlock base plan if wall is a part of it
+          basePlanLocked &= !isItemPartOfBasePlan(wall);
+        }
+        this.home.setBasePlanLocked(basePlanLocked);
+      }
+      final boolean newBasePlanLocked = basePlanLocked;
+      
       // Retrieve data about joined walls to newWalls
       final JoinedWall [] joinedNewWalls = new JoinedWall [newWalls.size()];
       for (int i = 0; i < joinedNewWalls.length; i++) {
@@ -2344,14 +2488,14 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteWalls(joinedNewWalls);
+          doDeleteWalls(joinedNewWalls, oldBasePlanLocked);
           selectAndShowItems(Arrays.asList(oldSelectedItems));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddWalls(joinedNewWalls);       
+          doAddWalls(joinedNewWalls, newBasePlanLocked);       
           selectAndShowItems(JoinedWall.getWalls(joinedNewWalls));
         }      
   
@@ -2369,11 +2513,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Adds the walls in <code>joinedWalls</code> to plan component, joins
    * them to other walls if necessary.
    */
-  private void doAddWalls(JoinedWall [] joinedWalls) {
+  private void doAddWalls(JoinedWall [] joinedWalls, boolean basePlanLocked) {
     // First add all walls to home
     for (JoinedWall joinedNewWall : joinedWalls) {
-      this.home.addWall(joinedNewWall.getWall());
+      Wall wall = joinedNewWall.getWall();
+      this.home.addWall(wall);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
+    
     // Then join them to each other if necessary
     for (JoinedWall joinedNewWall : joinedWalls) {
       Wall wall = joinedNewWall.getWall();
@@ -2401,10 +2548,12 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Deletes walls referenced in <code>joinedDeletedWalls</code>.
    */
-  private void doDeleteWalls(JoinedWall [] joinedDeletedWalls) {
+  private void doDeleteWalls(JoinedWall [] joinedDeletedWalls, 
+                             boolean basePlanLocked) {
     for (JoinedWall joinedWall : joinedDeletedWalls) {
       this.home.deleteWall(joinedWall.getWall());
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
 
   /**
@@ -2417,32 +2566,43 @@ public class PlanController extends FurnitureController implements Controller {
     int endIndex = home.getRooms().size();
     for (int i = 0; i < roomsIndex.length; i++) {
       roomsIndex [i] = endIndex++; 
+      this.home.addRoom(newRooms [i], roomsIndex [i]);
     }
-    doAddRooms(newRooms, roomsIndex);
-    postCreateRooms(newRooms, roomsIndex, this.home.getSelectedItems());
+    postCreateRooms(newRooms, roomsIndex, this.home.getSelectedItems(), this.home.isBasePlanLocked());
   }
   
   /**
    * Posts an undoable new room operation, about <code>newRooms</code>.
    */
   private void postCreateRooms(final Room [] newRooms,
-                            final int [] roomsIndex, 
-                            List<Selectable> oldSelection) {
+                               final int [] roomsIndex, 
+                               List<Selectable> oldSelection, 
+                               final boolean oldBasePlanLocked) {
     if (newRooms.length > 0) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
+      if (basePlanLocked) {
+        for (Room room : newRooms) {
+          // Unlock base plan if room is a part of it
+          basePlanLocked &= !isItemPartOfBasePlan(room);
+        }
+        this.home.setBasePlanLocked(basePlanLocked);
+      }
+      final boolean newBasePlanLocked = basePlanLocked;
+
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteRooms(newRooms);
+          doDeleteRooms(newRooms, oldBasePlanLocked);
           selectAndShowItems(Arrays.asList(oldSelectedItems));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddRooms(newRooms, roomsIndex);       
+          doAddRooms(newRooms, roomsIndex, newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(newRooms));
         }      
   
@@ -2460,7 +2620,8 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable new room operation, about <code>newRooms</code>.
    */
   private void postCreateRooms(List<Room> rooms, 
-                               List<Selectable> oldSelection) {
+                               List<Selectable> oldSelection,
+                               boolean basePlanLocked) {
     // Search the index of rooms in home list of rooms
     Room [] newRooms = rooms.toArray(new Room [rooms.size()]);
     int [] roomsIndex = new int [rooms.size()];
@@ -2468,43 +2629,61 @@ public class PlanController extends FurnitureController implements Controller {
     for (int i = 0; i < roomsIndex.length; i++) {
       roomsIndex [i] = homeRooms.lastIndexOf(newRooms [i]); 
     }
-    postCreateRooms(newRooms, roomsIndex, oldSelection);
+    postCreateRooms(newRooms, roomsIndex, oldSelection, basePlanLocked);
   }
 
   /**
    * Adds the <code>rooms</code> to plan component.
+   * @param oldBasePlanLocked 
    */
   private void doAddRooms(Room [] rooms,
-                          int [] roomsIndex) {
+                          int [] roomsIndex, 
+                          boolean basePlanLocked) {
     for (int i = 0; i < roomsIndex.length; i++) {
       this.home.addRoom (rooms [i], roomsIndex [i]);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
   
   /**
    * Deletes <code>rooms</code>.
    */
-  private void doDeleteRooms(Room [] rooms) {
+  private void doDeleteRooms(Room [] rooms, 
+                             boolean basePlanLocked) {
     for (Room room : rooms) {
       this.home.deleteRoom(room);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
 
   /**
    * Add <code>dimensionLines</code> to home and post an undoable new dimension line operation.
    */
   public void addDimensionLines(List<DimensionLine> dimensionLines) {
-    doAddDimensionLines(
-        dimensionLines.toArray(new DimensionLine [dimensionLines.size()]));
-    postCreateDimensionLines(dimensionLines, this.home.getSelectedItems());
+    for (DimensionLine dimensionLine : dimensionLines) {
+      this.home.addDimensionLine(dimensionLine);
+    }
+    postCreateDimensionLines(dimensionLines, 
+        this.home.getSelectedItems(), this.home.isBasePlanLocked());
   }
   
   /**
    * Posts an undoable new dimension line operation, about <code>newDimensionLines</code>.
    */
   private void postCreateDimensionLines(List<DimensionLine> newDimensionLines, 
-                                        List<Selectable> oldSelection) {
+                                        List<Selectable> oldSelection,
+                                        final boolean oldBasePlanLocked) {
     if (newDimensionLines.size() > 0) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
+      if (basePlanLocked) {
+        for (DimensionLine dimensionLine : newDimensionLines) {
+          // Unlock base plan if dimension line is a part of it
+          basePlanLocked &= !isItemPartOfBasePlan(dimensionLine);
+        }
+        this.home.setBasePlanLocked(basePlanLocked);
+      }
+      final boolean newBasePlanLocked = basePlanLocked;
+      
       final DimensionLine [] dimensionLines = newDimensionLines.toArray(
           new DimensionLine [newDimensionLines.size()]);
       final Selectable [] oldSelectedItems = 
@@ -2513,14 +2692,14 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteDimensionLines(dimensionLines);
+          doDeleteDimensionLines(dimensionLines, oldBasePlanLocked);
           selectAndShowItems(Arrays.asList(oldSelectedItems));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddDimensionLines(dimensionLines);       
+          doAddDimensionLines(dimensionLines, newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(dimensionLines));
         }      
   
@@ -2537,35 +2716,52 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Adds the dimension lines in <code>dimensionLines</code> to plan component.
    */
-  private void doAddDimensionLines(DimensionLine [] dimensionLines) {
+  private void doAddDimensionLines(DimensionLine [] dimensionLines, 
+                                   boolean basePlanLocked) {
     for (DimensionLine dimensionLine : dimensionLines) {
       this.home.addDimensionLine(dimensionLine);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
   
   /**
    * Deletes dimension lines in <code>dimensionLines</code>.
    */
-  private void doDeleteDimensionLines(DimensionLine [] dimensionLines) {
+  private void doDeleteDimensionLines(DimensionLine [] dimensionLines,
+                                      boolean basePlanLocked) {
     for (DimensionLine dimensionLine : dimensionLines) {
       this.home.deleteDimensionLine(dimensionLine);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
 
   /**
    * Add <code>labels</code> to home and post an undoable new label operation.
    */
   public void addLabels(List<Label> labels) {
-    doAddLabels(labels.toArray(new Label [labels.size()]));
-    postCreateLabels(labels, this.home.getSelectedItems());
+    for (Label label : labels) {
+      this.home.addLabel(label);
+    }
+    postCreateLabels(labels, this.home.getSelectedItems(), this.home.isBasePlanLocked());
   }
   
   /**
    * Posts an undoable new label operation, about <code>newLabels</code>.
    */
   private void postCreateLabels(List<Label> newLabels, 
-                             List<Selectable> oldSelection) {
+                                List<Selectable> oldSelection, 
+                                final boolean oldBasePlanLocked) {
     if (newLabels.size() > 0) {
+      boolean basePlanLocked = this.home.isBasePlanLocked();
+      if (basePlanLocked) {
+        for (Label label : newLabels) {
+          // Unlock base plan if label is a part of it
+          basePlanLocked &= !isItemPartOfBasePlan(label);
+        }
+        this.home.setBasePlanLocked(basePlanLocked);
+      }
+      final boolean newBasePlanLocked = basePlanLocked;
+      
       final Label [] labels = newLabels.toArray(new Label [newLabels.size()]);
       final Selectable [] oldSelectedItems = 
           oldSelection.toArray(new Selectable [oldSelection.size()]);
@@ -2573,14 +2769,14 @@ public class PlanController extends FurnitureController implements Controller {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteLabels(labels);
+          doDeleteLabels(labels, oldBasePlanLocked);
           selectAndShowItems(Arrays.asList(oldSelectedItems));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddLabels(labels);       
+          doAddLabels(labels, newBasePlanLocked);       
           selectAndShowItems(Arrays.asList(labels));
         }      
   
@@ -2597,19 +2793,21 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Adds the labels in <code>labels</code> to plan component.
    */
-  private void doAddLabels(Label [] labels) {
+  private void doAddLabels(Label [] labels, boolean basePlanLocked) {
     for (Label label : labels) {
       this.home.addLabel(label);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
   
   /**
    * Deletes labels in <code>labels</code>.
    */
-  private void doDeleteLabels(Label [] labels) {
+  private void doDeleteLabels(Label [] labels, boolean basePlanLocked) {
     for (Label label : labels) {
       this.home.deleteLabel(label);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
 
   /**
@@ -2712,6 +2910,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postItemsDuplication(final List<Selectable> items,
                                     final List<Selectable> oldSelectedItems) {
+    boolean basePlanLocked = this.home.isBasePlanLocked();
     // Delete furniture and add it again in a compound edit
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
     deleteFurniture(furniture);
@@ -2729,10 +2928,10 @@ public class PlanController extends FurnitureController implements Controller {
 
     addFurniture(furniture);
     List<Selectable> emptyList = Collections.emptyList();
-    postCreateWalls(Home.getWallsSubList(items), emptyList);
-    postCreateRooms(Home.getRoomsSubList(items), emptyList);
-    postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList);
-    postCreateLabels(Home.getLabelsSubList(items), emptyList);
+    postCreateWalls(Home.getWallsSubList(items), emptyList, basePlanLocked);
+    postCreateRooms(Home.getRoomsSubList(items), emptyList, basePlanLocked);
+    postCreateDimensionLines(Home.getDimensionLinesSubList(items), emptyList, basePlanLocked);
+    postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked);
 
     // Add a undoable edit that will select all the items at redo
     this.undoSupport.postEdit(new AbstractUndoableEdit() {      
@@ -4280,6 +4479,7 @@ public class PlanController extends FurnitureController implements Controller {
     private Wall             wallEndAtEnd;
     private Wall             lastWall;
     private List<Selectable> oldSelection;
+    private boolean          oldBasePlanLocked;
     private List<Wall>       newWalls;
     private boolean          magnetismEnabled;
     
@@ -4317,6 +4517,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       super.enter();
       this.oldSelection = home.getSelectedItems();
+      this.oldBasePlanLocked = home.isBasePlanLocked();
       this.xStart = getXLastMousePress();
       this.yStart = getYLastMousePress();
       // If the start or end line of a wall close to (xStart, yStart) is
@@ -4409,9 +4610,11 @@ public class PlanController extends FurnitureController implements Controller {
           joinNewWallEndToWall(this.lastWall, 
               this.wallStartAtEnd, this.wallEndAtEnd);
         }
-        // Post walls creation to undo support
-        postCreateWalls(this.newWalls, this.oldSelection);
-        selectItems(this.newWalls);
+        if (this.newWalls.size() > 0) {
+          // Post walls creation to undo support
+          postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
+          selectItems(this.newWalls);
+        }
         // Change state to WallCreationState 
         setState(getWallCreationState());
       } else {
@@ -4449,9 +4652,11 @@ public class PlanController extends FurnitureController implements Controller {
         home.deleteWall(this.newWall);
         this.newWalls.remove(this.newWall);
       }
-      // Post other walls creation to undo support
-      postCreateWalls(this.newWalls, this.oldSelection);
-      selectItems(this.newWalls);
+      if (this.newWalls.size() > 0) {
+        // Post other walls creation to undo support
+        postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
+        selectItems(this.newWalls);
+      }
       // Change state to WallCreationState 
       setState(getWallCreationState());
     }
@@ -5268,6 +5473,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float            yStart;
     private DimensionLine    newDimensionLine;
     private List<Selectable> oldSelection;
+    private boolean          oldBasePlanLocked;
     private boolean          magnetismEnabled;
     private boolean          offsetChoice;
     
@@ -5304,6 +5510,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.oldSelection = home.getSelectedItems();
+      this.oldBasePlanLocked = home.isBasePlanLocked();
       this.xStart = getXLastMousePress();
       this.yStart = getYLastMousePress();
       this.offsetChoice = false;
@@ -5362,11 +5569,11 @@ public class PlanController extends FurnitureController implements Controller {
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
-        if (offsetChoice) {
+        if (this.offsetChoice) {
           selectItem(this.newDimensionLine);
           // Post dimension line creation to undo support
           postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
-              this.oldSelection);
+              this.oldSelection, this.oldBasePlanLocked);
           this.newDimensionLine = null;
           // Change state to WallCreationState 
           setState(getDimensionLineCreationState());
@@ -5749,6 +5956,7 @@ public class PlanController extends FurnitureController implements Controller {
     private Room                   newRoom;
     private float []               newPoint;
     private List<Selectable>       oldSelection;
+    private boolean                oldBasePlanLocked;
     private boolean                magnetismEnabled;
     
     @Override
@@ -5784,6 +5992,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.oldSelection = home.getSelectedItems();
+      this.oldBasePlanLocked = home.isBasePlanLocked();
       this.rooms = home.getRooms();
       this.newRoom = null;
       toggleMagnetism(wasShiftDownLastMousePress());
@@ -5881,8 +6090,9 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.newRoom != null) {
           float [][] roomPoints = this.newRoom.getPoints();
           if (roomPoints.length > 2) {
-            // Post walls creation to undo support
-            postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+            // Post rooms creation to undo support
+            postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), 
+                this.oldSelection, this.oldBasePlanLocked);
           } else {
             // Delete rooms with only two points
             home.deleteRoom(this.newRoom);
@@ -6021,8 +6231,9 @@ public class PlanController extends FurnitureController implements Controller {
             System.arraycopy(points, 0, newPoints, 0, newPoints.length);
             this.newRoom.setPoints(newPoints);
           }
-          // Post walls creation to undo support
-          postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), this.oldSelection);
+          // Post rooms creation to undo support
+          postCreateRooms(Arrays.asList(new Room [] {this.newRoom}), 
+              this.oldSelection, this.oldBasePlanLocked);
         }
       }
       // Change state to RoomCreationState 

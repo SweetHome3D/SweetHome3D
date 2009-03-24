@@ -167,16 +167,19 @@ public class LabelController implements Controller {
    * Controls the creation of a label.
    */
   public void createLabel() {
-    List<Selectable> oldSelection = this.home.getSelectedItems();
     String text = getText();
     
     if (text != null && text.trim().length() > 0) {
       // Apply modification
+      List<Selectable> oldSelection = this.home.getSelectedItems();
+      boolean basePlanLocked = this.home.isBasePlanLocked();    
       Label label = new Label(text, x, y);
-      doAddLabel(this.home, label); 
+      // Unlock base plan if label is a part of it
+      boolean newBasePlanLocked = basePlanLocked && !isLabelPartOfBasePlan(label);
+      doAddLabel(this.home, label, newBasePlanLocked); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LabelCreationUndoableEdit(
-            this.home, this.preferences, oldSelection, label);
+            this.home, this.preferences, oldSelection, basePlanLocked, label, newBasePlanLocked);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -190,29 +193,35 @@ public class LabelController implements Controller {
     private final Home             home;
     private final UserPreferences  preferences;
     private final List<Selectable> oldSelection;
+    private final boolean          basePlanLocked;
     private final Label            label;
+    private final boolean          newBasePlanLocked;
 
     private LabelCreationUndoableEdit(Home home,
                                       UserPreferences preferences, 
                                       List<Selectable> oldSelection, 
-                                      Label label) {
+                                      boolean oldBasePlanLocked, 
+                                      Label label, 
+                                      boolean newBasePlanLocked) {
       this.home = home;
       this.preferences = preferences;
       this.oldSelection = oldSelection;
+      this.basePlanLocked = oldBasePlanLocked;
       this.label = label;
+      this.newBasePlanLocked = newBasePlanLocked;
     }
 
     @Override
     public void undo() throws CannotUndoException {
       super.undo();
-      doDeleteLabel(this.home, this.label);
+      doDeleteLabel(this.home, this.label, this.basePlanLocked);
       this.home.setSelectedItems(this.oldSelection); 
     }
 
     @Override
     public void redo() throws CannotRedoException {
       super.redo();
-      doAddLabel(this.home, this.label); 
+      doAddLabel(this.home, this.label, this.newBasePlanLocked); 
     }
 
     @Override
@@ -224,16 +233,27 @@ public class LabelController implements Controller {
   /**
    * Adds label to home and selects it.
    */
-  private static void doAddLabel(Home home, Label label) {
+  private static void doAddLabel(Home home, 
+                                 Label label, 
+                                 boolean basePlanLocked) {
     home.addLabel(label);
+    home.setBasePlanLocked(basePlanLocked);
     home.setSelectedItems(Arrays.asList(new Selectable [] {label}));
   }
 
   /**
    * Deletes label from home.
    */
-  private static void doDeleteLabel(Home home, Label label) {
+  private static void doDeleteLabel(Home home, Label label, boolean basePlanLocked) {
     home.deleteLabel(label);
+    home.setBasePlanLocked(basePlanLocked);
+  }
+
+  /**
+   * Returns <code>true</code>.
+   */
+  protected boolean isLabelPartOfBasePlan(Label label) {
+    return true;
   }
 
   /**

@@ -111,30 +111,35 @@ public class FurnitureController implements Controller {
    * @param furniture the furniture to add.
    */
   public void addFurniture(List<HomePieceOfFurniture> furniture) {
+    final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
     final List<Selectable> oldSelection = this.home.getSelectedItems(); 
     final HomePieceOfFurniture [] newFurniture = furniture.
         toArray(new HomePieceOfFurniture [furniture.size()]);
     // Get indices of furniture added to home
     final int [] furnitureIndex = new int [furniture.size()];
     int endIndex = home.getFurniture().size();
+    boolean basePlanLocked = oldBasePlanLocked;
     for (int i = 0; i < furnitureIndex.length; i++) {
       furnitureIndex [i] = endIndex++; 
-    }
-  
-    doAddFurniture(newFurniture, furnitureIndex); 
+      // Unlock base plan if the piece is a part of it
+      basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(newFurniture [i]);
+    }  
+    final boolean newBasePlanLocked = basePlanLocked;
+    
+    doAddFurniture(newFurniture, furnitureIndex, newBasePlanLocked); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteFurniture(newFurniture); 
+          doDeleteFurniture(newFurniture, oldBasePlanLocked); 
           home.setSelectedItems(oldSelection); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddFurniture(newFurniture, furnitureIndex); 
+          doAddFurniture(newFurniture, furnitureIndex, newBasePlanLocked); 
         }
         
         @Override
@@ -147,11 +152,12 @@ public class FurnitureController implements Controller {
   }
   
   private void doAddFurniture(HomePieceOfFurniture [] furniture,
-                              int [] furnitureIndex) { 
+                              int [] furnitureIndex,
+                              boolean basePlanLocked) {
     for (int i = 0; i < furnitureIndex.length; i++) {
-      this.home.addPieceOfFurniture (furniture [i], 
-                                     furnitureIndex [i]);
+      this.home.addPieceOfFurniture (furniture [i], furnitureIndex [i]);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
     this.home.setSelectedItems(Arrays.asList(furniture)); 
   }
   
@@ -168,6 +174,7 @@ public class FurnitureController implements Controller {
    * Once the selected furniture is deleted, undo support will receive a new undoable edit.
    */
   public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
+    final boolean basePlanLocked = this.home.isBasePlanLocked();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
     // Sort the deleted furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
@@ -182,20 +189,20 @@ public class FurnitureController implements Controller {
     for (int index : sortedMap.keySet()) {
       furnitureIndex [i++] = index; 
     }
-    doDeleteFurniture(furniture); 
+    doDeleteFurniture(furniture, basePlanLocked); 
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doAddFurniture(furniture, furnitureIndex); 
+          doAddFurniture(furniture, furnitureIndex, basePlanLocked); 
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
           home.setSelectedItems(Arrays.asList(furniture));
-          doDeleteFurniture(furniture); 
+          doDeleteFurniture(furniture, basePlanLocked); 
         }
         
         @Override
@@ -207,16 +214,21 @@ public class FurnitureController implements Controller {
     }
   }
   
-  private void doDeleteFurniture(HomePieceOfFurniture [] furniture) { 
+  private void doDeleteFurniture(HomePieceOfFurniture [] furniture, 
+                                 boolean basePlanLocked) { 
     for (HomePieceOfFurniture piece : furniture) {
       this.home.deletePieceOfFurniture(piece);
     }
+    this.home.setBasePlanLocked(basePlanLocked);
   }
 
   /**
    * Updates the selected furniture in home.
    */
   public void setSelectedFurniture(List<HomePieceOfFurniture> selectedFurniture) {
+    if (this.home.isBasePlanLocked()) {
+      selectedFurniture = getFurnitureNotPartOfBasePlan(selectedFurniture);
+    }
     this.home.setSelectedItems(selectedFurniture);
   }
 
@@ -227,6 +239,26 @@ public class FurnitureController implements Controller {
     setSelectedFurniture(this.home.getFurniture());
   }
   
+  /**
+   * Returns <code>true</code> if the given <code>piece</code> is a door or a window.
+   */
+  protected boolean isPieceOfFurniturePartOfBasePlan(HomePieceOfFurniture piece) {
+    return piece.isDoorOrWindow();
+  }
+
+  /**
+   * Returns the furniture among the given list that are not part of the base plan.
+   */
+  private List<HomePieceOfFurniture> getFurnitureNotPartOfBasePlan(List<HomePieceOfFurniture> furniture) {
+    List<HomePieceOfFurniture> furnitureNotPartOfBasePlan = new ArrayList<HomePieceOfFurniture>();
+    for (HomePieceOfFurniture piece : furniture) {
+      if (!isPieceOfFurniturePartOfBasePlan(piece)) {
+        furnitureNotPartOfBasePlan.add(piece);
+      }
+    }
+    return furnitureNotPartOfBasePlan;
+  }
+
   /**
    * Uses <code>furnitureProperty</code> to sort home furniture 
    * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>

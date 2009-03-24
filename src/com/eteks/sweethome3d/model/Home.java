@@ -44,7 +44,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1700;
+  public static final long CURRENT_VERSION = 1800;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
@@ -54,7 +54,7 @@ public class Home implements Serializable {
    */
   public enum Property {NAME, MODIFIED,
     FURNITURE_SORTED_PROPERTY, FURNITURE_DESCENDING_SORTED, FURNITURE_VISIBLE_PROPERTIES,    
-    BACKGROUND_IMAGE, CAMERA, PRINT};
+    BACKGROUND_IMAGE, CAMERA, PRINT, BASE_PLAN_LOCKED};
   
   private List<HomePieceOfFurniture>                  furniture;
   private transient CollectionChangeSupport<HomePieceOfFurniture> furnitureChangeSupport;
@@ -83,6 +83,7 @@ public class Home implements Serializable {
   private Map<String, Object>                         visualProperties;
   private transient PropertyChangeSupport             propertyChangeSupport;
   private long                                        version;
+  private boolean                                     basePlanLocked; 
   // The 5 following environment fields are still declared for compatibility reasons
   private int                                         skyColor;
   private int                                         groundColor;
@@ -94,7 +95,7 @@ public class Home implements Serializable {
   private List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties;
   // The following field is a temporary copy of furniture containing HomeDoorOrWindow instances
   // created at serialization time for backward compatibility reasons
-  private List<HomePieceOfFurniture>                  furnitureWithDoorsAndWindows; 
+  private List<HomePieceOfFurniture>                  furnitureWithDoorsAndWindows;
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -873,6 +874,28 @@ public class Home implements Serializable {
     this.visualProperties.put(propertyName, propertyValue);
   }
 
+  /**
+   * Returns <code>true</code> if the home objects belonging to the base plan 
+   * (generally walls, rooms, dimension lines and texts) are locked.
+   * @since 1.8
+   */
+  public boolean isBasePlanLocked() {
+    return this.basePlanLocked;
+  }
+
+  /**
+   * Sets whether home objects belonging to the base plan (generally walls, rooms, 
+   * dimension lines and texts) are locked and fires a <code>PropertyChangeEvent</code>.
+   * @since 1.8
+   */
+  public void setBasePlanLocked(boolean basePlanLocked) {
+    if (basePlanLocked != this.basePlanLocked) {
+      this.basePlanLocked = basePlanLocked;
+      this.propertyChangeSupport.firePropertyChange(
+          Property.BASE_PLAN_LOCKED.name(), !basePlanLocked, basePlanLocked);
+    }
+  }
+  
   /**
    * Returns the version of this home, the last time it was serialized or 
    * or {@link #CURRENT_VERSION} if it is not serialized yet or 
