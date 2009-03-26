@@ -24,7 +24,7 @@
 -->
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="1.7"/>
+  <property name="version" value="1.8"/>
 
   <!-- Builds build/SweetHome3D.jar with all its classes -->
   <target name="build">
@@ -322,7 +322,6 @@
         <include name="bin/**"/>
         <include name="lib/**"/>
 
-        <exclude name="lib/charsets.jar"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="bin/rmid.exe"/>
         <exclude name="bin/rmiregistry.exe"/>
@@ -342,6 +341,7 @@
         <exclude name="bin/jusched.exe"/>
         <exclude name="bin/wsdetect.dll"/>
         <exclude name="bin/npjava*.dll"/>
+        <exclude name="bin/npjpi*.dll"/>
         <exclude name="bin/npoji610.dll"/>
         <exclude name="bin/regutils.dll"/>
         <exclude name="bin/axbridge.dll"/>
@@ -484,7 +484,6 @@
       <fileset dir="jre1.6.0_12">
         <include name="**"/>
 
-        <exclude name="lib/charsets.jar"/>
         <exclude name="lib/ext/sunjce_provider.jar"/>
         <exclude name="bin/rmid"/>
         <exclude name="bin/rmiregistry"/>
