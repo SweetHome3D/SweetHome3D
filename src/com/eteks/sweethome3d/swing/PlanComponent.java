@@ -62,6 +62,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -91,6 +92,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
+
+import org.freehep.graphicsio.ImageConstants;
+import org.freehep.graphicsio.svg.SVGGraphics2D;
+import org.freehep.util.UserProperties;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
@@ -125,7 +130,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
       DUPLICATION_ON, DUPLICATION_OFF}
-  private enum PaintMode {PAINT, PRINT, CLIPBOARD}
+  private enum PaintMode {PAINT, PRINT, CLIPBOARD, EXPORT}
   
   private static final float MARGIN = 40;
   
@@ -1247,6 +1252,37 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format.
+   */
+  public void exportToSVG(OutputStream out) {
+    List<Selectable> homeItems = getHomeItems();
+    Rectangle2D svgItemBounds = getItemsBounds(null, homeItems);
+    if (svgItemBounds == null) {
+      svgItemBounds = new Rectangle2D.Float();
+    }
+    float svgScale = 1f;
+    float extraMargin = getStrokeWidthExtraMargin(homeItems);
+    Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
+        (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
+      
+    SVGGraphics2D exportG2D = new SVGGraphics2D(out, imageSize);
+    UserProperties properties = new UserProperties();
+    properties.setProperty(SVGGraphics2D.STYLABLE, true);
+    properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
+    properties.setProperty(SVGGraphics2D.TITLE, 
+        this.home.getName() != null 
+            ? this.home.getName() 
+            : "" );
+    properties.setProperty(SVGGraphics2D.FOR, System.getProperty("user.name", ""));
+    exportG2D.setProperties(properties);
+    exportG2D.startExport();
+    exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
+        -svgItemBounds.getMinY() + extraMargin);
+    paintContent(exportG2D, 1, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
+    exportG2D.endExport();
+  }
+  
+  /**
    * Sets rendering hints used to paint plan.
    */
   private void setRenderingHints(Graphics2D g2D) {
@@ -1754,7 +1790,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       wallsArea = getWallsArea(paintedWalls);
     }
     // Fill walls area
-    float wallPaintScale = paintMode == PaintMode.PRINT
+    float wallPaintScale = paintMode == PaintMode.PRINT 
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale;
     g2D.setPaint(getWallPaint(wallPaintScale, backgroundColor, foregroundColor));

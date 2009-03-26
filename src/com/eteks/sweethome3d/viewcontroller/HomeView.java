@@ -56,7 +56,7 @@ public interface HomeView extends View {
       LOCK_BASE_PLAN, UNLOCK_BASE_PLAN, MODIFY_WALL, REVERSE_WALL_DIRECTION, SPLIT_WALL, MODIFY_ROOM, MODIFY_LABEL,
       INCREASE_TEXT_SIZE, DECREASE_TEXT_SIZE, TOGGLE_BOLD_STYLE, TOGGLE_ITALIC_STYLE,
       IMPORT_BACKGROUND_IMAGE, MODIFY_BACKGROUND_IMAGE, HIDE_BACKGROUND_IMAGE, SHOW_BACKGROUND_IMAGE, DELETE_BACKGROUND_IMAGE, 
-      ZOOM_OUT, ZOOM_IN,  
+      ZOOM_OUT, ZOOM_IN, EXPORT_TO_SVG,
       VIEW_FROM_TOP, VIEW_FROM_OBSERVER, MODIFY_3D_ATTRIBUTES, EXPORT_TO_OBJ,
       HELP, ABOUT}
   public enum SaveAnswer {SAVE, CANCEL, DO_NOT_SAVE}
@@ -177,6 +177,16 @@ public interface HomeView extends View {
    * to write to another kind of output stream.
    */
   public abstract void printToPDF(String pdfFile) throws RecorderException;
+
+  /**
+   * Shows a content chooser save dialog to export a home plan in a SVG file.
+   */
+  public abstract String showExportToSVGDialog(String name);
+
+  /**
+   * Exports the plan objects to a given SVG file.
+   */
+  public abstract void exportToSVG(String svgName) throws RecorderException;
 
   /**
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.

@@ -52,6 +52,7 @@ public class SweetHome3DBootstrap {
         "libjogl_awt.jnilib",
         "libjogl_cg.jnilib",
         "iText-2.1.2u.jar", // Jars included in Sweet Home 3D executable jar file 
+        "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2.jar",
         "jnlp.jar"};
     String [] applicationPackages = {

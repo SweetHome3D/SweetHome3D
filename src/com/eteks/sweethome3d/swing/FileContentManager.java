@@ -183,6 +183,24 @@ public class FileContentManager implements ContentManager {
           return "PDF";
         }
       }};
+  private static final String SVG_EXTENSION = ".svg";
+  /**
+   * Supported SVG filter.
+   */
+  private static final FileFilter [] SVG_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .obj files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(SVG_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "SVG - Scalable Vector Graphics";
+        }
+      }};
   
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
@@ -203,6 +221,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
+    this.fileFilters.put(ContentType.SVG, SVG_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
     this.fileFilters.put(ContentType.SWEET_HOME_3D, new FileFilter [] {
         new FileFilter() {
@@ -256,6 +275,7 @@ public class FileContentManager implements ContentManager {
     this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);
   }
   

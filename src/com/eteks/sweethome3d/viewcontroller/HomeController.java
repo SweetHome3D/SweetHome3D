@@ -267,6 +267,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.DELETE_BACKGROUND_IMAGE, homeHasBackgroundImage);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomeView.ActionType.ZOOM_OUT, true);
+    homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
@@ -1486,7 +1487,40 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Controls the export of the 3D view of current home to a OBJ file.
+   * Controls the export of the 3D view of current home to a SVG file.
+   */
+  public void exportToSVG() {
+    final String svgName = getView().showExportToSVGDialog(this.home.getName());    
+    if (svgName != null) {
+      // Export 3D view in a threaded task
+      Callable<Void> exportToObjTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              getView().exportToSVG(svgName);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = preferences.getLocalizedString(
+                      HomeController.class, "exportToSVGError", svgName);
+                  getView().showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToObjTask, 
+          preferences.getLocalizedString(HomeController.class, "exportToSVGMessage"), exceptionHandler, 
+          this.preferences, this.viewFactory).executeTask(getView());
+    }
+  }
+  
+  /**
+   * Controls the export of the 3D view of current home to an OBJ file.
    */
   public void exportToOBJ() {
     final String objName = getView().showExportToOBJDialog(this.home.getName());    

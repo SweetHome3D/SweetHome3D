@@ -51,6 +51,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -412,6 +413,7 @@ public class HomePane extends JRootPane implements HomeView {
         controller, "deleteBackgroundImage");
     createAction(preferences, ActionType.ZOOM_IN, controller, "zoomIn");
     createAction(preferences, ActionType.ZOOM_OUT, controller, "zoomOut");
+    createAction(preferences, ActionType.EXPORT_TO_SVG, controller, "exportToSVG");
     
     createAction(preferences, ActionType.VIEW_FROM_TOP, 
         controller.getHomeController3D(), "viewFromTop");
@@ -694,6 +696,8 @@ public class HomePane extends JRootPane implements HomeView {
     planMenu.addSeparator();
     planMenu.add(createMenuItemAction(ActionType.ZOOM_IN));
     planMenu.add(createMenuItemAction(ActionType.ZOOM_OUT));
+    planMenu.addSeparator();
+    planMenu.add(createMenuItemAction(ActionType.EXPORT_TO_SVG));
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
@@ -1716,8 +1720,6 @@ public class HomePane extends JRootPane implements HomeView {
     view3D.setComponentPopupMenu(view3DPopup);
     view3DPopup.addSeparator();
     view3DPopup.add(createPopupMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
-    view3DPopup.addSeparator();
-    view3DPopup.add(createPopupMenuItemAction(ActionType.EXPORT_TO_OBJ));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
@@ -2124,6 +2126,44 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
   
+  /**
+   * Shows a content chooser save dialog to export a home plan in a SVG file.
+   */
+  public String showExportToSVGDialog(String homeName) {
+    return this.controller.getContentManager().showSaveDialog(this,
+        this.preferences.getLocalizedString(HomePane.class, "exportToSVGDialog.title"), 
+        ContentManager.ContentType.SVG, homeName);
+  }
+
+  /**
+   * Exports the plan objects to a given SVG file.
+   */
+  public void exportToSVG(String svgName) throws RecorderException {
+    View planView = this.controller.getPlanController().getView();
+    PlanComponent planComponent;
+    if (planView instanceof PlanComponent) {
+      planComponent = (PlanComponent)planView;
+    } else {
+      planComponent = new PlanComponent(this.home, this.preferences, null);
+    }    
+    
+    OutputStream out = null;
+    try {
+      out = new BufferedOutputStream(new FileOutputStream(svgName));
+      planComponent.exportToSVG(out);
+    } catch (IOException ex) {
+      throw new RecorderException("Can't save SVG image to " + svgName, ex);
+    } finally {
+      if (out != null) {
+        try {
+          out.close();
+        } catch (IOException ex) {
+          throw new RecorderException("Can't close file " + svgName, ex);
+        }
+      }
+    }
+  }
+
   /**
    * Shows a content chooser save dialog to export a 3D home in a OBJ file.
    */
