@@ -1278,7 +1278,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     exportG2D.startExport();
     exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
         -svgItemBounds.getMinY() + extraMargin);
-    paintContent(exportG2D, 1, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
+    paintContent(exportG2D, svgScale, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
     exportG2D.endExport();
   }
   
