@@ -88,6 +88,7 @@ public class SweetHome3D extends HomeApplication {
   private static final String APPLICATION_PLUGINS_SUB_FOLDER = "plugins";
   
   private final HomeRecorder        homeRecorder;
+  private final HomeRecorder        compressedHomeRecorder;
   private final FileUserPreferences userPreferences;
   private final ContentManager      contentManager;
   private final ViewFactory         viewFactory;
@@ -97,6 +98,7 @@ public class SweetHome3D extends HomeApplication {
 
   private SweetHome3D() {
     this.homeRecorder = new HomeFileRecorder();
+    this.compressedHomeRecorder = new HomeFileRecorder(9);
     this.userPreferences = new FileUserPreferences();
     this.contentManager = new FileContentManager(this.userPreferences);
     this.viewFactory = new SwingViewFactory();
@@ -114,6 +116,15 @@ public class SweetHome3D extends HomeApplication {
   @Override
   public HomeRecorder getHomeRecorder() {
     return this.homeRecorder;
+  }
+
+  @Override
+  public HomeRecorder getHomeRecorder(HomeRecorder.Type type) {
+    if (type == HomeRecorder.Type.COMPRESSED) {
+      return this.compressedHomeRecorder;
+    } else {
+      return super.getHomeRecorder(type);
+    }
   }
   
   /**

@@ -82,9 +82,20 @@ public abstract class HomeApplication {
   }
 
   /**
-   * Returns a recorder able to write and read homes.
+   * Returns the default recorder able to write and read homes.
    */
   public abstract HomeRecorder getHomeRecorder();
+  
+  /**
+   * Returns a recorder of a given <code>type</code> able to write and read homes.
+   * Subclasses may override this method to return a recorder matching <code>type</code>. 
+   * @param type  a hint for the application to choose the returned recorder.
+   * @return the default recorder able to write and read homes.
+   * @since 1.8
+   */
+  public HomeRecorder getHomeRecorder(HomeRecorder.Type type) {
+    return getHomeRecorder();
+  }
   
   /**
    * Returns user preferences.

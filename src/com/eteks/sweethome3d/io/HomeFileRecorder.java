@@ -38,6 +38,24 @@ import com.eteks.sweethome3d.model.RecorderException;
  * @author Emmanuel Puybaret
  */
 public class HomeFileRecorder implements HomeRecorder {
+  private final int compressionLevel;
+
+  /**
+   * Creates a home recorder able to write and read homes in uncompressed files. 
+   */
+  public HomeFileRecorder() {
+    this(0);
+  }
+
+  /**
+   * Creates a home recorder able to write and read homes in files compressed 
+   * at a level from 0 to 9. 
+   * @param compressionLevel 0 (uncompressed) to 9 (compressed).
+   */
+  public HomeFileRecorder(int compressionLevel) {
+    this.compressionLevel = compressionLevel;
+  }
+
   /**
    * Writes home data.
    * @throws RecorderException if a problem occurred while writing home.
@@ -48,7 +66,8 @@ public class HomeFileRecorder implements HomeRecorder {
     try {
       // Open a stream on a temporary file 
       tempFile = File.createTempFile("save", ".sh3d");
-      homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile));
+      homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
+          this.compressionLevel, false);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
     } catch (InterruptedIOException ex) {

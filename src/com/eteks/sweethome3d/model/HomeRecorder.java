@@ -25,6 +25,21 @@ package com.eteks.sweethome3d.model;
  */
 public interface HomeRecorder {
   /**
+   * Recorder type used as a hint to select a home recorder.
+   * @see HomeApplication#getHomeRecorder(Type)
+   * @since 1.8
+   */
+  public enum Type {
+    /**
+     * The default recorder type.
+     */
+    DEFAULT, 
+    /**
+     * A recorder type able to compress home data.
+     */
+    COMPRESSED}
+  
+  /**
    * Writes <code>home</code> data.
    * @param home  the home to write.
    * @param name  the name of the resource in which the home will be written. 

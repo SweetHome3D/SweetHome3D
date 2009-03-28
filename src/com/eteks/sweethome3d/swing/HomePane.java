@@ -266,6 +266,7 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(preferences, ActionType.CLOSE, controller, "close");
     createAction(preferences, ActionType.SAVE, controller, "save");
     createAction(preferences, ActionType.SAVE_AS, controller, "saveAs");
+    createAction(preferences, ActionType.SAVE_AND_COMPRESS, controller, "saveAndCompress");
     createAction(preferences, ActionType.PAGE_SETUP, controller, "setupPage");
     createAction(preferences, ActionType.PRINT_PREVIEW, controller, "previewPrint");
     createAction(preferences, ActionType.PRINT, controller, "print");
@@ -616,6 +617,7 @@ public class HomePane extends JRootPane implements HomeView {
     fileMenu.add(createMenuItemAction(ActionType.CLOSE));
     fileMenu.add(createMenuItemAction(ActionType.SAVE));
     fileMenu.add(createMenuItemAction(ActionType.SAVE_AS));
+    fileMenu.add(createMenuItemAction(ActionType.SAVE_AND_COMPRESS));
     fileMenu.addSeparator();
     fileMenu.add(createMenuItemAction(ActionType.PAGE_SETUP));
     fileMenu.add(createMenuItemAction(ActionType.PRINT_PREVIEW));

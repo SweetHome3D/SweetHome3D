@@ -55,6 +55,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Light;
@@ -205,6 +206,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.CLOSE, applicationExists);
     homeView.setEnabled(HomeView.ActionType.SAVE, applicationExists);
     homeView.setEnabled(HomeView.ActionType.SAVE_AS, applicationExists);
+    homeView.setEnabled(HomeView.ActionType.SAVE_AND_COMPRESS, applicationExists);
     homeView.setEnabled(HomeView.ActionType.PAGE_SETUP, true);
     homeView.setEnabled(HomeView.ActionType.PRINT_PREVIEW, true);
     homeView.setEnabled(HomeView.ActionType.PRINT, true);
@@ -1373,7 +1375,7 @@ public class HomeController implements Controller {
       
     if (this.home.isModified()) {
       switch (getView().confirmSave(this.home.getName())) {
-        case SAVE   : save(closeTask); // Falls through
+        case SAVE   : save(HomeRecorder.Type.DEFAULT, closeTask); // Falls through
         case CANCEL : return;
       }  
     }
@@ -1385,18 +1387,18 @@ public class HomeController implements Controller {
    * this method will act as {@link #saveAs() saveAs} method.
    */
   public void save() {
-    save(null);
+    save(HomeRecorder.Type.DEFAULT, null);
   }
 
   /**
    * Saves the home managed by this controller and executes <code>postSaveTask</code> 
    * if it's not <code>null</code>.
    */
-  private void save(Runnable postSaveTask) {
+  private void save(HomeRecorder.Type recorderType, Runnable postSaveTask) {
     if (this.home.getName() == null) {
-      saveAs(postSaveTask);
+      saveAs(recorderType, postSaveTask);
     } else {
-      save(this.home.getName(), postSaveTask);
+      save(this.home.getName(), recorderType, postSaveTask);
     }
   }
   
@@ -1406,24 +1408,34 @@ public class HomeController implements Controller {
    * and saves home with the chosen name if any. 
    */
   public void saveAs() {
-    saveAs(null);
+    saveAs(HomeRecorder.Type.DEFAULT, null);
   }
 
   /**
    * Saves the home managed by this controller with a different name. 
    */
-  private void saveAs(Runnable postSaveTask) {
+  private void saveAs(HomeRecorder.Type recorderType, Runnable postSaveTask) {
     String newName = getView().showSaveDialog(this.home.getName());
     if (newName != null) {
-      save(newName, postSaveTask);
+      save(newName, recorderType, postSaveTask);
     }
   }
 
   /**
+   * Saves the home managed by this controller and compresses it. If home name doesn't exist, 
+   * this method will prompt user to choose a home name.
+   */
+  public void saveAndCompress() {
+    save(HomeRecorder.Type.COMPRESSED, null);
+  }
+  
+  /**
    * Actually saves the home managed by this controller and executes <code>postSaveTask</code> 
    * if it's not <code>null</code>.
    */
-  private void save(final String homeName, final Runnable postSaveTask) {
+  private void save(final String homeName, 
+                    final HomeRecorder.Type recorderType, 
+                    final Runnable postSaveTask) {
     // If home version is older than current version
     // or if home name is changed
     // or if user confirms to save a home created with a newer version
@@ -1434,7 +1446,7 @@ public class HomeController implements Controller {
       Callable<Void> exportToObjTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               // Write home with application recorder
-              application.getHomeRecorder().writeHome(home, homeName);
+              application.getHomeRecorder(recorderType).writeHome(home, homeName);
               updateSavedHome(homeName, postSaveTask);
               return null;
             }
