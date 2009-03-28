@@ -2107,18 +2107,24 @@ public class HomePane extends JRootPane implements HomeView {
    */
   public void printToPDF(String pdfFile) throws RecorderException {
     OutputStream outputStream = null;
+    boolean printInterrupted = false;
     try {
       outputStream = new FileOutputStream(pdfFile);
       new HomePDFPrinter(this.home, this.preferences, this.controller, getFont())
           .write(outputStream);
     } catch (InterruptedIOException ex) {
-      throw new InterruptedRecorderException("Print interrupted");
+      printInterrupted = true;
+      throw new InterruptedRecorderException("Print interrupted");      
     } catch (IOException ex) {
       throw new RecorderException("Couldn't export to PDF", ex);
     } finally {
       try {
         if (outputStream != null) {
           outputStream.close();
+        }
+        // Delete the file if printing is interrupted
+        if (printInterrupted) {
+          new File(pdfFile).delete();
         }
       } catch (IOException ex) {
         throw new RecorderException("Couldn't export to PDF", ex);
@@ -2138,7 +2144,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Exports the plan objects to a given SVG file.
    */
-  public void exportToSVG(String svgName) throws RecorderException {
+  public void exportToSVG(String svgFile) throws RecorderException {
     View planView = this.controller.getPlanController().getView();
     PlanComponent planComponent;
     if (planView instanceof PlanComponent) {
@@ -2147,18 +2153,26 @@ public class HomePane extends JRootPane implements HomeView {
       planComponent = new PlanComponent(this.home, this.preferences, null);
     }    
     
-    OutputStream out = null;
+    OutputStream outputStream = null;
+    boolean exportInterrupted = false;
     try {
-      out = new BufferedOutputStream(new FileOutputStream(svgName));
-      planComponent.exportToSVG(out);
+      outputStream = new BufferedOutputStream(new FileOutputStream(svgFile));
+      planComponent.exportToSVG(outputStream);
+    } catch (InterruptedIOException ex) {
+      exportInterrupted = true;
+      throw new InterruptedRecorderException("Export to " + svgFile + " interrupted");
     } catch (IOException ex) {
-      throw new RecorderException("Can't save SVG image to " + svgName, ex);
+      throw new RecorderException("Couldn't export to SVG in " + svgFile, ex);
     } finally {
-      if (out != null) {
+      if (outputStream != null) {
         try {
-          out.close();
+          outputStream.close();
+          // Delete the file if exporting is interrupted
+          if (exportInterrupted) {
+            new File(svgFile).delete();
+          }
         } catch (IOException ex) {
-          throw new RecorderException("Can't close file " + svgName, ex);
+          throw new RecorderException("Couldn't export to SVG in " + svgFile, ex);
         }
       }
     }
@@ -2177,12 +2191,14 @@ public class HomePane extends JRootPane implements HomeView {
    * Exports the objects of the 3D view to the given OBJ file.
    */
   public void exportToOBJ(String objFile) throws RecorderException {
+    OBJWriter writer = null;
+    boolean exportInterrupted = false;
     try {
       String header = this.preferences != null
           ? this.preferences.getLocalizedString(HomePane.class, 
                                                 "exportToOBJ.header", new Date())
           : "";      
-      OBJWriter writer = new OBJWriter(objFile, header, -1);
+      writer = new OBJWriter(objFile, header, -1);
 
       if (this.home.getWalls().size() > 0) {
         // Create a not alive new ground to be able to explore its coordinates without setting capabilities
@@ -2216,12 +2232,24 @@ public class HomePane extends JRootPane implements HomeView {
         Room3D roomNode = new Room3D(room, this.home, false, true, true);
         writer.writeNode(roomNode, "room_" + ++i);
       }
-      writer.close();
     } catch (InterruptedIOException ex) {
+      exportInterrupted = true;
       throw new InterruptedRecorderException("Export to " + objFile + " interrupted");
     } catch (IOException ex) {
-      throw new RecorderException("Failed to export to " + objFile, ex);
-    } 
+      throw new RecorderException("Couldn't export to OBJ in " + objFile, ex);
+    } finally {
+      if (writer != null) {
+        try {
+          writer.close();
+          // Delete the file if exporting is interrupted
+          if (exportInterrupted) {
+            new File(objFile).delete();
+          }
+        } catch (IOException ex) {
+          throw new RecorderException("Couldn't export to OBJ in " + objFile, ex);
+        }
+      }
+    }
   }
   
   /**

@@ -62,6 +62,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.text.NumberFormat;
@@ -1140,7 +1141,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (this.preferences.isGridVisible()) {
       paintGrid(g2D, paintScale);
     }
-    paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);   
+    try {
+      paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);
+    } catch (InterruptedIOException ex) {
+      // Ignore exception because it may happen only in EXPORT paint mode 
+    }   
     g2D.dispose();
   }
 
@@ -1211,8 +1216,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           Math.max(0, 
               (imageableHeight / printScale - printedItemBounds.getHeight() - 2 * extraMargin) / 2));
       setRenderingHints(g2D);
-      // Print component contents
-      paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);   
+      try {
+        // Print component contents
+        paintContent(g2D, printScale, Color.WHITE, Color.BLACK, PaintMode.PRINT);
+      } catch (InterruptedIOException ex) {
+        // Ignore exception because it may happen only in EXPORT paint mode 
+      }   
       g2D.dispose();
       return PAGE_EXISTS;
     } else {
@@ -1244,8 +1253,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(-selectionBounds.getMinX() + extraMargin,
           -selectionBounds.getMinY() + extraMargin);
       setRenderingHints(g2D);
-      // Paint component contents
-      paintContent(g2D, clipboardScale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);   
+      try {
+        // Paint component contents
+        paintContent(g2D, clipboardScale, Color.WHITE, Color.BLACK, PaintMode.CLIPBOARD);
+      } catch (InterruptedIOException ex) {
+        // Ignore exception because it may happen only in EXPORT paint mode 
+      }   
       g2D.dispose();
       return image;
     }
@@ -1254,7 +1267,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format.
    */
-  public void exportToSVG(OutputStream out) {
+  public void exportToSVG(OutputStream outputStream) throws IOException {
     List<Selectable> homeItems = getHomeItems();
     Rectangle2D svgItemBounds = getItemsBounds(null, homeItems);
     if (svgItemBounds == null) {
@@ -1265,7 +1278,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
         (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
       
-    SVGGraphics2D exportG2D = new SVGGraphics2D(out, imageSize);
+    SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize);
     UserProperties properties = new UserProperties();
     properties.setProperty(SVGGraphics2D.STYLABLE, true);
     properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
@@ -1278,8 +1291,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     exportG2D.startExport();
     exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
         -svgItemBounds.getMinY() + extraMargin);
+    
+    checkCurrentThreadIsntInterrupted(PaintMode.EXPORT);
     paintContent(exportG2D, svgScale, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
     exportG2D.endExport();
+  }
+  
+  /**
+   * Throws an <code>InterruptedRecorderException</code> exception if current thread 
+   * is interrupted and <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>.  
+   */
+  private void checkCurrentThreadIsntInterrupted(PaintMode paintMode) throws InterruptedIOException {
+    if (paintMode == PaintMode.EXPORT
+        && Thread.interrupted()) {
+      throw new InterruptedIOException("Current thread interrupted");
+    }
   }
   
   /**
@@ -1421,9 +1447,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Paints plan items.
+   * @throws InterruptedIOException if painting was interrupted (may happen only 
+   *           if <code>paintMode</code> is equal to <code>PaintMode.EXPORT</code>).
    */
   private void paintContent(Graphics2D g2D, float planScale, 
-                            Color backgroundColor, Color foregroundColor, PaintMode paintMode) {
+                            Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     
     Color selectionColor = getSelectionColor(); 
@@ -1456,15 +1484,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           });
     }
     
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintRooms(g2D, selectedItems, planScale, foregroundColor, paintMode);
+
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintWalls(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
+    
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintFurniture(g2D, this.sortedHomeFurniture, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
+    
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
         selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, selectionColor, 
         locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
+    
     // Paint rooms text, furniture name and labels last to ensure they are not hidden
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintRoomsNameAndArea(g2D, selectedItems, planScale, foregroundColor, paintMode);
+
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintFurnitureName(g2D, this.sortedHomeFurniture, selectedItems, planScale, foregroundColor, paintMode);
+
+    checkCurrentThreadIsntInterrupted(paintMode);
     paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
         planScale, foregroundColor, paintMode);
     
