@@ -503,13 +503,13 @@ public class OBJWriter extends FilterWriter {
           }
         } else if (geometryArray instanceof IndexedGeometryStripArray) {
           IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
-          int [] stripIndexCount = new int [geometryStripArray.getNumStrips()];
-          geometryStripArray.getStripIndexCounts(stripIndexCount);
+          int [] stripIndexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripIndexCounts(stripIndexCounts);
           int initialIndex = 0; 
           
           if (geometryStripArray instanceof IndexedTriangleStripArray) {
-            for (int strip = 0; strip < stripIndexCount.length; strip++) {
-              for (int i = initialIndex, n = initialIndex + stripIndexCount [strip] - 2, j = 0; i < n; i++, j++) {
+            for (int strip = 0; strip < stripIndexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2, j = 0; i < n; i++, j++) {
                 if (j % 2 == 0) {
                   writeIndexedTriangle(geometryStripArray, i, i + 1, i + 2, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,   
@@ -520,16 +520,16 @@ public class OBJWriter extends FilterWriter {
                       textureCoordinatesIndexSubstitutes);
                 }
               }
-              initialIndex += stripIndexCount [strip];
+              initialIndex += stripIndexCounts [strip];
             }
           } else if (geometryStripArray instanceof IndexedTriangleFanArray) {
-            for (int strip = 0; strip < stripIndexCount.length; strip++) {
-              for (int i = initialIndex, n = initialIndex + stripIndexCount [strip] - 2; i < n; i++) {
+            for (int strip = 0; strip < stripIndexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2; i < n; i++) {
                 writeIndexedTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,   
                     textureCoordinatesIndexSubstitutes);
               }
-              initialIndex += stripIndexCount [strip];
+              initialIndex += stripIndexCounts [strip];
             }
           }
         } 
@@ -550,13 +550,13 @@ public class OBJWriter extends FilterWriter {
           }
         } else if (geometryArray instanceof GeometryStripArray) {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
-          int [] stripVertexCount = new int [geometryStripArray.getNumStrips()];
-          geometryStripArray.getStripVertexCounts(stripVertexCount);
+          int [] stripVertexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripVertexCounts(stripVertexCounts);
           int initialIndex = 0;
           
           if (geometryStripArray instanceof TriangleStripArray) {
-            for (int strip = 0; strip < stripVertexCount.length; strip++) {
-              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
+            for (int strip = 0; strip < stripVertexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2, j = 0; i < n; i++, j++) {
                 if (j % 2 == 0) {
                   writeTriangle(geometryStripArray, i, i + 1, i + 2, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,  
@@ -567,16 +567,16 @@ public class OBJWriter extends FilterWriter {
                       textureCoordinatesIndexSubstitutes);
                 }
               }
-              initialIndex += stripVertexCount [strip];
+              initialIndex += stripVertexCounts [strip];
             }
           } else if (geometryStripArray instanceof TriangleFanArray) {
-            for (int strip = 0; strip < stripVertexCount.length; strip++) {
-              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
+            for (int strip = 0; strip < stripVertexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2; i < n; i++) {
                 writeTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,  
                     textureCoordinatesIndexSubstitutes);
               }
-              initialIndex += stripVertexCount [strip];
+              initialIndex += stripVertexCounts [strip];
             }
           }
         }
