@@ -44,9 +44,11 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
+import javax.media.j3d.GeometryStripArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.IndexedGeometryStripArray;
 import javax.media.j3d.IndexedQuadArray;
 import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
@@ -499,37 +501,36 @@ public class OBJWriter extends FilterWriter {
                 vertexIndexSubstitutes, normalIndexSubstitutes,  
                 textureCoordinatesIndexSubstitutes);
           }
-        } else if (geometryArray instanceof IndexedTriangleStripArray) {
-          IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
-          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripIndexCounts(stripVertexCount);
-          int initialIndex = 0;
-          for (int strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
-              if (j % 2 == 0) {
-                writeIndexedTriangle(triangleStripArray, i, i + 1, i + 2, 
+        } else if (geometryArray instanceof IndexedGeometryStripArray) {
+          IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
+          int [] stripIndexCount = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripIndexCounts(stripIndexCount);
+          int initialIndex = 0; 
+          
+          if (geometryStripArray instanceof IndexedTriangleStripArray) {
+            for (int strip = 0; strip < stripIndexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCount [strip] - 2, j = 0; i < n; i++, j++) {
+                if (j % 2 == 0) {
+                  writeIndexedTriangle(geometryStripArray, i, i + 1, i + 2, 
+                      vertexIndexSubstitutes, normalIndexSubstitutes,   
+                      textureCoordinatesIndexSubstitutes);
+                } else { // Vertices of odd triangles are in reverse order               
+                  writeIndexedTriangle(geometryStripArray, i, i + 2, i + 1, 
+                      vertexIndexSubstitutes, normalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes);
+                }
+              }
+              initialIndex += stripIndexCount [strip];
+            }
+          } else if (geometryStripArray instanceof IndexedTriangleFanArray) {
+            for (int strip = 0; strip < stripIndexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCount [strip] - 2; i < n; i++) {
+                writeIndexedTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,   
                     textureCoordinatesIndexSubstitutes);
-              } else { // Vertices of odd triangles are in reverse order               
-                writeIndexedTriangle(triangleStripArray, i, i + 2, i + 1, 
-                    vertexIndexSubstitutes, normalIndexSubstitutes,  
-                    textureCoordinatesIndexSubstitutes);
               }
+              initialIndex += stripIndexCount [strip];
             }
-            initialIndex += stripVertexCount [strip];
-          }
-        } else if (geometryArray instanceof IndexedTriangleFanArray) {
-          IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
-          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripIndexCounts(stripVertexCount);
-          int initialIndex = 0;
-          for (int strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
-              writeIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2, 
-                  vertexIndexSubstitutes, normalIndexSubstitutes,   
-                  textureCoordinatesIndexSubstitutes);
-            }
-            initialIndex += stripVertexCount [strip];
           }
         } 
       } else {
@@ -547,37 +548,36 @@ public class OBJWriter extends FilterWriter {
                 vertexIndexSubstitutes, normalIndexSubstitutes,   
                 textureCoordinatesIndexSubstitutes);
           }
-        } else if (geometryArray instanceof TriangleStripArray) {
-          TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
-          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripVertexCounts(stripVertexCount);
+        } else if (geometryArray instanceof GeometryStripArray) {
+          GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
+          int [] stripVertexCount = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripVertexCounts(stripVertexCount);
           int initialIndex = 0;
-          for (int strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
-              if (j % 2 == 0) {
-                writeTriangle(triangleStripArray, i, i + 1, i + 2, 
-                    vertexIndexSubstitutes, normalIndexSubstitutes,  
-                    textureCoordinatesIndexSubstitutes);
-              } else { // Vertices of odd triangles are in reverse order               
-                writeTriangle(triangleStripArray, i, i + 2, i + 1, 
+          
+          if (geometryStripArray instanceof TriangleStripArray) {
+            for (int strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; i < n; i++, j++) {
+                if (j % 2 == 0) {
+                  writeTriangle(geometryStripArray, i, i + 1, i + 2, 
+                      vertexIndexSubstitutes, normalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes);
+                } else { // Vertices of odd triangles are in reverse order               
+                  writeTriangle(geometryStripArray, i, i + 2, i + 1, 
+                      vertexIndexSubstitutes, normalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes);
+                }
+              }
+              initialIndex += stripVertexCount [strip];
+            }
+          } else if (geometryStripArray instanceof TriangleFanArray) {
+            for (int strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
+                writeTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,  
                     textureCoordinatesIndexSubstitutes);
               }
+              initialIndex += stripVertexCount [strip];
             }
-            initialIndex += stripVertexCount [strip];
-          }
-        } else if (geometryArray instanceof TriangleFanArray) {
-          TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
-          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripVertexCounts(stripVertexCount);
-          int initialIndex = 0;
-          for (int strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; i < n; i++) {
-              writeTriangle(triangleFanArray, initialIndex, i + 1, i + 2, 
-                  vertexIndexSubstitutes, normalIndexSubstitutes,  
-                  textureCoordinatesIndexSubstitutes);
-            }
-            initialIndex += stripVertexCount [strip];
           }
         }
       }
