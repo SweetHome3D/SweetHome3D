@@ -59,6 +59,9 @@ public class PackageDependenciesTest extends TestCase {
     // iText for PDF
     JavaPackage iText = constraint.addPackage("com.lowagie.text");
     JavaPackage iTextPdf = constraint.addPackage("com.lowagie.text.pdf");
+    // FreeHEP Vector Graphics for SVG
+    JavaPackage vectorGraphicsUtil = constraint.addPackage("org.freehep.util");
+    JavaPackage vectorGraphicsSvg = constraint.addPackage("org.freehep.graphicsio.svg");
     // Java JNLP
     JavaPackage jnlp = constraint.addPackage("javax.jnlp");
     // Mac OS X specific interfaces
@@ -101,6 +104,8 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(sun3dUtilsUniverse);
     sweetHome3DSwing.dependsUpon(iText);
     sweetHome3DSwing.dependsUpon(iTextPdf);
+    sweetHome3DSwing.dependsUpon(vectorGraphicsUtil);
+    sweetHome3DSwing.dependsUpon(vectorGraphicsSvg);
     sweetHome3DSwing.dependsUpon(jnlp);
     
     sweetHome3DIO.dependsUpon(sweetHome3DModel);
