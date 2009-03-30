@@ -71,6 +71,15 @@ public class ObserverCamera extends Camera implements Selectable {
   }
   
   /**
+   * Sets the elevation of this camera.
+   */
+  public void setZ(float z) {
+    super.setZ(z);
+    this.shapeCache = null;
+    this.rectangleShapeCache = null;
+  }
+  
+  /**
    * Returns the width of this observer camera according to
    * human proportions with an eyes elevation at z. 
    */

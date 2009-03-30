@@ -499,6 +499,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           String propertyName = ev.getPropertyName();
           if (Camera.Property.X.name().equals(propertyName)
               || Camera.Property.Y.name().equals(propertyName) 
+              || Camera.Property.Z.name().equals(propertyName)
+              || Camera.Property.FIELD_OF_VIEW.name().equals(propertyName)
               || Camera.Property.YAW.name().equals(propertyName)) {
             invalidatePlanBoundsAndRevalidate();
           }
