@@ -77,6 +77,8 @@ public class Ground3D extends Object3DBranch {
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     groundShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
+    setCapability(ALLOW_CHILDREN_READ);
+    
     addChild(groundShape);
 
     update(waitTextureLoadingEnd);    
