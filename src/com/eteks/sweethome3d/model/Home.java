@@ -210,8 +210,8 @@ public class Home implements Serializable {
     this.topCamera = new Camera(500, 1500, 1000, 
         (float)Math.PI, (float)Math.PI / 4, (float)Math.PI * 63 / 180);
     // Create a default observer camera (use a 63° field of view equivalent to a 35mm lens for a 24x36 film)
-    this.observerCamera = new ObserverCamera(100, 100, 170, 
-        3 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
+    this.observerCamera = new ObserverCamera(50, 50, 170, 
+        7 * (float)Math.PI / 4, (float)Math.PI / 16, (float)Math.PI * 63 / 180);
     // Initialize new fields 
     this.environment = new HomeEnvironment();
     this.rooms = new ArrayList<Room>();
