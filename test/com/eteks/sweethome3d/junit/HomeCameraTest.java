@@ -163,6 +163,12 @@ public class HomeCameraTest extends ComponentTestFixture {
     // Check camera is the observer camera
     assertSame("Camera isn't observer camera", observerCamera, home.getCamera());
     // Check default camera location and angles
+    assertCoordinatesAndAnglesEqualCameraLocationAndAngles(50, 50, 170, 
+        7 * (float)Math.PI / 4, (float)Math.PI / 16, home.getCamera());
+    // Change camera location and angles
+    observerCamera.setX(100);
+    observerCamera.setY(100);
+    observerCamera.setYaw(3 * (float)Math.PI / 4);
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(100, 100, 170, 
         3 * (float)Math.PI / 4, (float)Math.PI / 16, home.getCamera());
     // Check observer camera is selected
