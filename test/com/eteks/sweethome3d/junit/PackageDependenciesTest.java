@@ -86,6 +86,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(vecmath);
     sweetHome3DJava3D.dependsUpon(sun3dLoaders);
     sweetHome3DJava3D.dependsUpon(sun3dLoadersLw3d);
+    sweetHome3DJava3D.dependsUpon(sun3dUtilsGeometry);
     sweetHome3DJava3D.dependsUpon(sun3dUtilsImage);
     sweetHome3DJava3D.dependsUpon(sun3dUtilsUniverse);
     sweetHome3DJava3D.dependsUpon(loader3ds);
