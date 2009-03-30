@@ -132,6 +132,9 @@ public class OBJWriter extends FilterWriter {
     } else {
       this.mtlFileName = objFileName + ".mtl";
     }
+    // Remove spaces in MTL file name
+    this.mtlFileName = new File(new File(this.mtlFileName).getParent(), 
+        new File(this.mtlFileName).getName().replace(' ', '_')).toString();
   }
   
   /**
