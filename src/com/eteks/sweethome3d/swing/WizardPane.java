@@ -81,9 +81,9 @@ public class WizardPane extends JOptionPane implements DialogView {
     // Make backOptionButton appear at left of nextFinishOptionButton
     if (UIManager.getBoolean("OptionPane.isYesLast")
         || OperatingSystem.isMacOSX()) {
-      setOptions(new Object [] {cancelOption, this.nextFinishOptionButton, this.backOptionButton});      
+      setOptions(new Object [] {this.nextFinishOptionButton, this.backOptionButton, cancelOption});      
     } else {
-      setOptions(new Object [] {cancelOption, this.backOptionButton, this.nextFinishOptionButton});      
+      setOptions(new Object [] {this.backOptionButton, this.nextFinishOptionButton, cancelOption});      
     }
     setInitialValue(this.nextFinishOptionButton);
     
