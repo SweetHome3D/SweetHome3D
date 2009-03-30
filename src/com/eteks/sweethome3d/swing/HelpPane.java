@@ -387,7 +387,7 @@ public class HelpPane extends JRootPane implements HelpView {
     Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
     screenSize.width -= screenInsets.left + screenInsets.right;
     screenSize.height -= screenInsets.top + screenInsets.bottom;
-    frame.setSize(2 * screenSize.width / 3, screenSize.height * 4 / 5);
+    frame.setSize(Math.min(2 * screenSize.width / 3, 800), screenSize.height * 4 / 5);
   }
   
   /**
