@@ -65,7 +65,7 @@
   </resources>
  
   <resources os="Windows">
-    <jar href="lib/iText-2.1.2u.jar"/>
+    <jar href="lib/iText-2.1.5.jar"/>
     <jar href="lib/windows/java3d.jar"/>
   </resources>
   <resources os="Mac OS X">
@@ -73,15 +73,15 @@
     <jar href="lib/macosx/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
-    <jar href="lib/iText-2.1.2u.jar"/>
+    <jar href="lib/iText-2.1.5.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="SunOS" arch="x86">
-    <jar href="lib/iText-2.1.2u.jar"/>
+    <jar href="lib/iText-2.1.5.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   <resources os="SunOS" arch="sparc">
-    <jar href="lib/iText-2.1.2u.jar"/>
+    <jar href="lib/iText-2.1.5.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   

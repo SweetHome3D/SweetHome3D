@@ -404,7 +404,7 @@
         <exclude name="j3dutils.jar"/>
         <exclude name="vecmath.jar"/>
         <!-- Print to PDF menu item isn't available under Mac OS X as it's already in standard print dialog -->
-        <exclude name="iText-2.1.2u.jar"/>
+        <exclude name="iText-2.1.5.jar"/>
       </fileset>
     </copy>
     <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
