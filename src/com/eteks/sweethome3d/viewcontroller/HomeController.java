@@ -1241,7 +1241,7 @@ public class HomeController implements Controller {
     }
     
     // Read home in a threaded task
-    Callable<Void> exportToObjTask = new Callable<Void>() {
+    Callable<Void> openTask = new Callable<Void>() {
           public Void call() throws RecorderException {
             // Read home with application recorder
             Home openedHome = application.getHomeRecorder().readHome(homeName);
@@ -1264,7 +1264,7 @@ public class HomeController implements Controller {
             }
           }
         };
-    new ThreadedTaskController(exportToObjTask, 
+    new ThreadedTaskController(openTask, 
         this.preferences.getLocalizedString(HomeController.class, "openMessage"), exceptionHandler, 
         this.preferences, this.viewFactory).executeTask(getView());
   }
@@ -1443,7 +1443,7 @@ public class HomeController implements Controller {
         || !homeName.equals(this.home.getName()) 
         || getView().confirmSaveNewerHome(homeName)) {
       // Save home in a threaded task
-      Callable<Void> exportToObjTask = new Callable<Void>() {
+      Callable<Void> saveTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               // Write home with application recorder
               application.getHomeRecorder(recorderType).writeHome(home, homeName);
@@ -1465,7 +1465,7 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(exportToObjTask, 
+      new ThreadedTaskController(saveTask, 
           this.preferences.getLocalizedString(HomeController.class, "saveMessage"), exceptionHandler, 
           this.preferences, this.viewFactory).executeTask(getView());
     }
@@ -1505,7 +1505,7 @@ public class HomeController implements Controller {
     final String svgName = getView().showExportToSVGDialog(this.home.getName());    
     if (svgName != null) {
       // Export 3D view in a threaded task
-      Callable<Void> exportToObjTask = new Callable<Void>() {
+      Callable<Void> exportToSvgTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               getView().exportToSVG(svgName);
               return null;
@@ -1525,7 +1525,7 @@ public class HomeController implements Controller {
               }
             }
           };
-      new ThreadedTaskController(exportToObjTask, 
+      new ThreadedTaskController(exportToSvgTask, 
           preferences.getLocalizedString(HomeController.class, "exportToSVGMessage"), exceptionHandler, 
           this.preferences, this.viewFactory).executeTask(getView());
     }
