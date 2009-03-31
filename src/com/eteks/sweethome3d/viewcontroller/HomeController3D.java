@@ -59,7 +59,6 @@ public class HomeController3D implements Controller {
   /**
    * Creates the controller of home 3D view.
    * @param home the home edited by this controller and its view
-   * @param viewFactory 
    */
   public HomeController3D(Home home, 
                           UserPreferences preferences,
