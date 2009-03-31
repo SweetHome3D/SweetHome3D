@@ -169,8 +169,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private BufferedImage      backgroundImageCache;
   private Area               wallsAreaCache;
 
-
-
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
   private static final GeneralPath FURNITURE_ELEVATION_INDICATOR;
@@ -1270,33 +1268,45 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Writes this plan in the given output stream at SVG (Scalable Vector Graphics) format.
    */
   public void exportToSVG(OutputStream outputStream) throws IOException {
-    List<Selectable> homeItems = getHomeItems();
-    Rectangle2D svgItemBounds = getItemsBounds(null, homeItems);
-    if (svgItemBounds == null) {
-      svgItemBounds = new Rectangle2D.Float();
-    }
-    float svgScale = 1f;
-    float extraMargin = getStrokeWidthExtraMargin(homeItems);
-    Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
-        (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
+    SVGSupport.exportToSVG(outputStream, this);   
+  }
+  
+  /**
+   * Separated static class to be able to exclude FreeHEP library from classpath
+   * in case the application doesn't use export to SVG format. 
+   */
+  private static class SVGSupport {
+    public static void exportToSVG(OutputStream outputStream, 
+                                   PlanComponent planComponent) throws IOException {
+      List<Selectable> homeItems = planComponent.getHomeItems();
+      Rectangle2D svgItemBounds = planComponent.getItemsBounds(null, homeItems);
+      if (svgItemBounds == null) {
+        svgItemBounds = new Rectangle2D.Float();
+      }
       
-    SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize);
-    UserProperties properties = new UserProperties();
-    properties.setProperty(SVGGraphics2D.STYLABLE, true);
-    properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
-    properties.setProperty(SVGGraphics2D.TITLE, 
-        this.home.getName() != null 
-            ? this.home.getName() 
-            : "" );
-    properties.setProperty(SVGGraphics2D.FOR, System.getProperty("user.name", ""));
-    exportG2D.setProperties(properties);
-    exportG2D.startExport();
-    exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
-        -svgItemBounds.getMinY() + extraMargin);
-    
-    checkCurrentThreadIsntInterrupted(PaintMode.EXPORT);
-    paintContent(exportG2D, svgScale, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
-    exportG2D.endExport();
+      float svgScale = 1f;
+      float extraMargin = planComponent.getStrokeWidthExtraMargin(homeItems);
+      Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
+          (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
+      
+      SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize);
+      UserProperties properties = new UserProperties();
+      properties.setProperty(SVGGraphics2D.STYLABLE, true);
+      properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
+      properties.setProperty(SVGGraphics2D.TITLE, 
+          planComponent.home.getName() != null 
+              ? planComponent.home.getName() 
+              : "" );
+      properties.setProperty(SVGGraphics2D.FOR, System.getProperty("user.name", ""));
+      exportG2D.setProperties(properties);
+      exportG2D.startExport();
+      exportG2D.translate(-svgItemBounds.getMinX() + extraMargin,
+          -svgItemBounds.getMinY() + extraMargin);
+      
+      planComponent.checkCurrentThreadIsntInterrupted(PaintMode.EXPORT);
+      planComponent.paintContent(exportG2D, svgScale, Color.WHITE, Color.BLACK, PaintMode.EXPORT);   
+      exportG2D.endExport();
+    }
   }
   
   /**
