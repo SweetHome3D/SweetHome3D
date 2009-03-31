@@ -32,6 +32,7 @@ import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -59,6 +60,11 @@ public class HomeAppletController extends HomeController {
     view.setEnabled(HomePane.ActionType.OPEN, openEnabled);
     view.setEnabled(HomePane.ActionType.SAVE, saveEnabled);
     view.setEnabled(HomePane.ActionType.SAVE_AS, saveAsEnabled);
+    
+    // Disabled Print to PDF and Export to SVG actions 
+    // (their libraries are not included with applet jar files)  
+    view.setEnabled(HomeView.ActionType.PRINT_TO_PDF, false);
+    view.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, false);
   }
   
   /**
