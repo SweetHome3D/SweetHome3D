@@ -715,6 +715,8 @@ public class HomePane extends JRootPane implements HomeView {
     group.add(viewFromObserverRadioButtonMenuItem);
     preview3DMenu.addSeparator();
     preview3DMenu.add(createMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
+    preview3DMenu.addSeparator();
+    preview3DMenu.add(createMenuItemAction(ActionType.EXPORT_TO_OBJ));
     
     // Create Help menu
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
