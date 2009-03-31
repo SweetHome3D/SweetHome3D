@@ -153,6 +153,7 @@ public class SweetHome3DApplet extends JApplet {
       }
     }
     this.appletApplication = null;
+    // Collect deleted objects (seems to be required under Mac OS X when the applet is being reloaded)
     System.gc();
   }
   
