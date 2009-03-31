@@ -43,7 +43,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     
  * <p>Use space bar to switch between aerial view and virtual visitor view</p>.
  * 
- * <p>The bytecode of this class is Java 1.1 compatible and to be able to notify users that 
+ * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.
  *     
  * @author Emmanuel Puybaret
