@@ -153,7 +153,6 @@ public class SweetHome3DApplet extends JApplet {
       }
     }
     this.appletApplication = null;
-    System.gc();
   }
   
   /**
