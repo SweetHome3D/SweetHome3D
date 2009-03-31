@@ -1698,6 +1698,8 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.addSeparator();
     planViewPopup.add(createPopupMenuItemAction(ActionType.ZOOM_OUT));
     planViewPopup.add(createPopupMenuItemAction(ActionType.ZOOM_IN));
+    planViewPopup.addSeparator();
+    planViewPopup.add(createPopupMenuItemAction(ActionType.EXPORT_TO_SVG));
     planViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     planView.setComponentPopupMenu(planViewPopup);
     
