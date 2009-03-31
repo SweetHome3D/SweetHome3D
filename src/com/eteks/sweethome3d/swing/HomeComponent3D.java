@@ -146,7 +146,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    *             by this component couldn't be created.
    */
   public HomeComponent3D(Home home, HomeController3D controller) {
-    this(home, null, null);
+    this(home, null, controller);
   }
 
   /**
