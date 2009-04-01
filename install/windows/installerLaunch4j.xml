@@ -7,7 +7,7 @@
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D.exe in tmp directory running with
      JRE 6 Update 12 stored in jre6 subdirectory 
-     + SweetHome3D.jar, Loader3DS1_2.jar and Windows Java 3D DLLs and JARs for Java 3D 
+     + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
   <dontWrapJar>true</dontWrapJar>
@@ -29,7 +29,7 @@
     <cp>lib/Furniture.jar</cp>
     <cp>lib/Textures.jar</cp>
     <cp>lib/Help.jar</cp>
-    <cp>lib/Loader3DS1_2.jar</cp>
+    <cp>lib/Loader3DS1_2u.jar</cp>
     <cp>lib/iText-2.1.5.jar</cp>
     <cp>lib/freehep-vectorgraphics-svg-2.1.1.jar</cp>
     <cp>lib/j3dcore.jar</cp>

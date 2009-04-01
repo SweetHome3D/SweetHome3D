@@ -14,7 +14,7 @@
   <resources>
     <j2se version="1.5+" max-heap-size="384m"/>
     <jar href="lib/SweetHome3DApplet.jar"/>
-    <jar href="lib/Loader3DS1_2.jar"/>
+    <jar href="lib/Loader3DS1_2u.jar"/>
     <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="sun.swing.enableImprovedDragGesture" value="true"/>
     <property name="com.eteks.sweethome3d.deploymentInformation" value="On-line"/>
