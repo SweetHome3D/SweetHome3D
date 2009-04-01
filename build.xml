@@ -313,12 +313,11 @@
         <exclude name="j3dcore.jar"/>
         <exclude name="j3dutils.jar"/>
         <exclude name="vecmath.jar"/>
-        <!-- No Print to PDF and Export to SVG in applet -->
+        <!-- No Print to PDF and Export to SVG in viewer -->
         <exclude name="iText-2.1.5.jar"/>
       	<exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
       </fileset>
     </copy>
-    <copy todir="deploy/lib" file="libtest/jnlp.jar"/>
 
     <!-- Clean build directory -->
     <delete dir="build"/>
