@@ -41,7 +41,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     it will be read relative to applet document base. By default, this parameter is 
  *     equal to <code>default.sh3d</code>.</li></ul>
  *     
- * <p>Use space bar to switch between aerial view and virtual visitor view</p>.
+ * <p>Use space bar to switch between aerial view and virtual visitor view.</p>
  * 
  * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.
