@@ -18,6 +18,7 @@
      - windowsInstaller : Builds SweetHome3D-version-windows.exe file in install directory     
      - macosxInstaller  : Builds SweetHome3D-version-macosx.dmg file in install directory
      - linuxInstaller   : Builds SweetHome3D-version-linux-x86.tgz file in install directory
+     - viewerInstaller  : Builds SweetHome3DViewer-version.zip file in install directory
      - sourceArchive    : Builds SweetHome3D-version-src.zip file in install directory
      - javadoc          : Builds SweetHome3D-version-javadoc.zip file install directory 
      
@@ -220,7 +221,7 @@
         <exclude name="vecmath.jar"/>
         <!-- No Print to PDF and Export to SVG in applet -->
         <exclude name="iText-2.1.5.jar"/>
-      	<exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
+        <exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
       </fileset>
     </copy>
     <copy todir="deploy/lib" file="libtest/jnlp.jar"/>
@@ -268,7 +269,7 @@
       </fileset>
     </copy>
     
-  	<!-- Create SweetHome3DViewer.jar containing only classes and resources required by Sweet Home 3D Viewer -->
+    <!-- Create SweetHome3DViewer.jar containing only classes and resources required by Sweet Home 3D Viewer -->
     <mkdir dir="deploy/lib"/>
     <zip destfile="deploy/lib/SweetHome3DViewer.jar"  
          basedir="build/classes">
@@ -315,7 +316,7 @@
         <exclude name="vecmath.jar"/>
         <!-- No Print to PDF and Export to SVG in viewer -->
         <exclude name="iText-2.1.5.jar"/>
-      	<exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
+        <exclude name="freehep-vectorgraphics-svg-2.1.1.jar"/>
       </fileset>
     </copy>
 
@@ -367,7 +368,7 @@
         <include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
         <include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
         <include name="THIRDPARTY-LICENSE-ITEXT.TXT"/>
-      	<include name="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"/>
+        <include name="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"/>
         <include name="THIRDPARTY-LICENSE-TANGO.TXT"/>
         <include name="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"/>
       </fileset>
@@ -406,7 +407,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/windows/tmp" />
-  	<copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-INNOSETUP.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/windows/tmp" />
@@ -523,7 +524,7 @@
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
  
@@ -574,7 +575,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/linux/i386/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/linux/i386/SweetHome3D-${version}" />
 
@@ -615,6 +616,25 @@
     <delete dir="install/linux/i386"/>
 
     <echo message="install/SweetHome3D-${version}-linux-x86.tgz ready for ftp"/>
+  </target>
+
+  <!-- Builds install/SweetHome3DViewer-version.zip archive that contains 
+       the files required for SweetHome3DViewer applet -->
+  <target name="viewerInstaller" depends="viewer">
+    <zip destfile="install/SweetHome3DViewer-${version}.zip">
+      <zipfileset dir="deploy" 
+                  includes="lib/**, SweetHome3DViewer.*"/>
+      <zipfileset dir="install/viewer" 
+                  includes="README.TXT"/>
+      <zipfileset dir=".">
+     	<include name="COPYING.TXT"/>
+      	<include name="LICENSE.TXT"/>
+		<include name="THIRDPARTY-LICENSE-JAVA3D.TXT"/>
+      	<include name="THIRDPARTY-LICENSE-LOADER3DS.TXT"/>
+      </zipfileset>
+    </zip>
+  	
+    <echo message="install/SweetHome3DViewer-${version}.zip ready for ftp"/>
   </target>
 
   <!-- Builds install/SweetHome3D-version-src.zip archive that contains 
