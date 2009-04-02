@@ -91,7 +91,8 @@ import com.eteks.sweethome3d.viewcontroller.WizardController;
  * @author Emmanuel Puybaret
  */
 public final class ViewerHelper {
-  private static final String HOME_URL_PARAMETER = "homeURL";
+  private static final String HOME_URL_PARAMETER     = "homeURL";
+  private static final String IGNORE_CACHE_PARAMETER = "ignoreCache";
   
   public ViewerHelper(final JApplet applet) {
     // Create default user preferences with no catalog
@@ -244,13 +245,17 @@ public final class ViewerHelper {
     if (homeUrlParameter == null) {
       homeUrlParameter = "default.sh3d";
     }
+    // Retrieve ignoreCache parameter value
+    String ignoreCacheParameter = applet.getParameter(IGNORE_CACHE_PARAMETER);
+    final boolean ignoreCache = ignoreCacheParameter != null 
+        && "true".equalsIgnoreCase(ignoreCacheParameter);
     try {
       final URL homeUrl = new URL(applet.getDocumentBase(), homeUrlParameter);
       // Read home in a threaded task
       Callable<Void> openTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               // Read home with application recorder
-              Home openedHome = readHome(homeUrl);
+              Home openedHome = readHome(homeUrl, ignoreCache);
               displayHome(applet.getRootPane(), openedHome, viewFactory);
               return null;
             }
@@ -336,14 +341,14 @@ public final class ViewerHelper {
   /**
    * Reads a home from its URL.
    */
-  private Home readHome(URL homeUrl) throws RecorderException {
+  private Home readHome(URL homeUrl, boolean ignoreCache) throws RecorderException {
     URLConnection connection = null;
     DefaultHomeInputStream in = null;
     try {
       // Open a home input stream to server 
       connection = homeUrl.openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
-      connection.setUseCaches(false);
+      connection.setUseCaches(!ignoreCache);
       in = new DefaultHomeInputStream(connection.getInputStream());
       // Read home with HomeInputStream
       Home home = in.readHome();

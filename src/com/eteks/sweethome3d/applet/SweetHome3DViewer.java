@@ -33,13 +33,19 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
 /**
  * This applet class displays the 3D view of a Sweet Home 3D file from its URL.
- * <p>This applet accepts the following parameter:
+ * <p>This applet accepts the following parameters:
  * 
  * <ul><li><code>homeURL</code> specifies the URL of the home that will be downloaded 
  *     and displayed at applet launch. 
  *     <br>This URL should return a content at SH3D file format. If it's not an absolute URL, 
  *     it will be read relative to applet document base. By default, this parameter is 
- *     equal to <code>default.sh3d</code>.</li></ul>
+ *     equal to <code>default.sh3d</code>.</li>
+ *     
+ *     <li><code>ignoreCache</code> specifies whether home file may be read from Java 
+ *     cache or not. 
+ *     <br>If its value is <code>true</code>, then each time the applet is launched the
+ *     home file will be downloaded ignoring the file that may exist in cache. 
+ *     By default, its value is <code>false</code>.</li></ul>
  *     
  * <p>Use space bar to switch between aerial view and virtual visitor view.</p>
  * 
