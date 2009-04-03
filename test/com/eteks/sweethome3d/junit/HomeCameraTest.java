@@ -246,7 +246,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionMouseRelease();
     // Check camera yaw changed
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(130.6284f, 141.8525f, 170, 
-        3.2156f, 0.1639f, home.getCamera());
+        3.0156f, 0.1639f, home.getCamera());
     
     // Change camera pitch with mouse in 3D view
     tester.actionMousePress(component3D, new ComponentLocation(new Point(20, 20)));
@@ -254,7 +254,7 @@ public class HomeCameraTest extends ComponentTestFixture {
     tester.actionMouseRelease();
     // Check camera yaw changed
     assertCoordinatesAndAnglesEqualCameraLocationAndAngles(130.6284f, 141.8525f, 170, 
-        3.2156f, 0.2339f, home.getCamera());
+        3.0156f, 0.2139f, home.getCamera());
     
     // 11. Edit 3D view modal dialog box
     JDialog attributesDialog = showHome3DAttributesPanel(preferences, controller, frame, tester);
