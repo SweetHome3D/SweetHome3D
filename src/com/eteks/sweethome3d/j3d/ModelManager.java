@@ -23,8 +23,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -52,6 +57,10 @@ import com.sun.j3d.loaders.lw3d.Lw3dLoader;
 
 /**
  * Singleton managing 3D models cache.
+ * This manager supports 3D models with an OBJ, 3DS or LWS format by default. 
+ * Additional classes implementing Java 3D <code>Loader</code> interface may be 
+ * specified in the <code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code>
+ * (separated by a space or a colon :) to enable the support of other formats. 
  * @author Emmanuel Puybaret
  */
 public class ModelManager {
@@ -67,14 +76,59 @@ public class ModelManager {
   private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
   
+  private static final String ADDITIONAL_LOADER_CLASSES = "com.eteks.sweethome3d.j3d.additionalLoaderClasses";
+  
   private static ModelManager instance;
   
   // Map storing loaded model nodes
   private Map<Content, BranchGroup> modelNodes;
+  // List of additional loader classes
+  private Class<Loader> [] additionalLoaderClasses;
   
   private ModelManager() {    
     // This class is a singleton
     this.modelNodes = new WeakHashMap<Content, BranchGroup>();
+    List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
+    String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
+    if (loaderClassNames != null) {
+      for (String loaderClassName : loaderClassNames.split("\\s|:")) {
+        try {
+          loaderClasses.add(getLoaderClass(loaderClassName));
+        } catch (IllegalArgumentException ex) {
+          System.err.println("Invalid loader class " + loaderClassName + ":\n" + ex.getMessage());
+        }
+      }
+    }
+    this.additionalLoaderClasses = loaderClasses.toArray(new Class [loaderClasses.size()]);
+  }
+  
+  /**
+   * Returns the class of name <code>loaderClassName</code>.
+   */
+  @SuppressWarnings("unchecked")
+  private Class<Loader> getLoaderClass(String loaderClassName) {
+    try {
+      Class<Loader> loaderClass = (Class<Loader>)getClass().getClassLoader().loadClass(loaderClassName);
+      if (!Loader.class.isAssignableFrom(loaderClass)) {
+        throw new IllegalArgumentException(loaderClassName + " not a subclass of " + Loader.class.getName());
+      } else if (Modifier.isAbstract(loaderClass.getModifiers()) || !Modifier.isPublic(loaderClass.getModifiers())) {
+        throw new IllegalArgumentException(loaderClassName + " not a public static class");
+      }
+      Constructor<Loader> constructor = loaderClass.getConstructor(new Class [0]);
+      // Try to instantiate it now to see if it won't cause any problem
+      constructor.newInstance(new Object [0]);
+      return loaderClass;
+    } catch (ClassNotFoundException ex) {
+      throw new IllegalArgumentException(ex.getMessage(), ex);
+    } catch (NoSuchMethodException ex) {
+      throw new IllegalArgumentException(ex.getMessage(), ex);
+    } catch (InvocationTargetException ex) {
+      throw new IllegalArgumentException(ex.getMessage(), ex);
+    } catch (IllegalAccessException ex) {
+      throw new IllegalArgumentException(loaderClassName + " constructor not accessible");
+    } catch (InstantiationException ex) {
+      throw new IllegalArgumentException(loaderClassName + " not a public static class");
+    }
   }
   
   /**
@@ -178,9 +232,23 @@ public class ModelManager {
       }
     };
 
-    Loader []  loaders = new Loader [] {new OBJLoader(),
-                                        loader3DSWithNoStackTraces,
-                                        new Lw3dLoader()};
+    Loader []  defaultLoaders = new Loader [] {new OBJLoader(),
+                                               loader3DSWithNoStackTraces,
+                                               new Lw3dLoader()};
+    Loader [] loaders = new Loader [defaultLoaders.length + this.additionalLoaderClasses.length];
+    System.arraycopy(defaultLoaders, 0, loaders, 0, defaultLoaders.length);
+    for (int i = 0; i < this.additionalLoaderClasses.length; i++) {
+      try {
+        loaders [defaultLoaders.length + i] = this.additionalLoaderClasses [i].newInstance();
+      } catch (InstantiationException ex) {
+        // Can't happen: getLoaderClass checked this class is instantiable
+        throw new InternalError(ex.getMessage());
+      } catch (IllegalAccessException ex) {
+        // Can't happen: getLoaderClass checked this class is instantiable 
+        throw new InternalError(ex.getMessage());
+      } 
+    }
+    
     Exception lastException = null;
     for (Loader loader : loaders) {
       try {     
