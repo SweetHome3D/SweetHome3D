@@ -145,7 +145,7 @@
 	<key>Java</key>
 	<dict>
 		<key>VMOptions</key>
-		<string>-Xmx384m</string>
+		<string>-Xmx512m</string>
 		<key>MainClass</key>
 		<string>com.eteks.sweethome3d.SweetHome3D</string>
 		<key>JVMVersion</key>
