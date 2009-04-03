@@ -413,7 +413,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (alpha == null || alpha.finished()) {
             this.initialCamera = new Camera(camera.getX(), camera.getY(), camera.getZ(), 
                 camera.getYaw(), camera.getPitch(), camera.getFieldOfView());
-          } else if (alpha.value() < 0.5) {
+          } else if (alpha.value() < 0.3) {
             Transform3D finalTransformation = new Transform3D();
             // Jump directly to final location
             updateViewPlatformTransform(finalTransformation, this.finalCamera.getX(), this.finalCamera.getY(), this.finalCamera.getZ(), 
