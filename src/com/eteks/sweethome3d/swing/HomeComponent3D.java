@@ -413,7 +413,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (alpha == null || alpha.finished()) {
             this.initialCamera = new Camera(camera.getX(), camera.getY(), camera.getZ(), 
                 camera.getYaw(), camera.getPitch(), camera.getFieldOfView());
+          } else if (alpha.value() < 0.5) {
+            Transform3D finalTransformation = new Transform3D();
+            // Jump directly to final location
+            updateViewPlatformTransform(finalTransformation, this.finalCamera.getX(), this.finalCamera.getY(), this.finalCamera.getZ(), 
+                this.finalCamera.getYaw(), this.finalCamera.getPitch());
+            getTarget().setTransform(finalTransformation);
+            this.initialCamera = this.finalCamera;
           } else {
+            // Compute initial location from current alpha value 
             this.initialCamera = new Camera(this.initialCamera.getX() + (this.finalCamera.getX() - this.initialCamera.getX()) * alpha.value(), 
                 this.initialCamera.getY() + (this.finalCamera.getY() - this.initialCamera.getY()) * alpha.value(), 
                 this.initialCamera.getZ() + (this.finalCamera.getZ() - this.initialCamera.getZ()) * alpha.value(),
@@ -505,7 +513,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               } 
               controller.moveCamera(delta);
             } else {
-              final float ANGLE_FACTOR = 0.007f;
+              final float ANGLE_FACTOR = 0.005f;
               // Mouse move along X axis changes camera yaw 
               float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
               // Multiply yaw delta by 10 if shift isn't down
