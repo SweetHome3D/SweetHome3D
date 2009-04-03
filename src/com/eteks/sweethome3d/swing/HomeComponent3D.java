@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import javax.media.j3d.Alpha;
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.Background;
@@ -59,6 +60,7 @@ import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransformInterpolator;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -111,6 +113,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
   private SimpleUniverse                           universe;
+  private Camera                                   camera;
   // Listeners bound to home that updates 3D scene objects
   private PropertyChangeListener                   cameraChangeListener;
   private PropertyChangeListener                   homeCameraListener;
@@ -208,6 +211,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private SimpleUniverse createUniverse(Home home) {
     // Create a universe bound to no canvas 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
+    // Add an interpolator to view transform to get smooth transition 
+    TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
+    CameraInterpolator cameraInterpolator = new CameraInterpolator(viewPlatformTransform);
+    cameraInterpolator.setSchedulingBounds(new BoundingSphere(new Point3d(), 1E7));
+    viewPlatformTransform.addChild(cameraInterpolator);
+    viewPlatformTransform.setCapability(TransformGroup.ALLOW_CHILDREN_READ);
+    
     Viewer viewer = new Viewer(new Canvas3D [0]);
     SimpleUniverse universe = new SimpleUniverse(viewingPlatform, viewer);
     
@@ -215,9 +225,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     // Update field of view from current camera
     updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
     
-    TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
     // Update point of view from current camera
-    updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+    updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), false);
     
     // Add camera listeners to update later point of view from camera
     addCameraListeners(home, view, viewPlatformTransform);
@@ -316,7 +325,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           EventQueue.invokeLater(new Runnable() {
             public void run() {
               updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
-              updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+              updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), true);
             }
           });
         }
@@ -325,7 +334,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.homeCameraListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
-          updateViewPlatformTransform(viewPlatformTransform, home.getCamera());
+          updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), false);
           // Add camera change listener to new active camera
           ((Camera)ev.getOldValue()).removePropertyChangeListener(cameraChangeListener);
           home.getCamera().addPropertyChangeListener(cameraChangeListener);
@@ -362,22 +371,102 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates <code>viewPlatformTransform</code> transform from <code>camera</code> angles and location.
    */
-  private void updateViewPlatformTransform(TransformGroup viewPlatformTransform, Camera camera) {
-    Transform3D yawRotation = new Transform3D();
-    yawRotation.rotY(-camera.getYaw() + Math.PI);
-    
-    Transform3D pitchRotation = new Transform3D();
-    pitchRotation.rotX(-camera.getPitch());
-    yawRotation.mul(pitchRotation);
-    
-    Transform3D transform = new Transform3D();
-    transform.setTranslation(new Vector3f(camera.getX(), camera.getZ(), camera.getY()));
-    transform.mul(yawRotation);
-    
-    viewPlatformTransform.setTransform(transform);
+  private void updateViewPlatformTransform(TransformGroup viewPlatformTransform, 
+                                           Camera camera, boolean updateWithAnimation) {
+    if (updateWithAnimation) {
+      // Get the camera interpolator
+      CameraInterpolator cameraInterpolator = 
+          (CameraInterpolator)viewPlatformTransform.getChild(viewPlatformTransform.numChildren() - 1);
+      cameraInterpolator.moveCamera(camera);
+    } else {
+      Transform3D transform = new Transform3D();
+      updateViewPlatformTransform(transform, camera.getX(), camera.getY(), 
+          camera.getZ(), camera.getYaw(), camera.getPitch());
+      viewPlatformTransform.setTransform(transform);
+    }
     clearPrintedImageCache();
   }
+
+  /**
+   * An interpolator that computes smooth camera moves. 
+   */
+  private class CameraInterpolator extends TransformInterpolator {
+    private Camera initialCamera;
+    private Camera finalCamera;
+    
+    public CameraInterpolator(TransformGroup transformGroup) {
+      setTarget(transformGroup);
+    }
+    
+    /**
+     * Moves the camera to a new location.
+     */
+    public void moveCamera(Camera finalCamera) {
+      if (this.finalCamera == null
+          || this.finalCamera.getX() != finalCamera.getX()
+          || this.finalCamera.getY() != finalCamera.getY()
+          || this.finalCamera.getZ() != finalCamera.getZ()
+          || this.finalCamera.getYaw() != finalCamera.getYaw()
+          || this.finalCamera.getPitch() != finalCamera.getPitch()) {
+        synchronized (this) {
+          Alpha alpha = getAlpha();
+          if (alpha == null || alpha.finished()) {
+            this.initialCamera = new Camera(camera.getX(), camera.getY(), camera.getZ(), 
+                camera.getYaw(), camera.getPitch(), camera.getFieldOfView());
+          } else {
+            this.initialCamera = new Camera(this.initialCamera.getX() + (this.finalCamera.getX() - this.initialCamera.getX()) * alpha.value(), 
+                this.initialCamera.getY() + (this.finalCamera.getY() - this.initialCamera.getY()) * alpha.value(), 
+                this.initialCamera.getZ() + (this.finalCamera.getZ() - this.initialCamera.getZ()) * alpha.value(),
+                this.initialCamera.getYaw() + (this.finalCamera.getYaw() - this.initialCamera.getYaw()) * alpha.value(), 
+                this.initialCamera.getPitch() + (this.finalCamera.getPitch() - this.initialCamera.getPitch()) * alpha.value(), 
+                finalCamera.getFieldOfView());
+          }
+          this.finalCamera = new Camera(finalCamera.getX(), finalCamera.getY(), finalCamera.getZ(), 
+              finalCamera.getYaw(), finalCamera.getPitch(), finalCamera.getFieldOfView());
+          
+          // Create an animation that will interpolate camera location 
+          // between initial camera and final camera in 150 ms
+          if (alpha == null) {
+            alpha = new Alpha(1, 150);
+            setAlpha(alpha);
+          }
+          // Start animation now
+          alpha.setStartTime(System.currentTimeMillis());
+        }
+      } 
+    }
+    
+    @Override
+    public synchronized void computeTransform(float alpha, Transform3D transform) {
+      updateViewPlatformTransform(transform, 
+          this.initialCamera.getX() + (this.finalCamera.getX() - this.initialCamera.getX()) * alpha, 
+          this.initialCamera.getY() + (this.finalCamera.getY() - this.initialCamera.getY()) * alpha, 
+          this.initialCamera.getZ() + (this.finalCamera.getZ() - this.initialCamera.getZ()) * alpha, 
+          this.initialCamera.getYaw() + (this.finalCamera.getYaw() - this.initialCamera.getYaw()) * alpha, 
+          this.initialCamera.getPitch() + (this.finalCamera.getPitch() - this.initialCamera.getPitch()) * alpha);
+    }
+  }
   
+  /**
+   * Updates <code>viewPlatformTransform</code> transform from camera angles and location.
+   */
+  private void updateViewPlatformTransform(Transform3D transform, 
+                                           float cameraX, float cameraY, float cameraZ, 
+                                           float cameraYaw, float cameraPitch) {
+    Transform3D yawRotation = new Transform3D();
+    yawRotation.rotY(-cameraYaw + Math.PI);
+    
+    Transform3D pitchRotation = new Transform3D();
+    pitchRotation.rotX(-cameraPitch);
+    yawRotation.mul(pitchRotation);
+    
+    transform.setIdentity();
+    transform.setTranslation(new Vector3f(cameraX, cameraZ, cameraY));
+    transform.mul(yawRotation);
+    
+    this.camera = new Camera(cameraX, cameraY, cameraZ, cameraYaw, cameraPitch, 0);
+  }
+
   /**
    * Adds AWT mouse listeners to <code>canvas3D</code> that calls back <code>controller</code> methods.  
    */
