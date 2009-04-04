@@ -108,7 +108,7 @@ public class SweetHome3D extends HomeApplication {
     // during the instantiation of plug-ins only under Mac OS X 32 bits but 
     // sun.arch.data.model System property remains equal to 32 bits even if
     // architecture is 64 bits)
-    boolean macOsXUnderJavaWebStart = false &&
+    boolean macOsXUnderJavaWebStart = 
         OperatingSystem.isMacOSX()
         && Arrays.asList(ServiceManager.getServiceNames()).contains("javax.jnlp.DownloadService");
     this.pluginManager = applicationPluginsFolder != null && !macOsXUnderJavaWebStart 
