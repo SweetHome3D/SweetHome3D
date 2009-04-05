@@ -39,7 +39,6 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,14 +103,7 @@ public class SweetHome3D extends HomeApplication {
     this.viewFactory = new SwingViewFactory();
     // Create the plug-in manager that will search plug-in files in plugins folder
     File applicationPluginsFolder = getApplicationPluginsFolder();    
-    // Don't support plug-in under Mac OS X / Java Web Start (there's a bug 
-    // during the instantiation of plug-ins only under Mac OS X 32 bits but 
-    // sun.arch.data.model System property remains equal to 32 bits even if
-    // architecture is 64 bits)
-    boolean macOsXUnderJavaWebStart = 
-        OperatingSystem.isMacOSX()
-        && Arrays.asList(ServiceManager.getServiceNames()).contains("javax.jnlp.DownloadService");
-    this.pluginManager = applicationPluginsFolder != null && !macOsXUnderJavaWebStart 
+    this.pluginManager = applicationPluginsFolder != null  
         ? new PluginManager(applicationPluginsFolder)
         : null;
     this.homeFrames = new HashMap<Home, JFrame>();    
