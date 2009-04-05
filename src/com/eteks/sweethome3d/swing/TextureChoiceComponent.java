@@ -413,7 +413,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
       // Third row
-      JPanel buttonsPanel = new JPanel(new GridLayout(3, 1));
+      JPanel buttonsPanel = new JPanel(new GridLayout(3, 1, 3, 3));
       buttonsPanel.add(this.importTextureButton);
       buttonsPanel.add(this.modifyTextureButton);
       buttonsPanel.add(this.deleteTextureButton);
