@@ -46,14 +46,12 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP} 
   
-  private static final String    DEFAULT_COUNTRY;
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
   private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f);
 
   static {
-    DEFAULT_COUNTRY = Locale.getDefault().getCountry();
     ResourceBundle resource = ResourceBundle.getBundle(UserPreferences.class.getName());
     SUPPORTED_LANGUAGES = resource.getString("supportedLanguages").split("\\s");
   }
@@ -64,6 +62,7 @@ public abstract class UserPreferences {
 
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
+  private final String     defaultCountry;
   private String           language;
   private String           currency;
   private LengthUnit       unit;
@@ -79,13 +78,14 @@ public abstract class UserPreferences {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     this.classResourceBundles = new HashMap<Class<?>, ResourceBundle>();
     this.resourceBundles = new HashMap<String, ResourceBundle>();
-    
+
+    this.defaultCountry = Locale.getDefault().getCountry();    
     String defaultLanguage = Locale.getDefault().getLanguage();
     // Find closest language among supported languages in Sweet Home 3D
     // For example, use simplified Chinese even for Chinese users (zh_?) not from China (zh_CN)
     // unless their exact locale is supported (as in Taiwan)
     for (String supportedLanguage : SUPPORTED_LANGUAGES) {
-      if (supportedLanguage.equals(defaultLanguage + "_" + DEFAULT_COUNTRY)) {
+      if (supportedLanguage.equals(defaultLanguage + "_" + this.defaultCountry)) {
         this.language = supportedLanguage;
         break; // Found the exact supported language
       } else if (this.language == null 
@@ -109,7 +109,7 @@ public abstract class UserPreferences {
       Locale.setDefault(new Locale(this.language.substring(0, underscoreIndex), 
           this.language.substring(underscoreIndex + 1)));
     } else {
-      Locale.setDefault(new Locale(this.language, DEFAULT_COUNTRY));
+      Locale.setDefault(new Locale(this.language, this.defaultCountry));
     }
   }
 
