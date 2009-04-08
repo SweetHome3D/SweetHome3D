@@ -84,7 +84,7 @@ public class IconManager {
   
   /**
    * Returns an icon read from <code>content</code> and rescaled at a given <code>height</code>.
-   * @param content an objet containing an image
+   * @param content an object containing an image
    * @param height  the desired height of the returned icon
    * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
    *            be read immediately in the current thread.
@@ -122,7 +122,7 @@ public class IconManager {
    * Returns an icon created and scaled from its content.
    * @param content the content from which the icon image is read
    * @param height  the desired height of the returned icon
-   * @param errorIcon the returned icon in cas of error
+   * @param errorIcon the returned icon in case of error
    */
   private Icon createIcon(Content content, int height, Icon errorIcon) {
     try {
