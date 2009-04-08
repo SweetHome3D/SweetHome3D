@@ -119,7 +119,7 @@ public class IconManager {
   }
   
   /**
-   * Returns an icon created and scaled from the content of contentKey.
+   * Returns an icon created and scaled from its content.
    * @param content the content from which the icon image is read
    * @param height  the desired height of the returned icon
    * @param errorIcon the returned icon in cas of error
