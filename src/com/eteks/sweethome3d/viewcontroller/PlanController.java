@@ -1377,8 +1377,10 @@ public class PlanController extends FurnitureController implements Controller {
         float wallDistance = thicknessEpsilon / 2;
         if (piece instanceof HomeDoorOrWindow) {
           HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow) piece;
-          piece.setDepth(thicknessEpsilon 
-              + wallAtPoint.getThickness() / doorOrWindow.getWallThickness());
+          if (piece.isResizable()) {
+            piece.setDepth(thicknessEpsilon 
+                + wallAtPoint.getThickness() / doorOrWindow.getWallThickness());
+          }
           wallDistance += piece.getDepth() * doorOrWindow.getWallDistance();           
         } 
         float halfDepth = piece.getDepth() / 2;
@@ -2877,7 +2879,9 @@ public class PlanController extends FurnitureController implements Controller {
           super.undo();
           piece.move(-dx, -dy);
           piece.setAngle(oldAngle);
-          piece.setDepth(oldDepth);
+          if (piece.isResizable()) {
+            piece.setDepth(oldDepth);
+          }
           piece.setElevation(oldElevation);
           if (piece instanceof HomeDoorOrWindow) {
             ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
@@ -2890,7 +2894,9 @@ public class PlanController extends FurnitureController implements Controller {
           super.redo();
           piece.move(dx, dy);
           piece.setAngle(newAngle);
-          piece.setDepth(newDepth);
+          if (piece.isResizable()) {
+            piece.setDepth(newDepth);
+          }
           piece.setElevation(newElevation);
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
@@ -4015,7 +4021,9 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-        this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+        if (this.movedPieceOfFurniture.isResizable()) {
+          this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+        }
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
         this.movedPieceOfFurniture.move(x - getXLastMousePress(), y - getYLastMousePress());
         if (this.magnetismEnabled) {
@@ -4097,7 +4105,9 @@ public class PlanController extends FurnitureController implements Controller {
           this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-          this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+          if (this.movedPieceOfFurniture.isResizable()) {
+            this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+          }
           this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
           if (this.movedPieceOfFurniture instanceof HomeDoorOrWindow) {
             ((HomeDoorOrWindow)this.movedPieceOfFurniture).setBoundToWall(
@@ -4140,7 +4150,9 @@ public class PlanController extends FurnitureController implements Controller {
             this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-            this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+            if (this.movedPieceOfFurniture.isResizable()) {
+              this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
+            }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
           } else {
@@ -4356,7 +4368,9 @@ public class PlanController extends FurnitureController implements Controller {
         this.draggedPieceOfFurniture.setX(this.xDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.setY(this.yDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.setAngle(this.angleDraggedPieceOfFurniture);
-        this.draggedPieceOfFurniture.setDepth(this.depthDraggedPieceOfFurniture);
+        if (this.draggedPieceOfFurniture.isResizable()) {
+          this.draggedPieceOfFurniture.setDepth(this.depthDraggedPieceOfFurniture);
+        }
         this.draggedPieceOfFurniture.setElevation(this.elevationDraggedPieceOfFurniture);
         this.draggedPieceOfFurniture.move(x, y);
 
