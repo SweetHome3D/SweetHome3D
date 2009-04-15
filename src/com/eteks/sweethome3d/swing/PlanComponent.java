@@ -3523,13 +3523,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (Math.abs(value) < 1E-5) {
         value = 0; // Avoid "-0" text
       }
-      if (preferences.getLengthUnit() == LengthUnit.CENTIMETER) {
+      if (preferences.getLengthUnit() == LengthUnit.INCH) {
+        text = format.format(LengthUnit.centimeterToFoot(value)) + "'"; 
+      } else {
         text = format.format(value / 100);
         if (value == 0) {
-          text += "m";
+          text += LengthUnit.METER.getName();
         }
-      } else {
-        text = format.format(LengthUnit.centimeterToFoot(value)) + "'"; 
       }
       return text;
     }

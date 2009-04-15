@@ -181,7 +181,7 @@ public class NullableSpinner extends AutoCommitSpinner {
     public NullableSpinnerLengthModel(UserPreferences preferences, float minimum, float maximum) {
       super(minimum, minimum, maximum, 
             preferences.getLengthUnit() == LengthUnit.INCH
-              ? 0.125f : 0.5f);
+              ? 0.125f : preferences.getLengthUnit().centimeterToUnit(0.5f));
       this.preferences = preferences;
     }
 
@@ -191,10 +191,8 @@ public class NullableSpinner extends AutoCommitSpinner {
     public Float getLength() {
       if (getValue() == null) {
         return null;
-      } else if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
-        return LengthUnit.inchToCentimeter(((Number)getValue()).floatValue());
       } else {
-        return ((Number)getValue()).floatValue();
+        return this.preferences.getLengthUnit().unitToCentimeter(((Number)getValue()).floatValue());
       }
     }
 
@@ -202,9 +200,8 @@ public class NullableSpinner extends AutoCommitSpinner {
      * Sets the length in centimeter displayed in this model.
      */
     public void setLength(Float length) {
-      if (length != null 
-          && this.preferences.getLengthUnit() == LengthUnit.INCH) {
-        length = LengthUnit.centimeterToInch(length);
+      if (length != null) {
+        length = this.preferences.getLengthUnit().centimeterToUnit(length);
       } 
       setValue(length);
     }

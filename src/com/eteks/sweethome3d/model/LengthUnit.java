@@ -68,43 +68,184 @@ public enum LengthUnit {
       if (!Locale.getDefault().equals(this.formatLocale)) {
         this.formatLocale = Locale.getDefault();  
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
-        this.name = resource.getString("centimerUnit");
+        this.name = resource.getString("centimeterUnit");
         this.lengthFormatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
         this.lengthFormat = new DecimalFormat("#,##0.#");
         String squareMeterUnit = resource.getString("squareMeterUnit");
-        this.areaFormatWithUnit = new DecimalFormat("#,##0.## " + squareMeterUnit) {
-            @Override
-            public StringBuffer format(double number, StringBuffer result,
-                                       FieldPosition fieldPosition) {
-              // Convert square centimeter to square meter
-              return super.format(number / 10000, result, fieldPosition);                
-            }
-          };
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
       }
     }
 
     @Override
     public float getMagnetizedLength(float length, float maxDelta) {
-      // Use a maximum precision of 1 mm depending on maxDelta
-      maxDelta *= 2;
-      float precision = 1 / 10f;
-      if (maxDelta > 100) {
-        precision = 100;
-      } else if (maxDelta > 10) {
-        precision = 10;
-      } else if (maxDelta > 5) {
-        precision = 5;
-      } else if (maxDelta > 1) {
-        precision = 1;
-      } else if  (maxDelta > 0.5f) {
-        precision = 0.5f;
-      } 
-      return Math.round(length / precision) * precision;
+      return getMagnetizedMeterLength(length, maxDelta);
     }
 
     @Override
     public float getMinimumLength() {
       return 0.1f;
+    }
+    
+    @Override
+    public float centimeterToUnit(float length) {
+      return length;
+    }
+
+    @Override
+    public float unitToCentimeter(float length) {
+      return length;
+    }
+  }, 
+  
+  /**
+   * Millimeter unit.
+   * @since 1.9
+   */
+  MILLIMETER {
+    private Locale        formatLocale;  
+    private String        name;
+    private DecimalFormat lengthFormatWithUnit;
+    private DecimalFormat lengthFormat;
+    private DecimalFormat areaFormatWithUnit;
+    
+    @Override
+    public Format getFormatWithUnit() {
+      checkLocaleChange();
+      return this.lengthFormatWithUnit;
+    }
+
+    @Override
+    public Format getAreaFormatWithUnit() {
+      checkLocaleChange();
+      return this.areaFormatWithUnit;
+    }
+
+    @Override
+    public Format getFormat() {
+      checkLocaleChange();
+      return this.lengthFormat;
+    }
+    
+    @Override
+    public String getName() {
+      checkLocaleChange();
+      return this.name;
+    }
+    
+    private void checkLocaleChange() {
+      // Instantiate formats if locale changed
+      if (!Locale.getDefault().equals(this.formatLocale)) {
+        this.formatLocale = Locale.getDefault();  
+        ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
+        this.name = resource.getString("millimeterUnit");
+        this.lengthFormatWithUnit = new DecimalFormat("#,##0 " + this.name) {
+            @Override
+            public StringBuffer format(double number, StringBuffer result,
+                                       FieldPosition fieldPosition) {
+              // Convert centimeter to millimeter
+              return super.format(number * 10, result, fieldPosition);                
+            }
+          };          
+        this.lengthFormat = new DecimalFormat("#,##0");
+        String squareMeterUnit = resource.getString("squareMeterUnit");
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
+      }
+    }
+
+    @Override
+    public float getMagnetizedLength(float length, float maxDelta) {
+      return getMagnetizedMeterLength(length, maxDelta);
+    }
+
+    @Override
+    public float getMinimumLength() {
+      return 0.1f;
+    }
+    
+    @Override
+    public float centimeterToUnit(float length) {
+      return length * 10;
+    }
+
+    @Override
+    public float unitToCentimeter(float length) {
+      return length / 10;
+    }
+  }, 
+  
+  /**
+   * Meter unit.
+   * @since 1.9
+   */
+  METER {
+    private Locale        formatLocale;  
+    private String        name;
+    private DecimalFormat lengthFormatWithUnit;
+    private DecimalFormat lengthFormat;
+    private DecimalFormat areaFormatWithUnit;
+    
+    @Override
+    public Format getFormatWithUnit() {
+      checkLocaleChange();
+      return this.lengthFormatWithUnit;
+    }
+
+    @Override
+    public Format getAreaFormatWithUnit() {
+      checkLocaleChange();
+      return this.areaFormatWithUnit;
+    }
+
+    @Override
+    public Format getFormat() {
+      checkLocaleChange();
+      return this.lengthFormat;
+    }
+    
+    @Override
+    public String getName() {
+      checkLocaleChange();
+      return this.name;
+    }
+    
+    private void checkLocaleChange() {
+      // Instantiate formats if locale changed
+      if (!Locale.getDefault().equals(this.formatLocale)) {
+        this.formatLocale = Locale.getDefault();  
+        ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
+        this.name = resource.getString("meterUnit");
+        this.lengthFormatWithUnit = new DecimalFormat("#,##0.00# " + this.name) {
+            @Override
+            public StringBuffer format(double number, StringBuffer result,
+                                       FieldPosition fieldPosition) {
+              // Convert centimeter to meter
+              return super.format(number / 100, result, fieldPosition);                
+            }
+          };          
+        this.lengthFormat = new DecimalFormat("#,##0.00#");
+        String squareMeterUnit = resource.getString("squareMeterUnit");
+        this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
+      }
+    }
+
+    @Override
+    public float getMagnetizedLength(float length, float maxDelta) {
+      return getMagnetizedMeterLength(length, maxDelta);
+    }
+
+    @Override
+    public float getMinimumLength() {
+      return 0.1f;
+    }
+
+    @Override
+    public float centimeterToUnit(float length) {
+      return length / 100;
+    }
+
+    @Override
+    public float unitToCentimeter(float length) {
+      return length * 100;
     }
   }, 
   
@@ -226,6 +367,16 @@ public enum LengthUnit {
     public float getMinimumLength() {        
       return LengthUnit.inchToCentimeter(0.125f);
     }
+
+    @Override
+    public float centimeterToUnit(float length) {
+      return centimeterToInch(length);
+    }
+
+    @Override
+    public float unitToCentimeter(float length) {
+      return inchToCentimeter(length);
+    }
   };
 
   /**
@@ -270,6 +421,22 @@ public enum LengthUnit {
    * Returns a format able to format areas with their localized unit.
    */
   public abstract Format getAreaFormatWithUnit();
+
+  /**
+   * A decimal format for square meter.
+   */
+  private static class SquareMeterAreaFormatWithUnit extends DecimalFormat {
+    public SquareMeterAreaFormatWithUnit(String squareMeterUnit) {
+      super("#,##0.## " + squareMeterUnit);
+    }
+    
+    @Override
+    public StringBuffer format(double number, StringBuffer result,
+                               FieldPosition fieldPosition) {
+      // Convert square centimeter to square meter
+      return super.format(number / 10000, result, fieldPosition);                
+    }
+  }
   
   /**
    * Returns a localized name of this unit.
@@ -277,12 +444,47 @@ public enum LengthUnit {
   public abstract String getName();
   
   /**
-   * Returns the value close to the given length under magnetism. 
+   * Returns the value close to the given <code>length</code> in centimeter under magnetism. 
    */
   public abstract float getMagnetizedLength(float length, float maxDelta);
 
   /**
-   * Returns the minimum value for length.
+   * Returns the value close to the given length under magnetism for meter units.
+   */
+  private static float getMagnetizedMeterLength(float length, float maxDelta) {
+    // Use a maximum precision of 1 mm depending on maxDelta
+    maxDelta *= 2;
+    float precision = 1 / 10f;
+    if (maxDelta > 100) {
+      precision = 100;
+    } else if (maxDelta > 10) {
+      precision = 10;
+    } else if (maxDelta > 5) {
+      precision = 5;
+    } else if (maxDelta > 1) {
+      precision = 1;
+    } else if  (maxDelta > 0.5f) {
+      precision = 0.5f;
+    } 
+    return Math.round(length / precision) * precision;
+  }
+
+  /**
+   * Returns the minimum value for length in centimeter.
    */
   public abstract float getMinimumLength();
+  
+  /**
+   * Returns the <code>length</code> given in centimeters converted 
+   * to a value expressed in this unit.
+   * @since 1.9
+   */
+  public abstract float centimeterToUnit(float length);
+
+  /**
+   * Returns the <code>length</code> given in this unit converted 
+   * to a value expressed in centimeter.
+   * @since 1.9
+   */
+  public abstract float unitToCentimeter(float length);
 }
