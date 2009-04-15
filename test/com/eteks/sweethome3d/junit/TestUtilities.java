@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.lang.reflect.Field;
 
+import junit.framework.TestCase;
 import abbot.finder.BasicFinder;
 import abbot.finder.ComponentSearchException;
 import abbot.finder.Matcher;
@@ -33,7 +34,7 @@ import abbot.finder.Matcher;
  */
 public final class TestUtilities {  
   private TestUtilities() {    
-    // This class isn't instatiable and contains only static methods
+    // This class isn't instantiable and contains only static methods
   }
 
   /**
@@ -58,5 +59,14 @@ public final class TestUtilities {
           return componentClass.isInstance(component);
         }
       });
+  }
+
+  /**
+   * Asserts <code>value1</code> equals <code>value2</code> within <code>epsilon</code>.
+   */
+  public static void assertEqualsWithinEpsilon(String message, 
+                                               float value1, float value2, float epsilon) {
+    TestCase.assertTrue(message + ", expected:" + value1 + " but was:" + value2, 
+        Math.abs(value1 - value2) < epsilon);
   }
 }

@@ -206,9 +206,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     float newWidth = (Float)widthSpinner.getValue();
     float newDepth = (Float)depthSpinner.getValue();
     float newHeight = (Float)heightSpinner.getValue();
-    assertEpsilonEquals("width", depth, newWidth);
-    assertEpsilonEquals("depth", width, newDepth);
-    assertEpsilonEquals("height", height, newHeight);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect width", depth, newWidth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect depth", width, newDepth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect height", height, newHeight, 1E-3f);
     // Click on down button
     width = newWidth;
     depth = newDepth;
@@ -218,9 +218,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     newWidth = (Float)widthSpinner.getValue();
     newDepth = (Float)depthSpinner.getValue();
     newHeight = (Float)heightSpinner.getValue();
-    assertEpsilonEquals("width", width, newWidth);
-    assertEpsilonEquals("depth", height, newDepth);
-    assertEpsilonEquals("height", depth, newHeight);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect width", width, newWidth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect depth", height, newDepth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect height", depth, newHeight, 1E-3f);
     
     // 5. Click on next button
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
@@ -268,9 +268,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     newWidth = (Float)widthSpinner.getValue();
     newDepth = (Float)depthSpinner.getValue();
     newHeight = (Float)heightSpinner.getValue();
-    assertEpsilonEquals("width", 10 * width, newWidth);
-    assertEpsilonEquals("depth", 10 * depth, newDepth);
-    assertEpsilonEquals("height", 10 * height, newHeight);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect width", 10 * width, newWidth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect depth", 10 * depth, newDepth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect height", 10 * height, newHeight, 1E-3f);
     // Deselect keep proportions check box 
     keepProportionsCheckBox.setSelected(false);
     // Change width with a value 2 times greater
@@ -282,9 +282,9 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     newWidth = (Float)widthSpinner.getValue();
     newDepth = (Float)depthSpinner.getValue();
     newHeight = (Float)heightSpinner.getValue();
-    assertEpsilonEquals("width", 2 * width, newWidth);
-    assertEpsilonEquals("depth", depth, newDepth);
-    assertEpsilonEquals("height", height, newHeight);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect width", 2 * width, newWidth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect depth", depth, newDepth, 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect height", height, newHeight, 1E-3f);
 
     // 8. Change elevation, movable, door or window, color default values
     assertEquals("Wrong default elevation", 0f, (Float)elevationSpinner.getValue());
@@ -327,10 +327,10 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
     assertEquals("Wrong catalog piece category name", categoryTestName, catalogPiece.getCategory().getName());
     assertTrue("Catalog doesn't contain new piece", 
         preferences.getFurnitureCatalog().getCategories().contains(catalogPiece.getCategory()));
-    assertEpsilonEquals("width", newWidth, catalogPiece.getWidth());
-    assertEpsilonEquals("depth", newDepth, catalogPiece.getDepth());
-    assertEpsilonEquals("height", newHeight, catalogPiece.getHeight());
-    assertEpsilonEquals("elevation", 10, catalogPiece.getElevation());
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect width", newWidth, catalogPiece.getWidth(), 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect depth", newDepth, catalogPiece.getDepth(), 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect height", newHeight, catalogPiece.getHeight(), 1E-3f);
+    TestUtilities.assertEqualsWithinEpsilon("Incorrect elevation", 10, catalogPiece.getElevation(), 1E-3f);
     assertFalse("Catalog piece is movable", catalogPiece.isMovable());
     assertTrue("Catalog piece isn't a door or window", catalogPiece.isDoorOrWindow());
     assertEquals("Wrong catalog piece color", null, catalogPiece.getColor());
@@ -411,13 +411,5 @@ public class ImportedFurnitureWizardTest extends ComponentTestFixture {
         ((JComponent)TestUtilities.getField(panel, "attributesPreviewComponent")).isShowing());
     assertEquals("Wrong icon step visibility", iconStepShowing,
         ((JComponent)TestUtilities.getField(panel, "iconPreviewComponent")).isShowing());
-  }
-  
-  /**
-   * Asserts <code>expectedValue</code> is equal to <code>value</code>. 
-   */
-  private void assertEpsilonEquals(String valueName, float expectedValue, float value) {
-    assertTrue("Incorrect " + valueName + " " + value + ", should be " + expectedValue, 
-        Math.abs(expectedValue - value) < 1E-3);
   }
 }

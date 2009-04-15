@@ -223,26 +223,26 @@ public class HomeControllerTest extends TestCase {
     // Align on bottom
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_BOTTOM);
     // Check bottom of second piece equals bottom of first piece
-    assertEpsilonEquals("Second piece isn't aligned on bottom of first piece",
-        getMaxY(firstPiece), getMaxY(secondPiece));
+    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on bottom of first piece",
+        getMaxY(firstPiece), getMaxY(secondPiece), 10E-4f);
 
     // 6. Align on top
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_TOP);
     // Check bottom of second piece equals bottom of first piece
-    assertEpsilonEquals("Second piece isn't aligned on top of first piece",
-        getMinY(firstPiece), getMinY(secondPiece));
+    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on top of first piece",
+        getMinY(firstPiece), getMinY(secondPiece), 10E-4f);
     
     // 7. Align on left
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_LEFT);
     // Check bottom of second piece equals bottom of first piece
-    assertEpsilonEquals("Second piece isn't aligned on left of first piece",
-        getMinX(firstPiece), getMinX(secondPiece));
+    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on left of first piece",
+        getMinX(firstPiece), getMinX(secondPiece), 10E-4f);
     
     // 8. Align on right
     runAction(HomePane.ActionType.ALIGN_FURNITURE_ON_RIGHT);
     // Check bottom of second piece equals bottom of first piece
-    assertEpsilonEquals("Second piece isn't aligned on right of first piece",
-        getMaxX(firstPiece), getMaxX(secondPiece));
+    TestUtilities.assertEqualsWithinEpsilon("Second piece isn't aligned on right of first piece",
+        getMaxX(firstPiece), getMaxX(secondPiece), 10E-4f);
     float alignedPieceX = secondPiece.getX();
     float alignedPieceY = secondPiece.getY();
 
@@ -252,10 +252,10 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.UNDO);
     runAction(HomePane.ActionType.UNDO);
     // Check second piece is back to its place
-    assertEpsilonEquals("Second piece abcissa is incorrect",
-        secondPieceX, secondPiece.getX());
-    assertEpsilonEquals("Second piece ordinate is incorrect",
-        secondPieceY, secondPiece.getY());
+    TestUtilities.assertEqualsWithinEpsilon("Second piece abcissa is incorrect",
+        secondPieceX, secondPiece.getX(), 10E-4f);
+    TestUtilities.assertEqualsWithinEpsilon("Second piece ordinate is incorrect",
+        secondPieceY, secondPiece.getY(), 10E-4f);
 
     // 10. Redo alignments
     runAction(HomePane.ActionType.REDO);
@@ -263,10 +263,10 @@ public class HomeControllerTest extends TestCase {
     runAction(HomePane.ActionType.REDO);
     runAction(HomePane.ActionType.REDO);
     // Check second piece is back to its place
-    assertEpsilonEquals("Second piece abcissa is incorrect",
-        alignedPieceX, secondPiece.getX());
-    assertEpsilonEquals("Second piece ordinate is incorrect",
-        alignedPieceY, secondPiece.getY());
+    TestUtilities.assertEqualsWithinEpsilon("Second piece abcissa is incorrect",
+        alignedPieceX, secondPiece.getX(), 10E-4f);
+    TestUtilities.assertEqualsWithinEpsilon("Second piece ordinate is incorrect",
+        alignedPieceY, secondPiece.getY(), 10E-4f);
   }
   
   /**
@@ -351,13 +351,6 @@ public class HomeControllerTest extends TestCase {
         getAction(HomePane.ActionType.REDO).isEnabled() == redoActionEnabled);
   }
   
-  /**
-   * Asserts <code>value1</code> equals <code>value2</code> at epsilon.
-   */
-  private void assertEpsilonEquals(String message, float value1, float value2) {
-    assertTrue(message, Math.abs(value1 - value2) < 1E-4);
-  }
-
   /**
    * Returns the minimum abcissa of the vertices of <code>piece</code>.  
    */
