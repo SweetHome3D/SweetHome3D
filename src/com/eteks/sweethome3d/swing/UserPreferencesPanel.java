@@ -407,21 +407,14 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
      * Returns the displayed value in centimeter.
      */
     public float getLength() {
-      if (unit == LengthUnit.INCH) {
-        return LengthUnit.inchToCentimeter(getNumber().floatValue());
-      } else {
-        return getNumber().floatValue();
-      }
+      return this.unit.unitToCentimeter(getNumber().floatValue());
     }
 
     /**
      * Sets the length in centimeter displayed in this model.
      */
     public void setLength(float length) {
-      if (unit == LengthUnit.INCH) {
-        length = LengthUnit.centimeterToInch(length);
-      } 
-      setValue(length);
+      setValue(this.unit.centimeterToUnit(length));
     }
   }
 }
