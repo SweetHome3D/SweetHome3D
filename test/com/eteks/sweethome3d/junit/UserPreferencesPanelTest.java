@@ -19,6 +19,8 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.text.ParseException;
+import java.text.ParsePosition;
 import java.util.Locale;
 
 import javax.swing.JCheckBox;
@@ -153,5 +155,83 @@ public class UserPreferencesPanelTest extends TestCase {
         preferences.getNewWallThickness());
     assertEquals("Wrong new home wall height", newHomeWallHeight,
         preferences.getNewWallHeight());
+  }
+  
+  /**
+   * Tests length unit conversions.
+   */
+  public void testUnitLength() throws ParseException {
+    Locale.setDefault(Locale.FRANCE);
+    // Test formats without unit
+    assertEquals("Wrong conversion", "102", LengthUnit.CENTIMETER.getFormat().format(102));
+    assertEquals("Wrong conversion", "1,02", LengthUnit.METER.getFormat().format(102));
+    // \u00a0 is a no-break space
+    assertEquals("Wrong conversion", "1\u00a0020", LengthUnit.MILLIMETER.getFormat().format(102));
+    assertEquals("Wrong conversion", "0'11\"", 
+        LengthUnit.INCH.getFormat().format(LengthUnit.inchToCentimeter(11)));
+    assertEquals("Wrong conversion", "1'11\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12)));
+    assertEquals("Wrong conversion", "1'11\u215b\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12 + 0.125f)));
+    
+    // Test formats with unit
+    assertEquals("Wrong conversion", "102 cm", LengthUnit.CENTIMETER.getFormatWithUnit().format(102));
+    assertEquals("Wrong conversion", "1,02 m", LengthUnit.METER.getFormatWithUnit().format(102));
+    // \u00a0 is a no-break space
+    assertEquals("Wrong conversion", "1\u00a0020 mm", LengthUnit.MILLIMETER.getFormatWithUnit().format(102));
+    assertEquals("Wrong conversion", "0'11\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11)));
+    assertEquals("Wrong conversion", "1'11\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12)));
+    assertEquals("Wrong conversion", "1'11\u215b\"", 
+        LengthUnit.INCH.getFormatWithUnit().format(LengthUnit.inchToCentimeter(11 + 12 + 0.125f)));
+    
+    // Test parsing
+    assertEquals("Wrong parsing", 102f, LengthUnit.CENTIMETER.getFormat().parseObject("102"));
+    assertEquals("Wrong parsing", 102f, LengthUnit.METER.getFormat().parseObject("1,02"));
+    assertEquals("Wrong parsing", 102f, LengthUnit.MILLIMETER.getFormat().parseObject("1020"));
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(11),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("0'11\"")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(10 + 12),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("1 ' 10 \"")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(24),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("2'")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(11),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("11\"")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(11),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("11")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(11.125f),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("11,125")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(12 + 11 + 3 * 0.125f),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("1'11\u215c\"")).floatValue(), 1E-10f);
+    TestUtilities.assertEqualsWithinEpsilon("Wrong conversion",  LengthUnit.inchToCentimeter(12 + 11 + 3 * 0.125f),
+        ((Number)LengthUnit.INCH.getFormat().parseObject("1' 11 \u215c")).floatValue(), 1E-10f);
+    try {
+      LengthUnit.INCH.getFormat().parseObject("'");
+      fail("' not a number");
+    } catch (Exception ex) {
+      // Expected a failure
+    }
+    try {
+      LengthUnit.INCH.getFormat().parseObject("\"");
+      fail("\" not a number");
+    } catch (Exception ex) {
+      // Expected a failure
+    }
+    try {
+      LengthUnit.INCH.getFormat().parseObject("10A'");
+      fail("10A' not a number");
+    } catch (Exception ex) {
+      // Expected a failure
+    }
+    try {
+      LengthUnit.INCH.getFormat().parseObject("10,2'");
+      fail("10,2' not a number"); // Accept fraction part only for inches
+    } catch (Exception ex) {
+      // Expected a failure
+    }
+    ParsePosition parsePosition = new ParsePosition(0);
+    LengthUnit.INCH.getFormat().parseObject("10'2A", parsePosition);
+    assertEquals("Wrong parse position", "10'2A".indexOf('A'), parsePosition.getIndex());
   }
 }
