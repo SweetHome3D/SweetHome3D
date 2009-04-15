@@ -69,8 +69,8 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();  
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("centimeterUnit");
-        this.lengthFormatWithUnit = new DecimalFormat("#,##0.# " + this.name);          
-        this.lengthFormat = new DecimalFormat("#,##0.#");
+        this.lengthFormatWithUnit = new MeterFamilyFormatWithUnit("#,##0.# " + this.name, 1);          
+        this.lengthFormat = new MeterFamilyFormatWithUnit("#,##0.#", 1);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
       }
@@ -138,15 +138,8 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();  
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("millimeterUnit");
-        this.lengthFormatWithUnit = new DecimalFormat("#,##0 " + this.name) {
-            @Override
-            public StringBuffer format(double number, StringBuffer result,
-                                       FieldPosition fieldPosition) {
-              // Convert centimeter to millimeter
-              return super.format(number * 10, result, fieldPosition);                
-            }
-          };          
-        this.lengthFormat = new DecimalFormat("#,##0");
+        this.lengthFormatWithUnit = new MeterFamilyFormatWithUnit("#,##0 " + this.name, 10);          
+        this.lengthFormat = new MeterFamilyFormatWithUnit("#,##0", 10);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
       }
@@ -214,15 +207,8 @@ public enum LengthUnit {
         this.formatLocale = Locale.getDefault();  
         ResourceBundle resource = ResourceBundle.getBundle(LengthUnit.class.getName());
         this.name = resource.getString("meterUnit");
-        this.lengthFormatWithUnit = new DecimalFormat("#,##0.00# " + this.name) {
-            @Override
-            public StringBuffer format(double number, StringBuffer result,
-                                       FieldPosition fieldPosition) {
-              // Convert centimeter to meter
-              return super.format(number / 100, result, fieldPosition);                
-            }
-          };          
-        this.lengthFormat = new DecimalFormat("#,##0.00#");
+        this.lengthFormatWithUnit = new MeterFamilyFormatWithUnit("#,##0.00# " + this.name, 0.01f);          
+        this.lengthFormat = new MeterFamilyFormatWithUnit("#,##0.00#", 0.01f);
         String squareMeterUnit = resource.getString("squareMeterUnit");
         this.areaFormatWithUnit = new SquareMeterAreaFormatWithUnit(squareMeterUnit);
       }
@@ -412,6 +398,32 @@ public enum LengthUnit {
    */
   public abstract Format getFormatWithUnit(); 
 
+  /**
+   * A decimal format for meter family units.
+   */
+  private static class MeterFamilyFormatWithUnit extends DecimalFormat {
+    private final float unitMultiplier;
+
+    public MeterFamilyFormatWithUnit(String pattern, float unitMultiplier) {
+      super(pattern);
+      this.unitMultiplier = unitMultiplier;
+      
+    }
+
+    @Override
+    public StringBuffer format(double number, StringBuffer result,
+                               FieldPosition fieldPosition) {
+      // Convert centimeter to millimeter
+      return super.format(number * this.unitMultiplier, result, fieldPosition);                
+    }
+
+    @Override
+    public StringBuffer format(long number, StringBuffer result,
+                               FieldPosition fieldPosition) {
+      return format((double)number, result, fieldPosition);
+    }
+  }
+  
   /**
    * Returns a format able to format lengths.
    */
