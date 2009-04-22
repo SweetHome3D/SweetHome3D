@@ -70,9 +70,17 @@ import com.eteks.sweethome3d.model.Wall;
  */
 public class PlanController extends FurnitureController implements Controller {
   public enum Property {MODE, MODIFICATION_STATE}
-  
+
+  /**
+   * Selectable modes in controller.
+   */
   public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION, LABEL_CREATION}
-  
+
+  /**
+   * Fields that can be edited in plan view.
+   */
+  public static enum EditableProperty {X, Y, LENGTH, ANGLE, THICKNESS}
+
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
   private static final int PIXEL_MARGIN = 3;
@@ -285,11 +293,26 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Activates duplication feature. 
+   * Activates or deactivates duplication feature. 
    * @param duplicationActivated if <code>true</code> then duplication is active.
    */
-  public void activateDuplication(boolean duplicationActivated) {
-    this.state.activateDuplication(duplicationActivated);
+  public void setDuplicationActivated(boolean duplicationActivated) {
+    this.state.setDuplicationActivated(duplicationActivated);
+  }
+
+  /**
+   * Activates or deactivates edition.
+   * @param editionActivated if <code>true</code> then edition is active 
+   */
+  public void setEditionActivated(boolean editionActivated) {    
+    this.state.setEditionActivated(editionActivated);
+  }  
+
+  /**
+   * Updates an editable property with the entered <code>value</code>.
+   */
+  public void updateEditableProperty(EditableProperty editableProperty, Object value) {
+    this.state.updateEditableProperty(editableProperty, value);
   }
 
   /**
@@ -3785,7 +3808,13 @@ public class PlanController extends FurnitureController implements Controller {
     public void toggleMagnetism(boolean magnetismToggled) {
     }
 
-    public void activateDuplication(boolean duplicationActivated) {
+    public void setDuplicationActivated(boolean duplicationActivated) {
+    }
+
+    public void setEditionActivated(boolean editionActivated) {
+    }
+
+    public void updateEditableProperty(EditableProperty editableField, Object value) {
     }
 
     public void pressMouse(float x, float y, int clickCount, 
@@ -4011,7 +4040,7 @@ public class PlanController extends FurnitureController implements Controller {
             && ((HomeDoorOrWindow)this.movedPieceOfFurniture).isBoundToWall();
       }
       this.duplicatedItems = null;
-      activateDuplication(wasDuplicationActivatedLastMousePress());
+      setDuplicationActivated(wasDuplicationActivatedLastMousePress());
     }
     
     @Override
@@ -4124,7 +4153,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
-    public void activateDuplication(boolean duplicationActivated) {
+    public void setDuplicationActivated(boolean duplicationActivated) {
       if (!(this.movedItems.get(0) instanceof Camera)) {
         if (duplicationActivated
             && this.duplicatedItems == null) {
@@ -4423,6 +4452,15 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     @Override
+    public void setEditionActivated(boolean editionActivated) {
+      if (editionActivated) {
+        // Consider user clicked at (0, 0) 
+        PlanController.this.pressMouse(0, 0, 1, false, false);
+        PlanController.this.setEditionActivated(editionActivated);
+      }
+    }
+    
+    @Override
     public void exit() {
       getView().deleteFeedback();
     }  
@@ -4444,17 +4482,39 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
-      float length = (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
+      float length = getWallLength(wall);
+      Integer wallAngle = getWallAngleWithPreviousWall(wall, length);
+      if (wallAngle != null) {
+        return "<html>" + String.format(this.wallLengthToolTipFeedback, 
+            preferences.getLengthUnit().getFormatWithUnit().format(length))
+        + "<br>" + String.format(this.wallAngleToolTipFeedback, wallAngle);
+      }
+      return String.format(this.wallLengthToolTipFeedback, 
+          preferences.getLengthUnit().getFormatWithUnit().format(length));
+    }
+    
+    protected float getWallLength(Wall wall) {
+      return (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
           wall.getXEnd(), wall.getYEnd());
+    }
+
+    /**
+     * Returns wall angle with its previous wall in degrees.
+     */
+    protected Integer getWallAngleWithPreviousWall(Wall wall) {
+      return getWallAngleWithPreviousWall(wall, getWallLength(wall));
+    }
+
+    private Integer getWallAngleWithPreviousWall(Wall wall, float wallLength) {
       Wall wallAtStart = wall.getWallAtStart();
       if (wallAtStart != null) {
         float wallAtStartLength = (float)Point2D.distance(
             wallAtStart.getXStart(), wallAtStart.getYStart(), 
             wallAtStart.getXEnd(), wallAtStart.getYEnd());
-        if (length != 0 && wallAtStartLength != 0) {
+        if (wallLength != 0 && wallAtStartLength != 0) {
           // Compute the angle between the wall and its wall at start
-          float xWallVector = (wall.getXEnd() - wall.getXStart()) / length;
-          float yWallVector = (wall.getYEnd() - wall.getYStart()) / length;
+          float xWallVector = (wall.getXEnd() - wall.getXStart()) / wallLength;
+          float yWallVector = (wall.getYEnd() - wall.getYStart()) / wallLength;
           float xWallAtStartVector = (wallAtStart.getXEnd() - wallAtStart.getXStart()) / wallAtStartLength;
           float yWallAtStartVector = (wallAtStart.getYEnd() - wallAtStart.getYStart()) / wallAtStartLength;
           if (wallAtStart.getWallAtStart() == wall) {
@@ -4468,13 +4528,19 @@ public class PlanController extends FurnitureController implements Controller {
           if (wallAngle > 180) {
             wallAngle -= 360;
           }
-          return "<html>" + String.format(this.wallLengthToolTipFeedback, 
-              preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.wallAngleToolTipFeedback, wallAngle);
+          return wallAngle;
         }
       }
-      return String.format(this.wallLengthToolTipFeedback, 
-          preferences.getLengthUnit().getFormatWithUnit().format(length));
+      return null;
+    }
+
+    protected int getWallAngle(Wall wall) {
+      int wallAngle = (int)Math.round(Math.toDegrees(Math.atan2(
+          wall.getYStart() - wall.getYEnd(), wall.getXEnd() - wall.getXStart())));
+      if (wallAngle < 0) {
+        wallAngle += 360;
+      }
+      return wallAngle;
     }
   }
 
@@ -4496,6 +4562,7 @@ public class PlanController extends FurnitureController implements Controller {
     private boolean          oldBasePlanLocked;
     private List<Wall>       newWalls;
     private boolean          magnetismEnabled;
+    private long             lastWallCreationTime;
     
     @Override
     public Mode getMode() {
@@ -4554,6 +4621,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.wallEndAtEnd = null;
       this.lastWall = null;
       this.newWalls = new ArrayList<Wall>();
+      this.lastWallCreationTime = -1;
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       PlanView planView = getView();
@@ -4612,7 +4680,7 @@ public class PlanController extends FurnitureController implements Controller {
       planView.makePointVisible(x, y);
       // Update move coordinates
       this.xLastEnd = xEnd;
-      this.yLastEnd = yEnd;
+      this.yLastEnd = yEnd;      
     }
 
     @Override
@@ -4637,12 +4705,151 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.newWall != null) {
           getView().deleteToolTipFeedback();
           selectItem(this.newWall);
-          this.lastWall = 
-          this.wallEndAtStart = this.newWall;
-          this.wallStartAtStart = null;
-          this.newWall = null;
-          this.xStart = this.xLastEnd; 
-          this.yStart = this.yLastEnd;
+          endWallCreation();
+        }
+      }
+    }
+
+    private void endWallCreation() {
+      this.lastWall = 
+      this.wallEndAtStart = this.newWall;
+      this.wallStartAtStart = null;
+      this.newWall = null;
+      this.xStart = this.xLastEnd; 
+      this.yStart = this.yLastEnd;
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      if (editionActivated) {
+        PlanView planView = getView();
+        planView.deleteFeedback();
+        if (this.newWalls.size() == 0) {
+          // Edit xStart and yStart
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.X,
+                                                                       EditableProperty.Y},
+              new Object [] {this.xLastEnd, this.yLastEnd},
+              this.xLastEnd, this.yLastEnd);
+          planView.makePointVisible(this.xLastEnd, this.yLastEnd);
+        } else {
+          if (this.newWall == null) {
+            // May happen if edition is activated after the user clicked to finish one wall 
+            createNextWall();            
+          }
+          // Edit length, angle and thickness        
+          Integer wallAngleWithPreviousWall = getWallAngleWithPreviousWall(this.newWall);
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
+                                                                       EditableProperty.ANGLE,
+                                                                       EditableProperty.THICKNESS},
+              new Object [] {getWallLength(this.newWall), 
+                             wallAngleWithPreviousWall != null 
+                               ? wallAngleWithPreviousWall 
+                               : getWallAngle(this.newWall), 
+                             this.newWall.getThickness()},
+              this.newWall.getXEnd(), this.newWall.getYEnd());
+        }
+      } else {
+        if (this.newWall == null) {
+          // Create a new wall
+          float defaultLength = preferences.getLengthUnit().getMagnetizedLength(300, 1);
+          this.xLastEnd = this.xStart + defaultLength;
+          this.yLastEnd = this.yStart;
+          this.newWall = createNewWall(this.xStart, this.yStart, 
+              this.xLastEnd, this.yLastEnd, null, null);
+          this.newWalls.add(this.newWall);
+          // Activate automatically second step
+          getView().deleteToolTipFeedback();
+          setEditionActivated(true);
+        } else if (System.currentTimeMillis() - this.lastWallCreationTime < 300) {
+          if (this.newWalls.size() > 1) {
+            this.newWalls.remove(this.newWall);
+            home.deleteWall(this.newWall);
+            if (this.newWalls.size() > 2) {
+              this.lastWall = this.newWalls.get(this.newWalls.size() - 1);
+              Wall firstWall = this.newWalls.get(0);
+              if (firstWall.getXStart() == this.lastWall.getXEnd()
+                  && firstWall.getYStart() == this.lastWall.getYEnd()) {
+                // Join last wall to the first wall at its end
+                joinNewWallEndToWall(this.lastWall, firstWall, null);
+              }
+            }            
+            // Post walls creation to undo support
+            postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
+            selectItems(this.newWalls);
+          }
+          // Change state to WallCreationState 
+          setState(getWallCreationState());
+        } else {
+          endWallCreation();
+          createNextWall();
+          // Reactivate automatically second step
+          getView().deleteToolTipFeedback();
+          setEditionActivated(true);
+        }
+      }
+    }
+
+    private void createNextWall() {
+      // Create a new wall with an angle equal to last wall angle - 90°
+      double lastWallAngle = Math.PI - Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
+          this.lastWall.getXStart() - this.lastWall.getXEnd());
+      lastWallAngle -=  Math.PI / 2;
+      float lastWallLength = getWallLength(this.lastWall); 
+      this.xLastEnd = (float)(this.xStart + lastWallLength * Math.cos(lastWallAngle));
+      this.yLastEnd = (float)(this.yStart - lastWallLength * Math.sin(lastWallAngle));
+      this.newWall = createNewWall(this.xStart, this.yStart, 
+          this.xLastEnd, this.yLastEnd, null, this.wallEndAtStart);
+      this.newWall.setThickness(this.lastWall.getThickness());          
+      this.newWalls.add(this.newWall);
+      this.lastWallCreationTime = System.currentTimeMillis();
+      deselectAll();
+    }
+    
+    @Override
+    public void updateEditableProperty(EditableProperty editableProperty, Object value) {
+      if (this.newWall == null) {
+        switch (editableProperty) {
+          case X : 
+            this.xStart = value != null ? ((Number)value).floatValue() : 0;
+            break;      
+          case Y : 
+            this.yStart = value != null ? ((Number)value).floatValue() : 0;
+            break;      
+        }
+        getView().makePointVisible(this.xStart, this.yStart);
+      } else {
+        switch (editableProperty) {
+          case LENGTH : 
+            float length = Math.max(0.001f, value != null ? ((Number)value).floatValue() : 0);
+            double wallAngle = Math.PI - Math.atan2(this.yStart - this.yLastEnd, this.xStart - this.xLastEnd);
+            this.xLastEnd = (float)(this.xStart + length * Math.cos(wallAngle));
+            this.yLastEnd = (float)(this.yStart - length * Math.sin(wallAngle));
+            this.newWall.setXEnd(this.xLastEnd);
+            this.newWall.setYEnd(this.yLastEnd);
+            // Ensure wall points are visible
+            getView().makePointVisible(this.xStart, this.yStart);
+            getView().makePointVisible(this.xLastEnd, this.yLastEnd);
+            break;      
+          case ANGLE : 
+            wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+            if (this.lastWall != null) {
+              wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
+                  this.lastWall.getXStart() - this.lastWall.getXEnd());
+            }
+            float wallLength = getWallLength(this.newWall);
+            
+            this.xLastEnd = (float)(this.xStart + wallLength * Math.cos(wallAngle));
+            this.yLastEnd = (float)(this.yStart - wallLength * Math.sin(wallAngle));
+            this.newWall.setXEnd(this.xLastEnd);
+            this.newWall.setYEnd(this.yLastEnd);
+            // Ensure wall points are visible
+            getView().makePointVisible(this.xStart, this.yStart);
+            getView().makePointVisible(this.xLastEnd, this.yLastEnd);
+            break;      
+          case THICKNESS : 
+            float thickness = Math.max(0.01f, value != null ? Math.abs(((Number)value).floatValue()) : 0);
+            this.newWall.setThickness(thickness);
+            break;      
         }
       }
     }
@@ -4658,7 +4865,7 @@ public class PlanController extends FurnitureController implements Controller {
         moveMouse(getXLastMouseMove(), getYLastMouseMove());
       }
     }
-
+    
     @Override
     public void escape() {
       if (this.newWall != null) {

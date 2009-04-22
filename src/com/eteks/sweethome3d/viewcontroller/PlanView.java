@@ -30,8 +30,11 @@ import com.eteks.sweethome3d.model.TextStyle;
  * @author Emmanuel Puybaret
  */
 public interface PlanView extends View {
+  /**
+   * The cursor types available in plan view.
+   */
   public enum CursorType {SELECTION, DRAW, ROTATION, ELEVATION, HEIGHT, RESIZE, DUPLICATION}
-
+  
   /**
    * Sets rectangle selection feedback coordinates. 
    */
@@ -95,6 +98,13 @@ public interface PlanView extends View {
   public abstract void setToolTipFeedback(String toolTipFeedback,
                                           float x, float y);
 
+  /**
+   * Set properties edited in tool tip.
+   */
+  public abstract void setToolTipEditedProperties(PlanController.EditableProperty [] toolTipEditedProperties, 
+                                                  Object [] toolTipPropertyValues,
+                                                  float x, float y);
+  
   /**
    * Deletes tool tip text from screen. 
    */

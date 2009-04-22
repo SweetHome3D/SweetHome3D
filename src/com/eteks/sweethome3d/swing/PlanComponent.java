@@ -19,19 +19,25 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AWTKeyStroke;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Composite;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -43,6 +49,8 @@ import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
@@ -65,13 +73,17 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
+import java.text.Format;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executors;
 
@@ -79,20 +91,32 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JToolTip;
 import javax.swing.JViewport;
 import javax.swing.JWindow;
 import javax.swing.KeyStroke;
+import javax.swing.LookAndFeel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.event.MouseInputListener;
+import javax.swing.text.DefaultFormatterFactory;
+import javax.swing.text.InternationalFormatter;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.NumberFormatter;
 
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
@@ -130,7 +154,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
-      DUPLICATION_ON, DUPLICATION_OFF}
+      ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION, 
+      ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
   private enum PaintMode {PAINT, PRINT, CLIPBOARD, EXPORT}
   
   private static final float MARGIN = 40;
@@ -159,6 +184,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private JWindow               toolTipWindow;
   private boolean               resizeIndicatorVisible;
   
+  private Map<PlanController.EditableProperty, JFormattedTextField> toolTipEditableTextFields;
+  private KeyListener                 toolTipKeyListener;
+  
   private List<HomePieceOfFurniture>  sortedHomeFurniture;
   private List<Room>                  sortedHomeRooms;
   private Map<TextStyle, Font>        fonts;
@@ -168,6 +196,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private boolean            planBoundsCacheValid;  
   private BufferedImage      backgroundImageCache;
   private Area               wallsAreaCache;
+
 
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
@@ -190,7 +219,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   private static final float       WALL_STROKE_WIDTH = 1.5f;
   private static final float       BORDER_STROKE_WIDTH = 1f;
-  
+
   static {
     // Create a path that draws an round arrow used as a rotation indicator 
     // at top left point of a piece of furniture
@@ -340,8 +369,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
-      createActions(controller);
-      installKeyboardActions();
+      createActions(controller);      
+      installDefaultKeyboardActions();
+      createToolTipTextFields(controller, preferences);
       setFocusable(true);
       setAutoscrolls(true);
     }
@@ -537,11 +567,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public void propertyChange(PropertyChangeEvent ev) {
       // If plan component was garbage collected, remove this listener from preferences
       PlanComponent planComponent = this.planComponent.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
       if (planComponent == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
-            UserPreferences.Property.UNIT, this);
+        preferences.removePropertyChangeListener(UserPreferences.Property.UNIT, this);
       } else {
         planComponent.repaint();
+        // Update format of tool tip text fields
+        for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry : 
+          planComponent.toolTipEditableTextFields.entrySet()) {
+          updateToolTipTextFieldFormatterFactory(toolTipTextFieldEntry.getValue(), 
+              toolTipTextFieldEntry.getKey(), preferences);
+        }
         if (planComponent.horizontalRuler != null) {
           planComponent.horizontalRuler.repaint();
         }
@@ -695,10 +731,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
-   * Installs keys bound to actions. 
+   * Installs default keys bound to actions. 
    */
-  private void installKeyboardActions() {
+  private void installDefaultKeyboardActions() {
     InputMap inputMap = getInputMap(WHEN_FOCUSED);
+    inputMap.clear();
     inputMap.put(KeyStroke.getKeyStroke("DELETE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("BACK_SPACE"), ActionType.DELETE_SELECTION);
     inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
@@ -709,15 +746,36 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     inputMap.put(KeyStroke.getKeyStroke("shift pressed SHIFT"), ActionType.TOGGLE_MAGNETISM_ON);
     inputMap.put(KeyStroke.getKeyStroke("released SHIFT"), ActionType.TOGGLE_MAGNETISM_OFF);
     inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("ENTER"), ActionType.ACTIVATE_EDITIION);
+    inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), ActionType.ACTIVATE_EDITIION);
     if (OperatingSystem.isMacOSX()) {
       // Under Mac OS X, duplication with Alt key 
-      inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.DUPLICATION_ON);
-      inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DUPLICATION_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("alt pressed ALT"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("released ALT"), ActionType.DEACTIVATE_DUPLICATION);
       inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
     } else {
       // Under other systems, duplication with Ctrl key 
-      inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.DUPLICATION_ON);
-      inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DUPLICATION_OFF);
+      inputMap.put(KeyStroke.getKeyStroke("control pressed CONTROL"), ActionType.ACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("released CONTROL"), ActionType.DEACTIVATE_DUPLICATION);
+      inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
+    }
+  }
+  
+  /**
+   * Installs keys bound to actions during edition. 
+   */
+  private void installEditionKeyboardActions() {
+    InputMap inputMap = getInputMap(WHEN_FOCUSED);
+    inputMap.clear();
+    inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("shift ESCAPE"), ActionType.ESCAPE);
+    inputMap.put(KeyStroke.getKeyStroke("ENTER"), ActionType.DEACTIVATE_EDITIION);
+    inputMap.put(KeyStroke.getKeyStroke("shift ENTER"), ActionType.DEACTIVATE_EDITIION);
+    if (OperatingSystem.isMacOSX()) {
+      // Under Mac OS X, duplication with Alt key 
+      inputMap.put(KeyStroke.getKeyStroke("alt ESCAPE"), ActionType.ESCAPE);
+    } else {
+      // Under other systems, duplication with Ctrl key 
       inputMap.put(KeyStroke.getKeyStroke("control ESCAPE"), ActionType.ESCAPE);
     }
   }
@@ -726,19 +784,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Creates actions that calls back <code>controller</code> methods.  
    */
   private void createActions(final PlanController controller) {
-    // Delete selection action mapped to back space and delete keys
+    // Delete selection action 
     Action deleteSelectionAction = new AbstractAction() {
       public void actionPerformed(ActionEvent ev) {
         controller.deleteSelection();
       }
     };
-    // Escape action mapped to Esc key
+    // Escape action 
     Action escapeAction = new AbstractAction() {
       public void actionPerformed(ActionEvent ev) {
         controller.escape();
       }
     };
-    // Move selection action mapped to arrow keys 
+    // Move selection action  
     class MoveSelectionAction extends AbstractAction {
       private final int dx;
       private final int dy;
@@ -752,7 +810,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         controller.moveSelection(this.dx / getScale(), this.dy / getScale());
       }
     }
-    // Temporary magnetism mapped to Shift key
+    // Toggle magnetism action
     class ToggleMagnetismAction extends AbstractAction {
       private final boolean toggle;
       
@@ -764,16 +822,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         controller.toggleMagnetism(this.toggle);
       }
     }
-    // Duplication mapped to Ctrl or Alt key
-    class DuplicationAction extends AbstractAction {
+    // Duplication action
+    class SetDuplicationActivatedAction extends AbstractAction {
       private final boolean duplicationActivated;
       
-      public DuplicationAction(boolean duplicationActivated) {
+      public SetDuplicationActivatedAction(boolean duplicationActivated) {
         this.duplicationActivated = duplicationActivated;
       }
 
       public void actionPerformed(ActionEvent ev) {
-        controller.activateDuplication(this.duplicationActivated);
+        controller.setDuplicationActivated(this.duplicationActivated);
+      }
+    }
+    // Edition action
+    class SetEditionActivatedAction extends AbstractAction {
+      private final boolean editionActivated;
+      
+      public SetEditionActivatedAction(boolean editionActivated) {
+        this.editionActivated = editionActivated;
+      }
+
+      public void actionPerformed(ActionEvent ev) {
+        controller.setEditionActivated(this.editionActivated);
       }
     }
     ActionMap actionMap = getActionMap();
@@ -785,10 +855,73 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     actionMap.put(ActionType.MOVE_SELECTION_RIGHT, new MoveSelectionAction(1, 0));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_ON, new ToggleMagnetismAction(true));
     actionMap.put(ActionType.TOGGLE_MAGNETISM_OFF, new ToggleMagnetismAction(false));
-    actionMap.put(ActionType.DUPLICATION_ON, new DuplicationAction(true));
-    actionMap.put(ActionType.DUPLICATION_OFF, new DuplicationAction(false));
+    actionMap.put(ActionType.ACTIVATE_DUPLICATION, new SetDuplicationActivatedAction(true));
+    actionMap.put(ActionType.DEACTIVATE_DUPLICATION, new SetDuplicationActivatedAction(false));
+    actionMap.put(ActionType.ACTIVATE_EDITIION, new SetEditionActivatedAction(true));
+    actionMap.put(ActionType.DEACTIVATE_EDITIION, new SetEditionActivatedAction(false));
   }
 
+  /**
+   * Creates the text fields used in tool tip and their label.
+   */
+  private void createToolTipTextFields(final PlanController controller, 
+                                       UserPreferences preferences) {
+    this.toolTipEditableTextFields = new HashMap<PlanController.EditableProperty, JFormattedTextField>();
+    Font toolTipFont = UIManager.getFont("ToolTip.font");
+    for (final PlanController.EditableProperty editableProperty : PlanController.EditableProperty.values()) {
+      final JFormattedTextField textField = new JFormattedTextField() {
+          @Override
+          public Dimension getPreferredSize() {
+            // Enlarge preferred size of one pixel
+            Dimension preferredSize = super.getPreferredSize();
+            return new Dimension(preferredSize.width + 1, preferredSize.height);
+          }
+        };
+      updateToolTipTextFieldFormatterFactory(textField, editableProperty, preferences);
+      textField.setFont(toolTipFont);
+      textField.setOpaque(false);
+      textField.setBorder(null);
+      // Add a listener to notify changes to controller
+      textField.getDocument().addDocumentListener(new DocumentListener() {
+          public void changedUpdate(DocumentEvent ev) {
+            try {
+              textField.commitEdit();
+              controller.updateEditableProperty(editableProperty, textField.getValue());
+            } catch (ParseException ex) {
+              controller.updateEditableProperty(editableProperty, null);
+            }
+          }
+  
+          public void insertUpdate(DocumentEvent ev) {
+            changedUpdate(ev);
+          }
+  
+          public void removeUpdate(DocumentEvent ev) {
+            changedUpdate(ev);
+          }
+        });
+
+      this.toolTipEditableTextFields.put(editableProperty, textField);
+    }
+  }
+
+  private static void updateToolTipTextFieldFormatterFactory(JFormattedTextField textField,
+                                                             PlanController.EditableProperty editableProperty,
+                                                             UserPreferences preferences) {
+    InternationalFormatter formatter;
+    if (editableProperty == PlanController.EditableProperty.ANGLE) {      
+      formatter = new NumberFormatter(NumberFormat.getNumberInstance());
+    } else {
+      Format lengthFormat = preferences.getLengthUnit().getFormat();
+      if (lengthFormat instanceof NumberFormat) {
+        formatter = new NumberFormatter((NumberFormat)lengthFormat);
+      } else {
+        formatter = new InternationalFormatter(lengthFormat);
+      }
+    }
+    textField.setFormatterFactory(new DefaultFormatterFactory(formatter));
+  }
+  
   /**
    * Create custom rotation cursor with a hot spot point at center of cursor.
    */ 
@@ -3069,23 +3202,30 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    *                    or <code>null</code> to make tool tip disapear.
    */
   public void setToolTipFeedback(String toolTipFeedback, float x, float y) {
+    stopToolTipTextFieldsEditing();
     // Create tool tip for this component
     if (this.toolTip == null) {
       this.toolTip = new JToolTip();
       this.toolTip.setComponent(this);
     }
-    // Change its text    
-    this.toolTip.setTipText(toolTipFeedback);
+    // Change tool tip text    
+    this.toolTip.setTipText(toolTipFeedback);    
+    showToolTipComponentAt(this.toolTip, x , y);
+  }
 
+  /**
+   * Shows the given component as a tool tip.
+   */
+  private void showToolTipComponentAt(JComponent toolTipComponent, float x, float y) {
     if (this.toolTipWindow == null) {
       // Show tool tip in a window (we don't use a Swing Popup because 
       // we require the tool tip window to move along with mouse pointer 
       // and a Swing popup can't move without hiding then showing it again)
       this.toolTipWindow = new JWindow(JOptionPane.getFrameForComponent(this));
       this.toolTipWindow.setFocusableWindowState(false);
-      this.toolTipWindow.add(this.toolTip);
+      this.toolTipWindow.add(toolTipComponent);
       // Add to window a mouse listener that redispatch mouse events to
-      // plan component (if the user moves fastly enough the mouse pointer in a way 
+      // plan component (if the user moves fast enough the mouse pointer in a way 
       // it's in toolTipWindow, the matching event is dispatched to toolTipWindow)
       MouseInputAdapter mouseAdapter = new MouseInputAdapter() {
         @Override
@@ -3115,7 +3255,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.toolTipWindow.addMouseListener(mouseAdapter);
       this.toolTipWindow.addMouseMotionListener(mouseAdapter);
     } else {
-      this.toolTip.revalidate();
+      Container contentPane = this.toolTipWindow.getContentPane();
+      if (contentPane.getComponent(0) != toolTipComponent) {
+        contentPane.removeAll();
+        contentPane.add(toolTipComponent);
+      }
+      toolTipComponent.revalidate();
     }
     // Convert (x, y) to screen coordinates 
     Point point = new Point(convertXModelToPixel(x), convertYModelToPixel(y));
@@ -3134,18 +3279,134 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     this.toolTipWindow.setLocation(point);      
     this.toolTipWindow.pack();
     this.toolTipWindow.setVisible(true);
-    this.toolTip.paintImmediately(this.toolTip.getBounds());
+    toolTipComponent.paintImmediately(toolTipComponent.getBounds());
+  }
+  
+  /**
+   * Set tool tip edition.
+   */
+  public void setToolTipEditedProperties(final PlanController.EditableProperty [] toolTipEditedProperties, 
+                                         Object [] toolTipPropertyValues,
+                                         float x, float y) {
+    final JPanel toolTipPanel = new JPanel(new GridBagLayout());
+    // Reuse tool tip look
+    LookAndFeel.installColorsAndFont(toolTipPanel, "ToolTip.background", "ToolTip.foreground", "ToolTip.font");
+    Border border = UIManager.getBorder("ToolTip.border");
+    if (!OperatingSystem.isMacOSX()) {
+      border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(0, 3, 0, 2));
+    }
+    toolTipPanel.setBorder(border);
+
+    // Add labels and text fields to tool tip panel
+    for (int i = 0; i < toolTipEditedProperties.length; i++) {
+      JFormattedTextField textField = this.toolTipEditableTextFields.get(toolTipEditedProperties [i]);
+      textField.setValue(toolTipPropertyValues [i]); 
+      JLabel label = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, 
+          toolTipEditedProperties [i].name() + ".toolTipText"));
+      label.setFont(textField.getFont());
+      JLabel unitLabel = null;
+      if (toolTipEditedProperties [i] == PlanController.EditableProperty.ANGLE) {
+        unitLabel = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, "degreeLabel.text"));
+      } else if (this.preferences.getLengthUnit() != LengthUnit.INCH) {
+        unitLabel = new JLabel(" " + this.preferences.getLengthUnit().getName());
+      }
+      
+      JPanel labelTextFieldPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0, 0));
+      labelTextFieldPanel.setOpaque(false);
+      
+      labelTextFieldPanel.add(label);
+      labelTextFieldPanel.add(textField);
+      if (unitLabel != null) {
+        unitLabel.setFont(textField.getFont());
+        labelTextFieldPanel.add(unitLabel);
+      }
+      toolTipPanel.add(labelTextFieldPanel, new GridBagConstraints(
+          0, i, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
+          new Insets(0, 0, 0, 0), 0, 0));
+    }
+    
+    showToolTipComponentAt(toolTipPanel, x, y);
+    // Add a key listener that redispatches events to tool tip text fields
+    // (don't give focus to tool tip window otherwise plan component window will lose focus)
+    this.toolTipKeyListener = new KeyListener() {
+        private int focusedTextFieldIndex;
+        private JTextComponent focusedTextField;
+  
+        {
+          // Simulate focus on first text field
+          setFocusedTextFieldIndex(0);
+        }
+        
+        private void setFocusedTextFieldIndex(int textFieldIndex) {
+          if (this.focusedTextField != null) {
+            this.focusedTextField.getCaret().setVisible(false);
+            this.focusedTextField.getCaret().setSelectionVisible(false);        
+          }
+          this.focusedTextFieldIndex = textFieldIndex;
+          this.focusedTextField = toolTipEditableTextFields.get(toolTipEditedProperties [textFieldIndex]);
+          this.focusedTextField.selectAll();    
+          this.focusedTextField.getCaret().setSelectionVisible(true);
+        }
+        
+        public void keyPressed(KeyEvent ev) {
+          Set<AWTKeyStroke> forwardKeys = this.focusedTextField.getFocusTraversalKeys(
+              KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
+          if (forwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))) {
+            setFocusedTextFieldIndex((this.focusedTextFieldIndex + 1) % toolTipEditedProperties.length);
+          } else {
+            Set<AWTKeyStroke> backwardKeys = this.focusedTextField.getFocusTraversalKeys(
+                KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS);
+            if (backwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))) {
+              setFocusedTextFieldIndex((this.focusedTextFieldIndex - 1 + toolTipEditedProperties.length) % toolTipEditedProperties.length);
+            } else {
+              KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
+              this.focusedTextField.getCaret().setVisible(true);
+            } 
+          }
+        }
+  
+        public void keyReleased(KeyEvent ev) {
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(focusedTextField, ev);
+        }
+  
+        public void keyTyped(KeyEvent ev) {
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(focusedTextField, ev);
+          toolTipWindow.pack();
+        }      
+      };
+
+    addKeyListener(this.toolTipKeyListener);
+    setFocusTraversalKeysEnabled(false);
+    installEditionKeyboardActions();
   }
   
   /**
    * Deletes tool tip text from screen. 
    */
   public void deleteToolTipFeedback() {
+    stopToolTipTextFieldsEditing();
     if (this.toolTip != null) {
       this.toolTip.setTipText(null);
     }
     if (this.toolTipWindow != null) {
       this.toolTipWindow.setVisible(false);
+    }
+  }
+
+  /**
+   * Stops editing in tool tip text fields.
+   */
+  private void stopToolTipTextFieldsEditing() {
+    if (this.toolTipKeyListener != null) {
+      installDefaultKeyboardActions();
+      setFocusTraversalKeysEnabled(true);
+      removeKeyListener(toolTipKeyListener);
+      this.toolTipKeyListener = null;
+      
+      for (JFormattedTextField textField : this.toolTipEditableTextFields.values()) {
+        textField.getCaret().setVisible(false);
+        textField.getCaret().setSelectionVisible(false);
+      }      
     }
   }
 
@@ -3276,7 +3537,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public PlanRulerComponent(int orientation) {
       this.orientation = orientation;
       setOpaque(true);
-      // Use same font as tooltips
+      // Use same font as tool tips
       setFont(UIManager.getFont("ToolTip.font"));
       addMouseListeners();
     }
@@ -3503,11 +3764,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setColor(getSelectionColor());
         g2D.setStroke(new BasicStroke(1 / rulerScale));
         if (this.orientation == SwingConstants.HORIZONTAL) {
-          // Draw mouse feeback vertical line
+          // Draw mouse feedback vertical line
           float x = convertXPixelToModel(this.mouseLocation.x);
           g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
         } else {
-          // Draw mouse feeback horizontal line
+          // Draw mouse feedback horizontal line
           float y = convertYPixelToModel(this.mouseLocation.y);
           if (leftToRightOriented) {
             g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
