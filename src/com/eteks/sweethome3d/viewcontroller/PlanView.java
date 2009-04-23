@@ -124,6 +124,7 @@ public interface PlanView extends View {
                                             float x, 
                                             float y, 
                                             boolean showPoint);
+  
   /**
    * Sets the feedback of dragged items drawn during a drag and drop operation, 
    * initiated from outside of plan view.

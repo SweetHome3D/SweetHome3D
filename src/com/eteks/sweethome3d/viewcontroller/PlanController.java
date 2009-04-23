@@ -4454,8 +4454,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void setEditionActivated(boolean editionActivated) {
       if (editionActivated) {
-        // Consider user clicked at (0, 0) 
-        PlanController.this.pressMouse(0, 0, 1, false, false);
+        setState(getWallDrawingState());
         PlanController.this.setEditionActivated(editionActivated);
       }
     }
@@ -4625,8 +4624,7 @@ public class PlanController extends FurnitureController implements Controller {
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
       PlanView planView = getView();
-      planView.setAlignmentFeedback(Wall.class, null, 
-          getXLastMousePress(), getYLastMousePress(), false);
+      planView.setAlignmentFeedback(Wall.class, null, this.xStart, this.yStart, false);
     }
 
     @Override
@@ -4692,13 +4690,7 @@ public class PlanController extends FurnitureController implements Controller {
           joinNewWallEndToWall(this.lastWall, 
               this.wallStartAtEnd, this.wallEndAtEnd);
         }
-        if (this.newWalls.size() > 0) {
-          // Post walls creation to undo support
-          postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
-          selectItems(this.newWalls);
-        }
-        // Change state to WallCreationState 
-        setState(getWallCreationState());
+        validateDrawnWalls();
       } else {
         // Create a new wall only when it will have a length > 0
         // meaning after the first mouse move
@@ -4708,6 +4700,16 @@ public class PlanController extends FurnitureController implements Controller {
           endWallCreation();
         }
       }
+    }
+
+    private void validateDrawnWalls() {
+      if (this.newWalls.size() > 0) {
+        // Post walls creation to undo support
+        postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
+        selectItems(this.newWalls);
+      }
+      // Change state to WallCreationState 
+      setState(getWallCreationState());
     }
 
     private void endWallCreation() {
@@ -4721,16 +4723,17 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void setEditionActivated(boolean editionActivated) {
+      PlanView planView = getView();
       if (editionActivated) {
-        PlanView planView = getView();
         planView.deleteFeedback();
-        if (this.newWalls.size() == 0) {
+        if (this.newWalls.size() == 0
+            && this.wallEndAtStart == null
+            && this.wallStartAtStart == null) {
           // Edit xStart and yStart
           planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.X,
                                                                        EditableProperty.Y},
-              new Object [] {this.xLastEnd, this.yLastEnd},
-              this.xLastEnd, this.yLastEnd);
-          planView.makePointVisible(this.xLastEnd, this.yLastEnd);
+              new Object [] {this.xStart, this.yStart},
+              this.xStart, this.yStart);
         } else {
           if (this.newWall == null) {
             // May happen if edition is activated after the user clicked to finish one wall 
@@ -4748,58 +4751,58 @@ public class PlanController extends FurnitureController implements Controller {
                              this.newWall.getThickness()},
               this.newWall.getXEnd(), this.newWall.getYEnd());
         }
-      } else {
+      } else { 
         if (this.newWall == null) {
-          // Create a new wall
-          float defaultLength = preferences.getLengthUnit().getMagnetizedLength(300, 1);
+          // Create a new wall once user entered the start point of the first wall 
+          float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
+              ? LengthUnit.footToCentimeter(10) : 300;
           this.xLastEnd = this.xStart + defaultLength;
           this.yLastEnd = this.yStart;
           this.newWall = createNewWall(this.xStart, this.yStart, 
-              this.xLastEnd, this.yLastEnd, null, null);
+              this.xLastEnd, this.yLastEnd, this.wallStartAtStart, this.wallEndAtStart);
           this.newWalls.add(this.newWall);
-          // Activate automatically second step
-          getView().deleteToolTipFeedback();
+          // Activate automatically second step to let user enter the 
+          // length, angle and thickness of the new wall
+          planView.deleteFeedback();
           setEditionActivated(true);
         } else if (System.currentTimeMillis() - this.lastWallCreationTime < 300) {
+          // If the user deactivated edition less than 300 ms after activation, 
+          // validate drawn walls after removing the last added wall 
           if (this.newWalls.size() > 1) {
             this.newWalls.remove(this.newWall);
             home.deleteWall(this.newWall);
-            if (this.newWalls.size() > 2) {
-              this.lastWall = this.newWalls.get(this.newWalls.size() - 1);
-              Wall firstWall = this.newWalls.get(0);
-              if (firstWall.getXStart() == this.lastWall.getXEnd()
-                  && firstWall.getYStart() == this.lastWall.getYEnd()) {
-                // Join last wall to the first wall at its end
-                joinNewWallEndToWall(this.lastWall, firstWall, null);
-              }
-            }            
-            // Post walls creation to undo support
-            postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
-            selectItems(this.newWalls);
           }
-          // Change state to WallCreationState 
-          setState(getWallCreationState());
+          validateDrawnWalls();
         } else {
           endWallCreation();
+          if (this.newWalls.size() > 2 && this.wallStartAtEnd != null) {
+            // Join last wall to the first wall at its end and validate drawn walls
+            joinNewWallEndToWall(this.lastWall, this.wallStartAtEnd, null);
+            validateDrawnWalls();
+            return;
+          }
           createNextWall();
           // Reactivate automatically second step
-          getView().deleteToolTipFeedback();
+          planView.deleteToolTipFeedback();
           setEditionActivated(true);
         }
       }
     }
 
     private void createNextWall() {
-      // Create a new wall with an angle equal to last wall angle - 90°
-      double lastWallAngle = Math.PI - Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
-          this.lastWall.getXStart() - this.lastWall.getXEnd());
-      lastWallAngle -=  Math.PI / 2;
-      float lastWallLength = getWallLength(this.lastWall); 
-      this.xLastEnd = (float)(this.xStart + lastWallLength * Math.cos(lastWallAngle));
-      this.yLastEnd = (float)(this.yStart - lastWallLength * Math.sin(lastWallAngle));
+      Wall previousWall = this.wallEndAtStart != null
+          ? this.wallEndAtStart
+          : this.wallStartAtStart;
+      // Create a new wall with an angle equal to previous wall angle - 90°
+      double previousWallAngle = Math.PI - Math.atan2(previousWall.getYStart() - previousWall.getYEnd(), 
+          previousWall.getXStart() - previousWall.getXEnd());
+      previousWallAngle -=  Math.PI / 2;
+      float previousWallLength = getWallLength(previousWall); 
+      this.xLastEnd = (float)(this.xStart + previousWallLength * Math.cos(previousWallAngle));
+      this.yLastEnd = (float)(this.yStart - previousWallLength * Math.sin(previousWallAngle));
       this.newWall = createNewWall(this.xStart, this.yStart, 
-          this.xLastEnd, this.yLastEnd, null, this.wallEndAtStart);
-      this.newWall.setThickness(this.lastWall.getThickness());          
+          this.xLastEnd, this.yLastEnd, this.wallStartAtStart, previousWall);
+      this.newWall.setThickness(previousWall.getThickness());          
       this.newWalls.add(this.newWall);
       this.lastWallCreationTime = System.currentTimeMillis();
       deselectAll();
@@ -4807,49 +4810,67 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void updateEditableProperty(EditableProperty editableProperty, Object value) {
+      PlanView planView = getView();
       if (this.newWall == null) {
+        // Update start point of the first wall
         switch (editableProperty) {
           case X : 
             this.xStart = value != null ? ((Number)value).floatValue() : 0;
+            this.xStart = Math.max(-100000f, Math.min(this.xStart, 100000f));
             break;      
           case Y : 
             this.yStart = value != null ? ((Number)value).floatValue() : 0;
+            this.yStart = Math.max(-100000f, Math.min(this.yStart, 100000f));
             break;      
         }
-        getView().makePointVisible(this.xStart, this.yStart);
+        planView.setAlignmentFeedback(Wall.class, null, this.xStart, this.yStart, true);
+        planView.makePointVisible(this.xStart, this.yStart);
       } else {
-        switch (editableProperty) {
-          case LENGTH : 
-            float length = Math.max(0.001f, value != null ? ((Number)value).floatValue() : 0);
-            double wallAngle = Math.PI - Math.atan2(this.yStart - this.yLastEnd, this.xStart - this.xLastEnd);
-            this.xLastEnd = (float)(this.xStart + length * Math.cos(wallAngle));
-            this.yLastEnd = (float)(this.yStart - length * Math.sin(wallAngle));
-            this.newWall.setXEnd(this.xLastEnd);
-            this.newWall.setYEnd(this.yLastEnd);
-            // Ensure wall points are visible
-            getView().makePointVisible(this.xStart, this.yStart);
-            getView().makePointVisible(this.xLastEnd, this.yLastEnd);
-            break;      
-          case ANGLE : 
-            wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
-            if (this.lastWall != null) {
-              wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
-                  this.lastWall.getXStart() - this.lastWall.getXEnd());
-            }
-            float wallLength = getWallLength(this.newWall);
-            
-            this.xLastEnd = (float)(this.xStart + wallLength * Math.cos(wallAngle));
-            this.yLastEnd = (float)(this.yStart - wallLength * Math.sin(wallAngle));
-            this.newWall.setXEnd(this.xLastEnd);
-            this.newWall.setYEnd(this.yLastEnd);
-            // Ensure wall points are visible
-            getView().makePointVisible(this.xStart, this.yStart);
-            getView().makePointVisible(this.xLastEnd, this.yLastEnd);
-            break;      
-          case THICKNESS : 
-            float thickness = Math.max(0.01f, value != null ? Math.abs(((Number)value).floatValue()) : 0);
-            this.newWall.setThickness(thickness);
-            break;      
+        if (editableProperty == EditableProperty.THICKNESS) {
+          float thickness = value != null ? Math.abs(((Number)value).floatValue()) : 0;
+          thickness = Math.max(0.01f, Math.min(thickness, 1000));
+          this.newWall.setThickness(thickness);
+        } else {
+          // Update end point of the current wall
+          switch (editableProperty) {
+            case LENGTH : 
+              float length = value != null ? ((Number)value).floatValue() : 0;
+              length = Math.max(0.001f, Math.min(length, 100000f));
+              double wallAngle = Math.PI - Math.atan2(this.yStart - this.yLastEnd, this.xStart - this.xLastEnd);
+              this.xLastEnd = (float)(this.xStart + length * Math.cos(wallAngle));
+              this.yLastEnd = (float)(this.yStart - length * Math.sin(wallAngle));
+              break;      
+            case ANGLE : 
+              wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+              if (this.lastWall != null) {
+                wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
+                    this.lastWall.getXStart() - this.lastWall.getXEnd());
+              }
+              float wallLength = getWallLength(this.newWall);              
+              this.xLastEnd = (float)(this.xStart + wallLength * Math.cos(wallAngle));
+              this.yLastEnd = (float)(this.yStart - wallLength * Math.sin(wallAngle));
+              break;
+            default :
+              return;
+          }
+
+          // Update new wall
+          this.newWall.setXEnd(this.xLastEnd);
+          this.newWall.setYEnd(this.yLastEnd);
+          planView.setAlignmentFeedback(Wall.class, this.newWall, this.xLastEnd, this.yLastEnd, false);
+          // Ensure wall points are visible
+          planView.makePointVisible(this.xStart, this.yStart);
+          planView.makePointVisible(this.xLastEnd, this.yLastEnd);
+          // Search if the free start point of the first wall matches the end point of the current wall
+          if (this.newWalls.size() > 2
+              && this.newWalls.get(0).getWallAtStart() == null
+              && this.newWalls.get(0).containsWallStartAt(this.xLastEnd, this.yLastEnd, 1E-3f)) {
+            this.wallStartAtEnd = this.newWalls.get(0);
+            selectItem(this.wallStartAtEnd);          
+          } else {
+            this.wallStartAtEnd = null;
+            deselectAll();
+          }
         }
       }
     }
@@ -4873,13 +4894,7 @@ public class PlanController extends FurnitureController implements Controller {
         home.deleteWall(this.newWall);
         this.newWalls.remove(this.newWall);
       }
-      if (this.newWalls.size() > 0) {
-        // Post other walls creation to undo support
-        postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked);
-        selectItems(this.newWalls);
-      }
-      // Change state to WallCreationState 
-      setState(getWallCreationState());
+      validateDrawnWalls();
     }
 
     @Override

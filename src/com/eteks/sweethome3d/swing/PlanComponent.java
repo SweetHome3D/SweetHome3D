@@ -1668,8 +1668,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // Paint alignment feedback depending on aligned object class
       if (this.alignedObjectClass != null) {
         if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, 
-              selectionColor, locationFeedbackStroke, planScale);
+          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback, 
+              selectionColor, locationFeedbackStroke, planScale,
+              selectionOutlinePaint, selectionOutlineStroke);
         } else if (Room.class.isAssignableFrom(this.alignedObjectClass)) {
           paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
               selectionColor, locationFeedbackStroke, planScale,
@@ -2601,8 +2602,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintWallAlignmentFeedback(Graphics2D g2D, 
                                           Wall alignedWall, Point2D locationFeedback, 
+                                          boolean showPointFeedback, 
                                           Paint feedbackPaint, Stroke feedbackStroke,
-                                          float planScale) {
+                                          float planScale, Paint pointPaint, 
+                                          Stroke pointStroke) {
     // Paint wall location feedback
     if (locationFeedback != null) {
       float margin = 1f / planScale;
@@ -2684,7 +2687,34 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               x, y - deltaYToClosestWall + 25 / planScale));
         }
       }
+
+      // Draw point feedback
+      if (showPointFeedback) {
+        paintPointFeedback(g2D, locationFeedback, feedbackPaint, planScale, pointPaint, pointStroke);
+      }
     }
+  }
+
+  /**
+   * Paints point feedback.
+   */
+  private void paintPointFeedback(Graphics2D g2D, Point2D locationFeedback, 
+                                  Paint feedbackPaint, float planScale,
+                                  Paint pointPaint, Stroke pointStroke) {
+    g2D.setPaint(pointPaint);         
+    g2D.setStroke(pointStroke);
+    g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale, 
+        (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
+    g2D.setPaint(feedbackPaint);         
+    g2D.setStroke(new BasicStroke(1 / planScale));
+    g2D.draw(new Line2D.Float((float)locationFeedback.getX(), 
+        (float)locationFeedback.getY() - 5f / planScale, 
+        (float)locationFeedback.getX(), 
+        (float)locationFeedback.getY() + 5f / planScale));
+    g2D.draw(new Line2D.Float((float)locationFeedback.getX() - 5f / planScale, 
+        (float)locationFeedback.getY(), 
+        (float)locationFeedback.getX() + 5f / planScale, 
+        (float)locationFeedback.getY()));
   }
   
   /**
@@ -2701,7 +2731,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintRoomAlignmentFeedback(Graphics2D g2D, 
                                           Room alignedRoom, Point2D locationFeedback, 
-                                          boolean magnetizedPointFeedback, 
+                                          boolean showPointFeedback, 
                                           Paint feedbackPaint, Stroke feedbackStroke,
                                           float planScale, Paint pointPaint, 
                                           Stroke pointStroke) {
@@ -2766,11 +2796,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       
-      if (magnetizedPointFeedback) {
-        g2D.setPaint(pointPaint);         
-        g2D.setStroke(pointStroke);
-        g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale, 
-            (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
+      if (showPointFeedback) {
+        paintPointFeedback(g2D, locationFeedback, feedbackPaint, planScale, pointPaint, pointStroke);
       }
     }
   }
@@ -3349,20 +3376,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
         
         public void keyPressed(KeyEvent ev) {
-          Set<AWTKeyStroke> forwardKeys = this.focusedTextField.getFocusTraversalKeys(
-              KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
-          if (forwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))) {
-            setFocusedTextFieldIndex((this.focusedTextFieldIndex + 1) % toolTipEditedProperties.length);
-          } else {
-            Set<AWTKeyStroke> backwardKeys = this.focusedTextField.getFocusTraversalKeys(
-                KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS);
-            if (backwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))) {
-              setFocusedTextFieldIndex((this.focusedTextFieldIndex - 1 + toolTipEditedProperties.length) % toolTipEditedProperties.length);
-            } else {
-              KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
-              this.focusedTextField.getCaret().setVisible(true);
-            } 
-          }
+          keyTyped(ev);
         }
   
         public void keyReleased(KeyEvent ev) {
@@ -3370,8 +3384,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
   
         public void keyTyped(KeyEvent ev) {
-          KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(focusedTextField, ev);
-          toolTipWindow.pack();
+          Set<AWTKeyStroke> forwardKeys = this.focusedTextField.getFocusTraversalKeys(
+              KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
+          if (forwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))
+              || ev.getKeyCode() == KeyEvent.VK_DOWN) {
+            setFocusedTextFieldIndex((this.focusedTextFieldIndex + 1) % toolTipEditedProperties.length);
+            ev.consume();
+          } else {
+            Set<AWTKeyStroke> backwardKeys = this.focusedTextField.getFocusTraversalKeys(
+                KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS);
+            if (backwardKeys.contains(AWTKeyStroke.getAWTKeyStrokeForEvent(ev))
+                || ev.getKeyCode() == KeyEvent.VK_UP) {
+              setFocusedTextFieldIndex((this.focusedTextFieldIndex - 1 + toolTipEditedProperties.length) % toolTipEditedProperties.length);
+              ev.consume();
+            } else {
+              KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
+              this.focusedTextField.getCaret().setVisible(true);
+              toolTipWindow.pack();
+            } 
+          }
         }      
       };
 
