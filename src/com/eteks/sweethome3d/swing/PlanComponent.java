@@ -91,7 +91,6 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
@@ -103,12 +102,10 @@ import javax.swing.JToolTip;
 import javax.swing.JViewport;
 import javax.swing.JWindow;
 import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
@@ -3229,15 +3226,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    *                    or <code>null</code> to make tool tip disapear.
    */
   public void setToolTipFeedback(String toolTipFeedback, float x, float y) {
-    stopToolTipTextFieldsEditing();
+    stopToolTipPropertiesEdition();
+    JToolTip toolTip = getToolTip();
+    // Change tool tip text    
+    toolTip.setTipText(toolTipFeedback);    
+    showToolTipComponentAt(toolTip, x , y);
+  }
+
+  /**
+   * Returns the tool tip of the plan.
+   */
+  private JToolTip getToolTip() {
     // Create tool tip for this component
     if (this.toolTip == null) {
       this.toolTip = new JToolTip();
       this.toolTip.setComponent(this);
     }
-    // Change tool tip text    
-    this.toolTip.setTipText(toolTipFeedback);    
-    showToolTipComponentAt(this.toolTip, x , y);
+    return this.toolTip;
   }
 
   /**
@@ -3315,14 +3320,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   public void setToolTipEditedProperties(final PlanController.EditableProperty [] toolTipEditedProperties, 
                                          Object [] toolTipPropertyValues,
                                          float x, float y) {
-    final JPanel toolTipPanel = new JPanel(new GridBagLayout());
+    final JPanel toolTipPropertiesPanel = new JPanel(new GridBagLayout());
     // Reuse tool tip look
-    LookAndFeel.installColorsAndFont(toolTipPanel, "ToolTip.background", "ToolTip.foreground", "ToolTip.font");
-    Border border = UIManager.getBorder("ToolTip.border");
-    if (!OperatingSystem.isMacOSX()) {
-      border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(0, 3, 0, 2));
-    }
-    toolTipPanel.setBorder(border);
+    JToolTip toolTip = getToolTip();
+    toolTipPropertiesPanel.setBackground(toolTip.getBackground());
+    toolTipPropertiesPanel.setForeground(toolTip.getForeground());
+    toolTipPropertiesPanel.setBorder(toolTip.getBorder());
 
     // Add labels and text fields to tool tip panel
     for (int i = 0; i < toolTipEditedProperties.length; i++) {
@@ -3347,12 +3350,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         unitLabel.setFont(textField.getFont());
         labelTextFieldPanel.add(unitLabel);
       }
-      toolTipPanel.add(labelTextFieldPanel, new GridBagConstraints(
+      toolTipPropertiesPanel.add(labelTextFieldPanel, new GridBagConstraints(
           0, i, 1, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
           new Insets(0, 0, 0, 0), 0, 0));
     }
     
-    showToolTipComponentAt(toolTipPanel, x, y);
+    showToolTipComponentAt(toolTipPropertiesPanel, x, y);
     // Add a key listener that redispatches events to tool tip text fields
     // (don't give focus to tool tip window otherwise plan component window will lose focus)
     this.toolTipKeyListener = new KeyListener() {
@@ -3371,7 +3374,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
           this.focusedTextFieldIndex = textFieldIndex;
           this.focusedTextField = toolTipEditableTextFields.get(toolTipEditedProperties [textFieldIndex]);
-          this.focusedTextField.selectAll();    
+          if (this.focusedTextField.getText().length() == 0) {
+            this.focusedTextField.getCaret().setVisible(false);
+          } else {
+            this.focusedTextField.selectAll();
+          }
           this.focusedTextField.getCaret().setSelectionVisible(true);
         }
         
@@ -3415,7 +3422,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Deletes tool tip text from screen. 
    */
   public void deleteToolTipFeedback() {
-    stopToolTipTextFieldsEditing();
+    stopToolTipPropertiesEdition();
     if (this.toolTip != null) {
       this.toolTip.setTipText(null);
     }
@@ -3427,7 +3434,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Stops editing in tool tip text fields.
    */
-  private void stopToolTipTextFieldsEditing() {
+  private void stopToolTipPropertiesEdition() {
     if (this.toolTipKeyListener != null) {
       installDefaultKeyboardActions();
       setFocusTraversalKeysEnabled(true);
