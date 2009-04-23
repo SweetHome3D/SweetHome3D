@@ -91,6 +91,7 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
@@ -106,6 +107,7 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.MouseInputAdapter;
@@ -3322,10 +3324,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                          float x, float y) {
     final JPanel toolTipPropertiesPanel = new JPanel(new GridBagLayout());
     // Reuse tool tip look
+    Border border = UIManager.getBorder("ToolTip.border");
+    if (!OperatingSystem.isMacOSX()) {
+      border = BorderFactory.createCompoundBorder(border, BorderFactory.createEmptyBorder(0, 3, 0, 2));
+    }
+    toolTipPropertiesPanel.setBorder(border);
+    // Copy colors from tool tip instance (on Linux, colors aren't set in UIManager)
     JToolTip toolTip = getToolTip();
     toolTipPropertiesPanel.setBackground(toolTip.getBackground());
     toolTipPropertiesPanel.setForeground(toolTip.getForeground());
-    toolTipPropertiesPanel.setBorder(toolTip.getBorder());
 
     // Add labels and text fields to tool tip panel
     for (int i = 0; i < toolTipEditedProperties.length; i++) {
