@@ -63,7 +63,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class PlanComponentTest extends ComponentTestFixture {
-  public void testPlanComponent() {
+  public void testPlanComponentWithMouse() {
     // 1. Create a frame that displays a PlanComponent instance of 
     // a new home at 540 pixels by 400 preferred size, and a tool bar
     // with a mode toggle button, an undo button and a redo button
@@ -261,6 +261,108 @@ public class PlanComponentTest extends ComponentTestFixture {
     assertFalse("Wall still present in home", frame.home.getWalls().contains(wall6));
   }
 
+  public void testPlanComponentWithKeyboard() throws InterruptedException {
+    // 1. Create a frame that displays a PlanComponent instance 
+    PlanTestFrame frame = new PlanTestFrame();    
+    // Show home plan frame
+    showWindow(frame);
+    PlanComponent planComponent = (PlanComponent)frame.planController.getView();
+  
+    // Build an ordered list of walls added to home
+    final ArrayList<Wall> orderedWalls = new ArrayList<Wall>();
+    frame.home.addWallsListener(new CollectionListener<Wall>() {
+      public void collectionChanged(CollectionEvent<Wall> ev) {
+        if (ev.getType() == CollectionEvent.Type.ADD) {
+          orderedWalls.add(ev.getItem());
+        }
+      }
+    });
+    
+    // 2. Create walls with keyboard
+    frame.planController.setMode(PlanController.Mode.WALL_CREATION);
+    assertEquals("Current mode isn't " + PlanController.Mode.WALL_CREATION, 
+        PlanController.Mode.WALL_CREATION, frame.planController.getMode());
+    planComponent.requestFocus();
+    JComponentTester tester = new JComponentTester();
+    tester.waitForIdle();
+    assertTrue("Plan component doesn't have focus", planComponent.hasFocus());
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Enter the coordinates of the start point
+    tester.actionKeyString("10");
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyString("21");
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Enter the length of the wall
+    tester.actionKeyString("200");
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Create a wall with same length
+    Thread.sleep(500);
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Create a wall with same length, an angle at 270° and a thickness of 7,55 cm
+    tester.actionKeyStroke(KeyEvent.VK_DOWN);
+    tester.actionKeyStroke(KeyEvent.VK_HOME);
+    tester.actionKeyString("27");
+    tester.actionKeyStroke(KeyEvent.VK_DELETE); // Remove the 9 digit
+    tester.actionKeyStroke(KeyEvent.VK_UP);
+    tester.actionKeyStroke(KeyEvent.VK_UP);
+    tester.actionKeyStroke(KeyEvent.VK_END);
+    tester.actionKeyString("5 ");
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Check created walls
+    assertEquals("Wrong walls count", 3, frame.home.getWalls().size());
+    Wall wall1 = orderedWalls.get(0);
+    assertCoordinatesEqualWallPoints(10, 21, 210, 21, wall1);
+    Wall wall2 = orderedWalls.get(1);
+    assertCoordinatesEqualWallPoints(210, 21, 210, 221, wall2);
+    assertEquals("Wrong wall thickness", wall1.getThickness(), wall2.getThickness());
+    Wall wall3 = orderedWalls.get(2);
+    assertCoordinatesEqualWallPoints(210, 221, 410, 221, wall3);
+    assertEquals("Wrong wall thickness", 
+        Float.parseFloat(String.valueOf(wall1.getThickness()) + "5"), wall3.getThickness());
+    assertWallsAreJoined(wall1, wall2, wall3);
+    assertSelectionContains(frame.home, wall1, wall2, wall3);
+    
+    // 3. Mix mouse and keyboard to create other walls
+    tester.actionClick(planComponent, 300, 200);
+    tester.actionMouseMove(planComponent, 
+        new ComponentLocation(new Point(310, 200)));
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Enter the length and the angle of the wall
+    tester.actionKeyString("100");
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyString("315");
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Create 3 walls with same length
+    Thread.sleep(500);
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    Thread.sleep(500);
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Take control with mouse
+    tester.actionMouseMove(planComponent, 
+        new ComponentLocation(new Point(200, 200)));
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    Wall wall7 = orderedWalls.get(7);
+    assertCoordinatesEqualWallPoints(wall7.getXStart(), wall7.getYStart(), 
+        planComponent.convertXPixelToModel(200), 
+        planComponent.convertYPixelToModel(200), wall7);
+    tester.waitForIdle();
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    // Take control again with keyboard and close the walls square
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyString("100");
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyString("90");
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    // Check created walls
+    assertEquals("Wrong walls count", 7, frame.home.getWalls().size());
+    Wall wall4 = orderedWalls.get(4);
+    Wall wall5 = orderedWalls.get(5);
+    Wall wall6 = orderedWalls.get(6);
+    assertSelectionContains(frame.home, wall4, wall5, wall6, wall7);
+    assertWallsAreJoined(wall6, wall7, wall4);
+  }
+    
   /**
    * Asserts the start point and the end point of 
    * <code>wall</code> are at (<code>xStart</code>, <code>yStart</code>), (<code>xEnd</code>, <code>yEnd</code>). 
