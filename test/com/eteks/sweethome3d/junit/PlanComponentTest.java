@@ -308,7 +308,7 @@ public class PlanComponentTest extends ComponentTestFixture {
     tester.actionKeyStroke(KeyEvent.VK_END);
     tester.actionKeyString("5 ");
     tester.actionKeyStroke(KeyEvent.VK_ENTER);
-    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyStroke(KeyEvent.VK_ESCAPE);
     // Check created walls
     assertEquals("Wrong walls count", 3, frame.home.getWalls().size());
     Wall wall1 = orderedWalls.get(0);
