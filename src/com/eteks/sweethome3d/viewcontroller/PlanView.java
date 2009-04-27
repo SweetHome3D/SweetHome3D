@@ -125,6 +125,14 @@ public interface PlanView extends View {
                                             float y, 
                                             boolean showPoint);
   
+
+  /**
+   * Sets the points used to draw an angle in plan view.
+   */
+  public abstract void setAngleFeedback(float xCenter, float yCenter, 
+                                        float x1, float y1, 
+                                        float x2, float y2);
+
   /**
    * Sets the feedback of dragged items drawn during a drag and drop operation, 
    * initiated from outside of plan view.
