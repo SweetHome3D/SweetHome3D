@@ -176,6 +176,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Selectable            alignedObjectFeedback;
   private Point2D               locationFeeback;
   private boolean               showPointFeedback;
+  private Point2D               centerAngleFeedback;
+  private Point2D               point1AngleFeedback;
+  private Point2D               point2AngleFeedback;
   private List<Selectable>      draggedItemsFeedback;
   private List<DimensionLine>   dimensionLinesFeedback;
   private boolean               selectionScrollUpdated;
@@ -1679,6 +1682,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               selectionColor, locationFeedbackStroke, planScale);
         }
       }
+      if (this.centerAngleFeedback != null) {
+       paintAngleFeddback(g2D, this.centerAngleFeedback, this.point1AngleFeedback, this.point2AngleFeedback, 
+           planScale, selectionColor); 
+      }
       if (this.dimensionLinesFeedback != null) {
         List<Selectable> emptySelection = Collections.emptyList();        
         paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection, 
@@ -2930,6 +2937,35 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * Paints an arc centered at <code>center</code> point that goes
+   */
+  private void paintAngleFeddback(Graphics2D g2D, Point2D center, 
+                                  Point2D point1, Point2D point2,
+                                  float planScale, Color selectionColor) {
+    g2D.setColor(selectionColor);
+    g2D.setStroke(new BasicStroke(1 / planScale));
+    // Compute angles
+    double angle1 = Math.atan2(center.getY() - point1.getY(), point1.getX() - center.getX());
+    double angle2 = Math.atan2(center.getY() - point2.getY(), point2.getX() - center.getX());
+    double extent = (angle2 - angle1 + Math.PI * 2) % (Math.PI * 2);
+    if (extent > Math.PI) {
+      extent = 2 * Math.PI - extent;
+      angle1 = angle2;
+    }
+    AffineTransform previousTransform = g2D.getTransform();
+    // Draw an arc
+    g2D.translate(center.getX(), center.getY());
+    float radius = 20 / planScale;
+    g2D.draw(new Arc2D.Double(-radius, -radius,
+        radius * 2, radius * 2, Math.toDegrees(angle1), Math.toDegrees(extent), Arc2D.OPEN));
+    // Draw two radius
+    radius += 5 / planScale;
+    g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1), -radius * Math.sin(angle1)));
+    g2D.draw(new Line2D.Double(0, 0, radius * Math.cos(angle1 + extent), -radius * Math.sin(angle1 + extent)));
+    g2D.setTransform(previousTransform);
+  }
+
+  /**
    * Paints the observer camera at its current location, if home camera is the observer camera.
    */
   private void paintCamera(Graphics2D g2D, List<Selectable> selectedItems,
@@ -3339,7 +3375,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       JFormattedTextField textField = this.toolTipEditableTextFields.get(toolTipEditedProperties [i]);
       textField.setValue(toolTipPropertyValues [i]); 
       JLabel label = new JLabel(this.preferences.getLocalizedString(PlanComponent.class, 
-          toolTipEditedProperties [i].name() + ".toolTipText"));
+          toolTipEditedProperties [i].name() + ".editablePropertyLabel.text") + " ");
       label.setFont(textField.getFont());
       JLabel unitLabel = null;
       if (toolTipEditedProperties [i] == PlanController.EditableProperty.ANGLE) {
@@ -3480,6 +3516,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
   
   /**
+   * Sets the points used to draw an angle in plan view.
+   */
+  public void setAngleFeedback(float xCenter, float yCenter, 
+                               float x1, float y1, 
+                               float x2, float y2) {
+    this.centerAngleFeedback = new Point2D.Float(xCenter, yCenter);
+    this.point1AngleFeedback = new Point2D.Float(x1, y1);
+    this.point2AngleFeedback = new Point2D.Float(x2, y2);
+  }
+
+  /**
    * Sets the feedback of dragged items drawn during a drag and drop operation, 
    * initiated from outside of plan view.
    */
@@ -3506,7 +3553,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     this.alignedObjectClass = null;
     this.alignedObjectFeedback = null;
     this.locationFeeback = null;
-    
+
+    this.centerAngleFeedback = null;
+    this.point1AngleFeedback = null;
+    this.point2AngleFeedback = null;
+
     this.draggedItemsFeedback = null;
 
     this.dimensionLinesFeedback = null;
