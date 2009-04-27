@@ -190,6 +190,14 @@ public class Room implements Serializable, Selectable {
     return deepCopy(this.points);  
   }
 
+  /**
+   * Returns the number of points of the polygon matching this room.
+   * @since 1.9 
+   */
+  public int getPointCount() {
+    return this.points.length;  
+  }
+
   private float [][] deepCopy(float [][] points) {
     float [][] pointsCopy = new float [points.length][];
     for (int i = 0; i < points.length; i++) {
