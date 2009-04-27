@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.EventQueue;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +33,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
@@ -82,8 +85,10 @@ public class ModelManager {
   
   // Map storing loaded model nodes
   private Map<Content, BranchGroup> modelNodes;
+  // Executor used to load models
+  private ExecutorService           modelsLoader;
   // List of additional loader classes
-  private Class<Loader> [] additionalLoaderClasses;
+  private Class<Loader> []          additionalLoaderClasses;
   
   private ModelManager() {    
     // This class is a singleton
@@ -100,8 +105,9 @@ public class ModelManager {
       }
     }
     this.additionalLoaderClasses = loaderClasses.toArray(new Class [loaderClasses.size()]);
+    this.modelsLoader = Executors.newSingleThreadExecutor();
   }
-  
+
   /**
    * Returns the class of name <code>loaderClassName</code>.
    */
@@ -142,6 +148,17 @@ public class ModelManager {
   }
 
   /**
+   * Shutdowns the multithreaded service that load textures. 
+   */
+  public void clear() {
+    if (this.modelsLoader != null) {
+      this.modelsLoader.shutdownNow();
+      this.modelsLoader = null;
+    }
+    this.modelNodes.clear();
+  }
+  
+  /**
    * Returns the size of 3D shapes under <code>node</code>.
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
@@ -173,7 +190,7 @@ public class ModelManager {
   private void computeBounds(Node node, BoundingBox bounds) {
     if (node instanceof Group) {
       // Compute the bounds of all the node children
-      Enumeration enumeration = ((Group)node).getAllChildren();
+      Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements ()) {
         computeBounds((Node)enumeration.nextElement (), bounds);
       }
@@ -184,14 +201,78 @@ public class ModelManager {
   }
   
   /**
-   * Returns the node loaded synchronously from <code>content</code> with supported loaders.
+   * Reads asynchronously a 3D node from <code>content</code> with supported loaders
+   * and notifies the loaded model to the given <code>modelObserver</code> once available. 
+   * @param content an object containing a model
+   * @param modelObserver the observer that will be notified once the model is available
+   *    or if an error happens
    */
-  public BranchGroup getModel(Content content) throws IOException {
-    BranchGroup modelNode = this.modelNodes.get(content);
-    if (modelNode != null) {
-      return (BranchGroup)modelNode.cloneTree(true);
-    }
+  public void loadModel(Content content,
+                        ModelObserver modelObserver) {
+    loadModel(content, false, modelObserver);
+  }
+  
+  /**
+   * Reads a 3D node from <code>content</code> with supported loaders
+   * and notifies the loaded model to the given <code>modelObserver</code> once available.
+   * @param content an object containing a model
+   * @param synchronous if <code>true</code>, this method will return only once model content is loaded
+   * @param modelObserver the observer that will be notified once the model is available
+   *    or if an error happens. If model is loaded asynchronously, the observer will be notified
+   *    in Event Dispatch Thread, otherwise it will be notified in the same thread as caller.
+   */
+  public void loadModel(final Content content,
+                        boolean synchronous,
+                        final ModelObserver modelObserver) {
+    BranchGroup modelRoot = this.modelNodes.get(content);
+    if (modelRoot == null) {
+      if (synchronous) {
+        try {
+          modelRoot = loadModel(content);
+        } catch (IOException ex) {
+          modelObserver.modelError(ex);
+        }
+        // Store in cache a model node for future copies 
+        this.modelNodes.put(content, (BranchGroup)modelRoot);
+      } else {
+        if (this.modelsLoader == null) {
+          this.modelsLoader = Executors.newSingleThreadExecutor();
+        }
+        // Load the model in an other thread
+        this.modelsLoader.execute(new Runnable() {
+          public void run() {
+            try {
+              final BranchGroup loadedModel = loadModel(content);
+              EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  modelNodes.put(content, loadedModel);
+                  final BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
+                  modelObserver.modelUpdated(modelNode);
+                }
+              });
+            } catch (final IOException ex) {
+              EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  modelObserver.modelError(ex);
+                }
+              });
+            }
+          }
+        });
+        return;
+      }
+    } 
     
+    // Notify cached model to observer with a clone of the model
+    modelObserver.modelUpdated((BranchGroup)modelRoot.cloneTree(true));
+  }
+    
+  /**
+   * Returns the node loaded synchronously from <code>content</code> with supported loaders. 
+   * This method is threadsafe and may be called from any thread.
+   * @param content an object containing a model
+   */
+  public BranchGroup loadModel(Content content) throws IOException {
     // Ensure we use a URLContent object
     URLContent urlContent;
     if (content instanceof URLContent) {
@@ -200,17 +281,6 @@ public class ModelManager {
       urlContent = TemporaryURLContent.copyToTemporaryURLContent(content);
     }
     
-    modelNode = loadModel(urlContent);
-    
-    // Store in cache a clone of model node for future copies 
-    modelNodes.put(content, (BranchGroup)modelNode.cloneTree(true));
-    return modelNode;
-  }
-  
-  /**
-   * Returns the model read from <code>urlContent</code> with one of the loaders in parameter.
-   */
-  private BranchGroup loadModel(URLContent urlContent) throws IOException {
     Loader3DS loader3DSWithNoStackTraces = new Loader3DS() {
       @Override
       public Scene load(URL url) throws FileNotFoundException {
@@ -334,12 +404,21 @@ public class ModelManager {
   private void turnOffLights(Node node) {
     if (node instanceof Group) {
       // Remove lights of all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         turnOffLights((Node)enumeration.nextElement());
       }
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     }
+  }
+
+  /**
+   * An observer that receives model loading notifications. 
+   */
+  public static interface ModelObserver {
+    public void modelUpdated(BranchGroup modelRoot); 
+    
+    public void modelError(Exception ex);
   }
 }

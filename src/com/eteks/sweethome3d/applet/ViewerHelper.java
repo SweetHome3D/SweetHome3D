@@ -44,6 +44,7 @@ import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.j3d.Component3DManager;
+import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
@@ -292,6 +293,7 @@ public final class ViewerHelper {
     System.gc();
     // Stop managers threads
     TextureManager.getInstance().clear();
+    ModelManager.getInstance().clear();
   }
   
   private void initLookAndFeel() {

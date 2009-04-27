@@ -20,11 +20,7 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
-import java.awt.EventQueue;
-import java.io.IOException;
 import java.util.Enumeration;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
@@ -54,8 +50,6 @@ import com.sun.j3d.utils.geometry.Box;
  * Root of piece of furniture branch.
  */
 public class HomePieceOfFurniture3D extends Object3DBranch {
-  private static Executor modelLoader = Executors.newSingleThreadExecutor();
-
   private final Home home;
   
   /**
@@ -80,61 +74,48 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Allow to read branch transform child
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     
-    createPieceOfFurnitureNode(ignoreDrawingMode, waitModelLoadingEnd);
+    createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelLoadingEnd);
   }
 
   /**
    * Creates the piece node with its transform group and add it to the piece branch. 
    */
-  private void createPieceOfFurnitureNode(final boolean ignoreDrawingMode, 
+  private void createPieceOfFurnitureNode(HomePieceOfFurniture piece, 
+                                          final boolean ignoreDrawingMode, 
                                           boolean waitModelLoadingEnd) {
     final TransformGroup pieceTransformGroup = new TransformGroup();
     // Allow the change of the transformation that sets piece size and position
     pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
+    pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
+    pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
     addChild(pieceTransformGroup);
-
-    if (waitModelLoadingEnd) {
-      BranchGroup modelBranch = createModelBranchGroup(ignoreDrawingMode);
-      pieceTransformGroup.addChild(modelBranch);
-      update();
-    } else {
-      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
-      pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-      
-      // While loading model use a temporary node that displays a white box  
-      final BranchGroup waitBranch = new BranchGroup();
-      waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
-      waitBranch.addChild(getModelBox(Color.WHITE));      
-      // Allow appearance change on all children
-      setAppearanceChangeCapability(waitBranch);
-      
-      pieceTransformGroup.addChild(waitBranch);
-      
-      // Set piece model initial location, orientation and size      
-      updatePieceOfFurnitureTransform();
-      
-      // Load piece real 3D model
-      modelLoader.execute(new Runnable() {
-          public void run() {
-            final BranchGroup modelBranch = createModelBranchGroup(ignoreDrawingMode);              
-            // Change live objects in Event Dispatch Thread
-            EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  // Add model branch to live scene
-                  pieceTransformGroup.addChild(modelBranch);
-                  // Remove temporary node
-                  waitBranch.detach();
-                  // Update piece color, visibility and model mirror in dispatch thread as
-                  // these attributes may be changed in that thread
-                  updatePieceOfFurnitureColor();      
-                  updatePieceOfFurnitureVisibility();
-                  updatePieceOfFurnitureModelMirrored();
-                }
-              });
+    
+    // While loading model use a temporary node that displays a white box  
+    final BranchGroup waitBranch = new BranchGroup();
+    waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
+    waitBranch.addChild(getModelBox(Color.WHITE));      
+    // Allow appearance change on all children
+    setAppearanceChangeCapability(waitBranch);
+    
+    pieceTransformGroup.addChild(waitBranch);
+    
+    // Set piece model initial location, orientation and size      
+    updatePieceOfFurnitureTransform();
+    
+    // Load piece real 3D model
+    Content model = piece.getModel();
+    ModelManager.getInstance().loadModel(model, waitModelLoadingEnd,
+        new ModelManager.ModelObserver() {
+          public void modelUpdated(BranchGroup modelRoot) {
+            updatePieceOfFurnitureModelNode(getNormalizedNode(modelRoot), ignoreDrawingMode);            
+          }
+          
+          public void modelError(Exception ex) {
+            // In case of problem use a default red box
+            updatePieceOfFurnitureModelNode(getModelBox(Color.RED), ignoreDrawingMode);            
           }
         });
-    }
   }
 
   @Override
@@ -250,70 +231,71 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   }
 
   /**
-   * Returns a new branch group with its model node as a child.
+   * Updates transform group children with <code>modelMode</code>.
    */
-  private BranchGroup createModelBranchGroup(boolean ignoreDrawingMode) {
+  private void updatePieceOfFurnitureModelNode(Node modelNode, boolean ignoreDrawingMode) {    
     BranchGroup modelBranch = new BranchGroup();
     // Add model node to branch group
-    Node filledModelNode = getModelNode();
-    modelBranch.addChild(filledModelNode);
+    modelBranch.addChild(modelNode);
     if (!ignoreDrawingMode) {
       // Add outline model node 
-      modelBranch.addChild(createOutlineModelNode(filledModelNode));
+      modelBranch.addChild(createOutlineModelNode(modelNode));
     }
     // Allow appearance change on all children
     setAppearanceChangeCapability(modelBranch);
-    return modelBranch;
+
+    TransformGroup transformGroup = (TransformGroup)getChild(0);
+    // Remove previous nodes    
+    transformGroup.removeAllChildren();
+    // Add model branch to live scene
+    transformGroup.addChild(modelBranch);
+    
+    // Update piece color, visibility and model mirror in dispatch thread as
+    // these attributes may be changed in that thread
+    updatePieceOfFurnitureColor();      
+    updatePieceOfFurnitureVisibility();
+    updatePieceOfFurnitureModelMirrored();
   }
   
   /**
    * Returns the 3D model of this piece that fits in a 1 unit wide box 
    * centered at the origin. 
    */
-  private Node getModelNode() {
-    PieceOfFurniture piece = (PieceOfFurniture)getUserData();
-    // If same model was already loaded return a clone from its cache 
-    Content model = piece.getModel();
+  private Node getNormalizedNode(Node modelNode) {
+    PieceOfFurniture piece = (PieceOfFurniture)getUserData();    
+    // Get model bounding box size
+    BoundingBox modelBounds = ModelManager.getInstance().getBounds(modelNode);
+    Point3d lower = new Point3d();
+    modelBounds.getLower(lower);
+    Point3d upper = new Point3d();
+    modelBounds.getUpper(upper);
     
-    try {
-      BranchGroup modelNode = ModelManager.getInstance().getModel(model);
-      // Get model bounding box size
-      BoundingBox modelBounds = ModelManager.getInstance().getBounds(modelNode);
-      Point3d lower = new Point3d();
-      modelBounds.getLower(lower);
-      Point3d upper = new Point3d();
-      modelBounds.getUpper(upper);
-      
-      // Translate model to its center
-      Transform3D translation = new Transform3D();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-              -lower.y - (upper.y - lower.y) / 2, 
-              -lower.z - (upper.z - lower.z) / 2));      
-      // Scale model to make it fill a 1 unit wide box
-      Transform3D scaleOneTransform = new Transform3D();
-      scaleOneTransform.setScale (
-          new Vector3d(1 / (upper.x -lower.x), 
-              1 / (upper.y - lower.y), 
-              1 / (upper.z - lower.z)));
-      scaleOneTransform.mul(translation);
-      // Apply model rotation
-      Transform3D modelTransform = new Transform3D();
-      float [][] modelRotation = piece.getModelRotation();
-      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-      modelTransform.setRotation(modelRotationMatrix);
-      modelTransform.mul(scaleOneTransform);
-      
-      // Add model scene to transform group
-      TransformGroup modelTransformGroup = new TransformGroup(modelTransform);
-      modelTransformGroup.addChild(modelNode);
-      return modelTransformGroup;
-    } catch (IOException ex) {
-      // In case of problem return a default box
-      return getModelBox(Color.RED);
-    } 
+    // Translate model to its center
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(
+        new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+            -lower.y - (upper.y - lower.y) / 2, 
+            -lower.z - (upper.z - lower.z) / 2));      
+    // Scale model to make it fill a 1 unit wide box
+    Transform3D scaleOneTransform = new Transform3D();
+    scaleOneTransform.setScale (
+        new Vector3d(1 / (upper.x -lower.x), 
+            1 / (upper.y - lower.y), 
+            1 / (upper.z - lower.z)));
+    scaleOneTransform.mul(translation);
+    // Apply model rotation
+    Transform3D modelTransform = new Transform3D();
+    float [][] modelRotation = piece.getModelRotation();
+    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+    modelTransform.setRotation(modelRotationMatrix);
+    modelTransform.mul(scaleOneTransform);
+    
+    // Add model scene to transform group
+    TransformGroup modelTransformGroup = new TransformGroup(modelTransform);
+    modelTransformGroup.addChild(modelNode);
+    return modelTransformGroup;
   }
 
   /**

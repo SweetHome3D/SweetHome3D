@@ -55,6 +55,7 @@ import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
+import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -187,6 +188,7 @@ public class AppletApplication extends HomeApplication {
     // Stop managers threads
     IconManager.getInstance().clear();
     TextureManager.getInstance().clear();
+    ModelManager.getInstance().clear();
   }
   
   /**

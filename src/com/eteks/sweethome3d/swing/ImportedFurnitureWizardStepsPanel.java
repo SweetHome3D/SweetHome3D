@@ -193,6 +193,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                            UserPreferences preferences, 
                                            final ImportedFurnitureWizardController controller) {
     this.controller = controller;
+    // Create a model loader for each wizard in case model loading hangs
     this.modelLoader = Executors.newSingleThreadExecutor();
     createComponents(importHomePiece, preferences, controller);
     setMnemonics(preferences);
@@ -1160,7 +1161,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         });
             
       // Load piece model 
-      final BranchGroup modelNode = ModelManager.getInstance().getModel(modelContent);
+      final BranchGroup modelNode = ModelManager.getInstance().loadModel(modelContent);
       
       // Change live object in Event Dispatch Thread
       EventQueue.invokeLater(new Runnable() {
@@ -1602,7 +1603,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private void setNodeCapabilities(Node node) {
       if (node instanceof Group) {
         node.setCapability(Group.ALLOW_CHILDREN_READ);
-        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
           setNodeCapabilities((Node)enumeration.nextElement());
         }
@@ -1641,7 +1642,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private void setBackFaceShown(Node node, boolean backFaceShown) {
       if (node instanceof Group) {
         // Set visibility of all children
-        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
           setBackFaceShown((Node)enumeration.nextElement(), backFaceShown);
         }
@@ -1767,7 +1768,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     private void setMaterial(Node node, Material material) {
       if (node instanceof Group) {
         // Set material of all children
-        Enumeration enumeration = ((Group)node).getAllChildren(); 
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
           setMaterial((Node)enumeration.nextElement(), material);
         }
