@@ -53,7 +53,6 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Content;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.microcrowd.loader.java3d.max3ds.Loader3DS;
