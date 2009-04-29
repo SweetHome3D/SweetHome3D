@@ -56,7 +56,7 @@ public class TextureManager {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.textures = new WeakHashMap<Content, Texture>();
-    this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+    this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 
   /**
