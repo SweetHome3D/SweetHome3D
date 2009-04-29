@@ -297,7 +297,7 @@ public class OBJWriter extends FilterWriter {
   private void writeNode(Node parent, Node node, String nodeName) throws IOException {
     if (node instanceof Group) {
       // Write all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         writeNode(parent, (Node)enumeration.nextElement(), nodeName);
       }
