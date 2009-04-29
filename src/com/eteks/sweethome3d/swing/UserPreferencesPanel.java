@@ -20,20 +20,23 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
-import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -49,6 +52,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -67,12 +71,22 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JLabel         unitLabel;
   private JRadioButton   centimeterRadioButton;
   private JRadioButton   inchRadioButton;
+  private JRadioButton   millimeterRadioButton;
+  private JRadioButton   meterRadioButton;
   private JLabel         magnetismEnabledLabel;
   private JCheckBox      magnetismCheckBox;
   private JLabel         rulersVisibleLabel;
   private JCheckBox      rulersCheckBox;
   private JLabel         gridVisibleLabel;
   private JCheckBox      gridCheckBox;
+  private JLabel         furnitureIconLabel;
+  private JRadioButton   catalogIconRadioButton;
+  private JRadioButton   topViewRadioButton;
+  private JLabel         roomRenderingLabel;
+  private JRadioButton   monochromeRadioButton;
+  private JRadioButton   floorColorOrTextureRadioButton;
+  private JLabel         wallPatternLabel;
+  private JComboBox      wallPatternComboBox;
   private JLabel         newWallThicknessLabel;
   private JSpinner       newWallThicknessSpinner;
   private JLabel         newWallHeightLabel;
@@ -141,26 +155,51 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     this.centimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "centimeterRadioButton.text"), 
         controller.getUnit() == LengthUnit.CENTIMETER);
+    this.centimeterRadioButton.setActionCommand(LengthUnit.CENTIMETER.name());
     this.inchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "inchRadioButton.text"), 
         controller.getUnit() == LengthUnit.INCH);
-    ButtonGroup unitButtonGroup = new ButtonGroup();
+    this.inchRadioButton.setActionCommand(LengthUnit.INCH.name());
+    this.millimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "millimeterRadioButton.text"), 
+        controller.getUnit() == LengthUnit.MILLIMETER);
+    this.millimeterRadioButton.setActionCommand(LengthUnit.MILLIMETER.name());
+    this.meterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "meterRadioButton.text"), 
+        controller.getUnit() == LengthUnit.METER);
+    this.meterRadioButton.setActionCommand(LengthUnit.METER.name());
+    final ButtonGroup unitButtonGroup = new ButtonGroup();
     unitButtonGroup.add(this.centimeterRadioButton);
     unitButtonGroup.add(this.inchRadioButton);
+    unitButtonGroup.add(this.millimeterRadioButton);
+    unitButtonGroup.add(this.meterRadioButton);
 
     ItemListener unitChangeListener = new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setUnit(centimeterRadioButton.isSelected() 
-              ? LengthUnit.CENTIMETER
-              : LengthUnit.INCH);
+          controller.setUnit(LengthUnit.valueOf(unitButtonGroup.getSelection().getActionCommand())); 
         }
       };
     this.centimeterRadioButton.addItemListener(unitChangeListener);
     this.inchRadioButton.addItemListener(unitChangeListener);
+    this.millimeterRadioButton.addItemListener(unitChangeListener);
+    this.meterRadioButton.addItemListener(unitChangeListener);
     controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            centimeterRadioButton.setSelected(controller.getUnit() == LengthUnit.CENTIMETER);
+            switch (controller.getUnit()) {
+              case CENTIMETER :
+                centimeterRadioButton.setSelected(true);
+                break;
+              case INCH :
+                inchRadioButton.setSelected(true);
+                break;
+              case MILLIMETER :
+                millimeterRadioButton.setSelected(true);
+                break;
+              case METER :
+                meterRadioButton.setSelected(true);
+                break;
+            }
           }
         });
 
@@ -215,11 +254,117 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           }
         });
     
+    // Create furniture appearance label and radio buttons bound to controller FURNITURE_VIEWED_FROM_TOP property
+    this.furnitureIconLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "furnitureIconLabel.text"));
+    this.catalogIconRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "catalogIconRadioButton.text"), 
+        !controller.isFurnitureViewedFromTop());
+    this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "topViewRadioButton.text"), 
+        controller.isFurnitureViewedFromTop());
+    if (Component3DManager.getInstance().isOffScreenImageSupported()) {
+      ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
+      furnitureAppearanceButtonGroup.add(this.catalogIconRadioButton);
+      furnitureAppearanceButtonGroup.add(this.topViewRadioButton);
+  
+      ItemListener furnitureAppearanceChangeListener = new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setFurnitureViewedFromTop(topViewRadioButton.isSelected());
+          }
+        };
+      this.catalogIconRadioButton.addItemListener(furnitureAppearanceChangeListener);
+      this.topViewRadioButton.addItemListener(furnitureAppearanceChangeListener);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
+            }
+          });
+    } else {
+      this.catalogIconRadioButton.setEnabled(false);
+      this.topViewRadioButton.setEnabled(false);
+    }
+
+    // Create room rendering label and radio buttons bound to controller ROOM_RENDERING property
+    this.roomRenderingLabel = new JLabel(preferences.getLocalizedString(
+        UserPreferencesPanel.class, "roomRenderingLabel.text"));
+    this.monochromeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "monochromeRadioButton.text"), 
+        !controller.isRoomFloorColoredOrTextured());
+    this.floorColorOrTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "floorColorOrTextureRadioButton.text"), 
+        controller.isRoomFloorColoredOrTextured());
+    ButtonGroup roomRenderingButtonGroup = new ButtonGroup();
+    roomRenderingButtonGroup.add(this.monochromeRadioButton);
+    roomRenderingButtonGroup.add(this.floorColorOrTextureRadioButton);
+
+    ItemListener roomRenderingChangeListener = new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setRoomFloorColoredOrTextured(floorColorOrTextureRadioButton.isSelected());
+        }
+      };
+    this.monochromeRadioButton.addItemListener(roomRenderingChangeListener);
+    this.floorColorOrTextureRadioButton.addItemListener(roomRenderingChangeListener);
+    controller.addPropertyChangeListener(UserPreferencesController.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            floorColorOrTextureRadioButton.setSelected(controller.isRoomFloorColoredOrTextured());
+          }
+        });
+
+    // Create wall pattern label and combo box bound to controller WALL_PATTERN property
+    this.wallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+        UserPreferencesPanel.class, "wallPatternLabel.text"));    
+    this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(UserPreferences.Pattern.values()));
+    this.wallPatternComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(final JList list, 
+            Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          UserPreferences.Pattern wallPattern = (UserPreferences.Pattern)value;
+          final Component component = super.getListCellRendererComponent(
+              list, "", index, isSelected, cellHasFocus);
+          final BufferedImage patternImage = SwingTools.getPatternImage(
+              wallPattern, list.getBackground(), list.getForeground());
+          setIcon(new Icon() {
+              public int getIconWidth() {
+                return patternImage.getWidth() * 4;
+              }
+        
+              public int getIconHeight() {
+                return patternImage.getHeight() + 2;
+              }
+        
+              public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2D = (Graphics2D)g;
+                for (int i = 0; i < 4; i++) {
+                  g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
+                }
+                g2D.setColor(list.getForeground());
+                g2D.drawRect(x, y, getIconWidth() - 1, getIconHeight() - 1);
+              }
+            });
+          return component;
+        }
+      });
+    this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
+    this.wallPatternComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setWallPattern((UserPreferences.Pattern)wallPatternComboBox.getSelectedItem());
+        }
+      });
+    controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            wallPatternComboBox.setSelectedItem(controller.getWallPattern());
+          }
+        });
+    
     // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
     this.newWallThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "newWallThicknessLabel.text"));
     final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
-        0.5f, 0.125f, this.centimeterRadioButton);
+        0.5f, 0.125f, 5f, 0.005f, controller);
     this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
     newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
     newWallThicknessSpinnerModel.addChangeListener(new ChangeListener() {
@@ -239,7 +384,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     this.newWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "newWallHeightLabel.text"));
     final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
-        10f, 2f, this.centimeterRadioButton);
+        10f, 2f, 100f, 0.1f, controller);
     this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
     newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
     newWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
@@ -277,12 +422,27 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           UserPreferencesPanel.class, "centimeterRadioButton.mnemonic")).getKeyCode());
       this.inchRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           UserPreferencesPanel.class, "inchRadioButton.mnemonic")).getKeyCode());
+      this.millimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "millimeterRadioButton.mnemonic")).getKeyCode());
+      this.meterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "meterRadioButton.mnemonic")).getKeyCode());
       this.magnetismCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           UserPreferencesPanel.class, "magnetismCheckBox.mnemonic")).getKeyCode());
       this.rulersCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           UserPreferencesPanel.class, "rulersCheckBox.mnemonic")).getKeyCode());
       this.gridCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           UserPreferencesPanel.class, "gridCheckBox.mnemonic")).getKeyCode());
+      this.catalogIconRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
+      this.topViewRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "topViewRadioButton.mnemonic")).getKeyCode());
+      this.monochromeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "monochromeRadioButton.mnemonic")).getKeyCode());
+      this.floorColorOrTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "floorColorOrTextureRadioButton.mnemonic")).getKeyCode());
+      this.wallPatternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "wallPatternLabel.mnemonic")).getKeyCode());
+      this.wallPatternLabel.setLabelFor(this.wallPatternComboBox);
       this.newWallThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           UserPreferencesPanel.class, "newWallThicknessLabel.mnemonic")).getKeyCode());
       this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
@@ -314,50 +474,84 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.centimeterRadioButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
     add(this.inchRadioButton, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
     // Third row
-    add(this.magnetismEnabledLabel, new GridBagConstraints(
-        0, 2, 1, 1, 0, 0, labelAlignment, 
+    add(this.millimeterRadioButton, new GridBagConstraints(
+        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.magnetismCheckBox, new GridBagConstraints(
-        1, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+    add(this.meterRadioButton, new GridBagConstraints(
+        2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     // Fourth row
-    add(this.rulersVisibleLabel, new GridBagConstraints(
+    add(this.magnetismEnabledLabel, new GridBagConstraints(
         0, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.rulersCheckBox, new GridBagConstraints(
+    add(this.magnetismCheckBox, new GridBagConstraints(
         1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     // Fifth row
-    add(this.gridVisibleLabel, new GridBagConstraints(
+    add(this.rulersVisibleLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.gridCheckBox, new GridBagConstraints(
+    add(this.rulersCheckBox, new GridBagConstraints(
         1, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     // Sixth row
-    add(this.newWallThicknessLabel, new GridBagConstraints(
+    add(this.gridVisibleLabel, new GridBagConstraints(
         0, 5, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.newWallThicknessSpinner, new GridBagConstraints(
-        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    add(this.gridCheckBox, new GridBagConstraints(
+        1, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     // Seventh row
-    add(this.newWallHeightLabel, new GridBagConstraints(
+    add(this.furnitureIconLabel, new GridBagConstraints(
         0, 6, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.newWallHeightSpinner, new GridBagConstraints(
+    add(this.catalogIconRadioButton, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.topViewRadioButton, new GridBagConstraints(
+        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    // Eighth row
+    add(this.roomRenderingLabel, new GridBagConstraints(
+        0, 7, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.monochromeRadioButton, new GridBagConstraints(
+        1, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+        2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    // Ninth row
+    add(this.wallPatternLabel, new GridBagConstraints(
+        0, 8, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.wallPatternComboBox, new GridBagConstraints(
+        1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    // Tenth row
+    add(this.newWallThicknessLabel, new GridBagConstraints(
+        0, 9, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.newWallThicknessSpinner, new GridBagConstraints(
+        1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    // Eleventh row
+    add(this.newWallHeightLabel, new GridBagConstraints(
+        0, 10, 1, 1, 0, 0, labelAlignment, 
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.newWallHeightSpinner, new GridBagConstraints(
+        1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     // Last row
     if (this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 7, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 11, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }
@@ -378,27 +572,32 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
 
     public SpinnerLengthModel(final float centimeterStepSize, 
                               final float inchStepSize,
-                              final AbstractButton centimeterButton) {
+                              final float millimeterStepSize, 
+                              final float meterStepSize, 
+                              final UserPreferencesController controller) {
       // Invoke constructor that take objects in parameter to avoid any ambiguity
       super(new Float(1f), new Float(0f), new Float(100000f), new Float(centimeterStepSize));
-      // Add a listener to convert value and step 
-      // to centimeter when button model is selected 
-      centimeterButton.addChangeListener(
-        new ChangeListener () {
-          public void stateChanged(ChangeEvent ev) {
-            if (centimeterButton.isSelected()) {
-              if (unit == LengthUnit.INCH) {
-                unit = LengthUnit.CENTIMETER;
+      // Add a listener to convert value and step when unit changes 
+      controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
+        new PropertyChangeListener () {
+          public void propertyChange(PropertyChangeEvent ev) {
+            float lengthInCentimeter = getLength();
+            unit = controller.getUnit();
+            switch (controller.getUnit()) {
+              case CENTIMETER :
                 setStepSize(centimeterStepSize);
-                setValue(LengthUnit.inchToCentimeter(getNumber().floatValue()));
-              }
-            } else {
-              if (unit == LengthUnit.CENTIMETER) {
-                unit = LengthUnit.INCH;
-                setStepSize(inchStepSize);
-                setValue(LengthUnit.centimeterToInch(getNumber().floatValue()));
-              }
+                break;
+              case INCH :
+                setStepSize(centimeterStepSize);
+                break;
+              case MILLIMETER :
+                setStepSize(millimeterStepSize);
+                break;
+              case METER :
+                setStepSize(meterStepSize);
+                break;
             }
+            setLength(lengthInCentimeter);
           }
         });
     }

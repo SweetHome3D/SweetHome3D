@@ -44,7 +44,13 @@ public abstract class UserPreferences {
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP} 
+                        FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP}
+  /**
+   * The filling pattern of walls in plan.
+   * @since 1.9
+   */
+  public enum Pattern {FOREGROUND, HATCH_UP, HATCH_DOWN, BACKGROUND};
   
   private static final String [] SUPPORTED_LANGUAGES; 
 
@@ -66,9 +72,12 @@ public abstract class UserPreferences {
   private String           language;
   private String           currency;
   private LengthUnit       unit;
-  private boolean          magnetismEnabled = true;
-  private boolean          rulersVisible    = true;
-  private boolean          gridVisible      = true;
+  private boolean          magnetismEnabled    = true;
+  private boolean          rulersVisible       = true;
+  private boolean          gridVisible         = true;
+  private boolean          furnitureViewedFromTop;
+  private boolean          roomFloorColoredOrTextured;
+  private Pattern          wallPattern         = Pattern.HATCH_UP;
   private float            newWallThickness;
   private float            newWallHeight;
   private List<String>     recentHomes;
@@ -411,6 +420,76 @@ public abstract class UserPreferences {
       this.gridVisible = gridVisible;
       this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.name(), 
           !gridVisible, gridVisible);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if furniture should be viewed from its top in plan.
+   * @since 1.9
+   */
+  public boolean isFurnitureViewedFromTop() {
+    return this.furnitureViewedFromTop;
+  }
+  
+  /**
+   * Sets how furniture icon should be displayed in plan, and notifies
+   * listeners of this change. 
+   * @param furnitureViewedFromTop if <code>true</code> the furniture 
+   *    should be viewed from its top.
+   * @since 1.9
+   */
+  public void setFurnitureViewedFromTop(boolean furnitureViewedFromTop) {
+    if (this.furnitureViewedFromTop != furnitureViewedFromTop) {
+      this.furnitureViewedFromTop = furnitureViewedFromTop;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_VIEWED_FROM_TOP.name(), 
+          !furnitureViewedFromTop, furnitureViewedFromTop);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if room floors should be rendered with color or texture 
+   * in plan.
+   * @return <code>false</code> by default.
+   * @since 1.9
+   */
+  public boolean isRoomFloorColoredOrTextured() {
+    return this.roomFloorColoredOrTextured;
+  }
+  
+  /**
+   * Sets whether room floors should be rendered with color or texture, 
+   * and notifies listeners of this change. 
+   * @param roomFloorColoredOrTextured <code>true</code> if floor color 
+   *          or texture is used, <code>false</code> otherwise.
+   * @since 1.9
+   */
+  public void setFloorColoredOrTextured(boolean roomFloorColoredOrTextured) {
+    if (this.roomFloorColoredOrTextured != roomFloorColoredOrTextured) {
+      this.roomFloorColoredOrTextured = roomFloorColoredOrTextured;
+      this.propertyChangeSupport.firePropertyChange(Property.ROOM_FLOOR_COLORED_OR_TEXTURED.name(), 
+          !roomFloorColoredOrTextured, roomFloorColoredOrTextured);
+    }
+  }
+
+  /**
+   * Returns the wall pattern in plan.
+   * @since 1.9
+   */
+  public Pattern getWallPattern() {
+    return this.wallPattern;
+  }
+  
+  /**
+   * Sets how furniture should be displayed in plan, and notifies
+   * listeners of this change.
+   * @since 1.9 
+   */
+  public void setWallPattern(Pattern wallPattern) {
+    if (this.wallPattern != wallPattern) {
+      Pattern oldWallPattern = this.wallPattern;
+      this.wallPattern = wallPattern;
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
+          oldWallPattern, wallPattern);
     }
   }
 

@@ -83,6 +83,20 @@ public class IconManager {
   }
   
   /**
+   * Returns the icon displayed for wrong content.
+   */
+  public Icon getErrorIcon(int height) {
+    return getIcon(this.errorIconContent, height, null);
+  }
+  
+  /**
+   * Returns the icon displayed while a content is loaded.
+   */
+  public Icon getWaitIcon(int height) {
+    return getIcon(this.waitIconContent, height, null);
+  }
+  
+  /**
    * Returns an icon read from <code>content</code> and rescaled at a given <code>height</code>.
    * @param content an object containing an image
    * @param height  the desired height of the returned icon
@@ -107,7 +121,7 @@ public class IconManager {
             getIcon(this.errorIconContent, height, null)); 
       } else {
         // For content different from error icon and wait icon, 
-        // laod it in a different thread with a virtual proxy 
+        // load it in a different thread with a virtual proxy 
         icon = new IconProxy(content, height, waitingComponent,
                  getIcon(this.errorIconContent, height, null),
                  getIcon(this.waitIconContent, height, null));

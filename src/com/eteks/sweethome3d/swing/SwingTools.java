@@ -19,13 +19,16 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -69,8 +72,8 @@ public class SwingTools {
         resource = ResourceBundle.getBundle(swingResource, Locale.ENGLISH);
       }
       // Update UIManager properties
-      for (Enumeration iter = resource.getKeys(); iter.hasMoreElements(); ) {
-        String property = (String)iter.nextElement();
+      for (Enumeration<?> it = resource.getKeys(); it.hasMoreElements(); ) {
+        String property = (String)it.nextElement();
         UIManager.put(property, resource.getString(property));
       }      
     };
@@ -227,5 +230,42 @@ public class SwingTools {
       });
     dialog.setVisible(true);    
     dialog.dispose();
+  }
+
+  /**
+   * Returns the image matching a given pattern.
+   */
+  public static BufferedImage getPatternImage(UserPreferences.Pattern pattern,
+                                              Color backgroundColor, 
+                                              Color foregroundColor) {
+    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+    Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+    switch (pattern) {
+      case FOREGROUND :
+        imageGraphics.setColor(foregroundColor);
+        imageGraphics.fillRect(0, 0, 10, 10);
+        break;
+      case HATCH_UP :
+        // Draw an upward diagonal line
+        imageGraphics.setPaint(backgroundColor);
+        imageGraphics.fillRect(0, 0, 10, 10);
+        imageGraphics.setColor(foregroundColor);
+        imageGraphics.drawLine(0, 9, 9, 0);
+        break;
+      case HATCH_DOWN :
+        // Draw a downward diagonal line
+        imageGraphics.setPaint(backgroundColor);
+        imageGraphics.fillRect(0, 0, 10, 10);
+        imageGraphics.setColor(foregroundColor);
+        imageGraphics.drawLine(0, 0, 9, 9);
+        break;
+      case BACKGROUND :
+      default :
+        imageGraphics.setColor(backgroundColor);
+        imageGraphics.fillRect(0, 0, 10, 10);
+        break;        
+    }
+    imageGraphics.dispose();
+    return image;
   }
 }

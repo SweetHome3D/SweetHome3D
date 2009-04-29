@@ -23,7 +23,6 @@ import java.awt.Color;
 import java.util.Enumeration;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.BoundingBox;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Group;
 import javax.media.j3d.Material;
@@ -34,8 +33,6 @@ import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.vecmath.Color3f;
-import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
@@ -43,7 +40,6 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.sun.j3d.utils.geometry.Box;
 
 /**
@@ -80,7 +76,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   /**
    * Creates the piece node with its transform group and add it to the piece branch. 
    */
-  private void createPieceOfFurnitureNode(HomePieceOfFurniture piece, 
+  private void createPieceOfFurnitureNode(final HomePieceOfFurniture piece, 
                                           final boolean ignoreDrawingMode, 
                                           boolean waitModelLoadingEnd) {
     final TransformGroup pieceTransformGroup = new TransformGroup();
@@ -108,7 +104,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     ModelManager.getInstance().loadModel(model, waitModelLoadingEnd,
         new ModelManager.ModelObserver() {
           public void modelUpdated(BranchGroup modelRoot) {
-            updatePieceOfFurnitureModelNode(getNormalizedNode(modelRoot), ignoreDrawingMode);            
+            float [][] modelRotation = piece.getModelRotation();
+            // Add piece model scene to a normalized transform group
+            TransformGroup modelTransformGroup = 
+                ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
+            modelTransformGroup.addChild(modelRoot);
+            updatePieceOfFurnitureModelNode(modelTransformGroup, ignoreDrawingMode);            
           }
           
           public void modelError(Exception ex) {
@@ -256,47 +257,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureModelMirrored();
   }
-  
-  /**
-   * Returns the 3D model of this piece that fits in a 1 unit wide box 
-   * centered at the origin. 
-   */
-  private Node getNormalizedNode(Node modelNode) {
-    PieceOfFurniture piece = (PieceOfFurniture)getUserData();    
-    // Get model bounding box size
-    BoundingBox modelBounds = ModelManager.getInstance().getBounds(modelNode);
-    Point3d lower = new Point3d();
-    modelBounds.getLower(lower);
-    Point3d upper = new Point3d();
-    modelBounds.getUpper(upper);
-    
-    // Translate model to its center
-    Transform3D translation = new Transform3D();
-    translation.setTranslation(
-        new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-            -lower.y - (upper.y - lower.y) / 2, 
-            -lower.z - (upper.z - lower.z) / 2));      
-    // Scale model to make it fill a 1 unit wide box
-    Transform3D scaleOneTransform = new Transform3D();
-    scaleOneTransform.setScale (
-        new Vector3d(1 / (upper.x -lower.x), 
-            1 / (upper.y - lower.y), 
-            1 / (upper.z - lower.z)));
-    scaleOneTransform.mul(translation);
-    // Apply model rotation
-    Transform3D modelTransform = new Transform3D();
-    float [][] modelRotation = piece.getModelRotation();
-    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-    modelTransform.setRotation(modelRotationMatrix);
-    modelTransform.mul(scaleOneTransform);
-    
-    // Add model scene to transform group
-    TransformGroup modelTransformGroup = new TransformGroup(modelTransform);
-    modelTransformGroup.addChild(modelNode);
-    return modelTransformGroup;
-  }
 
   /**
    * Returns a box that may replace model. 
@@ -325,7 +285,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   private void setOutlineAppearance(Node node) {
     if (node instanceof Group) {
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setOutlineAppearance((Node)enumeration.nextElement());
       }
@@ -349,7 +309,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setAppearanceChangeCapability(Node node) {
     if (node instanceof Group) {
       node.setCapability(Group.ALLOW_CHILDREN_READ);
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setAppearanceChangeCapability((Node)enumeration.nextElement());
       }
@@ -370,7 +330,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setMaterial(Node node, Material material) {
     if (node instanceof Group) {
       // Set material of all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setMaterial((Node)enumeration.nextElement(), material);
       }
@@ -408,7 +368,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setVisible(Node node, boolean visible) {
     if (node instanceof Group) {
       // Set visibility of all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setVisible((Node)enumeration.nextElement(), visible);
       }
@@ -437,7 +397,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setCullFace(Node node, int cullFace) {
     if (node instanceof Group) {
       // Set cull face of all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setCullFace((Node)enumeration.nextElement(), cullFace);
       }
@@ -466,7 +426,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setBackFaceNormalFlip(Node node, boolean backFaceNormalFlip) {
     if (node instanceof Group) {
       // Set back face normal flip of all children
-      Enumeration enumeration = ((Group)node).getAllChildren(); 
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setBackFaceNormalFlip((Node)enumeration.nextElement(), backFaceNormalFlip);
       }

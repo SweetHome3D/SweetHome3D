@@ -33,21 +33,25 @@ public class UserPreferencesController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, 
-      GRID_VISIBLE, NEW_WALL_THICKNESS, NEW_WALL_HEIGHT}
+  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
+      FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT}
   
-  private final UserPreferences       preferences;
-  private final ViewFactory           viewFactory;
-  private final PropertyChangeSupport propertyChangeSupport;
-  private DialogView                  userPreferencesView;
+  private final UserPreferences         preferences;
+  private final ViewFactory             viewFactory;
+  private final PropertyChangeSupport   propertyChangeSupport;
+  private DialogView                    userPreferencesView;
 
-  private String      language;
-  private LengthUnit  unit;
-  private boolean     magnetismEnabled;
-  private boolean     rulersVisible;
-  private boolean     gridVisible;
-  private float       newWallThickness;
-  private float       newWallHeight;
+  private String                        language;
+  private LengthUnit                    unit;
+  private boolean                       magnetismEnabled;
+  private boolean                       rulersVisible;
+  private boolean                       gridVisible;
+  private boolean                       furnitureViewedFromTop;
+  private boolean                       roomFloorColoredOrTextured;
+  private UserPreferences.Pattern       wallPattern;
+  private float                         newWallThickness;
+  private float                         newWallHeight;
 
   /**
    * Creates the controller of user preferences view.
@@ -103,6 +107,9 @@ public class UserPreferencesController implements Controller {
     setMagnetismEnabled(this.preferences.isMagnetismEnabled());
     setGridVisible(this.preferences.isGridVisible());
     setRulersVisible(this.preferences.isRulersVisible());
+    setFurnitureViewedFromTop(this.preferences.isFurnitureViewedFromTop());
+    setRoomFloorColoredOrTextured(this.preferences.isRoomFloorColoredOrTextured());
+    setWallPattern(this.preferences.getWallPattern());
     setNewWallThickness(this.preferences.getNewWallThickness());
     setNewWallHeight(this.preferences.getNewWallHeight());
   }  
@@ -166,7 +173,7 @@ public class UserPreferencesController implements Controller {
   public void setRulersVisible(boolean rulersVisible) {
     if (rulersVisible != this.rulersVisible) {
       this.rulersVisible = rulersVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), !rulersVisible, rulersVisible);
+      this.propertyChangeSupport.firePropertyChange(Property.RULERS_VISIBLE.name(), !rulersVisible, rulersVisible);
     }
   }
 
@@ -183,7 +190,7 @@ public class UserPreferencesController implements Controller {
   public void setGridVisible(boolean gridVisible) {
     if (gridVisible != this.gridVisible) {
       this.gridVisible = gridVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.MAGNETISM_ENABLED.name(), !gridVisible, gridVisible);
+      this.propertyChangeSupport.firePropertyChange(Property.GRID_VISIBLE.name(), !gridVisible, gridVisible);
     }
   }
 
@@ -194,6 +201,63 @@ public class UserPreferencesController implements Controller {
     return this.gridVisible;
   }
 
+  /**
+   * Sets how furniture should be displayed in plan. 
+   */
+  public void setFurnitureViewedFromTop(boolean furnitureViewedFromTop) {
+    if (this.furnitureViewedFromTop != furnitureViewedFromTop) {
+      this.furnitureViewedFromTop = furnitureViewedFromTop;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_VIEWED_FROM_TOP.name(), 
+          !furnitureViewedFromTop, furnitureViewedFromTop);
+    }
+  }
+  
+  /**
+   * Returns how furniture should be displayed in plan.
+   * @since 1.9
+   */
+  public boolean isFurnitureViewedFromTop() {
+    return this.furnitureViewedFromTop;
+  }
+
+  /**
+   * Sets whether floor texture is visible in plan or not.
+   */
+  public void setRoomFloorColoredOrTextured(boolean floorTextureVisible) {
+    if (this.roomFloorColoredOrTextured != floorTextureVisible) {
+      this.roomFloorColoredOrTextured = floorTextureVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.ROOM_FLOOR_COLORED_OR_TEXTURED.name(), 
+          !floorTextureVisible, floorTextureVisible);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if floor texture is visible in plan.
+   */
+  public boolean isRoomFloorColoredOrTextured() {
+    return this.roomFloorColoredOrTextured;
+  }
+  
+  /**
+   * Sets how furniture should be displayed in plan, and notifies
+   * listeners of this change.
+   */
+  public void setWallPattern(UserPreferences.Pattern wallPattern) {
+    if (this.wallPattern != wallPattern) {
+      UserPreferences.Pattern oldWallPattern = this.wallPattern;
+      this.wallPattern = wallPattern;
+      this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
+          oldWallPattern, wallPattern);
+    }
+  }
+
+  /**
+   * Returns the wall pattern in plan.
+   */
+  public UserPreferences.Pattern getWallPattern() {
+    return this.wallPattern;
+  }
+  
   /**
    * Sets the edited new wall thickness.
    */
@@ -239,6 +303,9 @@ public class UserPreferencesController implements Controller {
     this.preferences.setMagnetismEnabled(isMagnetismEnabled());
     this.preferences.setRulersVisible(isRulersVisible());
     this.preferences.setGridVisible(isGridVisible());
+    this.preferences.setFurnitureViewedFromTop(isFurnitureViewedFromTop());
+    this.preferences.setFloorColoredOrTextured(isRoomFloorColoredOrTextured());
+    this.preferences.setWallPattern(getWallPattern());
     this.preferences.setNewWallThickness(getNewWallThickness());
     this.preferences.setNewWallHeight(getNewWallHeight());
   }

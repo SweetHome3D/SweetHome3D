@@ -23,6 +23,7 @@ import java.awt.AWTKeyStroke;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Composite;
 import java.awt.Container;
@@ -45,6 +46,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.TexturePaint;
+import java.awt.Toolkit;
 import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
@@ -64,6 +66,7 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.MemoryImageSource;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
@@ -80,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,11 +92,29 @@ import java.util.WeakHashMap;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.AmbientLight;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Background;
+import javax.media.j3d.BoundingBox;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Canvas3D;
+import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.Group;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.Light;
+import javax.media.j3d.Material;
+import javax.media.j3d.Node;
+import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -116,19 +138,26 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.InternationalFormatter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
+import javax.vecmath.Color3f;
+import javax.vecmath.Vector3f;
 
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 import org.freehep.util.UserProperties;
 
+import com.eteks.sweethome3d.j3d.Component3DManager;
+import com.eteks.sweethome3d.j3d.ModelManager;
+import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.ObserverCamera;
@@ -144,6 +173,9 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
+import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * A component displaying the plan of a home.
@@ -194,11 +226,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<TextStyle, Font>        fonts;
   private Map<TextStyle, FontMetrics> fontsMetrics;
   
-  private Rectangle2D        planBoundsCache;  
-  private boolean            planBoundsCacheValid;  
-  private BufferedImage      backgroundImageCache;
-  private Area               wallsAreaCache;
-
+  private Rectangle2D                 planBoundsCache;  
+  private boolean                     planBoundsCacheValid;  
+  private BufferedImage               backgroundImageCache;
+  private Area                        wallsAreaCache;
+  private Map<Content, BufferedImage> floorTextureImagesCache;
+  private WeakHashMap<HomePieceOfFurniture, FurnitureTopViewIconProxy> furnitureTopViewIconsCache;
 
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
@@ -400,10 +433,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (!HomePieceOfFurniture.Property.NAME.name().equals(ev.getPropertyName())) {
-            sortedHomeFurniture = null;
-            invalidatePlanBoundsAndRevalidate();
+          if (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
+            furnitureTopViewIconsCache.remove(ev.getSource());
           }
+          if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+            sortedHomeFurniture = null;
+          } 
+          invalidatePlanBoundsAndRevalidate();
         }
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
@@ -552,7 +588,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
         new UnitChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
-        new GridVisibleChangeListener(this));
+        new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
+        new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
+        new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, 
+        new UserPreferencesChangeListener(this));
   }
 
   /**
@@ -594,10 +636,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Preferences property listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  
    */
-  private static class GridVisibleChangeListener implements PropertyChangeListener {
+  private static class UserPreferencesChangeListener implements PropertyChangeListener {
     private WeakReference<PlanComponent>  planComponent;
 
-    public GridVisibleChangeListener(PlanComponent planComponent) {
+    public UserPreferencesChangeListener(PlanComponent planComponent) {
       this.planComponent = new WeakReference<PlanComponent>(planComponent);
     }
     
@@ -606,7 +648,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       PlanComponent planComponent = this.planComponent.get();
       if (planComponent == null) {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
-            UserPreferences.Property.UNIT, this);
+            UserPreferences.Property.valueOf(ev.getPropertyName()), this);
       } else {
         planComponent.repaint();
       }
@@ -1638,7 +1680,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintWalls(g2D, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
     
     checkCurrentThreadIsntInterrupted(paintMode);
-    paintFurniture(g2D, this.sortedHomeFurniture, selectedItems, planScale, backgroundColor, foregroundColor, paintMode);
+    paintFurniture(g2D, this.sortedHomeFurniture, selectedItems, 
+        planScale, backgroundColor, foregroundColor, paintMode, true);
     
     checkCurrentThreadIsntInterrupted(paintMode);
     paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
@@ -1704,7 +1747,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             planScale, foregroundColor);
         paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
             planScale, foregroundColor);
-        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, foregroundColor, paintMode);
+        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, 
+            foregroundColor, paintMode, false);
         paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
             planScale, foregroundColor);
       }
@@ -1758,9 +1802,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           });
     }
     
-    Color fillPaint = paintMode == PaintMode.PRINT 
+    Color defaultFillPaint = paintMode == PaintMode.PRINT 
         ? Color.WHITE
-        : new Color(128, 128, 128, 144);
+        : Color.GRAY;
+    Composite oldComposite = g2D.getComposite();
     // Draw rooms area
     g2D.setStroke(new BasicStroke(WALL_STROKE_WIDTH / planScale));
     for (Room room : this.sortedHomeRooms) { 
@@ -1768,8 +1813,42 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // In clipboard paint mode, paint room only if it is selected
       if (paintMode != PaintMode.CLIPBOARD
           || selectedRoom) {
-        g2D.setPaint(fillPaint);
+        g2D.setPaint(defaultFillPaint);
+        if (this.preferences.isRoomFloorColoredOrTextured()) {
+          // Use room floor color or texture image
+          if (room.getFloorColor() != null) {
+            g2D.setPaint(new Color(room.getFloorColor()));
+          } else {
+            final HomeTexture floorTexture = room.getFloorTexture();
+            if (floorTexture != null) {
+              if (this.floorTextureImagesCache == null) {
+                this.floorTextureImagesCache = new WeakHashMap<Content, BufferedImage>();
+              }
+              BufferedImage textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
+              if (textureImage == null) {
+                final boolean waitForTexture = paintMode != PaintMode.PAINT;
+                TextureManager.getInstance().loadTexture(floorTexture.getImage(), waitForTexture,
+                    new TextureManager.TextureObserver() {
+                      public void textureUpdated(Texture texture) {
+                        floorTextureImagesCache.put(floorTexture.getImage(), 
+                            ((ImageComponent2D)texture.getImage(0)).getImage());
+                        if (waitForTexture) {
+                          repaint();
+                        }
+                      }
+                    });                
+                textureImage = this.floorTextureImagesCache.get(floorTexture.getImage());
+              }
+              g2D.setPaint(new TexturePaint(textureImage, 
+                  new Rectangle2D.Float(0, 0, floorTexture.getWidth(), floorTexture.getHeight())));
+            }
+          }          
+        }
+        
+        g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
         g2D.fill(getShape(room.getPoints()));
+        g2D.setComposite(oldComposite);
+
         g2D.setPaint(foregroundColor);
         g2D.draw(getShape(room.getPoints()));
       }
@@ -2118,14 +2197,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the <code>Paint</code> object used to fill walls.
    */
   private Paint getWallPaint(float planScale, Color backgroundColor, Color foregroundColor) {
-    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-    Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-    // Create an image displaying a line in its diagonal
-    imageGraphics.setPaint(backgroundColor);
-    imageGraphics.fillRect(0, 0, 10, 10);
-    imageGraphics.setColor(foregroundColor);
-    imageGraphics.drawLine(0, 9, 9, 0);
-    imageGraphics.dispose();
+    BufferedImage image = SwingTools.getPatternImage(this.preferences.getWallPattern(), 
+        backgroundColor, foregroundColor);
     return new TexturePaint(image, 
         new Rectangle2D.Float(0, 0, 10 / planScale, 10 / planScale));
   }
@@ -2135,8 +2208,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture, 
                               List<Selectable> selectedItems, float planScale, 
-                              Color backgroundColor, Color foregroundColor, PaintMode paintMode) {    
+                              Color backgroundColor, Color foregroundColor, 
+                              PaintMode paintMode, boolean paintIcon) {    
     BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+    Composite oldComposite = g2D.getComposite();
+    final boolean furnitureViewedFromTop = 
+        this.preferences.isFurnitureViewedFromTop()
+        && Component3DManager.getInstance().isOffScreenImageSupported();
+    
     // Draw furniture
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()) {
@@ -2153,25 +2232,44 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else {
             pieceShape2D = pieceShape;
           }
-          if (backgroundColor != null) {
-            // Fill piece area
-            g2D.setPaint(backgroundColor);
-            g2D.fill(pieceShape2D);
-            // Draw its icon
-            paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale);
+                    
+          if (paintIcon && furnitureViewedFromTop) {
+            if (piece instanceof HomeDoorOrWindow) {
+              // Draw doors and windows border
+              g2D.setPaint(backgroundColor);
+              g2D.fill(pieceShape2D);
+              g2D.setPaint(foregroundColor);
+              g2D.setStroke(pieceBorderStroke);
+              g2D.draw(pieceShape2D);
+            } else {
+              paintPieceOfFurnitureTop(g2D, piece, pieceShape2D, pieceBorderStroke, planScale, 
+                  backgroundColor, foregroundColor, paintMode);
+            }
+            if (paintMode == PaintMode.PAINT) {
+              // Draw selection outline rectangle  
+              g2D.setStroke(pieceBorderStroke);
+              g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+              g2D.draw(pieceShape);
+              g2D.setComposite(oldComposite);
+            } 
+          } else {
+            if (paintIcon) {
+              // Draw its icon
+              paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale, 
+                  backgroundColor, paintMode);
+            }
+            // Draw its border
+            g2D.setPaint(foregroundColor);
+            g2D.setStroke(pieceBorderStroke);
+            g2D.draw(pieceShape2D);
+            if (piece instanceof HomeDoorOrWindow
+                && paintMode == PaintMode.PAINT) {
+              // Draw outline rectangle
+              g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+              g2D.draw(pieceShape);
+              g2D.setComposite(oldComposite);
+            } 
           }
-          // Draw its border
-          g2D.setPaint(foregroundColor);
-          g2D.setStroke(pieceBorderStroke);
-          g2D.draw(pieceShape2D);
-          if (piece instanceof HomeDoorOrWindow
-              && paintMode == PaintMode.PAINT) {
-            // Draw outline rectangle
-            Composite oldComposite = g2D.getComposite();
-            g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
-            g2D.draw(pieceShape);
-            g2D.setComposite(oldComposite);
-          } 
         }
       }
     }
@@ -2201,7 +2299,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints the sashes of a door or a window.
    */
   private void paintDoorOrWindowSashes(Graphics2D g2D, HomeDoorOrWindow doorOrWindow, float planScale, 
-                                        Color foregroundColor) {
+                                       Color foregroundColor) {
     BasicStroke sashBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
     g2D.setPaint(foregroundColor);
     g2D.setStroke(sashBorderStroke);
@@ -2315,13 +2413,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints <code>piece</code> icon with <code>g2D</code>.
    */
   private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, 
-                                         Shape pieceShape2D, float planScale) {
+                                         Shape pieceShape2D, float planScale, 
+                                         Color backgroundColor, PaintMode paintMode) {
+    // Get piece icon
+    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, 
+        paintMode == PaintMode.PAINT ? this : null);
+    paintPieceOfFurnitureIcon(g2D, piece, icon, pieceShape2D, planScale, backgroundColor);
+  }
+
+  /**
+   * Paints <code>icon</code> with <code>g2D</code>.
+   */
+  private void paintPieceOfFurnitureIcon(Graphics2D g2D, HomePieceOfFurniture piece, Icon icon,
+                                         Shape pieceShape2D, float planScale, Color backgroundColor) {
+    // Fill piece area
+    g2D.setPaint(backgroundColor);
+    g2D.fill(pieceShape2D);
+    
     Shape previousClip = g2D.getClip();
     // Clip icon drawing into piece shape
     g2D.clip(pieceShape2D);
     AffineTransform previousTransform = g2D.getTransform();
-    // Get piece icon
-    Icon icon = IconManager.getInstance().getIcon(piece.getIcon(), 128, this);
     // Translate to piece center
     final Rectangle bounds = pieceShape2D.getBounds();
     g2D.translate(bounds.getCenterX(), bounds.getCenterY());
@@ -2343,6 +2455,52 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Revert g2D transformation to previous value
     g2D.setTransform(previousTransform);
     g2D.setClip(previousClip);
+  }
+
+  /**
+   * Paints <code>piece</code> top icon with <code>g2D</code>.
+   */
+  private void paintPieceOfFurnitureTop(Graphics2D g2D, HomePieceOfFurniture piece, 
+                                        Shape pieceShape2D, BasicStroke pieceBorderStroke, 
+                                        float planScale, 
+                                        Color backgroundColor, Color foregroundColor, 
+                                        PaintMode paintMode) {
+    if (this.furnitureTopViewIconsCache == null) {
+      this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurniture, FurnitureTopViewIconProxy>();
+    }
+    FurnitureTopViewIconProxy icon = this.furnitureTopViewIconsCache.get(piece);
+    if (icon == null
+        || icon.isWaitIcon()
+           && paintMode != PaintMode.PAINT) {
+      icon = new FurnitureTopViewIconProxy(piece, 
+          paintMode == PaintMode.PAINT ? this : null);
+      this.furnitureTopViewIconsCache.put(piece, icon);
+    }
+    
+    if (icon.isWaitIcon() || icon.isErrorIcon()) {
+      paintPieceOfFurnitureIcon(g2D, piece, icon, pieceShape2D, planScale, backgroundColor);
+      g2D.setPaint(foregroundColor);
+      g2D.setStroke(pieceBorderStroke);
+      g2D.draw(pieceShape2D);
+    } else {        
+      AffineTransform previousTransform = g2D.getTransform();  
+      // Translate to piece center
+      final Rectangle bounds = pieceShape2D.getBounds();
+      g2D.translate(bounds.getCenterX(), bounds.getCenterY());
+      g2D.rotate(piece.getAngle());
+      float pieceDepth = piece.getDepth();
+      // Scale icon to fit in its area
+      if (piece.isModelMirrored()) {
+        // If piece model is mirrored, inverse x scale
+        g2D.scale(-piece.getWidth() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
+      } else {
+        g2D.scale(piece.getWidth() / icon.getIconWidth(), pieceDepth / icon.getIconHeight());
+      }
+      // Paint piece icon
+      icon.paintIcon(this, g2D, -icon.getIconWidth() / 2, -icon.getIconHeight() / 2);
+      // Revert g2D transformation to previous value
+      g2D.setTransform(previousTransform);
+    }
   }
 
   /**
@@ -3889,6 +4047,235 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       }
       return text;
+    }
+  }
+
+  /**
+   * A proxy for the furniture top view icon. 
+   */
+  private static class FurnitureTopViewIconProxy implements Icon {
+    private static Icon        errorIcon;
+    private static Icon        waitIcon;
+    private static Canvas3D    canvas3D;      
+    private static BranchGroup sceneRoot;          
+    
+    static {
+      // Get icons
+      errorIcon = IconManager.getInstance().getErrorIcon(128);
+      waitIcon = IconManager.getInstance().getWaitIcon(128);
+      // Create the universe used to compute top view icons 
+      canvas3D = Component3DManager.getInstance().getOffScreenCanvas3D(128, 128);
+      SimpleUniverse universe = new SimpleUniverse(canvas3D);
+      ViewingPlatform viewingPlatform = universe.getViewingPlatform();
+      // View model from top
+      TransformGroup viewPlatformTransform = viewingPlatform.getViewPlatformTransform();
+      Transform3D rotation = new Transform3D();
+      rotation.rotX(-Math.PI / 2);
+      Transform3D transform = new Transform3D();
+      transform.setTranslation(new Vector3f(0, 5, 0));
+      transform.mul(rotation);
+      viewPlatformTransform.setTransform(transform);
+      // Use parallel projection
+      Viewer viewer = viewingPlatform.getViewers() [0];      
+      javax.media.j3d.View view = viewer.getView();
+      view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
+      sceneRoot = new BranchGroup();
+      // Prepare scene root
+      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
+      sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
+      Background background = new Background(1, 1, 1);
+      background.setCapability(Background.ALLOW_COLOR_WRITE);
+      background.setApplicationBounds(new BoundingBox());
+      sceneRoot.addChild(background);
+      Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
+                         new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
+                         new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
+                         new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
+      for (Light light : lights) {
+        light.setInfluencingBounds(new BoundingBox());
+        sceneRoot.addChild(light);
+      }
+      universe.addBranchGraph(sceneRoot);
+    }
+    
+    private Icon icon;
+
+    /**
+     * Creates a top view icon proxy for a <code>piece</code> of furniture.
+     * @param piece an object containing a 3D content
+     * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
+     *            be read immediately in the current thread.
+     */
+    private FurnitureTopViewIconProxy(final HomePieceOfFurniture piece, 
+                                  final Component waitingComponent) {
+      this.icon = waitIcon;
+      ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
+          new ModelManager.ModelObserver() {
+            public void modelUpdated(BranchGroup modelNode) {
+              icon = createIcon(piece, modelNode);
+              if (waitingComponent != null) {
+                waitingComponent.repaint();
+              }
+            }
+        
+            public void modelError(Exception ex) {
+              // Too bad, we'll use errorIcon
+              icon = errorIcon;                
+              if (waitingComponent != null) {
+                waitingComponent.repaint();
+              }
+            }
+          });
+    }
+    
+    public int getIconWidth() {
+      return this.icon.getIconWidth();
+    }
+
+    public int getIconHeight() {
+      return this.icon.getIconHeight();
+    }
+    
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      this.icon.paintIcon(c, g, x, y);
+    }
+
+    public boolean isWaitIcon() {
+      return this.icon == waitIcon;
+    }
+    
+    public boolean isErrorIcon() {
+      return this.icon == errorIcon;
+    }
+    
+    /**
+     * Returns an icon created and scaled from piece model content.
+     * @param piece the content from which the icon image is read
+     */
+    private Icon createIcon(HomePieceOfFurniture piece, BranchGroup modelNode) {
+      // Add piece model scene to a normalized transform group
+      TransformGroup modelTransformGroup = 
+          ModelManager.getInstance().getNormalizedTransformGroup(modelNode, piece.getModelRotation(), 2);
+      modelTransformGroup.addChild(modelNode);
+
+      // Update model color
+      final Integer pieceColor = piece.getColor();
+      if (pieceColor != null) {
+        Color3f materialColor = new Color3f(new Color(pieceColor));
+        Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 32);
+        setMaterial(modelNode, material);
+      }
+      // Update back face flip
+      if (piece.isBackFaceShown()) {
+        setBackFaceNormalFlip(modelNode);
+      }
+      
+      BranchGroup model = new BranchGroup();
+      model.setCapability(BranchGroup.ALLOW_DETACH);
+      model.addChild(modelTransformGroup);
+      
+      sceneRoot.addChild(model);
+      
+      // Render scene with a white background
+      Background background = (Background)sceneRoot.getChild(0);        
+      background.setColor(1, 1, 1);
+      canvas3D.renderOffScreenBuffer();
+      canvas3D.waitForOffScreenRendering();          
+      BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
+      
+      // Render scene with a black background
+      background.setColor(0, 0, 0);
+      canvas3D.renderOffScreenBuffer();
+      canvas3D.waitForOffScreenRendering();          
+      BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
+      
+      // Create an image with transparent pixels where model isn't drawn
+      int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
+          0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
+          0, imageWithWhiteBackgound.getWidth());
+      int [] imageWithBlackBackgoundPixels = imageWithBlackBackgound.getRGB(
+          0, 0, imageWithBlackBackgound.getWidth(), imageWithBlackBackgound.getHeight(), null,
+          0, imageWithBlackBackgound.getWidth());
+      for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
+        if (imageWithBlackBackgoundPixels [i] != imageWithWhiteBackgoundPixels [i]
+            && imageWithBlackBackgoundPixels [i] == 0xFF000000
+            && imageWithWhiteBackgoundPixels [i] == 0xFFFFFFFF) {
+          imageWithWhiteBackgoundPixels [i] = 0;
+        }           
+      }
+      
+      sceneRoot.removeChild(model);
+      return new ImageIcon(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
+          imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
+          imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())));
+    }
+
+    /**
+     * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
+     * with a given <code>material</code>. 
+     */
+    private void setMaterial(Node node, Material material) {
+      if (node instanceof Group) {
+        // Set material of all children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          setMaterial((Node)enumeration.nextElement(), material);
+        }
+      } else if (node instanceof Shape3D) {
+        Shape3D shape = (Shape3D)node;
+        String shapeName = (String)shape.getUserData();
+        // Change material of all shape that are not window panes
+        if (shapeName == null
+            || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
+          Appearance appearance = shape.getAppearance();
+          if (appearance == null) {
+            appearance = new Appearance();
+            ((Shape3D)node).setAppearance(appearance);
+          }
+          // Use appearance user data to store shape default material
+          Material defaultMaterial = (Material)appearance.getUserData();
+          if (defaultMaterial == null) {
+            defaultMaterial = appearance.getMaterial();
+            appearance.setUserData(defaultMaterial);
+          }
+          // Change material
+          if (material != null) {
+            appearance.setMaterial(material);
+          } else {
+            // Restore default material
+            appearance.setMaterial(defaultMaterial);
+          }
+        }
+      }
+    }
+
+    /**
+     * Sets flipped normals on all <code>Shape3D</code> children nodes of <code>node</code>.
+     */
+    private void setBackFaceNormalFlip(Node node) {
+      if (node instanceof Group) {
+        // Set back face normal flip of all children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          setBackFaceNormalFlip((Node)enumeration.nextElement());
+        }
+      } else if (node instanceof Shape3D) {
+        Appearance appearance = ((Shape3D)node).getAppearance();
+        if (appearance == null) {
+          appearance = new Appearance();
+          ((Shape3D)node).setAppearance(appearance);
+        }
+        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+        if (polygonAttributes == null) {
+          polygonAttributes = new PolygonAttributes();
+          appearance.setPolygonAttributes(polygonAttributes);
+        }
+        
+        // Change back face normal flip
+        polygonAttributes.setBackFaceNormalFlip(true);
+        polygonAttributes.setCullFace(PolygonAttributes.CULL_FRONT);
+      }
     }
   }
 }

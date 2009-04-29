@@ -69,47 +69,50 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class FileUserPreferences extends UserPreferences {
-  private static final String LANGUAGE                    = "language";
-  private static final String UNIT                        = "unit";
-  private static final String MAGNETISM_ENABLED           = "magnetismEnabled";
-  private static final String RULERS_VISIBLE              = "rulersVisible";
-  private static final String GRID_VISIBLE                = "gridVisible";
-  private static final String NEW_WALL_HEIGHT             = "newHomeWallHeight";
-  private static final String NEW_WALL_THICKNESS          = "newWallThickness";
-  private static final String RECENT_HOMES                = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP          = "ignoredActionTip#";
+  private static final String LANGUAGE                              = "language";
+  private static final String UNIT                                  = "unit";
+  private static final String MAGNETISM_ENABLED                     = "magnetismEnabled";
+  private static final String RULERS_VISIBLE                        = "rulersVisible";
+  private static final String GRID_VISIBLE                          = "gridVisible";
+  private static final String FURNITURE_VIEWED_FROM_TOP             = "furnitureViewedFromTop";
+  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED        = "roomFloorColoredOrTextured";
+  private static final String WALL_PATTERN                          = "wallPattern";
+  private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
+  private static final String RECENT_HOMES                          = "recentHomes#";
+  private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";
 
-  private static final String FURNITURE_NAME              = "furnitureName#";
-  private static final String FURNITURE_CATEGORY          = "furnitureCategory#";
-  private static final String FURNITURE_ICON              = "furnitureIcon#";
-  private static final String FURNITURE_MODEL             = "furnitureModel#";
-  private static final String FURNITURE_WIDTH             = "furnitureWidth#";
-  private static final String FURNITURE_DEPTH             = "furnitureDepth#";
-  private static final String FURNITURE_HEIGHT            = "furnitureHeight#";
-  private static final String FURNITURE_MOVABLE           = "furnitureMovable#";
-  private static final String FURNITURE_DOOR_OR_WINDOW    = "furnitureDoorOrWindow#";
-  private static final String FURNITURE_ELEVATION         = "furnitureElevation#";
-  private static final String FURNITURE_COLOR             = "furnitureColor#";
-  private static final String FURNITURE_MODEL_ROTATION    = "furnitureModelRotation#";
-  private static final String FURNITURE_BACK_FACE_SHOWN   = "furnitureBackFaceShown#";
-  private static final String FURNITURE_ICON_YAW          = "furnitureIconYaw#";
-  private static final String FURNITURE_PROPORTIONAL      = "furnitureProportional#";
+  private static final String FURNITURE_NAME                        = "furnitureName#";
+  private static final String FURNITURE_CATEGORY                    = "furnitureCategory#";
+  private static final String FURNITURE_ICON                        = "furnitureIcon#";
+  private static final String FURNITURE_MODEL                       = "furnitureModel#";
+  private static final String FURNITURE_WIDTH                       = "furnitureWidth#";
+  private static final String FURNITURE_DEPTH                       = "furnitureDepth#";
+  private static final String FURNITURE_HEIGHT                      = "furnitureHeight#";
+  private static final String FURNITURE_MOVABLE                     = "furnitureMovable#";
+  private static final String FURNITURE_DOOR_OR_WINDOW              = "furnitureDoorOrWindow#";
+  private static final String FURNITURE_ELEVATION                   = "furnitureElevation#";
+  private static final String FURNITURE_COLOR                       = "furnitureColor#";
+  private static final String FURNITURE_MODEL_ROTATION              = "furnitureModelRotation#";
+  private static final String FURNITURE_BACK_FACE_SHOWN             = "furnitureBackFaceShown#";
+  private static final String FURNITURE_ICON_YAW                    = "furnitureIconYaw#";
+  private static final String FURNITURE_PROPORTIONAL                = "furnitureProportional#";
 
-  private static final String TEXTURE_NAME                = "textureName#";
-  private static final String TEXTURE_CATEGORY            = "textureCategory#";
-  private static final String TEXTURE_IMAGE               = "textureImage#";
-  private static final String TEXTURE_WIDTH               = "textureWidth#";
-  private static final String TEXTURE_HEIGHT              = "textureHeight#";
+  private static final String TEXTURE_NAME                          = "textureName#";
+  private static final String TEXTURE_CATEGORY                      = "textureCategory#";
+  private static final String TEXTURE_IMAGE                         = "textureImage#";
+  private static final String TEXTURE_WIDTH                         = "textureWidth#";
+  private static final String TEXTURE_HEIGHT                        = "textureHeight#";
 
-  private static final String FURNITURE_CONTENT_PREFIX    = "Content";
-  private static final String TEXTURE_CONTENT_PREFIX      = "TextureContent";
-  
+  private static final String FURNITURE_CONTENT_PREFIX              = "Content";
+  private static final String TEXTURE_CONTENT_PREFIX                = "TextureContent";
+
   private static final String PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER = "furniture";
 
   private static final Content DUMMY_CONTENT;
   
   private static final String EDITOR_SUB_FOLDER; 
-  private static final String APPLICATION_SUB_FOLDER; 
+  private static final String APPLICATION_SUB_FOLDER;
   
   private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
   
@@ -156,11 +159,19 @@ public class FileUserPreferences extends UserPreferences {
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
     // Read other preferences 
-    LengthUnit unit = LengthUnit.valueOf(preferences.get(UNIT, defaultPreferences.getLengthUnit().name()));
-    setUnit(unit);
+    setUnit(LengthUnit.valueOf(preferences.get(UNIT, 
+        defaultPreferences.getLengthUnit().name())));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
-    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, true));
-    setGridVisible(preferences.getBoolean(GRID_VISIBLE, true));
+    setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
+        defaultPreferences.isRulersVisible()));
+    setGridVisible(preferences.getBoolean(GRID_VISIBLE, 
+        defaultPreferences.isGridVisible()));
+    setFurnitureViewedFromTop(preferences.getBoolean(FURNITURE_VIEWED_FROM_TOP, 
+        defaultPreferences.isFurnitureViewedFromTop()));
+    setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
+        defaultPreferences.isRoomFloorColoredOrTextured()));
+    setWallPattern(Pattern.valueOf(preferences.get(WALL_PATTERN, 
+        defaultPreferences.getWallPattern().name())));
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
             defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
@@ -388,6 +399,9 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
+    preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
+    preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
+    preferences.put(WALL_PATTERN, getWallPattern().name());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     // Write recent homes list

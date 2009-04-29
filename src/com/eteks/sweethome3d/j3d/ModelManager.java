@@ -44,11 +44,16 @@ import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Content;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.microcrowd.loader.java3d.max3ds.Loader3DS;
@@ -198,6 +203,45 @@ public class ModelManager {
       Bounds shapeBounds = ((Shape3D)node).getBounds();
       bounds.combine(shapeBounds);
     }
+  }
+
+  /**
+   * Returns a transform group that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model at the end
+   * @param width    the width of the box
+   */
+  public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
+    // Get model bounding box size
+    BoundingBox modelBounds = ModelManager.getInstance().getBounds(node);
+    Point3d lower = new Point3d();
+    modelBounds.getLower(lower);
+    Point3d upper = new Point3d();
+    modelBounds.getUpper(upper);
+    
+    // Translate model to its center
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(
+        new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+            -lower.y - (upper.y - lower.y) / 2, 
+            -lower.z - (upper.z - lower.z) / 2));      
+    // Scale model to make it fill a 1 unit wide box
+    Transform3D scaleOneTransform = new Transform3D();
+    scaleOneTransform.setScale (
+        new Vector3d(width / (upper.x -lower.x), 
+            width / (upper.y - lower.y), 
+            width / (upper.z - lower.z)));
+    scaleOneTransform.mul(translation);
+    // Apply model rotation
+    Transform3D modelTransform = new Transform3D();
+    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+    modelTransform.setRotation(modelRotationMatrix);
+    modelTransform.mul(scaleOneTransform);
+    
+    return new TransformGroup(modelTransform);
   }
   
   /**
