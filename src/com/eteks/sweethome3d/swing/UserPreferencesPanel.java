@@ -328,7 +328,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
               wallPattern, list.getBackground(), list.getForeground());
           setIcon(new Icon() {
               public int getIconWidth() {
-                return patternImage.getWidth() * 4;
+                return patternImage.getWidth() * 4 + 1;
               }
         
               public int getIconHeight() {
@@ -341,7 +341,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
                   g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
                 }
                 g2D.setColor(list.getForeground());
-                g2D.drawRect(x, y, getIconWidth() - 1, getIconHeight() - 1);
+                g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
               }
             });
           return component;
