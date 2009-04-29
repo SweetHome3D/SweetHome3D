@@ -109,7 +109,7 @@ public class ModelManager {
       }
     }
     this.additionalLoaderClasses = loaderClasses.toArray(new Class [loaderClasses.size()]);
-    this.modelsLoader = Executors.newSingleThreadExecutor();
+    this.modelsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
   }
 
   /**

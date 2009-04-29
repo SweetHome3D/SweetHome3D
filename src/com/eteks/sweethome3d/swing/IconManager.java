@@ -57,7 +57,7 @@ public class IconManager {
     this.errorIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-missing.png");
     this.waitIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-loading.png");
     this.icons = new WeakHashMap<Content, Map<Integer, Icon>>();
-    this.iconsLoader = Executors.newFixedThreadPool(5);
+    this.iconsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
   }
   
   /**
