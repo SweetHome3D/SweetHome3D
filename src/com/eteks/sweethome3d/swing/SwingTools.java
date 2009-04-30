@@ -21,7 +21,10 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -29,11 +32,15 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.Executors;
 
+import javax.imageio.ImageIO;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -267,5 +274,52 @@ public class SwingTools {
     }
     imageGraphics.dispose();
     return image;
+  }
+  
+  /**
+   * Displays the image referenced by <code>imageUrl</code> in an AWT window 
+   * disposed once an other AWT frame is created.
+   * If the <code>imageUrl</code> is incorrect, nothing happens.
+   */
+  public static void showSplashScreenWindow(URL imageUrl) {
+    try {
+      final BufferedImage image = ImageIO.read(imageUrl);
+      final Window splashScreenWindow = new Window(new Frame()) {
+          @Override
+          public void paint(Graphics g) {
+            g.drawImage(image, 0, 0, this);
+          }
+        };
+        
+      splashScreenWindow.setSize(image.getWidth(), image.getHeight());
+      splashScreenWindow.setLocationRelativeTo(null);
+      splashScreenWindow.setVisible(true);
+          
+      Executors.newSingleThreadExecutor().execute(new Runnable() {
+          public void run() {
+            try {
+              while (splashScreenWindow.isVisible()) {
+                Thread.sleep(500);
+                // If an other frame is created, dispose splash window
+                  EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      if (Frame.getFrames().length > 1) {
+                        splashScreenWindow.dispose();
+                      }
+                    }
+                  });
+                }
+              } catch (InterruptedException ex) {
+                EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    splashScreenWindow.dispose();
+                  }
+                });
+              };
+            }
+          });
+    } catch (IOException ex) {
+      // Ignore splash screen
+    }
   }
 }

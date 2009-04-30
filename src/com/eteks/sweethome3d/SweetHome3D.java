@@ -20,11 +20,7 @@
 package com.eteks.sweethome3d;
 
 import java.awt.EventQueue;
-import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;
-import java.awt.Window;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
@@ -47,7 +43,6 @@ import java.util.concurrent.Executors;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import javax.imageio.ImageIO;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.ServiceManagerStub;
@@ -192,7 +187,7 @@ public class SweetHome3D extends HomeApplication {
           System.exit(0);
         } else {
           // Display splash screen
-          new SplashScreenWindow();
+          SwingTools.showSplashScreenWindow(SweetHome3D.class.getResource("resources/splashScreen.jpg"));
           // Create JNLP services required by Sweet Home 3D 
           ServiceManager.setServiceManagerStub(new StandaloneServiceManager());
         }
@@ -540,56 +535,6 @@ public class SweetHome3D extends HomeApplication {
         null, new Object [] {save, doNotSave}, save) == JOptionPane.YES_OPTION;
   }
 
-  /**
-   * An AWT window displaying a splash screen image.
-   * The window is disposed when an other AWT frame is created.
-   */
-  private static class SplashScreenWindow extends Window {
-    private BufferedImage image;
-    
-    public SplashScreenWindow() {
-      super(new Frame());
-      try {
-        this.image = ImageIO.read(SplashScreenWindow.class.getResource(
-            "resources/splashScreen.jpg"));
-        setSize(this.image.getWidth(), this.image.getHeight());
-        setLocationRelativeTo(null);
-        setVisible(true);
-        
-        Executors.newSingleThreadExecutor().execute(new Runnable() {
-            public void run() {
-              try {
-                while (isVisible()) {
-                  Thread.sleep(500);
-                  // If an other frame is created, dispose splash window
-                  EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                      if (Frame.getFrames().length > 1) {
-                        dispose();
-                      }
-                    }
-                  });
-                }
-              } catch (InterruptedException ex) {
-                EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    dispose();
-                  }
-                });
-              };
-            }
-          });
-      } catch (IOException ex) {
-        // Ignore splash screen
-      }
-    }
-    
-    @Override
-    public void paint(Graphics g) {
-      g.drawImage(this.image, 0, 0, this);
-    }
-  }
-  
   /**
    * JNLP <code>ServiceManagerStub</code> implementation for standalone applications 
    * run out of Java Web Start. This service manager supports <code>BasicService</code> 
