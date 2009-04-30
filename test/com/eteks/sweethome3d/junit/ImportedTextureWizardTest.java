@@ -204,7 +204,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // 4. Choose tested image 
     String imageChoiceOrChangeButtonText = imageChoiceOrChangeButton.getText();
     imageChoiceOrChangeButton.doClick();
-    // Wait 200 s to let time to Java to load the image
+    // Wait 200 ms to let time to Java to load the image
     Thread.sleep(200);
     // Check choice button text changed
     assertFalse("Choice button text didn't change", 
@@ -230,6 +230,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     // Rename texture  
     String textureTestName = "#@" + System.currentTimeMillis() + "@#";
     nameTextField.setText(textureTestName);    
+    tester.waitForIdle();    
     // Check next button is enabled again
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
 
