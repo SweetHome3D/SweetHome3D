@@ -317,9 +317,10 @@ public class FurnitureTable extends JTable implements View, Printable {
         @Override
         public void mouseClicked(MouseEvent ev) {
           int columnIndex = getTableHeader().columnAtPoint(ev.getPoint());
-          HomePieceOfFurniture.SortableProperty property = 
-              (HomePieceOfFurniture.SortableProperty)getColumnModel().getColumn(columnIndex).getIdentifier();
-          controller.sortFurniture(property);
+          Object columnIdentifier = getColumnModel().getColumn(columnIndex).getIdentifier();
+          if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
+            controller.sortFurniture((HomePieceOfFurniture.SortableProperty)columnIdentifier);
+          }
         }
       });
   }
@@ -343,8 +344,10 @@ public class FurnitureTable extends JTable implements View, Printable {
           List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties = 
               new ArrayList<HomePieceOfFurniture.SortableProperty>();
           for (Enumeration<TableColumn> it = getColumnModel().getColumns(); it.hasMoreElements(); ) {
-            furnitureVisibleProperties.add(
-                (HomePieceOfFurniture.SortableProperty)it.nextElement().getIdentifier());
+            Object columnIdentifier = it.nextElement().getIdentifier();
+            if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
+              furnitureVisibleProperties.add((HomePieceOfFurniture.SortableProperty)columnIdentifier);
+            }
           }
           controller.setFurnitureVisibleProperties(furnitureVisibleProperties);
           getColumnModel().addColumnModelListener(this);
@@ -491,54 +494,66 @@ public class FurnitureTable extends JTable implements View, Printable {
     
     // Selected values 
     for (int rowIndex : getSelectedRows()) {
-      HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)getModel().getValueAt(rowIndex, 0);
+      TableModel model = getModel();
+      HomePieceOfFurniture copiedPiece = (HomePieceOfFurniture)model.getValueAt(rowIndex, 0);
       for (int columnIndex = 0, n = this.columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
         if (columnIndex > 0) {
           csv.append("\t");
         }
         TableColumn column = this.columnModel.getColumn(columnIndex);
-        switch ((HomePieceOfFurniture.SortableProperty)column.getIdentifier()) {
-          case CATALOG_ID :
-            // Copy piece catalog id
-            String catalogId = copiedPiece.getCatalogId();
-            csv.append(catalogId != null ? catalogId : "");
-            break;
-          case NAME :
-            // Copy piece name
-            csv.append(copiedPiece.getName());
-            break;
-          case COLOR :
-            // Copy piece color at #xxxxxx format
-            csv.append(copiedPiece.getColor() != null 
-                ? "#" + Integer.toHexString(copiedPiece.getColor()).substring(2)
-                : "");
-            break;
-          case WIDTH :
-          case DEPTH :
-          case HEIGHT : 
-          case X : 
-          case Y :
-          case ELEVATION : 
-          case ANGLE :
-          case PRICE : 
-          case VALUE_ADDED_TAX_PERCENTAGE : 
-          case VALUE_ADDED_TAX :
-          case PRICE_VALUE_ADDED_TAX_INCLUDED : 
-            // Copy numbers as they are displayed by their renderer
-            csv.append(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
-                this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
-            break;
-          case MOVABLE :
-            // Copy boolean as true or false
-            csv.append(copiedPiece.isMovable());
-            break;
-          case DOOR_OR_WINDOW : 
-            csv.append(copiedPiece.isDoorOrWindow());
-            break;
-          case VISIBLE :
-            csv.append(copiedPiece.isVisible());
-            break;
-        }
+        Object columnIdentifier = column.getIdentifier();
+        if (columnIdentifier instanceof HomePieceOfFurniture.SortableProperty) {
+          switch ((HomePieceOfFurniture.SortableProperty)columnIdentifier) {
+            case CATALOG_ID :
+              // Copy piece catalog id
+              String catalogId = copiedPiece.getCatalogId();
+              csv.append(catalogId != null ? catalogId : "");
+              break;
+            case NAME :
+              // Copy piece name
+              csv.append(copiedPiece.getName());
+              break;
+            case COLOR :
+              // Copy piece color at #xxxxxx format
+              csv.append(copiedPiece.getColor() != null 
+                  ? "#" + Integer.toHexString(copiedPiece.getColor()).substring(2)
+                  : "");
+              break;
+            case WIDTH :
+            case DEPTH :
+            case HEIGHT : 
+            case X : 
+            case Y :
+            case ELEVATION : 
+            case ANGLE :
+            case PRICE : 
+            case VALUE_ADDED_TAX_PERCENTAGE : 
+            case VALUE_ADDED_TAX :
+            case PRICE_VALUE_ADDED_TAX_INCLUDED : 
+              // Copy numbers as they are displayed by their renderer
+              csv.append(((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                  this, copiedPiece, false, false, rowIndex, columnIndex)).getText());
+              break;
+            case MOVABLE :
+              // Copy boolean as true or false
+              csv.append(copiedPiece.isMovable());
+              break;
+            case DOOR_OR_WINDOW : 
+              csv.append(copiedPiece.isDoorOrWindow());
+              break;
+            case VISIBLE :
+              csv.append(copiedPiece.isVisible());
+              break;
+          }
+        } else {
+          Component rendererComponent = column.getCellRenderer().getTableCellRendererComponent(
+              this, copiedPiece, false, false, rowIndex, columnIndex);
+          if (rendererComponent instanceof JLabel) {
+            csv.append(((JLabel)rendererComponent).getText());              
+          } else {
+            csv.append(model.getValueAt(rowIndex, columnIndex));
+          }
+        }  
       }
       csv.append(lineSeparator);
     }
@@ -626,11 +641,10 @@ public class FurnitureTable extends JTable implements View, Printable {
         } else {          
           // Change column name and renderer from current locale
           for (TableColumn tableColumn : furnitureTableColumnModel.availableColumns.values()) {
-            tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(
-                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier(), preferences));
-            tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(
-                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier(),
-                preferences));
+            HomePieceOfFurniture.SortableProperty columnIdentifier = 
+                (HomePieceOfFurniture.SortableProperty)tableColumn.getIdentifier();
+            tableColumn.setHeaderValue(furnitureTableColumnModel.getColumnName(columnIdentifier, preferences));
+            tableColumn.setCellRenderer(furnitureTableColumnModel.getColumnRenderer(columnIdentifier, preferences));
           }
         }
       }
@@ -643,7 +657,9 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Remove columns not in furnitureVisibleProperties
       for (int i = this.tableColumns.size() - 1; i >= 0; i--) {
         TableColumn tableColumn = this.tableColumns.get(i);
-        if (!furnitureVisibleProperties.contains(tableColumn.getIdentifier())) {
+        Object columnIdentifier = tableColumn.getIdentifier();
+        if ((columnIdentifier instanceof HomePieceOfFurniture.SortableProperty)
+            && !furnitureVisibleProperties.contains(columnIdentifier)) {
           removeColumn(tableColumn);
         } 
       }
@@ -1091,8 +1107,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             JLabel label = (JLabel)this.headerRenderer.getTableCellRendererComponent(
                 table, value, isSelected, hasFocus, row, column);
             // Add to column an icon matching sort
-            if (getColumn(column).getIdentifier().equals(
-                home.getFurnitureSortedProperty())) {
+            if (getColumn(column).getIdentifier().equals(home.getFurnitureSortedProperty())) {
               label.setHorizontalTextPosition(JLabel.LEADING);
               if (home.isFurnitureDescendingSorted()) {
                 label.setIcon(descendingSortIcon);
@@ -1192,8 +1207,6 @@ public class FurnitureTable extends JTable implements View, Printable {
             if (home.getFurnitureSortedProperty() == null) {
               return homePieceIndex;
             } 
-          } else if (!furnitureFilter.include(home, piece)) {
-            return -1;
           } 
           return getPieceOfFurnitureIndex(piece);              
         }
