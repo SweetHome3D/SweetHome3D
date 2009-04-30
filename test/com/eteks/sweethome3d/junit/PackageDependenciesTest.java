@@ -26,9 +26,6 @@ public class PackageDependenciesTest extends TestCase {
     packageFilter.addPackage("javax.swing.*");
     // Ignore JUnit tests
     packageFilter.addPackage("com.eteks.sweethome3d.junit");
-    // Ignore other test classes 
-    packageFilter.addPackage("com.eteks.sweethome3d.test");
-    packageFilter.addPackage("com.eteks.sweethome3d.utilities");
     
     JDepend jdepend = new JDepend(packageFilter);
     jdepend.addDirectory("classes");
