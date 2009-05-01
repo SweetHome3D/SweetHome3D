@@ -132,9 +132,9 @@ public class FurnitureTable extends JTable implements View, Printable {
           // Build the list of selected furniture
           List<HomePieceOfFurniture> selectedFurniture =
               new ArrayList<HomePieceOfFurniture>(selectedRows.length);
-          FurnitureTableModel tableModel = (FurnitureTableModel)getModel();
+          TableModel tableModel = getModel();
           for (int index : selectedRows) {
-            // Add to selectedFurniture table model first column value that stores piece
+            // Add to selectedFurniture table model value that stores piece
             selectedFurniture.add((HomePieceOfFurniture)tableModel.getValueAt(index, 0));
           }
           // Set the new selection in home with controller
@@ -216,19 +216,19 @@ public class FurnitureTable extends JTable implements View, Printable {
    */
   private void addUserPreferencesListener(UserPreferences preferences) {
     preferences.addPropertyChangeListener(
-        UserPreferences.Property.UNIT, new PreferencesChangeListener(this));
+        UserPreferences.Property.UNIT, new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(
-        UserPreferences.Property.LANGUAGE, new PreferencesChangeListener(this));
+        UserPreferences.Property.LANGUAGE, new UserPreferencesChangeListener(this));
   }
 
   /**
    * Preferences property listener bound to this table with a weak reference to avoid
-   * strong link between preferences and this table.  
+   * strong link between user preferences and this table.  
    */
-  private static class PreferencesChangeListener implements PropertyChangeListener {
+  private static class UserPreferencesChangeListener implements PropertyChangeListener {
     private WeakReference<FurnitureTable>  furnitureTable;
 
-    public PreferencesChangeListener(FurnitureTable furnitureTable) {
+    public UserPreferencesChangeListener(FurnitureTable furnitureTable) {
       this.furnitureTable = new WeakReference<FurnitureTable>(furnitureTable);
     }
     
@@ -237,7 +237,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       FurnitureTable furnitureTable = this.furnitureTable.get();
       if (furnitureTable == null) {
         ((UserPreferences)ev.getSource()).removePropertyChangeListener(
-            UserPreferences.Property.UNIT, this);
+            UserPreferences.Property.valueOf(ev.getPropertyName()), this);
       } else {
         furnitureTable.repaint();
         furnitureTable.getTableHeader().repaint();
@@ -266,7 +266,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     final PropertyChangeListener furnitureChangeListener = 
       new PropertyChangeListener () {
         public void propertyChange(PropertyChangeEvent ev) {
-          // As furniture properties values change may alter sort order, udpate sort and whole table
+          // As furniture properties values change may alter sort order, update sort and whole table
           ((FurnitureTableModel)getModel()).filterAndSortFurniture();
           // Update selected rows
           updateTableSelectedFurniture(home.getSelectedItems());
