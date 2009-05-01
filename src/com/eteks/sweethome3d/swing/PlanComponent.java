@@ -428,12 +428,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Adds home items and selection listeners on this component to receive  
    * changes notifications from home. 
    */
-  private void addModelListeners(Home home, UserPreferences preferences, 
+  private void addModelListeners(Home home, final UserPreferences preferences, 
                                  final PlanController controller) {
     // Add listener to update plan when furniture changes
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
+          if (furnitureTopViewIconsCache != null
+              && HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
             furnitureTopViewIconsCache.remove(ev.getSource());
           }
           if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())) {
@@ -502,6 +503,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.AREA_STYLE.name().equals(ev.getPropertyName())) {
             sortedHomeRooms = null;
             invalidatePlanBoundsAndRevalidate();
+          } else if (preferences.isRoomFloorColoredOrTextured()
+                     && (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
+                         || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
+                         || Room.Property.FLOOR_VISIBLE.name().equals(ev.getPropertyName()))) {
+            repaint(); 
           }
         }
       };
