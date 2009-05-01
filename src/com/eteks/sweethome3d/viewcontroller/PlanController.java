@@ -615,7 +615,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (item instanceof HomePieceOfFurniture) {
       return isPieceOfFurniturePartOfBasePlan((HomePieceOfFurniture)item);
     } else {
-      return true;
+      return !(item instanceof ObserverCamera);
     }
   }
 
