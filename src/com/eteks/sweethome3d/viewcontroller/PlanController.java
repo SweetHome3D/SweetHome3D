@@ -4741,12 +4741,24 @@ public class PlanController extends FurnitureController implements Controller {
     private void createWallsAroundRoom(Room room) {
       if (room.isSingular()) {
         float [][] roomPoints = room.getPoints();
+        List<float []> pointsList = new ArrayList<float[]>(Arrays.asList(roomPoints));
         // It points are not clockwise reverse their order
         if (!room.isClockwise()) {
-          List<float []> pointsList = Arrays.asList(roomPoints);
           Collections.reverse(pointsList);
-          roomPoints = pointsList.toArray(roomPoints);
         }
+        // Remove equal points 
+        for (int i = 0; i < pointsList.size(); ) {
+          float [] point = pointsList.get(i);
+          float [] nextPoint = pointsList.get(i == roomPoints.length - 1  ? 0  : i + 1);
+          if (point [0] == nextPoint [0]
+              && point [1] == nextPoint [1]) {
+            pointsList.remove(i);
+          } else {
+            i++;
+          }
+        }
+        roomPoints = pointsList.toArray(new float [pointsList.size()][]);
+        
         float halfWallThickness = preferences.getNewWallThickness() / 2;
         float [][] largerRoomPoints = new float [roomPoints.length][];
         for (int i = 0; i < roomPoints.length; i++) {
@@ -6676,6 +6688,7 @@ public class PlanController extends FurnitureController implements Controller {
           // If last edited point matches first point validate drawn room 
           if (points.length > 2 
               && this.newRoom.getPointIndexAt(points [points.length - 1][0], points [points.length - 1][1], 0.001f) == 0) {
+            removeLastPoint();
             validateDrawnRoom();
             return;
           }
@@ -6705,6 +6718,16 @@ public class PlanController extends FurnitureController implements Controller {
       this.newRoom.setPoints(newPoints);
       this.newPoint = null;
       this.lastPointCreationTime = System.currentTimeMillis();
+    }
+    
+    /**
+     * Removes last currently edited point.
+     */
+    private void removeLastPoint() {
+      float [][] points = this.newRoom.getPoints();
+      float [][] newPoints = new float [points.length -1][];
+      System.arraycopy(points, 0, newPoints, 0, newPoints.length);
+      this.newRoom.setPoints(newPoints);
     }
     
     @Override
@@ -6777,15 +6800,11 @@ public class PlanController extends FurnitureController implements Controller {
     public void escape() {
       if (this.newRoom != null
           && this.newPoint == null) {
-        // Remove last currently edited point
-        float [][] points = this.newRoom.getPoints();
-        float [][] newPoints = new float [points.length -1][];
-        System.arraycopy(points, 0, newPoints, 0, newPoints.length);
-        this.newRoom.setPoints(newPoints);
+        removeLastPoint();
       }
       validateDrawnRoom();
     }
-    
+
     @Override
     public void exit() {
       getView().deleteFeedback();
