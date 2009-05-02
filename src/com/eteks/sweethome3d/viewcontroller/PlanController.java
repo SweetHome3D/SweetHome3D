@@ -4714,7 +4714,11 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount, 
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 2) {
-        if (this.lastWall != null) {
+        Selectable selectableItem = getSelectableItemAt(x, y);
+        if (this.newWalls.size() == 0
+            && selectableItem instanceof Room) {
+          createWallsAroundRoom((Room)selectableItem);
+        } else if (this.lastWall != null) {
           // Join last wall to the selected wall at its end
           joinNewWallEndToWall(this.lastWall, 
               this.wallStartAtEnd, this.wallEndAtEnd);
@@ -4729,6 +4733,59 @@ public class PlanController extends FurnitureController implements Controller {
           endWallCreation();
         }
       }
+    }
+
+    /**
+     * Creates walls around the given <code>room</code>.
+     */
+    private void createWallsAroundRoom(Room room) {
+      if (room.isSingular()) {
+        float [][] roomPoints = room.getPoints();
+        // It points are not clockwise reverse their order
+        if (!room.isClockwise()) {
+          List<float []> pointsList = Arrays.asList(roomPoints);
+          Collections.reverse(pointsList);
+          roomPoints = pointsList.toArray(roomPoints);
+        }
+        float halfWallThickness = preferences.getNewWallThickness() / 2;
+        float [][] largerRoomPoints = new float [roomPoints.length][];
+        for (int i = 0; i < roomPoints.length; i++) {
+          float [] point = roomPoints [i];
+          float [] previousPoint = roomPoints [i == 0  ? roomPoints.length - 1  : i - 1];
+          float [] nextPoint     = roomPoints [i == roomPoints.length - 1  ? 0  : i + 1];
+          
+          // Compute the angle of the line with a direction orthogonal to line (previousPoint, point)
+          double previousAngle = Math.atan2(point [0] - previousPoint [0], previousPoint [1] - point [1]);      
+          // Compute the points of the line joining previous and current point
+          // at a distance equal to the half wall thickness 
+          float deltaX = (float)(Math.cos(previousAngle) * halfWallThickness);
+          float deltaY = (float)(Math.sin(previousAngle) * halfWallThickness);
+          float [] point1 = {previousPoint [0] - deltaX, previousPoint [1] - deltaY}; 
+          float [] point2 = {point [0] - deltaX, point [1] - deltaY};
+          
+          // Compute the angle of the line with a direction orthogonal to line (point, nextPoint)
+          double nextAngle = Math.atan2(nextPoint [0] - point [0], point [1] - nextPoint [1]);      
+          // Compute the points of the line joining current and next point
+          // at a distance equal to the half wall thickness 
+          deltaX = (float)(Math.cos(nextAngle) * halfWallThickness);
+          deltaY = (float)(Math.sin(nextAngle) * halfWallThickness);
+          float [] point3 = {point [0] - deltaX, point [1] - deltaY}; 
+          float [] point4 = {nextPoint [0] - deltaX, nextPoint [1] - deltaY}; 
+          
+          largerRoomPoints [i] = computeIntersection(point1, point2, point3, point4);
+        }
+
+        // Create walls joining points of largerRoomPoints
+        Wall lastWall = null;
+        for (int i = 0; i < largerRoomPoints.length; i++) {
+          float [] point     = largerRoomPoints [i];
+          float [] nextPoint = largerRoomPoints [i == roomPoints.length - 1  ? 0  : i + 1];
+          Wall wall = createWall(point [0], point [1], nextPoint [0], nextPoint [1], null, lastWall);
+          this.newWalls.add(wall);
+          lastWall = wall;
+        }
+        joinNewWallEndToWall(lastWall, this.newWalls.get(0), null);
+      }      
     }
 
     private void validateDrawnWalls() {
