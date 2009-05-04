@@ -3611,7 +3611,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 || ev.getKeyCode() == KeyEvent.VK_UP) {
               setFocusedTextFieldIndex((this.focusedTextFieldIndex - 1 + toolTipEditedProperties.length) % toolTipEditedProperties.length);
               ev.consume();
-            } else {
+            } else if (ev.getKeyCode() != KeyEvent.VK_ESCAPE) { 
+              // Forward other key events to focused text field (except for Esc key, otherwise InputMap won't receive it)
               KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
               this.focusedTextField.getCaret().setVisible(true);
               toolTipWindow.pack();
