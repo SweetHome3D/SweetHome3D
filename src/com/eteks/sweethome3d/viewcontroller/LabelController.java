@@ -52,7 +52,7 @@ public class LabelController implements Controller {
   private final ViewFactory           viewFactory;
   private final UndoableEditSupport   undoSupport;
   private final PropertyChangeSupport propertyChangeSupport;
-  private DialogView                  pageSetupView;
+  private DialogView                  labelView;
 
   private String text;
   
@@ -118,10 +118,10 @@ public class LabelController implements Controller {
    */
   public DialogView getView() {
     // Create view lazily only once it's needed
-    if (this.pageSetupView == null) {
-      this.pageSetupView = this.viewFactory.createLabelView(this.x == null, this.preferences, this);
+    if (this.labelView == null) {
+      this.labelView = this.viewFactory.createLabelView(this.x == null, this.preferences, this);
     }
-    return this.pageSetupView;
+    return this.labelView;
   }
   
   /**
