@@ -231,7 +231,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private BufferedImage               backgroundImageCache;
   private Area                        wallsAreaCache;
   private Map<Content, BufferedImage> floorTextureImagesCache;
-  private WeakHashMap<HomePieceOfFurniture, FurnitureTopViewIconProxy> furnitureTopViewIconsCache;
+  private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
@@ -2472,13 +2472,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                         Color backgroundColor, Color foregroundColor, 
                                         PaintMode paintMode) {
     if (this.furnitureTopViewIconsCache == null) {
-      this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurniture, FurnitureTopViewIconProxy>();
+      this.furnitureTopViewIconsCache = new WeakHashMap<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon>();
     }
-    FurnitureTopViewIconProxy icon = this.furnitureTopViewIconsCache.get(piece);
+    PieceOfFurnitureTopViewIcon icon = this.furnitureTopViewIconsCache.get(piece);
     if (icon == null
         || icon.isWaitIcon()
            && paintMode != PaintMode.PAINT) {
-      icon = new FurnitureTopViewIconProxy(piece, 
+      icon = new PieceOfFurnitureTopViewIcon(piece, 
           paintMode == PaintMode.PAINT ? this : null);
       this.furnitureTopViewIconsCache.put(piece, icon);
     }
@@ -4060,7 +4060,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * A proxy for the furniture top view icon. 
    */
-  private static class FurnitureTopViewIconProxy implements Icon {
+  private static class PieceOfFurnitureTopViewIcon implements Icon {
     private static Icon        errorIcon;
     private static Icon        waitIcon;
     private static Canvas3D    canvas3D;      
@@ -4114,8 +4114,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
      * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
      *            be read immediately in the current thread.
      */
-    private FurnitureTopViewIconProxy(final HomePieceOfFurniture piece, 
-                                  final Component waitingComponent) {
+    private PieceOfFurnitureTopViewIcon(final HomePieceOfFurniture piece, 
+                                        final Component waitingComponent) {
       this.icon = waitIcon;
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
