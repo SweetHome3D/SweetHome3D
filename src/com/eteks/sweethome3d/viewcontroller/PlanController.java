@@ -4934,7 +4934,8 @@ public class PlanController extends FurnitureController implements Controller {
               break;      
             case ANGLE : 
               wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
-              if (this.lastWall != null) {
+              if (this.lastWall != null
+                  && this.lastWall.getLength() > 0) {
                 wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
                     this.lastWall.getXStart() - this.lastWall.getXEnd());
               }
@@ -5147,25 +5148,27 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     @Override
-    public void moveMouse(float x, float y) {      
-      // Compute the new angle of the piece
-      float angleMouseMove = (float)Math.atan2(this.selectedPiece.getY() - y, 
-          x - this.selectedPiece.getX()); 
-      float newAngle = this.oldAngle - angleMouseMove + this.angleMousePress;
-      
-      if (this.magnetismEnabled) {
-        float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
-        // Compute angles closest to a step angle (multiple of angleStep) 
-        newAngle = Math.round(newAngle / angleStep) * angleStep;
+    public void moveMouse(float x, float y) {
+      if (x != this.selectedPiece.getX() || y != this.selectedPiece.getY()) {
+        // Compute the new angle of the piece      
+        float angleMouseMove = (float)Math.atan2(this.selectedPiece.getY() - y, 
+            x - this.selectedPiece.getX()); 
+        float newAngle = this.oldAngle - angleMouseMove + this.angleMousePress;
+        
+        if (this.magnetismEnabled) {
+          float angleStep = 2 * (float)Math.PI / STEP_COUNT; 
+          // Compute angles closest to a step angle (multiple of angleStep) 
+          newAngle = Math.round(newAngle / angleStep) * angleStep;
+        }
+  
+        // Update piece new angle
+        this.selectedPiece.setAngle(newAngle); 
+  
+        // Ensure point at (x,y) is visible
+        PlanView planView = getView();
+        planView.makePointVisible(x, y);
+        planView.setToolTipFeedback(getToolTipFeedbackText(newAngle), x, y);
       }
-
-      // Update piece new angle
-      this.selectedPiece.setAngle(newAngle); 
-
-      // Ensure point at (x,y) is visible
-      PlanView planView = getView();
-      planView.makePointVisible(x, y);
-      planView.setToolTipFeedback(getToolTipFeedbackText(newAngle), x, y);
     }
 
     @Override
@@ -5638,30 +5641,32 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void moveMouse(float x, float y) {      
-      // Compute the new angle of the camera
-      float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
-          x - this.selectedCamera.getX());
-
-      // Compute yaw angle with a delta that takes into account the direction
-      // of the rotation (clock wise or counter clock wise) 
-      float deltaYaw = angleLastMouseMove - angleMouseMove;
-      float orientation = Math.signum((y - this.selectedCamera.getY()) * (this.xLastMouseMove - this.selectedCamera.getX()) 
-          - (this.yLastMouseMove - this.selectedCamera.getY()) * (x- this.selectedCamera.getX()));
-      if (orientation < 0 && deltaYaw > 0) {
-        deltaYaw -= (float)(Math.PI * 2f);
-      } else if (orientation > 0 && deltaYaw < 0) {
-        deltaYaw += (float)(Math.PI * 2f);
-      }  
-      
-      // Update camera new yaw angle
-      float newYaw = this.selectedCamera.getYaw() + deltaYaw;
-      this.selectedCamera.setYaw(newYaw); 
-
-      getView().setToolTipFeedback(getToolTipFeedbackText(newYaw), x, y);
-
-      this.xLastMouseMove = x;
-      this.yLastMouseMove = y;      
-      this.angleLastMouseMove = angleMouseMove;      
+      if (x != this.selectedCamera.getX() || y != this.selectedCamera.getY()) {
+        // Compute the new angle of the camera
+        float angleMouseMove = (float)Math.atan2(this.selectedCamera.getY() - y, 
+            x - this.selectedCamera.getX());
+  
+        // Compute yaw angle with a delta that takes into account the direction
+        // of the rotation (clock wise or counter clock wise) 
+        float deltaYaw = angleLastMouseMove - angleMouseMove;
+        float orientation = Math.signum((y - this.selectedCamera.getY()) * (this.xLastMouseMove - this.selectedCamera.getX()) 
+            - (this.yLastMouseMove - this.selectedCamera.getY()) * (x- this.selectedCamera.getX()));
+        if (orientation < 0 && deltaYaw > 0) {
+          deltaYaw -= (float)(Math.PI * 2f);
+        } else if (orientation > 0 && deltaYaw < 0) {
+          deltaYaw += (float)(Math.PI * 2f);
+        }  
+        
+        // Update camera new yaw angle
+        float newYaw = this.selectedCamera.getYaw() + deltaYaw;
+        this.selectedCamera.setYaw(newYaw); 
+  
+        getView().setToolTipFeedback(getToolTipFeedbackText(newYaw), x, y);
+  
+        this.xLastMouseMove = x;
+        this.yLastMouseMove = y;      
+        this.angleLastMouseMove = angleMouseMove;
+      }
     }
 
     @Override
@@ -6538,9 +6543,9 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     private void endRoomSide() {
-      // Create a new room side only when it will have one point
-      // meaning after the first mouse move
-      if (this.newRoom != null) {
+      // Create a new room side only when its length is greater than zero
+      if (this.newRoom != null
+          && getRoomSideLength(this.newRoom, this.newRoom.getPointCount() - 1) > 0) {        
         this.newPoint = new float [2];
         // Let's consider that any point outside of home will create 
         // by default a room with no ceiling
