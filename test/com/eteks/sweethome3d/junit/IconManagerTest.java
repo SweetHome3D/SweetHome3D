@@ -58,7 +58,7 @@ public class IconManagerTest extends TestCase {
     ThreadPoolExecutor iconsLoader = 
         (ThreadPoolExecutor)TestUtilities.getField(iconManager, "iconsLoader");
     iconsLoader.shutdownNow();
-    // Replace it by an excecutor that controls the start of a task with a barrier
+    // Replace it by an executor that controls the start of a task with a barrier
     final CyclicBarrier iconLoadingStartBarrier = new CyclicBarrier(2);
     final ThreadPoolExecutor replacingIconsLoader = 
       new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
@@ -97,7 +97,7 @@ public class IconManagerTest extends TestCase {
     Icon errorIcon = iconManager.getIcon(errorIconContent, HEIGHT, null);
     assertNotSame("Error icon loaded with IconProxy", errorIcon.getClass(), iconProxyClass);
 
-    // For other tests, replace again iconLoader by an excecutor that let icon loading complete normaly
+    // For other tests, replace again iconLoader by an executor that let icon loading complete normally
     final Executor nextTestsIconsLoader = Executors.newFixedThreadPool(5); 
     iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
       public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
