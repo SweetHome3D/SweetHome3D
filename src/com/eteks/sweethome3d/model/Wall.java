@@ -195,6 +195,13 @@ public class Wall implements Serializable, Selectable {
   }
 
   /**
+   * Returns the length from the start point of this wall to its end point.
+   */
+  public float getLength() {
+    return (float)Point2D.distance(getXStart(), getYStart(), getXEnd(), getYEnd());
+  }
+  
+  /**
    * Returns the wall joined to this wall at start point.
    */
   public Wall getWallAtStart() {

@@ -1353,7 +1353,8 @@ public class PlanController extends FurnitureController implements Controller {
     Wall wallAtPoint = null;
     // Search if point (x, y) is contained in home walls with no margin
     for (Wall wall : this.home.getWalls()) {
-      if (wall.containsPoint(x, y, 0)) {
+      if (wall.containsPoint(x, y, 0)
+          && wall.getLength() > 0) {
         wallAtPoint = wall;
         break;
       }
@@ -1362,7 +1363,8 @@ public class PlanController extends FurnitureController implements Controller {
       float margin = PIXEL_MARGIN / getScale();
       // If not found search if point (x, y) is contained in home walls with a margin
       for (Wall wall : this.home.getWalls()) {
-        if (wall.containsPoint(x, y, margin)) {
+        if (wall.containsPoint(x, y, margin)
+            && wall.getLength() > 0) {
           wallAtPoint = wall;
           break;
         }
@@ -4501,7 +4503,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
     
     protected String getToolTipFeedbackText(Wall wall) {
-      float length = getWallLength(wall);
+      float length = wall.getLength();
       int wallAngle = getWallAngle(wall, length);
       return "<html>" + String.format(this.wallLengthToolTipFeedback, 
           preferences.getLengthUnit().getFormatWithUnit().format(length))
@@ -4510,16 +4512,11 @@ public class PlanController extends FurnitureController implements Controller {
               preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
     }
     
-    protected float getWallLength(Wall wall) {
-      return (float)Point2D.distance(wall.getXStart(), wall.getYStart(), 
-          wall.getXEnd(), wall.getYEnd());
-    }
-
     /**
      * Returns wall angle in degrees.
      */
     protected Integer getWallAngle(Wall wall) {
-      return getWallAngle(wall, getWallLength(wall));
+      return getWallAngle(wall, wall.getLength());
     }
 
     private Integer getWallAngle(Wall wall, float wallLength) {
@@ -4726,8 +4723,8 @@ public class PlanController extends FurnitureController implements Controller {
         validateDrawnWalls();
       } else {
         // Create a new wall only when it will have a length > 0
-        // meaning after the first mouse move
-        if (this.newWall != null) {
+        if (this.newWall != null
+            && this.newWall.getLength() > 0) {
           getView().deleteToolTipFeedback();
           selectItem(this.newWall);
           endWallCreation();
@@ -4841,7 +4838,7 @@ public class PlanController extends FurnitureController implements Controller {
           planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
                                                                        EditableProperty.ANGLE,
                                                                        EditableProperty.THICKNESS},
-              new Object [] {getWallLength(this.newWall), 
+              new Object [] {this.newWall.getLength(), 
                              getWallAngle(this.newWall), 
                              this.newWall.getThickness()},
               this.newWall.getXEnd(), this.newWall.getYEnd());
@@ -4892,7 +4889,7 @@ public class PlanController extends FurnitureController implements Controller {
       double previousWallAngle = Math.PI - Math.atan2(previousWall.getYStart() - previousWall.getYEnd(), 
           previousWall.getXStart() - previousWall.getXEnd());
       previousWallAngle -=  Math.PI / 2;
-      float previousWallLength = getWallLength(previousWall); 
+      float previousWallLength = previousWall.getLength(); 
       this.xLastEnd = (float)(this.xStart + previousWallLength * Math.cos(previousWallAngle));
       this.yLastEnd = (float)(this.yStart - previousWallLength * Math.sin(previousWallAngle));
       this.newWall = createWall(this.xStart, this.yStart, 
@@ -4941,7 +4938,7 @@ public class PlanController extends FurnitureController implements Controller {
                 wallAngle -= Math.atan2(this.lastWall.getYStart() - this.lastWall.getYEnd(), 
                     this.lastWall.getXStart() - this.lastWall.getXEnd());
               }
-              float wallLength = getWallLength(this.newWall);              
+              float wallLength = this.newWall.getLength();              
               this.xLastEnd = (float)(this.xStart + wallLength * Math.cos(wallAngle));
               this.yLastEnd = (float)(this.yStart - wallLength * Math.sin(wallAngle));
               break;
