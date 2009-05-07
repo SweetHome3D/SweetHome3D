@@ -111,7 +111,6 @@ public class TextureManager {
    * white image texture will be notified immediately to the given <code>textureObserver</code>, 
    * then a second notification will be given once the image texture is loaded in Event Dispatch Thread. 
    * If the texture is in cache, it will be notified immediately to the given <code>textureObserver</code>.
-   * If <code>synchronous</code> is <code>true</code>, 
    * @param content an object containing an image
    * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
    * @param textureObserver the observer that will be notified once the texture is available
