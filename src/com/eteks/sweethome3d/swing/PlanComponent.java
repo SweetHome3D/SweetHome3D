@@ -652,10 +652,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public void propertyChange(PropertyChangeEvent ev) {
       // If plan component was garbage collected, remove this listener from preferences
       PlanComponent planComponent = this.planComponent.get();
+      UserPreferences preferences = (UserPreferences)ev.getSource();
       if (planComponent == null) {
-        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+        preferences.removePropertyChangeListener(
             UserPreferences.Property.valueOf(ev.getPropertyName()), this);
       } else {
+        if (planComponent.furnitureTopViewIconsCache != null
+            && !preferences.isFurnitureViewedFromTop()) {
+          planComponent.furnitureTopViewIconsCache = null;
+        }
         planComponent.repaint();
       }
     }
