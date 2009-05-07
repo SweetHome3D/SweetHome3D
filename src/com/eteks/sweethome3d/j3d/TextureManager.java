@@ -25,6 +25,7 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
@@ -55,7 +56,7 @@ public class TextureManager {
   private TextureManager() {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
-    this.textures = new WeakHashMap<Content, Texture>();
+    this.textures = Collections.synchronizedMap(new WeakHashMap<Content, Texture>());
     this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 

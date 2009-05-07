@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.EventQueue;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,6 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -40,15 +43,29 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Bounds;
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Geometry;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.GeometryStripArray;
 import javax.media.j3d.Group;
+import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.IndexedGeometryStripArray;
+import javax.media.j3d.IndexedQuadArray;
+import javax.media.j3d.IndexedTriangleArray;
+import javax.media.j3d.IndexedTriangleFanArray;
+import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
 import javax.media.j3d.Node;
+import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
+import javax.media.j3d.TriangleArray;
+import javax.media.j3d.TriangleFanArray;
+import javax.media.j3d.TriangleStripArray;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
@@ -96,7 +113,7 @@ public class ModelManager {
   
   private ModelManager() {    
     // This class is a singleton
-    this.modelNodes = new WeakHashMap<Content, BranchGroup>();
+    this.modelNodes = Collections.synchronizedMap(new WeakHashMap<Content, BranchGroup>());
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
     if (loaderClassNames != null) {
@@ -453,6 +470,286 @@ public class ModelManager {
       }
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
+    }
+  }
+
+  /**
+   * Returns the 2D area of the 3D shapes children of the given <code>node</code> 
+   * projected on the floor (plan y = 0). 
+   */
+  public Area getAreaOnFloor(Node node) {
+    Area modelAreaOnFloor = new Area();
+    computeAreaOnFloor(node, node, modelAreaOnFloor);
+    return modelAreaOnFloor;
+  }
+  
+  /**
+   * Computes the 2D area on floor of a the 3D shapes children of <code>node</code>.
+   */
+  private void computeAreaOnFloor(Node parent, Node node, Area nodeArea) {
+    if (node instanceof Group) {
+      // Compute all children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        computeAreaOnFloor(parent, (Node)enumeration.nextElement(), nodeArea);
+      }
+    } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      // Retrieve transformation applied to vertices
+      Transform3D transformationToParent = getTransformationToParent(parent, node);
+      // Compute shape geometries area
+      for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+        computeGeometryAreaOnFloor(shape.getGeometry(i), transformationToParent, nodeArea);
+      }
+    }    
+  }
+  
+  /**
+   * Returns the transformation applied to a <code>child</code> 
+   * on the path to <code>parent</code>. 
+   */
+  private Transform3D getTransformationToParent(Node parent, Node child) {
+    Transform3D transform = new Transform3D();
+    if (child instanceof TransformGroup) {
+      ((TransformGroup)child).getTransform(transform);
+    }
+    if (child != parent) {
+      Transform3D parentTransform = getTransformationToParent(parent, child.getParent());
+      parentTransform.mul(transform);
+      return parentTransform;
+    } else {
+      return transform;
+    }
+  }
+  
+  /**
+   * Computes the area on floor of a 3D geometry.
+   */
+  private void computeGeometryAreaOnFloor(Geometry geometry, 
+                                          Transform3D transformationToParent, 
+                                          Area nodeArea) {
+    if (geometry instanceof GeometryArray) {
+      GeometryArray geometryArray = (GeometryArray)geometry;      
+
+      int vertexCount = geometryArray.getVertexCount();
+      float [] vertices = new float [vertexCount * 2]; 
+      Point3f vertex = new Point3f();
+      if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+        if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+          float [] vertexData = geometryArray.getInterleavedVertices();
+          int vertexSize = vertexData.length / vertexCount;
+          // Store vertices coordinates 
+          for (int index = 0, i = vertexSize - 3; index < vertices.length; i += vertexSize) {
+            vertex.x = vertexData [i];
+            vertex.y = vertexData [i + 1];
+            vertex.z = vertexData [i + 2];
+            transformationToParent.transform(vertex);
+            vertices [index++] = vertex.x;
+            vertices [index++] = vertex.z;
+          }
+        } else {
+          // Store vertices coordinates
+          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+          for (int index = 0, i = 0; index < vertices.length; i += 3) {
+            vertex.x = vertexCoordinates [i];
+            vertex.y = vertexCoordinates [i + 1];
+            vertex.z = vertexCoordinates [i + 2];
+            transformationToParent.transform(vertex);
+            vertices [index++] = vertex.x;
+            vertices [index++] = vertex.z;
+          }
+        }
+      } else {
+        // Store vertices coordinates
+        for (int index = 0, i = 0; index < vertices.length; i++) {
+          geometryArray.getCoordinate(i, vertex);
+          transformationToParent.transform(vertex);
+          vertices [index++] = vertex.x;
+          vertices [index++] = vertex.z;
+        }
+      }
+
+      // Create path from triangles or quadrilaterals of geometry
+      GeneralPath geometryPath = null;
+      if (geometryArray instanceof IndexedGeometryArray) {
+        if (geometryArray instanceof IndexedTriangleArray) {
+          IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          for (int i = 0, triangleIndex = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
+            addIndexedTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
+                geometryPath, triangleIndex++, nodeArea);
+          }
+        } else if (geometryArray instanceof IndexedQuadArray) {
+          IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          for (int i = 0, quadrilateralIndex = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
+            addIndexedQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
+                geometryPath, quadrilateralIndex++, nodeArea); 
+          }
+        } else if (geometryArray instanceof IndexedGeometryStripArray) {
+          IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
+          int [] stripIndexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripIndexCounts(stripIndexCounts);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          int initialIndex = 0; 
+          
+          if (geometryStripArray instanceof IndexedTriangleStripArray) {
+            for (int strip = 0, triangleIndex = 0; strip < stripIndexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2, j = 0; i < n; i++, j++) {
+                if (j % 2 == 0) {
+                  addIndexedTriangleToPath(geometryStripArray, i, i + 1, i + 2, vertices, 
+                      geometryPath, triangleIndex++, nodeArea); 
+                } else { // Vertices of odd triangles are in reverse order               
+                  addIndexedTriangleToPath(geometryStripArray, i, i + 2, i + 1, vertices, 
+                      geometryPath, triangleIndex++, nodeArea);
+                }
+              }
+              initialIndex += stripIndexCounts [strip];
+            }
+          } else if (geometryStripArray instanceof IndexedTriangleFanArray) {
+            for (int strip = 0, triangleIndex = 0; strip < stripIndexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2; i < n; i++) {
+                addIndexedTriangleToPath(geometryStripArray, initialIndex, i + 1, i + 2, vertices, 
+                    geometryPath, triangleIndex++, nodeArea); 
+              }
+              initialIndex += stripIndexCounts [strip];
+            }
+          }
+        }
+      } else {
+        if (geometryArray instanceof TriangleArray) {
+          TriangleArray triangleArray = (TriangleArray)geometryArray;
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          for (int i = 0, triangleIndex = 0; i < vertexCount; i += 3) {
+            addTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
+                geometryPath, triangleIndex++, nodeArea);
+          }
+        } else if (geometryArray instanceof QuadArray) {
+          QuadArray quadArray = (QuadArray)geometryArray;
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          for (int i = 0, quadrilateralIndex = 0; i < vertexCount; i += 4) {
+            addQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
+                geometryPath, quadrilateralIndex++, nodeArea);
+          }
+        } else if (geometryArray instanceof GeometryStripArray) {
+          GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
+          int [] stripVertexCounts = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripVertexCounts(stripVertexCounts);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          int initialIndex = 0;
+          
+          if (geometryStripArray instanceof TriangleStripArray) {
+            for (int strip = 0, triangleIndex = 0; strip < stripVertexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2, j = 0; i < n; i++, j++) {
+                if (j % 2 == 0) {
+                  addTriangleToPath(geometryStripArray, i, i + 1, i + 2, vertices, 
+                      geometryPath, triangleIndex++, nodeArea);
+                } else { // Vertices of odd triangles are in reverse order               
+                  addTriangleToPath(geometryStripArray, i, i + 2, i + 1, vertices, 
+                      geometryPath, triangleIndex++, nodeArea);
+                }
+              }
+              initialIndex += stripVertexCounts [strip];
+            }
+          } else if (geometryStripArray instanceof TriangleFanArray) {
+            for (int strip = 0, triangleIndex = 0; strip < stripVertexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2; i < n; i++) {
+                addTriangleToPath(geometryStripArray, initialIndex, i + 1, i + 2, vertices, 
+                    geometryPath, triangleIndex++, nodeArea);
+              }
+              initialIndex += stripVertexCounts [strip];
+            }
+          }
+        }
+      }
+      
+      if (geometryPath != null) {
+        nodeArea.add(new Area(geometryPath));
+      }
+    } 
+  }
+
+  /**
+   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * vertexIndex1, vertexIndex2, vertexIndex3 indices.
+   */
+  private void addIndexedTriangleToPath(IndexedGeometryArray geometryArray, 
+                                    int vertexIndex1, int vertexIndex2, int vertexIndex3, 
+                                    float [] vertices, 
+                                    GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
+    addTriangleToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
+        geometryArray.getCoordinateIndex(vertexIndex2), 
+        geometryArray.getCoordinateIndex(vertexIndex3), vertices, geometryPath, triangleIndex, nodeArea);
+  }
+  
+  /**
+   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices.
+   */
+  private void addIndexedQuadrilateralToPath(IndexedGeometryArray geometryArray, 
+                                         int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
+                                         float [] vertices, 
+                                         GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
+    addQuadrilateralToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
+        geometryArray.getCoordinateIndex(vertexIndex2), 
+        geometryArray.getCoordinateIndex(vertexIndex3), 
+        geometryArray.getCoordinateIndex(vertexIndex4), vertices, geometryPath, quadrilateralIndex, nodeArea);
+  }
+  
+  /**
+   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * vertexIndex1, vertexIndex2, vertexIndex3 indices, 
+   * only if the triangle has a positive orientation. .
+   */
+  private void addTriangleToPath(GeometryArray geometryArray, 
+                             int vertexIndex1, int vertexIndex2, int vertexIndex3, 
+                             float [] vertices, 
+                             GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
+    float xVertex1 = vertices [2 * vertexIndex1];
+    float yVertex1 = vertices [2 * vertexIndex1 + 1];
+    float xVertex2 = vertices [2 * vertexIndex2];
+    float yVertex2 = vertices [2 * vertexIndex2 + 1];
+    float xVertex3 = vertices [2 * vertexIndex3];
+    float yVertex3 = vertices [2 * vertexIndex3 + 1];
+    if ((xVertex2 - xVertex1) * (yVertex3 - yVertex2) - (yVertex2 - yVertex1) * (xVertex3 - xVertex2) > 0) {
+      if (triangleIndex > 0 && triangleIndex % 1000 == 0) {
+        // Add now current path to area otherwise area gets too slow
+        nodeArea.add(new Area(geometryPath));
+        geometryPath.reset();
+      }
+      geometryPath.moveTo(xVertex1, yVertex1);      
+      geometryPath.lineTo(xVertex2, yVertex2);      
+      geometryPath.lineTo(xVertex3, yVertex3);
+      geometryPath.closePath();
+    }
+  }
+  
+  /**
+   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices, 
+   * only if the quadrilateral has a positive orientation. 
+   */
+  private void addQuadrilateralToPath(GeometryArray geometryArray, 
+                                      int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
+                                      float [] vertices, 
+                                      GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
+    float xVertex1 = vertices [2 * vertexIndex1];
+    float yVertex1 = vertices [2 * vertexIndex1 + 1];
+    float xVertex2 = vertices [2 * vertexIndex2];
+    float yVertex2 = vertices [2 * vertexIndex2 + 1];
+    float xVertex3 = vertices [2 * vertexIndex3];
+    float yVertex3 = vertices [2 * vertexIndex3 + 1];
+    if ((xVertex2 - xVertex1) * (yVertex3 - yVertex2) - (yVertex2 - yVertex1) * (xVertex3 - xVertex2) > 0) {
+      if (quadrilateralIndex > 0 && quadrilateralIndex % 1000 == 0) {
+        // Add now current path to area otherwise area gets too slow
+        nodeArea.add(new Area(geometryPath));
+        geometryPath.reset();
+      }
+      geometryPath.moveTo(xVertex1, yVertex1);      
+      geometryPath.lineTo(xVertex2, yVertex2);      
+      geometryPath.lineTo(xVertex3, yVertex3);
+      geometryPath.lineTo(vertices [2 * vertexIndex4], vertices [2 * vertexIndex4 + 1]);
+      geometryPath.closePath();
     }
   }
 

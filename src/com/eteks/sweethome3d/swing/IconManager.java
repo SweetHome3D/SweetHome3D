@@ -25,6 +25,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -56,7 +57,7 @@ public class IconManager {
   private IconManager() {
     this.errorIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-missing.png");
     this.waitIconContent = new ResourceURLContent(IconManager.class, "resources/icons/tango/image-loading.png");
-    this.icons = new WeakHashMap<Content, Map<Integer, Icon>>();
+    this.icons = Collections.synchronizedMap(new WeakHashMap<Content, Map<Integer, Icon>>());
     this.iconsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
   }
   
@@ -106,7 +107,7 @@ public class IconManager {
   public Icon getIcon(Content content, int height, Component waitingComponent) {
     Map<Integer, Icon> contentIcons = this.icons.get(content);
     if (contentIcons == null) {
-      contentIcons = new HashMap<Integer, Icon>();
+      contentIcons = Collections.synchronizedMap(new HashMap<Integer, Icon>());
       this.icons.put(content, contentIcons);
     }
     Icon icon = contentIcons.get(height);
