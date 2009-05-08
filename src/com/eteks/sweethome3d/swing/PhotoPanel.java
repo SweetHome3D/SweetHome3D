@@ -328,33 +328,40 @@ public class PhotoPanel extends JPanel implements DialogView {
     photoPanel.setBorder(BorderFactory.createEtchedBorder());
     // First row
     add(photoPanel, new GridBagConstraints(
-        0, 0, 4, 1, 0, 0, labelAlignment, 
+        0, 0, 6, 1, 1, 1, labelAlignment, 
         GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
     // Second row
+    // Add a dummy label at left and right
+    add(new JLabel(), new GridBagConstraints(
+        0, 1, 1, 3, 0.5f, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    add(new JLabel(), new GridBagConstraints(
+        5, 1, 1, 3, 0.5f, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     Insets labelInsets = new Insets(0, 0, 5, 5);
     add(this.widthLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
+        1, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets componentInsets = new Insets(0, 0, 5, 10);
     add(this.widthSpinner, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     add(this.heightLabel, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, labelAlignment, 
+        3, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.heightSpinner, new GridBagConstraints(
-        3, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Third row
     add(this.keep3DViewProportionsCheckBox, new GridBagConstraints(
-        0, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        1, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
     // Last row
     add(this.qualityLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
+        1, 3, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     add(this.qualitySlider, new GridBagConstraints(
-        1, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
+        2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
   }
   
