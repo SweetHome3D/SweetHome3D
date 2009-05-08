@@ -1843,7 +1843,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       public void textureUpdated(Texture texture) {
                         floorTextureImagesCache.put(floorTexture.getImage(), 
                             ((ImageComponent2D)texture.getImage(0)).getImage());
-                        if (waitForTexture) {
+                        if (!waitForTexture) {
                           repaint();
                         }
                       }
