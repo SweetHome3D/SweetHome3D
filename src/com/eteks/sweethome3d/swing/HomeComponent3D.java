@@ -29,6 +29,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Area;
+import java.awt.geom.PathIterator;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -39,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.media.j3d.Alpha;
@@ -61,6 +64,7 @@ import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransformInterpolator;
+import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -79,6 +83,7 @@ import javax.vecmath.Vector3f;
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.Ground3D;
 import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
+import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.Object3DBranch;
 import com.eteks.sweethome3d.j3d.Room3D;
 import com.eteks.sweethome3d.j3d.TextureManager;
@@ -110,6 +115,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
   
   private final Home                               home;
+  private final boolean                            displayShadowOnFloor;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
   private SimpleUniverse                           universe;
@@ -153,18 +159,42 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Creates a 3D component that displays <code>home</code> walls, rooms  and furniture.
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
+   * with shadows on the floor.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *             by this component couldn't be created.
+   */
+  public HomeComponent3D(Home home, 
+                         UserPreferences  preferences, 
+                         boolean displayShadowOnFloor) {
+    this(home, preferences, displayShadowOnFloor, null);  
+  }
+  
+  /**
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
    * @throws IllegalRenderingStateException  if the canvas 3D displayed 
    *            by this component couldn't be created.
    */
   public HomeComponent3D(Home home,
                          UserPreferences  preferences,
                          HomeController3D controller) {
+    this(home, preferences, false, controller);    
+  }
+
+  /**
+   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture.
+   * @throws IllegalRenderingStateException  if the canvas 3D displayed 
+   *            by this component couldn't be created.
+   */
+  private HomeComponent3D(Home home,
+                          UserPreferences  preferences,
+                          boolean displayShadowOnFloor,
+                          HomeController3D controller) {
     this.home = home;
-    
+    this.displayShadowOnFloor = displayShadowOnFloor;
+
     // Create the Java 3D canvas that will display home 
     Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();    
-    // Layout canvas3D
     setLayout(new GridLayout(1, 1));
     add(canvas3D);
 
@@ -178,18 +208,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     // Add an ancestor listener to create canvas universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
-    addAncestorListener(canvas3D, home);
+    addAncestorListener(canvas3D, home, displayShadowOnFloor);
   }
 
   /**
    * Adds an ancestor listener to this component to manage canvas universe 
    * creation and clean up.  
    */
-  private void addAncestorListener(final Canvas3D canvas3D, 
-                                    final Home home) {
+  private void addAncestorListener(final Canvas3D canvas3D,
+                                   final Home home, 
+                                   final boolean displayShadowOnFloor) {
     addAncestorListener(new AncestorListener() {        
         public void ancestorAdded(AncestorEvent event) {
-          universe = createUniverse(home);
+          universe = createUniverse(home, displayShadowOnFloor, true, false);
           // Bind universe to canvas3D
           universe.getViewer().getView().addCanvas3D(canvas3D);
           canvas3D.setFocusable(false);
@@ -208,7 +239,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns a new 3D universe that displays <code>home</code> objects.
    */
-  private SimpleUniverse createUniverse(Home home) {
+  private SimpleUniverse createUniverse(Home home, 
+                                        boolean displayShadowOnFloor,
+                                        boolean listenToHomeUpdates, 
+                                        boolean waitForLoading) {
     // Create a universe bound to no canvas 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     // Add an interpolator to view transform to get smooth transition 
@@ -229,10 +263,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), false);
     
     // Add camera listeners to update later point of view from camera
-    addCameraListeners(home, view, viewPlatformTransform);
+    if (listenToHomeUpdates) {
+      addCameraListeners(home, view, viewPlatformTransform);
+    }
     
     // Link scene matching home to universe
-    universe.addBranchGraph(createSceneTree(home));
+    universe.addBranchGraph(createSceneTree(
+        home, displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
     
     return universe;
   }
@@ -276,26 +313,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       int printedImageSize = (int)(printSize / 72 * 150);
       if (this.printedImage == null 
           || this.printedImage.getWidth() != printedImageSize) {
-        SimpleUniverse printUniverse = null;
         try {
-          View view;
-          if (this.universe == null) {
-            printUniverse = createUniverse(this.home);
-            view = printUniverse.getViewer().getView();
-          } else {
-            view = this.universe.getViewer().getView();
-          }
-       
-          this.printedImage = Component3DManager.getInstance().
-              getOffScreenImage(view, printedImageSize, printedImageSize);
+          this.printedImage = getOffScreenImage(printedImageSize, printedImageSize);
         } catch (IllegalRenderingStateException ex) {
           // If off screen canvas failed, consider that 3D view page doesn't exist
           return NO_SUCH_PAGE;
-        } finally {
-          if (printUniverse != null) {
-            printUniverse.cleanup();
-            removeHomeListeners(this.home);
-          } 
         }
       }
   
@@ -311,6 +333,28 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       return PAGE_EXISTS;
     } else {
       return NO_SUCH_PAGE;
+    }
+  }
+  
+  /**
+   * Returns an image of the home viewed by this component at the given size.
+   */
+  public BufferedImage getOffScreenImage(int width, int height) {
+    SimpleUniverse offScreenImageUniverse = null;
+    try {
+      View view;
+      if (this.universe == null) {
+        offScreenImageUniverse = createUniverse(this.home, this.displayShadowOnFloor, false, true);
+        view = offScreenImageUniverse.getViewer().getView();
+      } else {
+        view = this.universe.getViewer().getView();
+      }
+   
+      return Component3DManager.getInstance().getOffScreenImage(view, width, height);
+    } finally {
+      if (offScreenImageUniverse != null) {
+        offScreenImageUniverse.cleanup();
+      } 
     }
   }
   
@@ -639,14 +683,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns a new scene tree root.
    */
-  private BranchGroup createSceneTree(Home home) {
+  private BranchGroup createSceneTree(Home home,
+                                      boolean displayShadowOnFloor,
+                                      boolean listenToHomeUpdates, 
+                                      boolean waitForLoading) {
     BranchGroup root = new BranchGroup();
 
     // Build scene tree
-    root.addChild(createHomeTree(home));
-    root.addChild(createBackgroundNode(home));
-    root.addChild(createGroundNode(home, -1E5f / 2, -1E5f / 2, 1E5f, 1E5f));
-    for (Light light : createLights(home)) {
+    root.addChild(createHomeTree(home, displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
+    root.addChild(createBackgroundNode(home, listenToHomeUpdates));
+    root.addChild(createGroundNode(home, -1E5f / 2, -1E5f / 2, 1E5f, 1E5f, listenToHomeUpdates, waitForLoading));
+    for (Light light : createLights(home, listenToHomeUpdates)) {
       root.addChild(light);
     }
 
@@ -656,7 +703,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns a new background node.  
    */
-  private Node createBackgroundNode(final Home home) {
+  private Node createBackgroundNode(final Home home, boolean listenToHomeUpdates) {
     final Appearance backgroundAppearance = new Appearance();
     ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
     backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
@@ -677,16 +724,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         new Point3d(-1E6, -1E6, -1E6), 
         new Point3d(1E6, 1E6, 1E6)));    
     
-    // Add a listener on sky color and texture properties change 
-    this.skyColorListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          updateBackgroundColorAndTexture(backgroundAppearance, home);
-        }
-      };
-    home.getEnvironment().addPropertyChangeListener(
-        HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
-    home.getEnvironment().addPropertyChangeListener(
-        HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
+    if (listenToHomeUpdates) {
+      // Add a listener on sky color and texture properties change 
+      this.skyColorListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateBackgroundColorAndTexture(backgroundAppearance, home);
+          }
+        };
+      home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.SKY_COLOR, this.skyColorListener);
+      home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.SKY_TEXTURE, this.skyColorListener);
+    }
     return background;
   }
 
@@ -767,22 +816,26 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                 final float groundOriginX,
                                 final float groundOriginY,
                                 final float groundWidth,
-                                final float groundDepth) {
+                                final float groundDepth, 
+                                boolean listenToHomeUpdates,
+                                boolean waitForLoading) {
     final Ground3D ground3D = new Ground3D(home, 
-        groundOriginX, groundOriginY, groundWidth, groundDepth, false);
+        groundOriginX, groundOriginY, groundWidth, groundDepth, waitForLoading);
     
-    // Add a listener on ground color and texture properties change 
-    this.groundColorAndTextureListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          ground3D.update();
-          clearPrintedImageCache();
-        }
-      };
-    HomeEnvironment homeEnvironment = home.getEnvironment();
-    homeEnvironment.addPropertyChangeListener(
-        HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
-    homeEnvironment.addPropertyChangeListener(
-        HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener); 
+    if (listenToHomeUpdates) {
+      // Add a listener on ground color and texture properties change 
+      this.groundColorAndTextureListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            ground3D.update();
+            clearPrintedImageCache();
+          }
+        };
+      HomeEnvironment homeEnvironment = home.getEnvironment();
+      homeEnvironment.addPropertyChangeListener(
+          HomeEnvironment.Property.GROUND_COLOR, this.groundColorAndTextureListener); 
+      homeEnvironment.addPropertyChangeListener(
+          HomeEnvironment.Property.GROUND_TEXTURE, this.groundColorAndTextureListener);
+    }
     
     return ground3D;
   }
@@ -790,7 +843,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Returns the lights of the scene.
    */
-  private Light [] createLights(final Home home) {
+  private Light [] createLights(final Home home, 
+                                boolean listenToHomeUpdates) {
     final Light [] lights = {
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(1.5f, -0.8f, -1)),         
         new DirectionalLight(new Color3f(1, 1, 1), new Vector3f(-1.5f, -0.8f, -1)), 
@@ -811,16 +865,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       light.setInfluencingBounds(new BoundingSphere(new Point3d(), 10000));
     }
     
-    // Add a listener on light color property change to home
-    this.lightColorListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          for (int i = 0; i < lights.length - 1; i++) {
-            updateLightColor(lights [i], home);
+    if (listenToHomeUpdates) {
+      // Add a listener on light color property change to home
+      this.lightColorListener = new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            for (int i = 0; i < lights.length - 1; i++) {
+              updateLightColor(lights [i], home);
+            }
           }
-        }
-      };
-    home.getEnvironment().addPropertyChangeListener(
-        HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener); 
+        };
+      home.getEnvironment().addPropertyChangeListener(
+          HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
+    }
     
     return lights;
   }
@@ -841,24 +897,34 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns a <code>home</code> new tree node, with branches for each wall 
    * and piece of furniture of <code>home</code>. 
    */
-  private Node createHomeTree(Home home) {
+  private Node createHomeTree(Home home, 
+                              boolean displayShadowOnFloor, 
+                              boolean listenToHomeUpdates, 
+                              boolean waitForLoading) {
     Group homeRoot = createHomeRoot();
     // Add walls, pieces and rooms already available 
     for (Wall wall : home.getWalls()) {
-      addWall(homeRoot, wall, home);
+      addWall(homeRoot, wall, home, waitForLoading);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
-      addPieceOfFurniture(homeRoot, piece, home);
+      addPieceOfFurniture(homeRoot, piece, home, waitForLoading);
     }
     for (Room room : home.getRooms()) {
-      addRoom(homeRoot, room, home);
+      addRoom(homeRoot, room, home, waitForLoading);
+    }    
+    
+    if (displayShadowOnFloor && !listenToHomeUpdates) {
+      addShadowOnFloor(homeRoot);
     }
-    // Add wall, furniture, room listeners to home for further update
-    addWallListener(home, homeRoot);
-    addFurnitureListener(home, homeRoot);
-    addRoomListener(home, homeRoot);
-    // Add environment listeners
-    addEnvironmentListeners(home);
+    
+    if (listenToHomeUpdates) {
+      // Add wall, furniture, room listeners to home for further update    
+      addWallListener(home, homeRoot);
+      addFurnitureListener(home, homeRoot);
+      addRoomListener(home, homeRoot);
+      // Add environment listeners
+      addEnvironmentListeners(home);
+    }
     return homeRoot;
   }
 
@@ -892,7 +958,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           Wall wall = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addWall(homeRoot, wall, home);
+              addWall(homeRoot, wall, home, false);
               wall.addPropertyChangeListener(wallChangeListener);
               break;
             case DELETE :
@@ -931,7 +997,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addPieceOfFurniture(homeRoot, piece, home);
+              addPieceOfFurniture(homeRoot, piece, home, false);
               piece.addPropertyChangeListener(furnitureChangeListener);
               break;
             case DELETE :
@@ -967,7 +1033,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           Room room = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addRoom(homeRoot, room, home);
+              addRoom(homeRoot, room, home, false);
               room.addPropertyChangeListener(roomChangeListener);
               break;
             case DELETE :
@@ -1006,8 +1072,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>homeRoot</code> a wall branch matching <code>wall</code>.
    */
-  private void addWall(Group homeRoot, Wall wall, Home home) {
-    Wall3D wall3D = new Wall3D(wall, home);
+  private void addWall(Group homeRoot, Wall wall, Home home, 
+                       boolean waitForLoading) {
+    Wall3D wall3D = new Wall3D(wall, home, false, waitForLoading);
     this.homeObjects.put(wall, wall3D);
     homeRoot.addChild(wall3D);
     clearPrintedImageCache();
@@ -1041,8 +1108,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>homeRoot</code> a piece branch matching <code>piece</code>.
    */
-  private void addPieceOfFurniture(Group homeRoot, HomePieceOfFurniture piece, Home home) {
-    HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home);
+  private void addPieceOfFurniture(Group homeRoot, HomePieceOfFurniture piece, Home home, 
+                                   boolean waitForLoading) {
+    HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home, false, waitForLoading);
     this.homeObjects.put(piece, piece3D);
     homeRoot.addChild(piece3D);
     clearPrintedImageCache();
@@ -1058,8 +1126,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds to <code>homeRoot</code> a room branch matching <code>room</code>.
    */
-  private void addRoom(Group homeRoot, Room room, Home home) {
-    Room3D room3D = new Room3D(room, home);
+  private void addRoom(Group homeRoot, Room room, Home home, 
+                       boolean waitForLoading) {
+    Room3D room3D = new Room3D(room, home, false, false, waitForLoading);
     this.homeObjects.put(room, room3D);
     homeRoot.addChild(room3D);
     clearPrintedImageCache();
@@ -1095,5 +1164,61 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       });
     }
     clearPrintedImageCache();
+  }
+  
+  /**
+   * Adds to <code>homeRoot</code> a shape matching the shadow of furniture at ground level.
+   */
+  private void addShadowOnFloor(Group homeRoot) {
+    Area areaOnFloor = new Area();
+    // Compute union of the areas of pieces at ground level that are not lights, doors or windows
+    for (Map.Entry<Selectable, Object3DBranch> object3DEntry : this.homeObjects.entrySet()) {
+      if (object3DEntry.getKey() instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)object3DEntry.getKey();
+        // This operation can be lengthy, so give up if thread is interrupted 
+        if (Thread.interrupted()) {
+          return;
+        }
+        if (piece.getElevation() == 0 
+            && !piece.isDoorOrWindow()
+            && !(piece instanceof com.eteks.sweethome3d.model.Light)) {
+          Area pieceAreaOnFloor = ModelManager.getInstance().getAreaOnFloor(object3DEntry.getValue());
+          areaOnFloor.add(pieceAreaOnFloor);
+        }
+      }
+    }
+    
+    // Create the 3D shape matching computed area
+    List<Point3f> coords = new ArrayList<Point3f>();
+    List<Integer> stripCounts = new ArrayList<Integer>();
+    int pointsCount = 0;
+    float [] modelPoint = new float[2];
+    for (PathIterator it = areaOnFloor.getPathIterator(null); !it.isDone(); ) {
+      if (it.currentSegment(modelPoint) == PathIterator.SEG_CLOSE) {
+        stripCounts.add(pointsCount);
+        pointsCount = 0;
+      } else {
+        coords.add(new Point3f(modelPoint [0], 0.49f, modelPoint [1]));
+        pointsCount++;
+      }
+      it.next();
+    }
+
+    if (coords.size() > 0) {
+      GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+      geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
+      int [] stripCountsArray = new int [stripCounts.size()];
+      for (int i = 0; i < stripCountsArray.length; i++) {
+        stripCountsArray [i] = stripCounts.get(i);
+      }
+      geometryInfo.setStripCounts(stripCountsArray);
+ 
+      Shape3D shadow = new Shape3D(geometryInfo.getIndexedGeometryArray());
+      Appearance shadowAppearance = new Appearance();
+      shadowAppearance.setColoringAttributes(new ColoringAttributes(new Color3f(), ColoringAttributes.SHADE_FLAT));
+      shadowAppearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 0.7f));
+      shadow.setAppearance(shadowAppearance);    
+      homeRoot.addChild(shadow);
+    }
   }
 }

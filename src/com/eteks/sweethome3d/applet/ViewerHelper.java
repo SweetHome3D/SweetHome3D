@@ -72,6 +72,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
+import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
@@ -233,6 +234,10 @@ public final class ViewerHelper {
         }
 
         public DialogView createWizardView(UserPreferences preferences, WizardController wizardController) {
+          throw new UnsupportedOperationException();
+        }
+
+        public DialogView createPhotoView(Home home, UserPreferences preferences, PhotoController photoController) {
           throw new UnsupportedOperationException();
         }
       };

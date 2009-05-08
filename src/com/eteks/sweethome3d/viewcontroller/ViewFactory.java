@@ -158,6 +158,12 @@ public interface ViewFactory {
                                                     PrintPreviewController printPreviewController);
 
   /**
+   * Returns a new view able to compute a photo realistic image of a home. 
+   */
+  public abstract DialogView createPhotoView(Home home, UserPreferences preferences, 
+                                             PhotoController photoController);
+
+  /**
    * Returns a new view that displays Sweet Home 3D help.
    */
   public abstract HelpView createHelpView(UserPreferences preferences,

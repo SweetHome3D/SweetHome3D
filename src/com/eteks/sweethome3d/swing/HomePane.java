@@ -422,6 +422,7 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getHomeController3D(), "viewFromObserver");
     createAction(preferences, ActionType.MODIFY_3D_ATTRIBUTES, 
         controller.getHomeController3D(), "modifyAttributes");
+    createAction(preferences, ActionType.CREATE_PHOTO, controller, "createPhoto");
     createAction(preferences, ActionType.EXPORT_TO_OBJ, controller, "exportToOBJ");
     
     createAction(preferences, ActionType.HELP, controller, "help");
@@ -716,6 +717,7 @@ public class HomePane extends JRootPane implements HomeView {
     preview3DMenu.addSeparator();
     preview3DMenu.add(createMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
     preview3DMenu.addSeparator();
+    preview3DMenu.add(createMenuItemAction(ActionType.CREATE_PHOTO));
     preview3DMenu.add(createMenuItemAction(ActionType.EXPORT_TO_OBJ));
     
     // Create Help menu
@@ -1322,6 +1324,8 @@ public class HomePane extends JRootPane implements HomeView {
     
     toolBar.add(createToolBarAction(ActionType.ZOOM_IN));
     toolBar.add(createToolBarAction(ActionType.ZOOM_OUT));
+    toolBar.addSeparator();
+    toolBar.add(createToolBarAction(ActionType.CREATE_PHOTO));
     toolBar.addSeparator();
     
     // Add plugin actions buttons

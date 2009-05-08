@@ -75,22 +75,22 @@ import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
  * @author Emmanuel Puybaret
  */
 public class HomeController implements Controller {
-  private final Home                 home;
-  private final UserPreferences      preferences;
-  private final HomeApplication      application;
-  private final ViewFactory          viewFactory;
-  private final ContentManager       contentManager;
-  private final PluginManager        pluginManager;
-  private final UndoableEditSupport  undoSupport;
-  private final UndoManager          undoManager;
-  private HomeView                   homeView;
-  private FurnitureCatalogController furnitureCatalogController;
-  private FurnitureController        furnitureController;
-  private PlanController             planController;
-  private HomeController3D           homeController3D;
-  private static HelpController      helpController;  // Only one help controller 
-  private int                        saveUndoLevel;
-  private View                       focusedView;
+  private final Home                  home;
+  private final UserPreferences       preferences;
+  private final HomeApplication       application;
+  private final ViewFactory           viewFactory;
+  private final ContentManager        contentManager;
+  private final PluginManager         pluginManager;
+  private final UndoableEditSupport   undoSupport;
+  private final UndoManager           undoManager;
+  private HomeView                    homeView;
+  private FurnitureCatalogController  furnitureCatalogController;
+  private FurnitureController         furnitureController;
+  private PlanController              planController;
+  private HomeController3D            homeController3D;
+  private static HelpController       helpController;  // Only one help controller
+  private int                         saveUndoLevel;
+  private View                        focusedView;
 
   /**
    * Creates the controller of home view.
@@ -273,6 +273,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
+    homeView.setEnabled(HomeView.ActionType.CREATE_PHOTO, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
         this.home.getFurniture().size() > 0 
         || this.home.getWalls().size() > 0 
@@ -1526,7 +1527,7 @@ public class HomeController implements Controller {
             }
           };
       new ThreadedTaskController(exportToSvgTask, 
-          preferences.getLocalizedString(HomeController.class, "exportToSVGMessage"), exceptionHandler, 
+          this.preferences.getLocalizedString(HomeController.class, "exportToSVGMessage"), exceptionHandler, 
           this.preferences, this.viewFactory).executeTask(getView());
     }
   }
@@ -1559,9 +1560,20 @@ public class HomeController implements Controller {
             }
           };
       new ThreadedTaskController(exportToObjTask, 
-          preferences.getLocalizedString(HomeController.class, "exportToOBJMessage"), exceptionHandler, 
+          this.preferences.getLocalizedString(HomeController.class, "exportToOBJMessage"), exceptionHandler, 
           this.preferences, this.viewFactory).executeTask(getView());
     }
+  }
+  
+  /**
+   * Controls the creation of photo-realistic images.
+   */
+  public void createPhoto() {
+    PhotoController photoController = new PhotoController(this.home, this.preferences, 
+          this.viewFactory, this.contentManager);
+    View view3D = getHomeController3D().getView();
+    photoController.setAspectRatio((float)view3D.getWidth() / view3D.getHeight());
+    photoController.displayView(getView());
   }
   
   /**

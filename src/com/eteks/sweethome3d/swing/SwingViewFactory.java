@@ -41,6 +41,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
+import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
@@ -224,6 +225,15 @@ public class SwingViewFactory implements ViewFactory {
                                            HomeController homeController,
                                            PrintPreviewController printPreviewController) {
     return new PrintPreviewPanel(home, preferences, homeController, printPreviewController);
+  }
+  
+  /**
+   * Returns a new view able to create photo realistic images of the given home. 
+   */
+  public DialogView createPhotoView(Home home, 
+                                    UserPreferences preferences, 
+                                    PhotoController photoController) {
+    return new PhotoPanel(home, preferences, photoController);
   }
   
   /**

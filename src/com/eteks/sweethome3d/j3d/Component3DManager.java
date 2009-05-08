@@ -136,6 +136,8 @@ public class Component3DManager {
       throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
     }
     try {
+      // Ensure unused canvases are freed
+      System.gc();
       // Create a Java 3D canvas  
       return new Canvas3D(this.configuration, offscreen);
     } catch (IllegalArgumentException ex) {

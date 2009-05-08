@@ -108,6 +108,23 @@ public class FileContentManager implements ContentManager {
      }};
   private static final String PNG_EXTENSION = ".png";
   /**
+   * Supported OBJ filter.
+   */
+  private static final FileFilter [] PNG_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .png files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(PNG_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "PNG";
+        }
+      }};
+  /**
    * Supported image file filters.
    */
   private static final FileFilter [] IMAGE_FILTERS = {
@@ -152,19 +169,7 @@ public class FileContentManager implements ContentManager {
           return "JPEG";
         }
       }, 
-      new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          // Accept directories and PNG files
-          return file.isDirectory()
-                 || file.getName().toLowerCase().endsWith(PNG_EXTENSION);
-        }
-    
-        @Override
-        public String getDescription() {
-          return "PNG";
-        }
-      }};
+      PNG_FILTER [0]};
   private static final String PDF_EXTENSION = ".pdf";
   /**
    * Supported PDF filter.
@@ -220,6 +225,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
+    this.fileFilters.put(ContentType.PNG, PNG_FILTER);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.SVG, SVG_FILTER);
     this.fileFilters.put(ContentType.OBJ, OBJ_FILTER);
@@ -274,6 +280,7 @@ public class FileContentManager implements ContentManager {
     this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, sweetHome3DFileExtension);
     this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
+    this.defaultFileExtensions.put(ContentType.PNG, PNG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
     this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);

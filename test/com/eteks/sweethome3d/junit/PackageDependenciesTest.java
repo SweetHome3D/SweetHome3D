@@ -53,6 +53,13 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
     JavaPackage loader3ds = constraint.addPackage("com.microcrowd.loader.java3d.max3ds");
+    // SunFlow
+    JavaPackage sunflow = constraint.addPackage("org.sunflow");
+    JavaPackage sunflowCore = constraint.addPackage("org.sunflow.core");
+    JavaPackage sunflowImage = constraint.addPackage("org.sunflow.image");
+    JavaPackage sunflowMath = constraint.addPackage("org.sunflow.math");
+    JavaPackage sunflowSystem = constraint.addPackage("org.sunflow.system");
+    JavaPackage sunflowSystemUI = constraint.addPackage("org.sunflow.system.ui");
     // iText for PDF
     JavaPackage iText = constraint.addPackage("com.lowagie.text");
     JavaPackage iTextPdf = constraint.addPackage("com.lowagie.text.pdf");
@@ -88,6 +95,12 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(sun3dUtilsUniverse);
     sweetHome3DJava3D.dependsUpon(loader3ds);
     sweetHome3DJava3D.dependsUpon(imageio);
+    sweetHome3DJava3D.dependsUpon(sunflow);
+    sweetHome3DJava3D.dependsUpon(sunflowCore);
+    sweetHome3DJava3D.dependsUpon(sunflowImage);
+    sweetHome3DJava3D.dependsUpon(sunflowMath);
+    sweetHome3DJava3D.dependsUpon(sunflowSystem);
+    sweetHome3DJava3D.dependsUpon(sunflowSystemUI);
     
     sweetHome3DSwing.dependsUpon(sweetHome3DModel);
     sweetHome3DSwing.dependsUpon(sweetHome3DTools);
