@@ -54,6 +54,7 @@ public class SweetHome3DBootstrap {
         "iText-2.1.5.jar", // Jars included in Sweet Home 3D executable jar file 
         "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2u.jar",
+        "sunflow-0.07.3b.jar",
         "jnlp.jar"};
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
@@ -63,7 +64,8 @@ public class SweetHome3DBootstrap {
         "com.sun.opengl",
         "com.sun.gluegen.runtime",
         "javax.media.opengl",
-        "com.microcrowd.loader.java3d"};
+        "com.microcrowd.loader.java3d",
+        "org.sunflow"};
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),
