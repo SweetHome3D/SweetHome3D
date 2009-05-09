@@ -93,7 +93,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JSpinner              widthSpinner;
   private JLabel                heightLabel;
   private JSpinner              heightSpinner;
-  private JCheckBox             keep3DViewProportionsCheckBox;
+  private JCheckBox             use3DViewProportionsCheckBox;
   private JLabel                qualityLabel;
   private JSlider               qualitySlider;
   private String                dialogTitle;
@@ -193,17 +193,17 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
     
     // Keep proportions check box bound to PROPORTIONAL controller property
-    this.keep3DViewProportionsCheckBox = new JCheckBox();
-    this.keep3DViewProportionsCheckBox.addItemListener(new ItemListener() {
+    this.use3DViewProportionsCheckBox = new JCheckBox();
+    this.use3DViewProportionsCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setProportional(keep3DViewProportionsCheckBox.isSelected());
+          controller.setProportional(use3DViewProportionsCheckBox.isSelected());
         }
       });
     controller.addPropertyChangeListener(PhotoController.Property.PROPORTIONAL,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            // If proportional property changes update keep proportions check box
-            keep3DViewProportionsCheckBox.setSelected(controller.isProportional());
+            // If proportional property changes update check box
+            use3DViewProportionsCheckBox.setSelected(controller.isProportional());
           }
         });
 
@@ -247,8 +247,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "widthLabel.text"));
     this.heightLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "heightLabel.text"));
-    this.keep3DViewProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "keep3DViewProportionsCheckBox.text"));
+    this.use3DViewProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "use3DViewProportionsCheckBox.text"));
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "qualityLabel.text"));
     JLabel fastLabel = new JLabel(preferences.getLocalizedString(
@@ -279,9 +279,9 @@ public class PhotoPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               PhotoPanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.keep3DViewProportionsCheckBox.setMnemonic(
+      this.use3DViewProportionsCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "keep3DViewProportionsCheckBox.mnemonic")).getKeyCode());
+              PhotoPanel.class, "use3DViewProportionsCheckBox.mnemonic")).getKeyCode());
       this.qualityLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               PhotoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
@@ -353,7 +353,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
     // Third row
-    add(this.keep3DViewProportionsCheckBox, new GridBagConstraints(
+    add(this.use3DViewProportionsCheckBox, new GridBagConstraints(
         1, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
     // Last row
