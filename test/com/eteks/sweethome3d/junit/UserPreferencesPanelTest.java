@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.AWTException;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.Locale;
@@ -294,7 +293,7 @@ public class UserPreferencesPanelTest extends TestCase {
   /**
    * Tests language changes on the GUI. 
    */
-  public void testLanguageChange() throws AWTException {
+  public void testLanguageChange() {
     Locale.setDefault(Locale.US);
     UserPreferences preferences = new DefaultUserPreferences() {
       @Override
