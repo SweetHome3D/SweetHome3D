@@ -224,7 +224,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.qualitySlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (!offScreenImageSupported) {
-            qualitySlider.setValue(Math.max(2, controller.getQuality()));
+            qualitySlider.setValue(Math.max(2, qualitySlider.getValue()));
           }
           controller.setQuality(qualitySlider.getValue());
         }
@@ -253,6 +253,9 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "qualityLabel.text"));
     JLabel fastLabel = new JLabel(preferences.getLocalizedString(
         PhotoPanel.class, "fastLabel.text"));
+    if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
+      fastLabel.setEnabled(false);
+    }
     JLabel bestLabel = new JLabel(preferences.getLocalizedString(
         PhotoPanel.class, "bestLabel.text"));
     Dictionary<Integer,JComponent> qualitySliderLabelTable = new Hashtable<Integer,JComponent>();
