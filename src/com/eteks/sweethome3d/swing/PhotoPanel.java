@@ -232,13 +232,13 @@ public class PhotoPanel extends JPanel implements DialogView {
                     PhotoPanel.class, "aspectRatioComboBox.squareRatio.text");
                 break;
               case RATIO_4_3 :
-                displayedValue = "4:3";
+                displayedValue = "4/3";
                 break;
               case RATIO_3_2 :
-                displayedValue = "3:2";
+                displayedValue = "3/2";
                 break;
               case RATIO_16_9 :
-                displayedValue = "16:9";
+                displayedValue = "16/9";
                 break;
             }
           } 
