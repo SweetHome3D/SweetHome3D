@@ -47,13 +47,16 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -93,7 +96,8 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JSpinner              widthSpinner;
   private JLabel                heightLabel;
   private JSpinner              heightSpinner;
-  private JCheckBox             use3DViewProportionsCheckBox;
+  private JCheckBox             applyProportionsCheckBox;
+  private JComboBox             aspectRatioComboBox;
   private JLabel                qualityLabel;
   private JSlider               qualitySlider;
   private String                dialogTitle;
@@ -103,6 +107,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   private PhotoRenderer         photoRenderer;
   
   private static PhotoPanel     currentPhotoPanel; // There can be only one photo panel opened at a time
+  private ComponentAdapter      view3DSizeListener;
 
   public PhotoPanel(Home home, 
                     UserPreferences preferences, 
@@ -150,7 +155,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Creates and initializes components.
    */
-  private void createComponents(UserPreferences preferences,
+  private void createComponents(final UserPreferences preferences,
                                 final PhotoController controller) {
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(400, 400));
@@ -175,6 +180,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
 
+    
     // Create observer height label and spinner bound to HEIGHT controller property
     this.heightLabel = new JLabel();
     final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 3000, 10);
@@ -191,19 +197,69 @@ public class PhotoPanel extends JPanel implements DialogView {
             heightSpinnerModel.setValue(controller.getHeight());
           }
         });
-    
-    // Keep proportions check box bound to PROPORTIONAL controller property
-    this.use3DViewProportionsCheckBox = new JCheckBox();
-    this.use3DViewProportionsCheckBox.addItemListener(new ItemListener() {
+
+    // Keep proportions check box bound to ASPECT_RATIO controller property
+    boolean notFreeAspectRatio = controller.getAspectRatio() != UserPreferences.AspectRatio.FREE_RATIO;
+    this.applyProportionsCheckBox = new JCheckBox();
+    this.applyProportionsCheckBox.setSelected(notFreeAspectRatio);
+    this.applyProportionsCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setProportional(use3DViewProportionsCheckBox.isSelected());
+          controller.setAspectRatio(applyProportionsCheckBox.isSelected()
+              ? (UserPreferences.AspectRatio)aspectRatioComboBox.getSelectedItem()
+              : UserPreferences.AspectRatio.FREE_RATIO);
         }
       });
-    controller.addPropertyChangeListener(PhotoController.Property.PROPORTIONAL,
+    this.aspectRatioComboBox = new JComboBox(new Object [] {
+        UserPreferences.AspectRatio.VIEW_3D_RATIO,
+        UserPreferences.AspectRatio.SQUARE_RATIO,
+        UserPreferences.AspectRatio.RATIO_4_3,
+        UserPreferences.AspectRatio.RATIO_3_2,
+        UserPreferences.AspectRatio.RATIO_16_9});
+    this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, 
+                                                      int index, boolean isSelected, boolean cellHasFocus) {
+          UserPreferences.AspectRatio aspectRatio = (UserPreferences.AspectRatio)value;
+          String displayedValue = "";
+          if (aspectRatio != UserPreferences.AspectRatio.FREE_RATIO) {
+            switch (aspectRatio) {
+              case VIEW_3D_RATIO :
+                displayedValue = preferences.getLocalizedString(
+                    PhotoPanel.class, "aspectRatioComboBox.view3DRatio.text");
+                break;
+              case SQUARE_RATIO :
+                displayedValue = preferences.getLocalizedString(
+                    PhotoPanel.class, "aspectRatioComboBox.squareRatio.text");
+                break;
+              case RATIO_4_3 :
+                displayedValue = "4:3";
+                break;
+              case RATIO_3_2 :
+                displayedValue = "3:2";
+                break;
+              case RATIO_16_9 :
+                displayedValue = "16:9";
+                break;
+            }
+          } 
+          return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
+              cellHasFocus);
+        }
+      });
+    this.aspectRatioComboBox.addItemListener(new ItemListener() {
+        public void itemStateChanged(ItemEvent ev) {
+          controller.setAspectRatio((UserPreferences.AspectRatio)aspectRatioComboBox.getSelectedItem());
+        }
+      });
+    this.aspectRatioComboBox.setEnabled(notFreeAspectRatio);
+    this.aspectRatioComboBox.setSelectedItem(controller.getAspectRatio());
+    controller.addPropertyChangeListener(PhotoController.Property.ASPECT_RATIO,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            // If proportional property changes update check box
-            use3DViewProportionsCheckBox.setSelected(controller.isProportional());
+            boolean notFreeAspectRatio = controller.getAspectRatio() != UserPreferences.AspectRatio.FREE_RATIO;
+            applyProportionsCheckBox.setSelected(notFreeAspectRatio);
+            aspectRatioComboBox.setEnabled(notFreeAspectRatio);
+            aspectRatioComboBox.setSelectedItem(controller.getAspectRatio());
           }
         });
 
@@ -235,7 +291,18 @@ public class PhotoPanel extends JPanel implements DialogView {
             qualitySlider.setValue(controller.getQuality());
           }
         });
-    
+
+    // Add a listener on 3D view to be notified when its size changes 
+    final JComponent view3D = (JComponent)controller.get3DView();
+    this.view3DSizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent ev) {
+          controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
+        }
+      };
+    view3D.addComponentListener(this.view3DSizeListener);
+    controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
+
     setComponentTexts(preferences);
   }
 
@@ -247,8 +314,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "widthLabel.text"));
     this.heightLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "heightLabel.text"));
-    this.use3DViewProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
-        PhotoPanel.class, "use3DViewProportionsCheckBox.text"));
+    this.applyProportionsCheckBox.setText(SwingTools.getLocalizedLabelText(preferences, 
+        PhotoPanel.class, "applyProportionsCheckBox.text"));
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "qualityLabel.text"));
     JLabel fastLabel = new JLabel(preferences.getLocalizedString(
@@ -282,9 +349,9 @@ public class PhotoPanel extends JPanel implements DialogView {
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               PhotoPanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.use3DViewProportionsCheckBox.setMnemonic(
+      this.applyProportionsCheckBox.setMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
-              PhotoPanel.class, "use3DViewProportionsCheckBox.mnemonic")).getKeyCode());
+              PhotoPanel.class, "applyProportionsCheckBox.mnemonic")).getKeyCode());
       this.qualityLabel.setDisplayedMnemonic(
           KeyStroke.getKeyStroke(preferences.getLocalizedString(
               PhotoPanel.class, "qualityLabel.mnemonic")).getKeyCode());
@@ -341,11 +408,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     add(new JLabel(), new GridBagConstraints(
         5, 1, 1, 3, 0.5f, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    Insets labelInsets = new Insets(0, 0, 5, 5);
+    Insets labelInsets = new Insets(0, 0, 0, 5);
     add(this.widthLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets componentInsets = new Insets(0, 0, 5, 10);
+    Insets componentInsets = new Insets(0, 0, 0, 10);
     add(this.widthSpinner, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
@@ -354,11 +421,14 @@ public class PhotoPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.heightSpinner, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
     // Third row
-    add(this.use3DViewProportionsCheckBox, new GridBagConstraints(
+    JPanel proportionsPanel = new JPanel();
+    proportionsPanel.add(this.applyProportionsCheckBox);
+    proportionsPanel.add(this.aspectRatioComboBox);
+    add(proportionsPanel, new GridBagConstraints(
         1, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
     // Last row
     add(this.qualityLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, labelAlignment, 
@@ -443,14 +513,15 @@ public class PhotoPanel extends JPanel implements DialogView {
     BufferedImage image = null;
     try {
       int quality = this.controller.getQuality();
+      int imageWidth = this.controller.getWidth();
+      int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
         this.photoRenderer = new PhotoRenderer(this.home, quality == 2 
             ? PhotoRenderer.Quality.LOW 
             : PhotoRenderer.Quality.HIGH);
         if (!Thread.interrupted()) {
-          image = new BufferedImage(this.controller.getWidth(), 
-              this.controller.getHeight(), BufferedImage.TYPE_INT_RGB);
+          image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
           this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -463,8 +534,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(this.home, this.preferences, quality == 1);
-        image = homeComponent3D.getOffScreenImage(
-            this.controller.getWidth(), this.controller.getHeight());
+        image = homeComponent3D.getOffScreenImage(imageWidth, imageHeight);
       }
     } catch (OutOfMemoryError ex) {
       image = getErrorImage();
@@ -515,6 +585,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     SwingUtilities.getWindowAncestor(this).dispose();
     
     if (this.photoCreationExecutor != null) {
+      ((JComponent)controller.get3DView()).removeComponentListener(this.view3DSizeListener);
+      
       this.photoCreationExecutor.shutdownNow();
       this.photoCreationExecutor = null;
 

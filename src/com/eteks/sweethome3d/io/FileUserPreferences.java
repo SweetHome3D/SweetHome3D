@@ -79,8 +79,12 @@ public class FileUserPreferences extends UserPreferences {
   private static final String WALL_PATTERN                          = "wallPattern";
   private static final String NEW_WALL_HEIGHT                       = "newHomeWallHeight";
   private static final String NEW_WALL_THICKNESS                    = "newWallThickness";
+  private static final String PHOTO_WIDTH                           = "photoWidth";
+  private static final String PHOTO_HEIGHT                          = "photoHeight";
+  private static final String PHOTO_ASPECT_RATIO                    = "photoAspectRatio";
+  private static final String PHOTO_QUALITY                         = "photoQuality";
   private static final String RECENT_HOMES                          = "recentHomes#";
-  private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";
+  private static final String IGNORED_ACTION_TIP                    = "ignoredActionTip#";  
 
   private static final String FURNITURE_NAME                        = "furnitureName#";
   private static final String FURNITURE_CATEGORY                    = "furnitureCategory#";
@@ -176,6 +180,11 @@ public class FileUserPreferences extends UserPreferences {
             defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
             defaultPreferences.getNewWallHeight()));    
+    setPhotoWidth(preferences.getInt(PHOTO_WIDTH, defaultPreferences.getPhotoWidth()));
+    setPhotoHeight(preferences.getInt(PHOTO_HEIGHT, defaultPreferences.getPhotoHeight()));
+    setPhotoAspectRatio(AspectRatio.valueOf(preferences.get(PHOTO_ASPECT_RATIO, 
+        defaultPreferences.getPhotoAspectRatio().name())));
+    setPhotoQuality(preferences.getInt(PHOTO_QUALITY, defaultPreferences.getPhotoQuality()));
     setCurrency(defaultPreferences.getCurrency());    
     // Read recent homes list
     List<String> recentHomes = new ArrayList<String>();
@@ -404,6 +413,10 @@ public class FileUserPreferences extends UserPreferences {
     preferences.put(WALL_PATTERN, getWallPattern().name());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
+    preferences.putInt(PHOTO_WIDTH, getPhotoWidth());
+    preferences.putInt(PHOTO_HEIGHT, getPhotoHeight());
+    preferences.put(PHOTO_ASPECT_RATIO, getPhotoAspectRatio().name());
+    preferences.putInt(PHOTO_QUALITY, getPhotoQuality());
     // Write recent homes list
     int i = 1;
     for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {

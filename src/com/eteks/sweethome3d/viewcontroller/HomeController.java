@@ -1570,9 +1570,7 @@ public class HomeController implements Controller {
    */
   public void createPhoto() {
     PhotoController photoController = new PhotoController(this.home, this.preferences, 
-          this.viewFactory, this.contentManager);
-    View view3D = getHomeController3D().getView();
-    photoController.setAspectRatio((float)view3D.getWidth() / view3D.getHeight());
+        getHomeController3D().getView(), this.viewFactory, this.contentManager);
     photoController.displayView(getView());
   }
   

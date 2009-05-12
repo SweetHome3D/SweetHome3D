@@ -33,27 +33,29 @@ public class PhotoController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {ASPECT_RATIO, WIDTH, HEIGHT, PROPORTIONAL, QUALITY}
+  public enum Property {ASPECT_RATIO, WIDTH, HEIGHT, QUALITY, VIEW_3D_ASPECT_RATIO}
   
   private final Home                  home;
   private final UserPreferences       preferences;
+  private final View                  view3D;
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  photoView;
   
-  private float                       aspectRatio;
+  private UserPreferences.AspectRatio aspectRatio;
   private int                         width;
   private int                         height;
-  private boolean                     propotional;
   private int                         quality;
+  private float                       view3DAspectRatio;
 
   public PhotoController(Home home,
                          UserPreferences preferences, 
-                         ViewFactory viewFactory,
+                         View view3D, ViewFactory viewFactory,
                          ContentManager contentManager) {
     this.home = home;
     this.preferences = preferences;
+    this.view3D = view3D;
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -104,28 +106,34 @@ public class PhotoController implements Controller {
    * Updates edited properties from the photo creation preferences.
    */
   protected void updateProperties() {
-    setAspectRatio(4f / 3);
-    setWidth(400);
-    setHeight(300);
-    setProportional(false);
-    setQuality(0);
+    setAspectRatio(this.preferences.getPhotoAspectRatio());
+    setWidth(this.preferences.getPhotoWidth(), false);
+    setHeight(this.preferences.getPhotoHeight(), false);
+    setQuality(this.preferences.getPhotoQuality());
+    this.view3DAspectRatio = 1;
   }
   
   /**
    * Sets the aspect ratio of the photo.
    */
-  public void setAspectRatio(float aspectRatio) {
+  public void setAspectRatio(UserPreferences.AspectRatio aspectRatio) {
     if (this.aspectRatio != aspectRatio) {
-      float oldAspectRatio = this.aspectRatio;
+      UserPreferences.AspectRatio oldAspectRatio = this.aspectRatio;
       this.aspectRatio = aspectRatio;
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, aspectRatio);
+      this.preferences.setPhotoAspectRatio(getAspectRatio());
+      if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+        setHeight(Math.round(width / this.view3DAspectRatio), false);
+      } else if (this.aspectRatio.getValue() != null) {
+        setHeight(Math.round(width / this.aspectRatio.getValue()), false);
+      }
     }
   }
   
   /**
    * Returns the aspect ratio of the photo.
    */
-  public float getAspectRatio() {
+  public UserPreferences.AspectRatio getAspectRatio() {
     return this.aspectRatio;
   }
 
@@ -136,14 +144,19 @@ public class PhotoController implements Controller {
     setWidth(width, true);
   }
   
-  private void setWidth(int width, boolean updateHeightIfProportional) {
+  private void setWidth(int width, boolean updateHeight) {
     if (this.width != width) {
       int oldWidth = this.width;
       this.width = width;
       this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
-      if (updateHeightIfProportional && isProportional()) {
-        setHeight(Math.round(width / getAspectRatio()), false);
+      if (updateHeight) {
+        if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+          setHeight(Math.round(width / this.view3DAspectRatio), false);
+        } else if (this.aspectRatio.getValue() != null) {
+          setHeight(Math.round(width / this.aspectRatio.getValue()), false);
+        }
       }
+      this.preferences.setPhotoWidth(getWidth());
     }
   }
   
@@ -161,14 +174,19 @@ public class PhotoController implements Controller {
     setHeight(height, true);
   }
   
-  private void setHeight(int height, boolean updateWidthIfProportional) {
+  private void setHeight(int height, boolean updateWidth) {
     if (this.height != height) {
       int oldHeight = this.height;
       this.height = height;
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
-      if (updateWidthIfProportional && isProportional()) {
-        setWidth(Math.round(height * getAspectRatio()), false);
+      if (updateWidth) {
+        if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+          setWidth(Math.round(height * this.view3DAspectRatio), false);
+        } else if (this.aspectRatio.getValue() != null) {
+          setWidth(Math.round(height * this.aspectRatio.getValue()), false);
+        }
       }
+      this.preferences.setPhotoHeight(getHeight());
     }
   }
   
@@ -180,26 +198,6 @@ public class PhotoController implements Controller {
   }
 
   /**
-   * Sets whether the height of the photo is proportional to aspect ratio.
-   */
-  public void setProportional(boolean propotional) {
-    if (this.propotional != propotional) {
-      this.propotional = propotional;
-      this.propertyChangeSupport.firePropertyChange(Property.PROPORTIONAL.name(), !propotional, propotional);
-      if (propotional) {
-        setHeight(Math.round(getWidth() / getAspectRatio()), false);
-      }
-    }
-  }
-  
-  /**
-   * Returns <code>true</code> if the height of the photo is proportional to aspect ratio.
-   */
-  public boolean isProportional() {
-    return this.propotional;
-  }
-
-  /**
    * Sets the rendering quality of the photo.
    */
   public void setQuality(int quality) {
@@ -207,6 +205,7 @@ public class PhotoController implements Controller {
       int oldQuality = this.quality;
       this.quality = quality;
       this.propertyChangeSupport.firePropertyChange(Property.QUALITY.name(), oldQuality, quality);
+      this.preferences.setPhotoQuality(getQuality());
     }
   }
   
@@ -215,5 +214,34 @@ public class PhotoController implements Controller {
    */
   public int getQuality() {
     return this.quality;
+  }
+  
+  /**
+   * Sets the aspect ratio of the 3D view.
+   */
+  public void set3DViewAspectRatio(float view3DAspectRatio) {
+    if (this.view3DAspectRatio != view3DAspectRatio) {
+      float oldAspectRatio = this.view3DAspectRatio;
+      this.view3DAspectRatio = view3DAspectRatio;
+      this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, view3DAspectRatio);
+      if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+        setHeight(Math.round(this.width / this.view3DAspectRatio), false);
+      }
+    }
+  }
+  
+  /**
+   * Returns the aspect ratio of the 3D view.
+   */
+  public float get3DViewAspectRatio() {
+    return this.view3DAspectRatio;
+  }
+
+
+  /**
+   * Returns the 3D view used to compute aspect ratio bound to it.
+   */
+  public View get3DView() {
+    return this.view3D;
   }
 }

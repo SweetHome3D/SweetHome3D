@@ -45,12 +45,33 @@ public abstract class UserPreferences {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP}
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
+                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY}
+  
   /**
    * The filling pattern of walls in plan.
    * @since 1.9
    */
   public enum Pattern {FOREGROUND, HATCH_UP, HATCH_DOWN, BACKGROUND};
+  
+  /**
+   * The aspect ratio of photos.
+   * @since 1.9
+   */
+  public enum AspectRatio {FREE_RATIO(null), VIEW_3D_RATIO(null), RATIO_4_3(4f / 3), RATIO_3_2(1.5f), RATIO_16_9(16f / 9), SQUARE_RATIO(1f);
+    private final Float value;
+    
+    private AspectRatio(Float value) {
+      this.value = value;
+    }    
+    
+    /**
+     * Returns the value of this aspect ration or <code>null</code> if it's not known.
+     */
+    public Float getValue() {
+      return value;
+    }
+  };  
   
   private static final String [] SUPPORTED_LANGUAGES; 
 
@@ -80,6 +101,10 @@ public abstract class UserPreferences {
   private Pattern          wallPattern         = Pattern.HATCH_UP;
   private float            newWallThickness;
   private float            newWallHeight;
+  private int              photoWidth  = 400;
+  private int              photoHeight = 300;
+  private AspectRatio      photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
+  private int              photoQuality;
   private List<String>     recentHomes;
 
 
@@ -530,6 +555,86 @@ public abstract class UserPreferences {
       this.newWallHeight = newWallHeight;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_HEIGHT.name(), 
           oldWallHeight, newWallHeight);
+    }
+  }
+  
+  /**
+   * Returns preferred photo width. 
+   */
+  public int getPhotoWidth() {
+    return this.photoWidth;
+  }
+
+  /**
+   * Sets preferred photo width, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoWidth(int photoWidth) {
+    if (this.photoWidth != photoWidth) {
+      int oldPhotoWidth = this.photoWidth;
+      this.photoWidth = photoWidth;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_WIDTH.name(), 
+          oldPhotoWidth, photoWidth);
+    }
+  }
+  
+  /**
+   * Returns preferred photo height. 
+   */
+  public int getPhotoHeight() {
+    return this.photoHeight;
+  }
+
+  /**
+   * Sets preferred photo height, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoHeight(int photoHeight) {
+    if (this.photoHeight != photoHeight) {
+      int oldPhotoHeight = this.photoHeight;
+      this.photoHeight = photoHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_HEIGHT.name(), 
+          oldPhotoHeight, photoHeight);
+    }
+  }
+  
+  /**
+   * Returns preferred photo aspect ratio. 
+   */
+  public AspectRatio getPhotoAspectRatio() {
+    return this.photoAspectRatio;
+  }
+
+  /**
+   * Sets preferred photo aspect ratio, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoAspectRatio(AspectRatio photoAspectRatio) {
+    if (this.photoAspectRatio != photoAspectRatio) {
+      AspectRatio oldPhotoAspectRatio = this.photoAspectRatio;
+      this.photoAspectRatio = photoAspectRatio;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(), 
+          oldPhotoAspectRatio, photoAspectRatio);
+    }
+  }
+  
+  /**
+   * Returns preferred photo quality. 
+   */
+  public int getPhotoQuality() {
+    return this.photoQuality;
+  }
+
+  /**
+   * Sets preferred photo quality, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoQuality(int photoQuality) {
+    if (this.photoQuality != photoQuality) {
+      int oldPhotoQuality = this.photoQuality;
+      this.photoQuality = photoQuality;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(), 
+          oldPhotoQuality, photoQuality);
     }
   }
   
