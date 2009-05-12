@@ -328,7 +328,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new RoomController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();
       new Home3DAttributesController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
-      new PhotoController(home, preferences, viewFactory, contentManager).getView();
+      new PhotoController(home, preferences, homeController.getHomeController3D().getView(), viewFactory, contentManager).getView();
       
       new TextureChoiceController("", preferences, viewFactory, contentManager).getView();
       new ThreadedTaskController(new Callable<Void>() { 
