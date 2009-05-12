@@ -24,13 +24,4 @@ package com.eteks.sweethome3d.viewcontroller;
  * @author Emmanuel Puybaret
  */
 public interface View {
-  /**
-   * Returns the width of this view.
-   */
-  public int getWidth();
-  
-  /**
-   * Returns the height of this view.
-   */
-  public int getHeight();
 }
