@@ -596,8 +596,8 @@ public class HomePane extends JRootPane implements HomeView {
                                  final HomeController controller) {
     // Create File menu
     JMenu fileMenu = new JMenu(this.menuActionMap.get(MenuActionType.FILE_MENU));
-    fileMenu.add(createMenuItemAction(ActionType.NEW_HOME));
-    fileMenu.add(createMenuItemAction(ActionType.OPEN));
+    addActionToMenu(ActionType.NEW_HOME, fileMenu);
+    addActionToMenu(ActionType.OPEN, fileMenu);
     
     final JMenu openRecentHomeMenu = 
         new JMenu(this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU));
@@ -615,116 +615,100 @@ public class HomePane extends JRootPane implements HomeView {
     
     fileMenu.add(openRecentHomeMenu);
     fileMenu.addSeparator();
-    fileMenu.add(createMenuItemAction(ActionType.CLOSE));
-    fileMenu.add(createMenuItemAction(ActionType.SAVE));
-    fileMenu.add(createMenuItemAction(ActionType.SAVE_AS));
-    fileMenu.add(createMenuItemAction(ActionType.SAVE_AND_COMPRESS));
+    addActionToMenu(ActionType.CLOSE, fileMenu);
+    addActionToMenu(ActionType.SAVE, fileMenu);
+    addActionToMenu(ActionType.SAVE_AS, fileMenu);
+    addActionToMenu(ActionType.SAVE_AND_COMPRESS, fileMenu);
     fileMenu.addSeparator();
-    fileMenu.add(createMenuItemAction(ActionType.PAGE_SETUP));
-    fileMenu.add(createMenuItemAction(ActionType.PRINT_PREVIEW));
-    fileMenu.add(createMenuItemAction(ActionType.PRINT));
+    addActionToMenu(ActionType.PAGE_SETUP, fileMenu);
+    addActionToMenu(ActionType.PRINT_PREVIEW, fileMenu);
+    addActionToMenu(ActionType.PRINT, fileMenu);
     // Don't add PRINT_TO_PDF, PREFERENCES and EXIT menu items under Mac OS X, 
     // because PREFERENCES and EXIT items are displayed in application menu
     // and PRINT_TO_PDF is available in standard Mac OS X Print dialog
     if (!OperatingSystem.isMacOSX()) {
-      fileMenu.add(createMenuItemAction(ActionType.PRINT_TO_PDF));
+      addActionToMenu(ActionType.PRINT_TO_PDF, fileMenu);
       fileMenu.addSeparator();
-      fileMenu.add(createMenuItemAction(ActionType.PREFERENCES));
+      addActionToMenu(ActionType.PREFERENCES, fileMenu);
     }
 
     // Create Edit menu
     JMenu editMenu = new JMenu(this.menuActionMap.get(MenuActionType.EDIT_MENU));
-    editMenu.add(createMenuItemAction(ActionType.UNDO));
-    editMenu.add(createMenuItemAction(ActionType.REDO));
+    addActionToMenu(ActionType.UNDO, editMenu);
+    addActionToMenu(ActionType.REDO, editMenu);
     editMenu.addSeparator();
-    editMenu.add(createMenuItemAction(ActionType.CUT));
-    editMenu.add(createMenuItemAction(ActionType.COPY));
-    editMenu.add(createMenuItemAction(ActionType.PASTE));
+    addActionToMenu(ActionType.CUT, editMenu);
+    addActionToMenu(ActionType.COPY, editMenu);
+    addActionToMenu(ActionType.PASTE, editMenu);
     editMenu.addSeparator();
-    editMenu.add(createMenuItemAction(ActionType.DELETE));
-    editMenu.add(createMenuItemAction(ActionType.SELECT_ALL));
+    addActionToMenu(ActionType.DELETE, editMenu);
+    addActionToMenu(ActionType.SELECT_ALL, editMenu);
 
     // Create Furniture menu
     JMenu furnitureMenu = new JMenu(this.menuActionMap.get(MenuActionType.FURNITURE_MENU));
-    furnitureMenu.add(createMenuItemAction(ActionType.ADD_HOME_FURNITURE));
-    furnitureMenu.add(createMenuItemAction(ActionType.MODIFY_FURNITURE));
+    addActionToMenu(ActionType.ADD_HOME_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.MODIFY_FURNITURE, furnitureMenu);
     furnitureMenu.addSeparator();
-    furnitureMenu.add(createMenuItemAction(ActionType.IMPORT_FURNITURE));
-    furnitureMenu.add(createMenuItemAction(ActionType.IMPORT_FURNITURE_LIBRARY));
+    addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
     furnitureMenu.addSeparator();
-    furnitureMenu.add(createMenuItemAction(ActionType.ALIGN_FURNITURE_ON_TOP));
-    furnitureMenu.add(createMenuItemAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM));
-    furnitureMenu.add(createMenuItemAction(ActionType.ALIGN_FURNITURE_ON_LEFT));
-    furnitureMenu.add(createMenuItemAction(ActionType.ALIGN_FURNITURE_ON_RIGHT));
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_TOP, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, furnitureMenu);
+    addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
     furnitureMenu.addSeparator();
     furnitureMenu.add(createFurnitureSortMenu(home, preferences));
     furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
-    JRadioButtonMenuItem selectRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.selectToggleModel, ActionType.SELECT, false);
-    planMenu.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createWallsToggleModel, ActionType.CREATE_WALLS, false);
-    planMenu.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, ActionType.CREATE_ROOMS, false);
-    planMenu.add(createRoomsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, ActionType.CREATE_DIMENSION_LINES, false);
-    planMenu.add(createDimensionLinesRadioButtonMenuItem);
-    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createLabelsToggleModel, ActionType.CREATE_LABELS, false);
-    planMenu.add(createLabelsRadioButtonMenuItem);
-    // Add Select, Create Walls and Create dimensions menu items to radio group 
     ButtonGroup group = new ButtonGroup();
-    group.add(selectRadioButtonMenuItem);
-    group.add(createWallsRadioButtonMenuItem);  
-    group.add(createRoomsRadioButtonMenuItem);  
-    group.add(createDimensionLinesRadioButtonMenuItem);  
-    group.add(createLabelsRadioButtonMenuItem);  
+    addToggleActionToMenu(ActionType.SELECT, 
+        this.selectToggleModel, group, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_WALLS, 
+        this.createWallsToggleModel, group, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_ROOMS, 
+        this.createRoomsToggleModel, group, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_DIMENSION_LINES, 
+        this.createDimensionLinesToggleModel, group, planMenu);
+    addToggleActionToMenu(ActionType.CREATE_LABELS, 
+        this.createLabelsToggleModel, group, planMenu);
     planMenu.addSeparator();
     planMenu.add(createLockUnlockBasePlanMenuItem(home, false));
-    planMenu.add(createMenuItemAction(ActionType.MODIFY_WALL));
-    planMenu.add(createMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
-    planMenu.add(createMenuItemAction(ActionType.SPLIT_WALL));
-    planMenu.add(createMenuItemAction(ActionType.MODIFY_ROOM));
-    planMenu.add(createMenuItemAction(ActionType.MODIFY_LABEL));
+    addActionToMenu(ActionType.MODIFY_WALL, planMenu);
+    addActionToMenu(ActionType.REVERSE_WALL_DIRECTION, planMenu);
+    addActionToMenu(ActionType.SPLIT_WALL, planMenu);
+    addActionToMenu(ActionType.MODIFY_ROOM, planMenu);
+    addActionToMenu(ActionType.MODIFY_LABEL, planMenu);
     planMenu.add(createTextStyleMenu(home, preferences, false));
     planMenu.addSeparator();
     planMenu.add(createImportModifyBackgroundImageMenuItem(home, false));
     planMenu.add(createHideShowBackgroundImageMenuItem(home, false));
-    planMenu.add(createMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
+    addActionToMenu(ActionType.DELETE_BACKGROUND_IMAGE, planMenu);
     planMenu.addSeparator();
-    planMenu.add(createMenuItemAction(ActionType.ZOOM_IN));
-    planMenu.add(createMenuItemAction(ActionType.ZOOM_OUT));
+    addActionToMenu(ActionType.ZOOM_IN, planMenu);
+    addActionToMenu(ActionType.ZOOM_OUT, planMenu);
     planMenu.addSeparator();
-    planMenu.add(createMenuItemAction(ActionType.EXPORT_TO_SVG));
+    addActionToMenu(ActionType.EXPORT_TO_SVG, planMenu);
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, ActionType.VIEW_FROM_TOP, false);
-    preview3DMenu.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, ActionType.VIEW_FROM_OBSERVER, false);
-    preview3DMenu.add(viewFromObserverRadioButtonMenuItem);
-    // Add View from top and View from observer menu items to radio group  
     group = new ButtonGroup();
-    group.add(viewFromTopRadioButtonMenuItem);
-    group.add(viewFromObserverRadioButtonMenuItem);
+    addToggleActionToMenu(ActionType.VIEW_FROM_TOP, 
+        this.viewFromTopToggleModel, group, preview3DMenu);
+    addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
+        this.viewFromObserverToggleModel, group, preview3DMenu);
     preview3DMenu.addSeparator();
-    preview3DMenu.add(createMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
+    addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
-    preview3DMenu.add(createMenuItemAction(ActionType.CREATE_PHOTO));
-    preview3DMenu.add(createMenuItemAction(ActionType.EXPORT_TO_OBJ));
+    addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
+    addActionToMenu(ActionType.EXPORT_TO_OBJ, preview3DMenu);
     
     // Create Help menu
     JMenu helpMenu = new JMenu(this.menuActionMap.get(MenuActionType.HELP_MENU));
-    helpMenu.add(createMenuItemAction(ActionType.HELP));      
+    addActionToMenu(ActionType.HELP, helpMenu);      
     if (!OperatingSystem.isMacOSX()) {
-      helpMenu.add(createMenuItemAction(ActionType.ABOUT));      
+      addActionToMenu(ActionType.ABOUT, helpMenu);      
     }
     
     // Add menus to menu bar
@@ -767,6 +751,106 @@ public class HomePane extends JRootPane implements HomeView {
     }
 
     return menuBar;
+  }
+
+  /**
+   * Adds the given action to <code>menu</code> and returns <code>true</code> if it was added.
+   */
+  private boolean addActionToMenu(ActionType actionType, JMenu menu) {
+    return addActionToMenu(actionType, false, menu);
+  }
+
+  /**
+   * Adds the given action to <code>menu</code> and returns <code>true</code> if it was added.
+   */
+  private boolean addActionToMenu(ActionType actionType, 
+                                  boolean popup,
+                                  JMenu menu) {
+    menu.add(popup 
+        ? createPopupMenuItemAction(actionType)
+        : createMenuItemAction(actionType));
+    return true;
+  }
+
+  /**
+   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code> 
+   * and returns <code>true</code> if it was added.
+   */
+  private boolean addToggleActionToMenu(ActionType actionType,
+                                        JToggleButton.ToggleButtonModel toggleButtonModel,
+                                        ButtonGroup buttonGroup,
+                                        JMenu menu) {
+    return addToggleActionToMenu(actionType, false, toggleButtonModel, buttonGroup, menu);
+  }
+
+  /**
+   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code> 
+   * and returns <code>true</code> if it was added.
+   */
+  private boolean addToggleActionToMenu(ActionType actionType,
+                                        boolean popup,
+                                        JToggleButton.ToggleButtonModel toggleButtonModel,
+                                        ButtonGroup buttonGroup,
+                                        JMenu menu) {
+    menu.add(createToggleMenuItem(actionType, popup, toggleButtonModel, buttonGroup));
+    return true;
+  }
+
+  /**
+   * Creates a menu item for a toggle action.
+   */
+  private JMenuItem createToggleMenuItem(ActionType actionType, 
+                                         boolean popup,
+                                         JToggleButton.ToggleButtonModel toggleButtonModel,
+                                         ButtonGroup buttonGroup) {
+    JMenuItem menuItem;
+    if (buttonGroup != null) {
+      menuItem = new JRadioButtonMenuItem();
+      buttonGroup.add(menuItem);
+    } else {
+      menuItem = new JCheckBoxMenuItem();
+    }
+    // Configure model
+    menuItem.setModel(toggleButtonModel);
+    // Configure menu item action after setting its model to avoid losing its mnemonic
+    menuItem.setAction(popup
+        ? createPopupMenuItemAction(actionType)
+        : createMenuItemAction(actionType));
+    return menuItem;
+  }
+
+  /**
+   * Adds the given action to <code>menu</code> and returns <code>true</code> if it was added.
+   */
+  private boolean addActionToPopupMenu(ActionType actionType, JPopupMenu menu) {
+    menu.add(createPopupMenuItemAction(actionType));
+    return true;
+  }
+
+  /**
+   * Adds to <code>menu</code> the menu item matching the given <code>actionType</code> 
+   * and returns <code>true</code> if it was added.
+   */
+  private boolean addToggleActionToPopupMenu(ActionType actionType,
+                                             JToggleButton.ToggleButtonModel toggleButtonModel,
+                                             ButtonGroup buttonGroup,
+                                             JPopupMenu menu) {
+    menu.add(createToggleMenuItem(actionType, true, toggleButtonModel, buttonGroup));
+    return true;
+  }
+
+  /**
+   * Returns an action decorated for menu items.
+   */
+  private Action createMenuItemAction(ActionType actionType) {
+    return new ResourceAction.MenuItemAction(getActionMap().get(actionType));
+  }
+
+  /**
+   * Returns an action decorated for popup menu items.
+   */
+  private Action createPopupMenuItemAction(ActionType actionType) {
+    return new ResourceAction.PopupMenuItemAction(getActionMap().get(actionType));
   }
 
   /**
@@ -988,30 +1072,13 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu modifyTextStyleMenu = new JMenu(
         this.menuActionMap.get(MenuActionType.MODIFY_TEXT_STYLE));
     
-    modifyTextStyleMenu.add(popup
-        ? createPopupMenuItemAction(ActionType.INCREASE_TEXT_SIZE)
-        : createMenuItemAction(ActionType.INCREASE_TEXT_SIZE));
-    modifyTextStyleMenu.add(popup 
-        ? createPopupMenuItemAction(ActionType.DECREASE_TEXT_SIZE)
-        : createMenuItemAction(ActionType.DECREASE_TEXT_SIZE));
+    addActionToMenu(ActionType.INCREASE_TEXT_SIZE, popup, modifyTextStyleMenu);
+    addActionToMenu(ActionType.DECREASE_TEXT_SIZE, popup, modifyTextStyleMenu);
     modifyTextStyleMenu.addSeparator();
-    JCheckBoxMenuItem boldMenuItem = new JCheckBoxMenuItem();
-    boldMenuItem.setModel(this.boldStyleToggleModel); 
-    // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    boldMenuItem.setAction(popup
-        ? createPopupMenuItemAction(ActionType.TOGGLE_BOLD_STYLE)
-        : createMenuItemAction(ActionType.TOGGLE_BOLD_STYLE));
-    modifyTextStyleMenu.add(boldMenuItem);
-    
-    JCheckBoxMenuItem italicMenuItem = new JCheckBoxMenuItem();
-    // Use a special model for italic check box menu item that is selected if
-    // texts in home selected items are all italic 
-    italicMenuItem.setModel(this.italicStyleToggleModel); 
-    // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    italicMenuItem.setAction(popup 
-        ? createPopupMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE)
-        : createMenuItemAction(ActionType.TOGGLE_ITALIC_STYLE));
-    modifyTextStyleMenu.add(italicMenuItem);
+    addToggleActionToMenu(ActionType.TOGGLE_BOLD_STYLE, popup, 
+        this.boldStyleToggleModel, null, modifyTextStyleMenu);
+    addToggleActionToMenu(ActionType.TOGGLE_ITALIC_STYLE, popup, 
+        this.italicStyleToggleModel, null, modifyTextStyleMenu);
     return modifyTextStyleMenu;
   }
 
@@ -1213,119 +1280,47 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
-   * Returns an action decorated for menu items.
-   */
-  private Action createMenuItemAction(ActionType actionType) {
-    return new ResourceAction.MenuItemAction(getActionMap().get(actionType));
-  }
-
-  /**
-   * Returns an action decorated for popup menu items.
-   */
-  private Action createPopupMenuItemAction(ActionType actionType) {
-    return new ResourceAction.PopupMenuItemAction(getActionMap().get(actionType));
-  }
-
-  /**
-   * Returns an action decorated for tool bar buttons.
-   */
-  private Action createToolBarAction(ActionType actionType) {
-    return new ResourceAction.ToolBarAction(getActionMap().get(actionType));
-  }
-
-  /**
-   * Returns a new radio menu item with the given <code>model</code>.
-   */
-  private JRadioButtonMenuItem createRadioButtonMenuItemFromModel(
-                                   JToggleButton.ToggleButtonModel model,
-                                   ActionType action,
-                                   boolean popup) {
-    JRadioButtonMenuItem radioButtonMenuItem = new JRadioButtonMenuItem();
-    // Configure shared model
-    radioButtonMenuItem.setModel(model);
-    // Configure check box menu item action after setting its model to avoid losing its mnemonic
-    radioButtonMenuItem.setAction(
-        popup ? createPopupMenuItemAction(action)
-              : createMenuItemAction(action));
-    return radioButtonMenuItem;
-  }
-  
-  /**
    * Returns the tool bar displayed in this pane.
    */
   private JToolBar createToolBar(Home home) {
     final JToolBar toolBar = new JToolBar();
-    toolBar.add(createToolBarAction(ActionType.NEW_HOME));
-    toolBar.add(createToolBarAction(ActionType.OPEN));
-    toolBar.add(createToolBarAction(ActionType.SAVE));
+    addActionToToolBar(ActionType.NEW_HOME, toolBar);
+    addActionToToolBar(ActionType.OPEN, toolBar);
+    addActionToToolBar(ActionType.SAVE, toolBar);
     toolBar.addSeparator();
 
-    toolBar.add(createToolBarAction(ActionType.UNDO));
-    toolBar.add(createToolBarAction(ActionType.REDO));
+    addActionToToolBar(ActionType.UNDO, toolBar);
+    addActionToToolBar(ActionType.REDO, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(createToolBarAction(ActionType.CUT));
-    toolBar.add(createToolBarAction(ActionType.COPY));
-    toolBar.add(createToolBarAction(ActionType.PASTE));
+    addActionToToolBar(ActionType.CUT, toolBar);
+    addActionToToolBar(ActionType.COPY, toolBar);
+    addActionToToolBar(ActionType.PASTE, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(createToolBarAction(ActionType.DELETE));
+    addActionToToolBar(ActionType.DELETE, toolBar);
     toolBar.addSeparator();
 
-    toolBar.add(createToolBarAction(ActionType.ADD_HOME_FURNITURE));
-    toolBar.add(createToolBarAction(ActionType.IMPORT_FURNITURE));
+    addActionToToolBar(ActionType.ADD_HOME_FURNITURE, toolBar);
+    addActionToToolBar(ActionType.IMPORT_FURNITURE, toolBar);
     toolBar.addSeparator();
    
-    JToggleButton selectToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.SELECT));
-    // Use the same model as Select menu item
-    selectToggleButton.setModel(this.selectToggleModel);
-    toolBar.add(selectToggleButton);
-    JToggleButton createWallsToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.CREATE_WALLS));
-    // Use the same model as Create walls menu item
-    createWallsToggleButton.setModel(this.createWallsToggleModel);
-    toolBar.add(createWallsToggleButton);
-    JToggleButton createRoomsToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.CREATE_ROOMS));
-    // Use the same model as Create rooms menu item
-    createRoomsToggleButton.setModel(this.createRoomsToggleModel);
-    toolBar.add(createRoomsToggleButton);
-    JToggleButton createDimensionLinesToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.CREATE_DIMENSION_LINES));
-    // Use the same model as Create dimensions menu item
-    createDimensionLinesToggleButton.setModel(this.createDimensionLinesToggleModel);
-    toolBar.add(createDimensionLinesToggleButton);
-    JToggleButton createLabelsToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.CREATE_LABELS));
-    // Use the same model as Create labels menu item
-    createLabelsToggleButton.setModel(this.createLabelsToggleModel);
-    toolBar.add(createLabelsToggleButton);
-    // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
-    group.add(selectToggleButton);
-    group.add(createWallsToggleButton);
-    group.add(createRoomsToggleButton);
-    group.add(createDimensionLinesToggleButton);
-    group.add(createLabelsToggleButton);
+    addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, group, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_WALLS, this.createWallsToggleModel, group, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_ROOMS, this.createRoomsToggleModel, group, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, this.createDimensionLinesToggleModel, group, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_LABELS, this.createLabelsToggleModel, group, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(createToolBarAction(ActionType.INCREASE_TEXT_SIZE));
-    toolBar.add(createToolBarAction(ActionType.DECREASE_TEXT_SIZE));
-    JToggleButton boldToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.TOGGLE_BOLD_STYLE));
-    // Use the same model as Toggle bold style menu item
-    boldToggleButton.setModel(this.boldStyleToggleModel); 
-    toolBar.add(boldToggleButton);
-    JToggleButton italicToggleButton = 
-        new JToggleButton(createToolBarAction(ActionType.TOGGLE_ITALIC_STYLE));
-    // Use the same model as Toggle italic style menu item
-    italicToggleButton.setModel(this.italicStyleToggleModel); 
-    toolBar.add(italicToggleButton);
+    addActionToToolBar(ActionType.INCREASE_TEXT_SIZE, toolBar);
+    addActionToToolBar(ActionType.DECREASE_TEXT_SIZE, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, this.boldStyleToggleModel, null, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, this.italicStyleToggleModel, null, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(createToolBarAction(ActionType.ZOOM_IN));
-    toolBar.add(createToolBarAction(ActionType.ZOOM_OUT));
+    addActionToToolBar(ActionType.ZOOM_IN, toolBar);
+    addActionToToolBar(ActionType.ZOOM_OUT, toolBar);
     toolBar.addSeparator();
-    toolBar.add(createToolBarAction(ActionType.CREATE_PHOTO));
+    addActionToToolBar(ActionType.CREATE_PHOTO, toolBar);
     toolBar.addSeparator();
     
     // Add plugin actions buttons
@@ -1340,7 +1335,7 @@ public class HomePane extends JRootPane implements HomeView {
       toolBar.addSeparator();
     }
     
-    toolBar.add(createToolBarAction(ActionType.HELP));
+    addActionToToolBar(ActionType.HELP, toolBar);
     
     updateToolBarButtons(toolBar);
     // Update toolBar buttons when component orientation changes 
@@ -1364,6 +1359,41 @@ public class HomePane extends JRootPane implements HomeView {
     return toolBar;
   }
 
+  /**
+   * Adds to tool bar the button matching the given <code>actionType</code> 
+   * and returns <code>true</code> if it was added.
+   */
+  private boolean addToggleActionToToolBar(ActionType actionType,
+                                           JToggleButton.ToggleButtonModel toggleButtonModel,
+                                           ButtonGroup buttonGroup,
+                                           JToolBar toolBar) {
+    Action toolBarAction = createToolBarAction(actionType);    
+    JToggleButton toggleButton = new JToggleButton(toolBarAction);
+    toggleButton.setModel(toggleButtonModel);
+    toolBar.add(toggleButton);
+    if (buttonGroup != null) {
+      buttonGroup.add(toggleButton);
+    }
+    return true;
+  }
+
+  /**
+   * Adds to tool bar the button matching the given <code>actionType</code> 
+   * and returns <code>true</code> if it was added.
+   */
+  private boolean addActionToToolBar(ActionType actionType,
+                                     JToolBar toolBar) {
+    toolBar.add(createToolBarAction(actionType));
+    return true;
+  }
+    
+  /**
+   * Returns an action decorated for tool bar buttons.
+   */
+  private Action createToolBarAction(ActionType actionType) {
+    return new ResourceAction.ToolBarAction(getActionMap().get(actionType));
+  }
+  
   /**
    * Ensures that all the children of toolBar aren't focusable. 
    * Under Mac OS X 10.5, it also uses segmented buttons and groups them depending
@@ -1546,14 +1576,14 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create catalog view popup menu
     JPopupMenu catalogViewPopup = new JPopupMenu();
-    catalogViewPopup.add(createPopupMenuItemAction(ActionType.COPY));
+    addActionToPopupMenu(ActionType.COPY, catalogViewPopup);
     catalogViewPopup.addSeparator();
-    catalogViewPopup.add(createPopupMenuItemAction(ActionType.DELETE));
+    addActionToPopupMenu(ActionType.DELETE, catalogViewPopup);
     catalogViewPopup.addSeparator();
-    catalogViewPopup.add(createPopupMenuItemAction(ActionType.ADD_HOME_FURNITURE));
-    catalogViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_FURNITURE));
+    addActionToPopupMenu(ActionType.ADD_HOME_FURNITURE, catalogViewPopup);
+    addActionToPopupMenu(ActionType.MODIFY_FURNITURE, catalogViewPopup);
     catalogViewPopup.addSeparator();
-    catalogViewPopup.add(createPopupMenuItemAction(ActionType.IMPORT_FURNITURE));
+    addActionToPopupMenu(ActionType.IMPORT_FURNITURE, catalogViewPopup);
     catalogViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
@@ -1597,17 +1627,17 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create furniture view popup menu
     JPopupMenu furnitureViewPopup = new JPopupMenu();
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.UNDO));
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.REDO));
+    addActionToPopupMenu(ActionType.UNDO, furnitureViewPopup);
+    addActionToPopupMenu(ActionType.REDO, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.CUT));
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.COPY));
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.PASTE));
+    addActionToPopupMenu(ActionType.CUT, furnitureViewPopup);
+    addActionToPopupMenu(ActionType.COPY, furnitureViewPopup);
+    addActionToPopupMenu(ActionType.PASTE, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.DELETE));
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.SELECT_ALL));
+    addActionToPopupMenu(ActionType.DELETE, furnitureViewPopup);
+    addActionToPopupMenu(ActionType.SELECT_ALL, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
-    furnitureViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_FURNITURE));
+    addActionToPopupMenu(ActionType.MODIFY_FURNITURE, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
     furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
@@ -1654,54 +1684,43 @@ public class HomePane extends JRootPane implements HomeView {
 
     // Create plan view popup menu
     JPopupMenu planViewPopup = new JPopupMenu();
-    planViewPopup.add(createPopupMenuItemAction(ActionType.UNDO));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.REDO));
+    addActionToPopupMenu(ActionType.UNDO, planViewPopup);
+    addActionToPopupMenu(ActionType.REDO, planViewPopup);
     planViewPopup.addSeparator();
-    planViewPopup.add(createPopupMenuItemAction(ActionType.CUT));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.COPY));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.PASTE));
+    addActionToPopupMenu(ActionType.CUT, planViewPopup);
+    addActionToPopupMenu(ActionType.COPY, planViewPopup);
+    addActionToPopupMenu(ActionType.PASTE, planViewPopup);
     planViewPopup.addSeparator();
-    planViewPopup.add(createPopupMenuItemAction(ActionType.DELETE));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.SELECT_ALL));
+    addActionToPopupMenu(ActionType.DELETE, planViewPopup);
+    addActionToPopupMenu(ActionType.SELECT_ALL, planViewPopup);
     planViewPopup.addSeparator();
-    JRadioButtonMenuItem selectRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.selectToggleModel, ActionType.SELECT, true);
-    planViewPopup.add(selectRadioButtonMenuItem);
-    JRadioButtonMenuItem createWallsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createWallsToggleModel, ActionType.CREATE_WALLS, true);
-    planViewPopup.add(createWallsRadioButtonMenuItem);
-    JRadioButtonMenuItem createRoomsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createRoomsToggleModel, ActionType.CREATE_ROOMS, true);
-    planViewPopup.add(createRoomsRadioButtonMenuItem);
-    JRadioButtonMenuItem createDimensionLinesRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createDimensionLinesToggleModel, ActionType.CREATE_DIMENSION_LINES, true);
-    planViewPopup.add(createDimensionLinesRadioButtonMenuItem);
-    JRadioButtonMenuItem createLabelsRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.createLabelsToggleModel, ActionType.CREATE_LABELS, true);
-    planViewPopup.add(createLabelsRadioButtonMenuItem);
-    // Add Select and Create Walls menu items to radio group 
     ButtonGroup group = new ButtonGroup();
-    group.add(selectRadioButtonMenuItem);
-    group.add(createWallsRadioButtonMenuItem);
-    group.add(createRoomsRadioButtonMenuItem);
-    group.add(createDimensionLinesRadioButtonMenuItem);
-    group.add(createLabelsRadioButtonMenuItem);
+    addToggleActionToPopupMenu(ActionType.SELECT, 
+        this.selectToggleModel, group, planViewPopup);
+    addToggleActionToPopupMenu(ActionType.CREATE_WALLS, 
+        this.createWallsToggleModel, group, planViewPopup);
+    addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, 
+        this.createRoomsToggleModel, group, planViewPopup);
+    addToggleActionToPopupMenu(ActionType.CREATE_DIMENSION_LINES, 
+        this.createDimensionLinesToggleModel, group, planViewPopup);
+    addToggleActionToPopupMenu(ActionType.CREATE_LABELS, 
+        this.createLabelsToggleModel, group, planViewPopup);
     planViewPopup.addSeparator();
     planViewPopup.add(createLockUnlockBasePlanMenuItem(home, true));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_FURNITURE));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_WALL));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.REVERSE_WALL_DIRECTION));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.SPLIT_WALL));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_ROOM));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.MODIFY_LABEL));
+    addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
+    addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
+    addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
+    addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);
+    addActionToPopupMenu(ActionType.MODIFY_ROOM, planViewPopup);
+    addActionToPopupMenu(ActionType.MODIFY_LABEL, planViewPopup);
     planViewPopup.add(createTextStyleMenu(home, preferences, true));
     planViewPopup.addSeparator();
     planViewPopup.add(createImportModifyBackgroundImageMenuItem(home, true));
     planViewPopup.add(createHideShowBackgroundImageMenuItem(home, true));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.DELETE_BACKGROUND_IMAGE));
+    addActionToPopupMenu(ActionType.DELETE_BACKGROUND_IMAGE, planViewPopup);
     planViewPopup.addSeparator();
-    planViewPopup.add(createPopupMenuItemAction(ActionType.ZOOM_OUT));
-    planViewPopup.add(createPopupMenuItemAction(ActionType.ZOOM_IN));
+    addActionToPopupMenu(ActionType.ZOOM_OUT, planViewPopup);
+    addActionToPopupMenu(ActionType.ZOOM_IN, planViewPopup);
     planViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     planView.setComponentPopupMenu(planViewPopup);
     
@@ -1712,20 +1731,15 @@ public class HomePane extends JRootPane implements HomeView {
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
-    JRadioButtonMenuItem viewFromTopRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.viewFromTopToggleModel, ActionType.VIEW_FROM_TOP, true);
-    view3DPopup.add(viewFromTopRadioButtonMenuItem);
-    JRadioButtonMenuItem viewFromObserverRadioButtonMenuItem = 
-        createRadioButtonMenuItemFromModel(this.viewFromObserverToggleModel, ActionType.VIEW_FROM_OBSERVER, true);
-    view3DPopup.add(viewFromObserverRadioButtonMenuItem);
-    // Add View from top and View from observer menu items to radio group 
     group = new ButtonGroup();
-    group.add(viewFromTopRadioButtonMenuItem);
-    group.add(viewFromObserverRadioButtonMenuItem);
+    addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
+        this.viewFromTopToggleModel, group, view3DPopup);
+    addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
+        this.viewFromObserverToggleModel, group, view3DPopup);
+    view3DPopup.addSeparator();
+    addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
-    view3DPopup.addSeparator();
-    view3DPopup.add(createPopupMenuItemAction(ActionType.MODIFY_3D_ATTRIBUTES));
     
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
