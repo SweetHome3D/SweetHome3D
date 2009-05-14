@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.EventQueue;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
@@ -115,9 +116,9 @@ public class PhotoRenderer {
     
     this.sunflow = new SunflowAPI();
     this.quality = quality;
-    int samples = quality == Quality.LOW ? 4 : 8;
+    int samples = quality == Quality.LOW ? 4 : 16;
     
-    // Export to Sunflow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
+    // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     final boolean useNormals = true;
     Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
     exportNode(ground, useNormals , true);
@@ -155,11 +156,6 @@ public class PhotoRenderer {
       this.sunflow.parameter("fixed", true);
       this.sunflow.parameter("samples", samples);
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
-      
-      this.sunflow.parameter("caustics", "kd");
-      this.sunflow.parameter("caustics.emit", 10000000); 
-      this.sunflow.parameter("caustics.gather", 64);
-      this.sunflow.parameter("caustics.radius", 0.5f);
     } else {
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("east", new Vector3(0, 0, 1));
@@ -201,7 +197,9 @@ public class PhotoRenderer {
           }
           
           float power = (float)Math.sqrt(room.getArea());
-          this.sunflow.parameter("radiance", null, power, power, power);
+          int lightColor = home.getEnvironment().getLightColor();
+          this.sunflow.parameter("radiance", null, 
+              (lightColor >> 16) * power / 255, ((lightColor >> 8) & 0xFF) * power / 255, (lightColor & 0xFF) * power / 255);
           this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 20, yCenter));                    
           this.sunflow.parameter("radius", 10f);
           this.sunflow.parameter("samples", samples);
@@ -240,16 +238,16 @@ public class PhotoRenderer {
     this.sunflow.parameter("resolutionX", image.getWidth());
     this.sunflow.parameter("resolutionY", image.getHeight());
     this.sunflow.parameter("filter", "gaussian"); // box, gaussian, blackman-harris, sinc, mitchell or triangle
-    this.sunflow.parameter("aa.min", 0);
+    
     if (this.quality == Quality.HIGH) {
       // The bigger aa.max is, the cleanest rendering you get
-      this.sunflow.parameter("aa.max",  2); 
+      this.sunflow.parameter("aa.min", 1);
+      this.sunflow.parameter("aa.max",  2);
       this.sunflow.parameter("aa.samples", 4);
-      this.sunflow.parameter("sampler", "bucket"); // ipr, fast or bucket
     } else {
+      this.sunflow.parameter("aa.min", 0);
       this.sunflow.parameter("aa.max",  1); 
-      this.sunflow.parameter("aa.samples", 2);
-      this.sunflow.parameter("sampler", "fast"); 
+      this.sunflow.parameter("sampler", "fast"); // ipr, fast or bucket 
     }
     // Render image with default camera
     this.sunflow.parameter("camera", CAMERA_NAME);
@@ -276,7 +274,8 @@ public class PhotoRenderer {
    * Exports all the 3D shapes children of <code>node</code> at OBJ format.
    */ 
   private void exportNode(Node parent, Node node, 
-                          boolean useNormals, boolean noConstantShader) throws IOException {
+                          boolean useNormals, 
+                          boolean noConstantShader) throws IOException {
     if (node instanceof Group) {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
@@ -285,6 +284,7 @@ public class PhotoRenderer {
       }
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
+      String shapeName = (String)shape.getUserData();
       
       // Retrieve transformation needed to be applied to vertices
       Transform3D transformationToParent = getTransformationToParent(parent, node);
@@ -296,7 +296,6 @@ public class PhotoRenderer {
       String appearanceName = null;
       if (appearance != null) {
         appearanceName = "shader" + uuid;
-        String shapeName = (String)shape.getUserData();
         boolean mirror = shapeName != null
             && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
         exportAppearance(appearance, appearanceName, mirror, noConstantShader);
@@ -712,9 +711,7 @@ public class PhotoRenderer {
           this.image.setRGB(x, y, ((rgba & 0xFEFEFEFE) >>> 1) + ((rgba & 0xFCFCFCFC) >>> 2));
         }
       }
-      if (this.observer != null) {
-        this.observer.imageUpdate(this.image, ImageObserver.FRAMEBITS | BASE_INFO_FLAGS, 0, 0, width, height);
-      }
+      notifyObserver(ImageObserver.FRAMEBITS | BASE_INFO_FLAGS, 0, 0, width, height);
     }
 
     public synchronized void imagePrepare(int x, int y, int width, int height, int id) {
@@ -732,9 +729,7 @@ public class PhotoRenderer {
           }
         }
       }
-      if (this.observer != null) {
-        this.observer.imageUpdate(this.image, ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
-      }
+      notifyObserver(ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
     }
 
     public synchronized void imageUpdate(int x, int y, int width, int height, Color [] data, float [] alpha) {
@@ -744,9 +739,7 @@ public class PhotoRenderer {
               data [index].copy().mul(1.0f / alpha [index]).toNonLinear().toRGBA(alpha [index]));
         }
       }
-      if (this.observer != null) {
-        this.observer.imageUpdate(this.image, ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
-      }
+      notifyObserver(ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
     }
 
     public synchronized void imageFill(int x, int y, int width, int height, Color c, float alpha) {
@@ -756,16 +749,22 @@ public class PhotoRenderer {
           this.image.setRGB(x + i, y + j, rgba);
         }
       }
-      if (this.observer != null) {
-        this.observer.imageUpdate(this.image, ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
-      }
+      notifyObserver(ImageObserver.SOMEBITS | BASE_INFO_FLAGS, x, y, width, height);
     }
 
     public void imageEnd() {
-      if (this.observer != null) {
-        this.observer.imageUpdate(this.image, ImageObserver.FRAMEBITS | BASE_INFO_FLAGS, 
+      notifyObserver(ImageObserver.FRAMEBITS | BASE_INFO_FLAGS, 
             0, 0, this.image.getWidth(), this.image.getHeight());
-      }
+    }
+
+    private void notifyObserver(final int flags, final int x, final int y, final int width, final int height) {
+      EventQueue.invokeLater(new Runnable() {
+          public void run() {
+            if (observer != null) {
+              observer.imageUpdate(image, flags, x, y, width, height);
+            }
+          }
+        });
     }
   }
 }
