@@ -966,19 +966,15 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
-   * Adds to <code>actions</code> the action matching <code>actionType</code>,
-   * and returns <code>true</code> if it exists.
+   * Adds to <code>actions</code> the action matching <code>actionType</code>.
    */
-  private boolean addActionToMap(ActionType actionType,
-                                 Map<HomePieceOfFurniture.SortableProperty, Action> actions,
-                                 HomePieceOfFurniture.SortableProperty key) {
-     Action action = getActionMap().get(actionType);
-     if (action.getValue(Action.NAME) != null) {
-       actions.put(key, action);
-       return true;
-     } else {
-       return false;
-     }
+  private void addActionToMap(ActionType actionType,
+                              Map<HomePieceOfFurniture.SortableProperty, Action> actions,
+                              HomePieceOfFurniture.SortableProperty key) {
+    Action action = getActionMap().get(actionType);
+    if (action.getValue(Action.NAME) != null) {
+      actions.put(key, action);
+    }
   }
   
   /**
