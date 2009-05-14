@@ -1651,13 +1651,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns a new wall instance between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>)
-   * end points. The new wall start point is joined to the start of
-   * <code>wallStartAtStart</code> or the end of <code>wallEndAtStart</code>.
+   * end points. The new wall is added to home and its start point is joined 
+   * to the start of <code>wallStartAtStart</code> or 
+   * the end of <code>wallEndAtStart</code>.
    */
-  private Wall createWall(float xStart, float yStart,
-                          float xEnd, float yEnd,
-                          Wall wallStartAtStart,
-                          Wall wallEndAtStart) {
+  protected Wall createWall(float xStart, float yStart,
+                            float xEnd, float yEnd,
+                            Wall wallStartAtStart,
+                            Wall wallEndAtStart) {
     // Create a new wall
     Wall newWall = new Wall(xStart, yStart, xEnd, yEnd, 
         this.preferences.getNewWallThickness(),
@@ -1758,19 +1759,17 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns a new selected room instance with one side between (<code>xStart</code>,
+   * Returns a new room instance with one side between (<code>xStart</code>,
    * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
-   * The new wall start point is joined to the start of
-   * <code>wallStartAtStart</code> or the end of <code>wallEndAtStart</code>.
+   * The new room is added to home.
    */
-  private Room createRoom(float xStart, float yStart,
-                          float xEnd, float yEnd) {
+  protected Room createRoom(float xStart, float yStart,
+                            float xEnd, float yEnd) {
     Room newRoom = new Room(new float [][] {{xStart, yStart}, {xEnd, yEnd}});
     // Let's consider that points outside of home will create  by default a room with no ceiling
     Area insideWallsArea = getInsideWallsArea();
     newRoom.setCeilingVisible(insideWallsArea.contains(xStart, yStart));
     this.home.addRoom(newRoom);
-    selectItem(newRoom);
     return newRoom;
   }
   
@@ -1825,6 +1824,19 @@ public class PlanController extends FurnitureController implements Controller {
     return null;
   }
   
+  /**
+   * Returns a new dimension instance joining (<code>xStart</code>,
+   * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
+   * The new dimension line is added to home.
+   */
+  protected DimensionLine createDimensionLine(float xStart, float yStart, 
+                                              float xEnd, float yEnd, 
+                                              float offset) {
+    DimensionLine newDimensionLine = new DimensionLine(xStart, yStart, xEnd, yEnd, offset);
+    this.home.addDimensionLine(newDimensionLine);
+    return newDimensionLine;
+  }
+
   /**
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
@@ -5885,8 +5897,7 @@ public class PlanController extends FurnitureController implements Controller {
         // If current dimension line doesn't exist
         if (this.newDimensionLine == null) {
           // Create a new one
-          this.newDimensionLine = new DimensionLine(this.xStart, this.yStart, xEnd, yEnd, 0);
-          home.addDimensionLine(newDimensionLine);
+          this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, xEnd, yEnd, 0);
         } else {
           // Otherwise update its end point
           this.newDimensionLine.setXEnd(xEnd); 
@@ -6479,6 +6490,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.newRoom == null) {
         // Create a new one
         this.newRoom = createRoom(this.xPreviousPoint, this.yPreviousPoint, xEnd, yEnd);
+        selectItem(this.newRoom);
       } else if (this.newPoint != null) {
         // Add a point to current room
         float [][] points = this.newRoom.getPoints();
@@ -6676,6 +6688,7 @@ public class PlanController extends FurnitureController implements Controller {
               ? LengthUnit.footToCentimeter(10) : 300;
           this.newRoom = createRoom(this.xPreviousPoint, this.yPreviousPoint, 
                                     this.xPreviousPoint + defaultLength, this.yPreviousPoint);
+          selectItem(this.newRoom);
           // Activate automatically second step to let user enter the 
           // length and angle of the new side
           planView.deleteFeedback();
