@@ -69,6 +69,7 @@ import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
+import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -199,29 +200,29 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
 
     // Keep proportions check box bound to ASPECT_RATIO controller property
-    boolean notFreeAspectRatio = controller.getAspectRatio() != UserPreferences.AspectRatio.FREE_RATIO;
+    boolean notFreeAspectRatio = controller.getAspectRatio() != AspectRatio.FREE_RATIO;
     this.applyProportionsCheckBox = new JCheckBox();
     this.applyProportionsCheckBox.setSelected(notFreeAspectRatio);
     this.applyProportionsCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setAspectRatio(applyProportionsCheckBox.isSelected()
-              ? (UserPreferences.AspectRatio)aspectRatioComboBox.getSelectedItem()
-              : UserPreferences.AspectRatio.FREE_RATIO);
+              ? (AspectRatio)aspectRatioComboBox.getSelectedItem()
+              : AspectRatio.FREE_RATIO);
         }
       });
     this.aspectRatioComboBox = new JComboBox(new Object [] {
-        UserPreferences.AspectRatio.VIEW_3D_RATIO,
-        UserPreferences.AspectRatio.SQUARE_RATIO,
-        UserPreferences.AspectRatio.RATIO_4_3,
-        UserPreferences.AspectRatio.RATIO_3_2,
-        UserPreferences.AspectRatio.RATIO_16_9});
+        AspectRatio.VIEW_3D_RATIO,
+        AspectRatio.SQUARE_RATIO,
+        AspectRatio.RATIO_4_3,
+        AspectRatio.RATIO_3_2,
+        AspectRatio.RATIO_16_9});
     this.aspectRatioComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, 
                                                       int index, boolean isSelected, boolean cellHasFocus) {
-          UserPreferences.AspectRatio aspectRatio = (UserPreferences.AspectRatio)value;
+          AspectRatio aspectRatio = (AspectRatio)value;
           String displayedValue = "";
-          if (aspectRatio != UserPreferences.AspectRatio.FREE_RATIO) {
+          if (aspectRatio != AspectRatio.FREE_RATIO) {
             switch (aspectRatio) {
               case VIEW_3D_RATIO :
                 displayedValue = preferences.getLocalizedString(
@@ -248,7 +249,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       });
     this.aspectRatioComboBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setAspectRatio((UserPreferences.AspectRatio)aspectRatioComboBox.getSelectedItem());
+          controller.setAspectRatio((AspectRatio)aspectRatioComboBox.getSelectedItem());
         }
       });
     this.aspectRatioComboBox.setEnabled(notFreeAspectRatio);
@@ -256,7 +257,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     controller.addPropertyChangeListener(PhotoController.Property.ASPECT_RATIO,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            boolean notFreeAspectRatio = controller.getAspectRatio() != UserPreferences.AspectRatio.FREE_RATIO;
+            boolean notFreeAspectRatio = controller.getAspectRatio() != AspectRatio.FREE_RATIO;
             applyProportionsCheckBox.setSelected(notFreeAspectRatio);
             aspectRatioComboBox.setEnabled(notFreeAspectRatio);
             aspectRatioComboBox.setSelectedItem(controller.getAspectRatio());

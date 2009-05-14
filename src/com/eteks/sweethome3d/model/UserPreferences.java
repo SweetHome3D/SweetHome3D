@@ -54,25 +54,6 @@ public abstract class UserPreferences {
    */
   public enum Pattern {FOREGROUND, HATCH_UP, HATCH_DOWN, BACKGROUND};
   
-  /**
-   * The aspect ratio of photos.
-   * @since 1.9
-   */
-  public enum AspectRatio {FREE_RATIO(null), VIEW_3D_RATIO(null), RATIO_4_3(4f / 3), RATIO_3_2(1.5f), RATIO_16_9(16f / 9), SQUARE_RATIO(1f);
-    private final Float value;
-    
-    private AspectRatio(Float value) {
-      this.value = value;
-    }    
-    
-    /**
-     * Returns the value of this aspect ration or <code>null</code> if it's not known.
-     */
-    public Float getValue() {
-      return value;
-    }
-  };  
-  
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);

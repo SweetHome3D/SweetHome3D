@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
+import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -43,7 +44,7 @@ public class PhotoController implements Controller {
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  photoView;
   
-  private UserPreferences.AspectRatio aspectRatio;
+  private AspectRatio                 aspectRatio;
   private int                         width;
   private int                         height;
   private int                         quality;
@@ -116,13 +117,13 @@ public class PhotoController implements Controller {
   /**
    * Sets the aspect ratio of the photo.
    */
-  public void setAspectRatio(UserPreferences.AspectRatio aspectRatio) {
+  public void setAspectRatio(AspectRatio aspectRatio) {
     if (this.aspectRatio != aspectRatio) {
-      UserPreferences.AspectRatio oldAspectRatio = this.aspectRatio;
+      AspectRatio oldAspectRatio = this.aspectRatio;
       this.aspectRatio = aspectRatio;
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, aspectRatio);
       this.preferences.setPhotoAspectRatio(getAspectRatio());
-      if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+      if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
         setHeight(Math.round(width / this.view3DAspectRatio), false);
       } else if (this.aspectRatio.getValue() != null) {
         setHeight(Math.round(width / this.aspectRatio.getValue()), false);
@@ -133,7 +134,7 @@ public class PhotoController implements Controller {
   /**
    * Returns the aspect ratio of the photo.
    */
-  public UserPreferences.AspectRatio getAspectRatio() {
+  public AspectRatio getAspectRatio() {
     return this.aspectRatio;
   }
 
@@ -150,7 +151,7 @@ public class PhotoController implements Controller {
       this.width = width;
       this.propertyChangeSupport.firePropertyChange(Property.WIDTH.name(), oldWidth, width);
       if (updateHeight) {
-        if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+        if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
           setHeight(Math.round(width / this.view3DAspectRatio), false);
         } else if (this.aspectRatio.getValue() != null) {
           setHeight(Math.round(width / this.aspectRatio.getValue()), false);
@@ -180,7 +181,7 @@ public class PhotoController implements Controller {
       this.height = height;
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), oldHeight, height);
       if (updateWidth) {
-        if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+        if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
           setWidth(Math.round(height * this.view3DAspectRatio), false);
         } else if (this.aspectRatio.getValue() != null) {
           setWidth(Math.round(height * this.aspectRatio.getValue()), false);
@@ -224,7 +225,7 @@ public class PhotoController implements Controller {
       float oldAspectRatio = this.view3DAspectRatio;
       this.view3DAspectRatio = view3DAspectRatio;
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, view3DAspectRatio);
-      if (this.aspectRatio == UserPreferences.AspectRatio.VIEW_3D_RATIO) {
+      if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
         setHeight(Math.round(this.width / this.view3DAspectRatio), false);
       }
     }

@@ -45,6 +45,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.apple.eio.FileManager;
+import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.CatalogDoorOrWindow;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
