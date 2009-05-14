@@ -581,25 +581,34 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT,
         new PropertyChangeListener () {
           public void propertyChange(PropertyChangeEvent ev) {
-            float lengthInCentimeter = getLength();
-            unit = controller.getUnit();
-            switch (controller.getUnit()) {
-              case CENTIMETER :
-                setStepSize(centimeterStepSize);
-                break;
-              case INCH :
-                setStepSize(centimeterStepSize);
-                break;
-              case MILLIMETER :
-                setStepSize(millimeterStepSize);
-                break;
-              case METER :
-                setStepSize(meterStepSize);
-                break;
-            }
-            setLength(lengthInCentimeter);
+            updateStepsAndLength(centimeterStepSize, inchStepSize, millimeterStepSize, meterStepSize, controller);
           }
         });
+      updateStepsAndLength(centimeterStepSize, inchStepSize, millimeterStepSize, meterStepSize, controller);
+    }
+    
+    private void updateStepsAndLength(float centimeterStepSize, 
+                                      float inchStepSize,
+                                      float millimeterStepSize, 
+                                      float meterStepSize,
+                                      UserPreferencesController controller) {
+      float lengthInCentimeter = getLength();
+      unit = controller.getUnit();
+      switch (controller.getUnit()) {
+        case CENTIMETER :
+          setStepSize(centimeterStepSize);
+          break;
+        case INCH :
+          setStepSize(inchStepSize);
+          break;
+        case MILLIMETER :
+          setStepSize(millimeterStepSize);
+          break;
+        case METER :
+          setStepSize(meterStepSize);
+          break;
+      }
+      setLength(lengthInCentimeter);
     }
 
     /**
