@@ -307,15 +307,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
     
-    // Add a listener on 3D view to be notified when its size changes 
     final JComponent view3D = (JComponent)controller.get3DView();
-    this.view3DSizeListener = new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent ev) {
-          controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
-        }
-      };
-    view3D.addComponentListener(this.view3DSizeListener);
     controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
 
     setComponentTexts(preferences);
@@ -510,6 +502,17 @@ public class PhotoPanel extends JPanel implements DialogView {
               homeWindow.getY());
         }
       }
+      
+      // Add a listener on 3D view to be notified when its size changes 
+      final JComponent view3D = (JComponent)this.controller.get3DView();
+      this.view3DSizeListener = new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent ev) {
+            controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
+          }
+        };
+      view3D.addComponentListener(this.view3DSizeListener);
+
       dialog.setVisible(true);
       currentPhotoPanel = this;
     }
@@ -608,11 +611,10 @@ public class PhotoPanel extends JPanel implements DialogView {
   }
 
   private void close() {
-    SwingUtilities.getWindowAncestor(this).dispose();
+    SwingUtilities.getWindowAncestor(this).dispose();    
+    ((JComponent)this.controller.get3DView()).removeComponentListener(this.view3DSizeListener);
     
     if (this.photoCreationExecutor != null) {
-      ((JComponent)controller.get3DView()).removeComponentListener(this.view3DSizeListener);
-      
       this.photoCreationExecutor.shutdownNow();
       this.photoCreationExecutor = null;
 
