@@ -116,7 +116,7 @@ public class PhotoRenderer {
     
     this.sunflow = new SunflowAPI();
     this.quality = quality;
-    int samples = quality == Quality.LOW ? 4 : 16;
+    int samples = quality == Quality.LOW ? 4 : 8;
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     final boolean useNormals = true;
@@ -196,15 +196,15 @@ public class PhotoRenderer {
             }
           }
           
-          float power = (float)Math.sqrt(room.getArea());
+          float power = (float)Math.sqrt(room.getArea()) / 3;
           int lightColor = home.getEnvironment().getLightColor();
           this.sunflow.parameter("radiance", null, 
               (lightColor >> 16) * power / 255, ((lightColor >> 8) & 0xFF) * power / 255, (lightColor & 0xFF) * power / 255);
-          this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 20, yCenter));                    
-          this.sunflow.parameter("radius", 10f);
+          this.sunflow.parameter("center", new Point3(xCenter, roomHeight - 25, yCenter));                    
+          this.sunflow.parameter("radius", 20f);
           this.sunflow.parameter("samples", samples);
           this.sunflow.light(UUID.randomUUID().toString(), "sphere");
-        }
+        } 
       }
     }
 
@@ -243,8 +243,6 @@ public class PhotoRenderer {
       // The bigger aa.max is, the cleanest rendering you get
       this.sunflow.parameter("aa.min", 1);
       this.sunflow.parameter("aa.max",  2);
-      this.sunflow.parameter("gi.engine", "path");
-      this.sunflow.parameter("gi.path.samples", 16);
     } else {
       this.sunflow.parameter("aa.min", 0);
       this.sunflow.parameter("aa.max",  1); 
