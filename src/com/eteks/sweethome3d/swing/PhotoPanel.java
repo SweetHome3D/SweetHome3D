@@ -343,11 +343,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
     qualitySliderLabelTable.put(this.qualitySlider.getMaximum(), bestLabel);
     this.qualitySlider.setLabelTable(qualitySliderLabelTable);
+    String sizeModifier = OperatingSystem.isWindows() 
+        ? "" 
+        : " size='-1'";
     for (int i = 0; i < qualityDescriptionLabels.length; i++) {
       this.qualityDescriptionLabels [i].setText("<html><table><tr valign='middle'>"
          + "<td><img border='1' src='" 
          + new ResourceURLContent(PhotoPanel.class, "resources/quality" + i + ".jpg").getURL() + "'></td>"
-         + "<td><font size='-1'>" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</font></td>"
+         + "<td><font" + sizeModifier + ">" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</font></td>"
          + "</tr></table>");
     }
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
