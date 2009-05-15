@@ -241,9 +241,10 @@ public class PhotoRenderer {
     
     if (this.quality == Quality.HIGH) {
       // The bigger aa.max is, the cleanest rendering you get
-      this.sunflow.parameter("aa.min", 1);
+      this.sunflow.parameter("aa.min", 0);
       this.sunflow.parameter("aa.max",  2);
-      this.sunflow.parameter("aa.samples", 4);
+      this.sunflow.parameter("gi.engine", "path");
+      this.sunflow.parameter("gi.path.samples", 16);
     } else {
       this.sunflow.parameter("aa.min", 0);
       this.sunflow.parameter("aa.max",  1); 
