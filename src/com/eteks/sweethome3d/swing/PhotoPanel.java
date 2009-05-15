@@ -137,14 +137,14 @@ public class PhotoPanel extends JPanel implements DialogView {
         new ResourceAction(preferences, PhotoPanel.class, ActionType.START_PHOTO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
-            startPhotoCreation((JButton)ev.getSource());
+            startPhotoCreation();
           }
         });
     actions.put(ActionType.STOP_PHOTO_CREATION, 
         new ResourceAction(preferences, PhotoPanel.class, ActionType.STOP_PHOTO_CREATION.name(), true) {
           @Override
           public void actionPerformed(ActionEvent ev) {
-            stopPhotoCreation((JButton)ev.getSource());
+            stopPhotoCreation();
           }
         });
     actions.put(ActionType.SAVE_PHOTO, 
@@ -528,16 +528,16 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Creates the photo image depending on the quality requested by the user.
    */
-  private void startPhotoCreation(final JButton button) {
+  private void startPhotoCreation() {
     this.photoComponent.setImage(null);
     getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(false);
-    button.setAction(getActionMap().get(ActionType.STOP_PHOTO_CREATION));
+    getActionMap().get(ActionType.START_PHOTO_CREATION).setEnabled(false);
     this.photoCardLayout.show(this.photoPanel, WAIT_CARD);
     
     this.photoCreationExecutor = Executors.newSingleThreadExecutor();
     this.photoCreationExecutor.execute(new Runnable() {
         public void run() {
-          computePhoto(button);
+          computePhoto();
         }
       });
   }
@@ -545,7 +545,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Computes the photo.
    */
-  private void computePhoto(final JButton button) {
+  private void computePhoto() {
     BufferedImage image = null;
     try {
       int quality = this.controller.getQuality();
@@ -587,7 +587,7 @@ public class PhotoPanel extends JPanel implements DialogView {
             photoComponent.setImage(photoImage);
             photoCardLayout.show(photoPanel, PHOTO_CARD);
             getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(photoImage != null);
-            button.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
+            getActionMap().get(ActionType.START_PHOTO_CREATION).setEnabled(true);
             photoCreationExecutor = null;
           }
         });
@@ -604,7 +604,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     return errorImage;
   }
   
-  private void stopPhotoCreation(JButton button) {
+  private void stopPhotoCreation() {
     if (this.photoCreationExecutor != null) {
       this.photoCreationExecutor.shutdownNow();
       this.photoCreationExecutor = null;
@@ -613,9 +613,6 @@ public class PhotoPanel extends JPanel implements DialogView {
         this.photoRenderer.stop();
         this.photoRenderer = null;
       }
-    }
-    if (button != null) {
-      button.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
     }
   }
 
@@ -639,6 +636,6 @@ public class PhotoPanel extends JPanel implements DialogView {
     SwingUtilities.getWindowAncestor(this).dispose();    
     ((JComponent)this.controller.get3DView()).removeComponentListener(this.view3DSizeListener);
     currentPhotoPanel = null;
-    stopPhotoCreation(null);
+    stopPhotoCreation();
   }
 }
