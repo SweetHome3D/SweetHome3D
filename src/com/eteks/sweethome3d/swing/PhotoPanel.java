@@ -73,6 +73,7 @@ import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
@@ -101,6 +102,8 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JComboBox             aspectRatioComboBox;
   private JLabel                qualityLabel;
   private JSlider               qualitySlider;
+  private JPanel                qualityDescriptionPanel;
+  private JLabel []             qualityDescriptionLabels;
   private String                dialogTitle;
   private JPanel                photoPanel;
   private CardLayout            photoCardLayout;
@@ -264,9 +267,18 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
 
+    // Quality panel displaying explanations about quality level
+    final CardLayout qualityDescriptionLayout = new CardLayout();
+    this.qualityDescriptionPanel = new JPanel(qualityDescriptionLayout);
+    this.qualityDescriptionLabels = new JLabel [4];
+    for (int i = 0; i < this.qualityDescriptionLabels.length; i++) {
+      this.qualityDescriptionLabels [i] = new JLabel();
+      this.qualityDescriptionPanel.add(String.valueOf(i), this.qualityDescriptionLabels [i]);
+    }
+
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
-    this.qualitySlider = new JSlider(0, 3);
+    this.qualitySlider = new JSlider(0, qualityDescriptionLabels.length - 1);
     this.qualitySlider.setPaintLabels(true);
     this.qualitySlider.setPaintTicks(true);    
     this.qualitySlider.setMajorTickSpacing(1);
@@ -278,6 +290,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       // Can't support 2 first quality levels if offscreen image isn't supported 
       this.qualitySlider.setValue(Math.max(2, controller.getQuality()));
     }
+    qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
     this.qualitySlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (!offScreenImageSupported) {
@@ -290,9 +303,10 @@ public class PhotoPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             qualitySlider.setValue(controller.getQuality());
+            qualityDescriptionLayout.show(qualityDescriptionPanel, String.valueOf(controller.getQuality()));
           }
         });
-
+    
     // Add a listener on 3D view to be notified when its size changes 
     final JComponent view3D = (JComponent)controller.get3DView();
     this.view3DSizeListener = new ComponentAdapter() {
@@ -330,6 +344,13 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
     qualitySliderLabelTable.put(this.qualitySlider.getMaximum(), bestLabel);
     this.qualitySlider.setLabelTable(qualitySliderLabelTable);
+    for (int i = 0; i < qualityDescriptionLabels.length; i++) {
+      this.qualityDescriptionLabels [i].setText("<html><table><tr valign='middle'>"
+         + "<td><img border='1' src='" 
+         + new ResourceURLContent(PhotoPanel.class, "resources/quality" + i + ".jpg").getURL() + "'></td>"
+         + "<td><font size='-1'>" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</font></td>"
+         + "</tr></table>");
+    }
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
     Window window = SwingUtilities.getWindowAncestor(this);  
     if (window != null) {
@@ -430,13 +451,17 @@ public class PhotoPanel extends JPanel implements DialogView {
     add(proportionsPanel, new GridBagConstraints(
         1, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
         GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
-    // Last row
+    // Fourth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
     add(this.qualitySlider, new GridBagConstraints(
         2, 3, 3, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
+    // Last row
+    add(this.qualityDescriptionPanel, new GridBagConstraints(
+        1, 4, 4, 1, 0, 0, GridBagConstraints.CENTER, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
   
   /**
