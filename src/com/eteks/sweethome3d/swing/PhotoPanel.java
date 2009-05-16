@@ -23,6 +23,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -64,6 +65,7 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -278,8 +280,10 @@ public class PhotoPanel extends JPanel implements DialogView {
     final CardLayout qualityDescriptionLayout = new CardLayout();
     this.qualityDescriptionPanel = new JPanel(qualityDescriptionLayout);
     this.qualityDescriptionLabels = new JLabel [4];
+    Font font = UIManager.getFont("ToolTip.font");
     for (int i = 0; i < this.qualityDescriptionLabels.length; i++) {
       this.qualityDescriptionLabels [i] = new JLabel();
+      this.qualityDescriptionLabels [i].setFont(font);
       this.qualityDescriptionPanel.add(String.valueOf(i), this.qualityDescriptionLabels [i]);
     }
 
@@ -343,14 +347,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
     qualitySliderLabelTable.put(this.qualitySlider.getMaximum(), bestLabel);
     this.qualitySlider.setLabelTable(qualitySliderLabelTable);
-    String sizeModifier = OperatingSystem.isWindows() 
-        ? "" 
-        : " size='-1'";
     for (int i = 0; i < qualityDescriptionLabels.length; i++) {
       this.qualityDescriptionLabels [i].setText("<html><table><tr valign='middle'>"
          + "<td><img border='1' src='" 
          + new ResourceURLContent(PhotoPanel.class, "resources/quality" + i + ".jpg").getURL() + "'></td>"
-         + "<td><font" + sizeModifier + ">" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</font></td>"
+         + "<td>" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</td>"
          + "</tr></table>");
     }
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
