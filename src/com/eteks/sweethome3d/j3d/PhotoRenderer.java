@@ -61,8 +61,11 @@ import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
 
+import org.sunflow.PluginRegistry;
 import org.sunflow.SunflowAPI;
 import org.sunflow.core.Display;
+import org.sunflow.core.Instance;
+import org.sunflow.core.light.SphereLight;
 import org.sunflow.image.Color;
 import org.sunflow.math.Matrix4;
 import org.sunflow.math.Point3;
@@ -90,15 +93,17 @@ public class PhotoRenderer {
   private final SunflowAPI sunflow;
   private final Map<Texture, File> textureImageFilesCache = new HashMap<Texture, File>();
 
+  static {
+    // Ignore logs
+    UI.set(new SilentInterface());
+    PluginRegistry.lightSourcePlugins.registerPlugin("sphere", SphereLightWithNoRepresentation.class);
+  }
 
   /**
    * Creates an instance ready to render the scene matching the given <code>home</code>.
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
-    // Ignore logs
-    UI.set(new SilentInterface());
-    
     // As only one SunFlow renderer can run at a time,
     // wait 10s max that SunFlow rendering threads end
     for (int i = 0; UI.taskCanceled() && i < 100; i++) {
@@ -764,6 +769,15 @@ public class PhotoRenderer {
             }
           }
         });
+    }
+  }
+
+  /**
+   * A SunFlow sphere light with no representation.
+   */
+  public static class SphereLightWithNoRepresentation extends SphereLight {
+    public Instance createInstance() {
+      return null;
     }
   }
 }
