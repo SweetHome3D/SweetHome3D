@@ -60,13 +60,23 @@ public class AppletUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
  
     // Read other preferences from resource bundle
-    LengthUnit defaultUnit = LengthUnit.valueOf(getLocalizedString(
-        DefaultUserPreferences.class, "unit").toUpperCase());
-    setUnit(defaultUnit);
+    setUnit(LengthUnit.valueOf(getLocalizedString(
+        DefaultUserPreferences.class, "unit").toUpperCase()));
+    setRulersVisible(Boolean.parseBoolean(getLocalizedString(
+        DefaultUserPreferences.class, "rulersVisible")));
+    setGridVisible(Boolean.parseBoolean(getLocalizedString(
+        DefaultUserPreferences.class, "gridVisible")));
+    setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(
+        DefaultUserPreferences.class, "furnitureViewedFromTop")));
+    setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(
+        DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
+    setWallPattern(Pattern.valueOf(getLocalizedString(
+        DefaultUserPreferences.class, "wallPattern").toUpperCase()));
     setNewWallThickness(Float.parseFloat(getLocalizedString(
         DefaultUserPreferences.class, "newWallThickness")));
     setNewWallHeight(Float.parseFloat(getLocalizedString(
         DefaultUserPreferences.class, "newHomeWallHeight")));
+
     setRecentHomes(new ArrayList<String>());
     try {
       setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
