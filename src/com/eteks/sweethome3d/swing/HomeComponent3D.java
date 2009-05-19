@@ -43,6 +43,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.media.j3d.Alpha;
 import javax.media.j3d.AmbientLight;
@@ -435,10 +438,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * An interpolator that computes smooth camera moves. 
    */
   private class CameraInterpolator extends TransformInterpolator {
+    private final ScheduledExecutorService scheduledExecutor;
     private Camera initialCamera;
     private Camera finalCamera;
     
     public CameraInterpolator(TransformGroup transformGroup) {
+      this.scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
       setTarget(transformGroup);
     }
     
@@ -484,6 +489,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           // Start animation now
           alpha.setStartTime(System.currentTimeMillis());
+          // In case system is overloaded computeTransform won't be called
+          // ensure final location will always be set after 150 ms
+          this.scheduledExecutor.schedule(new Runnable() {
+              public void run() {
+                if (getAlpha().value() == 1) {
+                  Transform3D transform = new Transform3D();
+                  computeTransform(1, transform);
+                  getTarget().setTransform(transform);
+                }
+              }
+            }, 150, TimeUnit.MILLISECONDS);
         }
       } 
     }
