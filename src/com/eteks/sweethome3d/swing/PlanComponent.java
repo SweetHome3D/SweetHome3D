@@ -4195,20 +4195,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
       BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
+      int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
+          0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
+          0, imageWithWhiteBackgound.getWidth());
       
       // Render scene with a black background
       background.setColor(0, 0, 0);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
       BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
-      
-      // Create an image with transparent pixels where model isn't drawn
-      int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
-          0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
-          0, imageWithWhiteBackgound.getWidth());
       int [] imageWithBlackBackgoundPixels = imageWithBlackBackgound.getRGB(
           0, 0, imageWithBlackBackgound.getWidth(), imageWithBlackBackgound.getHeight(), null,
           0, imageWithBlackBackgound.getWidth());
+      
+      // Create an image with transparent pixels where model isn't drawn
       for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
         if (imageWithBlackBackgoundPixels [i] != imageWithWhiteBackgoundPixels [i]
             && imageWithBlackBackgoundPixels [i] == 0xFF000000
