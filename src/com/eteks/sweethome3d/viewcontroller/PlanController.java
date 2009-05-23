@@ -3536,8 +3536,8 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private GeneralPath getPath(Area area) {
     GeneralPath path = new GeneralPath();
+    float [] point = new float [2];
     for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); ) {
-      float [] point = new float[2];
       switch (it.currentSegment(point)) {
         case PathIterator.SEG_MOVETO : 
           path.moveTo(point [0], point [1]);
