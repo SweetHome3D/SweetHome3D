@@ -1369,8 +1369,6 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.CUT, toolBar);
     addActionToToolBar(ActionType.COPY, toolBar);
     addActionToToolBar(ActionType.PASTE, toolBar);
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    addActionToToolBar(ActionType.DELETE, toolBar);
     toolBar.addSeparator();
 
     addActionToToolBar(ActionType.ADD_HOME_FURNITURE, toolBar);
@@ -1825,6 +1823,8 @@ public class HomePane extends JRootPane implements HomeView {
         this.viewFromObserverToggleModel, group, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
+    view3DPopup.addSeparator();
+    addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
     
