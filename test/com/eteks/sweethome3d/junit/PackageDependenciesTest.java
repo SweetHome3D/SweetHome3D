@@ -56,6 +56,7 @@ public class PackageDependenciesTest extends TestCase {
     // SunFlow
     JavaPackage sunflow = constraint.addPackage("org.sunflow");
     JavaPackage sunflowCore = constraint.addPackage("org.sunflow.core");
+    JavaPackage sunflowCoreLight = constraint.addPackage("org.sunflow.core.light");
     JavaPackage sunflowImage = constraint.addPackage("org.sunflow.image");
     JavaPackage sunflowMath = constraint.addPackage("org.sunflow.math");
     JavaPackage sunflowSystem = constraint.addPackage("org.sunflow.system");
@@ -97,6 +98,7 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(imageio);
     sweetHome3DJava3D.dependsUpon(sunflow);
     sweetHome3DJava3D.dependsUpon(sunflowCore);
+    sweetHome3DJava3D.dependsUpon(sunflowCoreLight);
     sweetHome3DJava3D.dependsUpon(sunflowImage);
     sweetHome3DJava3D.dependsUpon(sunflowMath);
     sweetHome3DJava3D.dependsUpon(sunflowSystem);
