@@ -228,13 +228,25 @@ public class PhotoRenderer {
                      final ImageObserver observer) {
     // Update pinhole camera lens from camera location in parameter
     Point3 eye = new Point3(camera.getX(), camera.getZ(), camera.getY());
-    // Set the point the camera is pointed to 
-    Point3 target = new Point3(
-        camera.getX() - (float)(Math.sin(camera.getYaw()) * Math.cos(camera.getPitch())), 
-        camera.getZ() - (float)Math.sin(camera.getPitch()), 
-        camera.getY() + (float)(Math.cos(camera.getYaw()) * Math.cos(camera.getPitch()))); 
-    Vector3 up = new Vector3(0, 1, 0);              
-    this.sunflow.parameter("transform", Matrix4.lookAt(eye, target, up));
+    Matrix4 transform;
+    float yaw = camera.getYaw();
+    float pitch = camera.getPitch();
+    double pitchCos = Math.cos(pitch);
+    if (Math.abs(pitchCos) > 1E-6) {
+      // Set the point the camera is pointed to 
+      Point3 target = new Point3(
+          camera.getX() - (float)(Math.sin(yaw) * pitchCos), 
+          camera.getZ() - (float)Math.sin(pitch), 
+          camera.getY() + (float)(Math.cos(yaw) * pitchCos)); 
+      Vector3 up = new Vector3(0, 1, 0);              
+      transform = Matrix4.lookAt(eye, target, up);
+    } else {
+      // Compute matrix directly when the camera points is at top
+      transform = new Matrix4((float)-Math.cos(yaw), (float)-Math.sin(yaw), 0, camera.getX(), 
+          0, 0, 1, camera.getZ(), 
+          (float)-Math.sin(yaw), (float)Math.cos(yaw), 0, camera.getY());
+    }
+    this.sunflow.parameter("transform", transform);
     this.sunflow.parameter("fov", (float)Math.toDegrees(camera.getFieldOfView()));
     this.sunflow.parameter("aspect", (float)image.getWidth() / image.getHeight());
     // Update camera
