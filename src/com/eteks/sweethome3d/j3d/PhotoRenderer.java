@@ -147,7 +147,8 @@ public class PhotoRenderer {
         && quality == Quality.HIGH) {
       BufferedImage skyImage = ImageIO.read(skyTexture.getImage().openStream());
       // Create a temporary image base light twice as high that will contain sky image in the top part
-      BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), skyImage.getHeight() * 2, skyImage.getType());
+      BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), 
+          skyImage.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
       // Make a brighter image to increase light power   
       g2D.drawImage(skyImage, new RescaleOp(1.75f, 0f, null), 0, 0);
