@@ -1,0 +1,100 @@
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=gb2312">
+	<title>打印家居模型</title>
+	<link href="../help.css" rel="stylesheet" media="all">
+</head>
+
+<body  bgcolor="#ffffff">
+<div id="banner">
+	<div id="helpheader"><a class="bread" href="index.html">Sweet Home 3D 帮助</a> → <a class="bread" href="tocCreating.html">建立家居模型、绘制墙体、置入物件</a></div>
+</div>
+<div id="mainbox" align="left">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr valign="bottom" height="32">
+	<td width="3" height="32">&nbsp;</td>
+	<td width="32" height="32"><img src="../images/sweethome3dIcon32.png" alt="Sweet Home 3D 图标" height="32" width="32"></td>
+	<td width="8" height="32">&nbsp;&nbsp;</td>
+	<td valign="bottom" height="32"><font id="topic">打印家居模型</font></td>
+	</tr>
+	<tr height="10">
+	<td colspan="4" height="10">&nbsp;</td>
+	</tr>
+</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="3">
+  <tr>
+    <td><p>　　如果您要打印当前的家居模型，请在菜单上选择<B>文件</B>→<B>打印</B>。<br>　　选择该菜单项后屏幕上会出现您使用的操作系统预设的打印对话框，您可以在其中选择打印机、打印的范围、打印的质量，等等。</p>
+      <p>　　默认情况下，Sweet Home 3D 打印的内容为当前家居模型的物件列表、平面图和当前显示在 3D 视图中的内容，并使用默认的纸张大小、页边距和方向。如果您想要更改这些参数，请使用<B>文件</B>→<B>页面设置...</B> 菜单项。</p>
+        <p align="center"><img src="images/pageSetup.png" alt="页面设置" width="366" height="394"></p>
+      <p>　　在页面设置窗口中，您可以单击<B>页面格式</B>按钮修改页面的大小和方向。您也可以设置是否打印家居模型的物件列表、平面图和 3D 视图中的内容。如果您不想使用软件自动计算出的最适合纸张大小的比例进行平面图的打印，请在“<B>固定比例</B>”中指定您想要的数值。<br>　　您还可以在这里自定义出现在每一页上的页眉与页脚。您既可以在<B>页眉</B>和<B>页脚</B>中输入静态文字，也可在其中使用变量。这些变量在打印的时候会被替换为对应的值。下面列出的是目前可用的 7 个变量（全部为半角字符）：</p>
+      <ul>
+        <li><B>$pageNumber</B>：页码</li>
+        <li><B>$pageCount</B>：总页数</li>
+        <li><B>$planScale</B>：平面图比例（自动计算和手动设置的比例均适用）</li>
+        <li><B>$date</B>：执行打印操作的日期</li>
+        <li><B>$time</B>：执行打印操作的时间</li>
+        <li><B>$name</B>：家居模型的文件名</li>
+        <li><B>$file</B>：家居模型的路径（包含文件名）</li>
+        </ul>      
+      <p>　　为防止逐键输入变量名的过程中发生错误，请使用<B>页眉</B>和<B>页脚</B>输入框下面的<B>变量按钮</B>输入变量。由于半角的“$”字符被保留作了变量名的标识符，故如果您想在打印时直接输出一个“$”，请输入“<B>$$</B>”（两个半角“$”）。</p>      
+      <p>　　打印家居模型之前，您可以使用菜单上的<B>文件</B>→<B>打印预览...</B> 在屏幕上预览您的页面设置。</p>
+        <p align="center"><img src="images/printPreview.png" alt="打印预览" width="470" height="447"></p>
+      <p>　　您可以在“打印预览”窗口中逐页预览家居模型打印的效果。如要切换预览的页面，请单击顶部的箭头或按键盘上的方向键。</p></td>
+  </tr>
+</table>
+<div id="taskbox">
+  <table width="100%" border="0" cellspacing="0" cellpadding="7" BGCOLOR="#eeeeee">
+    <tr valign="top" BGCOLOR="#eeeeee">
+      <td bgcolor="#eeeeee" width="98%">
+        <table border="0" cellspacing="0" cellpadding="4">
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>打印功能在 Linux 下可能会无法使用。如果出现这样的情况，请使用<B>文件</B>→<B>打印到 PDF...</B> 菜单项创建一个 PDF 文件，然后再用您查看 PDF 文件的工具打印该文件。</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>在某些系统配置下，3D 视图的打印可能会无法使用。此时“页面设置”中的“<B>打印 3D 视图</B>”会被置为未选中的状态，且被禁用。</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>家居模型的 3D 视图使用固定的 150 dpi 分辨率进行打印，在单一页面上占据除页边距外的空间。</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>除了使用页眉或页脚中的“比例”变量外，您还可以在平面图中画一条标准长度（如一米）的<a href="drawingDimensions.html">标注线</a>来标明平面图的比例尺。</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td><p>&#149;</p>
+            </td>
+            <td>
+              <p>您选择的页面设置会随家居模型文件一起<a href="savingHome.html">保存</a>。</p>
+            </td>
+          </tr>
+          <tr valign="top">
+            <td width="16"><p>&#149;</p>
+            </td>
+            <td>
+              <p>打印预览窗口可以使用鼠标拖曳放大。</p>
+            </td>
+          </tr>
+        </table>
+        </td>
+    </tr>
+  </table>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,134 @@
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html;charset=gb2312">
+	<title>绘制房间</title>
+	<link href="../help.css" rel="stylesheet" media="all">
+</head>
+
+<body  bgcolor="#ffffff">
+<div id="banner">
+	<div id="helpheader"><a class="bread" href="index.html">Sweet Home 3D 帮助</a> → <a class="bread" href="tocCreating.html">建立家居模型、绘制墙体、置入物件</a></div>
+</div>
+<div id="mainbox" align="left">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+	<tr valign="bottom" height="32">
+	<td width="3" height="32">&nbsp;</td>
+	<td width="32" height="32"><img src="../images/sweethome3dIcon32.png" alt="Sweet Home 3D 图标" height="32" width="32"></td>
+	<td width="8" height="32">&nbsp;&nbsp;</td>
+	<td valign="bottom" height="32"><font id="topic">绘制房间</font></td>
+	</tr>
+	<tr height="10">
+	<td colspan="4" height="10">&nbsp;</td>
+	</tr>
+</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="3">
+	<tr>
+	<td><p>　　如果您要绘制房间，请在菜单上选择<B>平面图</B>→<B>绘制房间</B>或者在工具栏上选择“<B>绘制房间</B>”工具。</p>
+	  <blockquote>
+	    <p><img src="../images/createRoomsTool.png" alt="绘制房间工具" width="24" height="24" align="absmiddle">&nbsp;<B>绘制房间</B>工具</p>
+	    </blockquote>	  
+	  <p>　　您可以使用两种方法在平面图中添加房间或平面：</p>
+	  <ul>
+	    <li>在房间的各个角落处单击鼠标进行定点，在最后一点处双击鼠标或在添加完最后一点后按 <B>Escape</B> 键。</li>
+	    <li>在任意一个<B>闭合</B>平面（例如被<a href="drawingWalls.html">墙体</a>包围的区域）内双击鼠标。</li>
+	  </ul>
+	  <p>　　如果您使用沿着墙体逐点描绘的方法绘制房间，那么在“自动吸附”启用的状态下，当鼠标指针位于墙体转角处时会在其上出现一个彩色的圆点，用以协助您准确定位每一个角点。将鼠标指针移到任一闭合区域内双击鼠标，将会自动绘制一个占满该区域的房间，且使用该法绘制的房间还会包含门框下方面积的一半。该功能可以保证当房间之间的门处于打开状态时两边的地板和天花板的纹理可以在 3D 视图中正确衔接。<br>　　所以，除非您要绘制一个与墙体无关的特殊平面（如门外的车道），您总是应该先在家居模型中<a href="drawingWalls.html">绘制墙体</a>并在需要的地方<a href="addingFurniture.html">加入门</a>，然后再使用双击的方法绘制房间。这样您就可以充分利用软件显示的校准线和工具提示绘制漂亮的房间，也可以将门框下一半的面积算入房间的面积中。<br>　　新绘制的房间会在平面图和 3D 视图中同步呈现。</p>
+	  <table border="0" align="center" cellpadding="0" cellspacing="5">
+        <tr>
+          <td align="center"><img src="../images/drawingRooms1.png" alt="使用逐点方式绘制房间" width="335" height="190"></td>
+          </tr>
+        <tr align="center">
+          <td>使用逐点绘制的方法绘制房间</td>
+          </tr>
+      </table>	  <br><table border="0" align="center" cellpadding="0" cellspacing="5">
+        <tr>
+          <td align="center"><img src="../images/drawingRooms2.png" alt="使用双击方式绘制房间" width="335" height="190"></td>
+        </tr>
+        <tr align="center">
+          <td>使用双击鼠标的方法绘制房间<br>绘制完成的房间会包含门框下面积的一半</td>
+        </tr>
+      </table>	  
+	  <p>　　使用逐点方式时，如果您要结束墙体的绘制，请选择<B>平面图</B>→<B>选择</B>，或单击工具栏上的<B>选择</B>工具（其他工具亦可），或在最后一点处双击鼠标。</p>	  
+	  <blockquote>
+	    <p><img src="../images/selectTool.png" alt="选择工具" width="24" height="24" align="absmiddle">&nbsp;<B>选择</B>工具</p>
+      </blockquote></td>
+	</tr>
+</table>
+<div id="taskbox">
+<table width="100%" border="0" cellspacing="0" cellpadding="7" BGCOLOR="#eeeeee">
+	<tr valign="top" BGCOLOR="#eeeeee">
+	<td bgcolor="#eeeeee" width="98%">
+	<table border="0" cellspacing="0" cellpadding="4">
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>新绘制的房间需至少需要三个点方能确定下来（如果仅单击了一次就双击的话，软件会忽略该绘制操作）</p>
+        </td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>仅当门的悬空高度为零的时候才会使双击法绘制的房间包含门框下一半的面积。所以，如果您不想让某一扇门所占的面积被计入房间面积内，您只需给其悬空高度赋一个非常小的值即可（1 毫米就足够了）。</p>
+        </td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>充分运用绘制过程中显示的工具提示、校准线和提示点可使您绘制的房间更为精准。如果在平面图捕获焦点的情况下按<b>回车</b>键，工具提示中的数值会变为可编辑状态，此时您便可以直接用键盘输入当前绘制边线段的长度和角度（如果此时您还没有用鼠标指定第一个角点的位置，则会出现一个让您指定角点坐标值的工具提示）。使用<b>上下方向键</b>或 <b>Tab</b> 键可以在各个数值间切换；再次按下<b>回车</b>键则表示确认您刚才输入的内容。如果在完成数值输入前您又想重新使用鼠标进行绘制，只需移动鼠标指针即可。</p>
+        </td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>默认情况下，使用逐点方式绘制房间时，您指定的点会自动贴合墙体的交点，房间边线的角度也被固定为 15 度的倍数。绘制的同时按住 <B>Shift</B> 键可以临时屏蔽该自动吸附的功能，而禁用“<a href="editingPreferences.html">参数设置</a>”中的“自动吸附”则可以直接关闭该功能。</p>
+        </td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>完成房间的绘制后，您可以<B>更改</B>其名称、3D 视图中显示的颜色或纹理，以及面积数据在平面图中的可见性。</p>
+        </td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>房间的面积、平面图的标尺和平面图网格使用的默认单位取决于操作系统的区域设置，但您仍然可在“<a href="editingPreferences.html">参数设置</a>”中将其更改为厘米、米、毫米或英寸。如果您将单位设置为“厘米”，那么房间的面积会以平方米为单位；如果设置的单位是“英寸”，房间面积的单位则为平方英尺。</td>
+	    </tr>
+	  <tr valign="top">
+        <td>
+          <p>&#149;</p>
+        </td>
+        <td>
+          <p>使用<B>平面图</B>→<B>放大</B>或<B>平面图</B>→<B>缩小</B>可以更改平面图的显示比例。       </td>
+	    </tr>
+	  <tr valign="top">
+	    <td>
+	      <p>&#149;</p>
+	      </td>
+	    <td>
+          <p>建议在绘制房间时使用默认的“<a href="editing3DView.html">鸟瞰模式</a>”，这样您就可以在 3D 视图中获得更好的视角。</p>
+	      </td>
+	    </tr>
+	  <tr valign="top"><td width="16"><p>&#149;</p></td><td>
+	<p>当“<B>绘制房间</B>”工具处于选中状态时，一些工具按钮和菜单项会被禁用。如果您需要使用这些工具，请重新选中“<B>选择</B>”工具。</p>
+	</td>
+	</tr></table>
+	 </td>
+	</tr>
+</table></div>
+</div>
+</body>
+
+</html>
