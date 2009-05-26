@@ -107,12 +107,12 @@ public class Room3D extends Object3DBranch {
   }
 
   /**
-   * Returns a new wall part shape with no geometry  
+   * Returns a new room part shape with no geometry  
    * and a default appearance with a white material.
    */
   private Node createRoomPartShape() {
     Shape3D roomShape = new Shape3D();
-    // Allow wall shape to change its geometry
+    // Allow room shape to change its geometry
     roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     roomShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
@@ -126,7 +126,7 @@ public class Room3D extends Object3DBranch {
     roomAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     roomAppearance.setMaterial(DEFAULT_MATERIAL);      
     roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-    // Mix texture and wall color
+    // Mix texture and room color
     TextureAttributes textureAttributes = new TextureAttributes ();
     textureAttributes.setTextureMode(TextureAttributes.MODULATE);
     roomAppearance.setTextureAttributes(textureAttributes);
