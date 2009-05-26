@@ -144,14 +144,14 @@ public class Room3D extends Object3DBranch {
    * Sets the 3D geometry of this room shapes that matches its 2D geometry.  
    */
   private void updateRoomGeometry() {
-    updateRoomSideGeometry(FLOOR_PART, ((Room)getUserData()).getFloorTexture());
-    updateRoomSideGeometry(CEILING_PART, ((Room)getUserData()).getCeilingTexture());
+    updateRoomPartGeometry(FLOOR_PART, ((Room)getUserData()).getFloorTexture());
+    updateRoomPartGeometry(CEILING_PART, ((Room)getUserData()).getCeilingTexture());
   }
   
-  private void updateRoomSideGeometry(int roomSide, HomeTexture texture) {
-    Shape3D roomShape = (Shape3D)getChild(roomSide);
+  private void updateRoomPartGeometry(int roomPart, HomeTexture texture) {
+    Shape3D roomShape = (Shape3D)getChild(roomPart);
     int currentGeometriesCount = roomShape.numGeometries();
-    for (Geometry roomGeometry : createRoomGeometries(roomSide, texture)) {
+    for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
       roomShape.addGeometry(roomGeometry);
     }
     for (int i = currentGeometriesCount - 1; i >= 0; i--) {
@@ -293,36 +293,36 @@ public class Room3D extends Object3DBranch {
    */
   private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
-    updateRoomSideAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
+    updateRoomPartAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
         room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.isFloorVisible());
-    updateRoomSideAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
+    updateRoomPartAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
         room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.isCeilingVisible());
   }
   
   /**
-   * Sets room side appearance with its color, texture and visibility.
+   * Sets room part appearance with its color, texture and visibility.
    */
-  private void updateRoomSideAppearance(final Appearance roomSideAppearance, 
-                                        final HomeTexture roomSideTexture,
+  private void updateRoomPartAppearance(final Appearance roomPartAppearance, 
+                                        final HomeTexture roomPartTexture,
                                         boolean waitTextureLoadingEnd,
-                                        Integer roomSideColor,
+                                        Integer roomPartColor,
                                         boolean visible) {
-    if (roomSideTexture == null) {
-      roomSideAppearance.setMaterial(getMaterial(roomSideColor));
-      roomSideAppearance.setTexture(null);
+    if (roomPartTexture == null) {
+      roomPartAppearance.setMaterial(getMaterial(roomPartColor));
+      roomPartAppearance.setTexture(null);
     } else {
-      // Update material and texture of room side
-      roomSideAppearance.setMaterial(DEFAULT_MATERIAL);
+      // Update material and texture of room part
+      roomPartAppearance.setMaterial(DEFAULT_MATERIAL);
       final TextureManager textureManager = TextureManager.getInstance();
-      textureManager.loadTexture(roomSideTexture.getImage(), waitTextureLoadingEnd,
+      textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                roomSideAppearance.setTexture(texture);
+                roomPartAppearance.setTexture(texture);
               }
             });
     }
-    // Update room side visibility
-    RenderingAttributes renderingAttributes = roomSideAppearance.getRenderingAttributes();
+    // Update room part visibility
+    RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
     renderingAttributes.setVisible(visible);
   }
   
