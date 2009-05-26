@@ -1408,7 +1408,17 @@ public class HomePane extends JRootPane implements HomeView {
     }
     
     addActionToToolBar(ActionType.HELP, toolBar);
-    
+
+    // Remove useless separators 
+    for (int i = toolBar.getComponentCount() - 1; i > 0; i--) {
+      Component child = toolBar.getComponent(i);
+      if (child instanceof JSeparator
+          && (i == toolBar.getComponentCount() - 1
+              || toolBar.getComponent(i - 1) instanceof JSeparator)) {
+        toolBar.remove(i);
+      } 
+    }
+
     updateToolBarButtons(toolBar);
     // Update toolBar buttons when component orientation changes 
     // and when buttons are added or removed to it  
