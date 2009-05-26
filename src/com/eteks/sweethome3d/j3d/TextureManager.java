@@ -90,7 +90,10 @@ public class TextureManager {
     g.setColor(color);
     g.drawLine(0, 0, 0, 0);
     g.dispose();
-    return new TextureLoader(image).getTexture();
+    Texture texture = new TextureLoader(image).getTexture();
+    texture.setCapability(Texture.ALLOW_IMAGE_READ);
+    texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+    return texture;
   }
   
   /**
@@ -128,7 +131,7 @@ public class TextureManager {
         textureObserver.textureUpdated(texture);
       } else {
         // Notify wait texture to observer
-        textureObserver.textureUpdated(waitTexture);
+        textureObserver.textureUpdated(this.waitTexture);
         if (this.texturesLoader == null) {
           this.texturesLoader = Executors.newSingleThreadExecutor();
         }
