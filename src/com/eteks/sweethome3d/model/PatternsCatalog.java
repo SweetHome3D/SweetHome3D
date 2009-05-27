@@ -24,14 +24,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * A catalog of patterns used as patterns to fill plan areas.
+ * A catalog of texture images used as patterns to fill plan areas.
  * @author Emmanuel Puybaret
  */
 public class PatternsCatalog {
   private List<TextureImage> patterns;
   
   /**
-   * Create a patterns catalog.
+   * Creates a patterns catalog.
    */
   public PatternsCatalog(List<TextureImage> patterns) {
     this.patterns = new ArrayList<TextureImage>(patterns);
