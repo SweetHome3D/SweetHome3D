@@ -247,7 +247,7 @@ public class Room implements Serializable, Selectable {
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
   
   /**
@@ -259,14 +259,16 @@ public class Room implements Serializable, Selectable {
     if (index < 0 || index >= this.points.length) {
       throw new IndexOutOfBoundsException("Invalid index " + index);
     }
-    
-    float [][] oldPoints = this.points;
-    this.points = deepCopy(points);
-    this.points [index][0] = x;
-    this.points [index][1] = y;
-    this.shapeCache = null;
-    this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+    if (this.points [index][0] != x 
+        || this.points [index][1] != y) {
+      float [][] oldPoints = this.points;
+      this.points = deepCopy(this.points);
+      this.points [index][0] = x;
+      this.points [index][1] = y;
+      this.shapeCache = null;
+      this.areaCache  = null;
+      this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+    }
   }
   
   /**
@@ -287,7 +289,7 @@ public class Room implements Serializable, Selectable {
     this.points = newPoints;
     this.shapeCache = null;
     this.areaCache  = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
   
   /**
