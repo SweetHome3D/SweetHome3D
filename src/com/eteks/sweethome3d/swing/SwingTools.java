@@ -274,7 +274,6 @@ public class SwingTools {
           throw new IllegalArgumentException("Can't read pattern image " + pattern.getName());
         }
       }
-      foregroundColor = Color.GREEN;
       // Draw the pattern image with foreground color
       final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
       imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
