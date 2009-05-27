@@ -257,40 +257,40 @@ public class SwingTools {
     if (patternImages == null) {
       patternImages = new HashMap<TextureImage, BufferedImage>();
     }
-      BufferedImage image = new BufferedImage(
-          (int)pattern.getWidth(), (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
-      Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-      imageGraphics.setColor(backgroundColor);
-      imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
-      // Get pattern image from cache
-      BufferedImage patternImage = patternImages.get(pattern); 
-      if (patternImage == null) {
-        try {
-          InputStream imageInput = pattern.getImage().openStream();
-          patternImage = ImageIO.read(imageInput);
-          imageInput.close();
-          patternImages.put(pattern, patternImage);
-        } catch (IOException ex) {
-          throw new IllegalArgumentException("Can't read pattern image " + pattern.getName());
-        }
+    BufferedImage image = new BufferedImage(
+        (int)pattern.getWidth(), (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
+    Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+    imageGraphics.setColor(backgroundColor);
+    imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+    // Get pattern image from cache
+    BufferedImage patternImage = patternImages.get(pattern); 
+    if (patternImage == null) {
+      try {
+        InputStream imageInput = pattern.getImage().openStream();
+        patternImage = ImageIO.read(imageInput);
+        imageInput.close();
+        patternImages.put(pattern, patternImage);
+      } catch (IOException ex) {
+        throw new IllegalArgumentException("Can't read pattern image " + pattern.getName());
       }
-      // Draw the pattern image with foreground color
-      final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
-      imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
-          new FilteredImageSource(patternImage.getSource(),
-          new RGBImageFilter() {
-            {
-              this.canFilterIndexColorModel = true;
-            }
+    }
+    // Draw the pattern image with foreground color
+    final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
+    imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
+        new FilteredImageSource(patternImage.getSource(),
+        new RGBImageFilter() {
+          {
+            this.canFilterIndexColorModel = true;
+          }
 
-            @Override
-            public int filterRGB(int x, int y, int rgba) {
-              // Always use foreground color and alpha
-              return (rgba & 0xFF000000) | foregroundColorRgb;
-            }
-          })), 0, 0, null);
-      imageGraphics.dispose();
-      return image;
+          @Override
+          public int filterRGB(int x, int y, int rgba) {
+            // Always use foreground color and alpha
+            return (rgba & 0xFF000000) | foregroundColorRgb;
+          }
+        })), 0, 0, null);
+    imageGraphics.dispose();
+    return image;
   }
   
   /**
