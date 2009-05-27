@@ -596,6 +596,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       });
     preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
         new UserPreferencesChangeListener(this));
+    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+        new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
@@ -626,6 +628,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         preferences.removePropertyChangeListener(property, this);
       } else {
         switch (property) {
+          case LANGUAGE :
           case UNIT :
             // Update format of tool tip text fields
             for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry : 
