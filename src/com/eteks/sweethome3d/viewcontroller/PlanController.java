@@ -2451,10 +2451,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Moves <code>room</code> point at the given index to (<code>x</code>, <code>y</code>).
    */
   private void moveRoomPoint(Room room, float x, float y, int pointIndex) {
-    float [][] points = room.getPoints();
-    points [pointIndex][0] = x;
-    points [pointIndex][1] = y;
-    room.setPoints(points);
+    room.setPoint(x, y, pointIndex);
   }
   
   /**
@@ -6496,19 +6493,13 @@ public class PlanController extends FurnitureController implements Controller {
         float [][] points = this.newRoom.getPoints();
         this.xPreviousPoint = points [points.length - 1][0];
         this.yPreviousPoint = points [points.length - 1][1]; 
-        float [][] newPoints = new float [points.length + 1][];
-        System.arraycopy(points, 0, newPoints, 0, points.length);
-        newPoints [newPoints.length - 1] = this.newPoint;
+        this.newRoom.addPoint(xEnd, yEnd);
         this.newPoint [0] = xEnd; 
         this.newPoint [1] = yEnd; 
-        this.newRoom.setPoints(newPoints);
         this.newPoint = null;
       } else {
         // Otherwise update its last point
-        float [][] points = this.newRoom.getPoints();
-        points [points.length - 1][0] = xEnd;
-        points [points.length - 1][1] = yEnd;
-        this.newRoom.setPoints(points);
+        this.newRoom.setPoint(xEnd, yEnd, this.newRoom.getPointCount() - 1);
       }         
       planView.setToolTipFeedback(
           getToolTipFeedbackText(this.newRoom, this.newRoom.getPointCount() - 1), x, y);
@@ -6703,7 +6694,8 @@ public class PlanController extends FurnitureController implements Controller {
           // If last edited point matches first point validate drawn room 
           if (points.length > 2 
               && this.newRoom.getPointIndexAt(points [points.length - 1][0], points [points.length - 1][1], 0.001f) == 0) {
-            removeLastPoint();
+            // Remove last currently edited point.
+            this.newRoom.removePoint(this.newRoom.getPointCount() - 1);
             validateDrawnRoom();
             return;
           }
@@ -6720,31 +6712,18 @@ public class PlanController extends FurnitureController implements Controller {
       float [][] points = this.newRoom.getPoints();
       this.xPreviousPoint = points [points.length - 1][0];
       this.yPreviousPoint = points [points.length - 1][1]; 
-      float [][] newPoints = new float [points.length + 1][];
-      System.arraycopy(points, 0, newPoints, 0, points.length);
-      newPoints [newPoints.length - 1] = this.newPoint;
       // Create a new side with an angle equal to previous side angle - 90°
       double previousSideAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1], 
           points [points.length - 2][0] - points [points.length - 1][0]);
       previousSideAngle -=  Math.PI / 2;
       float previousSideLength = getRoomSideLength(this.newRoom, points.length - 1); 
-      this.newPoint [0] = (float)(this.xPreviousPoint + previousSideLength * Math.cos(previousSideAngle)); 
-      this.newPoint [1] = (float)(this.yPreviousPoint - previousSideLength * Math.sin(previousSideAngle)); 
-      this.newRoom.setPoints(newPoints);
+      this.newRoom.addPoint(
+          (float)(this.xPreviousPoint + previousSideLength * Math.cos(previousSideAngle)),
+          (float)(this.yPreviousPoint - previousSideLength * Math.sin(previousSideAngle)));
       this.newPoint = null;
       this.lastPointCreationTime = System.currentTimeMillis();
     }
-    
-    /**
-     * Removes last currently edited point.
-     */
-    private void removeLastPoint() {
-      float [][] points = this.newRoom.getPoints();
-      float [][] newPoints = new float [points.length -1][];
-      System.arraycopy(points, 0, newPoints, 0, newPoints.length);
-      this.newRoom.setPoints(newPoints);
-    }
-    
+        
     @Override
     public void updateEditableProperty(EditableProperty editableProperty, Object value) {
       PlanView planView = getView();
@@ -6771,8 +6750,10 @@ public class PlanController extends FurnitureController implements Controller {
             length = Math.max(0.001f, Math.min(length, 100000f));
             double wallAngle = Math.PI - Math.atan2(points [points.length - 2][1] - points [points.length - 1][1], 
                 points [points.length - 2][0] - points [points.length - 1][0]);
-            points [points.length - 1][0] = (float)(points [points.length - 2][0] + length * Math.cos(wallAngle));
-            points [points.length - 1][1] = (float)(points [points.length - 2][1] - length * Math.sin(wallAngle));
+            this.newRoom.setPoint(
+                (float)(points [points.length - 2][0] + length * Math.cos(wallAngle)),
+                (float)(points [points.length - 2][1] - length * Math.sin(wallAngle)),
+                points.length - 1);
             break;      
           case ANGLE : 
             wallAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
@@ -6781,15 +6762,16 @@ public class PlanController extends FurnitureController implements Controller {
                   points [points.length - 3][0] - points [points.length - 2][0]);
             }
             float wallLength = getRoomSideLength(this.newRoom, points.length - 1);              
-            points [points.length - 1][0] = (float)(points [points.length - 2][0] + wallLength * Math.cos(wallAngle));
-            points [points.length - 1][1] = (float)(points [points.length - 2][1] - wallLength * Math.sin(wallAngle));
+            this.newRoom.setPoint(
+                (float)(points [points.length - 2][0] + wallLength * Math.cos(wallAngle)),
+                (float)(points [points.length - 2][1] - wallLength * Math.sin(wallAngle)),
+                points.length - 1);
             break;
           default :
             return;
         }
 
         // Update new room
-        this.newRoom.setPoints(points);
         planView.setAlignmentFeedback(Room.class, this.newRoom, 
             points [points.length - 1][0], points [points.length - 1][1], false);
         showRoomAngleFeedback(this.newRoom, points.length - 1);
@@ -6815,7 +6797,8 @@ public class PlanController extends FurnitureController implements Controller {
     public void escape() {
       if (this.newRoom != null
           && this.newPoint == null) {
-        removeLastPoint();
+        // Remove last currently edited point.
+        this.newRoom.removePoint(this.newRoom.getPointCount() - 1);
       }
       validateDrawnRoom();
     }

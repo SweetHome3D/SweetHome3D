@@ -219,6 +219,76 @@ public class Room implements Serializable, Selectable {
       this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
     }
   }
+
+  /**
+   * Adds a point at the end of room points.
+   * @since 1.9
+   */
+  public void addPoint(float x, float y) {
+    addPoint(x, y, this.points.length);
+  }
+  
+  /**
+   * Adds a point at the given <code>index</code>.
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code> 
+   * @since 1.9
+   */
+  public void addPoint(float x, float y, int index) {
+    if (index < 0 || index > this.points.length) {
+      throw new IndexOutOfBoundsException("Invalid index " + index);
+    }
+    
+    float [][] newPoints = new float [this.points.length + 1][];
+    System.arraycopy(this.points, 0, newPoints, 0, index);
+    newPoints [index] = new float [] {x, y};
+    System.arraycopy(this.points, index, newPoints, index + 1, this.points.length - index);
+    
+    float [][] oldPoints = this.points;
+    this.points = newPoints;
+    this.shapeCache = null;
+    this.areaCache  = null;
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+  }
+  
+  /**
+   * Sets the point at the given <code>index</code>.
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @since 1.9
+   */
+  public void setPoint(float x, float y, int index) {
+    if (index < 0 || index >= this.points.length) {
+      throw new IndexOutOfBoundsException("Invalid index " + index);
+    }
+    
+    float [][] oldPoints = this.points;
+    this.points = deepCopy(points);
+    this.points [index][0] = x;
+    this.points [index][1] = y;
+    this.shapeCache = null;
+    this.areaCache  = null;
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+  }
+  
+  /**
+   * Removes the point at the given <code>index</code>.
+   * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
+   * @since 1.9
+   */
+  public void removePoint(int index) {
+    if (index < 0 || index >= this.points.length) {
+      throw new IndexOutOfBoundsException("Invalid index " + index);
+    }
+    
+    float [][] newPoints = new float [this.points.length - 1][];
+    System.arraycopy(this.points, 0, newPoints, 0, index);
+    System.arraycopy(this.points, index + 1, newPoints, index, this.points.length - index - 1);
+    
+    float [][] oldPoints = this.points;
+    this.points = newPoints;
+    this.shapeCache = null;
+    this.areaCache  = null;
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, this.points);
+  }
   
   /**
    * Returns whether the area of this room is visible or not. 
