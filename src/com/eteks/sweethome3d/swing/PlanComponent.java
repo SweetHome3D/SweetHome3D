@@ -229,6 +229,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Rectangle2D                 planBoundsCache;  
   private boolean                     planBoundsCacheValid;  
   private BufferedImage               backgroundImageCache;
+  private BufferedImage               wallsPatternImageCache;
+  private Color                       wallsPatternBackgroundCache;
+  private Color                       wallsPatternForegroundCache;
   private Area                        wallsAreaCache;
   private Map<Content, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
@@ -592,7 +595,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         }
       });
     preferences.addPropertyChangeListener(UserPreferences.Property.UNIT, 
-        new UnitChangeListener(this));
+        new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.GRID_VISIBLE, 
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_VIEWED_FROM_TOP, 
@@ -601,41 +604,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, 
         new UserPreferencesChangeListener(this));
-  }
-
-  /**
-   * Preferences property listener bound to this component with a weak reference to avoid
-   * strong link between preferences and this component.  
-   */
-  private static class UnitChangeListener implements PropertyChangeListener {
-    private WeakReference<PlanComponent>  planComponent;
-
-    public UnitChangeListener(PlanComponent planComponent) {
-      this.planComponent = new WeakReference<PlanComponent>(planComponent);
-    }
-    
-    public void propertyChange(PropertyChangeEvent ev) {
-      // If plan component was garbage collected, remove this listener from preferences
-      PlanComponent planComponent = this.planComponent.get();
-      UserPreferences preferences = (UserPreferences)ev.getSource();
-      if (planComponent == null) {
-        preferences.removePropertyChangeListener(UserPreferences.Property.UNIT, this);
-      } else {
-        planComponent.repaint();
-        // Update format of tool tip text fields
-        for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry : 
-          planComponent.toolTipEditableTextFields.entrySet()) {
-          updateToolTipTextFieldFormatterFactory(toolTipTextFieldEntry.getValue(), 
-              toolTipTextFieldEntry.getKey(), preferences);
-        }
-        if (planComponent.horizontalRuler != null) {
-          planComponent.horizontalRuler.repaint();
-        }
-        if (planComponent.verticalRuler != null) {
-          planComponent.verticalRuler.repaint();
-        }
-      }
-    }
   }
 
   /**
@@ -653,13 +621,34 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       // If plan component was garbage collected, remove this listener from preferences
       PlanComponent planComponent = this.planComponent.get();
       UserPreferences preferences = (UserPreferences)ev.getSource();
+      UserPreferences.Property property = UserPreferences.Property.valueOf(ev.getPropertyName());
       if (planComponent == null) {
-        preferences.removePropertyChangeListener(
-            UserPreferences.Property.valueOf(ev.getPropertyName()), this);
+        preferences.removePropertyChangeListener(property, this);
       } else {
-        if (planComponent.furnitureTopViewIconsCache != null
-            && !preferences.isFurnitureViewedFromTop()) {
-          planComponent.furnitureTopViewIconsCache = null;
+        switch (property) {
+          case UNIT :
+            // Update format of tool tip text fields
+            for (Map.Entry<PlanController.EditableProperty, JFormattedTextField> toolTipTextFieldEntry : 
+              planComponent.toolTipEditableTextFields.entrySet()) {
+              updateToolTipTextFieldFormatterFactory(toolTipTextFieldEntry.getValue(), 
+                  toolTipTextFieldEntry.getKey(), preferences);
+            }
+            if (planComponent.horizontalRuler != null) {
+              planComponent.horizontalRuler.repaint();
+            }
+            if (planComponent.verticalRuler != null) {
+              planComponent.verticalRuler.repaint();
+            }
+            break;
+          case WALL_PATTERN :
+            planComponent.wallsPatternImageCache = null;
+            break;
+          case FURNITURE_VIEWED_FROM_TOP :
+            if (planComponent.furnitureTopViewIconsCache != null
+                && !preferences.isFurnitureViewedFromTop()) {
+              planComponent.furnitureTopViewIconsCache = null;
+            }
+            break;
         }
         planComponent.repaint();
       }
@@ -2208,9 +2197,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the <code>Paint</code> object used to fill walls.
    */
   private Paint getWallPaint(float planScale, Color backgroundColor, Color foregroundColor) {
-    BufferedImage image = SwingTools.getPatternImage(this.preferences.getWallPattern(), 
-        backgroundColor, foregroundColor);
-    return new TexturePaint(image, 
+    if (this.wallsPatternImageCache == null
+        || !backgroundColor.equals(this.wallsPatternBackgroundCache)
+        || !foregroundColor.equals(this.wallsPatternForegroundCache)) {
+      this.wallsPatternImageCache = SwingTools.getPatternImage(this.preferences.getWallPattern(), 
+          backgroundColor, foregroundColor);
+      this.wallsPatternBackgroundCache = backgroundColor;
+      this.wallsPatternForegroundCache = foregroundColor;
+    }
+    return new TexturePaint(this.wallsPatternImageCache, 
         new Rectangle2D.Float(0, 0, 10 / planScale, 10 / planScale));
   }
   
