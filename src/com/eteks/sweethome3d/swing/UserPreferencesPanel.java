@@ -31,6 +31,7 @@ import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.ButtonGroup;
@@ -54,6 +55,7 @@ import javax.swing.event.ChangeListener;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
@@ -316,12 +318,13 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     // Create wall pattern label and combo box bound to controller WALL_PATTERN property
     this.wallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         UserPreferencesPanel.class, "wallPatternLabel.text"));    
-    this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(UserPreferences.Pattern.values()));
+    List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
+    this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
     this.wallPatternComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list, 
             Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          UserPreferences.Pattern wallPattern = (UserPreferences.Pattern)value;
+          TextureImage wallPattern = (TextureImage)value;
           final Component component = super.getListCellRendererComponent(
               list, "", index, isSelected, cellHasFocus);
           final BufferedImage patternImage = SwingTools.getPatternImage(
@@ -350,7 +353,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
     this.wallPatternComboBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setWallPattern((UserPreferences.Pattern)wallPatternComboBox.getSelectedItem());
+          controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
         }
       });
     controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN, 

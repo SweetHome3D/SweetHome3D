@@ -32,7 +32,6 @@ import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
-import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
@@ -60,22 +59,22 @@ public class AppletUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
  
     // Read other preferences from resource bundle
-    setUnit(LengthUnit.valueOf(getLocalizedString(
-        DefaultUserPreferences.class, "unit").toUpperCase()));
-    setRulersVisible(Boolean.parseBoolean(getLocalizedString(
-        DefaultUserPreferences.class, "rulersVisible")));
-    setGridVisible(Boolean.parseBoolean(getLocalizedString(
-        DefaultUserPreferences.class, "gridVisible")));
-    setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(
-        DefaultUserPreferences.class, "furnitureViewedFromTop")));
-    setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(
-        DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
-    setWallPattern(Pattern.valueOf(getLocalizedString(
-        DefaultUserPreferences.class, "wallPattern").toUpperCase()));
-    setNewWallThickness(Float.parseFloat(getLocalizedString(
-        DefaultUserPreferences.class, "newWallThickness")));
-    setNewWallHeight(Float.parseFloat(getLocalizedString(
-        DefaultUserPreferences.class, "newHomeWallHeight")));
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    setPatternsCatalog(defaultPreferences.getPatternsCatalog());
+    setUnit(defaultPreferences.getLengthUnit());
+    setMagnetismEnabled(defaultPreferences.isMagnetismEnabled());
+    setRulersVisible(defaultPreferences.isRulersVisible());
+    setGridVisible(defaultPreferences.isGridVisible());
+    setFurnitureViewedFromTop(defaultPreferences.isFurnitureViewedFromTop());
+    setFloorColoredOrTextured(defaultPreferences.isRoomFloorColoredOrTextured());
+    setWallPattern(defaultPreferences.getWallPattern());
+    setNewWallThickness(defaultPreferences.getNewWallThickness());
+    setNewWallHeight(defaultPreferences.getNewWallHeight());    
+    setPhotoWidth(defaultPreferences.getPhotoWidth());
+    setPhotoHeight(defaultPreferences.getPhotoHeight());
+    setPhotoAspectRatio(defaultPreferences.getPhotoAspectRatio());
+    setPhotoQuality(defaultPreferences.getPhotoQuality());
+    setCurrency(defaultPreferences.getCurrency());    
 
     setRecentHomes(new ArrayList<String>());
     try {

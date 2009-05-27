@@ -54,6 +54,7 @@ import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.TexturesCatalog;
@@ -160,9 +161,13 @@ public class FileUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog());
     // Read additional textures
     readTexturesCatalog(preferences);
-    
+
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
     
+    // Fill default patterns catalog 
+    PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();
+    setPatternsCatalog(patternsCatalog);
+
     // Read other preferences 
     setUnit(LengthUnit.valueOf(preferences.get(UNIT, 
         defaultPreferences.getLengthUnit().name())));
@@ -175,8 +180,13 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.isFurnitureViewedFromTop()));
     setFloorColoredOrTextured(preferences.getBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, 
         defaultPreferences.isRoomFloorColoredOrTextured()));
-    setWallPattern(Pattern.valueOf(preferences.get(WALL_PATTERN, 
-        defaultPreferences.getWallPattern().name())));
+    try {
+      setWallPattern(patternsCatalog.getPattern(preferences.get(WALL_PATTERN, 
+          defaultPreferences.getWallPattern().getName())));
+    } catch (IllegalArgumentException ex) {
+      // Ensure wall pattern always exists even if new patterns are added in future versions
+      setWallPattern(defaultPreferences.getWallPattern());
+    }
     setNewWallThickness(preferences.getFloat(NEW_WALL_THICKNESS, 
             defaultPreferences.getNewWallThickness()));
     setNewWallHeight(preferences.getFloat(NEW_WALL_HEIGHT,
@@ -411,7 +421,7 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
     preferences.putBoolean(FURNITURE_VIEWED_FROM_TOP, isFurnitureViewedFromTop());
     preferences.putBoolean(ROOM_FLOOR_COLORED_OR_TEXTURED, isRoomFloorColoredOrTextured());
-    preferences.put(WALL_PATTERN, getWallPattern().name());
+    preferences.put(WALL_PATTERN, getWallPattern().getName());
     preferences.putFloat(NEW_WALL_THICKNESS, getNewWallThickness());   
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     preferences.putInt(PHOTO_WIDTH, getPhotoWidth());

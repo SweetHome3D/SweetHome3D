@@ -57,8 +57,10 @@
         <exclude name="**/*.java"/>
         <exclude name="**/package.html"/> 
         <exclude name="com/eteks/sweethome3d/io/*Catalog*.properties"/>
-        <exclude name="com/eteks/sweethome3d/io/resources/**"/>
-        <exclude name="com/eteks/sweethome3d/swing/resources/icons/jfc/*.*"/>
+        <exclude name="com/eteks/sweethome3d/io/resources/*"/>
+        <exclude name="com/eteks/sweethome3d/io/resources/contributions/*"/>
+        <exclude name="com/eteks/sweethome3d/io/resources/textures/*"/>
+        <exclude name="com/eteks/sweethome3d/swing/resources/icons/jfc/*"/>
         <exclude name="**/help/**"/> 
       </fileset>
     </copy>
@@ -84,6 +86,7 @@
       <include name="com/eteks/sweethome3d/io/*FurnitureCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/**"/>
       <exclude name="com/eteks/sweethome3d/io/resources/textures/**"/>
+      <exclude name="com/eteks/sweethome3d/io/resources/patterns/**"/>
     </zip>
   </target>
 

@@ -20,10 +20,15 @@
 package com.eteks.sweethome3d.io;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Default user preferences.
@@ -38,13 +43,21 @@ public class DefaultUserPreferences extends UserPreferences {
     setFurnitureCatalog(new DefaultFurnitureCatalog());
     // Read default textures catalog
     setTexturesCatalog(new DefaultTexturesCatalog());
+    // Build default patterns catalog
+    List<TextureImage> patterns = new ArrayList<TextureImage>();
+    patterns.add(new PatternTexture("foreground"));
+    patterns.add(new PatternTexture("hatchUp"));
+    patterns.add(new PatternTexture("hatchDown"));
+    patterns.add(new PatternTexture("background"));
+    PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
+    setPatternsCatalog(patternsCatalog);
     // Read other preferences from resource bundle
     setUnit(LengthUnit.valueOf(getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
     setRulersVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
     setGridVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
     setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
     setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
-    setWallPattern(Pattern.valueOf(getLocalizedString(DefaultUserPreferences.class, "wallPattern").toUpperCase()));
+    setWallPattern(patternsCatalog.getPattern(getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
     setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
     setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
@@ -78,5 +91,34 @@ public class DefaultUserPreferences extends UserPreferences {
   @Override
   public void addFurnitureLibrary(String name) throws RecorderException {
     throw new RecorderException("Default user preferences can't manage furniture libraries");
+  }
+  
+  /**
+   * A fixed sized pattern.
+   */
+  private static class PatternTexture implements TextureImage {
+    private final String name;
+    private final Content image;
+
+    public PatternTexture(String name) {
+      this.name = name;
+      this.image = new ResourceURLContent(PatternTexture.class, "resources/patterns/" + name + ".png");
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public Content getImage() {
+      return this.image;
+    }
+    
+    public float getWidth() {
+      return 10;
+    }
+    
+    public float getHeight() {
+      return 10;
+    }
   }
 }

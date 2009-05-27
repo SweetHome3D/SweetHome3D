@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -49,7 +50,7 @@ public class UserPreferencesController implements Controller {
   private boolean                       gridVisible;
   private boolean                       furnitureViewedFromTop;
   private boolean                       roomFloorColoredOrTextured;
-  private UserPreferences.Pattern       wallPattern;
+  private TextureImage                  wallPattern;
   private float                         newWallThickness;
   private float                         newWallHeight;
 
@@ -242,9 +243,9 @@ public class UserPreferencesController implements Controller {
    * Sets how furniture should be displayed in plan, and notifies
    * listeners of this change.
    */
-  public void setWallPattern(UserPreferences.Pattern wallPattern) {
+  public void setWallPattern(TextureImage wallPattern) {
     if (this.wallPattern != wallPattern) {
-      UserPreferences.Pattern oldWallPattern = this.wallPattern;
+      TextureImage oldWallPattern = this.wallPattern;
       this.wallPattern = wallPattern;
       this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
           oldWallPattern, wallPattern);
@@ -254,7 +255,7 @@ public class UserPreferencesController implements Controller {
   /**
    * Returns the wall pattern in plan.
    */
-  public UserPreferences.Pattern getWallPattern() {
+  public TextureImage getWallPattern() {
     return this.wallPattern;
   }
   

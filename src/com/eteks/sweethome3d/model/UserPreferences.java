@@ -48,12 +48,6 @@ public abstract class UserPreferences {
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
                         PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY}
   
-  /**
-   * The filling pattern of walls in plan.
-   * @since 1.9
-   */
-  public enum Pattern {FOREGROUND, HATCH_UP, HATCH_DOWN, BACKGROUND};
-  
   private static final String [] SUPPORTED_LANGUAGES; 
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
@@ -70,6 +64,7 @@ public abstract class UserPreferences {
 
   private FurnitureCatalog furnitureCatalog;
   private TexturesCatalog  texturesCatalog;
+  private PatternsCatalog  patternsCatalog;
   private final String     defaultCountry;
   private String           language;
   private String           currency;
@@ -79,7 +74,7 @@ public abstract class UserPreferences {
   private boolean          gridVisible         = true;
   private boolean          furnitureViewedFromTop;
   private boolean          roomFloorColoredOrTextured;
-  private Pattern          wallPattern         = Pattern.HATCH_UP;
+  private TextureImage     wallPattern;
   private float            newWallThickness;
   private float            newWallHeight;
   private int              photoWidth  = 400;
@@ -87,6 +82,7 @@ public abstract class UserPreferences {
   private AspectRatio      photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
   private int              photoQuality;
   private List<String>     recentHomes;
+
 
 
   public UserPreferences() {
@@ -180,6 +176,20 @@ public abstract class UserPreferences {
    */
   protected void setTexturesCatalog(TexturesCatalog catalog) {
     this.texturesCatalog = catalog;
+  }
+
+  /**
+   * Returns the patterns catalog available to fill plan areas. 
+   */
+  public PatternsCatalog getPatternsCatalog() {
+    return this.patternsCatalog;
+  }
+  
+  /**
+   * Sets the patterns available to fill plan areas.
+   */
+  protected void setPatternsCatalog(PatternsCatalog catalog) {
+    this.patternsCatalog = catalog;
   }
 
   /**
@@ -481,18 +491,18 @@ public abstract class UserPreferences {
    * Returns the wall pattern in plan.
    * @since 1.9
    */
-  public Pattern getWallPattern() {
+  public TextureImage getWallPattern() {
     return this.wallPattern;
   }
   
   /**
-   * Sets how furniture should be displayed in plan, and notifies
+   * Sets how walls should be displayed in plan, and notifies
    * listeners of this change.
    * @since 1.9 
    */
-  public void setWallPattern(Pattern wallPattern) {
+  public void setWallPattern(TextureImage wallPattern) {
     if (this.wallPattern != wallPattern) {
-      Pattern oldWallPattern = this.wallPattern;
+      TextureImage oldWallPattern = this.wallPattern;
       this.wallPattern = wallPattern;
       this.propertyChangeSupport.firePropertyChange(Property.WALL_PATTERN.name(), 
           oldWallPattern, wallPattern);

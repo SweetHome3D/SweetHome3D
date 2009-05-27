@@ -24,6 +24,7 @@ import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -32,10 +33,15 @@ import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.RGBImageFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
@@ -51,6 +57,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.text.JTextComponent;
 
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
@@ -239,41 +246,52 @@ public class SwingTools {
     dialog.dispose();
   }
 
+  private static Map<TextureImage, BufferedImage> patternImages;
+  
   /**
    * Returns the image matching a given pattern.
    */
-  public static BufferedImage getPatternImage(UserPreferences.Pattern pattern,
+  public static BufferedImage getPatternImage(TextureImage pattern,
                                               Color backgroundColor, 
                                               Color foregroundColor) {
-    BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-    Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
-    switch (pattern) {
-      case FOREGROUND :
-        imageGraphics.setColor(foregroundColor);
-        imageGraphics.fillRect(0, 0, 10, 10);
-        break;
-      case HATCH_UP :
-        // Draw an upward diagonal line
-        imageGraphics.setPaint(backgroundColor);
-        imageGraphics.fillRect(0, 0, 10, 10);
-        imageGraphics.setColor(foregroundColor);
-        imageGraphics.drawLine(0, 9, 9, 0);
-        break;
-      case HATCH_DOWN :
-        // Draw a downward diagonal line
-        imageGraphics.setPaint(backgroundColor);
-        imageGraphics.fillRect(0, 0, 10, 10);
-        imageGraphics.setColor(foregroundColor);
-        imageGraphics.drawLine(0, 0, 9, 9);
-        break;
-      case BACKGROUND :
-      default :
-        imageGraphics.setColor(backgroundColor);
-        imageGraphics.fillRect(0, 0, 10, 10);
-        break;        
+    if (patternImages == null) {
+      patternImages = new HashMap<TextureImage, BufferedImage>();
     }
-    imageGraphics.dispose();
-    return image;
+      BufferedImage image = new BufferedImage(
+          (int)pattern.getWidth(), (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
+      Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+      imageGraphics.setColor(backgroundColor);
+      imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
+      // Get pattern image from cache
+      BufferedImage patternImage = patternImages.get(pattern); 
+      if (patternImage == null) {
+        try {
+          InputStream imageInput = pattern.getImage().openStream();
+          patternImage = ImageIO.read(imageInput);
+          imageInput.close();
+          patternImages.put(pattern, patternImage);
+        } catch (IOException ex) {
+          throw new IllegalArgumentException("Can't read pattern image " + pattern.getName());
+        }
+      }
+      foregroundColor = Color.GREEN;
+      // Draw the pattern image with foreground color
+      final int foregroundColorRgb = foregroundColor.getRGB() & 0xFFFFFF;
+      imageGraphics.drawImage(Toolkit.getDefaultToolkit().createImage(
+          new FilteredImageSource(patternImage.getSource(),
+          new RGBImageFilter() {
+            {
+              this.canFilterIndexColorModel = true;
+            }
+
+            @Override
+            public int filterRGB(int x, int y, int rgba) {
+              // Always use foreground color and alpha
+              return (rgba & 0xFF000000) | foregroundColorRgb;
+            }
+          })), 0, 0, null);
+      imageGraphics.dispose();
+      return image;
   }
   
   /**
