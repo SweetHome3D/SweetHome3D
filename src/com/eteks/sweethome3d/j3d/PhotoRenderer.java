@@ -25,7 +25,6 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
-import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
