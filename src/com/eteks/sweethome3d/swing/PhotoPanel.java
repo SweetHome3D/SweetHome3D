@@ -34,6 +34,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -113,7 +115,6 @@ public class PhotoPanel extends JPanel implements DialogView {
   private PhotoRenderer         photoRenderer;
   
   private static PhotoPanel     currentPhotoPanel; // There can be only one photo panel opened at a time
-  private ComponentAdapter      view3DSizeListener;
 
   public PhotoPanel(Home home, 
                     UserPreferences preferences, 
@@ -516,13 +517,19 @@ public class PhotoPanel extends JPanel implements DialogView {
       
       // Add a listener on 3D view to be notified when its size changes 
       final JComponent view3D = (JComponent)this.controller.get3DView();
-      this.view3DSizeListener = new ComponentAdapter() {
+      final ComponentAdapter view3DSizeListener = new ComponentAdapter() {
           @Override
           public void componentResized(ComponentEvent ev) {
             controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
           }
         };
-      view3D.addComponentListener(this.view3DSizeListener);
+      view3D.addComponentListener(view3DSizeListener);
+      dialog.addWindowListener(new WindowAdapter() {
+          public void windowClosed(WindowEvent ev) {
+            ((JComponent)controller.get3DView()).removeComponentListener(view3DSizeListener);
+            stopPhotoCreation();
+          }
+        });
 
       dialog.setVisible(true);
       currentPhotoPanel = this;
@@ -598,6 +605,9 @@ public class PhotoPanel extends JPanel implements DialogView {
     }
   }
   
+  /**
+   * Returns the image used in case of an error.
+   */
   private BufferedImage getErrorImage() {
     Icon errorIcon = IconManager.getInstance().getErrorIcon(16);
     BufferedImage errorImage = new BufferedImage(
@@ -608,6 +618,9 @@ public class PhotoPanel extends JPanel implements DialogView {
     return errorImage;
   }
   
+  /**
+   * Stops photo creation.
+   */
   private void stopPhotoCreation() {
     if (this.photoCreationExecutor != null) {
       this.photoCreationExecutor.shutdownNow();
@@ -636,10 +649,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     }
   }
 
+  /**
+   * Manages closing of this pane.
+   */
   private void close() {
-    SwingUtilities.getWindowAncestor(this).dispose();    
-    ((JComponent)this.controller.get3DView()).removeComponentListener(this.view3DSizeListener);
+    Window window = SwingUtilities.getWindowAncestor(this);
+    if (window.isShowing()) {
+      window.dispose();
+    }    
     currentPhotoPanel = null;
-    stopPhotoCreation();
   }
 }
