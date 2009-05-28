@@ -150,15 +150,14 @@ public class PhotoRenderer {
       BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), 
           skyImage.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
       Graphics2D g2D = (Graphics2D)imageBaseLightImage.getGraphics();
-      // Make a brighter image to increase light power   
-      g2D.drawImage(skyImage, new RescaleOp(1.75f, 0f, null), 0, 0);
+      g2D.drawRenderedImage(skyImage, null);
       g2D.dispose();
       File imageFile = File.createTempFile("ibl", ".jpg");
       imageFile.deleteOnExit();
       ImageIO.write(imageBaseLightImage, "JPEG", imageFile);
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
-      this.sunflow.parameter("center", new Vector3(0, -1, 0));
-      this.sunflow.parameter("up", new Vector3(0, 0, 1));
+      this.sunflow.parameter("center", new Vector3(-1, 0, 0));
+      this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("fixed", true);
       this.sunflow.parameter("samples", samples);
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
