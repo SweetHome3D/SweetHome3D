@@ -139,11 +139,14 @@ public class PhotoRenderer {
       exportNode(room3D, useNormals, false);
     } 
 
-    // Set light settings (see SCParser#parseLightBlock for more lights choice)
+    // Set light settings 
+    boolean observerCamera = home.getCamera() == home.getObserverCamera();
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
-    if (home.getCamera() == home.getObserverCamera() 
+    if (observerCamera 
         && skyTexture != null
         && quality == Quality.HIGH) {
+      // If observer camera is used and high quality is requested, 
+      // create an image base light from sky texture  
       BufferedImage skyImage = ImageIO.read(skyTexture.getImage().openStream());
       // Create a temporary image base light twice as high that will contain sky image in the top part
       BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), 
@@ -154,6 +157,7 @@ public class PhotoRenderer {
       File imageFile = File.createTempFile("ibl", ".jpg");
       imageFile.deleteOnExit();
       ImageIO.write(imageBaseLightImage, "JPEG", imageFile);
+      
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
       this.sunflow.parameter("center", new Vector3(-1, 0, 0));
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
@@ -161,6 +165,7 @@ public class PhotoRenderer {
       this.sunflow.parameter("samples", samples);
       this.sunflow.light(UUID.randomUUID().toString(), "ibl");
     } else {
+      // Use sun sky light
       this.sunflow.parameter("up", new Vector3(0, 1, 0));
       this.sunflow.parameter("east", new Vector3(0, 0, 1));
       this.sunflow.parameter("sundir", new Vector3(1, 1, 1));
@@ -170,7 +175,7 @@ public class PhotoRenderer {
     }
     
     // Add lights at the top of each room when observer camera is used
-    if (home.getCamera() == home.getObserverCamera()) {
+    if (observerCamera) {
       for (Room room : home.getRooms()) {
         if (room.isCeilingVisible()) {
           float xCenter = room.getXCenter();
