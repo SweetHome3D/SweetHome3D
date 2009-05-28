@@ -167,7 +167,7 @@ public class PhotoRenderer {
       this.sunflow.parameter("east", new Vector3(0, 0, 1));
       this.sunflow.parameter("sundir", new Vector3(1, 1, 1));
       this.sunflow.parameter("turbidity", 6f);
-      this.sunflow.parameter("samples", samples);
+      this.sunflow.parameter("samples", samples * 3 / 2);
       this.sunflow.light(UUID.randomUUID().toString(), "sunsky");
     }
     
