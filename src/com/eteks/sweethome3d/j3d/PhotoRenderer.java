@@ -143,9 +143,8 @@ public class PhotoRenderer {
     boolean observerCamera = home.getCamera() == home.getObserverCamera();
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (observerCamera 
-        && skyTexture != null
-        && quality == Quality.HIGH) {
-      // If observer camera is used and high quality is requested, 
+        && skyTexture != null) {
+      // If observer camera is used with a sky texture, 
       // create an image base light from sky texture  
       BufferedImage skyImage = ImageIO.read(skyTexture.getImage().openStream());
       // Create a temporary image base light twice as high that will contain sky image in the top part
