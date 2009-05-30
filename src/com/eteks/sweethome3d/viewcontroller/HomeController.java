@@ -1686,7 +1686,7 @@ public class HomeController implements Controller {
    */
   public void setMode(Mode mode) {
     if (getPlanController().getMode() != mode) {
-      String actionKey = null;
+      final String actionKey;
       switch (mode) {
         case WALL_CREATION :
           actionKey = HomeView.ActionType.CREATE_WALLS.name();
@@ -1700,13 +1700,21 @@ public class HomeController implements Controller {
         case LABEL_CREATION :
           actionKey = HomeView.ActionType.CREATE_LABELS.name();
           break;
+        default :
+          actionKey = null;
+          break;
       }
       // Display the tip message dialog matching mode
       if (actionKey != null 
           && !this.preferences.isActionTipIgnored(actionKey)) {
-        if (getView().showActionTipMessage(actionKey)) {
-          this.preferences.setActionTipIgnored(actionKey);
-        }
+        getView().invokeLater(new Runnable() {
+            public void run() {
+              // Show tip later to let the mode switch finish first
+              if (getView().showActionTipMessage(actionKey)) {
+                preferences.setActionTipIgnored(actionKey);
+              }
+            }
+          });
       }
       getPlanController().setMode(mode);
     }
