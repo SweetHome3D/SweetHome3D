@@ -18,22 +18,35 @@
     <property name="sun.swing.enableImprovedDragGesture" value="true"/>
   </resources>
  
-  <resources os="Windows">
+  <resources os="Windows" arch="x86">
     <jar href="lib/windows/java3d.jar"/>
   </resources>
+  <resources os="Windows" arch="amd64">
+    <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
+  </resources>
+
   <resources os="Mac OS X">
+    <property name="j3d.rend" value="jogl"/>
     <jar href="lib/macosx/java3d.jar"/>
+  </resources>
+
+  <resources os="Linux" arch="x86">
+    <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
-  <resources os="SunOS" arch="x86">
+  <resources os="Linux" arch="amd64">
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
-  <resources os="SunOS" arch="sparc">
+  <resources os="Linux" arch="x86_64">
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
-  
+
+  <resources os="SunOS">
+    <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
+  </resources>
+
   <applet-desc main-class="com.eteks.sweethome3d.applet.SweetHome3DViewer" 
                name="Sweet Home 3D Viewer" width="800" height="600"/>
 </jnlp>
