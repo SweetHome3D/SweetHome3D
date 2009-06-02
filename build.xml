@@ -28,8 +28,8 @@
   <!-- The current version of Sweet Home 3D -->
   <property name="version" value="1.9"/>
 
-  <!-- Builds build/SweetHome3D.jar with all its classes -->
-  <target name="build">
+  <target name="build" 
+  	      description="Builds build/SweetHome3D.jar with all its classes">
     <!-- Compile Sweet Home 3D -->
     <mkdir dir="build/classes"/>
     <!-- Compile Sweet Home 3D applets first with javac 1.1 to be able to detect current Java version
@@ -71,8 +71,8 @@
     <delete dir="build/classes"/>
   </target>
 
-  <!-- Builds build/SweetHome3D.jar without applet classes -->
-  <target name="application" depends="build">
+  <target name="application" depends="build"
+  	      description="Builds build/SweetHome3D.jar application with all its classes">
     <zip destfile="build/SweetHome3DStandalone.jar">
       <zipfileset src="build/SweetHome3D.jar" 
                   excludes="com/eteks/sweethome3d/applet/**"/>
@@ -80,8 +80,8 @@
     <move file="build/SweetHome3DStandalone.jar" tofile="build/SweetHome3D.jar"/>
   </target>
 
-  <!-- Builds build/Furniture.jar that contains the furniture files -->
-  <target name="furniture">
+  <target name="furniture"
+  	      description="Builds build/Furniture.jar that contains the furniture files">
     <zip destfile="build/Furniture.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*FurnitureCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/**"/>
@@ -90,23 +90,23 @@
     </zip>
   </target>
 
-  <!-- Builds build/Textures.jar that contains the textures files -->
-  <target name="textures">
+  <target name="textures"
+  	      description="Builds build/Textures.jar that contains the textures files">
     <zip destfile="build/Textures.jar" basedir="src">
       <include name="com/eteks/sweethome3d/io/*TexturesCatalog*.properties"/>
       <include name="com/eteks/sweethome3d/io/resources/textures/**"/>
     </zip>
   </target>
 
-  <!-- Builds build/Help.jar that contains the help files -->
-  <target name="help">
+  <target name="help"
+  	      description="Builds build/Help.jar that contains the help files">
     <zip destfile="build/Help.jar" basedir="src">
       <include name="**/help/**"/>
     </zip>
   </target>
 
-  <!-- Builds JNLP Java 3D libraries in deploy/lib subdirectories -->
-  <target name="java3dLibraries">
+  <target name="java3dLibraries"
+  	      description="Builds JNLP Java 3D libraries in deploy/lib subdirectories">
     <!-- Create java3d.jar containing Windows Java 3D DLLs and jars -->
     <mkdir dir="deploy/lib/windows"/>
     <zip destfile="deploy/lib/windows/java3d.jar">
@@ -148,8 +148,8 @@
     </zip>
   </target>
 
-  <!-- Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start -->
-  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries">
+  <target name="javaWebStart" depends="application,furniture,textures,help,java3dLibraries"
+  	      description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
     <!-- Build SweetHome3D.jar file from the content of built jars -->
     <mkdir dir="deploy/lib"/>
     <zip destfile="deploy/lib/SweetHome3D.jar">
@@ -185,8 +185,8 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <!-- Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet -->
-  <target name="applet" depends="build,java3dLibraries">
+  <target name="applet" depends="build,java3dLibraries"
+  	      description="Builds deploy/lib/SweetHome3DApplet.jar and signs jars required by Sweet Home 3D applet">
     <!-- Create SweetHome3DApplet.jar containing Sweet Home 3D classes and resources -->
     <mkdir dir="deploy/lib"/>
     <zip destfile="deploy/lib/SweetHome3DApplet.jar">
@@ -244,8 +244,8 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <!-- Builds deploy/lib/SweetHome3DViewer.jar and signs jars required by Sweet Home 3D viewer -->
-  <target name="viewer" depends="java3dLibraries">
+  <target name="viewer" depends="java3dLibraries"
+  	      description="Builds deploy/lib/SweetHome3DViewer.jar and signs jars required by Sweet Home 3D viewer">
     <!-- Compile Sweet Home 3D Viewer-->
     <mkdir dir="build/classes"/>
     <!-- Compile Sweet Home 3D Viewer applet first with javac 1.1 to be able to detect current Java version
@@ -338,8 +338,8 @@
     <echo message="deploy dir ready for ftp"/>
   </target>
 
-  <!-- Builds install/SweetHome3D-version.jar executable Jar -->
-  <target name="jarExecutable" depends="application,furniture,textures,help">
+  <target name="jarExecutable" depends="application,furniture,textures,help"
+  	      description="Builds install/SweetHome3D-version.jar executable Jar">
     <!-- Create SweetHome3D-version.jar containing Sweet Home 3D classes and resources,
          and other DLLs and jars -->
     <jar destfile="install/SweetHome3D-${version}.jar" 
@@ -387,7 +387,8 @@
        with a Windows JRE and Sweet Home 3D libraries.
        CAUTION : May be run only under Windows and requires a Windows JRE, launch4j and Inno Setup 
                  installed in their default location -->
-  <target name="windowsInstaller" depends="application,furniture,textures,help">
+  <target name="windowsInstaller" depends="application,furniture,textures,help"
+  	      description="Builds install/SweetHome3D-version-windows.exe installer">
     <!-- Copy SweetHome3D JARs and Windows Java 3D DLLs and JARs for Java 3D 
          to install/windows/tmp/lib -->
     <mkdir dir="install/windows/tmp/lib"/>
@@ -482,7 +483,8 @@
   <!-- Builds install/SweetHome3D-version-macosx.dmg archive that contains SweetHome3D.app 
        and Sweet Home 3D libraries. 
        CAUTION : May be run only under Mac OS X and requires Disk Utility -->
-  <target name="macosxInstaller" depends="application,furniture,textures,help">
+  <target name="macosxInstaller" depends="application,furniture,textures,help"
+  	      description="Builds install/SweetHome3D-version-macosx.dmg archive">
     <!-- Copy Sweet Home 3D files to install/macosx/SweetHome3D-version/Sweet Home 3D.app -->
     <mkdir dir="install/macosx/SweetHome3D-${version}/"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app">
@@ -552,7 +554,8 @@
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
        CAUTION : Requires a Linux JRE installed in jre1.6.0_12 -->
-  <target name="linuxInstaller" depends="application,furniture,textures,help">
+  <target name="linuxInstaller" depends="application,furniture,textures,help"
+  	      description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
          to install/linux/i386/SweetHome3D-version/lib -->
     <mkdir dir="install/linux/i386/SweetHome3D-${version}/lib"/>
@@ -626,7 +629,8 @@
 
   <!-- Builds install/SweetHome3DViewer-version.zip archive that contains 
        the files required for SweetHome3DViewer applet -->
-  <target name="viewerInstaller" depends="viewer">
+  <target name="viewerInstaller" depends="viewer"
+  	      description="Builds install/SweetHome3DViewer-version.zip archive">
     <zip destfile="install/SweetHome3DViewer-${version}.zip">
       <zipfileset dir="deploy" 
                   includes="lib/**, SweetHome3DViewer.*"/>
@@ -645,7 +649,8 @@
 
   <!-- Builds install/SweetHome3D-version-src.zip archive that contains 
        SweetHome3D source files in directory named SweetHome3D-version-src -->
-  <target name="sourceArchive">
+  <target name="sourceArchive"
+  	      description="Builds install/SweetHome3D-version-src.zip archive">
     <mkdir dir="install/source/SweetHome3D-${version}-src"/>
     <copy todir="install/source/SweetHome3D-${version}-src">
       <fileset dir=".">
@@ -681,7 +686,8 @@
 
   <!-- Builds install/SweetHome3D-version-javadoc.zip archive that contains 
        SweetHome3D source files in directory named SweetHome3D-version-src -->
-  <target name="javadoc">
+  <target name="javadoc"
+  	      description="Builds install/SweetHome3D-version-javadoc.zip archive">
     <mkdir dir="install/javadoc/SweetHome3D-${version}-javadoc"/>
     <javadoc sourcepath="src" destdir="install/javadoc/SweetHome3D-${version}-javadoc" 
              encoding="ISO-8859-1" version="true" author="true" use="true"
@@ -714,7 +720,8 @@
   </target>
 
   <!-- Launchs a JDepend graphical UI to help update dependencies in PackageDependenciesTest test -->
-  <target name="jdepend" depends="build">
+  <target name="jdepend" depends="build"
+  	      description="Launchs a JDepend graphical UI">
     <!-- Create jdepend.properties file in build directory that specifies ignored Java packages -->
     <concat destfile="build/jdepend.properties">ignore.java=java.*,javax.swing.*</concat>
 
