@@ -44,7 +44,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 1800;
+  public static final long CURRENT_VERSION = 2000;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   

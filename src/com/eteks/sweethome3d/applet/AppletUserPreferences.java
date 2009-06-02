@@ -70,10 +70,6 @@ public class AppletUserPreferences extends UserPreferences {
     setWallPattern(defaultPreferences.getWallPattern());
     setNewWallThickness(defaultPreferences.getNewWallThickness());
     setNewWallHeight(defaultPreferences.getNewWallHeight());    
-    setPhotoWidth(defaultPreferences.getPhotoWidth());
-    setPhotoHeight(defaultPreferences.getPhotoHeight());
-    setPhotoAspectRatio(defaultPreferences.getPhotoAspectRatio());
-    setPhotoQuality(defaultPreferences.getPhotoQuality());
     setCurrency(defaultPreferences.getCurrency());    
 
     setRecentHomes(new ArrayList<String>());

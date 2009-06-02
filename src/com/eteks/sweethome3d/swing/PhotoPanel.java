@@ -280,7 +280,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     // Quality panel displaying explanations about quality level
     final CardLayout qualityDescriptionLayout = new CardLayout();
     this.qualityDescriptionPanel = new JPanel(qualityDescriptionLayout);
-    this.qualityDescriptionLabels = new JLabel [4];
+    this.qualityDescriptionLabels = new JLabel [controller.getQualityLevelCount()];
     Font font = UIManager.getFont("ToolTip.font");
     for (int i = 0; i < this.qualityDescriptionLabels.length; i++) {
       this.qualityDescriptionLabels [i] = new JLabel();

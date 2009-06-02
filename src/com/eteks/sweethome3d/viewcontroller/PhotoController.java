@@ -24,6 +24,7 @@ import java.beans.PropertyChangeSupport;
 
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
@@ -107,10 +108,11 @@ public class PhotoController implements Controller {
    * Updates edited properties from the photo creation preferences.
    */
   protected void updateProperties() {
-    setAspectRatio(this.preferences.getPhotoAspectRatio());
-    setWidth(this.preferences.getPhotoWidth(), false);
-    setHeight(this.preferences.getPhotoHeight(), false);
-    setQuality(this.preferences.getPhotoQuality());
+    HomeEnvironment homeEnvironment = this.home.getEnvironment();
+    setAspectRatio(homeEnvironment.getPhotoAspectRatio());
+    setWidth(homeEnvironment.getPhotoWidth(), false);
+    setHeight(homeEnvironment.getPhotoHeight(), false);
+    setQuality(homeEnvironment.getPhotoQuality());
     this.view3DAspectRatio = 1;
   }
   
@@ -122,7 +124,7 @@ public class PhotoController implements Controller {
       AspectRatio oldAspectRatio = this.aspectRatio;
       this.aspectRatio = aspectRatio;
       this.propertyChangeSupport.firePropertyChange(Property.ASPECT_RATIO.name(), oldAspectRatio, aspectRatio);
-      this.preferences.setPhotoAspectRatio(getAspectRatio());
+      this.home.getEnvironment().setPhotoAspectRatio(this.aspectRatio);
       if (this.aspectRatio == AspectRatio.VIEW_3D_RATIO) {
         setHeight(Math.round(width / this.view3DAspectRatio), false);
       } else if (this.aspectRatio.getValue() != null) {
@@ -157,7 +159,7 @@ public class PhotoController implements Controller {
           setHeight(Math.round(width / this.aspectRatio.getValue()), false);
         }
       }
-      this.preferences.setPhotoWidth(getWidth());
+      this.home.getEnvironment().setPhotoWidth(this.width);
     }
   }
   
@@ -187,7 +189,7 @@ public class PhotoController implements Controller {
           setWidth(Math.round(height * this.aspectRatio.getValue()), false);
         }
       }
-      this.preferences.setPhotoHeight(getHeight());
+      this.home.getEnvironment().setPhotoHeight(this.height);
     }
   }
   
@@ -204,9 +206,9 @@ public class PhotoController implements Controller {
   public void setQuality(int quality) {
     if (this.quality != quality) {
       int oldQuality = this.quality;
-      this.quality = quality;
+      this.quality = Math.min(quality, getQualityLevelCount() - 1);
       this.propertyChangeSupport.firePropertyChange(Property.QUALITY.name(), oldQuality, quality);
-      this.preferences.setPhotoQuality(getQuality());
+      this.home.getEnvironment().setPhotoQuality(this.quality);
     }
   }
   
@@ -215,6 +217,13 @@ public class PhotoController implements Controller {
    */
   public int getQuality() {
     return this.quality;
+  }
+
+  /**
+   * Returns the maximum value for quality.
+   */
+  public int getQualityLevelCount() {
+    return 4;
   }
   
   /**

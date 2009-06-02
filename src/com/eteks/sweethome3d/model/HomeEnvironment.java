@@ -35,7 +35,8 @@ public class HomeEnvironment implements Serializable {
   /**
    * The environment properties that may change.
    */
-  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE};
+  public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE,
+                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY};
   /**
    * The various modes used to draw home in 3D. 
    */
@@ -50,6 +51,13 @@ public class HomeEnvironment implements Serializable {
   private int                             lightColor;
   private float                           wallsAlpha;
   private DrawingMode                     drawingMode;
+  private int                             photoWidth;
+  private int                             photoHeight;
+  private transient AspectRatio           photoAspectRatio;
+  // Aspect ratio is saved as a string to be able to keep backward compatibility 
+  // if new constants are added to AspectRatio enum in future versions
+  private String                          photoAspectRatioName;
+  private int                             photoQuality;
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
@@ -74,8 +82,10 @@ public class HomeEnvironment implements Serializable {
     this.skyColor = skyColor;
     this.lightColor = lightColor;
     this.wallsAlpha = wallsAlpha;
-    
     this.drawingMode = DrawingMode.FILL;
+    this.photoWidth = 400;
+    this.photoHeight = 300;
+    this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
   }
 
   /**
@@ -84,9 +94,27 @@ public class HomeEnvironment implements Serializable {
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.photoWidth = 400;
+    this.photoHeight = 300;
+    this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
     in.defaultReadObject();
+    try {
+      // Read aspect from a string 
+      if (this.photoAspectRatioName != null) {
+        this.photoAspectRatio = AspectRatio.valueOf(this.photoAspectRatioName);
+      }
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed enum constant 
+    }
   }
 
+  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+    // Write aspect ratio as a string to be able to read aspect ratio later 
+    // even if enum changed in later versions
+    this.photoAspectRatioName = this.photoAspectRatio.name();
+    out.defaultWriteObject();
+  }
+  
   /**
    * Adds the property change <code>listener</code> in parameter to this environment.
    */
@@ -232,6 +260,86 @@ public class HomeEnvironment implements Serializable {
       this.drawingMode = drawingMode;
       this.propertyChangeSupport.firePropertyChange(
           Property.DRAWING_MODE.name(), oldDrawingMode, drawingMode);
+    }
+  }
+
+  /**
+   * Returns preferred photo width. 
+   */
+  public int getPhotoWidth() {
+    return this.photoWidth;
+  }
+
+  /**
+   * Sets preferred photo width, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoWidth(int photoWidth) {
+    if (this.photoWidth != photoWidth) {
+      int oldPhotoWidth = this.photoWidth;
+      this.photoWidth = photoWidth;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_WIDTH.name(), 
+          oldPhotoWidth, photoWidth);
+    }
+  }
+  
+  /**
+   * Returns preferred photo height. 
+   */
+  public int getPhotoHeight() {
+    return this.photoHeight;
+  }
+
+  /**
+   * Sets preferred photo height, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoHeight(int photoHeight) {
+    if (this.photoHeight != photoHeight) {
+      int oldPhotoHeight = this.photoHeight;
+      this.photoHeight = photoHeight;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_HEIGHT.name(), 
+          oldPhotoHeight, photoHeight);
+    }
+  }
+  
+  /**
+   * Returns preferred photo aspect ratio. 
+   */
+  public AspectRatio getPhotoAspectRatio() {
+    return this.photoAspectRatio;
+  }
+
+  /**
+   * Sets preferred photo aspect ratio, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoAspectRatio(AspectRatio photoAspectRatio) {
+    if (this.photoAspectRatio != photoAspectRatio) {
+      AspectRatio oldPhotoAspectRatio = this.photoAspectRatio;
+      this.photoAspectRatio = photoAspectRatio;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_ASPECT_RATIO.name(), 
+          oldPhotoAspectRatio, photoAspectRatio);
+    }
+  }
+  
+  /**
+   * Returns preferred photo quality. 
+   */
+  public int getPhotoQuality() {
+    return this.photoQuality;
+  }
+
+  /**
+   * Sets preferred photo quality, and notifies
+   * listeners of this change. 
+   */
+  public void setPhotoQuality(int photoQuality) {
+    if (this.photoQuality != photoQuality) {
+      int oldPhotoQuality = this.photoQuality;
+      this.photoQuality = photoQuality;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(), 
+          oldPhotoQuality, photoQuality);
     }
   }
 }
