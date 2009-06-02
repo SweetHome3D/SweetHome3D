@@ -265,6 +265,7 @@ public class HomeEnvironment implements Serializable {
 
   /**
    * Returns preferred photo width. 
+   * @since 1.9
    */
   public int getPhotoWidth() {
     return this.photoWidth;
@@ -273,6 +274,7 @@ public class HomeEnvironment implements Serializable {
   /**
    * Sets preferred photo width, and notifies
    * listeners of this change. 
+   * @since 1.9
    */
   public void setPhotoWidth(int photoWidth) {
     if (this.photoWidth != photoWidth) {
@@ -285,6 +287,7 @@ public class HomeEnvironment implements Serializable {
   
   /**
    * Returns preferred photo height. 
+   * @since 1.9
    */
   public int getPhotoHeight() {
     return this.photoHeight;
@@ -293,6 +296,7 @@ public class HomeEnvironment implements Serializable {
   /**
    * Sets preferred photo height, and notifies
    * listeners of this change. 
+   * @since 1.9
    */
   public void setPhotoHeight(int photoHeight) {
     if (this.photoHeight != photoHeight) {
@@ -305,6 +309,7 @@ public class HomeEnvironment implements Serializable {
   
   /**
    * Returns preferred photo aspect ratio. 
+   * @since 1.9
    */
   public AspectRatio getPhotoAspectRatio() {
     return this.photoAspectRatio;
@@ -313,6 +318,7 @@ public class HomeEnvironment implements Serializable {
   /**
    * Sets preferred photo aspect ratio, and notifies
    * listeners of this change. 
+   * @since 1.9
    */
   public void setPhotoAspectRatio(AspectRatio photoAspectRatio) {
     if (this.photoAspectRatio != photoAspectRatio) {
@@ -325,6 +331,7 @@ public class HomeEnvironment implements Serializable {
   
   /**
    * Returns preferred photo quality. 
+   * @since 1.9
    */
   public int getPhotoQuality() {
     return this.photoQuality;
@@ -333,6 +340,7 @@ public class HomeEnvironment implements Serializable {
   /**
    * Sets preferred photo quality, and notifies
    * listeners of this change. 
+   * @since 1.9
    */
   public void setPhotoQuality(int photoQuality) {
     if (this.photoQuality != photoQuality) {
