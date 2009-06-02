@@ -4755,7 +4755,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Remove equal points 
         for (int i = 0; i < pointsList.size(); ) {
           float [] point = pointsList.get(i);
-          float [] nextPoint = pointsList.get(i == roomPoints.length - 1  ? 0  : i + 1);
+          float [] nextPoint = pointsList.get(i == pointsList.size() - 1  ? 0  : i + 1);
           if (point [0] == nextPoint [0]
               && point [1] == nextPoint [1]) {
             pointsList.remove(i);
