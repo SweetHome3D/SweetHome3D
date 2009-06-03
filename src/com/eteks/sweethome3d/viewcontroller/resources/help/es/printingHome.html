@@ -26,20 +26,47 @@
 	</tr>
 </table>
 <table width="100%" border="0" cellspacing="0" cellpadding="3">
-  <tr>
-    <td><p>Para imprimir la casa elige <i>Archivo &gt; Imprimir...</i>.<br>
-      Este menú muestra el diálogo de impresión de tu sistema que te deja elegir la impresora, El número de páginas impresas, calidad
-          de impresión...</p>
-      <p>Por defecto, Sweet Home 3D imprime la lista de mobiliario, el plano y la vista 3D actual, usando los valores por defecto para papel
-        tamaño, márgenes y orientación.<br>
-        Si quieres modificar estos parámetros, elige <i>Archivo &gt; Configurar Página...</i>.</p>
-      <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="277" height="263"></p>
-      <p>          El Panel de configuración de página, puedes cambiar el tamaño del papel y la orientación haciendo clic en botón <i>Formato Página</i>.
-        Puedes elegir también si la lista de mobiliario, el plano y la vista 3D se imprimirán o no.</p>
-      <p>Para ver la vista preliminar, elige <i>Archivo &gt; Vista Preliminar...</i>.</p>
-      <p align="center"><img src="images/printPreview.png" alt="Vista Preliminar" width="315" height="295"></p>
-      <p>En el panel de vista preliminar, puedes ver como será impresa tu casa página a página. Para cambiar de página,
-        haz clic en las flechas de arriba del panel o en las flechas del teclado.</p></td>
+    <tr> 
+      <td><p>Para imprimir la casa elige <i>Archivo &gt; Imprimir...</i>.<br>
+          Este menú muestra el diálogo de impresión de tu sistema que te deja 
+          elegir la impresora, El número de páginas impresas, calidad de impresión...</p>
+        <p>Por defecto, Sweet Home 3D imprime la lista de mobiliario, el plano 
+          y la vista 3D actual, usando los valores por defecto para papel tamaño, 
+          márgenes y orientación.<br>
+          Si quieres modificar estos parámetros, elige <i>Archivo &gt; Configurar 
+          Página...</i>.</p>
+        <p align="center"><img src="images/pageSetup.png" alt="Page setup" width="277" height="263"></p>
+        <p> El Panel de configuración de página, puedes cambiar el tamaño del 
+          papel y la orientación haciendo clic en botón <i>Formato Página</i>. 
+          Tambien puedes elegir si la lista de los muebles, el plano y la vista 
+          3D de una vivienda se imprimira o no. Si no quieres utilizar la escala 
+          de plano automatica, puede elegir otra escala en el campo <i>Escala</i>. 
+          <br>
+          Tambien puedes elegir el cabecera y / o el pie de p&aacute;gina que 
+          aparecera en cada p&aacute;gina impresa. El <i>Cabecera</i> y <i>Pie 
+          de p&aacute;gina</i> acepta texto libre y tambienalgunas variables que 
+          ser&aacute;n sustituidas por su valor en la impresion. Aqu&iacute; est&aacute;n 
+          las 7 variables disponibles: </p>
+        <ul>
+          <li><i> $pageNumber</i> para numero de pagina, </li>
+          <li><i>$pageCount</i> para el numero de paginas, </li>
+          <li><i> $planScale</i> para la escala del plano (bien la automatica 
+            o la que introdujiste en el campo escala), </li>
+          <li><i>$date</i> para la fecha de la impresion,</li>
+          <li><i> $time</i> para la hora de la impresion, </li>
+          <li><i>$name</i> para el nombre de la casa, </li>
+          <li><i>$file</i> para la ruta de archivo de la casa. </li>
+        </ul>
+        <p>Para no tener que escribir el nombre entero de una variable, utilice 
+          el bot&oacute;n de variables que aparecen en la cabecera y el pie los 
+          campos de texto. Como el simbolo <i>$</i> se reserva para las variables, 
+          debe utilizar el c&oacute;digo <i>$$</i> para imprimir el simbolo <i>$</i>. 
+        </p>
+        <p>Para ver la vista preliminar, elige <i>Archivo &gt; Vista Preliminar...</i>.</p>
+        <p align="center"><img src="images/printPreview.png" alt="Vista Preliminar" width="315" height="295"></p>
+        <p>En el panel de vista preliminar, puedes ver como será impresa tu casa 
+          página a página. Para cambiar de página, haz clic en las flechas de 
+          arriba del panel o en las flechas del teclado.</p></td>
   </tr>
 </table>
 <div id="taskbox">
