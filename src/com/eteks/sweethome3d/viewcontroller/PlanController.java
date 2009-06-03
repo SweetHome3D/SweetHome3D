@@ -1514,7 +1514,7 @@ public class PlanController extends FurnitureController implements Controller {
       float [][] roomPoints = getPathPoints(roomPaths.get(i), true);
       for (int j = 0; j < roomPoints.length; j++) {
         float [] startPoint = roomPoints [j];
-        float [] endPoint = j == roomPoints.length - 1 ? roomPoints [0] : roomPoints [j + 1];
+        float [] endPoint = roomPoints [(j + 1) % roomPoints.length];
         boolean segmentContainsLeftPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
             endPoint [0], endPoint [1], pieceLeftPoint [0], pieceLeftPoint [1]) < 0.0001;
         boolean segmentContainsRightPoint = Line2D.ptSegDistSq(startPoint [0], startPoint [1], 
@@ -4755,7 +4755,7 @@ public class PlanController extends FurnitureController implements Controller {
         // Remove equal points 
         for (int i = 0; i < pointsList.size(); ) {
           float [] point = pointsList.get(i);
-          float [] nextPoint = pointsList.get(i == pointsList.size() - 1  ? 0  : i + 1);
+          float [] nextPoint = pointsList.get((i + 1) % pointsList.size());
           if (point [0] == nextPoint [0]
               && point [1] == nextPoint [1]) {
             pointsList.remove(i);
@@ -4769,8 +4769,8 @@ public class PlanController extends FurnitureController implements Controller {
         float [][] largerRoomPoints = new float [roomPoints.length][];
         for (int i = 0; i < roomPoints.length; i++) {
           float [] point = roomPoints [i];
-          float [] previousPoint = roomPoints [i == 0  ? roomPoints.length - 1  : i - 1];
-          float [] nextPoint     = roomPoints [i == roomPoints.length - 1  ? 0  : i + 1];
+          float [] previousPoint = roomPoints [(i + roomPoints.length - 1) % roomPoints.length];
+          float [] nextPoint     = roomPoints [(i + 1) % roomPoints.length];
           
           // Compute the angle of the line with a direction orthogonal to line (previousPoint, point)
           double previousAngle = Math.atan2(point [0] - previousPoint [0], previousPoint [1] - point [1]);      
@@ -4797,7 +4797,7 @@ public class PlanController extends FurnitureController implements Controller {
         Wall lastWall = null;
         for (int i = 0; i < largerRoomPoints.length; i++) {
           float [] point     = largerRoomPoints [i];
-          float [] nextPoint = largerRoomPoints [i == roomPoints.length - 1  ? 0  : i + 1];
+          float [] nextPoint = largerRoomPoints [(i + 1) % roomPoints.length];
           Wall wall = createWall(point [0], point [1], nextPoint [0], nextPoint [1], null, lastWall);
           this.newWalls.add(wall);
           lastWall = wall;
