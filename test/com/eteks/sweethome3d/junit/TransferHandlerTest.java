@@ -28,6 +28,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -115,6 +116,8 @@ public class TransferHandlerTest extends ComponentTestFixture {
     }
     frame.add(homeView);
     frame.pack();
+    // Ensure clipboard is empty
+    Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(""), null);
 
     // Show home plan frame
     showWindow(frame);
