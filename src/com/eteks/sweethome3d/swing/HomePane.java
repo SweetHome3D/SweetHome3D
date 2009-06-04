@@ -2430,8 +2430,7 @@ public class HomePane extends JRootPane implements HomeView {
   public boolean isClipboardEmpty() {
     Clipboard clipboard = getToolkit().getSystemClipboard();
     return !(clipboard.isDataFlavorAvailable(HomeTransferableList.HOME_FLAVOR)
-        || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));
-    
+        || getToolkit().getSystemClipboard().isDataFlavorAvailable(DataFlavor.javaFileListFlavor));    
   }
 
   /**
