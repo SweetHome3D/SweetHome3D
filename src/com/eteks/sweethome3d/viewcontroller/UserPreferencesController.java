@@ -215,7 +215,6 @@ public class UserPreferencesController implements Controller {
   
   /**
    * Returns how furniture should be displayed in plan.
-   * @since 1.9
    */
   public boolean isFurnitureViewedFromTop() {
     return this.furnitureViewedFromTop;
