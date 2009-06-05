@@ -31,11 +31,13 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -74,7 +76,6 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.MouseInputAdapter;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
@@ -179,43 +180,66 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(400, 400));
     this.photoComponent.setBorder(null);
-    // Set a transfer handler and a mouse listener on photo component 
-    // to let the user drag and drop the created image
-    this.photoComponent.setTransferHandler(new TransferHandler() {
-        @Override
-        public int getSourceActions(JComponent component) {
-          return COPY_OR_MOVE;
-        }
-        
-        @Override
-        protected Transferable createTransferable(JComponent component) {
-          return new Transferable() {
-              public Object getTransferData(DataFlavor flavor) {
-                return photoComponent.getImage();
-              }
-  
-              public DataFlavor [] getTransferDataFlavors() {
-                return new DataFlavor [] {DataFlavor.imageFlavor};
-              }
-  
-              public boolean isDataFlavorSupported(DataFlavor flavor) {
-                return flavor.equals(DataFlavor.imageFlavor);
-              }
-            };            
-        }
-      });
-    MouseInputAdapter mouseInputAdapter = new MouseInputAdapter() {
-        @Override
-        public void mousePressed(MouseEvent ev) {
-          if (SwingUtilities.isLeftMouseButton(ev)
-              && photoComponent.getImage() != null
-              && photoComponent.isPointInImage(ev.getX(), ev.getY())) {
-            photoComponent.getTransferHandler().exportAsDrag(photoComponent, ev, TransferHandler.COPY);
+    // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
+    // to let the user drag and drop the created image (Windows support seems to fail) 
+    if (OperatingSystem.isMacOSX()) {
+      this.photoComponent.setTransferHandler(new VisualTransferHandler() {
+          @Override
+          public int getSourceActions(JComponent component) {
+            return COPY_OR_MOVE;
           }
-        }
-      };
-    this.photoComponent.addMouseListener(mouseInputAdapter);
-    this.photoComponent.addMouseMotionListener(mouseInputAdapter);
+          
+          @Override
+          protected Transferable createTransferable(JComponent component) {
+            return new Transferable() {
+                public Object getTransferData(DataFlavor flavor) {
+                  return photoComponent.getImage();
+                }
+    
+                public DataFlavor [] getTransferDataFlavors() {
+                  return new DataFlavor [] {DataFlavor.imageFlavor};
+                }
+    
+                public boolean isDataFlavorSupported(DataFlavor flavor) {
+                  return flavor.equals(DataFlavor.imageFlavor);
+                }
+              };            
+          }
+          
+          @Override
+          public Icon getVisualRepresentation(Transferable transferable) {
+            try {
+              if (transferable.isDataFlavorSupported(DataFlavor.imageFlavor)) {
+                // Create a 128x128 icon from the transfered image
+                BufferedImage transferedImage = 
+                    (BufferedImage)transferable.getTransferData(DataFlavor.imageFlavor);
+                float scale = Math.min(1, 128f / Math.max(transferedImage.getWidth(), transferedImage.getHeight()));
+                BufferedImage iconImage = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2D = (Graphics2D)iconImage.getGraphics();
+                g2D.scale(scale, scale);
+                g2D.drawRenderedImage(transferedImage, null);
+                g2D.dispose();
+                return new ImageIcon(iconImage);
+              } 
+            } catch (UnsupportedFlavorException ex) {
+              // Use default representation
+            } catch (IOException ex) {
+              // Use default representation
+            }
+            return super.getVisualRepresentation(transferable);
+          }  
+        });
+      this.photoComponent.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent ev) {
+            if (SwingUtilities.isLeftMouseButton(ev)
+                && photoComponent.getImage() != null
+                && photoComponent.isPointInImage(ev.getX(), ev.getY())) {
+              photoComponent.getTransferHandler().exportAsDrag(photoComponent, ev, TransferHandler.COPY);
+            }
+          }
+        });
+    }
 
     this.animatedWaitLabel = new JLabel(new ImageIcon(PhotoPanel.class.getResource("resources/animatedWait.gif")));
 
