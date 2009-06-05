@@ -54,7 +54,7 @@
   </security>
 
   <resources>
-    <j2se version="1.5+" max-heap-size="512m"/>
+    <j2se version="1.5+" max-heap-size="1024m"/>
     <jar href="lib/SweetHome3D.jar"/>
     <jar href="lib/Loader3DS1_2u.jar"/>
     <jar href="lib/freehep-vectorgraphics-svg-2.1.1.jar"/>
