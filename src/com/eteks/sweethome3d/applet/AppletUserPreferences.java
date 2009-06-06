@@ -176,7 +176,7 @@ public class AppletUserPreferences extends UserPreferences {
 
     public PatternTexture(String name) {
       this.name = name;
-      this.image = new ResourceURLContent(DefaultFurnitureCatalog.class, "resources/patterns/" + name + ".png");
+      this.image = new ResourceURLContent(DefaultUserPreferences.class, "resources/patterns/" + name + ".png");
     }
 
     public String getName() {
