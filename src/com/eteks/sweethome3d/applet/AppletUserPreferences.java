@@ -23,19 +23,25 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
+import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
+import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Applet user preferences.
@@ -59,19 +65,22 @@ public class AppletUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
  
     // Read other preferences from resource bundle
-    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
-    setPatternsCatalog(defaultPreferences.getPatternsCatalog());
-    setUnit(defaultPreferences.getLengthUnit());
-    setMagnetismEnabled(defaultPreferences.isMagnetismEnabled());
-    setRulersVisible(defaultPreferences.isRulersVisible());
-    setGridVisible(defaultPreferences.isGridVisible());
-    setFurnitureViewedFromTop(defaultPreferences.isFurnitureViewedFromTop());
-    setFloorColoredOrTextured(defaultPreferences.isRoomFloorColoredOrTextured());
-    setWallPattern(defaultPreferences.getWallPattern());
-    setNewWallThickness(defaultPreferences.getNewWallThickness());
-    setNewWallHeight(defaultPreferences.getNewWallHeight());    
-    setCurrency(defaultPreferences.getCurrency());    
-
+    List<TextureImage> patterns = new ArrayList<TextureImage>();
+    patterns.add(new PatternTexture("foreground"));
+    patterns.add(new PatternTexture("hatchUp"));
+    patterns.add(new PatternTexture("hatchDown"));
+    patterns.add(new PatternTexture("background"));
+    PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
+    setPatternsCatalog(patternsCatalog);
+    // Read other preferences from resource bundle
+    setUnit(LengthUnit.valueOf(getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
+    setRulersVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
+    setGridVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
+    setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
+    setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
+    setWallPattern(patternsCatalog.getPattern(getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
+    setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
+    setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
     setRecentHomes(new ArrayList<String>());
     try {
       setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
@@ -156,5 +165,34 @@ public class AppletUserPreferences extends UserPreferences {
   @Override
   public void addFurnitureLibrary(String name) throws RecorderException {
     throw new RecorderException("No furniture libraries");
+  }
+
+  /**
+   * A fixed sized pattern.
+   */
+  private static class PatternTexture implements TextureImage {
+    private final String name;
+    private final Content image;
+
+    public PatternTexture(String name) {
+      this.name = name;
+      this.image = new ResourceURLContent(DefaultFurnitureCatalog.class, "resources/patterns/" + name + ".png");
+    }
+
+    public String getName() {
+      return this.name;
+    }
+
+    public Content getImage() {
+      return this.image;
+    }
+    
+    public float getWidth() {
+      return 10;
+    }
+    
+    public float getHeight() {
+      return 10;
+    }
   }
 }
