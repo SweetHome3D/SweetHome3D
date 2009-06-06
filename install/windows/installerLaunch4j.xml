@@ -6,7 +6,7 @@
      This script requires launch4j available at http://launch4j.sourceforge.net/     
      and a SweetHome3D.ico file containing Sweet Home 3D icon.
      It creates a SweetHome3D.exe in tmp directory running with
-     JRE 6 Update 12 stored in jre6 subdirectory 
+     JRE 6 Update 14 stored in jre6 subdirectory 
      + SweetHome3D.jar, Windows Java 3D DLLs and JARs for Java 3D and other required JARs 
        stored in a lib subdirectory -->
 <launch4jConfig>
@@ -45,15 +45,15 @@
     <dontUsePrivateJres>false</dontUsePrivateJres>
     <initialHeapSize>0</initialHeapSize>
     <maxHeapSize>0</maxHeapSize>
-    <opt>-Djava.library.path=lib -Xmx512m</opt>
+    <opt>-Djava.library.path=lib -Xmx1024m</opt>
   </jre>
   <versionInfo>
-    <fileVersion>1.9.0.0</fileVersion>
-    <txtFileVersion>1.9</txtFileVersion>
+    <fileVersion>2.0.0.0</fileVersion>
+    <txtFileVersion>2.0</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2009 eTeks</copyright>
-    <productVersion>1.9.0.0</productVersion>
-    <txtProductVersion>1.9</txtProductVersion>
+    <productVersion>2.0.0.0</productVersion>
+    <txtProductVersion>2.0</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>

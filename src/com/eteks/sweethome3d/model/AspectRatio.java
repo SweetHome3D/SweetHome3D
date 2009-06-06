@@ -21,7 +21,7 @@ package com.eteks.sweethome3d.model;
 
 /**
  * The aspect ratio of pictures.
- * @since 1.9
+ * @since 2.0
  */
 public enum AspectRatio {
   FREE_RATIO(null), 

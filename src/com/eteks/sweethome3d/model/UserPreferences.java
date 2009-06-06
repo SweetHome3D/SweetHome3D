@@ -436,7 +436,7 @@ public abstract class UserPreferences {
 
   /**
    * Returns <code>true</code> if furniture should be viewed from its top in plan.
-   * @since 1.9
+   * @since 2.0
    */
   public boolean isFurnitureViewedFromTop() {
     return this.furnitureViewedFromTop;
@@ -447,7 +447,7 @@ public abstract class UserPreferences {
    * listeners of this change. 
    * @param furnitureViewedFromTop if <code>true</code> the furniture 
    *    should be viewed from its top.
-   * @since 1.9
+   * @since 2.0
    */
   public void setFurnitureViewedFromTop(boolean furnitureViewedFromTop) {
     if (this.furnitureViewedFromTop != furnitureViewedFromTop) {
@@ -461,7 +461,7 @@ public abstract class UserPreferences {
    * Returns <code>true</code> if room floors should be rendered with color or texture 
    * in plan.
    * @return <code>false</code> by default.
-   * @since 1.9
+   * @since 2.0
    */
   public boolean isRoomFloorColoredOrTextured() {
     return this.roomFloorColoredOrTextured;
@@ -472,7 +472,7 @@ public abstract class UserPreferences {
    * and notifies listeners of this change. 
    * @param roomFloorColoredOrTextured <code>true</code> if floor color 
    *          or texture is used, <code>false</code> otherwise.
-   * @since 1.9
+   * @since 2.0
    */
   public void setFloorColoredOrTextured(boolean roomFloorColoredOrTextured) {
     if (this.roomFloorColoredOrTextured != roomFloorColoredOrTextured) {
@@ -484,7 +484,7 @@ public abstract class UserPreferences {
 
   /**
    * Returns the wall pattern in plan.
-   * @since 1.9
+   * @since 2.0
    */
   public TextureImage getWallPattern() {
     return this.wallPattern;
@@ -493,7 +493,7 @@ public abstract class UserPreferences {
   /**
    * Sets how walls should be displayed in plan, and notifies
    * listeners of this change.
-   * @since 1.9 
+   * @since 2.0 
    */
   public void setWallPattern(TextureImage wallPattern) {
     if (this.wallPattern != wallPattern) {

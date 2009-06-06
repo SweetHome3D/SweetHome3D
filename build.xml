@@ -26,7 +26,7 @@
 -->
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="1.9"/>
+  <property name="version" value="2.0"/>
 
   <target name="build" 
   	      description="Builds build/SweetHome3D.jar with all its classes">
@@ -195,7 +195,7 @@
     </zip>
  
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
-         (this library is used for Java versions older than Java SE 6 update 12) -->
+         (this library is used for Java versions older than Java SE 6 update 14) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
@@ -290,7 +290,7 @@
     <delete dir="build/classes"/>
  
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux and Mac OS X 
-         (this library is used for Java versions older than Java SE 6 update 12) -->
+         (this library is used for Java versions older than Java SE 6 update 14) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib/windows">
         <include name="*.dll"/>
@@ -553,7 +553,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux JRE installed in jre1.6.0_12 -->
+       CAUTION : Requires a Linux JRE installed in jre1.6.0_14 -->
   <target name="linuxInstaller" depends="application,furniture,textures,help"
   	      description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
@@ -590,8 +590,8 @@
 
     <!-- Copy JRE to install/linux/i386/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_12">
-      <fileset dir="jre1.6.0_12">
+    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_14">
+      <fileset dir="jre1.6.0_14">
         <include name="**"/>
 
         <exclude name="lib/ext/sunjce_provider.jar"/>
@@ -611,12 +611,12 @@
       <tarfileset dir="install/linux/i386"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
-        <exclude name="SweetHome3D-${version}/jre1.6.0_12/bin/java"/>
+        <exclude name="SweetHome3D-${version}/jre1.6.0_14/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
-        <include name="SweetHome3D-${version}/jre1.6.0_12/bin/java"/>
+        <include name="SweetHome3D-${version}/jre1.6.0_14/bin/java"/>
       </tarfileset>
     </tar>
 

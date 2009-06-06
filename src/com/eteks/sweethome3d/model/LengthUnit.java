@@ -101,7 +101,7 @@ public enum LengthUnit {
   
   /**
    * Millimeter unit.
-   * @since 1.9
+   * @since 2.0
    */
   MILLIMETER {
     private Locale        formatLocale;  
@@ -170,7 +170,7 @@ public enum LengthUnit {
   
   /**
    * Meter unit.
-   * @since 1.9
+   * @since 2.0
    */
   METER {
     private Locale        formatLocale;  
@@ -583,14 +583,14 @@ public enum LengthUnit {
   /**
    * Returns the <code>length</code> given in centimeters converted 
    * to a value expressed in this unit.
-   * @since 1.9
+   * @since 2.0
    */
   public abstract float centimeterToUnit(float length);
 
   /**
    * Returns the <code>length</code> given in this unit converted 
    * to a value expressed in centimeter.
-   * @since 1.9
+   * @since 2.0
    */
   public abstract float unitToCentimeter(float length);
 }

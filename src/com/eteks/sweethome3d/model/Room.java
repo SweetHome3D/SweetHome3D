@@ -192,7 +192,7 @@ public class Room implements Serializable, Selectable {
 
   /**
    * Returns the number of points of the polygon matching this room.
-   * @since 1.9 
+   * @since 2.0 
    */
   public int getPointCount() {
     return this.points.length;  
@@ -222,7 +222,7 @@ public class Room implements Serializable, Selectable {
 
   /**
    * Adds a point at the end of room points.
-   * @since 1.9
+   * @since 2.0
    */
   public void addPoint(float x, float y) {
     addPoint(x, y, this.points.length);
@@ -231,7 +231,7 @@ public class Room implements Serializable, Selectable {
   /**
    * Adds a point at the given <code>index</code>.
    * @throws IndexOutOfBoundsException if <code>index</code> is negative or > <code>getPointCount()</code> 
-   * @since 1.9
+   * @since 2.0
    */
   public void addPoint(float x, float y, int index) {
     if (index < 0 || index > this.points.length) {
@@ -253,7 +253,7 @@ public class Room implements Serializable, Selectable {
   /**
    * Sets the point at the given <code>index</code>.
    * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
-   * @since 1.9
+   * @since 2.0
    */
   public void setPoint(float x, float y, int index) {
     if (index < 0 || index >= this.points.length) {
@@ -274,7 +274,7 @@ public class Room implements Serializable, Selectable {
   /**
    * Removes the point at the given <code>index</code>.
    * @throws IndexOutOfBoundsException if <code>index</code> is negative or >= <code>getPointCount()</code> 
-   * @since 1.9
+   * @since 2.0
    */
   public void removePoint(int index) {
     if (index < 0 || index >= this.points.length) {
