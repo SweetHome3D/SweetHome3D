@@ -41,8 +41,8 @@
     }
     closedir($handler);
 
-    if (sizeof($homes) >= 5) {
-      // Refuse more than 5 homes on server
+    if (sizeof($homes) >= 25) {
+      // Refuse more than 25 homes on server
       echo "0";
       return;
     }
