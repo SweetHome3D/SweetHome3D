@@ -991,7 +991,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       try {
         // Read cursor image
         BufferedImage cursorImage = 
-          ImageIO.read(getClass().getResource(cursorImageResource));
+            ImageIO.read(PlanComponent.class.getResource(cursorImageResource));
         // Create custom cursor from image
         return getToolkit().createCustomCursor(cursorImage, 
             new Point(cursorSize.width / 2, cursorSize.height / 2),
