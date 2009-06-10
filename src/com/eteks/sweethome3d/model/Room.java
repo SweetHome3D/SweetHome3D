@@ -212,12 +212,19 @@ public class Room implements Serializable, Selectable {
    */
   public void setPoints(float [][] points) {
     if (!Arrays.deepEquals(this.points, points)) {
-      float [][] oldPoints = this.points;
-      this.points = deepCopy(points);
-      this.shapeCache = null;
-      this.areaCache  = null;
-      this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
+      updatePoints(points);
     }
+  }
+
+  /**
+   * Update the points of the polygon matching this room.
+   */
+  private void updatePoints(float [][] points) {
+    float [][] oldPoints = this.points;
+    this.points = deepCopy(points);
+    this.shapeCache = null;
+    this.areaCache  = null;
+    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
   }
 
   /**
@@ -671,7 +678,7 @@ public class Room implements Serializable, Selectable {
         points [i][0] += dx;
         points [i][1] += dy;
       }
-      setPoints(points);
+      updatePoints(points);
     }
   }
   
