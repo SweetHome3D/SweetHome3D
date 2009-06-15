@@ -225,7 +225,8 @@ public class ModelManager {
    * Returns a transform group that will transform the model <code>node</code>
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
-   * @param modelRotation the rotation applied to the model at the end
+   * @param modelRotation the rotation applied to the model at the end 
+   *                 or <code>null</code> if no transformation should be applied to node.
    * @param width    the width of the box
    */
   public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
@@ -249,12 +250,14 @@ public class ModelManager {
             width / (upper.y - lower.y), 
             width / (upper.z - lower.z)));
     scaleOneTransform.mul(translation);
-    // Apply model rotation
     Transform3D modelTransform = new Transform3D();
-    Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-        modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-        modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-    modelTransform.setRotation(modelRotationMatrix);
+    if (modelRotation != null) {
+      // Apply model rotation
+      Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
+          modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
+          modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
+      modelTransform.setRotation(modelRotationMatrix);
+    }
     modelTransform.mul(scaleOneTransform);
     
     return new TransformGroup(modelTransform);
