@@ -1761,16 +1761,11 @@ public class PlanController extends FurnitureController implements Controller {
   }
   
   /**
-   * Returns a new room instance with one side between (<code>xStart</code>,
-   * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
+   * Returns a new room instance with the given points. 
    * The new room is added to home.
    */
-  protected Room createRoom(float xStart, float yStart,
-                            float xEnd, float yEnd) {
-    Room newRoom = new Room(new float [][] {{xStart, yStart}, {xEnd, yEnd}});
-    // Let's consider that points outside of home will create  by default a room with no ceiling
-    Area insideWallsArea = getInsideWallsArea();
-    newRoom.setCeilingVisible(insideWallsArea.contains(xStart, yStart));
+  protected Room createRoom(float [][] roomPoints) {
+    Room newRoom = new Room(roomPoints);
     this.home.addRoom(newRoom);
     return newRoom;
   }
@@ -6488,8 +6483,7 @@ public class PlanController extends FurnitureController implements Controller {
       // If current room doesn't exist
       if (this.newRoom == null) {
         // Create a new one
-        this.newRoom = createRoom(this.xPreviousPoint, this.yPreviousPoint, xEnd, yEnd);
-        selectItem(this.newRoom);
+        this.newRoom = createAndSelectRoom(this.xPreviousPoint, this.yPreviousPoint, xEnd, yEnd);
       } else if (this.newPoint != null) {
         // Add a point to current room
         float [][] points = this.newRoom.getPoints();
@@ -6513,6 +6507,21 @@ public class PlanController extends FurnitureController implements Controller {
       planView.makePointVisible(x, y);
     }
     
+    /**
+     * Returns a new room instance with one side between (<code>xStart</code>,
+     * <code>yStart</code>) and (<code>xEnd</code>, <code>yEnd</code>) points. 
+     * The new room is added to home and selected
+     */
+    private Room createAndSelectRoom(float xStart, float yStart,
+                                     float xEnd, float yEnd) {
+      Room newRoom = createRoom(new float [][] {{xStart, yStart}, {xEnd, yEnd}});
+      // Let's consider that points outside of home will create  by default a room with no ceiling
+      Area insideWallsArea = getInsideWallsArea();
+      newRoom.setCeilingVisible(insideWallsArea.contains(xStart, yStart));
+      selectItem(newRoom);
+      return newRoom;
+    }
+
     @Override
     public void pressMouse(float x, float y, int clickCount, 
                            boolean shiftDown, boolean duplicationActivated) {
@@ -6521,7 +6530,6 @@ public class PlanController extends FurnitureController implements Controller {
           // Try to guess the room that contains the point (x,y)
           this.newRoom = createRoomAt(x, y);
           if (this.newRoom != null) {
-            home.addRoom(this.newRoom);
             selectItem(this.newRoom);           
           }
         }
@@ -6644,7 +6652,7 @@ public class PlanController extends FurnitureController implements Controller {
             }
           }
           
-          return new Room(getPathPoints(roomPath, false));
+          return createRoom(getPathPoints(roomPath, false));
         }
       }
       return null;
@@ -6679,9 +6687,8 @@ public class PlanController extends FurnitureController implements Controller {
           // Create a new side once user entered the start point of the room 
           float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
               ? LengthUnit.footToCentimeter(10) : 300;
-          this.newRoom = createRoom(this.xPreviousPoint, this.yPreviousPoint, 
-                                    this.xPreviousPoint + defaultLength, this.yPreviousPoint);
-          selectItem(this.newRoom);
+          this.newRoom = createAndSelectRoom(this.xPreviousPoint, this.yPreviousPoint, 
+                                             this.xPreviousPoint + defaultLength, this.yPreviousPoint);
           // Activate automatically second step to let user enter the 
           // length and angle of the new side
           planView.deleteFeedback();
