@@ -329,9 +329,9 @@ public class ModelManager {
                     observers = loadingModelObservers.remove(content);
                   }                  
                   for (final ModelObserver observer : observers) {
-                    final BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
                     EventQueue.invokeLater(new Runnable() {
                         public void run() {
+                          BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
                           observer.modelUpdated(modelNode);
                         }
                       });
