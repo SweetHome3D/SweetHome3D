@@ -33,6 +33,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -105,7 +106,9 @@ public class ModelManager {
   private static ModelManager instance;
   
   // Map storing loaded model nodes
-  private Map<Content, BranchGroup> modelNodes;
+  private Map<Content, BranchGroup> loadedModelNodes;
+  // Map storing model nodes being loaded
+  private Map<Content, List<ModelObserver>> loadingModelObservers;
   // Executor used to load models
   private ExecutorService           modelsLoader;
   // List of additional loader classes
@@ -113,7 +116,8 @@ public class ModelManager {
   
   private ModelManager() {    
     // This class is a singleton
-    this.modelNodes = Collections.synchronizedMap(new WeakHashMap<Content, BranchGroup>());
+    this.loadedModelNodes = Collections.synchronizedMap(new WeakHashMap<Content, BranchGroup>());
+    this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
     if (loaderClassNames != null) {
@@ -176,7 +180,7 @@ public class ModelManager {
       this.modelsLoader.shutdownNow();
       this.modelsLoader = null;
     }
-    this.modelNodes.clear();
+    this.loadedModelNodes.clear();
   }
   
   /**
@@ -286,8 +290,8 @@ public class ModelManager {
    */
   public void loadModel(final Content content,
                         boolean synchronous,
-                        final ModelObserver modelObserver) {
-    BranchGroup modelRoot = this.modelNodes.get(content);
+                        ModelObserver modelObserver) {
+    BranchGroup modelRoot = this.loadedModelNodes.get(content);
     if (modelRoot == null) {
       if (synchronous) {
         try {
@@ -296,32 +300,58 @@ public class ModelManager {
           modelObserver.modelError(ex);
         }
         // Store in cache a model node for future copies 
-        this.modelNodes.put(content, (BranchGroup)modelRoot);
+        this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
       } else {
         if (this.modelsLoader == null) {
           this.modelsLoader = Executors.newSingleThreadExecutor();
         }
-        // Load the model in an other thread
-        this.modelsLoader.execute(new Runnable() {
-          public void run() {
-            try {
-              final BranchGroup loadedModel = loadModel(content);
-              EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  modelNodes.put(content, loadedModel);
-                  final BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
-                  modelObserver.modelUpdated(modelNode);
+        synchronized (this.loadedModelNodes) {
+          List<ModelObserver> observers = this.loadingModelObservers.get(content);
+          if (observers != null) {
+            // If observers list exists, content model is already being loaded
+            // register observer for future notification
+            observers.add(modelObserver);
+          } else {
+            // Create a list of observers that will be notified once content model is loaded
+            observers = new ArrayList<ModelObserver>();
+            observers.add(modelObserver);
+            this.loadingModelObservers.put(content, observers);
+            
+            // Load the model in an other thread
+            this.modelsLoader.execute(new Runnable() {
+              public void run() {
+                try {
+                  final BranchGroup loadedModel = loadModel(content);
+                  // Update loaded models cache and notify registered observers
+                  List<ModelObserver> observers;
+                  synchronized (loadedModelNodes) {
+                    loadedModelNodes.put(content, loadedModel);
+                    observers = loadingModelObservers.remove(content);
+                  }                  
+                  for (final ModelObserver observer : observers) {
+                    final BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
+                    EventQueue.invokeLater(new Runnable() {
+                        public void run() {
+                          observer.modelUpdated(modelNode);
+                        }
+                      });
+                  }
+                } catch (final IOException ex) {
+                  synchronized (loadedModelNodes) {
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    for (final ModelObserver observer : observers) {
+                      EventQueue.invokeLater(new Runnable() {
+                          public void run() {
+                            observer.modelError(ex);
+                          }
+                        });
+                    }
+                  }                  
                 }
-              });
-            } catch (final IOException ex) {
-              EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                  modelObserver.modelError(ex);
-                }
-              });
-            }
+              }
+            });
           }
-        });
+        }
         return;
       }
     } 
