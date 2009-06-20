@@ -117,7 +117,8 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     this.observerHeightLabel = new JLabel(String.format(SwingTools.getLocalizedLabelText(preferences, 
         Home3DAttributesPanel.class, "observerHeightLabel.text"), unitName));
     final NullableSpinner.NullableSpinnerLengthModel observerHeightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 10f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 
+            preferences.getLengthUnit().centimeterToUnit(10f), preferences.getLengthUnit().centimeterToUnit(1000f));
     this.observerHeightSpinner = new AutoCommitSpinner(observerHeightSpinnerModel);
     observerHeightSpinnerModel.setLength((float)Math.round(controller.getObserverHeight() * 100) / 100);
     observerHeightSpinnerModel.addChangeListener(new ChangeListener() {
