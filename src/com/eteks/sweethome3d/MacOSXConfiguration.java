@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d;
 
 import java.awt.EventQueue;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -81,15 +82,16 @@ class MacOSXConfiguration {
       }
     }
     
+    final JFrame defaultFrame = new JFrame();
     EventQueue.invokeLater(new Runnable() {
       public void run() {
         // Create a default undecorated frame out of sight 
         // and attach the application menu bar of empty view to it
-        JFrame defaultFrame = new JFrame();
         defaultFrame.setLocation(-10, 0);
         defaultFrame.setUndecorated(true);
         defaultFrame.setVisible(true);
         defaultFrame.setJMenuBar(defaultHomeView.getJMenuBar());
+        defaultFrame.setContentPane(defaultHomeView);
         addWindowMenuToFrame(defaultFrame, homeApplication, true);
       }
     });
@@ -97,10 +99,14 @@ class MacOSXConfiguration {
     Application application = Application.getApplication();
     // Add a listener on Mac OS X application that will call
     // controller methods of the active frame
-    application.addApplicationListener(new ApplicationAdapter() {
+    application.addApplicationListener(new ApplicationAdapter() {      
       @Override
-      public void handleQuit(ApplicationEvent ev) {
-        defaultController.exit();
+      public void handleQuit(ApplicationEvent ev) { 
+        handleAction(new Runnable() {
+            public void run() {
+              defaultController.exit();
+            }
+          });
         if (homeApplication.getHomes().isEmpty()) {
           System.exit(0);
         }
@@ -108,13 +114,42 @@ class MacOSXConfiguration {
       
       @Override
       public void handleAbout(ApplicationEvent ev) {
-        defaultController.about();
+        handleAction(new Runnable() {
+            public void run() {
+              defaultController.about();
+            }
+          });
         ev.setHandled(true);
       }
 
       @Override
       public void handlePreferences(ApplicationEvent ev) {
-        defaultController.editPreferences();
+        handleAction(new Runnable() {
+            public void run() {
+              defaultController.editPreferences();
+            }
+          });
+      }
+      
+      private void handleAction(Runnable runnable) {
+        Frame activeFrame = null;
+        for (Frame frame : Frame.getFrames()) {
+          if (frame.isActive()) {
+            activeFrame = frame;
+            break;
+          }
+        }
+        // Move default frame to center to display dialogs at center
+        defaultFrame.setLocationRelativeTo(null);
+        
+        runnable.run();
+        
+        // Activate previous frame again
+        if (activeFrame != null) {
+          activeFrame.toFront();
+        }
+        // Move default frame out of user view
+        defaultFrame.setLocation(-10, 0);
       }
 
       @Override
