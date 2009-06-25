@@ -601,6 +601,7 @@ public class HomePane extends JRootPane implements HomeView {
     
     final JMenu openRecentHomeMenu = 
         new JMenu(this.menuActionMap.get(MenuActionType.OPEN_RECENT_HOME_MENU));
+    addActionToMenu(ActionType.DELETE_RECENT_HOMES, openRecentHomeMenu);
     openRecentHomeMenu.addMenuListener(new MenuListener() {
         public void menuSelected(MenuEvent ev) {
           updateOpenRecentHomeMenu(openRecentHomeMenu, controller);
@@ -861,7 +862,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Removes the useless separators and empty menus among children of component.
    */
   private void removeUselessSeparatorsAndEmptyMenus(JComponent component) {
-    for (int i = component.getComponentCount() - 1; i > 0; i--) {
+    for (int i = component.getComponentCount() - 1; i >= 0; i--) {
       Component child = component.getComponent(i);
       if (child instanceof JSeparator
           && (i == component.getComponentCount() - 1
@@ -876,6 +877,11 @@ public class HomePane extends JRootPane implements HomeView {
                   && ((JMenu)child).getMenuComponent(0) instanceof JSeparator)) {
         component.remove(i);
       }
+    }
+    // Don't let a menu start with a separator
+    if (component.getComponentCount() > 0 
+        && component.getComponent(0) instanceof JSeparator) {
+      component.remove(0);
     }
   }
 
