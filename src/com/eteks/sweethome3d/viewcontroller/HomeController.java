@@ -513,7 +513,7 @@ public class HomeController implements Controller {
    * undo and redo presentation names when preferred language changes.
    */
   private void addLanguageListener() {
-    preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
+    this.preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, 
         new LanguageChangeListener(this));
   }
 
@@ -1189,7 +1189,6 @@ public class HomeController implements Controller {
     enableActionsOnSelection();
     enablePasteAction();
     enableSelectAllAction();
-    
   }
   
   /**
