@@ -1894,7 +1894,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (area > 0.01f) {
             float xArea = xRoomCenter + room.getAreaXOffset(); 
             float yArea = yRoomCenter + room.getAreaYOffset();
-            TextStyle areaStyle = room.getNameStyle();
+            TextStyle areaStyle = room.getAreaStyle();
             if (areaStyle == null) {
               areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
             }          
