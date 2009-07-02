@@ -303,11 +303,11 @@ public class RoomController implements Controller {
   /**
    * Sets whether room area is visible or not.
    */
-  public void setAreaVisible(Boolean areaAreaVisible) {
-    if (areaAreaVisible != this.areaVisible) {
+  public void setAreaVisible(Boolean areaVisible) {
+    if (areaVisible != this.areaVisible) {
       Boolean oldAreaVisible = this.areaVisible;
-      this.areaVisible = areaAreaVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.AREA_VISIBLE.name(), oldAreaVisible, areaAreaVisible);
+      this.areaVisible = areaVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.AREA_VISIBLE.name(), oldAreaVisible, areaVisible);
     }
   }
 
@@ -321,11 +321,11 @@ public class RoomController implements Controller {
   /**
    * Sets whether room floor is visible or not.
    */
-  public void setFloorVisible(Boolean floorFloorVisible) {
-    if (floorFloorVisible != this.floorVisible) {
+  public void setFloorVisible(Boolean floorVisible) {
+    if (floorVisible != this.floorVisible) {
       Boolean oldFloorVisible = this.floorVisible;
-      this.floorVisible = floorFloorVisible;
-      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_VISIBLE.name(), oldFloorVisible, floorFloorVisible);
+      this.floorVisible = floorVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.FLOOR_VISIBLE.name(), oldFloorVisible, floorVisible);
     }
   }
 
