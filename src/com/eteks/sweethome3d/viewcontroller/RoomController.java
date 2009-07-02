@@ -312,7 +312,7 @@ public class RoomController implements Controller {
   }
 
   /**
-   * Returns whether room area is areaAreaVisible or not.
+   * Returns whether room area is visible or not.
    */
   public Boolean getAreaVisible() {
     return this.areaVisible;
@@ -330,7 +330,7 @@ public class RoomController implements Controller {
   }
 
   /**
-   * Returns whether room floor is floorFloorVisible or not.
+   * Returns whether room floor is visible or not.
    */
   public Boolean getFloorVisible() {
     return this.floorVisible;
