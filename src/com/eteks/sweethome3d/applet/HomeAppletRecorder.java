@@ -47,16 +47,33 @@ import com.eteks.sweethome3d.model.RecorderException;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletRecorder implements HomeRecorder {
-  private String writeHomeURL;
-  private String readHomeURL;
-  private String listHomesURL;
+  private final String writeHomeURL;
+  private final String readHomeURL;
+  private final String listHomesURL;
+  private final boolean includeOnlyTemporaryContent;
 
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read and list homes.
+   * @see SweetHome3DApplet
+   */
   public HomeAppletRecorder(String writeHomeURL, 
                             String readHomeURL,
                             String listHomesURL) {
+    this(writeHomeURL, readHomeURL, listHomesURL, true);
+  }
+  
+  /**
+   * Creates a recorder that will use the URLs in parameter to write, read and list homes.
+   * @see SweetHome3DApplet
+   */
+  public HomeAppletRecorder(String writeHomeURL, 
+                            String readHomeURL,
+                            String listHomesURL,
+                            boolean includeOnlyTemporaryContent) {
     this.writeHomeURL = writeHomeURL;
     this.readHomeURL = readHomeURL;
     this.listHomesURL = listHomesURL;
+    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;
   }
   
   /**
@@ -95,7 +112,7 @@ public class HomeAppletRecorder implements HomeRecorder {
           + name + "\"\r\n").getBytes("UTF-8"));
       out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes("UTF-8"));
       out.flush();
-      DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, true);
+      DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, this.includeOnlyTemporaryContent);
       // Write home with HomeOuputStream
       homeOut.writeHome(home);
       homeOut.flush();
