@@ -118,8 +118,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private int                  pageCount = -1;
   private int                  planViewIndex;
   private Date                 printDate;
-  private JLabel               fixedHeader;
-  private JLabel               fixedFooter;
+  private JLabel               fixedHeaderLabel;
+  private JLabel               fixedFooterLabel;
   
   /**
    * Creates a printable component that will print or display the
@@ -134,18 +134,24 @@ public class HomePrintableComponent extends JComponent implements Printable {
     
     try {
       ResourceBundle resource = ResourceBundle.getBundle(HomePrintableComponent.class.getName());
-      try {
-        this.fixedHeader = new JLabel(resource.getString("fixedHeader"), JLabel.CENTER);
-        this.fixedHeader.setFont(this.headerFooterFont);
-        this.fixedHeader.setSize(this.fixedHeader.getPreferredSize());
-      } catch (MissingResourceException ex) {
-        // No fixed header
-      }
-      this.fixedFooter = new JLabel(resource.getString("fixedFooter"), JLabel.CENTER);
-      this.fixedFooter.setFont(this.headerFooterFont);
-      this.fixedFooter.setSize(this.fixedFooter.getPreferredSize());
+      this.fixedHeaderLabel = getFixedLabel(resource, "fixedHeader");
+      this.fixedFooterLabel = getFixedLabel(resource, "fixedFooter");
     } catch (MissingResourceException ex) {
-      // No resource bundle or fixed footer
+      // No resource bundle 
+    }
+  }
+
+  private JLabel getFixedLabel(ResourceBundle resource, String resourceKey) {
+    try {        
+      String fixedHeader = String.format(resource.getString(resourceKey), 
+          HomePrintableComponent.class.getResource("."));
+      JLabel fixedLabel = new JLabel(fixedHeader, JLabel.CENTER);
+      fixedLabel.setFont(this.headerFooterFont);
+      fixedLabel.setSize(fixedLabel.getPreferredSize());
+      return fixedLabel;
+    } catch (MissingResourceException ex) {
+      // No fixed label
+      return null;
     }
   }
   
@@ -179,19 +185,19 @@ public class HomePrintableComponent extends JComponent implements Printable {
     float  xFixedFooter = 0;
     float  yFixedFooter = 0;
     
-    if (this.fixedHeader != null) {
-      this.fixedHeader.setSize((int)pageFormat.getImageableWidth(), this.fixedHeader.getPreferredSize().height);
-      imageableHeight -= this.fixedHeader.getHeight() + HEADER_FOOTER_MARGIN;
-      imageableY += this.fixedHeader.getHeight() + HEADER_FOOTER_MARGIN;
+    if (this.fixedHeaderLabel != null) {
+      this.fixedHeaderLabel.setSize((int)pageFormat.getImageableWidth(), this.fixedHeaderLabel.getPreferredSize().height);
+      imageableHeight -= this.fixedHeaderLabel.getHeight() + HEADER_FOOTER_MARGIN;
+      imageableY += this.fixedHeaderLabel.getHeight() + HEADER_FOOTER_MARGIN;
       xFixedHeader = (float)pageFormat.getImageableX();
       yFixedHeader = (float)pageFormat.getImageableY();
     }
     
-    if (this.fixedFooter != null) {
-      this.fixedFooter.setSize((int)pageFormat.getImageableWidth(), this.fixedFooter.getPreferredSize().height);
-      imageableHeight -= this.fixedFooter.getHeight() + HEADER_FOOTER_MARGIN;
+    if (this.fixedFooterLabel != null) {
+      this.fixedFooterLabel.setSize((int)pageFormat.getImageableWidth(), this.fixedFooterLabel.getPreferredSize().height);
+      imageableHeight -= this.fixedFooterLabel.getHeight() + HEADER_FOOTER_MARGIN;
       xFixedFooter = (float)pageFormat.getImageableX();
-      yFixedFooter = (float)(pageFormat.getImageableY() + pageFormat.getImageableHeight()) - this.fixedFooter.getHeight();
+      yFixedFooter = (float)(pageFormat.getImageableY() + pageFormat.getImageableHeight()) - this.fixedFooterLabel.getHeight();
     }
     
     Rectangle clipBounds = g2D.getClipBounds();
@@ -199,8 +205,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
     Paper oldPaper = pageFormat.getPaper();
     final PlanView planView = this.controller.getPlanController().getView();
     if (homePrint != null
-        || this.fixedHeader != null
-        || this.fixedFooter != null) {
+        || this.fixedHeaderLabel != null
+        || this.fixedFooterLabel != null) {
       if (homePrint != null) {
         FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
         float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
@@ -311,9 +317,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
       g2D.setClip(clipBounds);
       g2D.setFont(this.headerFooterFont);
       g2D.setColor(Color.BLACK);
-      if (this.fixedHeader != null) {
+      if (this.fixedHeaderLabel != null) {
         g2D.translate(xFixedHeader, yFixedHeader);
-        this.fixedHeader.print(g2D);
+        this.fixedHeaderLabel.print(g2D);
         g2D.translate(-xFixedHeader, -yFixedHeader);
       }
       if (header != null) {
@@ -322,9 +328,9 @@ public class HomePrintableComponent extends JComponent implements Printable {
       if (footer != null) {
         g2D.drawString(footer, xFooter, yFooter);
       }
-      if (this.fixedFooter != null) {
+      if (this.fixedFooterLabel != null) {
         g2D.translate(xFixedFooter, yFixedFooter);
-        this.fixedFooter.print(g2D);
+        this.fixedFooterLabel.print(g2D);
         g2D.translate(-xFixedFooter, -yFixedFooter);
       }
     }  
