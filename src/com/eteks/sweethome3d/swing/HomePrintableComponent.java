@@ -37,8 +37,11 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.text.MessageFormat;
 import java.util.Date;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePrint;
@@ -115,6 +118,8 @@ public class HomePrintableComponent extends JComponent implements Printable {
   private int                  pageCount = -1;
   private int                  planViewIndex;
   private Date                 printDate;
+  private JLabel               fixedHeader;
+  private JLabel               fixedFooter;
   
   /**
    * Creates a printable component that will print or display the
@@ -126,6 +131,22 @@ public class HomePrintableComponent extends JComponent implements Printable {
     this.controller = controller;
     this.defaultFont = defaultFont;
     this.headerFooterFont = defaultFont.deriveFont(11f);
+    
+    try {
+      ResourceBundle resource = ResourceBundle.getBundle(HomePrintableComponent.class.getName());
+      try {
+        this.fixedHeader = new JLabel(resource.getString("fixedHeader"), JLabel.CENTER);
+        this.fixedHeader.setFont(this.headerFooterFont);
+        this.fixedHeader.setSize(this.fixedHeader.getPreferredSize());
+      } catch (MissingResourceException ex) {
+        // No fixed header
+      }
+      this.fixedFooter = new JLabel(resource.getString("fixedFooter"), JLabel.CENTER);
+      this.fixedFooter.setFont(this.headerFooterFont);
+      this.fixedFooter.setSize(this.fixedFooter.getPreferredSize());
+    } catch (MissingResourceException ex) {
+      // No resource bundle or fixed footer
+    }
   }
   
   /**
@@ -140,25 +161,44 @@ public class HomePrintableComponent extends JComponent implements Printable {
     Graphics2D g2D = (Graphics2D)g;
     g2D.setFont(this.defaultFont);
     g2D.setColor(Color.WHITE);
-    g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), 
-                                    pageFormat.getHeight()));
+    g2D.fill(new Rectangle2D.Double(0, 0, pageFormat.getWidth(), pageFormat.getHeight()));
     int pageExists = NO_SUCH_PAGE;
     HomePrint homePrint = this.home.getPrint();
     
     // Prepare header and footer
+    float imageableY = (float)pageFormat.getImageableY();
+    float imageableHeight = (float)pageFormat.getImageableHeight();
     String header = null;
     float  xHeader = 0;
     float  yHeader = 0;
+    float  xFixedHeader = 0;
+    float  yFixedHeader = 0;
     String footer = null;
     float  xFooter = 0;
     float  yFooter = 0;
+    float  xFixedFooter = 0;
+    float  yFixedFooter = 0;
+    
+    if (this.fixedHeader != null) {
+      this.fixedHeader.setSize((int)pageFormat.getImageableWidth(), this.fixedHeader.getPreferredSize().height);
+      imageableHeight -= this.fixedHeader.getHeight() + HEADER_FOOTER_MARGIN;
+      imageableY += this.fixedHeader.getHeight() + HEADER_FOOTER_MARGIN;
+      xFixedHeader = (float)pageFormat.getImageableX();
+      yFixedHeader = (float)pageFormat.getImageableY();
+    }
+    
+    if (this.fixedFooter != null) {
+      this.fixedFooter.setSize((int)pageFormat.getImageableWidth(), this.fixedFooter.getPreferredSize().height);
+      imageableHeight -= this.fixedFooter.getHeight() + HEADER_FOOTER_MARGIN;
+      xFixedFooter = (float)pageFormat.getImageableX();
+      yFixedFooter = (float)(pageFormat.getImageableY() + pageFormat.getImageableHeight()) - this.fixedFooter.getHeight();
+    }
+    
     Rectangle clipBounds = g2D.getClipBounds();
     AffineTransform oldTransform = g2D.getTransform();
     Paper oldPaper = pageFormat.getPaper();
     final PlanView planView = this.controller.getPlanController().getView();
     if (homePrint != null) {
-      float imageableY = (float)pageFormat.getImageableY();
-      float imageableHeight = (float)pageFormat.getImageableHeight();
       FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
       float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
           + HEADER_FOOTER_MARGIN;
@@ -267,11 +307,21 @@ public class HomePrintableComponent extends JComponent implements Printable {
       g2D.setClip(clipBounds);
       g2D.setFont(this.headerFooterFont);
       g2D.setColor(Color.BLACK);
+      if (this.fixedHeader != null) {
+        g2D.translate(xFixedHeader, yFixedHeader);
+        this.fixedHeader.print(g2D);
+        g2D.translate(-xFixedHeader, -yFixedHeader);
+      }
       if (header != null) {
         g2D.drawString(header, xHeader, yHeader);
       }
       if (footer != null) {
         g2D.drawString(footer, xFooter, yFooter);
+      }
+      if (this.fixedFooter != null) {
+        g2D.translate(xFixedFooter, yFixedFooter);
+        this.fixedFooter.print(g2D);
+        g2D.translate(-xFixedFooter, -yFixedFooter);
       }
     }  
     pageFormat.setPaper(oldPaper);    
