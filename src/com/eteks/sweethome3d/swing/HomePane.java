@@ -2197,6 +2197,12 @@ public class HomePane extends JRootPane implements HomeView {
     PageFormat pageFormat = HomePrintableComponent.getPageFormat(this.home.getPrint());
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
     printerJob.setPrintable(new HomePrintableComponent(this.home, this.controller, getFont()), pageFormat);
+    String jobName = this.preferences.getLocalizedString(HomePane.class, "print.jobName");
+    if (this.home.getName() != null) {
+      jobName += " - " + this.controller.getContentManager().getPresentationName(
+          this.home.getName(), ContentManager.ContentType.SWEET_HOME_3D);
+    }
+    printerJob.setJobName(jobName);
     if (printerJob.printDialog()) {
       return new Callable<Void>() {
           public Void call() throws RecorderException {
