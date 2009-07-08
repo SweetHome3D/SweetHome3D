@@ -198,58 +198,62 @@ public class HomePrintableComponent extends JComponent implements Printable {
     AffineTransform oldTransform = g2D.getTransform();
     Paper oldPaper = pageFormat.getPaper();
     final PlanView planView = this.controller.getPlanController().getView();
-    if (homePrint != null) {
-      FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
-      float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
-          + HEADER_FOOTER_MARGIN;
-      
-      // Retrieve variable values
-      int pageNumber = page + 1; 
-      int pageCount = getPageCount(); 
-      String planScale = "?";
-      if (homePrint.getPlanScale() != null) {
-        planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
-      } else {
-        if (planView instanceof PlanComponent) {
-          planScale = "1/" + Math.round(1 / ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
-        }        
-      }          
-      if (page == 0) {
-        this.printDate = new Date();
-      }
-      String homeName = this.home.getName();
-      if (homeName == null) {
-        homeName = "";
-      }
-      String homePresentationName = this.controller.getContentManager().getPresentationName(
-           homeName, ContentManager.ContentType.SWEET_HOME_3D);
-      Object [] variableValues = new Object [] {
-          pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName};
-      
-      // Create header text
-      String headerFormat = homePrint.getHeaderFormat();      
-      if (headerFormat != null) {
-        header = Variable.getMessageFormat(headerFormat).format(variableValues).trim();
-        if (header.length() > 0) {
-          xHeader = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(header)) / 2;
-          yHeader = imageableY + fontMetrics.getAscent();
-          imageableY += headerFooterHeight;
-          imageableHeight -= headerFooterHeight;
+    if (homePrint != null
+        || this.fixedHeader != null
+        || this.fixedFooter != null) {
+      if (homePrint != null) {
+        FontMetrics fontMetrics = g2D.getFontMetrics(this.headerFooterFont);
+        float headerFooterHeight = fontMetrics.getAscent() + fontMetrics.getDescent() 
+        + HEADER_FOOTER_MARGIN;
+        
+        // Retrieve variable values
+        int pageNumber = page + 1; 
+        int pageCount = getPageCount(); 
+        String planScale = "?";
+        if (homePrint.getPlanScale() != null) {
+          planScale = "1/" + Math.round(1 / homePrint.getPlanScale());
         } else {
-          header = null;
+          if (planView instanceof PlanComponent) {
+            planScale = "1/" + Math.round(1 / ((PlanComponent)planView).getPrintPreferredScale(g, pageFormat)); 
+          }        
+        }          
+        if (page == 0) {
+          this.printDate = new Date();
         }
-      }
-      
-      // Create footer text
-      String footerFormat = homePrint.getFooterFormat();
-      if (footerFormat != null) {
-        footer = Variable.getMessageFormat(footerFormat).format(variableValues).trim();
-        if (footer.length() > 0) {
-          xFooter = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(footer)) / 2;
-          yFooter = imageableY + imageableHeight - fontMetrics.getDescent();
-          imageableHeight -= headerFooterHeight;
-        } else {
-          footer = null;
+        String homeName = this.home.getName();
+        if (homeName == null) {
+          homeName = "";
+        }
+        String homePresentationName = this.controller.getContentManager().getPresentationName(
+             homeName, ContentManager.ContentType.SWEET_HOME_3D);
+        Object [] variableValues = new Object [] {
+            pageNumber, pageCount, planScale, this.printDate, homePresentationName, homeName};
+        
+        // Create header text
+        String headerFormat = homePrint.getHeaderFormat();      
+        if (headerFormat != null) {
+          header = Variable.getMessageFormat(headerFormat).format(variableValues).trim();
+          if (header.length() > 0) {
+            xHeader = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(header)) / 2;
+            yHeader = imageableY + fontMetrics.getAscent();
+            imageableY += headerFooterHeight;
+            imageableHeight -= headerFooterHeight;
+          } else {
+            header = null;
+          }
+        }
+        
+        // Create footer text
+        String footerFormat = homePrint.getFooterFormat();
+        if (footerFormat != null) {
+          footer = Variable.getMessageFormat(footerFormat).format(variableValues).trim();
+          if (footer.length() > 0) {
+            xFooter = ((float)pageFormat.getWidth() - fontMetrics.stringWidth(footer)) / 2;
+            yFooter = imageableY + imageableHeight - fontMetrics.getDescent();
+            imageableHeight -= headerFooterHeight;
+          } else {
+            footer = null;
+          }
         }
       }
       
