@@ -134,21 +134,25 @@ public class HomePrintableComponent extends JComponent implements Printable {
     
     try {
       ResourceBundle resource = ResourceBundle.getBundle(HomePrintableComponent.class.getName());
-      this.fixedHeaderLabel = getFixedLabel(resource, "fixedHeader");
-      this.fixedFooterLabel = getFixedLabel(resource, "fixedFooter");
+      this.fixedHeaderLabel = getFixedHeaderOrFooterLabel(resource, "fixedHeader");
+      this.fixedFooterLabel = getFixedHeaderOrFooterLabel(resource, "fixedFooter");
     } catch (MissingResourceException ex) {
       // No resource bundle 
     }
   }
 
-  private JLabel getFixedLabel(ResourceBundle resource, String resourceKey) {
+  private JLabel getFixedHeaderOrFooterLabel(ResourceBundle resource, String resourceKey) {
     try {        
-      String fixedHeader = String.format(resource.getString(resourceKey), 
-          HomePrintableComponent.class.getResource("."));
-      JLabel fixedLabel = new JLabel(fixedHeader, JLabel.CENTER);
-      fixedLabel.setFont(this.headerFooterFont);
-      fixedLabel.setSize(fixedLabel.getPreferredSize());
-      return fixedLabel;
+      // Build URL base for resources referenced in fixed header or footer
+      String classFile = "/" + HomePrintableComponent.class.getName().replace('.', '/') + ".properties";
+      String urlBase = HomePrintableComponent.class.getResource(classFile).toString();
+      urlBase = urlBase.substring(0, urlBase.length() - classFile.length());      
+      
+      String fixedHeaderOrFooter = String.format(resource.getString(resourceKey), urlBase);      
+      JLabel fixedHeaderOrFooterLabel = new JLabel(fixedHeaderOrFooter, JLabel.CENTER);
+      fixedHeaderOrFooterLabel.setFont(this.headerFooterFont);
+      fixedHeaderOrFooterLabel.setSize(fixedHeaderOrFooterLabel.getPreferredSize());
+      return fixedHeaderOrFooterLabel;
     } catch (MissingResourceException ex) {
       // No fixed label
       return null;
