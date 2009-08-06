@@ -2,7 +2,7 @@
 
 # Retrieve Sweet Home 3D directory
 PROGRAM=`readlink "$0"`
-if ["$PROGRAM" = ""]; then
+if [ "$PROGRAM" = "" ]; then
   PROGRAM=$0
 fi
 PROGRAM_DIR=`dirname "$PROGRAM"`
