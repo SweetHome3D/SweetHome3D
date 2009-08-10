@@ -285,8 +285,9 @@ public class ModelManager {
    * @param content an object containing a model
    * @param synchronous if <code>true</code>, this method will return only once model content is loaded
    * @param modelObserver the observer that will be notified once the model is available
-   *    or if an error happens. If model is loaded asynchronously, the observer will be notified
-   *    in Event Dispatch Thread, otherwise it will be notified in the same thread as caller.
+   *    or if an error happens. When the model is loaded asynchronously, this method should be called
+   *    in Event Dispatch Thread and observer will be notified in EDT, otherwise it will be notified 
+   *    in the same thread as the caller.
    */
   public void loadModel(final Content content,
                         boolean synchronous,
@@ -305,52 +306,45 @@ public class ModelManager {
         if (this.modelsLoader == null) {
           this.modelsLoader = Executors.newSingleThreadExecutor();
         }
-        synchronized (this.loadedModelNodes) {
-          List<ModelObserver> observers = this.loadingModelObservers.get(content);
-          if (observers != null) {
-            // If observers list exists, content model is already being loaded
-            // register observer for future notification
-            observers.add(modelObserver);
-          } else {
-            // Create a list of observers that will be notified once content model is loaded
-            observers = new ArrayList<ModelObserver>();
-            observers.add(modelObserver);
-            this.loadingModelObservers.put(content, observers);
-            
-            // Load the model in an other thread
-            this.modelsLoader.execute(new Runnable() {
-              public void run() {
-                try {
-                  final BranchGroup loadedModel = loadModel(content);
-                  // Update loaded models cache and notify registered observers
-                  List<ModelObserver> observers;
-                  synchronized (loadedModelNodes) {
-                    loadedModelNodes.put(content, loadedModel);
-                    observers = loadingModelObservers.remove(content);
-                  }                  
-                  for (final ModelObserver observer : observers) {
-                    EventQueue.invokeLater(new Runnable() {
-                        public void run() {
-                          BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
-                          observer.modelUpdated(modelNode);
-                        }
-                      });
-                  }
-                } catch (final IOException ex) {
-                  synchronized (loadedModelNodes) {
-                    List<ModelObserver> observers = loadingModelObservers.remove(content);
-                    for (final ModelObserver observer : observers) {
-                      EventQueue.invokeLater(new Runnable() {
-                          public void run() {
-                            observer.modelError(ex);
-                          }
-                        });
+        List<ModelObserver> observers = this.loadingModelObservers.get(content);
+        if (observers != null) {
+          // If observers list exists, content model is already being loaded
+          // register observer for future notification
+          observers.add(modelObserver);
+        } else {
+          // Create a list of observers that will be notified once content model is loaded
+          observers = new ArrayList<ModelObserver>();
+          observers.add(modelObserver);
+          this.loadingModelObservers.put(content, observers);
+          
+          // Load the model in an other thread
+          this.modelsLoader.execute(new Runnable() {
+            public void run() {
+              try {
+                final BranchGroup loadedModel = loadModel(content);
+                // Update loaded models cache and notify registered observers
+                loadedModelNodes.put(content, loadedModel);
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
+                      for (final ModelObserver observer : loadingModelObservers.remove(content)) {
+                        BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
+                        observer.modelUpdated(modelNode);
+                      }
                     }
-                  }                  
-                }
+                  });
+              } catch (final IOException ex) {
+                synchronized (loadedModelNodes) {
+                  EventQueue.invokeLater(new Runnable() {
+                      public void run() {
+                        for (final ModelObserver observer : loadingModelObservers.remove(content)) {
+                          observer.modelError(ex);
+                        }
+                      }
+                    });
+                }                  
               }
-            });
-          }
+            }
+          });
         }
         return;
       }
