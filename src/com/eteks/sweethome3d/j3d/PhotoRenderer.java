@@ -124,8 +124,6 @@ public class PhotoRenderer {
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
     final boolean useNormals = true;
-    Ground3D ground = new Ground3D(home, -1E7f / 2, -1E7f / 2, 1E7f, 1E7f, true);
-    exportNode(ground, useNormals , true);
     for (Wall wall : home.getWalls()) {
       Wall3D wall3D = new Wall3D(wall, home, true, true);
       exportNode(wall3D, useNormals, false);
@@ -138,6 +136,16 @@ public class PhotoRenderer {
       Room3D room3D = new Room3D(room, home, home.getCamera() == home.getTopCamera(), true, true);
       exportNode(room3D, useNormals, false);
     } 
+    // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
+    Home groundHome = new Home();
+    groundHome.getEnvironment().setGroundColor(home.getEnvironment().getGroundColor());
+    groundHome.getEnvironment().setGroundTexture(home.getEnvironment().getGroundTexture());
+    Ground3D ground = new Ground3D(groundHome, -1E8f / 2, -1E8f / 2, 1E8f, 1E8f, true);
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(new Vector3f(0, -0.1f, 0));
+    TransformGroup groundTransformGroup = new TransformGroup(translation);
+    groundTransformGroup.addChild(ground);
+    exportNode(groundTransformGroup, useNormals , true);
 
     // Set light settings 
     boolean observerCamera = home.getCamera() == home.getObserverCamera();
