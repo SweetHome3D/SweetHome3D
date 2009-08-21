@@ -86,6 +86,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -1469,7 +1470,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       Dimension imageSize = new Dimension((int)Math.ceil(svgItemBounds.getWidth() * svgScale + 2 * extraMargin), 
           (int)Math.ceil(svgItemBounds.getHeight() * svgScale + 2 * extraMargin));
       
-      SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize);
+      SVGGraphics2D exportG2D = new SVGGraphics2D(outputStream, imageSize) {
+          @Override
+          public void writeHeader() throws IOException {
+            // Use English locale to avoid wrong encoding when localized dates contain accentuated letters 
+            Locale defaultLocale = Locale.getDefault();
+            Locale.setDefault(Locale.ENGLISH);
+            super.writeHeader();
+            Locale.setDefault(defaultLocale);
+          }
+        };
       UserProperties properties = new UserProperties();
       properties.setProperty(SVGGraphics2D.STYLABLE, true);
       properties.setProperty(SVGGraphics2D.WRITE_IMAGES_AS, ImageConstants.PNG);
