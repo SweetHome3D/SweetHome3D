@@ -145,7 +145,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         }
       });
     this.imageChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
-        BackgroundImageWizardStepsPanel.class, "imageChoiceErrolLabel.text"));
+        BackgroundImageWizardStepsPanel.class, "imageChoiceErrorLabel.text"));
     // Make imageChoiceErrorLabel visible only if an error occurred during image content loading
     this.imageChoiceErrorLabel.setVisible(false);
     this.imageChoicePreviewComponent = new ScaledImageComponent();

@@ -282,7 +282,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         }
       });
     this.modelChoiceErrorLabel = new JLabel(preferences.getLocalizedString(
-        ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrolLabel.text"));
+        ImportedFurnitureWizardStepsPanel.class, "modelChoiceErrorLabel.text"));
     // Make modelChoiceErrorLabel visible only if an error occurred during model content loading
     this.modelChoiceErrorLabel.setVisible(false);
     this.modelPreviewComponent = new ModelPreviewComponent();
