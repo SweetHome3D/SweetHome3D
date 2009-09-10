@@ -27,6 +27,7 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -154,7 +155,9 @@ public class PhotoRenderer {
         && skyTexture != null) {
       // If observer camera is used with a sky texture, 
       // create an image base light from sky texture  
-      BufferedImage skyImage = ImageIO.read(skyTexture.getImage().openStream());
+      InputStream skyImageStream = skyTexture.getImage().openStream();
+      BufferedImage skyImage = ImageIO.read(skyImageStream);
+      skyImageStream.close();
       // Create a temporary image base light twice as high that will contain sky image in the top part
       BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), 
           skyImage.getHeight() * 2, BufferedImage.TYPE_INT_RGB);
