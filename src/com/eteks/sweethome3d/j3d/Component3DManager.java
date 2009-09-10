@@ -216,6 +216,8 @@ public class Component3DManager {
     } finally {
       if (offScreenCanvas != null) {
         view.removeCanvas3D(offScreenCanvas);
+        // Free off screen buffer and context
+        offScreenCanvas.setOffScreenBuffer(null);
       }
       // Reset previous rendering error listener
       setRenderingErrorObserver(previousRenderingErrorObserver);
