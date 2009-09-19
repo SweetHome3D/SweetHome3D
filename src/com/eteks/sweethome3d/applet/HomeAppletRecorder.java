@@ -118,7 +118,7 @@ public class HomeAppletRecorder implements HomeRecorder {
       homeOut.flush();
       
       // Post last boundary
-      out.write(("\r\n--" + multiPartBoundary + "\r\n").getBytes("UTF-8"));
+      out.write(("\r\n--" + multiPartBoundary + "--\r\n").getBytes("UTF-8"));
       out.close();
       
       // Read response
