@@ -109,7 +109,7 @@ public class HomeAppletRecorder implements HomeRecorder {
       OutputStream out = connection.getOutputStream();
       out.write(("--" + multiPartBoundary + "\r\n").getBytes("UTF-8"));
       out.write(("Content-Disposition: form-data; name=\"home\"; filename=\"" 
-          + name + "\"\r\n").getBytes("UTF-8"));
+          + name.replace('\"', '\'') + "\"\r\n").getBytes("UTF-8"));
       out.write(("Content-Type: application/octet-stream\r\n\r\n").getBytes("UTF-8"));
       out.flush();
       DefaultHomeOutputStream homeOut = new DefaultHomeOutputStream(out, 9, this.includeOnlyTemporaryContent);
