@@ -190,7 +190,19 @@ public class AppletApplication extends HomeApplication {
     TextureManager.getInstance().clear();
     ModelManager.getInstance().clear();
   }
-  
+
+  /**
+   * Returns <code>true</code> if one of the homes of this application is modified.
+   */
+  public boolean isModified() {
+    for (Home home : getHomes()) {
+      if (home.isModified()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Returns the array of URL objects matching the URL list.
    */

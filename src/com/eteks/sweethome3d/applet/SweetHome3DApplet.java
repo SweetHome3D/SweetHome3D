@@ -158,6 +158,22 @@ public class SweetHome3DApplet extends JApplet {
   }
   
   /**
+   * Returns <code>true</code> if one of the homes edited by this applet is modified. 
+   */
+  public boolean isModified() {
+    if (this.appletApplication != null) {
+      try {
+        Method destroyMethod = this.appletApplication.getClass().getMethod("isModified", new Class [0]);
+        return ((Boolean)destroyMethod.invoke(this.appletApplication, new Object [0])).booleanValue();
+      } catch (Exception ex) {
+        // Can't do better than print stack trace
+        ex.printStackTrace();
+      }
+    }
+    return true;
+  }
+  
+  /**
    * Returns <code>true</code> if current JVM version is 5+. 
    */
   private boolean isJava5OrSuperior() {
