@@ -170,7 +170,7 @@ public class SweetHome3DApplet extends JApplet {
         ex.printStackTrace();
       }
     }
-    return true;
+    return false;
   }
   
   /**
