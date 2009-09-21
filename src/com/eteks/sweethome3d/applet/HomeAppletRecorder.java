@@ -77,7 +77,7 @@ public class HomeAppletRecorder implements HomeRecorder {
   }
   
   /**
-   * Returns the HTTP URL used to save the home with a given <code>name</code> to server.
+   * Returns the HTTP URL built from <code>urlBase</code> with parameters.
    */
   protected URL getURL(String urlBase, Object ... parameterValues) throws IOException {
     try { 
