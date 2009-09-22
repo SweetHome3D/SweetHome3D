@@ -88,6 +88,8 @@ public class AppletApplication extends HomeApplication {
   private static final String WRITE_HOME_URL_PARAMETER         = "writeHomeURL";
   private static final String READ_HOME_URL_PARAMETER          = "readHomeURL";
   private static final String LIST_HOMES_URL_PARAMETER         = "listHomesURL";
+  private static final String READ_PREFERENCES_URL_PARAMETER   = "readPreferencesURL";
+  private static final String WRITE_PREFERENCES_URL_PARAMETER  = "writePreferencesURL";
   private static final String DEFAULT_HOME_PARAMETER           = "defaultHome";
   
   private final HomeRecorder              homeRecorder;
@@ -100,24 +102,40 @@ public class AppletApplication extends HomeApplication {
     final String writeHomeURL = getAppletParameter(applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
     final String readHomeURL = getAppletParameter(applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
     final String listHomesURL = getAppletParameter(applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+    final String readPreferencesURL = getAppletParameter(applet, READ_PREFERENCES_URL_PARAMETER, "");    
+    final String writePreferencesURL = getAppletParameter(applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
 
-    this.homeRecorder = new HomeAppletRecorder(writeHomeURL, readHomeURL, listHomesURL);
+    URL codeBase = applet.getCodeBase();
+    this.homeRecorder = new HomeAppletRecorder(getURL(codeBase, writeHomeURL).toString(), 
+        getURL(codeBase, readHomeURL).toString(), 
+        getURL(codeBase, listHomesURL).toString());
     this.userPreferences = new AppletUserPreferences(
-        getURLs(applet.getCodeBase(), furnitureCatalogURLs), 
-        getURLs(applet.getCodeBase(), texturesCatalogURLs));
-    
-    final ViewFactory viewFactory = new SwingViewFactory();
-    final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
-    final PluginManager  pluginManager  = new PluginManager(
-        getURLs(applet.getCodeBase(), pluginURLs));
+        getURLs(codeBase, furnitureCatalogURLs), 
+        getURLs(codeBase, texturesCatalogURLs),
+        getURL(codeBase, writePreferencesURL), 
+        getURL(codeBase, readPreferencesURL));
 
-    // If Sweet Home 3D applet is launched from outside of Java Web Start
-    if (ServiceManager.getServiceNames() == null) {
+    // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
+    boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
+    if (serviceManagerAvailable) {
+      try { 
+        ServiceManager.lookup("javax.jnlp.BasicService");
+      } catch (UnavailableServiceException ex) {
+        serviceManagerAvailable = false;
+      }
+    }
+
+    if (!serviceManagerAvailable) {
       // Create JNLP services required by Sweet Home 3D 
       ServiceManager.setServiceManagerStub(
-          new StandaloneServiceManager(applet.getAppletContext(), applet.getCodeBase()));
-    }      
+          new StandaloneServiceManager(applet.getAppletContext(), codeBase));
+      // Caution: setting a new service manager stub won't replace the existing one,
+    }          
+
+    final ViewFactory viewFactory = new SwingViewFactory();
+    final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
+    final PluginManager  pluginManager  = new PluginManager(getURLs(codeBase, pluginURLs));
 
     initLookAndFeel();
    
@@ -210,13 +228,26 @@ public class AppletApplication extends HomeApplication {
     String [] urlStrings = urlList.split("\\s|,");
     List<URL> urls = new ArrayList<URL>(urlStrings.length);
     for (String urlString : urlStrings) {
+      URL url = getURL(codeBase, urlString);
+      if (url != null) {
+        urls.add(url);
+      }
+    }
+    return urls.toArray(new URL [urls.size()]);
+  }
+  
+  /**
+   * Returns the URL object matching the given <code>url</code> eventually relative to <code>codeBase</code>.
+   */
+  private URL getURL(URL codeBase, String url) {
+    if (url.length() > 0) {
       try {
-        urls.add(new URL(codeBase, urlString));
+        return new URL(codeBase, url);
       } catch (MalformedURLException ex) {
         // Ignore malformed URLs
       }
     }
-    return urls.toArray(new URL [urls.size()]);
+    return null;
   }
   
   /**

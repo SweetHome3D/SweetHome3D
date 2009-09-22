@@ -75,7 +75,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     to write the data of a home. This data will be uploaded in the file parameter named 
  *     <code>home</code> of a POST request encoded with multipart/form-data MIME type, with 
  *     the name of the uploaded home being stored in its <code>filename</code> attribute.
- *     This service must return 1 if it wrote the uploaded successfully.
+ *     This service must return 1 if it wrote the uploaded data successfully.
  *     <br>By default, this URL is <code>writeHome.php</code> and if it's not an absolute URL 
  *     it will be considered as relative to applet codebase. If its value is empty,
  *     <i>New</i>, <i>Save</i> and <i>Save as...</i> actions will be disabled and their buttons 
@@ -103,8 +103,22 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>If you want the applet open a home at launch without creating a <code>readHomeURL</code> 
  *     service, set <code>%s</code> value for <code>readHomeURL</code> parameter and put the absolute 
  *     URL of the home file or its URL relative to applet codebase in <code>defaultHome</code> 
- *     parameter.</li></ul>
+ *     parameter.</li>
  * 
+ *     <li><code>writePreferencesURL</code> specifies the URL of the HTTP service able 
+ *     to write the XML content describing the user preferences. This data will be uploaded 
+ *     in the parameter named <code>preferences</code> of a POST request.
+ *     This service must return 1 if it completed successfully.
+ *     <br>By default, this URL is empty and if it's not an absolute URL 
+ *     it will be considered as relative to applet codebase.</li>
+ *     
+ *     <li><code>readPreferencesURL</code> specifies the URL of the HTTP service able 
+ *     to return an XML content describing the user preferences as a set of properties. 
+ *     The DTD of the XML content supported by the applet is specified at 
+ *     <a href="http://java.sun.com/dtd/properties.dtd">http://java.sun.com/dtd/properties.dtd</a>.
+ *     <br>By default, this URL is empty and if it's not an absolute URL it will be 
+ *     considered as relative to applet codebase.</li></ul>
+ *     
  * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.
  *     

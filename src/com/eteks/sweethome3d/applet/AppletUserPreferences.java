@@ -21,71 +21,145 @@ package com.eteks.sweethome3d.applet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Map.Entry;
 
 import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.DefaultTexturesCatalog;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
-import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.PatternsCatalog;
 import com.eteks.sweethome3d.model.RecorderException;
-import com.eteks.sweethome3d.model.TextureImage;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
 import com.eteks.sweethome3d.model.UserPreferences;
-import com.eteks.sweethome3d.tools.ResourceURLContent;
 
 /**
  * Applet user preferences.
  * @author Emmanuel Puybaret
  */
 public class AppletUserPreferences extends UserPreferences {
-  private URL [] pluginFurnitureCatalogUrls;
-  private URL [] pluginTexturesCatalogUrls;
+  private static final String LANGUAGE                        = "language";
+  private static final String UNIT                            = "unit";
+  private static final String MAGNETISM_ENABLED               = "magnetismEnabled";
+  private static final String RULERS_VISIBLE                  = "rulersVisible";
+  private static final String GRID_VISIBLE                    = "gridVisible";
+  private static final String FURNITURE_VIEWED_FROM_TOP       = "furnitureViewedFromTop";
+  private static final String ROOM_FLOOR_COLORED_OR_TEXTURED  = "roomFloorColoredOrTextured";
+  private static final String WALL_PATTERN                    = "wallPattern";
+  private static final String NEW_WALL_HEIGHT                 = "newHomeWallHeight";
+  private static final String NEW_WALL_THICKNESS              = "newWallThickness";
+  private static final String RECENT_HOMES                    = "recentHomes#";
+  private static final String IGNORED_ACTION_TIP              = "ignoredActionTip#";  
+
+  private final URL [] pluginFurnitureCatalogURLs;
+  private final URL [] pluginTexturesCatalogURLs;
+  private Properties   properties;
+  private final URL    writePreferencesURL;
+  private final URL    readPreferencesURL;
+  
+  private final Map<String, Boolean> ignoredActionTips = new HashMap<String, Boolean>();
 
   /**
-   * Creates default user preferences read from resource files.
+   * Creates default user preferences read from resource files and catalogs urls given in parameter.
    */
-  public AppletUserPreferences(URL [] pluginFurnitureCatalogUrls,
-                               URL [] pluginTexturesCatalogUrls) {
-    this.pluginFurnitureCatalogUrls = pluginFurnitureCatalogUrls;
-    this.pluginTexturesCatalogUrls = pluginTexturesCatalogUrls;
+  public AppletUserPreferences(URL [] pluginFurnitureCatalogURLs,
+                               URL [] pluginTexturesCatalogURLs) {
+    this(pluginFurnitureCatalogURLs, pluginTexturesCatalogURLs, null, null);
+  }
+  
+  /**
+   * Creates default user preferences read from resource files and catalogs urls given in parameter, 
+   * then reads saved user preferences from the XML content returned by <code>readPreferencesURL</code>, 
+   * if URL isn't <code>null</code> or empty. 
+   * Preferences modifications will be notified to <code>writePreferencesURL</code> with 
+   * an XML content describing preferences in a parameter named preferences, 
+   * if URL isn't <code>null</code> or empty.
+   * The DTD of XML content is specified at 
+   * <a href="http://java.sun.com/dtd/properties.dtd">http://java.sun.com/dtd/properties.dtd</a>.
+   * Preferences written with this class don't include imported furniture and textures.
+   */
+  public AppletUserPreferences(URL [] pluginFurnitureCatalogURLs,
+                               URL [] pluginTexturesCatalogURLs, 
+                               URL writePreferencesURL, 
+                               URL readPreferencesURL) {
+    this.pluginFurnitureCatalogURLs = pluginFurnitureCatalogURLs;
+    this.pluginTexturesCatalogURLs = pluginTexturesCatalogURLs;
+    this.writePreferencesURL = writePreferencesURL;
+    this.readPreferencesURL = readPreferencesURL;
     
+    final Properties properties = getProperties();
+    setLanguage(properties.getProperty(LANGUAGE, getLanguage()));    
+
     // Read default furniture catalog
-    setFurnitureCatalog(new DefaultFurnitureCatalog(pluginFurnitureCatalogUrls));
+    setFurnitureCatalog(new DefaultFurnitureCatalog(pluginFurnitureCatalogURLs));
     // Read default textures catalog
-    setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogUrls));   
+    setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogURLs));   
  
-    // Read other preferences from resource bundle
-    List<TextureImage> patterns = new ArrayList<TextureImage>();
-    patterns.add(new PatternTexture("foreground"));
-    patterns.add(new PatternTexture("hatchUp"));
-    patterns.add(new PatternTexture("hatchDown"));
-    patterns.add(new PatternTexture("background"));
-    PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
+    DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    
+    // Fill default patterns catalog 
+    PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();
     setPatternsCatalog(patternsCatalog);
-    // Read other preferences from resource bundle
-    setUnit(LengthUnit.valueOf(getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
-    setRulersVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
-    setGridVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "gridVisible")));
-    setFurnitureViewedFromTop(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "furnitureViewedFromTop")));
-    setFloorColoredOrTextured(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "roomFloorColoredOrTextured")));
-    setWallPattern(patternsCatalog.getPattern(getLocalizedString(DefaultUserPreferences.class, "wallPattern")));
-    setNewWallThickness(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newWallThickness")));
-    setNewWallHeight(Float.parseFloat(getLocalizedString(DefaultUserPreferences.class, "newHomeWallHeight")));
-    setRecentHomes(new ArrayList<String>());
+
+    // Read other preferences 
+    setUnit(LengthUnit.valueOf(properties.getProperty(UNIT, defaultPreferences.getLengthUnit().name())));
+    setMagnetismEnabled(Boolean.parseBoolean(properties.getProperty(MAGNETISM_ENABLED, "true")));
+    setRulersVisible(Boolean.parseBoolean(properties.getProperty(RULERS_VISIBLE, 
+        String.valueOf(defaultPreferences.isMagnetismEnabled()))));
+    setGridVisible(Boolean.parseBoolean(properties.getProperty(GRID_VISIBLE, 
+        String.valueOf(defaultPreferences.isGridVisible()))));
+    setFurnitureViewedFromTop(Boolean.parseBoolean(properties.getProperty(FURNITURE_VIEWED_FROM_TOP, 
+        String.valueOf(defaultPreferences.isFurnitureViewedFromTop()))));
+    setFloorColoredOrTextured(Boolean.parseBoolean(properties.getProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, 
+        String.valueOf(defaultPreferences.isRoomFloorColoredOrTextured()))));
     try {
-      setCurrency(getLocalizedString(DefaultUserPreferences.class, "currency"));
+      setWallPattern(patternsCatalog.getPattern(properties.getProperty(WALL_PATTERN, 
+          defaultPreferences.getWallPattern().getName())));
     } catch (IllegalArgumentException ex) {
-      // Don't use currency and prices in program
+      // Ensure wall pattern always exists even if new patterns are added in future versions
+      setWallPattern(defaultPreferences.getWallPattern());
+    }
+    setNewWallThickness(Float.parseFloat(properties.getProperty(NEW_WALL_THICKNESS, 
+            String.valueOf(defaultPreferences.getNewWallThickness()))));
+    setNewWallHeight(Float.parseFloat(properties.getProperty(NEW_WALL_HEIGHT,
+        String.valueOf(defaultPreferences.getNewWallHeight()))));    
+    setCurrency(defaultPreferences.getCurrency());    
+    // Read recent homes list
+    List<String> recentHomes = new ArrayList<String>();
+    for (int i = 1; i <= 4; i++) {
+      String recentHome = properties.getProperty(RECENT_HOMES + i, null);
+      if (recentHome != null) {
+        recentHomes.add(recentHome);
+      }
+    }
+    setRecentHomes(recentHomes);
+    // Read ignored action tips
+    for (int i = 1; ; i++) {
+      String ignoredActionTip = properties.getProperty(IGNORED_ACTION_TIP + i, "");
+      if (ignoredActionTip.length() == 0) {
+        break;
+      } else {
+        this.ignoredActionTips.put(ignoredActionTip, true);
+      }
     }
     
     addPropertyChangeListener(Property.LANGUAGE, new PropertyChangeListener() {
@@ -94,7 +168,7 @@ public class AppletUserPreferences extends UserPreferences {
         }
       });
   }
-  
+
   /**
    * Reloads furniture and textures default catalogs.
    */
@@ -110,7 +184,7 @@ public class AppletUserPreferences extends UserPreferences {
     }
     // Add default pieces that don't have homonym among user catalog
     FurnitureCatalog defaultFurnitureCatalog = 
-        new DefaultFurnitureCatalog(this.pluginFurnitureCatalogUrls);
+        new DefaultFurnitureCatalog(this.pluginFurnitureCatalogURLs);
     for (FurnitureCategory category : defaultFurnitureCatalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
         try {
@@ -132,7 +206,7 @@ public class AppletUserPreferences extends UserPreferences {
     }
     // Add default textures that don't have homonym among user catalog
     TexturesCatalog defaultTexturesCatalog = 
-        new DefaultTexturesCatalog(this.pluginTexturesCatalogUrls);
+        new DefaultTexturesCatalog(this.pluginTexturesCatalogURLs);
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         try {
@@ -149,6 +223,148 @@ public class AppletUserPreferences extends UserPreferences {
    */
   @Override
   public void write() throws RecorderException {
+    Properties properties = getProperties();
+    // Write other preferences 
+    properties.setProperty(LANGUAGE, getLanguage());
+    properties.setProperty(UNIT, getLengthUnit().name());   
+    properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
+    properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
+    properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));
+    properties.setProperty(FURNITURE_VIEWED_FROM_TOP, String.valueOf(isFurnitureViewedFromTop()));
+    properties.setProperty(ROOM_FLOOR_COLORED_OR_TEXTURED, String.valueOf(isRoomFloorColoredOrTextured()));
+    properties.setProperty(WALL_PATTERN, getWallPattern().getName());
+    properties.setProperty(NEW_WALL_THICKNESS, String.valueOf(getNewWallThickness()));   
+    properties.setProperty(NEW_WALL_HEIGHT, String.valueOf(getNewWallHeight()));
+    // Write recent homes list
+    int i = 1;
+    for (Iterator<String> it = getRecentHomes().iterator(); it.hasNext() && i <= 4; i ++) {
+      properties.setProperty(RECENT_HOMES + i, it.next());
+    }
+    // Write ignored action tips
+    i = 1;
+    for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
+         it.hasNext(); ) {
+      Entry<String, Boolean> ignoredActionTipEntry = it.next();
+      if (ignoredActionTipEntry.getValue()) {
+        properties.setProperty(IGNORED_ACTION_TIP + i++, ignoredActionTipEntry.getKey());
+      } 
+    }
+    
+    try {
+      // Write preferences 
+      if (this.writePreferencesURL != null) {
+        writePreferences(getProperties());
+      }
+    } catch (IOException ex) {
+      throw new RecorderException("Couldn't write preferences", ex);
+    }
+  }
+
+  /**
+   * Returns Java preferences for current system user.
+   */
+  private Properties getProperties() {
+    if (this.properties == null) {
+      this.properties = new Properties();
+      if (this.readPreferencesURL != null) {
+        readPreferences(this.properties);
+      }
+    }
+    return this.properties;
+  }
+  
+  /**
+   * Reads user preferences.
+   */
+  private void readPreferences(Properties properties) {
+    URLConnection connection = null;
+    InputStream in = null;
+    try {
+      // Open an input stream to server 
+      connection = this.readPreferencesURL.openConnection();
+      connection.setRequestProperty("Content-Type", "charset=UTF-8");
+      connection.setUseCaches(false);
+      in = connection.getInputStream();
+      properties.loadFromXML(in);
+      in.close();
+    } catch (IOException ex) {
+      // Let default preferences unchanged
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (IOException ex) {
+        // Let default preferences unchanged
+      }
+    }
+  }
+  
+  /**
+   * Writes user preferences.
+   */
+  private void writePreferences(Properties properties) throws IOException {
+    HttpURLConnection connection = null;
+    try {
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      properties.storeToXML(bytes, "Applet user preferences 1.0");
+      bytes.close();
+
+      connection = (HttpURLConnection)this.writePreferencesURL.openConnection();
+      connection.setRequestMethod("POST");
+      connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+      connection.setDoOutput(true);
+      connection.setDoInput(true);
+      connection.setUseCaches(false);
+      OutputStream out = connection.getOutputStream();
+      out.write("preferences=".getBytes("UTF-8"));
+      out.write(URLEncoder.encode(new String(bytes.toByteArray(), "UTF-8"), "UTF-8").getBytes("UTF-8"));
+      out.close();
+
+      // Read response
+      InputStream in = connection.getInputStream();
+      int read = in.read();
+      in.close();
+      
+      if (read != '1') {
+        throw new IOException("Saving preferences failed");
+      } 
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+  }
+
+  /**
+   * Sets which action tip should be ignored.
+   */
+  @Override
+  public void setActionTipIgnored(String actionKey) {   
+    this.ignoredActionTips.put(actionKey, true);
+    super.setActionTipIgnored(actionKey);
+  }
+  
+  /**
+   * Returns whether an action tip should be ignored or not. 
+   */
+  @Override
+  public boolean isActionTipIgnored(String actionKey) {
+    Boolean ignoredActionTip = this.ignoredActionTips.get(actionKey);
+    return ignoredActionTip != null && ignoredActionTip.booleanValue();
+  }
+  
+  /**
+   * Resets the display flag of action tips.
+   */
+  @Override
+  public void resetIgnoredActionTips() {
+    for (Iterator<Map.Entry<String, Boolean>> it = this.ignoredActionTips.entrySet().iterator();
+         it.hasNext(); ) {
+      Entry<String, Boolean> ignoredActionTipEntry = it.next();
+      ignoredActionTipEntry.setValue(false);
+    }
+    super.resetIgnoredActionTips();
   }
 
   /**
@@ -165,34 +381,5 @@ public class AppletUserPreferences extends UserPreferences {
   @Override
   public void addFurnitureLibrary(String name) throws RecorderException {
     throw new RecorderException("No furniture libraries");
-  }
-
-  /**
-   * A fixed sized pattern.
-   */
-  private static class PatternTexture implements TextureImage {
-    private final String name;
-    private final Content image;
-
-    public PatternTexture(String name) {
-      this.name = name;
-      this.image = new ResourceURLContent(DefaultUserPreferences.class, "resources/patterns/" + name + ".png");
-    }
-
-    public String getName() {
-      return this.name;
-    }
-
-    public Content getImage() {
-      return this.image;
-    }
-    
-    public float getWidth() {
-      return 10;
-    }
-    
-    public float getHeight() {
-      return 10;
-    }
   }
 }
