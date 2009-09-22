@@ -104,26 +104,35 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
     
-    readFurniture(ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName()), 
-        null, furnitureHomonymsCounter, identifiedFurniture);
+    ResourceBundle resource;
+    try {
+      // Try to load DefaultFurnitureCatalog property file from classpath 
+      resource = ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName());
+    } catch (MissingResourceException ex) {
+      // Ignore furniture catalog
+      resource = null;
+    }
+    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
     
     String classPackage = DefaultFurnitureCatalog.class.getName();
     classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
     try {
-      // Try do load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
-      readFurniture(ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY), 
-          null, furnitureHomonymsCounter, identifiedFurniture);
+      // Try to load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
+      resource = ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY);
     } catch (MissingResourceException ex) {
       // Ignore contributed furniture catalog
+      resource = null;
     }
+    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
     
     try {
-      // Try do load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath 
-      readFurniture(ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY), 
-          null, furnitureHomonymsCounter, identifiedFurniture);
+      // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
+      ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY);
     } catch (MissingResourceException ex) {
       // Ignore additional furniture catalog
+      resource = null;
     }
+    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
     
     if (furniturePluginFolder != null) {
       // Try to load sh3f files from plugin folder
@@ -139,7 +148,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         Arrays.sort(furnitureFiles, Collections.reverseOrder());
         for (File furnitureFile : furnitureFiles) {
           try {
-            // Try do load Furniture property file from current file  
+            // Try to load Furniture property file from current file  
             URL furnitureUrl = furnitureFile.toURI().toURL();
             readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
                                                    new URLClassLoader(new URL [] {furnitureUrl})), 
@@ -183,89 +192,91 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                              URL furnitureUrl,
                              Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
-    for (int i = 1;; i++) {
-      String name = null;
-      try {
-        name = resource.getString(NAME + i);
-      } catch (MissingResourceException ex) {
-        // Stop the loop when a key name# doesn't exist
-        break;
-      }
-      String description = getOptionalString(resource, DESCRIPTION + i, null);
-      String category = resource.getString(CATEGORY + i);
-      Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
-      boolean multiPartModel = false;
-      try {
-        multiPartModel = Boolean.parseBoolean(resource.getString(MULTI_PART_MODEL + i));
-      } catch (MissingResourceException ex) {
-        // By default inDirectory is false
-      }
-      Content model = getContent(resource, MODEL + i, furnitureUrl, multiPartModel);
-      float width = Float.parseFloat(resource.getString(WIDTH + i));
-      float depth = Float.parseFloat(resource.getString(DEPTH + i));
-      float height = Float.parseFloat(resource.getString(HEIGHT + i));
-      boolean movable = Boolean.parseBoolean(resource.getString(MOVABLE + i));
-      boolean doorOrWindow = Boolean.parseBoolean(resource.getString(DOOR_OR_WINDOW + i));
-      float elevation = getOptionalFloat(resource, ELEVATION + i, 0);
-      float [][] modelRotation = getModelRotation(resource, MODEL_ROTATION + i);
-      // By default creator is eTeks
-      String creator = getOptionalString(resource, CREATOR + i, "eTeks");
-      String id = getOptionalString(resource, ID + i, null);
-      if (id != null) {
-        // Take into account only furniture that have an ID
-        if (identifiedFurniture.contains(id)) {
-          continue;
-        } else {
-          // Add id to identifiedFurniture to be sure that two pieces with a same ID
-          // won't be added twice to furniture catalog (in case they are cited twice
-          // in different furniture properties files)
-          identifiedFurniture.add(id);
+    if (resource != null) {
+      for (int i = 1;; i++) {
+        String name = null;
+        try {
+          name = resource.getString(NAME + i);
+        } catch (MissingResourceException ex) {
+          // Stop the loop when a key name# doesn't exist
+          break;
         }
-      }
-      boolean resizable = true;
-      try {
-        resizable = Boolean.parseBoolean(resource.getString(RESIZABLE + i));
-      } catch (MissingResourceException ex) {
-        // By default piece is resizable
-      }
-      BigDecimal price = null;
-      try {
-        price = new BigDecimal(resource.getString(PRICE + i));
-      } catch (MissingResourceException ex) {
-        // By default price is null
-      }
-      BigDecimal valueAddedTaxPercentage = null;
-      try {
-        valueAddedTaxPercentage = new BigDecimal(resource.getString(VALUE_ADDED_TAX_PERCENTAGE + i));
-      } catch (MissingResourceException ex) {
-        // By default price is null
-      }
-
-      FurnitureCategory pieceCategory = new FurnitureCategory(category);
-      CatalogPieceOfFurniture piece;
-      if (doorOrWindow) {
-        float wallThicknessPercentage = getOptionalFloat(
-            resource, DOOR_OR_WINDOW_WALL_THICKNESS + i, depth) / depth;
-        float wallDistancePercentage = getOptionalFloat(
-            resource, DOOR_OR_WINDOW_WALL_DISTANCE + i, 0) / depth;
-        Sash [] sashes = getDoorOrWindowSashes(resource, i, width, depth);
-        piece = new CatalogDoorOrWindow(id, name, description, icon, model,
-            width, depth, height, elevation, movable, 
-            wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-            resizable, price, valueAddedTaxPercentage);
-      } else {
-        LightSource [] lightSources = getLightSources(resource, i, width, depth, height);
-        if (lightSources != null) {
-          piece = new CatalogLight(id, name, description, icon, model,
-              width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
+        String description = getOptionalString(resource, DESCRIPTION + i, null);
+        String category = resource.getString(CATEGORY + i);
+        Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
+        boolean multiPartModel = false;
+        try {
+          multiPartModel = Boolean.parseBoolean(resource.getString(MULTI_PART_MODEL + i));
+        } catch (MissingResourceException ex) {
+          // By default inDirectory is false
+        }
+        Content model = getContent(resource, MODEL + i, furnitureUrl, multiPartModel);
+        float width = Float.parseFloat(resource.getString(WIDTH + i));
+        float depth = Float.parseFloat(resource.getString(DEPTH + i));
+        float height = Float.parseFloat(resource.getString(HEIGHT + i));
+        boolean movable = Boolean.parseBoolean(resource.getString(MOVABLE + i));
+        boolean doorOrWindow = Boolean.parseBoolean(resource.getString(DOOR_OR_WINDOW + i));
+        float elevation = getOptionalFloat(resource, ELEVATION + i, 0);
+        float [][] modelRotation = getModelRotation(resource, MODEL_ROTATION + i);
+        // By default creator is eTeks
+        String creator = getOptionalString(resource, CREATOR + i, "eTeks");
+        String id = getOptionalString(resource, ID + i, null);
+        if (id != null) {
+          // Take into account only furniture that have an ID
+          if (identifiedFurniture.contains(id)) {
+            continue;
+          } else {
+            // Add id to identifiedFurniture to be sure that two pieces with a same ID
+            // won't be added twice to furniture catalog (in case they are cited twice
+            // in different furniture properties files)
+            identifiedFurniture.add(id);
+          }
+        }
+        boolean resizable = true;
+        try {
+          resizable = Boolean.parseBoolean(resource.getString(RESIZABLE + i));
+        } catch (MissingResourceException ex) {
+          // By default piece is resizable
+        }
+        BigDecimal price = null;
+        try {
+          price = new BigDecimal(resource.getString(PRICE + i));
+        } catch (MissingResourceException ex) {
+          // By default price is null
+        }
+        BigDecimal valueAddedTaxPercentage = null;
+        try {
+          valueAddedTaxPercentage = new BigDecimal(resource.getString(VALUE_ADDED_TAX_PERCENTAGE + i));
+        } catch (MissingResourceException ex) {
+          // By default price is null
+        }
+  
+        FurnitureCategory pieceCategory = new FurnitureCategory(category);
+        CatalogPieceOfFurniture piece;
+        if (doorOrWindow) {
+          float wallThicknessPercentage = getOptionalFloat(
+              resource, DOOR_OR_WINDOW_WALL_THICKNESS + i, depth) / depth;
+          float wallDistancePercentage = getOptionalFloat(
+              resource, DOOR_OR_WINDOW_WALL_DISTANCE + i, 0) / depth;
+          Sash [] sashes = getDoorOrWindowSashes(resource, i, width, depth);
+          piece = new CatalogDoorOrWindow(id, name, description, icon, model,
+              width, depth, height, elevation, movable, 
+              wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
               resizable, price, valueAddedTaxPercentage);
         } else {
-          piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
-              width, depth, height, elevation, movable, modelRotation, creator, 
-              resizable, price, valueAddedTaxPercentage);
+          LightSource [] lightSources = getLightSources(resource, i, width, depth, height);
+          if (lightSources != null) {
+            piece = new CatalogLight(id, name, description, icon, model,
+                width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
+                resizable, price, valueAddedTaxPercentage);
+          } else {
+            piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
+                width, depth, height, elevation, movable, modelRotation, creator, 
+                resizable, price, valueAddedTaxPercentage);
+          }
         }
+        add(pieceCategory, piece, furnitureHomonymsCounter);
       }
-      add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
     

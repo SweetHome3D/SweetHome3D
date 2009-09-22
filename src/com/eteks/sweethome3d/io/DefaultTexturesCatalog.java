@@ -57,8 +57,14 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   public DefaultTexturesCatalog() {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
-    // Load DefaultTexturesCatalog property file from classpath 
-    ResourceBundle resource = ResourceBundle.getBundle(DefaultTexturesCatalog.class.getName());
+    ResourceBundle resource;
+    try {
+      // Try to load DefaultTexturesCatalog property file from classpath 
+      resource = ResourceBundle.getBundle(DefaultTexturesCatalog.class.getName());
+    } catch (MissingResourceException ex) {
+      // Ignore texture catalog
+      resource = null;
+    }
     readTextures(resource, null, textureHomonymsCounter);
   }
   
@@ -89,22 +95,24 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   private void readTextures(ResourceBundle resource, 
                             URL texturesUrl,
                             Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
-    for (int i = 1;; i++) {
-      String name = null;
-      try {
-        name = resource.getString(NAME + i);
-      } catch (MissingResourceException ex) {
-        // Stop the loop when a key name# doesn't exist
-        break;
+    if (resource != null) {
+      for (int i = 1;; i++) {
+        String name = null;
+        try {
+          name = resource.getString(NAME + i);
+        } catch (MissingResourceException ex) {
+          // Stop the loop when a key name# doesn't exist
+          break;
+        }
+        String category = resource.getString(CATEGORY + i);
+        Content image  = getContent(resource, IMAGE + i, texturesUrl);
+        float width = Float.parseFloat(resource.getString(WIDTH + i));
+        float height = Float.parseFloat(resource.getString(HEIGHT + i));
+  
+        add(new TexturesCategory(category),
+            new CatalogTexture(name, image, width, height),
+            textureHomonymsCounter);
       }
-      String category = resource.getString(CATEGORY + i);
-      Content image  = getContent(resource, IMAGE + i, texturesUrl);
-      float width = Float.parseFloat(resource.getString(WIDTH + i));
-      float height = Float.parseFloat(resource.getString(HEIGHT + i));
-
-      add(new TexturesCategory(category),
-          new CatalogTexture(name, image, width, height),
-          textureHomonymsCounter);
     }
   }
   
