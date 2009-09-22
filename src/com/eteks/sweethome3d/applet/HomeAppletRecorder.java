@@ -31,10 +31,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 
-import javax.jnlp.BasicService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
-
 import com.eteks.sweethome3d.io.DefaultHomeInputStream;
 import com.eteks.sweethome3d.io.DefaultHomeOutputStream;
 import com.eteks.sweethome3d.model.Home;
