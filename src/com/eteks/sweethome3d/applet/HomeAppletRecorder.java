@@ -80,13 +80,7 @@ public class HomeAppletRecorder implements HomeRecorder {
    * Returns the HTTP URL built from <code>urlBase</code> with parameters.
    */
   protected URL getURL(String urlBase, Object ... parameterValues) throws IOException {
-    try { 
-      // Lookup the javax.jnlp.BasicService object 
-      final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
-      return new URL(service.getCodeBase(), String.format(urlBase, parameterValues));
-    } catch (UnavailableServiceException ex) {
-      throw new IOException("Can't retrieve code base");
-    } 
+    return new URL(String.format(urlBase, parameterValues));
   }
   
   /**
