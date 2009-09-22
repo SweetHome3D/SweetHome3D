@@ -107,14 +107,14 @@ public class AppletApplication extends HomeApplication {
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
 
     URL codeBase = applet.getCodeBase();
-    this.homeRecorder = new HomeAppletRecorder(getURL(codeBase, writeHomeURL).toString(), 
-        getURL(codeBase, readHomeURL).toString(), 
-        getURL(codeBase, listHomesURL).toString());
+    this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
+        getURLStringWithCodeBase(codeBase, readHomeURL), 
+        getURLStringWithCodeBase(codeBase, listHomesURL));
     this.userPreferences = new AppletUserPreferences(
         getURLs(codeBase, furnitureCatalogURLs), 
         getURLs(codeBase, texturesCatalogURLs),
-        getURL(codeBase, writePreferencesURL), 
-        getURL(codeBase, readPreferencesURL));
+        getURLWithCodeBase(codeBase, writePreferencesURL), 
+        getURLWithCodeBase(codeBase, readPreferencesURL));
 
     // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
     boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
@@ -228,7 +228,7 @@ public class AppletApplication extends HomeApplication {
     String [] urlStrings = urlList.split("\\s|,");
     List<URL> urls = new ArrayList<URL>(urlStrings.length);
     for (String urlString : urlStrings) {
-      URL url = getURL(codeBase, urlString);
+      URL url = getURLWithCodeBase(codeBase, urlString);
       if (url != null) {
         urls.add(url);
       }
@@ -239,10 +239,24 @@ public class AppletApplication extends HomeApplication {
   /**
    * Returns the URL object matching the given <code>url</code> eventually relative to <code>codeBase</code>.
    */
-  private URL getURL(URL codeBase, String url) {
+  private URL getURLWithCodeBase(URL codeBase, String url) {
     if (url.length() > 0) {
       try {
         return new URL(codeBase, url);
+      } catch (MalformedURLException ex) {
+        // Ignore malformed URLs
+      }
+    }
+    return null;
+  }
+  
+  /**
+   * Returns the URL matching the given <code>url</code> eventually relative to <code>codeBase</code>.
+   */
+  private String getURLStringWithCodeBase(URL codeBase, String url) {
+    if (url.length() > 0) {
+      try {
+        return new URL(codeBase, url).toString();
       } catch (MalformedURLException ex) {
         // Ignore malformed URLs
       }
