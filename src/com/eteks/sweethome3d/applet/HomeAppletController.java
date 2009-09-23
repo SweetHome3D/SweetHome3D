@@ -119,14 +119,14 @@ public class HomeAppletController extends HomeController {
   }
 
   /**
-   * Controls the export of home to an SH3D file.
+   * Controls the export of home to a SH3D file.
    */
   public void exportToSH3D() {
     final String sh3dName = new FileContentManager(this.application.getUserPreferences()).showSaveDialog(getView(),
         this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "exportToSH3DDialog.title"), 
         ContentManager.ContentType.SWEET_HOME_3D, home.getName());    
     if (sh3dName != null) {
-      // Export 3D view in a threaded task
+      // Export home in a threaded task
       Callable<Void> exportToObjTask = new Callable<Void>() {
             public Void call() throws RecorderException {
               new HomeFileRecorder(9).writeHome(home, sh3dName);
