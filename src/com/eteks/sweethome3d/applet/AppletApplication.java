@@ -65,6 +65,7 @@ import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
+import com.eteks.sweethome3d.swing.ControllerAction;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.IconManager;
 import com.eteks.sweethome3d.swing.ResourceAction;
@@ -326,6 +327,16 @@ public class AppletApplication extends HomeApplication {
     if (saveAsAction.isEnabled()) {
       toolBar.add(saveAsAction);
     }
+    try {
+      // Add export to SH3D action
+      Action exportToSH3DAction = new ControllerAction(this.userPreferences, 
+          AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
+      exportToSH3DAction.setEnabled(true);
+      toolBar.add(new ResourceAction.ToolBarAction(exportToSH3DAction));
+    } catch (NoSuchMethodException ex) {
+      ex.printStackTrace();
+    }
+    
     if (toolBar.getComponentCount() > 0) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     }
@@ -460,6 +471,7 @@ public class AppletApplication extends HomeApplication {
   /**
    * Returns information about the version of this applet application.
    */
+  @Override
   public String getVersion() {
     String applicationVersion = this.userPreferences.getLocalizedString(
         AppletApplication.class, "applicationVersion");

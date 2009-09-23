@@ -21,18 +21,23 @@ package com.eteks.sweethome3d.applet;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.Callable;
 
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 
+import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeApplication;
+import com.eteks.sweethome3d.model.InterruptedRecorderException;
+import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.plugin.PluginManager;
-import com.eteks.sweethome3d.swing.HomePane;
+import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
+import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
@@ -40,7 +45,9 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * @author Emmanuel Puybaret
  */
 public class HomeAppletController extends HomeController {
+  private final Home home;
   private final HomeApplication application;
+  private final ViewFactory viewFactory;
 
   public HomeAppletController(Home home, 
                               HomeApplication application, 
@@ -52,14 +59,16 @@ public class HomeAppletController extends HomeController {
                               boolean saveEnabled, 
                               boolean saveAsEnabled) {
     super(home, application, viewFactory, contentManager, pluginManager);
+    this.home = home;
     this.application = application;
+    this.viewFactory = viewFactory;
     
-    HomePane view = (HomePane)getView();
-    view.setEnabled(HomePane.ActionType.EXIT, false);
-    view.setEnabled(HomePane.ActionType.NEW_HOME, newHomeEnabled);
-    view.setEnabled(HomePane.ActionType.OPEN, openEnabled);
-    view.setEnabled(HomePane.ActionType.SAVE, saveEnabled);
-    view.setEnabled(HomePane.ActionType.SAVE_AS, saveAsEnabled);
+    HomeView view = (HomeView)getView();
+    view.setEnabled(HomeView.ActionType.EXIT, false);
+    view.setEnabled(HomeView.ActionType.NEW_HOME, newHomeEnabled);
+    view.setEnabled(HomeView.ActionType.OPEN, openEnabled);
+    view.setEnabled(HomeView.ActionType.SAVE, saveEnabled);
+    view.setEnabled(HomeView.ActionType.SAVE_AS, saveAsEnabled);
     
     // Disabled Print to PDF, Export to SVG and Create photo actions 
     // (their libraries are not included with applet jar files)  
@@ -100,13 +109,48 @@ public class HomeAppletController extends HomeController {
     try { 
       // Lookup the javax.jnlp.BasicService object 
       final BasicService service = (BasicService)ServiceManager.lookup("javax.jnlp.BasicService");
-      String helpIndex = application.getUserPreferences().getLocalizedString(HomeAppletController.class, "helpIndex");
+      String helpIndex = this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "helpIndex");
       service.showDocument(new URL(helpIndex)); 
     } catch (UnavailableServiceException ex) {
       // Too bad : service is unavailable             
     } catch (MalformedURLException ex) {
       ex.printStackTrace();
     } 
+  }
+
+  /**
+   * Controls the export of home to an SH3D file.
+   */
+  public void exportToSH3D() {
+    final String sh3dName = new FileContentManager(this.application.getUserPreferences()).showSaveDialog(getView(),
+        this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "exportToSH3DDialog.title"), 
+        ContentManager.ContentType.SWEET_HOME_3D, home.getName());    
+    if (sh3dName != null) {
+      // Export 3D view in a threaded task
+      Callable<Void> exportToObjTask = new Callable<Void>() {
+            public Void call() throws RecorderException {
+              new HomeFileRecorder(9).writeHome(home, sh3dName);
+              return null;
+            }
+          };
+      ThreadedTaskController.ExceptionHandler exceptionHandler = 
+          new ThreadedTaskController.ExceptionHandler() {
+            public void handleException(Exception ex) {
+              if (!(ex instanceof InterruptedRecorderException)) {
+                if (ex instanceof RecorderException) {
+                  String message = application.getUserPreferences().getLocalizedString(
+                      HomeAppletController.class, "exportToSH3DError", sh3dName);
+                  getView().showError(message);
+                } else {
+                  ex.printStackTrace();
+                }
+              }
+            }
+          };
+      new ThreadedTaskController(exportToObjTask, 
+          this.application.getUserPreferences().getLocalizedString(HomeAppletController.class, "exportToSH3DMessage"), exceptionHandler, 
+          this.application.getUserPreferences(), viewFactory).executeTask(getView());
+    }
   }
 }
 
