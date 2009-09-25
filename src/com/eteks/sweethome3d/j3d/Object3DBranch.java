@@ -34,7 +34,7 @@ import javax.vecmath.Color3f;
 public abstract class Object3DBranch extends BranchGroup {
   // The coloring attributes used for drawing outline 
   protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
-      new ColoringAttributes(new Color3f(), ColoringAttributes.FASTEST);
+      new ColoringAttributes(new Color3f(0.16f, 0.16f, 0.16f), ColoringAttributes.FASTEST);
   protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_BACK, 0);
   protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
