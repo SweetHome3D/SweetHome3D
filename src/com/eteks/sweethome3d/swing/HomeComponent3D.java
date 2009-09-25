@@ -1096,11 +1096,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   protected Object3DBranch createObject3D(Selectable homeObject,
                                           boolean waitForLoading) {
     if (homeObject instanceof HomePieceOfFurniture) {
-      return new HomePieceOfFurniture3D((HomePieceOfFurniture)homeObject, this.home, false, waitForLoading);
+      return new HomePieceOfFurniture3D((HomePieceOfFurniture)homeObject, this.home, true, waitForLoading);
     } else if (homeObject instanceof Wall) {
-      return new Wall3D((Wall)homeObject, this.home, false, waitForLoading);
+      return new Wall3D((Wall)homeObject, this.home, true, waitForLoading);
     } else if (homeObject instanceof Room) {
-      return new Room3D((Room)homeObject, this.home, false, false, waitForLoading);
+      return new Room3D((Room)homeObject, this.home, false, true, waitForLoading);
     } else {
       throw new IllegalArgumentException("Can't create 3D object for an item of class " + homeObject.getClass());
     }
