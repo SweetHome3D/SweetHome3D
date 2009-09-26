@@ -127,7 +127,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     
     try {
       // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
-      ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY);
+      resource = ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY);
     } catch (MissingResourceException ex) {
       // Ignore additional furniture catalog
       resource = null;
