@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -265,9 +266,14 @@ public class SweetHome3DApplet extends JApplet {
       if (ex instanceof InvocationTargetException) {
         ex = ((InvocationTargetException)ex).getCause();
       }
-      showError("<html>Can't start applet:<br>Exception" 
-          + ex.getClass().getName() + " " + ex.getMessage());
-      ex.printStackTrace();
+      if (ex instanceof AccessControlException) {
+        showError("<html>If you want to run this applet, you must relaunch your browser,"               
+            + "<br>display this page again and accept the displayed digital signature.");
+      } else {
+        showError("<html>Can't start applet:<br>Exception" 
+            + ex.getClass().getName() + " " + ex.getMessage());
+        ex.printStackTrace();
+      }
     }
   }  
   
