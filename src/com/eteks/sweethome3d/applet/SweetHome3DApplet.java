@@ -117,7 +117,11 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     The DTD of the XML content supported by the applet is specified at 
  *     <a href="http://java.sun.com/dtd/properties.dtd">http://java.sun.com/dtd/properties.dtd</a>.
  *     <br>By default, this URL is empty and if it's not an absolute URL it will be 
- *     considered as relative to applet codebase.</li></ul>
+ *     considered as relative to applet codebase.</li>
+ *     
+ *     <li><code>showMemoryStatus</code> specifies whether this applet should display
+ *     each second the available memory in browser status bar when it has focus. 
+ *     <br>By default, the status message won't be modified by the applet.</li></ul>
  *     
  * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.

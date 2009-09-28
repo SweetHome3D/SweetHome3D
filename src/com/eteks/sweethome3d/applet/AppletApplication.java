@@ -28,6 +28,8 @@ import java.awt.EventQueue;
 import java.awt.FocusTraversalPolicy;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
@@ -52,6 +54,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -83,18 +87,20 @@ import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
  * @author Emmanuel Puybaret
  */
 public class AppletApplication extends HomeApplication {
-  private static final String FURNITURE_CATALOG_URLS_PARAMETER = "furnitureCatalogURLs";
-  private static final String TEXTURES_CATALOG_URLS_PARAMETER  = "texturesCatalogURLs";
-  private static final String PLUGIN_URLS_PARAMETER            = "pluginURLs";
-  private static final String WRITE_HOME_URL_PARAMETER         = "writeHomeURL";
-  private static final String READ_HOME_URL_PARAMETER          = "readHomeURL";
-  private static final String LIST_HOMES_URL_PARAMETER         = "listHomesURL";
-  private static final String READ_PREFERENCES_URL_PARAMETER   = "readPreferencesURL";
-  private static final String WRITE_PREFERENCES_URL_PARAMETER  = "writePreferencesURL";
-  private static final String DEFAULT_HOME_PARAMETER           = "defaultHome";
+  private static final String   FURNITURE_CATALOG_URLS_PARAMETER = "furnitureCatalogURLs";
+  private static final String   TEXTURES_CATALOG_URLS_PARAMETER  = "texturesCatalogURLs";
+  private static final String   PLUGIN_URLS_PARAMETER            = "pluginURLs";
+  private static final String   WRITE_HOME_URL_PARAMETER         = "writeHomeURL";
+  private static final String   READ_HOME_URL_PARAMETER          = "readHomeURL";
+  private static final String   LIST_HOMES_URL_PARAMETER         = "listHomesURL";
+  private static final String   READ_PREFERENCES_URL_PARAMETER   = "readPreferencesURL";
+  private static final String   WRITE_PREFERENCES_URL_PARAMETER  = "writePreferencesURL";
+  private static final String   DEFAULT_HOME_PARAMETER           = "defaultHome";
+  private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
   
-  private final HomeRecorder              homeRecorder;
-  private final UserPreferences           userPreferences;
+  private final HomeRecorder    homeRecorder;
+  private final UserPreferences userPreferences;
+  private       Timer           memoryStatusTimer;
 
   public AppletApplication(final JApplet applet) {
     final String furnitureCatalogURLs = getAppletParameter(applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
@@ -106,6 +112,8 @@ public class AppletApplication extends HomeApplication {
     final String readPreferencesURL = getAppletParameter(applet, READ_PREFERENCES_URL_PARAMETER, "");    
     final String writePreferencesURL = getAppletParameter(applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
+    final boolean showMemoryStatus = "true".equalsIgnoreCase(
+        getAppletParameter(applet, SHOW_MEMORY_STATUS_PARAMETER, "false"));
 
     URL codeBase = applet.getCodeBase();
     this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
@@ -190,6 +198,23 @@ public class AppletApplication extends HomeApplication {
           addHome(new Home());
         }
       });
+
+    if (showMemoryStatus) {
+      final String memoryStatus = this.userPreferences.getLocalizedString(AppletApplication.class, "memoryStatus");
+      // Launch a timer that displays memory used by the applet 
+      this.memoryStatusTimer = new Timer(1000, new ActionListener() {
+          public void actionPerformed(ActionEvent ev) {
+            Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, applet)) {
+              Runtime runtime = Runtime.getRuntime();
+              applet.showStatus(String.format(memoryStatus, 
+                  Math.round(100f * (runtime.totalMemory() - runtime.freeMemory()) / runtime.maxMemory()),
+                  runtime.maxMemory() / 1024 / 1024));
+            }
+          }
+        });
+      this.memoryStatusTimer.start();
+    }
   }
   
   /**
@@ -197,6 +222,10 @@ public class AppletApplication extends HomeApplication {
    * This method is called when an applet is destroyed.  
    */
   public void destroy() {
+    if (this.memoryStatusTimer != null) {
+      this.memoryStatusTimer.stop();
+      this.memoryStatusTimer = null;
+    }
     for (Home home : getHomes()) {
       // Delete directly home without closing it because when an applet is destroyed 
       // we can't control how long a warning dialog about unsaved home will be displayed 
