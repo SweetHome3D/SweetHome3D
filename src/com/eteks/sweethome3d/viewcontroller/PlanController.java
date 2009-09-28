@@ -1629,7 +1629,8 @@ public class PlanController extends FurnitureController implements Controller {
       float highestElevation = Float.MIN_VALUE;
       for (HomePieceOfFurniture homePiece : this.home.getFurniture()) {
         if (homePiece != piece 
-            && !homePiece.isDoorOrWindow()) {
+            && !homePiece.isDoorOrWindow()
+            && homePiece.isVisible()) {
           Shape shape = getPath(homePiece.getPoints());
           boolean surroundingPieceContainsPiece = true;
           for (float [] point : piecePoints) {
