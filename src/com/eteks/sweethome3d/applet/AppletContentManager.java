@@ -123,12 +123,19 @@ public class AppletContentManager extends FileContentManager {
       String message = this.preferences.getLocalizedString(
           AppletContentManager.class, "showSaveDialog.message");
       String savedName = (String)JOptionPane.showInputDialog((JComponent)parentView, 
-          message, getFileDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name); 
+          message, getFileDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name);
+      if (savedName == null) {
+        return null;
+      }
+      savedName = savedName.trim();
   
-      // If the name exists, prompt user if he wants to overwrite it
       try {
+        // If the name exists, prompt user if he wants to overwrite it
         if (this.recorder.exists(savedName)
             && !confirmOverwrite(parentView, savedName)) {
+          return showSaveDialog(parentView, dialogTitle, contentType, savedName);
+        // If name is empty, prompt user again
+        } else if (savedName.length() == 0) {
           return showSaveDialog(parentView, dialogTitle, contentType, savedName);
         }
         return savedName;
