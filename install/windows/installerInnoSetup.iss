@@ -49,6 +49,7 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "swedish"; MessagesFile: "Swedish.isl"
 Name: "greek"; MessagesFile: "Greek.isl"
 Name: "chinesesimp"; Messagesfile: "ChineseSimp.isl"
+Name: "japanese"; Messagesfile: "Japanese.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
