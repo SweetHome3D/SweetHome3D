@@ -325,9 +325,6 @@ public class AppletApplication extends HomeApplication {
    */
   private void updateAppletView(final JApplet applet, 
                                 final HomeController controller) {
-    final boolean enableExportToSH3D = getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SH3D);
-    final boolean enablePrintToPDF = getAppletBooleanParameter(applet, ENABLE_PRINT_TO_PDF);
-
     JRootPane homeView = (JRootPane)controller.getView();
     // Remove menu bar
     homeView.setJMenuBar(null);
@@ -372,7 +369,8 @@ public class AppletApplication extends HomeApplication {
     if (saveAsAction.isEnabled()) {
       toolBar.add(saveAsAction);
     }
-    if (enableExportToSH3D) {
+    
+    if (getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SH3D)) {
       try {
         // Add export to SH3D action
         Action exportToSH3DAction = new ControllerAction(this.userPreferences, 
@@ -389,11 +387,12 @@ public class AppletApplication extends HomeApplication {
     }
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP));
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT));
-    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PREFERENCES));
-    if (enablePrintToPDF && !OperatingSystem.isMacOSX()) {
+    if (getAppletBooleanParameter(applet, ENABLE_PRINT_TO_PDF) && !OperatingSystem.isMacOSX()) {
+      controller.getView().setEnabled(HomeView.ActionType.PRINT_TO_PDF, true);
       toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF));
     }
+    toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PREFERENCES));
     toolBar.addSeparator();
 
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.UNDO));
