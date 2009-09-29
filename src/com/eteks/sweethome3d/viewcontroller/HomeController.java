@@ -274,10 +274,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_PHOTO, true);
-    homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
-        this.home.getFurniture().size() > 0 
-        || this.home.getWalls().size() > 0 
-        || this.home.getRooms().size() > 0);
+    homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, true);
     homeView.setEnabled(HomeView.ActionType.HELP, true);
     homeView.setEnabled(HomeView.ActionType.ABOUT, true);
     homeView.setTransferEnabled(true);
@@ -762,17 +759,6 @@ public class HomeController implements Controller {
   }
   
   /**
-   * Enables zoom actions depending on current scale.
-   */
-  private void enableExportActions() {
-    HomeView view = getView();
-    view.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
-        this.home.getFurniture().size() > 0 
-        || this.home.getWalls().size() > 0 
-        || this.home.getRooms().size() > 0);
-  }
-
-  /**
    * Adds undoable edit listener to undo support that enables Undo action.
    */
   private void addUndoSupportListener() {
@@ -799,7 +785,6 @@ public class HomeController implements Controller {
           if (ev.getType() == CollectionEvent.Type.ADD 
               || ev.getType() == CollectionEvent.Type.DELETE) {
             enableSelectAllAction();
-            enableExportActions();
           }
         }
       });
@@ -814,7 +799,6 @@ public class HomeController implements Controller {
         if (ev.getType() == CollectionEvent.Type.ADD 
             || ev.getType() == CollectionEvent.Type.DELETE) {
           enableSelectAllAction();
-          enableExportActions();
         }
       }
     });
