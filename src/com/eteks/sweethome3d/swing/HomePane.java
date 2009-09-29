@@ -1822,6 +1822,8 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.ZOOM_OUT, planViewPopup);
     addActionToPopupMenu(ActionType.ZOOM_IN, planViewPopup);
+    planViewPopup.addSeparator();
+    addActionToPopupMenu(ActionType.EXPORT_TO_SVG, planViewPopup);
     planViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     planView.setComponentPopupMenu(planViewPopup);
     
@@ -1841,6 +1843,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
+    addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
     
