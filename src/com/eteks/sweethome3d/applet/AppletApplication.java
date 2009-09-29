@@ -51,6 +51,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JApplet;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
@@ -70,7 +71,6 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.plugin.PluginAction;
 import com.eteks.sweethome3d.plugin.PluginManager;
 import com.eteks.sweethome3d.swing.ControllerAction;
-import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.IconManager;
 import com.eteks.sweethome3d.swing.ResourceAction;
 import com.eteks.sweethome3d.swing.SwingTools;
@@ -78,6 +78,7 @@ import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
+import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
@@ -96,6 +97,11 @@ public class AppletApplication extends HomeApplication {
   private static final String   READ_PREFERENCES_URL_PARAMETER   = "readPreferencesURL";
   private static final String   WRITE_PREFERENCES_URL_PARAMETER  = "writePreferencesURL";
   private static final String   DEFAULT_HOME_PARAMETER           = "defaultHome";
+  private static final String   ENABLE_EXPORT_TO_SH3D            = "enableExportToSH3D";
+  private static final String   ENABLE_EXPORT_TO_SVG             = "enableExportToSVG";
+  private static final String   ENABLE_EXPORT_TO_OBJ             = "enableExportToOBJ";
+  private static final String   ENABLE_PRINT_TO_PDF              = "enablePrintToPDF";
+  private static final String   ENABLE_CREATE_PHOTO              = "enableCreatePhoto";
   private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
   
   private final HomeRecorder    homeRecorder;
@@ -112,8 +118,7 @@ public class AppletApplication extends HomeApplication {
     final String readPreferencesURL = getAppletParameter(applet, READ_PREFERENCES_URL_PARAMETER, "");    
     final String writePreferencesURL = getAppletParameter(applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
-    final boolean showMemoryStatus = "true".equalsIgnoreCase(
-        getAppletParameter(applet, SHOW_MEMORY_STATUS_PARAMETER, "false"));
+    final boolean showMemoryStatus = getAppletBooleanParameter(applet, SHOW_MEMORY_STATUS_PARAMETER);
 
     URL codeBase = applet.getCodeBase();
     this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
@@ -308,16 +313,27 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
+   * Returns the parameter value of the given <code>parameter</code> or 
+   * <code>false</code> if it doesn't exist.
+   */
+  private boolean getAppletBooleanParameter(JApplet applet, String parameter) {
+    return "true".equalsIgnoreCase(getAppletParameter(applet, parameter, "false"));
+  }
+  
+  /**
    * Updates the applet content pane with <code>controller</code> view. 
    */
   private void updateAppletView(final JApplet applet, 
                                 final HomeController controller) {
-    HomePane homeView = (HomePane)controller.getView();
+    final boolean enableExportToSH3D = getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SH3D);
+    final boolean enablePrintToPDF = getAppletBooleanParameter(applet, ENABLE_PRINT_TO_PDF);
+
+    JRootPane homeView = (JRootPane)controller.getView();
     // Remove menu bar
     homeView.setJMenuBar(null);
     
     // As the applet has no menu, activate accelerators directly on home view
-    for (HomePane.ActionType actionType : HomePane.ActionType.values()) {
+    for (HomeView.ActionType actionType : HomeView.ActionType.values()) {
       ResourceAction.MenuItemAction menuAction = new ResourceAction.MenuItemAction(homeView.getActionMap().get(actionType));
       KeyStroke accelerator = (KeyStroke)menuAction.getValue(Action.ACCELERATOR_KEY);
       if (accelerator != null) {
@@ -340,66 +356,71 @@ public class AppletApplication extends HomeApplication {
     }
     toolBar.removeAll();
     // Add New, Open, Save, Save as buttons if they are enabled
-    Action newHomeAction = getToolBarAction(homeView, HomePane.ActionType.NEW_HOME);
+    Action newHomeAction = getToolBarAction(homeView, HomeView.ActionType.NEW_HOME);
     if (newHomeAction.isEnabled()) {
       toolBar.add(newHomeAction);
     }
-    Action openAction = getToolBarAction(homeView, HomePane.ActionType.OPEN);
+    Action openAction = getToolBarAction(homeView, HomeView.ActionType.OPEN);
     if (openAction.isEnabled()) {
       toolBar.add(openAction);
     }
-    Action saveAction = getToolBarAction(homeView, HomePane.ActionType.SAVE);
+    Action saveAction = getToolBarAction(homeView, HomeView.ActionType.SAVE);
     if (saveAction.isEnabled()) {
       toolBar.add(saveAction);
     }
-    Action saveAsAction = getToolBarAction(homeView, HomePane.ActionType.SAVE_AS);
+    Action saveAsAction = getToolBarAction(homeView, HomeView.ActionType.SAVE_AS);
     if (saveAsAction.isEnabled()) {
       toolBar.add(saveAsAction);
     }
-    try {
-      // Add export to SH3D action
-      Action exportToSH3DAction = new ControllerAction(this.userPreferences, 
-          AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
-      exportToSH3DAction.setEnabled(true);
-      toolBar.add(new ResourceAction.ToolBarAction(exportToSH3DAction));
-    } catch (NoSuchMethodException ex) {
-      ex.printStackTrace();
+    if (enableExportToSH3D) {
+      try {
+        // Add export to SH3D action
+        Action exportToSH3DAction = new ControllerAction(this.userPreferences, 
+            AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
+        exportToSH3DAction.setEnabled(true);
+        toolBar.add(new ResourceAction.ToolBarAction(exportToSH3DAction));
+      } catch (NoSuchMethodException ex) {
+        ex.printStackTrace();
+      }
     }
     
     if (toolBar.getComponentCount() > 0) {
       toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     }
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PAGE_SETUP));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PRINT));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PREFERENCES));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PREFERENCES));
+    if (enablePrintToPDF && !OperatingSystem.isMacOSX()) {
+      toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF));
+    }
     toolBar.addSeparator();
 
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.UNDO));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.REDO));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.UNDO));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.REDO));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.CUT));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.COPY));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.PASTE));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.CUT));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.COPY));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PASTE));
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.DELETE));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.DELETE));
     toolBar.addSeparator();
 
     final JToggleButton selectToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.SELECT));
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.SELECT));
     selectToggleButton.setSelected(true);
     toolBar.add(selectToggleButton);
     final JToggleButton createWallsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_WALLS));
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_WALLS));
     toolBar.add(createWallsToggleButton);
     final JToggleButton createRoomsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_ROOMS));
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_ROOMS));
     toolBar.add(createRoomsToggleButton);
     final JToggleButton createDimensionLinesToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_DIMENSION_LINES));
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_DIMENSION_LINES));
     toolBar.add(createDimensionLinesToggleButton);
     final JToggleButton createLabelsToggleButton = 
-        new JToggleButton(getToolBarAction(homeView, HomePane.ActionType.CREATE_LABELS));
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_LABELS));
     toolBar.add(createLabelsToggleButton);
     // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
@@ -419,9 +440,16 @@ public class AppletApplication extends HomeApplication {
         });
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_OUT));
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ZOOM_IN));
-    
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_IN));
+
+    boolean enableCreatePhoto = getAppletBooleanParameter(applet, ENABLE_CREATE_PHOTO);
+    controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
+    if (enableCreatePhoto) {
+      toolBar.addSeparator();
+      toolBar.add(getToolBarAction(homeView, HomeView.ActionType.CREATE_PHOTO));
+    }
+
     // Add plug-in buttons
     if (pluginButtons.size() > 0) {
       toolBar.addSeparator();
@@ -431,7 +459,12 @@ public class AppletApplication extends HomeApplication {
     }
     
     toolBar.addSeparator();
-    toolBar.add(getToolBarAction(homeView, HomePane.ActionType.ABOUT));
+    toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ABOUT));
+    
+    controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
+        getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SVG));
+    controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
+        getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_OBJ));
     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
@@ -477,7 +510,7 @@ public class AppletApplication extends HomeApplication {
   /**
    * Returns an action decorated for tool bar buttons.
    */
-  private Action getToolBarAction(JComponent homeView, HomePane.ActionType actionType) {
+  private Action getToolBarAction(JComponent homeView, HomeView.ActionType actionType) {
     return new ResourceAction.ToolBarAction(homeView.getActionMap().get(actionType));
   }
   

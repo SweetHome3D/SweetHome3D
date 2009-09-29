@@ -120,7 +120,27 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>By default, this URL is empty and if it's not an absolute URL it will be 
  *     considered as relative to applet codebase.</li>
  *     
- *     <li><code>showMemoryStatus</code> specifies whether this applet should display
+ *     <li><code>enableExportToSH3D</code> specifies whether this applet should enable
+ *     the action that lets the user export the edited home to a SH3D file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>enableExportToSVG</code> specifies whether this applet should enable
+ *     the action that lets the user export the plan of the edited home to a SVG file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>enableExportToOBJ</code> specifies whether this applet should enable
+ *     the action that lets the user export the 3D view of the edited home to an OBJ file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>enablePrintToPDF</code> specifies whether this applet should enable
+ *     the action that lets the user print the edited home to a PDF file. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>enableCreatePhoto</code> specifies whether this applet should enable
+ *     the action that lets the user create a photo from the 3D view of the edited home. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
+ *     <li><code>showMemoryStatus</code> specifies whether this applet should enable
  *     each second the available memory in browser status bar when it has focus. 
  *     <br>By default, the value of this parameter is <code>false</code> and 
  *     the status message won't be modified by the applet.</li></ul>

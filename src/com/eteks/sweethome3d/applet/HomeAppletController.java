@@ -70,10 +70,10 @@ public class HomeAppletController extends HomeController {
     view.setEnabled(HomeView.ActionType.SAVE, saveEnabled);
     view.setEnabled(HomeView.ActionType.SAVE_AS, saveAsEnabled);
     
-    // Disabled Print to PDF, Export to SVG and Create photo actions 
-    // (their libraries are not included with applet jar files)  
+    // By default disabled Print to PDF, Export to SVG, Export to OBJ and Create photo actions 
     view.setEnabled(HomeView.ActionType.PRINT_TO_PDF, false);
     view.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, false);
+    view.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, false);
     view.setEnabled(HomeView.ActionType.CREATE_PHOTO, false);
   }
   
