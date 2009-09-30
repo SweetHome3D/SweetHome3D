@@ -1,4 +1,4 @@
-SWEET HOME 3D v 2.0
+SWEET HOME 3D v 2.1
 -------------------
 
 This archive contains source code of Sweet Home 3D, an interior design Java application.
@@ -7,7 +7,7 @@ about new features available in this version.
 
 You may also download this source code with the following CVS command :
 
-cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_2_0 SweetHome3D
+cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_2_1 SweetHome3D
 
 
 HOW TO USE THIS SOURCE CODE
@@ -19,7 +19,7 @@ as an Eclipse project or with Ant.
 
 If you want to compile ant test the Java files of this release 
 with Eclipse, please follow the next steps :
-1. install last JDK 5.0 available at http://java.sun.com
+1. install last JDK 5 or 6 available at http://java.sun.com
 2. install Eclipse available at http://www.eclipse.org
 3. in Eclipse, select File > Import... menu
 4. In "Select an import source" list of Import dialog box, 
