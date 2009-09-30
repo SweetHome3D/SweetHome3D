@@ -26,7 +26,6 @@ package com.eteks.sweethome3d.model;
 public interface HomeRecorder {
   /**
    * Recorder type used as a hint to select a home recorder.
-   * @see HomeApplication#getHomeRecorder(Type)
    * @since 1.8
    */
   public enum Type {
