@@ -1131,7 +1131,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           
         }
       }
-      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURL() + "!/" + objFile));
+      return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" + objFile));
     } finally {
       if (tempZipOut != null) {
         tempZipOut.close();

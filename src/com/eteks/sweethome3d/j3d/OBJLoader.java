@@ -1003,9 +1003,9 @@ public class OBJLoader extends LoaderBase implements Loader {
     URL baseUrl;
     try {
       if (this.basePath != null) {
-        baseUrl = new File(this.basePath).toURL();
+        baseUrl = new File(this.basePath).toURI().toURL();
       } else {
-        baseUrl = new File(file).toURL();
+        baseUrl = new File(file).toURI().toURL();
       } 
     } catch (MalformedURLException ex) {
       throw new FileNotFoundException(file);
