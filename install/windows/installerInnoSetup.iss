@@ -50,6 +50,7 @@ Name: "swedish"; MessagesFile: "Swedish.isl"
 Name: "greek"; MessagesFile: "Greek.isl"
 Name: "chinesesimp"; Messagesfile: "ChineseSimp.isl"
 Name: "japanese"; Messagesfile: "Japanese.isl"
+Name: "bulgarian"; Messagesfile: "Bulgarian.isl"
 
 [Tasks]
 Name: desktopicon; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
