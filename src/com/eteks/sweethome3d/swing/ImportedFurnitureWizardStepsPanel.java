@@ -974,23 +974,13 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
         public void run() {
           Content modelContent = null;
           try {
-            // Copy model content to a temporary content
             modelContent = contentManager.getContent(modelName);
           } catch (RecorderException ex) {
-            // Error message displayed below 
-          } 
-          if (modelContent == null) {
             if (!ignoreException) {
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
-                        preferences.getLocalizedString(
-                            ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
-                  }
-                });
+              showModelChoiceError(modelName, preferences);
             }
             return;
-          }
+          } 
           
           BranchGroup model = null;
           try {
@@ -998,45 +988,50 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             // Copy model to a temporary OBJ content with materials and textures
             modelContent = copyToTemporaryOBJContent(model, modelName);
           } catch (IOException ex) {
+            try {
+              // Copy model content to a temporary content
+              modelContent = TemporaryURLContent.copyToTemporaryURLContent(modelContent);
+            } catch (IOException ex2) {
+              if (!ignoreException) {
+                showModelChoiceError(modelName, preferences);
+              }
+              return;
+            }
+            
             // If content couldn't be loaded, try to load model as a zipped file
-            if (modelContent instanceof URLContent) {
-              ZipInputStream zipIn = null;
-              try {
-                URLContent urlContent = TemporaryURLContent.
-                    copyToTemporaryURLContent((URLContent)modelContent);
-                // Open zipped stream
-                zipIn = new ZipInputStream(urlContent.openStream());
-                // Parse entries to see if one is readable
-                for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
-                  try {
-                    String entryName = entry.getName();
-                    // Ignore directory entries and entries starting by a dot
-                    if (!entryName.endsWith("/")) {
-                      int slashIndex = entryName.lastIndexOf('/');
-                      String entryFileName = entryName.substring(++slashIndex);
-                      if (!entryFileName.startsWith(".")) {
-                        URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
-                        modelContent = modelContent instanceof TemporaryURLContent 
-                            ? new TemporaryURLContent(entryUrl)
-                            : new URLContent(entryUrl);
-                        model = readModel(modelContent);
-                        break;
-                      }
+            ZipInputStream zipIn = null;
+            try {
+              URLContent urlContent = (URLContent)modelContent;
+              // Open zipped stream
+              zipIn = new ZipInputStream(urlContent.openStream());
+              // Parse entries to see if one is readable
+              for (ZipEntry entry; (entry = zipIn.getNextEntry()) != null; ) {
+                try {
+                  String entryName = entry.getName();
+                  // Ignore directory entries and entries starting by a dot
+                  if (!entryName.endsWith("/")) {
+                    int slashIndex = entryName.lastIndexOf('/');
+                    String entryFileName = entryName.substring(++slashIndex);
+                    if (!entryFileName.startsWith(".")) {
+                      URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
+                      modelContent = new TemporaryURLContent(entryUrl);
+                      model = readModel(modelContent);
+                      break;
                     }
-                  } catch (IOException ex3) {
-                    // Ignore exception and try next entry
                   }
+                } catch (IOException ex3) {
+                  // Ignore exception and try next entry
+                }
+              }
+            } catch (IOException ex2) {
+              model = null;
+            } finally {
+              try {
+                if (zipIn != null) {
+                  zipIn.close();
                 }
               } catch (IOException ex2) {
-                model = null;
-              } finally {
-                try {
-                  if (zipIn != null) {
-                    zipIn.close();
-                  }
-                } catch (IOException ex2) {
-                  // Ignore close exception
-                }
+                // Ignore close exception
               }
             }
           }
@@ -1077,6 +1072,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       });
   }
 
+  /**
+   * Shows an error message about the chosen model.
+   */
+  private void showModelChoiceError(final String modelName,
+                                    final UserPreferences preferences) {
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+            preferences.getLocalizedString(
+                ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
+      }
+    });
+  }
+  
   /**
    * Returns a copy of a given <code>model</code> as a zip content at OBJ format.
    * Caution : this method must be thread safe because it's called from model loader executor. 
