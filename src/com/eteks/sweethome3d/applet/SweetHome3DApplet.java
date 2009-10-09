@@ -269,7 +269,8 @@ public class SweetHome3DApplet extends JApplet {
           "com.sun.opengl",
           "com.sun.gluegen.runtime",
           "javax.media.opengl",
-          "com.microcrowd.loader.java3d"}));
+          "com.microcrowd.loader.java3d",
+          "org.sunflow"}));
       applicationPackages.addAll(getPluginsPackages());
       
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
