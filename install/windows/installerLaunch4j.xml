@@ -48,12 +48,12 @@
     <opt>-Djava.library.path=lib -Xmx512m</opt>
   </jre>
   <versionInfo>
-    <fileVersion>2.1.0.0</fileVersion>
-    <txtFileVersion>2.1</txtFileVersion>
+    <fileVersion>2.2.0.0</fileVersion>
+    <txtFileVersion>2.2</txtFileVersion>
     <fileDescription>Sweet Home 3D</fileDescription>
     <copyright>Copyright (c) 2007-2009 eTeks</copyright>
-    <productVersion>2.1.0.0</productVersion>
-    <txtProductVersion>2.1</txtProductVersion>
+    <productVersion>2.2.0.0</productVersion>
+    <txtProductVersion>2.2</txtProductVersion>
     <productName>Sweet Home 3D</productName>
     <companyName>eTeks</companyName>
     <internalName>SweetHome3D</internalName>
