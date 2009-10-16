@@ -48,6 +48,7 @@ import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
+import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
@@ -314,33 +315,37 @@ public class PhotoRenderer {
       }
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
-      String shapeName = (String)shape.getUserData();
-      
-      // Retrieve transformation needed to be applied to vertices
-      Transform3D transformationToParent = getTransformationToParent(parent, node);
-
-      // Build a unique object name
-      String uuid = UUID.randomUUID().toString();
-
       Appearance appearance = shape.getAppearance();
-      String appearanceName = null;
-      if (appearance != null) {
-        appearanceName = "shader" + uuid;
-        boolean mirror = shapeName != null
-            && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
-        exportAppearance(appearance, appearanceName, mirror, noConstantShader);
-      }
-
-      // Export object geometries
-      for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        String objectName = "object" + uuid + "-" + i;
-        // Always ignore normals on walls
-        exportNodeGeometry(shape.getGeometry(i), transformationToParent, objectName, 
-            useNormals && !(shape.getParent() instanceof Wall3D));
-        if (appearanceName != null) {
-          this.sunflow.parameter("shaders", new String [] {appearanceName});
+      RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
+      if (renderingAttributes == null
+          || renderingAttributes.getVisible()) {
+        String shapeName = (String)shape.getUserData();
+        
+        // Retrieve transformation needed to be applied to vertices
+        Transform3D transformationToParent = getTransformationToParent(parent, node);
+  
+        // Build a unique object name
+        String uuid = UUID.randomUUID().toString();
+  
+        String appearanceName = null;
+        if (appearance != null) {
+          appearanceName = "shader" + uuid;
+          boolean mirror = shapeName != null
+              && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
+          exportAppearance(appearance, appearanceName, mirror, noConstantShader);
         }
-        this.sunflow.instance(objectName + ".instance", objectName);
+  
+        // Export object geometries
+        for (int i = 0, n = shape.numGeometries(); i < n; i++) {
+          String objectName = "object" + uuid + "-" + i;
+          // Always ignore normals on walls
+          exportNodeGeometry(shape.getGeometry(i), transformationToParent, objectName, 
+              useNormals && !(shape.getParent() instanceof Wall3D));
+          if (appearanceName != null) {
+            this.sunflow.parameter("shaders", new String [] {appearanceName});
+          }
+          this.sunflow.instance(objectName + ".instance", objectName);
+        }
       }
     }    
   }
