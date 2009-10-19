@@ -23,6 +23,9 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
 
@@ -35,27 +38,32 @@ public class SweetHome3DBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
     Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
-    String [] java3DFiles = {
-        "j3dcore.jar", // Main Java 3D jars
-        "vecmath.jar",
-        "j3dutils.jar",
-        "j3dcore-d3d.dll", // Windows DLLs
-        "j3dcore-ogl.dll",
-        "j3dcore-ogl-cg.dll",
-        "j3dcore-ogl-chk.dll",
-        "libj3dcore-ogl.so", // Linux DLLs
-        "libj3dcore-ogl-cg.so",
-        "gluegen-rt.jar", // Mac OS X jars and DLLs
-        "jogl.jar",
-        "libgluegen-rt.jnilib",
-        "libjogl.jnilib",
-        "libjogl_awt.jnilib",
-        "libjogl_cg.jnilib",
+    List<String> java3DFiles = new ArrayList<String>(Arrays.asList(new String [] {
         "iText-2.1.5.jar", // Jars included in Sweet Home 3D executable jar file 
         "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2u.jar",
         "sunflow-0.07.3b.jar",
-        "jnlp.jar"};
+        "jnlp.jar",
+        "j3dcore.jar", // Main Java 3D jars
+        "vecmath.jar",
+        "j3dutils.jar",
+        "windows/j3dcore-d3d.dll", // Windows DLLs
+        "windows/j3dcore-ogl.dll",
+        "windows/j3dcore-ogl-cg.dll",
+        "windows/j3dcore-ogl-chk.dll",
+        "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
+        "macosx/jogl.jar",
+        "macosx/libgluegen-rt.jnilib",
+        "macosx/libjogl.jnilib",
+        "macosx/libjogl_awt.jnilib",
+        "macosx/libjogl_cg.jnilib"}));
+    if (System.getProperty("os.name").startsWith("Linux")
+        && "64".equals(System.getProperty("sun.arch.data.model"))) {
+      java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
+      java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+    } else {
+      java3DFiles.add("linux/x64/libj3dcore-ogl.so"); 
+    }
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
@@ -69,7 +77,7 @@ public class SweetHome3DBootstrap {
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),
-        java3DFiles, applicationPackages);  
+        java3DFiles.toArray(new String [java3DFiles.size()]), applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);

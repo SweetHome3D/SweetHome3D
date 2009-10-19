@@ -245,22 +245,27 @@ public class SweetHome3DApplet extends JApplet {
   private void createAppletApplication() {
     try {
       Class sweetHome3DAppletClass = SweetHome3DApplet.class;
-      String [] java3DFiles = {
+      List java3DFiles = new ArrayList(Arrays.asList(new String [] {
           "j3dcore.jar", // Main Java 3D jars
           "vecmath.jar",
           "j3dutils.jar",
-          "j3dcore-d3d.dll", // Windows DLLs
-          "j3dcore-ogl.dll",
-          "j3dcore-ogl-cg.dll",
-          "j3dcore-ogl-chk.dll",
-          "libj3dcore-ogl.so", // Linux DLLs
-          "libj3dcore-ogl-cg.so",
-          "gluegen-rt.jar", // Mac OS X jars and DLLs
-          "jogl.jar",
-          "libgluegen-rt.jnilib",
-          "libjogl.jnilib",
-          "libjogl_awt.jnilib",
-          "libjogl_cg.jnilib"};
+          "windows/j3dcore-d3d.dll", // Windows DLLs
+          "windows/j3dcore-ogl.dll",
+          "windows/j3dcore-ogl-cg.dll",
+          "windows/j3dcore-ogl-chk.dll",
+          "macosx/gluegen-rt.jar", // Mac OS X jars and DLLs
+          "macosx/jogl.jar",
+          "macosx/libgluegen-rt.jnilib",
+          "macosx/libjogl.jnilib",
+          "macosx/libjogl_awt.jnilib",
+          "macosx/libjogl_cg.jnilib"}));
+      if (System.getProperty("os.name").startsWith("Linux")
+          && "64".equals(System.getProperty("sun.arch.data.model"))) {
+        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
+        java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+      } else {
+        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); 
+      }
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
           "javax.media.j3d",
@@ -275,7 +280,8 @@ public class SweetHome3DApplet extends JApplet {
       
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
           sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
-          java3DFiles, (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
+          (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
+          (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
       
       // Call application constructor with reflection
       String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
