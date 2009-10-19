@@ -65,11 +65,11 @@ public class ExtensionsClassLoader extends ClassLoader {
     String dllSuffix;
     String dllPrefix;
     
-    String os = System.getProperty("os.name");
-    if (os.startsWith("Windows")) {
+    String osName = System.getProperty("os.name");
+    if (osName.startsWith("Windows")) {
       dllSuffix = ".dll";
       dllPrefix = "";
-    } else if (os.startsWith("Mac OS X")) {
+    } else if (osName.startsWith("Mac OS X")) {
       dllSuffix = ".jnilib";
       dllPrefix = "lib";
     } else {
@@ -90,10 +90,11 @@ public class ExtensionsClassLoader extends ClassLoader {
             // Add tmp file to extension jars list
             extensionJars.add(new JarFile(extensionJar, false));
           } else if (extensionJarOrDll.endsWith(dllSuffix)) {
+            int lastSlashIndex  = extensionJarOrDll.lastIndexOf('/');
             // Copy DLL to a tmp file
             String extensionDll = copyInputStreamToTmpFile(extensionJarOrDllUrl.openStream(), dllSuffix);
             // Add tmp file to extension DLLs map
-            this.extensionDlls.put(extensionJarOrDll.substring(dllPrefix.length(), 
+            this.extensionDlls.put(extensionJarOrDll.substring(lastSlashIndex + 1 + dllPrefix.length(), 
                 extensionJarOrDll.indexOf(dllSuffix)), extensionDll);
           }          
         }
@@ -103,7 +104,7 @@ public class ExtensionsClassLoader extends ClassLoader {
     }
     // Create extensionJars array
     if (extensionJars.size() > 0) {
-      this.extensionJars = (JarFile []) extensionJars.toArray(new JarFile [extensionJars.size()]);                    
+      this.extensionJars = (JarFile [])extensionJars.toArray(new JarFile [extensionJars.size()]);                    
     }
   }
 
