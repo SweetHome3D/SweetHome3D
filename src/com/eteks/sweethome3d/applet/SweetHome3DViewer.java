@@ -130,10 +130,10 @@ public class SweetHome3DViewer extends JApplet {
           "macosx/libjogl_cg.jnilib"}));
       if (System.getProperty("os.name").startsWith("Linux")
           && "64".equals(System.getProperty("sun.arch.data.model"))) {
-        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
-        java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
       } else {
-        java3DFiles.add("linux/x64/libj3dcore-ogl.so"); 
+        java3DFiles.add("linux/i386/libj3dcore-ogl.so"); 
+        java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
       }
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",

@@ -59,11 +59,12 @@ public class SweetHome3DBootstrap {
         "macosx/libjogl_cg.jnilib"}));
     if (System.getProperty("os.name").startsWith("Linux")
         && "64".equals(System.getProperty("sun.arch.data.model"))) {
-      java3DFiles.add("linux/i386/libj3dcore-ogl.so"); // Linux DLLs
-      java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+      java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
     } else {
-      java3DFiles.add("linux/x64/libj3dcore-ogl.so"); 
+      java3DFiles.add("linux/i386/libj3dcore-ogl.so"); 
+      java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
     }
+    
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
         "javax.media.j3d",
