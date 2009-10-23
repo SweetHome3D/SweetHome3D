@@ -51,7 +51,7 @@ public class TemporaryURLContent extends URLContent {
     try {
       tempIn = content.openStream();
       tempOut = new FileOutputStream(tempFile);
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       int size; 
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);

@@ -584,7 +584,7 @@ public class FileUserPreferences extends UserPreferences {
       File applicationFile = createApplicationFile(contentPrefix);
       tempIn = content.openStream();
       tempOut = new FileOutputStream(applicationFile);
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       int size; 
       while ((size = tempIn.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);
@@ -776,7 +776,7 @@ public class FileUserPreferences extends UserPreferences {
         tempIn = new BufferedInputStream(new FileInputStream(furnitureLibraryName));
         furnitureLibrariesPluginFolder.mkdirs();
         tempOut = new FileOutputStream(destinationFile);          
-        byte [] buffer = new byte [8096];
+        byte [] buffer = new byte [8192];
         int size; 
         while ((size = tempIn.read(buffer)) != -1) {
           tempOut.write(buffer, 0, size);

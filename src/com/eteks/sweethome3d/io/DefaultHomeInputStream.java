@@ -72,7 +72,7 @@ public class DefaultHomeInputStream extends FilterInputStream {
     OutputStream tempOut = null;
     try {
       tempOut = new FileOutputStream(this.tempFile);
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       int size; 
       while ((size = this.in.read(buffer)) != -1) {
         tempOut.write(buffer, 0, size);

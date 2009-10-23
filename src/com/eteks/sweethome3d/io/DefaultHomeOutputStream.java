@@ -243,7 +243,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
    */
   private void writeZipEntry(ZipOutputStream zipOut, String entryName, Content content) throws IOException {
     checkCurrentThreadIsntInterrupted();
-    byte [] buffer = new byte [8096];
+    byte [] buffer = new byte [8192];
     InputStream contentIn = null;
     try {
       zipOut.putNextEntry(new ZipEntry(entryName));

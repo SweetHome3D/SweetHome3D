@@ -118,7 +118,7 @@ public class ExtensionsClassLoader extends ClassLoader {
     OutputStream output = null;
     try {
       output = new BufferedOutputStream(new FileOutputStream(tmpFile));
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       int size; 
       while ((size = input.read(buffer)) != -1) {
         output.write(buffer, 0, size);
@@ -174,7 +174,7 @@ public class ExtensionsClassLoader extends ClassLoader {
       // Read class input content to a byte array
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       BufferedInputStream in = new BufferedInputStream(classInputStream);
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       int size; 
       while ((size = in.read(buffer)) != -1) {
         out.write(buffer, 0, size);

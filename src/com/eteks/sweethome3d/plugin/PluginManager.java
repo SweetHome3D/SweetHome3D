@@ -372,7 +372,7 @@ public class PluginManager {
         tempIn = new BufferedInputStream(new FileInputStream(pluginName));
         this.pluginFolder.mkdirs();
         tempOut = new FileOutputStream(destinationFile);          
-        byte [] buffer = new byte [8096];
+        byte [] buffer = new byte [8192];
         int size; 
         while ((size = tempIn.read(buffer)) != -1) {
           tempOut.write(buffer, 0, size);

@@ -93,7 +93,7 @@ public class HomeFileRecorder implements HomeRecorder {
     }
     if (!tempFile.renameTo(homeFile)) {
       // If rename fails try to copy temporary file to home file
-      byte [] buffer = new byte [8096];
+      byte [] buffer = new byte [8192];
       OutputStream out = null;
       InputStream in = null;
       try {
