@@ -3,7 +3,7 @@ SWEET HOME 3D VIEWER v 2.2
 
 This archive contains files required to install Sweet Home 3D Viewer, an 
 applet able to display the 3D view of a Sweet Home 3D file from its URL.
-This applet can run under Windows, Mac OS X 10.4 to 10.6, Linux and Solaris.
+This applet can run under Windows, Mac OS X 10.4 to 10.6 and Linux.
 The size of the library files downloaded by this applet varies from 2.2 MB 
 to 4 MB depending on the system and the Java version of the user.
 
@@ -21,12 +21,13 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
 3. Copy the URL of your SH3D file to clipboard, ensuring it doesn't contain 
    spaces (or replace them by "%20" symbols)
 4. Edit the "SweetHome3DViewer.html" file and paste it as the value of the 
-   parameter named "homeURL" at the end of the line:
-     var parameters = {jnlp_href:"SweetHome3DViewer.jnlp"};
+   parameter named "homeURL" instead of "default.sh3d" default file :
+     var parameters = {java_arguments:"-Xmx512m",
+                       homeURL:"default.sh3d"};
    for example, if the URL of your SH3D file is:
      http://www.mydomain.com/myhome.sh3d
    you should obtain the following line:
-     var parameters = {jnlp_href:"SweetHome3DViewer.jnlp", 
+     var parameters = {java_arguments:"-Xmx512m", 
                        homeURL:"http://www.mydomain.com/myhome.sh3d"};
 5. Open the file "SweetHome3DViewer.html" in your web browser to check if
    it works correctly
@@ -34,7 +35,7 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
    the web page of your choice ; you can change the width and the height of
    the applet by modifying the values of its "width" and "height" attributes
 7. Install this web page at the location of your choice, copying it with 
-   the directories "lib" and the file "SweetHome3DViewer.jnlp" 
+   the directories "lib" 
 
 Note that by default, "homeURL" value is equal to "default.sh3d" and a non 
 absolute URL will be relative to the web page containing the applet scripts.
