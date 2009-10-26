@@ -145,6 +145,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     <br>By default, the value of this parameter is <code>false</code> and 
  *     the status message won't be modified by the applet.</li></ul>
  *     
+ *     <li><code>userLanguage</code> specifies the ISO 639 code (fr, en...) of the 
+ *     language used by the items displayed by this applet. 
+ *     <br>By default, the selected language depends on the user environment.</li></ul>
+ *     
  * <p>The bytecode of this class is Java 1.1 compatible to be able to notify users that 
  * it requires Java 5 when it's run under an old JVM.
  *     

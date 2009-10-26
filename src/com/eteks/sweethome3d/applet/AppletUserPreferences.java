@@ -30,9 +30,11 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -83,7 +85,7 @@ public class AppletUserPreferences extends UserPreferences {
    */
   public AppletUserPreferences(URL [] pluginFurnitureCatalogURLs,
                                URL [] pluginTexturesCatalogURLs) {
-    this(pluginFurnitureCatalogURLs, pluginTexturesCatalogURLs, null, null);
+    this(pluginFurnitureCatalogURLs, pluginTexturesCatalogURLs, null, null, null);
   }
   
   /**
@@ -101,13 +103,39 @@ public class AppletUserPreferences extends UserPreferences {
                                URL [] pluginTexturesCatalogURLs, 
                                URL writePreferencesURL, 
                                URL readPreferencesURL) {
+    this(pluginFurnitureCatalogURLs, pluginTexturesCatalogURLs, writePreferencesURL, readPreferencesURL, null);
+  }
+  
+  /**
+   * Creates default user preferences read from resource files and catalogs urls given in parameter, 
+   * then reads saved user preferences from the XML content returned by <code>readPreferencesURL</code>, 
+   * if URL isn't <code>null</code> or empty. 
+   * Preferences modifications will be notified to <code>writePreferencesURL</code> with 
+   * an XML content describing preferences in a parameter named preferences, 
+   * if URL isn't <code>null</code> or empty.
+   * The DTD of XML content is specified at 
+   * <a href="http://java.sun.com/dtd/properties.dtd">http://java.sun.com/dtd/properties.dtd</a>.
+   * Preferences written with this class don't include imported furniture and textures.
+   */
+  public AppletUserPreferences(URL [] pluginFurnitureCatalogURLs,
+                               URL [] pluginTexturesCatalogURLs, 
+                               URL writePreferencesURL, 
+                               URL readPreferencesURL,
+                               String userLanguage) {
     this.pluginFurnitureCatalogURLs = pluginFurnitureCatalogURLs;
     this.pluginTexturesCatalogURLs = pluginTexturesCatalogURLs;
     this.writePreferencesURL = writePreferencesURL;
     this.readPreferencesURL = readPreferencesURL;
     
     final Properties properties = getProperties();
-    setLanguage(properties.getProperty(LANGUAGE, getLanguage()));    
+    
+    if (userLanguage == null) {
+      userLanguage = getLanguage();
+    } 
+    if (!Arrays.asList(getSupportedLanguages()).contains(userLanguage)) {
+      userLanguage = Locale.ENGLISH.getLanguage();
+    }
+    setLanguage(properties.getProperty(LANGUAGE, userLanguage));    
 
     // Read default furniture catalog
     setFurnitureCatalog(new DefaultFurnitureCatalog(pluginFurnitureCatalogURLs));

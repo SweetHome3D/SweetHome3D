@@ -103,6 +103,7 @@ public class AppletApplication extends HomeApplication {
   private static final String   ENABLE_PRINT_TO_PDF              = "enablePrintToPDF";
   private static final String   ENABLE_CREATE_PHOTO              = "enableCreatePhoto";
   private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
+  private static final String   USER_LANGUAGE                    = "userLanguage";
   
   private final HomeRecorder    homeRecorder;
   private final UserPreferences userPreferences;
@@ -119,6 +120,7 @@ public class AppletApplication extends HomeApplication {
     final String writePreferencesURL = getAppletParameter(applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
     final boolean showMemoryStatus = getAppletBooleanParameter(applet, SHOW_MEMORY_STATUS_PARAMETER);
+    final String userLanguage = getAppletParameter(applet, USER_LANGUAGE, null);    
 
     URL codeBase = applet.getCodeBase();
     this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
@@ -128,7 +130,8 @@ public class AppletApplication extends HomeApplication {
         getURLs(codeBase, furnitureCatalogURLs), 
         getURLs(codeBase, texturesCatalogURLs),
         getURLWithCodeBase(codeBase, writePreferencesURL), 
-        getURLWithCodeBase(codeBase, readPreferencesURL));
+        getURLWithCodeBase(codeBase, readPreferencesURL),
+        userLanguage);
 
     // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
     boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
