@@ -219,7 +219,8 @@ public class AppletUserPreferences extends UserPreferences {
   }
 
   /**
-   * Does nothing, preferences aren't saved.
+   * Writes user preferences. This method sends to the <code>writePreferencesURL</code> 
+   * given at the creation a XML content describing preferences in a parameter named preferences.
    */
   @Override
   public void write() throws RecorderException {
