@@ -46,9 +46,7 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.ResourceAction;
-import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
-import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 /**
  * Configuration class that accesses to Mac OS X specifics.
@@ -62,12 +60,10 @@ class MacOSXConfiguration {
   /**
    * Binds <code>homeApplication</code> to Mac OS X application menu.
    */
-  public static void bindToApplicationMenu(final SweetHome3D homeApplication,
-                                           ContentManager contentManager,
-                                           ViewFactory viewFactory) {
+  public static void bindToApplicationMenu(final SweetHome3D homeApplication) {
     // Create a default controller for an empty home and disable unrelated actions
-    final HomeController defaultController = new HomeController(
-        new Home(), homeApplication, viewFactory, contentManager, null);
+    final HomeController defaultController = 
+        homeApplication.createHomeFrameController(new Home()).getHomeController();
     final HomePane defaultHomeView = (HomePane)defaultController.getView();
     for (HomePane.ActionType action : HomePane.ActionType.values()) {
       switch (action) {
@@ -96,10 +92,10 @@ class MacOSXConfiguration {
       }
     });
 
-    Application application = Application.getApplication();
-    // Add a listener on Mac OS X application that will call
+    Application macosxApplication = Application.getApplication();
+    // Add a listener to Mac OS X application that will call
     // controller methods of the active frame
-    application.addApplicationListener(new ApplicationAdapter() {      
+    macosxApplication.addApplicationListener(new ApplicationAdapter() {      
       @Override
       public void handleQuit(ApplicationEvent ev) { 
         handleAction(new Runnable() {
@@ -157,18 +153,18 @@ class MacOSXConfiguration {
         // handleOpenFile is called when user opens a document
         // associated with a Java Web Start application
         // Just call main with -open file arguments as JNLP specifies 
-        SweetHome3D.main(new String [] {"-open", ev.getFilename()});
+        homeApplication.run(new String [] {"-open", ev.getFilename()});
       }
       
       @Override
       public void handleReOpenApplication(ApplicationEvent ev) {
         // handleReOpenApplication is called when user launches 
         // the application when it's already open
-        SweetHome3D.main(new String [0]);
+        homeApplication.run(new String [0]);
       }
     });
-    application.setEnabledAboutMenu(true);
-    application.setEnabledPreferencesMenu(true);
+    macosxApplication.setEnabledAboutMenu(true);
+    macosxApplication.setEnabledPreferencesMenu(true);
     
     homeApplication.addHomesListener(new CollectionListener<Home>() {
       public void collectionChanged(CollectionEvent<Home> ev) {
@@ -187,7 +183,7 @@ class MacOSXConfiguration {
         Method setDockIconImageMethod = Application.class.getMethod("setDockIconImage", Image.class);
         String iconPath = homeApplication.getUserPreferences().getLocalizedString(HomePane.class, "about.icon");
         Image icon = ImageIO.read(HomePane.class.getResource(iconPath));
-        setDockIconImageMethod.invoke(application, icon);
+        setDockIconImageMethod.invoke(macosxApplication, icon);
       } catch (NoSuchMethodException ex) {
         // Ignore icon change if setDockIconImage isn't available
       } catch (InvocationTargetException ex) {
@@ -199,12 +195,11 @@ class MacOSXConfiguration {
   
   /**
    * Adds Mac OS X standard Window menu to frame. 
-   * @param application 
    */
   private static void addWindowMenuToFrame(final JFrame frame, 
-                                           final SweetHome3D application,
+                                           final SweetHome3D homeApplication,
                                            boolean defaultFrame) {
-    UserPreferences preferences = application.getUserPreferences();
+    UserPreferences preferences = homeApplication.getUserPreferences();
     JMenuBar menuBar = frame.getJMenuBar();
     final JMenu windowMenu = new JMenu(
         new ResourceAction(preferences, MacOSXConfiguration.class, "WINDOW_MENU", true));
@@ -235,8 +230,8 @@ class MacOSXConfiguration {
             public void actionPerformed(ActionEvent ev) {
               // Avoid blinking while bringing other windows to front
               frame.setAlwaysOnTop(true);
-              for (Home home : application.getHomes()) {
-                JFrame applicationFrame = application.getHomeFrame(home);
+              for (Home home : homeApplication.getHomes()) {
+                JFrame applicationFrame = homeApplication.getHomeFrame(home);
                 if (applicationFrame != frame
                     && applicationFrame.getState() != JFrame.ICONIFIED) {
                   applicationFrame.setFocusableWindowState(false);
@@ -252,8 +247,8 @@ class MacOSXConfiguration {
         public void menuSelected(MenuEvent ev) {
           boolean firstMenuItem = true;
           // Fill menu dynamically with a menu item for the frame of each application home
-          for (Home home : application.getHomes()) {
-            final JFrame applicationFrame = application.getHomeFrame(home);
+          for (Home home : homeApplication.getHomes()) {
+            final JFrame applicationFrame = homeApplication.getHomeFrame(home);
             JCheckBoxMenuItem windowMenuItem = new JCheckBoxMenuItem(
                 new AbstractAction(applicationFrame.getTitle()) {
                     public void actionPerformed(ActionEvent ev) {
