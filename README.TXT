@@ -32,20 +32,25 @@ with Eclipse, please follow the next steps :
 You may execute applications and tests of this archive, with the Eclipse Run menu.
 To execute applications and tests that require Java 3D, open Run Dialog in Eclipse, 
 select the Arguments tab of the target application, and add to the VM arguments 
-text field the option -Djava.ext.dirs=lib;lib/windows, -Djava.ext.dirs=lib:lib/macosx 
-or -Djava.ext.dirs=lib:lib/linux/i386 depending on your system.
+text field the option -Djava.ext.dirs=lib;lib/windows, -Djava.ext.dirs=lib:lib/macosx, 
+-Djava.ext.dirs=lib:lib/linux/i386 or -Djava.ext.dirs=lib:lib/linux/x64 depending on  
+your system and its architecture.
 
 The last release of Sweet Home 3D can be tested directly as a Java Web Start 
-application at http://sweethome3d.sourceforge.net/
+application at http://sweethome3d.sourceforge.net/ or as an applet at
+http://sweethome3d.sourceforge.net/SweetHome3DOnLine.html
 
-
-If you want to build the Java Web Start application of this release with Ant,
-please install last JDK 5.0 and Ant, and run ant command at archive root.
-Note that the last part of the deploy Ant task requires a passphrase for keystore 
-to sign the deployed jars. For security reasons, the required file keys.keytool
-isn't provided with this source code. You'll have first to generate this file 
-and choose a passphrase, with the following command run at archive root :
+If you want to build Sweet Home 3D with Ant, please install last JDK 5 or 6 and 
+Ant available at http://ant.apache.org/, and run ant command at archive root.
+The default target provided by build.xml Ant file builds the Java Web Start version.
+Read build.xml Ant file for more information about other available targets. 
+Note that the last part of the Ant targets javaWebStart, applet and viewer 
+requires a passphrase for keystore to sign the deployed jars. For security reasons, 
+the required file keys.keytool isn't provided with this source code. You'll have 
+first to generate this file and choose a passphrase, with the following command run 
+at archive root :
   keytool -genkey -keystore keys.keytool -alias SweetHome3D 
+
 
 
 Read LICENSE.TXT file for more details about licenses applicable to this software
