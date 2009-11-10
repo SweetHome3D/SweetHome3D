@@ -66,7 +66,9 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
 import java.awt.image.MemoryImageSource;
+import java.awt.image.RGBImageFilter;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
@@ -2231,7 +2233,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               PaintMode paintMode, boolean paintIcon) {    
     BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
     Composite oldComposite = g2D.getComposite();
-    final boolean furnitureViewedFromTop = 
+    final boolean allFurnitureViewedFromTop = 
         this.preferences.isFurnitureViewedFromTop()
         && Component3DManager.getInstance().isOffScreenImageSupported();
     
@@ -2252,7 +2254,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             pieceShape2D = pieceShape;
           }
                     
-          if (paintIcon && furnitureViewedFromTop) {
+          if (paintIcon 
+              && (allFurnitureViewedFromTop
+                  || this.preferences.isFurnitureViewedFromTop()
+                      && piece.getPlanIcon() != null)) {
             if (piece instanceof HomeDoorOrWindow) {
               // Draw doors and windows border
               g2D.setPaint(backgroundColor);
@@ -2491,8 +2496,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (icon == null
         || icon.isWaitIcon()
            && paintMode != PaintMode.PAINT) {
-      icon = new PieceOfFurnitureTopViewIcon(piece, 
-          paintMode == PaintMode.PAINT ? this : null);
+      PlanComponent waitingComponent = paintMode == PaintMode.PAINT ? this : null;
+      // Prefer use plan icon if it exists
+      if (piece.getPlanIcon() != null) {
+        icon = new PieceOfFurniturePlanIcon(piece, waitingComponent);
+      } else {
+        icon = new PieceOfFurnitureModelIcon(piece, waitingComponent);
+      }
       this.furnitureTopViewIconsCache.put(piece, icon);
     }
     
@@ -4071,18 +4081,109 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * A proxy for the furniture icon seen from top. 
+   */
+  private abstract static class PieceOfFurnitureTopViewIcon implements Icon {
+    private Icon icon;
+    
+    public PieceOfFurnitureTopViewIcon(Icon icon) {
+      this.icon = icon;
+    }
+
+    public int getIconWidth() {
+      return this.icon.getIconWidth();
+    }
+
+    public int getIconHeight() {
+      return this.icon.getIconHeight();
+    }
+    
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      this.icon.paintIcon(c, g, x, y);
+    }
+
+    public boolean isWaitIcon() {
+      return IconManager.getInstance().isWaitIcon(this.icon);
+    }
+    
+    public boolean isErrorIcon() {
+      return IconManager.getInstance().isErrorIcon(this.icon);
+    }
+    
+    protected void setIcon(Icon icon) {
+      this.icon = icon;
+    }
+  }
+  
+  /**
+   * A proxy for the furniture plan icon. 
+   */
+  private static class PieceOfFurniturePlanIcon extends PieceOfFurnitureTopViewIcon {
+    private Integer color;
+    
+    /**
+     * Creates a plan icon proxy for a <code>piece</code> of furniture.
+     * @param piece an object containing a plan icon content
+     * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
+     *            be read immediately in the current thread.
+     */
+    public PieceOfFurniturePlanIcon(final HomePieceOfFurniture piece, 
+                                    final Component waitingComponent) {
+      super(IconManager.getInstance().getIcon(piece.getPlanIcon(), waitingComponent));
+      this.color = piece.getColor();
+    }
+    
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      if (this.color != null
+          && !isWaitIcon()
+          && !isErrorIcon()) {
+        // Create a monochrome icon from plan icon  
+        BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics imageGraphics = image.getGraphics();
+        super.paintIcon(c, imageGraphics, 0, 0);
+        imageGraphics.dispose();
+        
+        final int colorRed   = this.color & 0xFF0000;
+        final int colorGreen = this.color & 0xFF00;
+        final int colorBlue  = this.color & 0xFF;
+        setIcon(new ImageIcon(c.createImage(new FilteredImageSource(image.getSource (),
+            new RGBImageFilter() {
+              {
+                canFilterIndexColorModel = true;
+              }
+
+              public int filterRGB (int x, int y, int rgb) {
+                int alpha = rgb & 0xFF000000;
+                int red   = (rgb & 0x00FF0000) >> 16;
+                int green = (rgb & 0x0000FF00) >> 8;
+                int blue  = rgb & 0x000000FF;
+                
+                // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue 
+                // for faster results
+                int brightness = (red + red + red + green + green + green + green + blue) >> 3;
+                
+                red   = (colorRed   * brightness / 0xFF) & 0xFF0000;
+                green = (colorGreen * brightness / 0xFF) & 0xFF00;
+                blue  = (colorBlue  * brightness / 0xFF) & 0xFF;
+                return alpha | red | green | blue;
+              }
+            }))));
+        // Don't need color information anymore
+        this.color = null;
+      }
+      super.paintIcon(c, g, x, y);
+    }
+  }
+  
+  /**
    * A proxy for the furniture top view icon. 
    */
-  private static class PieceOfFurnitureTopViewIcon implements Icon {
-    private static Icon        errorIcon;
-    private static Icon        waitIcon;
+  private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
     private static Canvas3D    canvas3D;      
     private static BranchGroup sceneRoot;          
     
     static {
-      // Get icons
-      errorIcon = IconManager.getInstance().getErrorIcon(128);
-      waitIcon = IconManager.getInstance().getWaitIcon(128);
       // Create the universe used to compute top view icons 
       canvas3D = Component3DManager.getInstance().getOffScreenCanvas3D(128, 128);
       SimpleUniverse universe = new SimpleUniverse(canvas3D);
@@ -4119,21 +4220,19 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       universe.addBranchGraph(sceneRoot);
     }
     
-    private Icon icon;
-
     /**
      * Creates a top view icon proxy for a <code>piece</code> of furniture.
      * @param piece an object containing a 3D content
      * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
      *            be read immediately in the current thread.
      */
-    private PieceOfFurnitureTopViewIcon(final HomePieceOfFurniture piece, 
-                                        final Component waitingComponent) {
-      this.icon = waitIcon;
+    public PieceOfFurnitureModelIcon(final HomePieceOfFurniture piece, 
+                                     final Component waitingComponent) {
+      super(IconManager.getInstance().getWaitIcon());
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelNode) {
-              icon = createIcon(piece, modelNode);
+              setIcon(createIcon(piece, modelNode));
               if (waitingComponent != null) {
                 waitingComponent.repaint();
               }
@@ -4141,32 +4240,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         
             public void modelError(Exception ex) {
               // Too bad, we'll use errorIcon
-              icon = errorIcon;                
+              setIcon(IconManager.getInstance().getErrorIcon());                
               if (waitingComponent != null) {
                 waitingComponent.repaint();
               }
             }
           });
-    }
-    
-    public int getIconWidth() {
-      return this.icon.getIconWidth();
-    }
-
-    public int getIconHeight() {
-      return this.icon.getIconHeight();
-    }
-    
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      this.icon.paintIcon(c, g, x, y);
-    }
-
-    public boolean isWaitIcon() {
-      return this.icon == waitIcon;
-    }
-    
-    public boolean isErrorIcon() {
-      return this.icon == errorIcon;
     }
     
     /**

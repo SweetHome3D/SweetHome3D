@@ -75,6 +75,12 @@ public interface PieceOfFurniture {
   public abstract Content getIcon();
 
   /**
+   * Returns the icon of this piece of furniture displayed in plan or <code>null</code>.
+   * @since 2.2
+   */
+  public abstract Content getPlanIcon();
+
+    /**
    * Returns the 3D model of this piece of furniture.
    */
   public abstract Content getModel();

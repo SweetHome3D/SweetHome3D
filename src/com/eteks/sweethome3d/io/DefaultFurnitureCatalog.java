@@ -57,6 +57,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private static final String DESCRIPTION                     = "description#";
   private static final String CATEGORY                        = "category#";
   private static final String ICON                            = "icon#";
+  private static final String PLAN_ICON                       = "planIcon#";
   private static final String MODEL                           = "model#";
   private static final String MULTI_PART_MODEL                = "multiPartModel#";
   private static final String WIDTH                           = "width#";
@@ -203,14 +204,15 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
         }
         String description = getOptionalString(resource, DESCRIPTION + i, null);
         String category = resource.getString(CATEGORY + i);
-        Content icon  = getContent(resource, ICON + i, furnitureUrl, false);
+        Content icon  = getContent(resource, ICON + i, furnitureUrl, false, false);
+        Content planIcon = getContent(resource, PLAN_ICON + i, furnitureUrl, false, true);
         boolean multiPartModel = false;
         try {
           multiPartModel = Boolean.parseBoolean(resource.getString(MULTI_PART_MODEL + i));
         } catch (MissingResourceException ex) {
           // By default inDirectory is false
         }
-        Content model = getContent(resource, MODEL + i, furnitureUrl, multiPartModel);
+        Content model = getContent(resource, MODEL + i, furnitureUrl, multiPartModel, false);
         float width = Float.parseFloat(resource.getString(WIDTH + i));
         float depth = Float.parseFloat(resource.getString(DEPTH + i));
         float height = Float.parseFloat(resource.getString(HEIGHT + i));
@@ -259,18 +261,18 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
           float wallDistancePercentage = getOptionalFloat(
               resource, DOOR_OR_WINDOW_WALL_DISTANCE + i, 0) / depth;
           Sash [] sashes = getDoorOrWindowSashes(resource, i, width, depth);
-          piece = new CatalogDoorOrWindow(id, name, description, icon, model,
+          piece = new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
               width, depth, height, elevation, movable, 
               wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
               resizable, price, valueAddedTaxPercentage);
         } else {
           LightSource [] lightSources = getLightSources(resource, i, width, depth, height);
           if (lightSources != null) {
-            piece = new CatalogLight(id, name, description, icon, model,
+            piece = new CatalogLight(id, name, description, icon, planIcon, model,
                 width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
                 resizable, price, valueAddedTaxPercentage);
           } else {
-            piece = new CatalogPieceOfFurniture(id, name, description, icon, model,
+            piece = new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
                 width, depth, height, elevation, movable, modelRotation, creator, 
                 resizable, price, valueAddedTaxPercentage);
           }
@@ -344,8 +346,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   private Content getContent(ResourceBundle resource, 
                              String contentKey, 
                              URL furnitureUrl, 
-                             boolean multiPartModel) {
-    String contentFile = resource.getString(contentKey);
+                             boolean multiPartModel,
+                             boolean optional) {
+    String contentFile = optional
+       ? getOptionalString(resource, contentKey, null)
+       : resource.getString(contentKey);
+    if (optional && contentFile == null) {
+      return null;
+    }
     try {
       // Try first to interpret contentFile as a URL
       return new URLContent(new URL(contentFile));

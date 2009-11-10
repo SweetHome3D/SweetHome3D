@@ -73,7 +73,7 @@ public class IconManager {
 
   /**
    * Clears the loaded resources cache and shutdowns the multithreaded service 
-   * that load icons. 
+   * that loads icons. 
    */
   public void clear() {
     if (this.iconsLoader != null) {
@@ -84,17 +84,65 @@ public class IconManager {
   }
   
   /**
-   * Returns the icon displayed for wrong content.
+   * Returns the icon displayed for wrong content resized at a given height.
    */
   public Icon getErrorIcon(int height) {
     return getIcon(this.errorIconContent, height, null);
   }
   
   /**
-   * Returns the icon displayed while a content is loaded.
+   * Returns the icon displayed for wrong content.
+   */
+  public Icon getErrorIcon() {
+    return getIcon(this.errorIconContent, -1, null);
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>icon</code> is the error icon
+   * used by this manager to indicate it couldn't load an icon.
+   */
+  public boolean isErrorIcon(Icon icon) {
+    Map<Integer, Icon> errorIcons = this.icons.get(this.errorIconContent);
+    return errorIcons != null
+        && (errorIcons.containsValue(icon)
+            || icon instanceof IconProxy
+                && errorIcons.containsValue(((IconProxy)icon).getIcon()));
+  }
+
+  /**
+   * Returns the icon displayed while a content is loaded resized at a given height.
    */
   public Icon getWaitIcon(int height) {
     return getIcon(this.waitIconContent, height, null);
+  }
+  
+  /**
+   * Returns the icon displayed while a content is loaded.
+   */
+  public Icon getWaitIcon() {
+    return getIcon(this.waitIconContent, -1, null);
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>icon</code> is the wait icon
+   * used by this manager to indicate it's currently loading an icon.
+   */
+  public boolean isWaitIcon(Icon icon) {
+    Map<Integer, Icon> waitIcons = this.icons.get(this.waitIconContent);
+    return waitIcons != null
+        && (waitIcons.containsValue(icon)
+            || icon instanceof IconProxy
+                && waitIcons.containsValue(((IconProxy)icon).getIcon()));
+  }
+
+  /**
+   * Returns an icon read from <code>content</code>.
+   * @param content an object containing an image
+   * @param waitingComponent a waiting component. If <code>null</code>, the returned icon will
+   *            be read immediately in the current thread.
+   */
+  public Icon getIcon(Content content, Component waitingComponent) {
+    return getIcon(content, -1, waitingComponent);
   }
   
   /**
@@ -146,17 +194,21 @@ public class IconManager {
       BufferedImage image = ImageIO.read(contentStream);
       contentStream.close();
       if (image != null) {
-        int width = image.getWidth() * height / image.getHeight();
-        Image scaledImage = image.getScaledInstance(
-            width, height, Image.SCALE_SMOOTH);
-        return new ImageIcon (scaledImage);
+        if (height != -1) {
+          int width = image.getWidth() * height / image.getHeight();
+          Image scaledImage = image.getScaledInstance(
+              width, height, Image.SCALE_SMOOTH);
+          return new ImageIcon(scaledImage);
+        } else {
+          return new ImageIcon(image);
+        }
       }
     } catch (IOException ex) {
       // Too bad, we'll use errorIcon
     }
     return errorIcon;
   }
-
+  
   /**
    * Proxy icon that displays a temporary icon while waiting 
    * image loading completion. 
@@ -190,6 +242,10 @@ public class IconManager {
     
     public void paintIcon(Component c, Graphics g, int x, int y) {
       this.icon.paintIcon(c, g, x, y);
+    }
+    
+    public Icon getIcon() {
+      return this.icon;
     }
   }
 }

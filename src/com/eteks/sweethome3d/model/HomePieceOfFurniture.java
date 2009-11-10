@@ -195,6 +195,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private TextStyle              nameStyle;
   private String                 description;
   private Content                icon;
+  private Content                planIcon;
   private Content                model;
   private float                  width;
   private float                  depth;
@@ -217,6 +218,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
+
   /**
    * Creates a home piece of furniture from an existing piece.
    * @param piece the piece from which data are copied
@@ -225,6 +227,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     this.name = piece.getName();
     this.description = piece.getDescription();
     this.icon = piece.getIcon();
+    this.planIcon = piece.getPlanIcon();
     this.model = piece.getModel();
     this.width = piece.getWidth();
     this.depth = piece.getDepth();
@@ -526,6 +529,14 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    */
   public Content getIcon() {
     return this.icon;
+  }
+
+  /**
+   * Returns the icon of this piece of furniture displayed in plan or <code>null</code>.
+   * @since 2.2
+   */
+  public Content getPlanIcon() {
+    return this.planIcon;
   }
 
   /**

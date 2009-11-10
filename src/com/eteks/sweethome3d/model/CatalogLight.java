@@ -56,7 +56,39 @@ public class CatalogLight extends CatalogPieceOfFurniture implements Light {
                                  LightSource [] lightSources,
                                  float [][] modelRotation, String creator,
                                  boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
-    super(id, name, description, icon, model, width, depth, height, elevation, movable,   
+    this(id, name, description, icon, null, model, width, depth, height, elevation, movable,   
+        lightSources, modelRotation, creator, resizable, price, valueAddedTaxPercentage);
+  }
+         
+  /**
+   * Creates an unmodifiable catalog light of the default catalog.
+   * @param id    the id of the new light, or <code>null</code>
+   * @param name  the name of the new light
+   * @param description the description of the new light 
+   * @param icon an URL to the icon file of the new light
+   * @param planIcon an URL to the icon file of the new piece displayed in plan
+   * @param model an URL to the 3D model file of the new light
+   * @param width  the width in centimeters of the new light
+   * @param depth  the depth in centimeters of the new light
+   * @param height  the height in centimeters of the new light
+   * @param elevation  the elevation in centimeters of the new light
+   * @param movable if <code>true</code>, the new light is movable
+   * @param lightSources the light sources of the new light
+   * @param modelRotation the rotation 3 by 3 matrix applied to the light model
+   * @param creator the creator of the model
+   * @param resizable if <code>true</code>, the size of the new light may be edited
+   * @param price the price of the new light, or <code>null</code> 
+   * @param valueAddedTaxPercentage the Value Added Tax percentage applied to the 
+   *             price of the new light or <code>null</code> 
+   * @since 2.2            
+   */
+  public CatalogLight(String id, String name, String description, 
+                      Content icon, Content planIcon, Content model, 
+                      float width, float depth, float height, float elevation, boolean movable, 
+                      LightSource [] lightSources,
+                      float [][] modelRotation, String creator,
+                      boolean resizable, BigDecimal price, BigDecimal valueAddedTaxPercentage) {
+    super(id, name, description, icon, planIcon, model, width, depth, height, elevation, movable,   
         modelRotation, creator, resizable, price, valueAddedTaxPercentage);
     this.lightSources = lightSources;
   }
