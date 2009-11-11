@@ -140,7 +140,7 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     the action that lets the user create a photo from the 3D view of the edited home. 
  *     <br>By default, the value of this parameter is <code>false</code>.</li>
  *     
- *     <li><code>showMemoryStatus</code> specifies whether this applet should enable
+ *     <li><code>showMemoryStatus</code> specifies whether this applet should display
  *     each second the available memory in browser status bar when it has focus. 
  *     <br>By default, the value of this parameter is <code>false</code> and 
  *     the status message won't be modified by the applet.</li></ul>
