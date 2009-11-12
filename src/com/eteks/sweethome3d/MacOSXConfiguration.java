@@ -63,7 +63,7 @@ class MacOSXConfiguration {
   public static void bindToApplicationMenu(final SweetHome3D homeApplication) {
     // Create a default controller for an empty home and disable unrelated actions
     final HomeController defaultController = 
-        homeApplication.createHomeFrameController(new Home()).getHomeController();
+        homeApplication.createHomeFrameController(homeApplication.createHome()).getHomeController();
     final HomePane defaultHomeView = (HomePane)defaultController.getView();
     for (HomePane.ActionType action : HomePane.ActionType.values()) {
       switch (action) {

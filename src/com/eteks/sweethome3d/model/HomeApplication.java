@@ -45,6 +45,15 @@ public abstract class HomeApplication {
   public void removeHomesListener(CollectionListener<Home> listener) {
     this.homesChangeSupport.removeCollectionListener(listener);
   } 
+  
+  /**
+   * Returns a new home.
+   * @return a new home with wall heights equal to the one in user preferences.
+   * @since 2.2
+   */
+  public Home createHome() {
+    return new Home(getUserPreferences().getNewWallHeight());
+  }
 
   /**
    * Returns an unmodifiable collection of the homes of this application.

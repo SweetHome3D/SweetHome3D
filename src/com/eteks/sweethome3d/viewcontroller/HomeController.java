@@ -1191,8 +1191,13 @@ public class HomeController implements Controller {
    * Creates a new home and adds it to application home list.
    */
   public void newHome() {
-    this.application.addHome(
-        new Home(this.preferences.getNewWallHeight()));
+    Home home;
+    if (this.application != null) {
+      home = this.application.createHome();
+    } else {
+      home = new Home(this.preferences.getNewWallHeight());
+    }
+    this.application.addHome(home);
   }
 
   /**

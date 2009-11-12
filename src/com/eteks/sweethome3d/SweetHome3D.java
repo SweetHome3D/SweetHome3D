@@ -521,14 +521,14 @@ public class SweetHome3D extends HomeApplication {
       
       if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
-        createHomeFrameController(new Home()).getHomeController().open(args [1]);
+        createHomeFrameController(createHome()).getHomeController().open(args [1]);
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         run(new String [0]);
         final String furnitureLibraryName = args [1];
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               // Import furniture library with a dummy controller 
-              createHomeFrameController(new Home()).getHomeController().importFurnitureLibrary(furnitureLibraryName);
+              createHomeFrameController(createHome()).getHomeController().importFurnitureLibrary(furnitureLibraryName);
             }
           });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.PLUGIN)) {
@@ -537,14 +537,13 @@ public class SweetHome3D extends HomeApplication {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
               // Import plug-in with a dummy controller 
-              createHomeFrameController(new Home()).getHomeController().importPlugin(pluginName);
+              createHomeFrameController(createHome()).getHomeController().importPlugin(pluginName);
             }
           });
       }
     } else if (getHomes().isEmpty()) {
-      // Create a default home 
-      Home home = new Home(getUserPreferences().getNewWallHeight());
-      addHome(home);
+      // Add a new home to application 
+      addHome(createHome());
     } else {
       // If no Sweet Home 3D frame has focus, bring last created viewed frame to front 
       final List<Home> homes = getHomes();
