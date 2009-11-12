@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.io;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,66 +62,134 @@ public class HomeFileRecorder implements HomeRecorder {
    * @throws RecorderException if a problem occurred while writing home.
    */
   public void writeHome(Home home, String name) throws RecorderException {
+    File homeFile = new File(name);
+    File backupFile = null;    
+
+    // Backup existing home file to a temporary file
+    if (homeFile.exists()) {
+      try {
+        backupFile = File.createTempFile("backup", ".sh3d");
+        copyFile(homeFile, backupFile);
+      } catch (IOException ex) {
+        if (backupFile != null) {
+          backupFile.delete();
+        }
+        throw new RecorderException("Can't create temporary backup of " + homeFile, ex);
+      }
+    }
+    
     DefaultHomeOutputStream homeOut = null;
-    File tempFile = null;
     try {
-      // Open a stream on a temporary file 
-      tempFile = File.createTempFile("save", ".sh3d");
-      homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
+      homeOut = new DefaultHomeOutputStream(new FileOutputStream(homeFile), 
           this.compressionLevel, false);
-      // Write home with HomeOuputStream
-      homeOut.writeHome(home);
+      // Write home with HomeOuputStream 
+      // Overwriting it will ensure that home file rights are kept
+      homeOut.writeHome(home); 
     } catch (InterruptedIOException ex) {
+      try {
+        if (homeOut != null) {
+          homeOut.close();
+        }
+      } catch (IOException ex2) {          
+      }
+      
+      if (backupFile != null) {
+        try {
+          // Prefer copy than rename to keep file rights
+          copyFile(backupFile, homeFile);
+        } catch (RecorderException ex2) {
+          throw new InterruptedRecorderException("Can't restore backup of " + homeFile + " after interruption");
+        }
+      } else {
+        homeFile.delete();
+      }
       throw new InterruptedRecorderException("Save " + name + " interrupted");
+    } catch (FileNotFoundException ex) {
+      throw new RecorderException("Can't save file " + name, ex);
     } catch (IOException ex) {
-      throw new RecorderException("Can't save home " + name, ex);
+      try {
+        if (homeOut != null) {
+          homeOut.close();
+        }
+      } catch (IOException ex2) {          
+      }
+      
+      if (backupFile != null) {
+        try {
+          // Prefer copy than rename to keep file rights
+          copyFile(backupFile, homeFile);
+        } catch (RecorderException ex2) {
+          // Last chance : delete home file and rename backup file to home file
+          if (!homeFile.delete()
+              || !backupFile.renameTo(homeFile)) {
+            throw new RecorderException("Can't save file " + name + " and restore backup", ex);
+          }
+        }
+      } else {
+        homeFile.delete();
+      }
+      throw new RecorderException("Can't save file " + name, ex);
     } finally {
       try {
         if (homeOut != null) {
           homeOut.close();
         }
       } catch (IOException ex) {
-        throw new RecorderException("Can't close file " + name, ex);
+        if (backupFile != null) {
+          try {
+            // Prefer copy than rename to keep file rights
+            copyFile(backupFile, homeFile);
+          } catch (RecorderException ex2) {
+            // Last chance : delete home file and rename backup file to home file
+            if (!homeFile.delete()
+                || !backupFile.renameTo(homeFile)) {
+              throw new RecorderException("Can't close file " + name + " and restore backup", ex);
+            }
+          }
+        }
+        throw new RecorderException("Can't close home " + name, ex);
+      } finally {
+        if (backupFile != null) {
+          backupFile.delete();
+        }
+      }
+      
+      if (backupFile != null) {
+        backupFile.delete();
       }
     }
-    
-    // As writing succeeded, replace old file by temporary file
-    File homeFile = new File(name);
-    if (homeFile.exists()
-        && !homeFile.delete()) {
-      tempFile.delete();
-      throw new RecorderException("Can't replace file " + name);
-    }
-    if (!tempFile.renameTo(homeFile)) {
-      // If rename fails try to copy temporary file to home file
-      byte [] buffer = new byte [8192];
-      OutputStream out = null;
-      InputStream in = null;
+  }
+
+  /**
+   * Copy <code>file1</code> to <code>file2</code>.
+   */
+  private void copyFile(File file1, File file2) throws RecorderException {
+    byte [] buffer = new byte [8192];
+    InputStream in = null;
+    OutputStream out = null;
+    try {
+      in = new FileInputStream(file1);          
+      out = new FileOutputStream(file2);
+      int size; 
+      while ((size = in.read(buffer)) != -1) {
+        out.write(buffer, 0, size);
+      }
+    } catch (IOException ex) { 
+      throw new RecorderException("Can't copy file " + file1 + " to " + file2);
+    } finally {
       try {
-        out = new FileOutputStream(homeFile);
-        in = new FileInputStream(tempFile);          
-        int size; 
-        while ((size = in.read(buffer)) != -1) {
-          out.write(buffer, 0, size);
+        if (out != null) {          
+          out.close();
         }
-      } catch (IOException ex) { 
-        throw new RecorderException("Can't copy file " + tempFile + " to " + name);
-      } finally {
-        try {
-          if (out != null) {          
-            out.close();
-          }
-        } catch (IOException ex) {
-          throw new RecorderException("Can't close file " + name, ex);
+      } catch (IOException ex) {
+        throw new RecorderException("Can't close file " + file2, ex);
+      }
+      try {
+        if (in != null) {          
+          in.close();
         }
-        try {
-          if (in != null) {          
-            in.close();
-            tempFile.delete();
-          }
-        } catch (IOException ex) {
-          // Forget exception
-        }
+      } catch (IOException ex) {
+        // Forget exception
       }
     }
   }
