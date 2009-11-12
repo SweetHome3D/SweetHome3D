@@ -309,7 +309,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       if (piece instanceof CatalogDoorOrWindow) {
         CatalogDoorOrWindow doorOrWindow = (CatalogDoorOrWindow)piece;
         piece = new CatalogDoorOrWindow(doorOrWindow.getId(), suffixedName,
-            doorOrWindow.getDescription(), doorOrWindow.getIcon(), doorOrWindow.getModel(),
+            doorOrWindow.getDescription(), doorOrWindow.getIcon(), doorOrWindow.getPlanIcon(), doorOrWindow.getModel(),
             doorOrWindow.getWidth(), doorOrWindow.getDepth(), doorOrWindow.getHeight(), doorOrWindow.getElevation(), 
             doorOrWindow.isMovable(), doorOrWindow.getWallThickness(), 
             doorOrWindow.getWallDistance(), doorOrWindow.getSashes(), 
@@ -318,14 +318,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       } else if (piece instanceof CatalogLight) {
         CatalogLight light = (CatalogLight)piece;
         piece = new CatalogLight(light.getId(), suffixedName,
-            light.getDescription(), light.getIcon(), light.getModel(),
+            light.getDescription(), light.getIcon(), light.getPlanIcon(), light.getModel(),
             light.getWidth(), light.getDepth(), light.getHeight(), light.getElevation(), 
             light.isMovable(), light.getLightSources(), 
             light.getModelRotation(), light.getCreator(),
             light.isResizable(), light.getPrice(), light.getValueAddedTaxPercentage());
       } else {
         piece = new CatalogPieceOfFurniture(piece.getId(), suffixedName,
-            piece.getDescription(), piece.getIcon(), piece.getModel(),
+            piece.getDescription(), piece.getIcon(), piece.getPlanIcon(), piece.getModel(),
             piece.getWidth(), piece.getDepth(), piece.getHeight(), piece.getElevation(), 
             piece.isMovable(), piece.getModelRotation(), piece.getCreator(),
             piece.isResizable(), piece.getPrice(), piece.getValueAddedTaxPercentage());
