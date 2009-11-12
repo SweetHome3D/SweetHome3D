@@ -66,7 +66,8 @@ public class HomeFileRecorder implements HomeRecorder {
     File backupFile = null;    
 
     // Backup existing home file to a temporary file
-    if (homeFile.exists()) {
+    if (homeFile.exists()
+        && homeFile.canWrite()) {
       try {
         backupFile = File.createTempFile("backup", ".sh3d");
         copyFile(homeFile, backupFile);
