@@ -94,16 +94,8 @@ public class HomeFileRecorder implements HomeRecorder {
       } catch (IOException ex2) {          
       }
       
-      if (backupFile != null) {
-        try {
-          // Prefer copy than rename to keep file rights
-          copyFile(backupFile, homeFile);
-        } catch (RecorderException ex2) {
-          throw new InterruptedRecorderException("Can't restore backup of " + homeFile + " after interruption");
-        }
-      } else {
-        homeFile.delete();
-      }
+      restoreHomeFile(homeFile, backupFile, 
+          "Can't restore backup of " + homeFile + " after interruption");          
       throw new InterruptedRecorderException("Save " + name + " interrupted");
     } catch (FileNotFoundException ex) {
       throw new RecorderException("Can't save file " + name, ex);
@@ -115,20 +107,8 @@ public class HomeFileRecorder implements HomeRecorder {
       } catch (IOException ex2) {          
       }
       
-      if (backupFile != null) {
-        try {
-          // Prefer copy than rename to keep file rights
-          copyFile(backupFile, homeFile);
-        } catch (RecorderException ex2) {
-          // Last chance : delete home file and rename backup file to home file
-          if (!homeFile.delete()
-              || !backupFile.renameTo(homeFile)) {
-            throw new RecorderException("Can't save file " + name + " and restore backup", ex);
-          }
-        }
-      } else {
-        homeFile.delete();
-      }
+      restoreHomeFile(homeFile, backupFile, 
+          "Can't save file " + name + " and restore backup");
       throw new RecorderException("Can't save file " + name, ex);
     } finally {
       try {
@@ -136,18 +116,8 @@ public class HomeFileRecorder implements HomeRecorder {
           homeOut.close();
         }
       } catch (IOException ex) {
-        if (backupFile != null) {
-          try {
-            // Prefer copy than rename to keep file rights
-            copyFile(backupFile, homeFile);
-          } catch (RecorderException ex2) {
-            // Last chance : delete home file and rename backup file to home file
-            if (!homeFile.delete()
-                || !backupFile.renameTo(homeFile)) {
-              throw new RecorderException("Can't close file " + name + " and restore backup", ex);
-            }
-          }
-        }
+        restoreHomeFile(homeFile, backupFile,
+            "Can't close file " + name + " and restore backup");
         throw new RecorderException("Can't close home " + name, ex);
       } finally {
         if (backupFile != null) {
@@ -192,6 +162,27 @@ public class HomeFileRecorder implements HomeRecorder {
       } catch (IOException ex) {
         // Forget exception
       }
+    }
+  }
+  
+  /**
+   * Copy <code>backupFile</code> to <code>homeFile</code> and deletes <code>backupFile</code>.
+   */
+  private void restoreHomeFile(File homeFile, File backupFile,  
+                               String errorMessage) throws RecorderException {
+    if (backupFile != null) {
+      try {
+        // Prefer copy than rename to keep file rights
+        copyFile(backupFile, homeFile);
+      } catch (RecorderException ex2) {
+        // Last chance : delete home file and rename backup file to home file
+        if (!homeFile.delete()
+            || !backupFile.renameTo(homeFile)) {
+          throw new RecorderException(errorMessage);
+        }
+      }
+    } else {
+      homeFile.delete();
     }
   }
 
