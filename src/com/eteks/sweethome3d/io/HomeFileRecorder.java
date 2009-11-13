@@ -39,7 +39,8 @@ import com.eteks.sweethome3d.model.RecorderException;
  * @author Emmanuel Puybaret
  */
 public class HomeFileRecorder implements HomeRecorder {
-  private final int compressionLevel;
+  private final int     compressionLevel;
+  private final boolean includeOnlyTemporaryContent;
 
   /**
    * Creates a home recorder able to write and read homes in uncompressed files. 
@@ -54,7 +55,22 @@ public class HomeFileRecorder implements HomeRecorder {
    * @param compressionLevel 0 (uncompressed) to 9 (compressed).
    */
   public HomeFileRecorder(int compressionLevel) {
+    this(compressionLevel, false);
+  }
+
+  /**
+   * Creates a home recorder able to write and read homes in files compressed 
+   * at a level from 0 to 9. 
+   * @param compressionLevel 0-9
+   * @param includeOnlyTemporaryContent if <code>true</code>, only content instances of 
+   *            <code>TemporaryURLContent</code> class referenced by the saved home 
+   *            will be written. If <code>false</code>, all the content instances 
+   *            referenced by the saved home will be written in the zip stream.  
+   */
+  public HomeFileRecorder(int     compressionLevel, 
+                          boolean includeOnlyTemporaryContent) {
     this.compressionLevel = compressionLevel;
+    this.includeOnlyTemporaryContent = includeOnlyTemporaryContent;    
   }
 
   /**
@@ -82,7 +98,7 @@ public class HomeFileRecorder implements HomeRecorder {
     DefaultHomeOutputStream homeOut = null;
     try {
       homeOut = new DefaultHomeOutputStream(new FileOutputStream(homeFile), 
-          this.compressionLevel, false);
+          this.compressionLevel, this.includeOnlyTemporaryContent);
       // Write home with HomeOuputStream 
       // Overwriting it will ensure that home file rights are kept
       homeOut.writeHome(home); 
