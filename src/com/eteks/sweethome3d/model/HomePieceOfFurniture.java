@@ -324,7 +324,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   }
   
   /**
-   * Sets whether the name of this piece is visible or not. Once this room 
+   * Sets whether the name of this piece is visible or not. Once this piece of furniture 
    * is updated, listeners added to this piece will receive a change notification.
    */
   public void setNameVisible(boolean nameVisible) {
@@ -363,7 +363,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
 
   /**
    * Sets the distance along y axis applied to piece ordinate to display piece name. 
-   * Once this piece is updated, listeners added to this room will receive a change notification.
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
    */
   public void setNameYOffset(float nameYOffset) {
     if (nameYOffset != this.nameYOffset) {
