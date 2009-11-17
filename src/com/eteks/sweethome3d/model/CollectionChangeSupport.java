@@ -27,10 +27,13 @@ import java.util.List;
  * <code>T</code> is the type of item stored in the collection.
  * @author Emmanuel Puybaret
  */
-class CollectionChangeSupport<T> {
+public class CollectionChangeSupport<T> {
   private final Object                      source;
   private final List<CollectionListener<T>> collectionListeners;
   
+  /**
+   * Creates a collection change support.
+   */
   public CollectionChangeSupport(Object source) {
     this.source = source;
     this.collectionListeners = new ArrayList<CollectionListener<T>>(5);
