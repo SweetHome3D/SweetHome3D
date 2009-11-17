@@ -44,7 +44,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 2000;
+  public static final long CURRENT_VERSION = 2200;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
@@ -415,9 +415,10 @@ public class Home implements Serializable {
   }
 
   /**
-   * Deselects <code>item</code> if it's selected.
+   * Deselects <code>item</code> if it's selected and notifies listeners selection change.
+   * @since 2.2
    */
-  private void deselectItem(Selectable item) {
+  public void deselectItem(Selectable item) {
     int pieceSelectionIndex = this.selectedItems.indexOf(item);
     if (pieceSelectionIndex != -1) {
       List<Selectable> selectedItems = new ArrayList<Selectable>(getSelectedItems());
@@ -959,9 +960,13 @@ public class Home implements Serializable {
     return getSubList(items, Label.class);
   }
   
+  /**
+   * Returns a sub list of <code>items</code> that contains only instances of <code>subListClass</code>.
+   * @since 2.2
+   */
   @SuppressWarnings("unchecked")
-  private static <T> List<T> getSubList(List<? extends Selectable> items, 
-                                        Class<T> subListClass) {
+  public static <T> List<T> getSubList(List<? extends Selectable> items, 
+                                       Class<T> subListClass) {
     List<T> subList = new ArrayList<T>();
     for (Selectable item : items) {
       if (subListClass.isInstance(item)) {
