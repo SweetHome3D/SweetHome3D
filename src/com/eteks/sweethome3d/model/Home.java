@@ -653,6 +653,19 @@ public class Home implements Serializable {
     this.labels.remove(label);
     this.labelsChangeSupport.fireCollectionChanged(label, CollectionEvent.Type.DELETE);
   }
+  
+  /**
+   * Returns <code>true</code> if this home doesn't contain any item i.e.  
+   * no piece of furniture, no wall, no room, no dimension line and no label.
+   * @since 2.2
+   */
+  public boolean isEmpty() {
+    return this.furniture.isEmpty()
+        && this.walls.isEmpty()
+        && this.rooms.isEmpty()
+        && this.dimensionLines.isEmpty()
+        && this.labels.isEmpty();
+  }
 
   /**
    * Adds the property change <code>listener</code> in parameter to this home.
