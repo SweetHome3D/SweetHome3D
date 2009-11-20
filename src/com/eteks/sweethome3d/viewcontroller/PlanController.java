@@ -69,12 +69,34 @@ import com.eteks.sweethome3d.model.Wall;
  * @author Emmanuel Puybaret
  */
 public class PlanController extends FurnitureController implements Controller {
-  public enum Property {MODE, MODIFICATION_STATE}
+  public enum Property {MODE, MODIFICATION_STATE, SCALE}
 
   /**
    * Selectable modes in controller.
    */
-  public enum Mode {SELECTION, WALL_CREATION, ROOM_CREATION, DIMENSION_LINE_CREATION, LABEL_CREATION}
+  public static class Mode {
+    // Don't qualify Mode as an enumeration to be able to extend Mode class
+    public static final Mode SELECTION = new Mode("SELECTION"); 
+    public static final Mode WALL_CREATION = new Mode("WALL_CREATION");
+    public static final Mode ROOM_CREATION = new Mode("ROOM_CREATION");
+    public static final Mode DIMENSION_LINE_CREATION = new Mode("DIMENSION_LINE_CREATION"); 
+    public static final Mode LABEL_CREATION = new Mode("LABEL_CREATION");
+    
+    private final String name;
+    
+    protected Mode(String name) {
+      this.name = name;      
+    }
+    
+    public final String name() {
+      return this.name;
+    }
+    
+    @Override
+    public String toString() {
+      return this.name;
+    }
+  };
 
   /**
    * Fields that can be edited in plan view.
@@ -1204,11 +1226,15 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Controls the scale in plan view. 
+   * Controls the scale in plan view and and fires a <code>PropertyChangeEvent</code>. 
    */
   public void setScale(float scale) {
-    getView().setScale(scale);
-    this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
+    if (scale != getView().getScale()) {
+      float oldScale = getView().getScale();
+      getView().setScale(scale);
+      this.propertyChangeSupport.firePropertyChange(Property.SCALE.name(), oldScale, scale);
+      this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
+    }
   } 
   
   /**
@@ -1894,13 +1920,20 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the item that will be selected by a click at (<code>x</code>, <code>y</code>) point.
    */
-  private Selectable getSelectableItemAt(float x, float y) {
+  protected Selectable getSelectableItemAt(float x, float y) {
     List<Selectable> selectableItems = getSelectableItemsAt(x, y, true);
     if (selectableItems.size() != 0) {
       return selectableItems.get(0);
     } else {
       return null;
     }
+  }
+  
+  /**
+   * Returns the selectable items at (<code>x</code>, <code>y</code>) point.
+   */
+  protected List<Selectable> getSelectableItemsAt(float x, float y) {
+    return getSelectableItemsAt(x, y, false);
   }
   
   /**
@@ -2058,7 +2091,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the items that intersects with the rectangle of (<code>x0</code>,
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite corners.
    */
-  private List<Selectable> getRectangleItems(float x0, float y0, float x1, float y1) {
+  protected List<Selectable> getSelectableItemsIntersectingRectangle(float x0, float y0, float x1, float y1) {
     List<Selectable> items = new ArrayList<Selectable>();
     updateRectangleItems(items, this.home.getDimensionLines(), x0, y0, x1, y1);
     updateRectangleItems(items, this.home.getRooms(), x0, y0, x1, y1);
@@ -2475,7 +2508,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Selects <code>items</code> and make them visible at screen.
    */
-  private void selectAndShowItems(List<? extends Selectable> items) {
+  protected void selectAndShowItems(List<? extends Selectable> items) {
     selectItems(items);
     getView().makeSelectionVisible();
   }
@@ -2483,7 +2516,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Selects <code>items</code>.
    */
-  private void selectItems(List<? extends Selectable> items) {
+  protected void selectItems(List<? extends Selectable> items) {
     // Remove selectionListener when selection is done from this controller
     // to control when selection should be made visible
     this.home.removeSelectionListener(this.selectionListener);
@@ -3867,22 +3900,16 @@ public class PlanController extends FurnitureController implements Controller {
   private abstract class AbstractModeChangeState extends ControllerState {
     @Override
     public void setMode(Mode mode) {
-      switch (mode) {
-        case SELECTION :
-          setState(getSelectionState());
-          break;
-        case WALL_CREATION :
-          setState(getWallCreationState());
-          break;
-        case ROOM_CREATION :
-          setState(getRoomCreationState());
-          break;
-        case DIMENSION_LINE_CREATION :
-          setState(getDimensionLineCreationState());
-          break;
-        case LABEL_CREATION :
-          setState(getLabelCreationState());
-          break;
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.WALL_CREATION) {
+        setState(getWallCreationState());
+      } else if (mode == Mode.ROOM_CREATION) {
+        setState(getRoomCreationState());
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        setState(getDimensionLineCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
       } 
     }
 
@@ -4050,7 +4077,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.yLastMouseMove = getYLastMousePress();
       this.mouseMoved = false;
       List<Selectable> selectableItemsUnderCursor = 
-          getSelectableItemsAt(getXLastMousePress(), getYLastMousePress(), false);
+          getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
       this.movedItems = home.getSelectedItems();
       toggleMagnetism(wasShiftDownLastMousePress());
       // If no selectable item under the cursor belongs to selection
@@ -4353,8 +4380,8 @@ public class PlanController extends FurnitureController implements Controller {
         selectedItems = new ArrayList<Selectable>();
       }
       
-      // For all the items that intersects with rectangle
-      for (Selectable item : getRectangleItems(x0, y0, x1, y1)) {
+      // For all the items that intersect with rectangle
+      for (Selectable item : getSelectableItemsIntersectingRectangle(x0, y0, x1, y1)) {
         // Don't let the camera be able to be selected with a rectangle
         if (!(item instanceof Camera)) {
           // If shift was down at mouse press
@@ -4614,19 +4641,14 @@ public class PlanController extends FurnitureController implements Controller {
     public void setMode(Mode mode) {
       // Escape current creation and change state to matching mode
       escape();
-      switch (mode) {
-        case SELECTION :
-          setState(getSelectionState());
-          break;
-        case ROOM_CREATION :
-          setState(getRoomCreationState());
-          break;
-        case DIMENSION_LINE_CREATION :
-          setState(getDimensionLineCreationState());
-          break;
-        case LABEL_CREATION :
-          setState(getLabelCreationState());
-          break;
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.ROOM_CREATION) {
+        setState(getRoomCreationState());
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        setState(getDimensionLineCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
       } 
     }
 
@@ -5839,19 +5861,14 @@ public class PlanController extends FurnitureController implements Controller {
     public void setMode(Mode mode) {
       // Escape current creation and change state to matching mode
       escape();
-      switch (mode) {
-        case SELECTION :
-          setState(getSelectionState());
-          break;
-        case WALL_CREATION :
-          setState(getWallCreationState());
-          break;
-        case ROOM_CREATION :
-          setState(getRoomCreationState());
-          break;
-        case LABEL_CREATION :
-          setState(getLabelCreationState());
-          break;
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.WALL_CREATION) {
+        setState(getWallCreationState());
+      } else if (mode == Mode.ROOM_CREATION) {
+        setState(getRoomCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
       } 
     }
 
@@ -6419,19 +6436,14 @@ public class PlanController extends FurnitureController implements Controller {
     public void setMode(Mode mode) {
       // Escape current creation and change state to matching mode
       escape();
-      switch (mode) {
-        case SELECTION :
-          setState(getSelectionState());
-          break;
-        case WALL_CREATION :
-          setState(getWallCreationState());
-          break;
-        case DIMENSION_LINE_CREATION :
-          setState(getDimensionLineCreationState());
-          break;
-        case LABEL_CREATION :
-          setState(getLabelCreationState());
-          break;
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.WALL_CREATION) {
+        setState(getWallCreationState());
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        setState(getDimensionLineCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
       } 
     }
 
@@ -6454,10 +6466,10 @@ public class PlanController extends FurnitureController implements Controller {
             point.getX(), point.getY(), point.isMagnetized());
         
       } else {
-         this.xPreviousPoint = getXLastMousePress();
-         this.yPreviousPoint = getYLastMousePress();
-         getView().setAlignmentFeedback(Room.class, null, 
-             this.xPreviousPoint, this.yPreviousPoint, false);
+        this.xPreviousPoint = getXLastMousePress();
+        this.yPreviousPoint = getYLastMousePress();
+        getView().setAlignmentFeedback(Room.class, null, 
+            this.xPreviousPoint, this.yPreviousPoint, false);
       }
       deselectAll();
     }

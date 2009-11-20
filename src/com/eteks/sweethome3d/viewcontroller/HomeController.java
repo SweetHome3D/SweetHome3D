@@ -48,6 +48,7 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.CatalogTexture;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.FurnitureCatalog;
 import com.eteks.sweethome3d.model.Home;
@@ -60,6 +61,7 @@ import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Light;
 import com.eteks.sweethome3d.model.RecorderException;
+import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -388,9 +390,8 @@ public class HomeController implements Controller {
     addHomeSelectionListener();
     addFurnitureSortListener();
     addUndoSupportListener();
-    addHomeFurnitureListener();
-    addHomeWallListener();
-    addPlanControllerListener();
+    addHomeItemsListener();
+    addPlanControllerListeners();
     addLanguageListener();
   }
 
@@ -500,7 +501,7 @@ public class HomeController implements Controller {
   private void addCatalogSelectionListener() {
     getFurnitureCatalogController().addSelectionListener(new SelectionListener() {
           public void selectionChanged(SelectionEvent ev) {
-            enableActionsOnSelection();
+            enableActionsBoundToSelection();
           }
         });
   }
@@ -551,7 +552,7 @@ public class HomeController implements Controller {
     if (this.home != null) {
       this.home.addSelectionListener(new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          enableActionsOnSelection();
+          enableActionsBoundToSelection();
         }
       });
     }
@@ -594,9 +595,11 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Enables action bound to selection. 
+   * Enables or disables action bound to selection. 
+   * This method will be called when selection in plan or in catalog changes and when 
+   * focused component or modification state in plan changes. 
    */
-  private void enableActionsOnSelection() {
+  protected void enableActionsBoundToSelection() {
     boolean modificationState = getPlanController().isModificationState();
     
     // Search if catalog selection contains at least one piece
@@ -727,7 +730,7 @@ public class HomeController implements Controller {
   /**
    * Enables select all action if home isn't empty.
    */
-  private void enableSelectAllAction() {
+  protected void enableSelectAllAction() {
     HomeView view = getView();
     boolean modificationState = getPlanController().isModificationState();
     if (this.focusedView == getFurnitureController().getView()) {
@@ -737,12 +740,7 @@ public class HomeController implements Controller {
     } else if (this.focusedView == getPlanController().getView()
                || this.focusedView == getHomeController3D().getView()) {
       view.setEnabled(HomeView.ActionType.SELECT_ALL,
-          !modificationState
-          && (this.home.getFurniture().size() > 0 
-              || this.home.getWalls().size() > 0 
-              || this.home.getRooms().size() > 0
-              || this.home.getDimensionLines().size() > 0
-              || this.home.getLabels().size() > 0));
+          !modificationState && !this.home.isEmpty());
     } else {
       view.setEnabled(HomeView.ActionType.SELECT_ALL, false);
     }
@@ -754,8 +752,8 @@ public class HomeController implements Controller {
   private void enableZoomActions() {
     float scale = getPlanController().getScale();
     HomeView view = getView();
-    view.setEnabled(HomeView.ActionType.ZOOM_IN, scale <= 5);
-    view.setEnabled(HomeView.ActionType.ZOOM_OUT, scale >= 0.1f);    
+    view.setEnabled(HomeView.ActionType.ZOOM_IN, scale < 5);
+    view.setEnabled(HomeView.ActionType.ZOOM_OUT, scale > 0.1f);    
   }
   
   /**
@@ -779,40 +777,33 @@ public class HomeController implements Controller {
   /**
    * Adds a furniture listener to home that enables / disables actions on furniture list change.
    */
-  private void addHomeFurnitureListener() {
-    this.home.addFurnitureListener(new CollectionListener<HomePieceOfFurniture>() {
-        public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
-          if (ev.getType() == CollectionEvent.Type.ADD 
-              || ev.getType() == CollectionEvent.Type.DELETE) {
-            enableSelectAllAction();
+  @SuppressWarnings("unchecked")
+  private void addHomeItemsListener() {
+    CollectionListener<? extends Selectable> homeItemsListener = 
+        new CollectionListener<? extends Selectable>() {
+          public void collectionChanged(CollectionEvent<? extends Selectable> ev) {
+            if (ev.getType() == CollectionEvent.Type.ADD 
+                || ev.getType() == CollectionEvent.Type.DELETE) {
+              enableSelectAllAction();
+            }
           }
-        }
-      });
-  }
-
-  /**
-   * Adds a wall listener to home that enables / disables actions on walls list change.
-   */
-  private void addHomeWallListener() {
-    this.home.addWallsListener(new CollectionListener<Wall>() {
-      public void collectionChanged(CollectionEvent<Wall> ev) {
-        if (ev.getType() == CollectionEvent.Type.ADD 
-            || ev.getType() == CollectionEvent.Type.DELETE) {
-          enableSelectAllAction();
-        }
-      }
-    });
+        };
+    this.home.addFurnitureListener((CollectionListener<HomePieceOfFurniture>)homeItemsListener);
+    this.home.addWallsListener((CollectionListener<Wall>)homeItemsListener);
+    this.home.addRoomsListener((CollectionListener<Room>)homeItemsListener);
+    this.home.addDimensionLinesListener((CollectionListener<DimensionLine>)homeItemsListener);
+    this.home.addLabelsListener((CollectionListener<Label>)homeItemsListener);
   }
 
   /**
    * Adds a property change listener to plan controller to 
-   * enable/disable authorized actions according to its modification state.
+   * enable/disable authorized actions according to its modification state and the plan scale.
    */
-  private void addPlanControllerListener() {
+  private void addPlanControllerListeners() {
     getPlanController().addPropertyChangeListener(PlanController.Property.MODIFICATION_STATE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            enableActionsOnSelection();
+            enableActionsBoundToSelection();
             enableSelectAllAction();
             HomeView view = getView();
             if (getPlanController().isModificationState()) {
@@ -824,6 +815,12 @@ public class HomeController implements Controller {
               view.setEnabled(HomeView.ActionType.UNDO, undoManager.canUndo());
               view.setEnabled(HomeView.ActionType.REDO, undoManager.canRedo());
             }
+          }
+        });
+    getPlanController().addPropertyChangeListener(PlanController.Property.SCALE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            enableZoomActions();
           }
         });
   }
@@ -1170,7 +1167,7 @@ public class HomeController implements Controller {
    */
   public void focusedViewChanged(View focusedView) {
     this.focusedView = focusedView;
-    enableActionsOnSelection();
+    enableActionsBoundToSelection();
     enablePasteAction();
     enableSelectAllAction();
   }
@@ -1675,22 +1672,16 @@ public class HomeController implements Controller {
   public void setMode(Mode mode) {
     if (getPlanController().getMode() != mode) {
       final String actionKey;
-      switch (mode) {
-        case WALL_CREATION :
-          actionKey = HomeView.ActionType.CREATE_WALLS.name();
-          break;
-        case ROOM_CREATION :
-          actionKey = HomeView.ActionType.CREATE_ROOMS.name();
-          break;
-        case DIMENSION_LINE_CREATION :
-          actionKey = HomeView.ActionType.CREATE_DIMENSION_LINES.name();
-          break;
-        case LABEL_CREATION :
-          actionKey = HomeView.ActionType.CREATE_LABELS.name();
-          break;
-        default :
-          actionKey = null;
-          break;
+      if (mode == Mode.WALL_CREATION) {
+        actionKey = HomeView.ActionType.CREATE_WALLS.name();
+      } else if (mode == Mode.ROOM_CREATION) {
+        actionKey = HomeView.ActionType.CREATE_ROOMS.name();
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        actionKey = HomeView.ActionType.CREATE_DIMENSION_LINES.name();
+      } else if (mode == Mode.LABEL_CREATION) {
+        actionKey = HomeView.ActionType.CREATE_LABELS.name();
+      } else {
+        actionKey = null;
       }
       // Display the tip message dialog matching mode
       if (actionKey != null 
@@ -1809,7 +1800,6 @@ public class HomeController implements Controller {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() / 1.5f;
     planController.setScale(newScale);
-    enableZoomActions();  
   }
 
   /**
@@ -1819,7 +1809,6 @@ public class HomeController implements Controller {
     PlanController planController = getPlanController();
     float newScale = planController.getScale() * 1.5f;
     planController.setScale(newScale);
-    enableZoomActions();
   }
 
   /**
