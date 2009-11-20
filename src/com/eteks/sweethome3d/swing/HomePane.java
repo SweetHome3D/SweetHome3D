@@ -214,6 +214,14 @@ public class HomePane extends JRootPane implements HomeView {
     this.createLabelsToggleModel = new JToggleButton.ToggleButtonModel();
     this.createLabelsToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.LABEL_CREATION);
+    
+    ButtonGroup modeGroup = new ButtonGroup();
+    this.selectToggleModel.setGroup(modeGroup);
+    this.createWallsToggleModel.setGroup(modeGroup);
+    this.createRoomsToggleModel.setGroup(modeGroup);
+    this.createDimensionLinesToggleModel.setGroup(modeGroup);
+    this.createLabelsToggleModel.setGroup(modeGroup);
+    
     // Use special models for bold and italic check box menu items and tool bar buttons 
     // that are selected texts in home selected items are all bold or italic
     this.boldStyleToggleModel = createBoldStyleToggleModel(home, preferences);
@@ -225,7 +233,11 @@ public class HomePane extends JRootPane implements HomeView {
     this.viewFromTopToggleModel.setSelected(home.getCamera() == home.getTopCamera());
     this.viewFromObserverToggleModel = new JToggleButton.ToggleButtonModel();
     this.viewFromObserverToggleModel.setSelected(home.getCamera() == home.getObserverCamera());
-    
+
+    ButtonGroup viewGroup = new ButtonGroup();
+    this.viewFromTopToggleModel.setGroup(viewGroup);
+    this.viewFromObserverToggleModel.setGroup(viewGroup);
+
     JPopupMenu.setDefaultLightWeightPopupEnabled(false);
     ToolTipManager.sharedInstance().setLightWeightPopupEnabled(false);    
     
@@ -663,17 +675,16 @@ public class HomePane extends JRootPane implements HomeView {
     
     // Create Plan menu
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
-    ButtonGroup group = new ButtonGroup();
     addToggleActionToMenu(ActionType.SELECT, 
-        this.selectToggleModel, group, planMenu);
+        this.selectToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_WALLS, 
-        this.createWallsToggleModel, group, planMenu);
+        this.createWallsToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_ROOMS, 
-        this.createRoomsToggleModel, group, planMenu);
+        this.createRoomsToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_DIMENSION_LINES, 
-        this.createDimensionLinesToggleModel, group, planMenu);
+        this.createDimensionLinesToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_LABELS, 
-        this.createLabelsToggleModel, group, planMenu);
+        this.createLabelsToggleModel, true, planMenu);
     planMenu.addSeparator();
     JMenuItem lockUnlockBasePlanMenuItem = createLockUnlockBasePlanMenuItem(home, false);
     if (lockUnlockBasePlanMenuItem != null) {
@@ -703,11 +714,10 @@ public class HomePane extends JRootPane implements HomeView {
 
     // Create 3D Preview menu
     JMenu preview3DMenu = new JMenu(this.menuActionMap.get(MenuActionType.VIEW_3D_MENU));
-    group = new ButtonGroup();
     addToggleActionToMenu(ActionType.VIEW_FROM_TOP, 
-        this.viewFromTopToggleModel, group, preview3DMenu);
+        this.viewFromTopToggleModel, true, preview3DMenu);
     addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
-        this.viewFromObserverToggleModel, group, preview3DMenu);
+        this.viewFromObserverToggleModel, true, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
@@ -791,9 +801,9 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addToggleActionToMenu(ActionType actionType,
                                      JToggleButton.ToggleButtonModel toggleButtonModel,
-                                     ButtonGroup buttonGroup,
+                                     boolean radioButton,
                                      JMenu menu) {
-    addToggleActionToMenu(actionType, false, toggleButtonModel, buttonGroup, menu);
+    addToggleActionToMenu(actionType, false, toggleButtonModel, radioButton, menu);
   }
 
   /**
@@ -803,11 +813,11 @@ public class HomePane extends JRootPane implements HomeView {
   private void addToggleActionToMenu(ActionType actionType,
                                      boolean popup,
                                      JToggleButton.ToggleButtonModel toggleButtonModel,
-                                     ButtonGroup buttonGroup,
+                                     boolean radioButton,
                                      JMenu menu) {
     Action action = getActionMap().get(actionType);
     if (action.getValue(Action.NAME) != null) {
-      menu.add(createToggleMenuItem(action, popup, toggleButtonModel, buttonGroup));
+      menu.add(createToggleMenuItem(action, popup, toggleButtonModel, radioButton));
     }
   }
 
@@ -817,11 +827,10 @@ public class HomePane extends JRootPane implements HomeView {
   private JMenuItem createToggleMenuItem(Action action, 
                                          boolean popup,
                                          JToggleButton.ToggleButtonModel toggleButtonModel,
-                                         ButtonGroup buttonGroup) {
+                                         boolean radioButton) {
     JMenuItem menuItem;
-    if (buttonGroup != null) {
+    if (radioButton) {
       menuItem = new JRadioButtonMenuItem();
-      buttonGroup.add(menuItem);
     } else {
       menuItem = new JCheckBoxMenuItem();
     }
@@ -850,11 +859,11 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addToggleActionToPopupMenu(ActionType actionType,
                                           JToggleButton.ToggleButtonModel toggleButtonModel,
-                                          ButtonGroup buttonGroup,
+                                          boolean radioButton,
                                           JPopupMenu menu) {
     Action action = getActionMap().get(actionType);
     if (action.getValue(Action.NAME) != null) {
-      menu.add(createToggleMenuItem(action, true, toggleButtonModel, buttonGroup));
+      menu.add(createToggleMenuItem(action, true, toggleButtonModel, radioButton));
     }
   }
 
@@ -1138,9 +1147,9 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.DECREASE_TEXT_SIZE, popup, modifyTextStyleMenu);
     modifyTextStyleMenu.addSeparator();
     addToggleActionToMenu(ActionType.TOGGLE_BOLD_STYLE, popup, 
-        this.boldStyleToggleModel, null, modifyTextStyleMenu);
+        this.boldStyleToggleModel, false, modifyTextStyleMenu);
     addToggleActionToMenu(ActionType.TOGGLE_ITALIC_STYLE, popup, 
-        this.italicStyleToggleModel, null, modifyTextStyleMenu);
+        this.italicStyleToggleModel, false, modifyTextStyleMenu);
     return modifyTextStyleMenu;
   }
 
@@ -1381,18 +1390,17 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.IMPORT_FURNITURE, toolBar);
     toolBar.addSeparator();
    
-    ButtonGroup group = new ButtonGroup();
-    addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, group, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_WALLS, this.createWallsToggleModel, group, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_ROOMS, this.createRoomsToggleModel, group, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, this.createDimensionLinesToggleModel, group, toolBar);
-    addToggleActionToToolBar(ActionType.CREATE_LABELS, this.createLabelsToggleModel, group, toolBar);
+    addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_WALLS, this.createWallsToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_ROOMS, this.createRoomsToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, this.createDimensionLinesToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.CREATE_LABELS, this.createLabelsToggleModel, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     addActionToToolBar(ActionType.INCREASE_TEXT_SIZE, toolBar);
     addActionToToolBar(ActionType.DECREASE_TEXT_SIZE, toolBar);
-    addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, this.boldStyleToggleModel, null, toolBar);
-    addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, this.italicStyleToggleModel, null, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_BOLD_STYLE, this.boldStyleToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.TOGGLE_ITALIC_STYLE, this.italicStyleToggleModel, toolBar);
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
     
     addActionToToolBar(ActionType.ZOOM_IN, toolBar);
@@ -1453,15 +1461,11 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private void addToggleActionToToolBar(ActionType actionType,
                                         JToggleButton.ToggleButtonModel toggleButtonModel,
-                                        ButtonGroup buttonGroup,
                                         JToolBar toolBar) {
     Action action = getActionMap().get(actionType);
     if (action.getValue(Action.NAME) != null) {
       Action toolBarAction = new ResourceAction.ToolBarAction(action);    
       JToggleButton toggleButton = new JToggleButton(toolBarAction);
-      if (buttonGroup != null) {
-        buttonGroup.add(toggleButton);
-      }
       toggleButton.setModel(toggleButtonModel);
       toolBar.add(toggleButton);
     }
@@ -1786,17 +1790,16 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.DELETE, planViewPopup);
     addActionToPopupMenu(ActionType.SELECT_ALL, planViewPopup);
     planViewPopup.addSeparator();
-    ButtonGroup group = new ButtonGroup();
     addToggleActionToPopupMenu(ActionType.SELECT, 
-        this.selectToggleModel, group, planViewPopup);
+        this.selectToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_WALLS, 
-        this.createWallsToggleModel, group, planViewPopup);
+        this.createWallsToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, 
-        this.createRoomsToggleModel, group, planViewPopup);
+        this.createRoomsToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_DIMENSION_LINES, 
-        this.createDimensionLinesToggleModel, group, planViewPopup);
+        this.createDimensionLinesToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_LABELS, 
-        this.createLabelsToggleModel, group, planViewPopup);
+        this.createLabelsToggleModel, true, planViewPopup);
     planViewPopup.addSeparator();
     JMenuItem lockUnlockBasePlanMenuItem = createLockUnlockBasePlanMenuItem(home, true);
     if (lockUnlockBasePlanMenuItem != null) {
@@ -1834,11 +1837,10 @@ public class HomePane extends JRootPane implements HomeView {
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
-    group = new ButtonGroup();
     addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
-        this.viewFromTopToggleModel, group, view3DPopup);
+        this.viewFromTopToggleModel, true, view3DPopup);
     addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
-        this.viewFromObserverToggleModel, group, view3DPopup);
+        this.viewFromObserverToggleModel, true, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
     view3DPopup.addSeparator();
