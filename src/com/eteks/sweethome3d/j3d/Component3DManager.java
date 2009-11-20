@@ -216,8 +216,12 @@ public class Component3DManager {
     } finally {
       if (offScreenCanvas != null) {
         view.removeCanvas3D(offScreenCanvas);
-        // Free off screen buffer and context
-        offScreenCanvas.setOffScreenBuffer(null);
+        try {
+          // Free off screen buffer and context
+          offScreenCanvas.setOffScreenBuffer(null);
+        } catch (NullPointerException ex) {
+          // Java 3D 1.3 may throw an exception
+        }
       }
       // Reset previous rendering error listener
       setRenderingErrorObserver(previousRenderingErrorObserver);
