@@ -779,9 +779,9 @@ public class HomeController implements Controller {
    */
   @SuppressWarnings("unchecked")
   private void addHomeItemsListener() {
-    CollectionListener<? extends Selectable> homeItemsListener = 
-        new CollectionListener<? extends Selectable>() {
-          public void collectionChanged(CollectionEvent<? extends Selectable> ev) {
+    CollectionListener homeItemsListener = 
+        new CollectionListener() {
+          public void collectionChanged(CollectionEvent ev) {
             if (ev.getType() == CollectionEvent.Type.ADD 
                 || ev.getType() == CollectionEvent.Type.DELETE) {
               enableSelectAllAction();
