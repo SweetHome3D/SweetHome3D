@@ -296,7 +296,7 @@ public class HomeFurnitureController implements Controller {
    */
   public void setNameVisible(Boolean nameVisible) {
     if (nameVisible != this.nameVisible) {
-      Boolean oldNameVisible = this.resizable;
+      Boolean oldNameVisible = this.nameVisible;
       this.nameVisible = nameVisible;
       this.propertyChangeSupport.firePropertyChange(Property.NAME_VISIBLE.name(), oldNameVisible, nameVisible);
     }
