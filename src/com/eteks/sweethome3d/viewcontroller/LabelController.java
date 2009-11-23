@@ -98,7 +98,7 @@ public class LabelController implements Controller {
     if (selectedLabels.isEmpty()) {
       setText(null); // Nothing to edit
     } else {
-      // Search the common properties among selected furniture
+      // Search the common properties among selected labels
       Label firstLabel = selectedLabels.get(0);
       String text = firstLabel.getText();
       if (text != null) {
@@ -337,7 +337,7 @@ public class LabelController implements Controller {
   }
 
   /**
-   * Restores furniture properties from the values stored in <code>modifiedLabels</code>.
+   * Restores label properties from the values stored in <code>modifiedLabels</code>.
    */
   private static void undoModifyLabels(ModifiedLabel [] modifiedLabels) {
     for (ModifiedLabel modifiedPiece : modifiedLabels) {
@@ -346,7 +346,7 @@ public class LabelController implements Controller {
   }
 
   /**
-   * Stores the current properties values of a modified label of furniture.
+   * Stores the current properties values of a modified label.
    */
   private static final class ModifiedLabel {
     private final Label  label;
