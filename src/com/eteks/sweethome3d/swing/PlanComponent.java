@@ -3388,25 +3388,37 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Sets the scale used to display the plan.
    * If this component is displayed in a viewport the view position is updated
-   * to ensure it remains unchanged in model coordinates system.
+   * to ensure the center's view will remain the same after the scale change.
    */
   public void setScale(float scale) {
     if (this.scale != scale) {
-      JViewport parent = (JViewport)getParent();
-      float xViewPosition = 0;
-      float yViewPosition = 0;
-      if (parent instanceof JViewport) {
-        Point viewPosition = parent.getViewPosition();
-        xViewPosition = convertXPixelToModel(viewPosition.x);
-        yViewPosition = convertYPixelToModel(viewPosition.y);
+      JViewport parent = null;
+      Rectangle viewRectangle = null;
+      float xViewCenterPosition = 0;
+      float yViewCenterPosition = 0;
+      if (getParent() instanceof JViewport) {
+        parent = (JViewport)getParent();
+        viewRectangle = parent.getViewRect();
+        xViewCenterPosition = (convertXPixelToModel(viewRectangle.x) 
+            + convertXPixelToModel(viewRectangle.x + viewRectangle.width)) / 2;
+        yViewCenterPosition = (convertYPixelToModel(viewRectangle.y)
+            + convertYPixelToModel(viewRectangle.y + viewRectangle.height)) / 2;
       }
       
       this.scale = scale;
       revalidate(false);
 
       if (parent instanceof JViewport) {
-        parent.setViewPosition(new Point(convertXModelToPixel(xViewPosition), 
-            convertYModelToPixel(yViewPosition)));
+        Dimension viewSize = parent.getViewSize();
+        float viewWidth = convertXPixelToModel(viewRectangle.x + viewRectangle.width) 
+            - convertXPixelToModel(viewRectangle.x);          
+        int xViewLocation = Math.max(0, Math.min(convertXModelToPixel(xViewCenterPosition - viewWidth / 2),
+            viewSize.width - viewRectangle.x));
+        float viewHeight = convertYPixelToModel(viewRectangle.y + viewRectangle.height) 
+            - convertYPixelToModel(viewRectangle.y);          
+        int yViewLocation = Math.max(0, Math.min(convertYModelToPixel(yViewCenterPosition - viewHeight / 2),
+            viewSize.height - viewRectangle.y));        
+        parent.setViewPosition(new Point(xViewLocation, yViewLocation));
       }
     }
   }
