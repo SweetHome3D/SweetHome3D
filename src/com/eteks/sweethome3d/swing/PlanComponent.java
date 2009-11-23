@@ -185,12 +185,16 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * @author Emmanuel Puybaret
  */
 public class PlanComponent extends JComponent implements PlanView, Scrollable, Printable {
+  /**
+   * The circumstances under which the home items displayed by this component will be painted. 
+   */
+  protected enum PaintMode {PAINT, PRINT, CLIPBOARD, EXPORT}
+  
   private enum ActionType {DELETE_SELECTION, ESCAPE, 
       MOVE_SELECTION_LEFT, MOVE_SELECTION_UP, MOVE_SELECTION_DOWN, MOVE_SELECTION_RIGHT,
       TOGGLE_MAGNETISM_ON, TOGGLE_MAGNETISM_OFF, 
       ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION, 
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
-  private enum PaintMode {PAINT, PRINT, CLIPBOARD, EXPORT}
   
   private static final float MARGIN = 40;
   
@@ -442,11 +446,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (furnitureTopViewIconsCache != null
               && HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
             furnitureTopViewIconsCache.remove(ev.getSource());
-          }
-          if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())) {
+            repaint();
+          } else if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())) {
             sortedHomeFurniture = null;
-          } 
-          invalidatePlanBoundsAndRevalidate();
+            repaint();
+          } else if (!HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())) {
+            revalidate();
+          }
         }
       };
     for (HomePieceOfFurniture piece : home.getFurniture()) {
@@ -460,7 +466,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             ev.getItem().removePropertyChangeListener(furnitureChangeListener);
           }
           sortedHomeFurniture = null;
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       });
     
@@ -476,7 +482,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Wall.Property.WALL_AT_END.name().equals(propertyName)
               || Wall.Property.THICKNESS.name().equals(propertyName)) {
             wallsAreaCache = null;
-            invalidatePlanBoundsAndRevalidate();
+            revalidate();
           }
         }
       };
@@ -491,7 +497,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             ev.getItem().removePropertyChangeListener(wallChangeListener);
           }
           wallsAreaCache = null;
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       });
     
@@ -508,7 +514,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Room.Property.AREA_Y_OFFSET.name().equals(ev.getPropertyName())
               || Room.Property.AREA_STYLE.name().equals(ev.getPropertyName())) {
             sortedHomeRooms = null;
-            invalidatePlanBoundsAndRevalidate();
+            revalidate();
           } else if (preferences.isRoomFloorColoredOrTextured()
                      && (Room.Property.FLOOR_COLOR.name().equals(ev.getPropertyName())
                          || Room.Property.FLOOR_TEXTURE.name().equals(ev.getPropertyName())
@@ -528,14 +534,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             ev.getItem().removePropertyChangeListener(roomChangeListener);
           }
           sortedHomeRooms = null;
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       });
 
     // Add listener to update plan when dimension lines change
     final PropertyChangeListener dimensionLineChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       };
     for (DimensionLine dimensionLine : home.getDimensionLines()) {
@@ -548,14 +554,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(dimensionLineChangeListener);
           }
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       });
 
     // Add listener to update plan when labels change
     final PropertyChangeListener labelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       };
     for (Label label : home.getLabels()) {
@@ -568,7 +574,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(labelChangeListener);
           }
-          invalidatePlanBoundsAndRevalidate();
+          revalidate();
         }
       });
 
@@ -580,7 +586,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               || Camera.Property.Z.name().equals(propertyName)
               || Camera.Property.FIELD_OF_VIEW.name().equals(propertyName)
               || Camera.Property.YAW.name().equals(propertyName)) {
-            invalidatePlanBoundsAndRevalidate();
+            revalidate();
           }
         }
       });
@@ -666,6 +672,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   @Override
   public void revalidate() {
+    revalidate(true);
+  }
+  
+  /**
+   * Revalidates this component after invalidating plan bounds cache if <code>invalidatePlanBoundsCache</code> is <code>true</code>
+   * and updates viewport position if this component is displayed in a scrolled pane.
+   */
+  private void revalidate(boolean invalidatePlanBoundsCache) {
+    boolean planBoundsCacheWereValid = this.planBoundsCacheValid;
+    final float planBoundsMinX = (float)getPlanBounds().getMinX();
+    final float planBoundsMinY = (float)getPlanBounds().getMinY();
+    if (invalidatePlanBoundsCache
+        && planBoundsCacheWereValid) {      
+      this.planBoundsCacheValid = false;
+    }
+    
+    // Revalidate and repaint
     super.revalidate();
     repaint();
     if (this.horizontalRuler != null) {
@@ -676,41 +699,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.verticalRuler.revalidate();
       this.verticalRuler.repaint();
     }
-  }
-
-  /**
-   * Invalidates plan bounds cache, revalidates this component and 
-   * updates viewport position if this component is displayed in a scrolled pane.
-   */
-  private void invalidatePlanBoundsAndRevalidate() {
-    if (this.planBoundsCacheValid) {      
-      final float planBoundsMinX = (float)getPlanBounds().getMinX();
-      final float planBoundsMinY = (float)getPlanBounds().getMinY();
-      final Point viewPosition = getParent() instanceof JViewport
-          ? ((JViewport)getParent()).getViewPosition()
-          : null;
       
-      this.planBoundsCacheValid = false;
-      
-      // Revalidate and repaint
-      revalidate();
-      
-      float planBoundsNewMinX = (float)getPlanBounds().getMinX();
-      float planBoundsNewMinY = (float)getPlanBounds().getMinY();
-      // If plan bounds upper left corner diminished
-      if (getParent() instanceof JViewport
-          && (planBoundsNewMinX < planBoundsMinX
-              || planBoundsNewMinY < planBoundsMinY)) {
-        JViewport parent = (JViewport)getParent();
-        Dimension extentSize = parent.getExtentSize();
-        Dimension viewSize = parent.getViewSize();
-        // Update view position when scroll bars are visible
-        if (extentSize.width < viewSize.width
-            || extentSize.height < viewSize.height) {
-          int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
-          int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
-          parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
-        }
+    final Point viewPosition = getParent() instanceof JViewport
+        ? ((JViewport)getParent()).getViewPosition()
+        : null;
+    float planBoundsNewMinX = (float)getPlanBounds().getMinX();
+    float planBoundsNewMinY = (float)getPlanBounds().getMinY();
+    // If plan bounds upper left corner diminished
+    if (getParent() instanceof JViewport
+        && (planBoundsNewMinX < planBoundsMinX
+            || planBoundsNewMinY < planBoundsMinY)) {
+      JViewport parent = (JViewport)getParent();
+      Dimension extentSize = parent.getExtentSize();
+      Dimension viewSize = parent.getViewSize();
+      // Update view position when scroll bars are visible
+      if (extentSize.width < viewSize.width
+          || extentSize.height < viewSize.height) {
+        int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
+        int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
+        parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
       }
     }
   }
@@ -1038,7 +1045,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         this.planBoundsCache.add(this.backgroundImageCache.getWidth() * backgroundImage.getScale() - backgroundImage.getXOrigin(),
             this.backgroundImageCache.getHeight() * backgroundImage.getScale() - backgroundImage.getYOrigin());
       }
-      Rectangle2D homeItemsBounds = getItemsBounds(getGraphics(), getHomeItems());
+      Rectangle2D homeItemsBounds = getItemsBounds(getGraphics(), getPaintedItems());
       if (homeItemsBounds != null) {
         this.planBoundsCache.add(homeItemsBounds);
       }
@@ -1052,11 +1059,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   
   /**
    * Returns the collection of walls, furniture, rooms and dimension lines of the home 
-   * displayed by this component.
+   * painted by this component.
    */
-  private List<Selectable> getHomeItems() {
+  protected List<Selectable> getPaintedItems() {
     List<Selectable> homeItems = new ArrayList<Selectable>(this.home.getWalls());
-    homeItems.addAll(this.home.getFurniture());
+    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+      if (piece.isVisible()) {
+        homeItems.add(piece);
+      }
+    }
     homeItems.addAll(this.home.getRooms());
     homeItems.addAll(this.home.getDimensionLines());
     homeItems.addAll(this.home.getLabels());
@@ -1067,6 +1078,28 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the bounds of the given collection of <code>items</code>.
    */
   private Rectangle2D getItemsBounds(Graphics g, Collection<Selectable> items) {
+    Rectangle2D itemsBounds = null;
+    for (Selectable item : items) {
+      if (itemsBounds == null) {
+        itemsBounds = getItemBounds(g, item);
+      } else {
+        itemsBounds.add(getItemBounds(g, item));
+      }
+    } 
+    return itemsBounds;
+  }
+  
+  /**
+   * Returns the bounds of the given <code>item</code>.
+   */
+  protected Rectangle2D getItemBounds(Graphics g, Selectable item) {
+    // Add to bounds all the visible items
+    float [][] points = item.getPoints();
+    Rectangle2D itemBounds = new Rectangle2D.Float(points [0][0], points [0][1], 0, 0);
+    for (int i = 1; i < points.length; i++) {
+      itemBounds.add(points [i][0], points [i][1]);
+    }
+    
     // Retrieve used font
     Font componentFont;
     if (g != null) {
@@ -1075,153 +1108,139 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       componentFont = getFont();
     }
     
-    Rectangle2D itemBounds = null;
-    for (Selectable item : items) {
-      if (!(item instanceof HomePieceOfFurniture)
-          || ((HomePieceOfFurniture)item).isVisible()) {
-        // Add to bounds all the visible items
-        for (float [] point : item.getPoints()) {
-          if (itemBounds == null) {
-            itemBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
-          } else {
-            itemBounds.add(point [0], point [1]);
-          }
-        }
-        if (item instanceof HomeDoorOrWindow) {
-          HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
-          // Add to bounds door and window sashes 
-          for (Sash sash : doorOrWindow.getSashes()) {
-            itemBounds.add(getDoorOrWindowSashShape(doorOrWindow, sash).getBounds2D());
-          }
+    if (item instanceof Room) {
+      // Add to bounds the displayed name and area bounds of each room 
+      Room room = (Room)item;
+      float xRoomCenter = room.getXCenter();
+      float yRoomCenter = room.getYCenter();
+      String roomName = room.getName();
+      if (roomName != null && roomName.length() > 0) {
+        float xName = xRoomCenter + room.getNameXOffset(); 
+        float yName = yRoomCenter + room.getNameYOffset();
+        TextStyle nameStyle = room.getNameStyle();
+        if (nameStyle == null) {
+          nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
+        }          
+        FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
+        Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
+        itemBounds.add(xName - nameBounds.getWidth() / 2, 
+            yName - nameFontMetrics.getAscent());
+        itemBounds.add(xName + nameBounds.getWidth() / 2, 
+            yName + nameFontMetrics.getDescent());
+      }
+      if (room.isAreaVisible()) {
+        float area = room.getArea();
+        if (area > 0.01f) {
+          float xArea = xRoomCenter + room.getAreaXOffset(); 
+          float yArea = yRoomCenter + room.getAreaYOffset();
+          String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
+          TextStyle areaStyle = room.getAreaStyle();
+          if (areaStyle == null) {
+            areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
+          }          
+          FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
+          Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
+          itemBounds.add(xArea - areaTextBounds.getWidth() / 2, 
+              yArea - areaFontMetrics.getAscent());
+          itemBounds.add(xArea + areaTextBounds.getWidth() / 2, 
+              yArea + areaFontMetrics.getDescent());
         }
       }
-      if (item instanceof Room) {
-        // Add to bounds the displayed name and area bounds of each room 
-        Room room = (Room)item;
-        float xRoomCenter = room.getXCenter();
-        float yRoomCenter = room.getYCenter();
-        String roomName = room.getName();
-        if (roomName != null && roomName.length() > 0) {
-          float xName = xRoomCenter + room.getNameXOffset(); 
-          float yName = yRoomCenter + room.getNameYOffset();
-          TextStyle nameStyle = room.getNameStyle();
-          if (nameStyle == null) {
-            nameStyle = this.preferences.getDefaultTextStyle(room.getClass());
-          }          
-          FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
-          Rectangle2D nameBounds = nameFontMetrics.getStringBounds(roomName, g);
-          itemBounds.add(xName - nameBounds.getWidth() / 2, 
-              yName - nameFontMetrics.getAscent());
-          itemBounds.add(xName + nameBounds.getWidth() / 2, 
-              yName + nameFontMetrics.getDescent());
+    } else if (item instanceof HomePieceOfFurniture) {
+      if (item instanceof HomeDoorOrWindow) {
+        HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)item;
+        // Add to bounds door and window sashes 
+        for (Sash sash : doorOrWindow.getSashes()) {
+          itemBounds.add(getDoorOrWindowSashShape(doorOrWindow, sash).getBounds2D());
         }
-        if (room.isAreaVisible()) {
-          float area = room.getArea();
-          if (area > 0.01f) {
-            float xArea = xRoomCenter + room.getAreaXOffset(); 
-            float yArea = yRoomCenter + room.getAreaYOffset();
-            String areaText = this.preferences.getLengthUnit().getAreaFormatWithUnit().format(area);
-            TextStyle areaStyle = room.getAreaStyle();
-            if (areaStyle == null) {
-              areaStyle = this.preferences.getDefaultTextStyle(room.getClass());
-            }          
-            FontMetrics areaFontMetrics = getFontMetrics(componentFont, areaStyle);
-            Rectangle2D areaTextBounds = areaFontMetrics.getStringBounds(areaText, g);
-            itemBounds.add(xArea - areaTextBounds.getWidth() / 2, 
-                yArea - areaFontMetrics.getAscent());
-            itemBounds.add(xArea + areaTextBounds.getWidth() / 2, 
-                yArea + areaFontMetrics.getDescent());
-          }
-        }
-      } else if (item instanceof HomePieceOfFurniture) {
-        // Add to bounds the displayed name of piece of furniture 
-        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-        float xPiece = piece.getX();
-        float yPiece = piece.getY();
-        String pieceName = piece.getName();
-        if (piece.isVisible()
-            && piece.isNameVisible()
-            && pieceName.length() > 0) {
-          float xName = xPiece + piece.getNameXOffset(); 
-          float yName = yPiece + piece.getNameYOffset();
-          TextStyle nameStyle = piece.getNameStyle();
-          if (nameStyle == null) {
-            nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
-          }          
-          FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
-          Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
-          itemBounds.add(xName - nameBounds.getWidth() / 2, 
-              yName - nameFontMetrics.getAscent());
-          itemBounds.add(xName + nameBounds.getWidth() / 2, 
-              yName + nameFontMetrics.getDescent());
-        }
-      } else if (item instanceof DimensionLine) {
-        // Add to bounds the text bounds of dimension line length 
-        DimensionLine dimensionLine = (DimensionLine)item;
-        float dimensionLineLength = dimensionLine.getLength();
-        String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
-        TextStyle lengthStyle = dimensionLine.getLengthStyle();
-        if (lengthStyle == null) {
-          lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
+      }
+      // Add to bounds the displayed name of the piece of furniture 
+      HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+      float xPiece = piece.getX();
+      float yPiece = piece.getY();
+      String pieceName = piece.getName();
+      if (piece.isVisible()
+          && piece.isNameVisible()
+          && pieceName.length() > 0) {
+        float xName = xPiece + piece.getNameXOffset(); 
+        float yName = yPiece + piece.getNameYOffset();
+        TextStyle nameStyle = piece.getNameStyle();
+        if (nameStyle == null) {
+          nameStyle = this.preferences.getDefaultTextStyle(piece.getClass());
         }          
-        FontMetrics lengthFontMetrics = getFontMetrics(componentFont, lengthStyle);
-        Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g);
-        // Transform length text bounding rectangle corners to their real location
-        double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
-            dimensionLine.getXEnd() - dimensionLine.getXStart());
-        AffineTransform transform = new AffineTransform();
-        transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
-        transform.rotate(angle);
-        transform.translate(0, dimensionLine.getOffset());
-        transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2, 
-            dimensionLine.getOffset() <= 0 
-                ? -lengthFontMetrics.getDescent() - 1
-                : lengthFontMetrics.getAscent() + 1);
-        GeneralPath lengthTextBoundsPath = new GeneralPath(lengthTextBounds);
-        for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); ) {
-          float [] pathPoint = new float[2];
-          if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            itemBounds.add(pathPoint [0], pathPoint [1]);
-          }
-          it.next();
+        FontMetrics nameFontMetrics = getFontMetrics(componentFont, nameStyle);
+        Rectangle2D nameBounds = nameFontMetrics.getStringBounds(pieceName, g);
+        itemBounds.add(xName - nameBounds.getWidth() / 2, 
+            yName - nameFontMetrics.getAscent());
+        itemBounds.add(xName + nameBounds.getWidth() / 2, 
+            yName + nameFontMetrics.getDescent());
+      }
+    } else if (item instanceof DimensionLine) {
+      // Add to bounds the text bounds of the dimension line length 
+      DimensionLine dimensionLine = (DimensionLine)item;
+      float dimensionLineLength = dimensionLine.getLength();
+      String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
+      TextStyle lengthStyle = dimensionLine.getLengthStyle();
+      if (lengthStyle == null) {
+        lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
+      }          
+      FontMetrics lengthFontMetrics = getFontMetrics(componentFont, lengthStyle);
+      Rectangle2D lengthTextBounds = lengthFontMetrics.getStringBounds(lengthText, g);
+      // Transform length text bounding rectangle corners to their real location
+      double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
+          dimensionLine.getXEnd() - dimensionLine.getXStart());
+      AffineTransform transform = new AffineTransform();
+      transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      transform.rotate(angle);
+      transform.translate(0, dimensionLine.getOffset());
+      transform.translate((dimensionLineLength - lengthTextBounds.getWidth()) / 2, 
+          dimensionLine.getOffset() <= 0 
+              ? -lengthFontMetrics.getDescent() - 1
+              : lengthFontMetrics.getAscent() + 1);
+      GeneralPath lengthTextBoundsPath = new GeneralPath(lengthTextBounds);
+      for (PathIterator it = lengthTextBoundsPath.getPathIterator(transform); !it.isDone(); ) {
+        float [] pathPoint = new float[2];
+        if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+          itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-        // Add to bounds the end lines drawn at dimension line start and end  
-        transform = new AffineTransform();
-        transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
-        transform.rotate(angle);
-        transform.translate(0, dimensionLine.getOffset());
-        for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
-          float [] pathPoint = new float[2];
-          if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            itemBounds.add(pathPoint [0], pathPoint [1]);
-          }
-          it.next();
+        it.next();
+      }
+      // Add to bounds the end lines drawn at dimension line start and end  
+      transform = new AffineTransform();
+      transform.translate(dimensionLine.getXStart(), dimensionLine.getYStart());
+      transform.rotate(angle);
+      transform.translate(0, dimensionLine.getOffset());
+      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
+        float [] pathPoint = new float[2];
+        if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+          itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-        transform.translate(dimensionLineLength, 0);
-        for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
-          float [] pathPoint = new float[2];
-          if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
-            itemBounds.add(pathPoint [0], pathPoint [1]);
-          }
-          it.next();
+        it.next();
+      }
+      transform.translate(dimensionLineLength, 0);
+      for (PathIterator it = DIMENSION_LINE_END.getPathIterator(transform); !it.isDone(); ) {
+        float [] pathPoint = new float[2];
+        if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE) {
+          itemBounds.add(pathPoint [0], pathPoint [1]);
         }
-      } else if (item instanceof Label) {
-        // Add to bounds the displayed text of a label 
-        Label label = (Label)item;
-        float xLabel = label.getX();
-        float yLabel = label.getY();
-        String labelText = label.getText();
-        TextStyle labelStyle = label.getStyle();
-        if (labelStyle == null) {
-          labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
-        }          
-        FontMetrics labelFontMetrics = getFontMetrics(componentFont, labelStyle);
-        Rectangle2D labelBounds = labelFontMetrics.getStringBounds(labelText, g);
-        itemBounds.add(xLabel - labelBounds.getWidth() / 2, 
-            yLabel - labelFontMetrics.getAscent());
-        itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
-            yLabel + labelFontMetrics.getDescent());
-      } 
+        it.next();
+      }
+    } else if (item instanceof Label) {
+      // Add to bounds the displayed text of a label 
+      Label label = (Label)item;
+      float xLabel = label.getX();
+      float yLabel = label.getY();
+      String labelText = label.getText();
+      TextStyle labelStyle = label.getStyle();
+      if (labelStyle == null) {
+        labelStyle = this.preferences.getDefaultTextStyle(label.getClass());
+      }          
+      FontMetrics labelFontMetrics = getFontMetrics(componentFont, labelStyle);
+      Rectangle2D labelBounds = labelFontMetrics.getStringBounds(labelText, g);
+      itemBounds.add(xLabel - labelBounds.getWidth() / 2, 
+          yLabel - labelFontMetrics.getAscent());
+      itemBounds.add(xLabel + labelBounds.getWidth() / 2, 
+          yLabel + labelFontMetrics.getDescent());
     } 
     return itemBounds;
   }
@@ -1276,7 +1295,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (textStyle.isItalic()) {
         fontStyle |= Font.ITALIC;
       }
-      font = new Font(defaultFont.getName(), fontStyle, 1);
+      String fontName = null;
+      if (defaultFont != null) {
+        fontName = defaultFont.getName();
+      } else {
+        fontName = null;
+      }
+      font = new Font(fontName, fontStyle, 1);
       font = font.deriveFont(textStyle.getFontSize());
       this.fonts.put(textStyle, font);
     }
@@ -1337,7 +1362,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * to make it fill <code>pageFormat</code> imageable size.
    */
   public float getPrintPreferredScale(Graphics g, PageFormat pageFormat) {
-    List<Selectable> printedItems = getHomeItems(); 
+    List<Selectable> printedItems = getPaintedItems(); 
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null) {
       float imageableWidthCm = LengthUnit.inchToCentimeter((float)pageFormat.getImageableWidth() / 72);
@@ -1371,7 +1396,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * that makes it fill <code>pageFormat</code> imageable size if this attribute is <code>null</code>.
    */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-    List<Selectable> printedItems = getHomeItems(); 
+    List<Selectable> printedItems = getPaintedItems(); 
     Rectangle2D printedItemBounds = getItemsBounds(g, printedItems);
     if (printedItemBounds != null && pageIndex == 0) {
       // Compute a scale that ensures the plan will fill the component if plan scale is null
@@ -1461,7 +1486,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static class SVGSupport {
     public static void exportToSVG(OutputStream outputStream, 
                                    PlanComponent planComponent) throws IOException {
-      List<Selectable> homeItems = planComponent.getHomeItems();
+      List<Selectable> homeItems = planComponent.getPaintedItems();
       Rectangle2D svgItemBounds = planComponent.getItemsBounds(null, homeItems);
       if (svgItemBounds == null) {
         svgItemBounds = new Rectangle2D.Float();
@@ -1552,8 +1577,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 // Ignore exceptions, the user may know its background image is incorrect 
                 // if he tries to modify the background image
               } 
-              invalidatePlanBoundsAndRevalidate();
-              repaint();
+              revalidate();
             } 
           });
       } else {
@@ -1656,19 +1680,80 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void paintContent(Graphics2D g2D, float planScale, 
                             Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
+    paintHomeItems(g2D, planScale, backgroundColor, foregroundColor, paintMode);
+        
+    if (paintMode == PaintMode.PAINT) {
+      List<Selectable> selectedItems = this.home.getSelectedItems();
+      
+      Color selectionColor = getSelectionColor(); 
+      Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
+          selectionColor.getBlue(), 128);
+      Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
+          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+      Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
+          BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+      Stroke locationFeedbackStroke = new BasicStroke(
+          1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+          new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
+      
+      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
+          planScale, backgroundColor, foregroundColor);
+      
+      // Paint alignment feedback depending on aligned object class
+      if (this.alignedObjectClass != null) {
+        if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback, 
+              selectionColor, locationFeedbackStroke, planScale,
+              selectionOutlinePaint, selectionOutlineStroke);
+        } else if (Room.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
+              selectionColor, locationFeedbackStroke, planScale,
+              selectionOutlinePaint, selectionOutlineStroke);
+        } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
+          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
+              selectionColor, locationFeedbackStroke, planScale);
+        }
+      }
+      if (this.centerAngleFeedback != null) {
+       paintAngleFeedback(g2D, this.centerAngleFeedback, this.point1AngleFeedback, this.point2AngleFeedback, 
+           planScale, selectionColor); 
+      }
+      if (this.dimensionLinesFeedback != null) {
+        List<Selectable> emptySelection = Collections.emptyList();        
+        paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection, 
+            null, null, null, locationFeedbackStroke, planScale, 
+            backgroundColor, selectionColor, paintMode, true);
+      }
+      
+      if (this.draggedItemsFeedback != null) {
+        paintDimensionLines(g2D, Home.getDimensionLinesSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null, 
+            locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
+        paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
+            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
+            planScale, foregroundColor, paintMode);
+        paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+        paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, 
+            foregroundColor, paintMode, false);
+        paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
+            planScale, foregroundColor);
+      }
+      
+      paintRectangleFeedback(g2D, selectionColor, planScale);
+    }
+  }
+  
+  /**
+   * Paints home items at the given scale, and with background and foreground colors.
+   * Outline around selected items will be painted only under <code>PAINT</code> mode. 
+   */
+  protected void paintHomeItems(Graphics g, float planScale, 
+                                Color backgroundColor, Color foregroundColor, PaintMode paintMode) throws InterruptedIOException {
+    Graphics2D g2D = (Graphics2D)g;
     List<Selectable> selectedItems = this.home.getSelectedItems();
-    
-    Color selectionColor = getSelectionColor(); 
-    Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
-        selectionColor.getBlue(), 128);
-    Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
-        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
-    Stroke locationFeedbackStroke = new BasicStroke(
-        1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
-        new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
-    
     if (this.sortedHomeFurniture == null) {
       // Sort home furniture in elevation order
       this.sortedHomeFurniture = 
@@ -1686,7 +1771,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               }
             }
           });
-    }
+    }    
+    
+    Color selectionColor = getSelectionColor(); 
+    Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
+        selectionColor.getBlue(), 128);
+    Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+    Stroke dimensionLinesSelectionOutlineStroke = new BasicStroke(4 / planScale, 
+        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND); 
+    Stroke locationFeedbackStroke = new BasicStroke(
+        1 / planScale, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL, 0, 
+        new float [] {20 / planScale, 5 / planScale, 5 / planScale, 5 / planScale}, 4 / planScale);
     
     checkCurrentThreadIsntInterrupted(paintMode);
     paintRooms(g2D, selectedItems, planScale, foregroundColor, paintMode);
@@ -1721,61 +1817,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           planScale, foregroundColor);
       paintFurnitureOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
-      
-      paintCamera(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
-          planScale, backgroundColor, foregroundColor);
-      
-      // Paint alignment feedback depending on aligned object class
-      if (this.alignedObjectClass != null) {
-        if (Wall.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintWallAlignmentFeedback(g2D, (Wall)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback, 
-              selectionColor, locationFeedbackStroke, planScale,
-              selectionOutlinePaint, selectionOutlineStroke);
-        } else if (Room.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintRoomAlignmentFeedback(g2D, (Room)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,
-              selectionColor, locationFeedbackStroke, planScale,
-              selectionOutlinePaint, selectionOutlineStroke);
-        } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
-              selectionColor, locationFeedbackStroke, planScale);
-        }
-      }
-      if (this.centerAngleFeedback != null) {
-       paintAngleFeddback(g2D, this.centerAngleFeedback, this.point1AngleFeedback, this.point2AngleFeedback, 
-           planScale, selectionColor); 
-      }
-      if (this.dimensionLinesFeedback != null) {
-        List<Selectable> emptySelection = Collections.emptyList();        
-        paintDimensionLines(g2D, this.dimensionLinesFeedback, emptySelection, 
-            null, null, null, locationFeedbackStroke, planScale, 
-            backgroundColor, selectionColor, paintMode, true);
-      }
-      
-      if (this.draggedItemsFeedback != null) {
-        paintDimensionLines(g2D, Home.getDimensionLinesSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
-            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, null, 
-            locationFeedbackStroke, planScale, backgroundColor, foregroundColor, paintMode, false);
-        paintLabels(g2D, Home.getLabelsSubList(this.draggedItemsFeedback), this.draggedItemsFeedback, 
-            selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
-            planScale, foregroundColor, paintMode);
-        paintRoomsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
-            planScale, foregroundColor);
-        paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
-            planScale, foregroundColor);
-        paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, 
-            foregroundColor, paintMode, false);
-        paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
-            planScale, foregroundColor);
-      }
-      
-      paintRectangleFeedback(g2D, selectionColor, planScale);
     }
   }
 
   /**
    * Returns the color used to draw selection outlines. 
    */
-  private Color getSelectionColor() {
+  protected Color getSelectionColor() {
     if (OperatingSystem.isMacOSX()) {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         Color selectionColor = UIManager.getColor("Focus.color");
@@ -2231,68 +2279,70 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               List<Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, 
                               PaintMode paintMode, boolean paintIcon) {    
-    BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-    Composite oldComposite = g2D.getComposite();
-    final boolean allFurnitureViewedFromTop = 
-        this.preferences.isFurnitureViewedFromTop()
-        && Component3DManager.getInstance().isOffScreenImageSupported();
-    
-    // Draw furniture
-    for (HomePieceOfFurniture piece : furniture) {
-      if (piece.isVisible()) {
-        boolean selectedPiece = selectedItems.contains(piece);
-        // In clipboard paint mode, paint piece only if it is selected
-        if (paintMode != PaintMode.CLIPBOARD
-            || selectedPiece) {
-          Shape pieceShape = getShape(piece.getPoints());
-          Shape pieceShape2D;
-          if (piece instanceof HomeDoorOrWindow) {
-            HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
-            pieceShape2D = getDoorOrWindowShapeAtWallIntersection(doorOrWindow);
-            paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor);
-          } else {
-            pieceShape2D = pieceShape;
-          }
-                    
-          if (paintIcon 
-              && (allFurnitureViewedFromTop
-                  || this.preferences.isFurnitureViewedFromTop()
-                      && piece.getPlanIcon() != null)) {
+    if (!furniture.isEmpty()) {
+      BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
+      Composite oldComposite = g2D.getComposite();
+      final boolean allFurnitureViewedFromTop = 
+          this.preferences.isFurnitureViewedFromTop()
+          && Component3DManager.getInstance().isOffScreenImageSupported();
+      
+      // Draw furniture
+      for (HomePieceOfFurniture piece : furniture) {
+        if (piece.isVisible()) {
+          boolean selectedPiece = selectedItems.contains(piece);
+          // In clipboard paint mode, paint piece only if it is selected
+          if (paintMode != PaintMode.CLIPBOARD
+              || selectedPiece) {
+            Shape pieceShape = getShape(piece.getPoints());
+            Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
-              // Draw doors and windows border
-              g2D.setPaint(backgroundColor);
-              g2D.fill(pieceShape2D);
+              HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+              pieceShape2D = getDoorOrWindowShapeAtWallIntersection(doorOrWindow);
+              paintDoorOrWindowSashes(g2D, doorOrWindow, planScale, foregroundColor);
+            } else {
+              pieceShape2D = pieceShape;
+            }
+                      
+            if (paintIcon 
+                && (allFurnitureViewedFromTop
+                    || this.preferences.isFurnitureViewedFromTop()
+                        && piece.getPlanIcon() != null)) {
+              if (piece instanceof HomeDoorOrWindow) {
+                // Draw doors and windows border
+                g2D.setPaint(backgroundColor);
+                g2D.fill(pieceShape2D);
+                g2D.setPaint(foregroundColor);
+                g2D.setStroke(pieceBorderStroke);
+                g2D.draw(pieceShape2D);
+              } else {
+                paintPieceOfFurnitureTop(g2D, piece, pieceShape2D, pieceBorderStroke, planScale, 
+                    backgroundColor, foregroundColor, paintMode);
+              }
+              if (paintMode == PaintMode.PAINT) {
+                // Draw selection outline rectangle  
+                g2D.setStroke(pieceBorderStroke);
+                g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+                g2D.draw(pieceShape);
+                g2D.setComposite(oldComposite);
+              } 
+            } else {
+              if (paintIcon) {
+                // Draw its icon
+                paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale, 
+                    backgroundColor, paintMode);
+              }
+              // Draw its border
               g2D.setPaint(foregroundColor);
               g2D.setStroke(pieceBorderStroke);
               g2D.draw(pieceShape2D);
-            } else {
-              paintPieceOfFurnitureTop(g2D, piece, pieceShape2D, pieceBorderStroke, planScale, 
-                  backgroundColor, foregroundColor, paintMode);
+              if (piece instanceof HomeDoorOrWindow
+                  && paintMode == PaintMode.PAINT) {
+                // Draw outline rectangle
+                g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+                g2D.draw(pieceShape);
+                g2D.setComposite(oldComposite);
+              } 
             }
-            if (paintMode == PaintMode.PAINT) {
-              // Draw selection outline rectangle  
-              g2D.setStroke(pieceBorderStroke);
-              g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
-              g2D.draw(pieceShape);
-              g2D.setComposite(oldComposite);
-            } 
-          } else {
-            if (paintIcon) {
-              // Draw its icon
-              paintPieceOfFurnitureIcon(g2D, piece, pieceShape2D, planScale, 
-                  backgroundColor, paintMode);
-            }
-            // Draw its border
-            g2D.setPaint(foregroundColor);
-            g2D.setStroke(pieceBorderStroke);
-            g2D.draw(pieceShape2D);
-            if (piece instanceof HomeDoorOrWindow
-                && paintMode == PaintMode.PAINT) {
-              // Draw outline rectangle
-              g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
-              g2D.draw(pieceShape);
-              g2D.setComposite(oldComposite);
-            } 
           }
         }
       }
@@ -3126,7 +3176,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Paints an arc centered at <code>center</code> point that goes
    */
-  private void paintAngleFeddback(Graphics2D g2D, Point2D center, 
+  private void paintAngleFeedback(Graphics2D g2D, Point2D center, 
                                   Point2D point1, Point2D point2,
                                   float planScale, Color selectionColor) {
     g2D.setColor(selectionColor);
@@ -3352,7 +3402,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       }
       
       this.scale = scale;
-      revalidate();
+      revalidate(false);
 
       if (parent instanceof JViewport) {
         parent.setViewPosition(new Point(convertXModelToPixel(xViewPosition), 
