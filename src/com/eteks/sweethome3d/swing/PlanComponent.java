@@ -1282,7 +1282,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the AWT font matching a given text style.
    */
-  private Font getFont(Font defaultFont, TextStyle textStyle) {
+  protected Font getFont(Font defaultFont, TextStyle textStyle) {
     if (this.fonts == null) {
       this.fonts = new WeakHashMap<TextStyle, Font>();
     }
@@ -1311,7 +1311,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the font metrics matching a given text style.
    */
-  private FontMetrics getFontMetrics(Font defaultFont, TextStyle textStyle) {
+  protected FontMetrics getFontMetrics(Font defaultFont, TextStyle textStyle) {
     if (this.fontsMetrics == null) {
       this.fontsMetrics = new WeakHashMap<TextStyle, FontMetrics>();
     }
@@ -2436,7 +2436,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             }          
             FontMetrics nameFontMetrics = getFontMetrics(previousFont, nameStyle);
             Rectangle2D nameBounds = nameFontMetrics.getStringBounds(name, g2D);
-            // Draw room name
+            // Draw piece name
             g2D.setFont(getFont(previousFont, nameStyle));
             g2D.drawString(name, xName - (float)nameBounds.getWidth() / 2, yName);
           }
