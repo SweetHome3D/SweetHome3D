@@ -700,24 +700,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       this.verticalRuler.repaint();
     }
       
-    final Point viewPosition = getParent() instanceof JViewport
-        ? ((JViewport)getParent()).getViewPosition()
-        : null;
-    float planBoundsNewMinX = (float)getPlanBounds().getMinX();
-    float planBoundsNewMinY = (float)getPlanBounds().getMinY();
-    // If plan bounds upper left corner diminished
-    if (getParent() instanceof JViewport
-        && (planBoundsNewMinX < planBoundsMinX
-            || planBoundsNewMinY < planBoundsMinY)) {
-      JViewport parent = (JViewport)getParent();
-      Dimension extentSize = parent.getExtentSize();
-      Dimension viewSize = parent.getViewSize();
-      // Update view position when scroll bars are visible
-      if (extentSize.width < viewSize.width
-          || extentSize.height < viewSize.height) {
-        int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
-        int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
-        parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+    if (invalidatePlanBoundsCache
+        && getParent() instanceof JViewport) {
+      float planBoundsNewMinX = (float)getPlanBounds().getMinX();
+      float planBoundsNewMinY = (float)getPlanBounds().getMinY();
+      // If plan bounds upper left corner diminished
+      if (planBoundsNewMinX < planBoundsMinX
+          || planBoundsNewMinY < planBoundsMinY) {
+        JViewport parent = (JViewport)getParent();
+        final Point viewPosition = parent.getViewPosition();
+        Dimension extentSize = parent.getExtentSize();
+        Dimension viewSize = parent.getViewSize();
+        // Update view position when scroll bars are visible
+        if (extentSize.width < viewSize.width
+            || extentSize.height < viewSize.height) {
+          int deltaX = Math.round((planBoundsMinX - planBoundsNewMinX) * getScale());
+          int deltaY = Math.round((planBoundsMinY - planBoundsNewMinY) * getScale());
+          parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
+        }
       }
     }
   }
