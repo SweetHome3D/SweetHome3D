@@ -56,6 +56,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import com.eteks.sweethome3d.io.DefaultFurnitureCatalog;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -348,7 +349,9 @@ public class SweetHome3D extends HomeApplication {
     System.setProperty("sun.swing.enableImprovedDragGesture", "true");
     if (OperatingSystem.isMacOSX()) {
       // Change Mac OS X application menu name
-      ResourceBundle resource = ResourceBundle.getBundle(SweetHome3D.class.getPackage().getName() + "." + "package");
+      String classPackage = SweetHome3D.class.getName();
+      classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
+      ResourceBundle resource = ResourceBundle.getBundle(classPackage + "." + "package");
       String applicationName = resource.getString("SweetHome3D.applicationName");
       System.setProperty("com.apple.mrj.application.apple.menu.about.name", applicationName);
       // Use Mac OS X screen menu bar for frames menu bar
