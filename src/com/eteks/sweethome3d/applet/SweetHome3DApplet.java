@@ -288,7 +288,7 @@ public class SweetHome3DApplet extends JApplet {
           (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
       
       // Call application constructor with reflection
-      String applicationClassName = "com.eteks.sweethome3d.applet.AppletApplication";
+      String applicationClassName = getApplicationClassName();
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
       Constructor applicationConstructor = 
           applicationClass.getConstructor(new Class [] {JApplet.class});
@@ -306,6 +306,14 @@ public class SweetHome3DApplet extends JApplet {
         ex.printStackTrace();
       }
     }
+  }
+
+  /**
+   * Returns the name of the {@linkplain AppletApplication application} class associated to this applet. 
+   * This class must have a constructor taking in parameter a <code>JApplet</code>. 
+   */
+  protected String getApplicationClassName() {
+    return "com.eteks.sweethome3d.applet.AppletApplication";
   }  
   
   /**
