@@ -209,7 +209,7 @@
     </zip>
  
     <!-- Create java3d.jar containing Java 3D DLLs and jars for Windows, Linux 32/64 bits and Mac OS X 
-         (this library is used for Java versions older than Java SE 6 update 10) -->
+         (this library is used when Javascript doesn't succeed to detect user's OS) -->
     <zip destfile="deploy/lib/java3d.jar">
       <fileset dir="lib">
         <include name="windows/*.dll"/>
