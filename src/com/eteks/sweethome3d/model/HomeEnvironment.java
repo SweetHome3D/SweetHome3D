@@ -67,7 +67,7 @@ public class HomeEnvironment implements Serializable {
     this(0xE0E0E0, // Ground color
         null,      // Ground texture
         (204 << 16) + (228 << 8) + 252, // Sky color
-        0xF0F0F0,  // Light color
+        0xD0D0D0,  // Light color
         0);        // Walls alpha
   }
 
