@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.jnlp.BasicService;
@@ -155,30 +156,18 @@ public class AppletApplication extends HomeApplication {
           switch (ev.getType()) {
             case ADD :
               try {
-                HomeController controller = createHomeController(home);
+                final HomeController controller = createHomeController(home);
                 // Change applet content 
                 applet.setContentPane((JComponent)controller.getView());
                 applet.getRootPane().revalidate();
                 
                 if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                   // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-                  final List<JComponent> focusableComponents = new ArrayList<JComponent>();
-                  if (controller.getFurnitureCatalogController() != null
-                      && controller.getFurnitureCatalogController().getView() != null) {
-                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
-                  }
-                  if (controller.getFurnitureController() != null
-                      && controller.getFurnitureController().getView() != null) {
-                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
-                  }
-                  if (controller.getPlanController() != null
-                      && controller.getPlanController().getView() != null) {
-                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
-                  }
-                  if (controller.getHomeController3D() != null
-                      && controller.getHomeController3D().getView() != null) {
-                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
-                  }
+                  final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
+                      (JComponent)controller.getFurnitureCatalogController().getView(),
+                      (JComponent)controller.getFurnitureController().getView(),
+                      (JComponent)controller.getPlanController().getView(),
+                      (JComponent)controller.getHomeController3D().getView()});      
                   applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
                       @Override
                       public Component getComponentAfter(Container container, Component component) {
@@ -227,6 +216,8 @@ public class AppletApplication extends HomeApplication {
     
     EventQueue.invokeLater(new Runnable() {
         public void run() {
+          
+          
           // Create a home in Event Dispatch Thread 
           addHome(createHome());
           
