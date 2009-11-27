@@ -480,7 +480,9 @@ public class AppletApplication extends HomeApplication {
             PlanController.Mode mode = controller.getPlanController().getMode();
             selectToggleButton.setSelected(mode == PlanController.Mode.SELECTION);
             createWallsToggleButton.setSelected(mode == PlanController.Mode.WALL_CREATION);
+            createRoomsToggleButton.setSelected(mode == PlanController.Mode.ROOM_CREATION);
             createDimensionLinesToggleButton.setSelected(mode == PlanController.Mode.DIMENSION_LINE_CREATION);
+            createLabelsToggleButton.setSelected(mode == PlanController.Mode.LABEL_CREATION);
           }
         });
     toolBar.add(Box.createRigidArea(new Dimension(2, 2)));
