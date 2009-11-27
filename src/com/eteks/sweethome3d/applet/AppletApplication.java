@@ -35,7 +35,6 @@ import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.jnlp.BasicService;
@@ -81,7 +80,6 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
-import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 
 /**
  * An application wrapper working in applet. 
@@ -105,33 +103,28 @@ public class AppletApplication extends HomeApplication {
   private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
   private static final String   USER_LANGUAGE                    = "userLanguage";
   
-  private final HomeRecorder    homeRecorder;
-  private final UserPreferences userPreferences;
-  private       Timer           memoryStatusTimer;
+  private JApplet         applet;
+  private final String    name;
+  private HomeRecorder    homeRecorder;
+  private UserPreferences userPreferences;
+  private ContentManager  contentManager;
+  private ViewFactory     viewFactory;
+  private PluginManager   pluginManager;
+  private Timer           memoryStatusTimer;
 
   public AppletApplication(final JApplet applet) {
-    final String furnitureCatalogURLs = getAppletParameter(applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
-    final String texturesCatalogURLs = getAppletParameter(applet, TEXTURES_CATALOG_URLS_PARAMETER, "catalog.zip");
-    final String pluginURLs = getAppletParameter(applet, PLUGIN_URLS_PARAMETER, "");
-    final String writeHomeURL = getAppletParameter(applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
+    this.applet = applet;
+    if (applet.getName() == null) {
+      this.name = super.getName();
+    } else {
+      this.name = applet.getName();
+    }
+    
     final String readHomeURL = getAppletParameter(applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
-    final String listHomesURL = getAppletParameter(applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
-    final String readPreferencesURL = getAppletParameter(applet, READ_PREFERENCES_URL_PARAMETER, "");    
-    final String writePreferencesURL = getAppletParameter(applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
     final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
     final boolean showMemoryStatus = getAppletBooleanParameter(applet, SHOW_MEMORY_STATUS_PARAMETER);
-    final String userLanguage = getAppletParameter(applet, USER_LANGUAGE, null);    
 
     URL codeBase = applet.getCodeBase();
-    this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
-        getURLStringWithCodeBase(codeBase, readHomeURL), 
-        getURLStringWithCodeBase(codeBase, listHomesURL));
-    this.userPreferences = new AppletUserPreferences(
-        getURLs(codeBase, furnitureCatalogURLs), 
-        getURLs(codeBase, texturesCatalogURLs),
-        getURLWithCodeBase(codeBase, writePreferencesURL), 
-        getURLWithCodeBase(codeBase, readPreferencesURL),
-        userLanguage);
 
     // If Sweet Home 3D applet is launched from outside of Java Web Start or basic service is unavailable
     boolean serviceManagerAvailable = ServiceManager.getServiceNames() != null; 
@@ -146,14 +139,10 @@ public class AppletApplication extends HomeApplication {
     if (!serviceManagerAvailable) {
       // Create JNLP services required by Sweet Home 3D 
       ServiceManager.setServiceManagerStub(
-          new StandaloneServiceManager(applet.getAppletContext(), codeBase));
+          new StandaloneServiceManager(applet.getAppletContext(), codeBase, this.name));
       // Caution: setting a new service manager stub won't replace the existing one,
     }          
-
-    final ViewFactory viewFactory = new SwingViewFactory();
-    final ContentManager contentManager = new AppletContentManager(this.homeRecorder, this.userPreferences);
-    final PluginManager  pluginManager  = new PluginManager(getURLs(codeBase, pluginURLs));
-
+ 
     initLookAndFeel();
    
     // Add a listener that changes the content pane of the current active applet 
@@ -166,22 +155,58 @@ public class AppletApplication extends HomeApplication {
           switch (ev.getType()) {
             case ADD :
               try {
-                // Create a home controller for new home
-                boolean newHomeEnabled = 
-                    writeHomeURL.length() != 0 && listHomesURL.length() != 0;
-                boolean openEnabled = 
-                    readHomeURL.length() != 0 && listHomesURL.length() != 0;
-                boolean saveEnabled = writeHomeURL.length() != 0 
-                    && (defaultHome.length() != 0 || listHomesURL.length() != 0);
-                boolean saveAsEnabled = 
-                    writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+                HomeController controller = createHomeController(home);
+                // Change applet content 
+                applet.setContentPane((JComponent)controller.getView());
+                applet.getRootPane().revalidate();
                 
-                final HomeAppletController controller = new HomeAppletController(
-                    home, AppletApplication.this, viewFactory, contentManager, pluginManager,
-                    newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
+                if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+                  // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
+                  final List<JComponent> focusableComponents = new ArrayList<JComponent>();
+                  if (controller.getFurnitureCatalogController() != null
+                      && controller.getFurnitureCatalogController().getView() != null) {
+                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
+                  }
+                  if (controller.getFurnitureController() != null
+                      && controller.getFurnitureController().getView() != null) {
+                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
+                  }
+                  if (controller.getPlanController() != null
+                      && controller.getPlanController().getView() != null) {
+                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
+                  }
+                  if (controller.getHomeController3D() != null
+                      && controller.getHomeController3D().getView() != null) {
+                    focusableComponents.add((JComponent)controller.getFurnitureCatalogController().getView());
+                  }
+                  applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+                      @Override
+                      public Component getComponentAfter(Container container, Component component) {
+                        return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
+                      }
                 
-                // Display its view in applet
-                updateAppletView(applet, controller);
+                      @Override
+                      public Component getComponentBefore(Container container, Component component) {
+                        return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
+                      }
+                
+                      @Override
+                      public Component getDefaultComponent(Container container) {
+                        return focusableComponents.get(0);
+                      }
+                
+                      @Override
+                      public Component getFirstComponent(Container container) {
+                        return focusableComponents.get(0);
+                      }
+                
+                      @Override
+                      public Component getLastComponent(Container container) {
+                        return focusableComponents.get(focusableComponents.size() - 1);
+                      }
+                    });
+                }
+
                 // Open specified home at launch time if it exits
                 if (this.firstHome) {
                   this.firstHome = false;
@@ -204,25 +229,25 @@ public class AppletApplication extends HomeApplication {
         public void run() {
           // Create a home in Event Dispatch Thread 
           addHome(createHome());
+          
+          if (showMemoryStatus) {
+            final String memoryStatus = getUserPreferences().getLocalizedString(AppletApplication.class, "memoryStatus");
+            // Launch a timer that displays memory used by the applet 
+            memoryStatusTimer = new Timer(1000, new ActionListener() {
+                public void actionPerformed(ActionEvent ev) {
+                  Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                  if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, applet)) {
+                    Runtime runtime = Runtime.getRuntime();
+                    applet.showStatus(String.format(memoryStatus, 
+                        Math.round(100f * (runtime.totalMemory() - runtime.freeMemory()) / runtime.maxMemory()),
+                        runtime.maxMemory() / 1024 / 1024));
+                  }
+                }
+              });
+            memoryStatusTimer.start();
+          }
         }
       });
-
-    if (showMemoryStatus) {
-      final String memoryStatus = this.userPreferences.getLocalizedString(AppletApplication.class, "memoryStatus");
-      // Launch a timer that displays memory used by the applet 
-      this.memoryStatusTimer = new Timer(1000, new ActionListener() {
-          public void actionPerformed(ActionEvent ev) {
-            Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, applet)) {
-              Runtime runtime = Runtime.getRuntime();
-              applet.showStatus(String.format(memoryStatus, 
-                  Math.round(100f * (runtime.totalMemory() - runtime.freeMemory()) / runtime.maxMemory()),
-                  runtime.maxMemory() / 1024 / 1024));
-            }
-          }
-        });
-      this.memoryStatusTimer.start();
-    }
   }
   
   /**
@@ -324,10 +349,28 @@ public class AppletApplication extends HomeApplication {
   }
   
   /**
-   * Updates the applet content pane with <code>controller</code> view. 
+   * Returns a new instance of a home controller after <code>home</code> was created.
    */
-  private void updateAppletView(final JApplet applet, 
-                                final HomeController controller) {
+  protected HomeController createHomeController(Home home) {
+    final String writeHomeURL = getAppletParameter(applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
+    final String readHomeURL = getAppletParameter(applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
+    final String listHomesURL = getAppletParameter(applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+    final String defaultHome = getAppletParameter(applet, DEFAULT_HOME_PARAMETER, "");    
+    
+    // Create a home controller for new home
+    boolean newHomeEnabled = 
+        writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+    boolean openEnabled = 
+        readHomeURL.length() != 0 && listHomesURL.length() != 0;
+    boolean saveEnabled = writeHomeURL.length() != 0 
+        && (defaultHome.length() != 0 || listHomesURL.length() != 0);
+    boolean saveAsEnabled = 
+        writeHomeURL.length() != 0 && listHomesURL.length() != 0;
+    
+    final HomeController controller = new HomeAppletController(
+        home, AppletApplication.this, getViewFactory(), getContentManager(), getPluginManager(),
+        newHomeEnabled, openEnabled, saveEnabled, saveAsEnabled);
+    
     JRootPane homeView = (JRootPane)controller.getView();
     // Remove menu bar
     homeView.setJMenuBar(null);
@@ -373,10 +416,10 @@ public class AppletApplication extends HomeApplication {
       toolBar.add(saveAsAction);
     }
     
-    if (getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SH3D)) {
+    if (getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SH3D)) {
       try {
         // Add export to SH3D action
-        Action exportToSH3DAction = new ControllerAction(this.userPreferences, 
+        Action exportToSH3DAction = new ControllerAction(getUserPreferences(), 
             AppletApplication.class, "EXPORT_TO_SH3D", controller, "exportToSH3D");
         exportToSH3DAction.setEnabled(true);
         toolBar.add(new ResourceAction.ToolBarAction(exportToSH3DAction));
@@ -390,7 +433,7 @@ public class AppletApplication extends HomeApplication {
     }
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PAGE_SETUP));
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT));
-    if (getAppletBooleanParameter(applet, ENABLE_PRINT_TO_PDF) && !OperatingSystem.isMacOSX()) {
+    if (getAppletBooleanParameter(this.applet, ENABLE_PRINT_TO_PDF) && !OperatingSystem.isMacOSX()) {
       controller.getView().setEnabled(HomeView.ActionType.PRINT_TO_PDF, true);
       toolBar.add(getToolBarAction(homeView, HomeView.ActionType.PRINT_TO_PDF));
     }
@@ -434,7 +477,7 @@ public class AppletApplication extends HomeApplication {
     controller.getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
-            Mode mode = controller.getPlanController().getMode();
+            PlanController.Mode mode = controller.getPlanController().getMode();
             selectToggleButton.setSelected(mode == PlanController.Mode.SELECTION);
             createWallsToggleButton.setSelected(mode == PlanController.Mode.WALL_CREATION);
             createDimensionLinesToggleButton.setSelected(mode == PlanController.Mode.DIMENSION_LINE_CREATION);
@@ -445,7 +488,7 @@ public class AppletApplication extends HomeApplication {
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_OUT));
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ZOOM_IN));
 
-    boolean enableCreatePhoto = getAppletBooleanParameter(applet, ENABLE_CREATE_PHOTO);
+    boolean enableCreatePhoto = getAppletBooleanParameter(this.applet, ENABLE_CREATE_PHOTO);
     controller.getView().setEnabled(HomeView.ActionType.CREATE_PHOTO, enableCreatePhoto);
     if (enableCreatePhoto) {
       toolBar.addSeparator();
@@ -464,49 +507,14 @@ public class AppletApplication extends HomeApplication {
     toolBar.add(getToolBarAction(homeView, HomeView.ActionType.ABOUT));
     
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_SVG, 
-        getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_SVG));
+        getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SVG));
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
-        getAppletBooleanParameter(applet, ENABLE_EXPORT_TO_OBJ));
+        getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_OBJ));
     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-    // Change applet content 
-    applet.setContentPane(homeView);
-    applet.getRootPane().revalidate();
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          (JComponent)controller.getFurnitureCatalogController().getView(),
-          (JComponent)controller.getFurnitureController().getView(),
-          (JComponent)controller.getPlanController().getView(),
-          (JComponent)controller.getHomeController3D().getView()});      
-      applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-          @Override
-          public Component getComponentAfter(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
-          }
     
-          @Override
-          public Component getComponentBefore(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
-          }
-    
-          @Override
-          public Component getDefaultComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getFirstComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getLastComponent(Container container) {
-            return focusableComponents.get(focusableComponents.size() - 1);
-          }
-        });
-    }
+    return controller;
   }
 
   /**
@@ -521,15 +529,79 @@ public class AppletApplication extends HomeApplication {
    */
   @Override
   public HomeRecorder getHomeRecorder() {
+    if (this.homeRecorder == null) {
+      URL codeBase = this.applet.getCodeBase();
+      final String writeHomeURL = getAppletParameter(this.applet, WRITE_HOME_URL_PARAMETER, "writeHome.php");    
+      final String readHomeURL = getAppletParameter(this.applet, READ_HOME_URL_PARAMETER, "readHome.php?home=%s");
+      final String listHomesURL = getAppletParameter(this.applet, LIST_HOMES_URL_PARAMETER, "listHomes.php");
+      this.homeRecorder = new HomeAppletRecorder(getURLStringWithCodeBase(codeBase, writeHomeURL), 
+          getURLStringWithCodeBase(codeBase, readHomeURL), 
+          getURLStringWithCodeBase(codeBase, listHomesURL));
+    }
     return this.homeRecorder;
   }
   
   /**
-   * Returns user preferences stored in resources.
+   * Returns user preferences.
    */
   @Override
   public UserPreferences getUserPreferences() {
+    // Initialize userPreferences lazily
+    if (this.userPreferences == null) {
+      URL codeBase = this.applet.getCodeBase();
+      final String furnitureCatalogURLs = getAppletParameter(this.applet, FURNITURE_CATALOG_URLS_PARAMETER, "catalog.zip");
+      final String texturesCatalogURLs = getAppletParameter(this.applet, TEXTURES_CATALOG_URLS_PARAMETER, "catalog.zip");
+      final String readPreferencesURL = getAppletParameter(this.applet, READ_PREFERENCES_URL_PARAMETER, "");    
+      final String writePreferencesURL = getAppletParameter(this.applet, WRITE_PREFERENCES_URL_PARAMETER, "");    
+      final String userLanguage = getAppletParameter(this.applet, USER_LANGUAGE, null);    
+      this.userPreferences = new AppletUserPreferences(
+          getURLs(codeBase, furnitureCatalogURLs), 
+          getURLs(codeBase, texturesCatalogURLs),
+          getURLWithCodeBase(codeBase, writePreferencesURL), 
+          getURLWithCodeBase(codeBase, readPreferencesURL),
+          userLanguage);
+    }
     return this.userPreferences;
+  }
+
+  /**
+   * Returns a content manager able to handle files.
+   */
+  protected ContentManager getContentManager() {
+    if (this.contentManager == null) {
+      this.contentManager = new AppletContentManager(getHomeRecorder(), getUserPreferences());
+    }
+    return this.contentManager;
+  }
+  
+  /**
+   * Returns a Swing view factory. 
+   */
+  protected ViewFactory getViewFactory() {
+    if (this.viewFactory == null) {
+     this.viewFactory = new SwingViewFactory();
+    }
+    return this.viewFactory;
+  }
+
+  /**
+   * Returns the plugin manager of this application. 
+   */
+  protected PluginManager getPluginManager() {
+    if (this.pluginManager == null) {
+      URL codeBase = this.applet.getCodeBase();
+      String pluginURLs = getAppletParameter(this.applet, PLUGIN_URLS_PARAMETER, "");
+      this.pluginManager = new PluginManager(getURLs(codeBase, pluginURLs));
+    }
+    return this.pluginManager;
+  }
+
+  /**
+   * Returns applet name.
+   */
+  @Override
+  public String getName() {
+    return this.name;
   }
   
   /**
@@ -537,7 +609,7 @@ public class AppletApplication extends HomeApplication {
    */
   @Override
   public String getVersion() {
-    String applicationVersion = this.userPreferences.getLocalizedString(
+    String applicationVersion = getUserPreferences().getLocalizedString(
         AppletApplication.class, "applicationVersion");
     String versionInformation = System.getProperty("com.eteks.sweethome3d.deploymentInformation");
     if (versionInformation != null) {
@@ -605,8 +677,9 @@ public class AppletApplication extends HomeApplication {
     private BasicService basicService;
 
     public StandaloneServiceManager(AppletContext appletContext,
-                                    URL codeBase) {
-      this.basicService = new AppletBasicService(appletContext, codeBase);
+                                    URL codeBase,
+                                    String appletName) {
+      this.basicService = new AppletBasicService(appletContext, codeBase, appletName);
     }
 
     public Object lookup(final String name) throws UnavailableServiceException {
@@ -627,16 +700,19 @@ public class AppletApplication extends HomeApplication {
    */
   private static class AppletBasicService implements BasicService {
     private final AppletContext appletContext;
-    private final URL codeBase;
+    private final URL    codeBase;
+    private final String appletName;
 
     public AppletBasicService(AppletContext appletContext,
-                              URL codeBase) {
+                              URL codeBase, 
+                              String appletName) {
       this.appletContext = appletContext;
       this.codeBase = codeBase;
+      this.appletName = appletName;
     }
 
     public boolean showDocument(URL url) {
-      this.appletContext.showDocument(url, "SweetHome3D");
+      this.appletContext.showDocument(url, this.appletName);
       return true;
     }
 
