@@ -73,13 +73,6 @@ public class HomeAppletRecorder implements HomeRecorder {
   }
   
   /**
-   * Returns the HTTP URL built from <code>urlBase</code> with parameters.
-   */
-  protected URL getURL(String urlBase, Object ... parameterValues) throws IOException {
-    return new URL(String.format(urlBase, parameterValues));
-  }
-  
-  /**
    * Posts home data to the server URL returned by <code>getHomeSaveURL</code>.
    * @throws RecorderException if a problem occurred while writing home.
    */
@@ -87,7 +80,7 @@ public class HomeAppletRecorder implements HomeRecorder {
     HttpURLConnection connection = null;
     try {
       // Open a stream to server 
-      connection = (HttpURLConnection)getURL(this.writeHomeURL).openConnection();
+      connection = (HttpURLConnection)new URL(this.writeHomeURL).openConnection();
       connection.setRequestMethod("POST");
       String multiPartBoundary = "---------#@&$!d3emohteews!$&@#---------";
       connection.setRequestProperty("Content-Type", "multipart/form-data; charset=UTF-8; boundary=" + multiPartBoundary);
@@ -138,8 +131,11 @@ public class HomeAppletRecorder implements HomeRecorder {
     URLConnection connection = null;
     DefaultHomeInputStream in = null;
     try {
-      // Open a home input stream to server 
-      connection = getURL(this.readHomeURL, URLEncoder.encode(name, "UTF-8")).openConnection();
+      // Replace % sequence by %% except %s before formating readHomeURL with home name 
+      String readHomeURL = String.format(this.readHomeURL.replaceAll("(%[^s])", "%$1"), 
+          URLEncoder.encode(name, "UTF-8"));
+      // Open a home input stream to server
+      connection = new URL(readHomeURL).openConnection();
       connection.setRequestProperty("Content-Type", "charset=UTF-8");
       connection.setUseCaches(false);
       in = new DefaultHomeInputStream(connection.getInputStream());
@@ -184,7 +180,7 @@ public class HomeAppletRecorder implements HomeRecorder {
     InputStream in = null;
     try {
       // Open a stream to server 
-      connection = getURL(this.listHomesURL).openConnection();
+      connection = new URL(this.listHomesURL).openConnection();
       connection.setUseCaches(false);
       in = connection.getInputStream();
       String contentEncoding = connection.getContentEncoding();
