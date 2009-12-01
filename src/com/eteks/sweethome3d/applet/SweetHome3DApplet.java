@@ -282,13 +282,26 @@ public class SweetHome3DApplet extends JApplet {
           "org.sunflow"}));
       applicationPackages.addAll(getPluginsPackages());
       
+      String applicationClassName = getApplicationClassName();
+      if (!applicationClassName.startsWith((String)applicationPackages.get(0))) {
+        String [] applicationClassParts = applicationClassName.split("\\.");
+        String applicationClassPackageBase = ""; 
+        // Contains the two first part of class package at most
+        for (int i = 0, n = Math.min(applicationClassParts.length - 1, 2); i < n; i++) {
+          if (i > 0) {
+            applicationClassPackageBase += ".";
+          }
+          applicationClassPackageBase += applicationClassParts [i];
+        }
+        applicationPackages.add(applicationClassPackageBase);
+      }
+      
       ClassLoader extensionsClassLoader = new ExtensionsClassLoader(
           sweetHome3DAppletClass.getClassLoader(), sweetHome3DAppletClass.getProtectionDomain(),
           (String [])java3DFiles.toArray(new String [java3DFiles.size()]), 
           (String [])applicationPackages.toArray(new String [applicationPackages.size()]));
       
       // Call application constructor with reflection
-      String applicationClassName = getApplicationClassName();
       Class applicationClass = extensionsClassLoader.loadClass(applicationClassName);
       Constructor applicationConstructor = 
           applicationClass.getConstructor(new Class [] {JApplet.class});
