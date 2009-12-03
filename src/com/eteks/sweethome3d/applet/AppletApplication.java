@@ -216,8 +216,6 @@ public class AppletApplication extends HomeApplication {
     
     EventQueue.invokeLater(new Runnable() {
         public void run() {
-          
-          
           // Create a home in Event Dispatch Thread 
           addHome(createHome());
           
