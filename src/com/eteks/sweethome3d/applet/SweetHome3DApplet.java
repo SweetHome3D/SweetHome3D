@@ -155,26 +155,8 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  * @author Emmanuel Puybaret
  */
 public class SweetHome3DApplet extends JApplet {
-  static {
-    initSystemProperties();
-  }
-  
   private Object appletApplication;
-  
-  /**
-   * Sets various <code>System</code> properties required to be set before Applet is displayed.
-   */
-  private static void initSystemProperties() {
-    try {
-      // Enables Java 5 bug correction about dragging directly
-      // a tree element without selecting it before :
-      // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4521075
-      System.setProperty("sun.swing.enableImprovedDragGesture", "true");
-    } catch (SecurityException ex) {
-      // Too bad Java refuses access to system properties
-    }
-  }
-  
+   
   public void init() {
     if (!isJava5OrSuperior()) {
       showError("<html><p>This applet may be run under Windows, Mac OS X 10.4 / 10.5, Linux and Solaris." +

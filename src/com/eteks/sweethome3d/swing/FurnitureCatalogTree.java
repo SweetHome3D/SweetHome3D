@@ -24,8 +24,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +36,7 @@ import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JLabel;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -92,13 +95,31 @@ public class FurnitureCatalogTree extends JTree implements View {
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new CatalogCellRenderer());
+    addDragListener();
     if (controller != null) {
       updateTreeSelectedFurniture(catalog, controller);
       addSelectionListeners(catalog, controller);
       addMouseListener(controller);
     }
-    setDragEnabled(true);
     ToolTipManager.sharedInstance().registerComponent(this);
+  }
+
+  /**
+   * Adds a mouse motion listener that will initiate a drag operation 
+   * when the user drags a piece of furniture.
+   */
+  private void addDragListener() {
+    addMouseMotionListener(new MouseMotionAdapter() {
+      public void mouseDragged(MouseEvent ev) {
+        if (SwingUtilities.isLeftMouseButton(ev)) {
+          TreePath clickedPath = getPathForLocation(ev.getX(), ev.getY());
+          if (clickedPath != null
+              && clickedPath.getLastPathComponent() instanceof CatalogPieceOfFurniture) {
+            getTransferHandler().exportAsDrag(FurnitureCatalogTree.this, ev, DnDConstants.ACTION_COPY);
+          }
+        }
+      }
+    });
   }
   
   /** 
