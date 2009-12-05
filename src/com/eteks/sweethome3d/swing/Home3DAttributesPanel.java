@@ -285,7 +285,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
           controller.setWallsAlpha(wallsTransparencySlider.getValue() / 255f);
         }
       });
-    controller.addPropertyChangeListener(Home3DAttributesController.Property.LIGHT_COLOR, 
+    controller.addPropertyChangeListener(Home3DAttributesController.Property.WALLS_ALPHA, 
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             wallsTransparencySlider.setValue((int)(controller.getWallsAlpha() * 255));
