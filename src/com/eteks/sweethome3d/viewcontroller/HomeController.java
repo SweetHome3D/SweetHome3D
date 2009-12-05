@@ -611,18 +611,41 @@ public class HomeController implements Controller {
     
     // Search if home selection contains at least one piece, one wall or one dimension line
     List<Selectable> selectedItems = this.home.getSelectedItems();
+    boolean homeSelectionContainsDeletableItems = false;
     boolean homeSelectionContainsFurniture = false;
-    boolean homeSelectionContainsOneCopiableObjectOrMore = false;
-    boolean homeSelectionContainsTwoPiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsDeletableFurniture = false;
+    boolean homeSelectionContainsOneCopiableItemOrMore = false;
+    boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOneLabel = false;
     boolean homeSelectionContainsItemsWithText = false;
     if (!modificationState) {
-      homeSelectionContainsFurniture = !Home.getFurnitureSubList(selectedItems).isEmpty();
-      homeSelectionContainsTwoPiecesOfFurnitureOrMore = 
-          Home.getFurnitureSubList(selectedItems).size() >= 2;
+      for (Selectable item : selectedItems) {
+        if (getPlanController().isItemDeletable(item)) {
+          homeSelectionContainsDeletableItems = true;
+          break;
+        }
+      }
+      List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(selectedItems);
+      homeSelectionContainsFurniture = !selectedFurniture.isEmpty();
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        if (getFurnitureController().isPieceOfFurnitureDeletable(piece)) {
+          homeSelectionContainsDeletableFurniture = true;
+          break;
+        }
+      }
+      int movablePiecesOfFurnitureCount = 0;
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        if (getFurnitureController().isPieceOfFurnitureMovable(piece)) {
+          movablePiecesOfFurnitureCount++;
+          if (movablePiecesOfFurnitureCount >= 2) {
+            homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = true;
+            break;
+          }
+        }
+      }
       List<Wall> selectedWalls = Home.getWallsSubList(selectedItems);
       homeSelectionContainsWalls = !selectedWalls.isEmpty();
       homeSelectionContainsOneWall = selectedWalls.size() == 1;
@@ -631,7 +654,7 @@ public class HomeController implements Controller {
       final List<Label> selectedLabels = Home.getLabelsSubList(selectedItems);
       boolean homeSelectionContainsLabels = !selectedLabels.isEmpty();
       homeSelectionContainsOneLabel = selectedLabels.size() == 1;
-      homeSelectionContainsOneCopiableObjectOrMore = 
+      homeSelectionContainsOneCopiableItemOrMore = 
           homeSelectionContainsFurniture || homeSelectionContainsWalls 
           || homeSelectionContainsRooms || homeSelectionContainsDimensionLines
           || homeSelectionContainsLabels; 
@@ -655,12 +678,12 @@ public class HomeController implements Controller {
       }
     } else if (this.focusedView == getFurnitureController().getView()) {
       view.setEnabled(HomeView.ActionType.COPY, homeSelectionContainsFurniture);
-      view.setEnabled(HomeView.ActionType.CUT, homeSelectionContainsFurniture);
-      view.setEnabled(HomeView.ActionType.DELETE, homeSelectionContainsFurniture);
+      view.setEnabled(HomeView.ActionType.CUT, homeSelectionContainsDeletableFurniture);
+      view.setEnabled(HomeView.ActionType.DELETE, homeSelectionContainsDeletableFurniture);
     } else if (this.focusedView == getPlanController().getView()) {
-      view.setEnabled(HomeView.ActionType.COPY, homeSelectionContainsOneCopiableObjectOrMore);
-      view.setEnabled(HomeView.ActionType.CUT, homeSelectionContainsOneCopiableObjectOrMore);
-      view.setEnabled(HomeView.ActionType.DELETE, homeSelectionContainsOneCopiableObjectOrMore);
+      view.setEnabled(HomeView.ActionType.COPY, homeSelectionContainsOneCopiableItemOrMore);
+      view.setEnabled(HomeView.ActionType.CUT, homeSelectionContainsDeletableItems);
+      view.setEnabled(HomeView.ActionType.DELETE, homeSelectionContainsDeletableItems);
     } else {
       view.setEnabled(HomeView.ActionType.COPY, false);
       view.setEnabled(HomeView.ActionType.CUT, false);
@@ -670,11 +693,11 @@ public class HomeController implements Controller {
     view.setEnabled(HomeView.ActionType.ADD_HOME_FURNITURE, catalogSelectionContainsFurniture);
     // In creation mode all actions bound to selection are disabled
     view.setEnabled(HomeView.ActionType.DELETE_HOME_FURNITURE,
-        homeSelectionContainsFurniture);
+        homeSelectionContainsDeletableFurniture);
     view.setEnabled(HomeView.ActionType.DELETE_SELECTION,
         (catalogSelectionContainsFurniture
             && this.focusedView == getFurnitureCatalogController().getView())
-        || (homeSelectionContainsOneCopiableObjectOrMore 
+        || (homeSelectionContainsDeletableItems 
             && (this.focusedView == getFurnitureController().getView()
                 || this.focusedView == getPlanController().getView()
                 || this.focusedView == getHomeController3D().getView())));
@@ -704,13 +727,13 @@ public class HomeController implements Controller {
     view.setEnabled(HomeView.ActionType.DECREASE_TEXT_SIZE, 
         homeSelectionContainsItemsWithText);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_TOP,
-        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_BOTTOM,
-        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_LEFT,
-        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_RIGHT,
-        homeSelectionContainsTwoPiecesOfFurnitureOrMore);
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
   }
 
   /**

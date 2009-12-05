@@ -690,6 +690,43 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns <code>true</code> if the given <code>item</code> may be moved
+   * in the plan. Default implementation returns <code>true</code>. 
+   */
+  protected boolean isItemMovable(Selectable item) {
+    if (item instanceof HomePieceOfFurniture) {
+      return isPieceOfFurnitureMovable((HomePieceOfFurniture)item);
+    } else {
+      return true;
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>item</code> may be resized.
+   * Default implementation returns <code>false</code> if the given <code>item</code>
+   * is a non resizable piece of furniture.
+   */
+  protected boolean isItemResizable(Selectable item) {
+    if (item instanceof HomePieceOfFurniture) {
+      return ((HomePieceOfFurniture)item).isResizable();
+    } else {
+      return true;
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given <code>item</code> may be deleted.
+   * Default implementation returns <code>true</code>. 
+   */
+  protected boolean isItemDeletable(Selectable item) {
+    if (item instanceof HomePieceOfFurniture) {
+      return isPieceOfFurnitureDeletable((HomePieceOfFurniture)item);
+    } else {
+      return true;
+    }
+  }
+
+  /**
    * Controls the direction reverse of selected walls.
    */
   public void reverseSelectedWallsDirection() {
@@ -1428,7 +1465,8 @@ public class PlanController extends FurnitureController implements Controller {
         float wallDistance = thicknessEpsilon / 2;
         if (piece instanceof HomeDoorOrWindow) {
           HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow) piece;
-          if (piece.isResizable()) {
+          if (piece.isResizable()
+              && isItemResizable(piece)) {
             piece.setDepth(thicknessEpsilon 
                 + wallAtPoint.getThickness() / doorOrWindow.getWallThickness());
           }
@@ -1766,7 +1804,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Wall getResizedWallStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Wall) {
+        && selectedItems.get(0) instanceof Wall
+        && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (wall.containsWallStartAt(x, y, margin)) {
@@ -1782,7 +1821,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Wall getResizedWallEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Wall) {
+        && selectedItems.get(0) instanceof Wall
+        && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (wall.containsWallEndAt(x, y, margin)) {
@@ -1824,7 +1864,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Room getRoomNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Room) {
+        && selectedItems.get(0) instanceof Room
+        && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (room.getName() != null
@@ -1842,7 +1883,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Room getRoomAreaAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Room) {
+        && selectedItems.get(0) instanceof Room
+        && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (room.isAreaVisible() 
@@ -1873,7 +1915,8 @@ public class PlanController extends FurnitureController implements Controller {
   private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof DimensionLine) {
+        && selectedItems.get(0) instanceof DimensionLine
+        && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
@@ -1890,7 +1933,8 @@ public class PlanController extends FurnitureController implements Controller {
   private DimensionLine getResizedDimensionLineEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof DimensionLine) {
+        && selectedItems.get(0) instanceof DimensionLine
+        && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
@@ -1907,7 +1951,8 @@ public class PlanController extends FurnitureController implements Controller {
   private DimensionLine getOffsetDimensionLineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof DimensionLine) {
+        && selectedItems.get(0) instanceof DimensionLine
+        && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (dimensionLine.isMiddlePointAt(x, y, margin)) {
@@ -2138,7 +2183,8 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+        && selectedItems.get(0) instanceof HomePieceOfFurniture
+        && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (piece.isTopLeftPointAt(x, y, margin)) {
@@ -2155,7 +2201,8 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+        && selectedItems.get(0) instanceof HomePieceOfFurniture
+        && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (piece.isTopRightPointAt(x, y, margin)) {
@@ -2176,7 +2223,8 @@ public class PlanController extends FurnitureController implements Controller {
         && selectedItems.get(0) instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
-      if (piece.isResizable() 
+      if (piece.isResizable()
+          && isItemResizable(piece) 
           && piece.isBottomLeftPointAt(x, y, margin)) {
         return piece;
       }
@@ -2192,10 +2240,12 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+        && selectedItems.get(0) instanceof HomePieceOfFurniture
+        && isItemResizable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
-      if (piece.isResizable() 
+      if (piece.isResizable()
+          && isItemResizable(piece) 
           && piece.isBottomRightPointAt(x, y, margin)) {
         return piece;
       }
@@ -2210,7 +2260,8 @@ public class PlanController extends FurnitureController implements Controller {
   private HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof HomePieceOfFurniture) {
+        && selectedItems.get(0) instanceof HomePieceOfFurniture
+        && isItemMovable(selectedItems.get(0))) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       if (piece.isNameVisible()
@@ -2229,7 +2280,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Camera getYawRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Camera) {
+        && selectedItems.get(0) instanceof Camera
+        && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
@@ -2252,7 +2304,8 @@ public class PlanController extends FurnitureController implements Controller {
   private Camera getPitchRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
-        && selectedItems.get(0) instanceof Camera) {
+        && selectedItems.get(0) instanceof Camera
+        && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
       float margin = PIXEL_MARGIN / getScale();
       float [][] cameraPoints = camera.getPoints();
@@ -2272,27 +2325,34 @@ public class PlanController extends FurnitureController implements Controller {
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
   public void deleteItems(List<? extends Selectable> items) {
-    if (!items.isEmpty()) {
+    List<Selectable> deletedItems = new ArrayList<Selectable>(items.size());
+    for (Selectable item : items) {
+      if (isItemDeletable(item)) {
+        deletedItems.add(item);
+      }
+    }
+    
+    if (!deletedItems.isEmpty()) {
       // Start a compound edit that deletes walls, furniture and dimension lines from home
       this.undoSupport.beginUpdate();
       
-      final List<Selectable> deletedItems = new ArrayList<Selectable>(items);      
+      final List<Selectable> selectedItems = new ArrayList<Selectable>(items);      
       // Add a undoable edit that will select the undeleted items at undo
       this.undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public void undo() throws CannotRedoException {
             super.undo();
-            selectAndShowItems(deletedItems);
+            selectAndShowItems(selectedItems);
           }
         });
 
-      deleteFurniture(Home.getFurnitureSubList(items));      
+      deleteFurniture(Home.getFurnitureSubList(deletedItems));      
 
       List<Selectable> deletedOtherItems = 
-          new ArrayList<Selectable>(Home.getWallsSubList(items));
-      deletedOtherItems.addAll(Home.getRoomsSubList(items));
-      deletedOtherItems.addAll(Home.getDimensionLinesSubList(items));
-      deletedOtherItems.addAll(Home.getLabelsSubList(items));
+          new ArrayList<Selectable>(Home.getWallsSubList(deletedItems));
+      deletedOtherItems.addAll(Home.getRoomsSubList(deletedItems));
+      deletedOtherItems.addAll(Home.getDimensionLinesSubList(deletedItems));
+      deletedOtherItems.addAll(Home.getLabelsSubList(deletedItems));
       // First post to undo support that walls, rooms and dimension lines are deleted, 
       // otherwise data about joined walls and rooms index can't be stored       
       postDeleteItems(deletedOtherItems, this.home.isBasePlanLocked());
@@ -2398,10 +2458,17 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void moveAndShowSelectedItems(float dx, float dy) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
-    if (!selectedItems.isEmpty()) {
-      moveItems(selectedItems, dx, dy);
-      getView().makeSelectionVisible();
-      postItemsMove(selectedItems, dx, dy);
+    List<Selectable> movedItems = new ArrayList<Selectable>(selectedItems.size());      
+    for (Selectable item : selectedItems) {
+      if (isItemMovable(item)) {
+        movedItems.add(item);
+      }
+    }
+    
+    if (!movedItems.isEmpty()) {
+      moveItems(movedItems, dx, dy);
+      selectAndShowItems(movedItems);
+      postItemsMove(movedItems, selectedItems, dx, dy);
     }
   }
 
@@ -2904,22 +2971,25 @@ public class PlanController extends FurnitureController implements Controller {
    * of <code>movedItems</code>.
    */
   private void postItemsMove(List<? extends Selectable> movedItems, 
+                             List<? extends Selectable> oldSelection, 
                              final float dx, final float dy) {
     if (dx != 0 || dy != 0) {
       // Store the moved items in an array
       final Selectable [] itemsArray = 
-        movedItems.toArray(new Selectable [movedItems.size()]);
+          movedItems.toArray(new Selectable [movedItems.size()]);
+      final Selectable [] oldSelectedItems = 
+        oldSelection.toArray(new Selectable [oldSelection.size()]);
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doMoveAndShowItems(itemsArray, -dx, -dy);       
+          doMoveAndShowItems(itemsArray, oldSelectedItems, -dx, -dy);       
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doMoveAndShowItems(itemsArray, dx, dy);   
+          doMoveAndShowItems(itemsArray, itemsArray, dx, dy);   
         }      
   
         @Override
@@ -2936,11 +3006,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Moves <code>movedItems</code> of (<code>dx</code>, <code>dy</code>) pixels, 
    * selects them and make them visible.
    */
-  private void doMoveAndShowItems(Selectable [] movedItems, 
+  private void doMoveAndShowItems(Selectable [] movedItems,
+                                  Selectable [] selectedItems,
                                   float dx, float dy) {
-    List<Selectable> itemsList = Arrays.asList(movedItems);
-    moveItems(itemsList, dx, dy);   
-    selectAndShowItems(itemsList);
+    moveItems(Arrays.asList(movedItems), dx, dy);   
+    selectAndShowItems(Arrays.asList(selectedItems));
   }
 
   /**
@@ -2966,7 +3036,8 @@ public class PlanController extends FurnitureController implements Controller {
           super.undo();
           piece.move(-dx, -dy);
           piece.setAngle(oldAngle);
-          if (piece.isResizable()) {
+          if (piece.isResizable()
+              && isItemResizable(piece)) {
             piece.setDepth(oldDepth);
           }
           piece.setElevation(oldElevation);
@@ -2981,7 +3052,8 @@ public class PlanController extends FurnitureController implements Controller {
           super.redo();
           piece.move(dx, dy);
           piece.setAngle(newAngle);
-          if (piece.isResizable()) {
+          if (piece.isResizable()
+              && isItemResizable(piece)) {
             piece.setDepth(newDepth);
           }
           piece.setElevation(newElevation);
@@ -3933,6 +4005,15 @@ public class PlanController extends FurnitureController implements Controller {
    * the deletion of selected items, and the move of selected items with arrow keys.
    */
   private class SelectionState extends AbstractModeChangeState {
+    private final SelectionListener selectionListener = new SelectionListener() {
+        public void selectionChanged(SelectionEvent selectionEvent) {
+          List<Selectable> selectedItems = home.getSelectedItems();
+          getView().setResizeIndicatorVisible(selectedItems.size() == 1
+              && (isItemResizable(selectedItems.get(0))
+                  || isItemMovable(selectedItems.get(0))));
+        }
+      };
+    
     @Override
     public Mode getMode() {
       return Mode.SELECTION;
@@ -3941,7 +4022,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
-      getView().setResizeIndicatorVisible(true);
+      home.addSelectionListener(this.selectionListener);
+      this.selectionListener.selectionChanged(null);
     }
     
     @Override
@@ -4036,6 +4118,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void exit() {
+      home.removeSelectionListener(this.selectionListener);
       getView().setResizeIndicatorVisible(false);
     }
   }
@@ -4050,6 +4133,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                xLastMouseMove;
     private float                yLastMouseMove;
     private boolean              mouseMoved;
+    private List<Selectable>     oldSelection;
     private List<Selectable>     movedItems;
     private List<Selectable>     duplicatedItems;
     private HomePieceOfFurniture movedPieceOfFurniture;
@@ -4078,13 +4162,19 @@ public class PlanController extends FurnitureController implements Controller {
       this.mouseMoved = false;
       List<Selectable> selectableItemsUnderCursor = 
           getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
-      this.movedItems = home.getSelectedItems();
+      this.oldSelection = home.getSelectedItems();
       toggleMagnetism(wasShiftDownLastMousePress());
       // If no selectable item under the cursor belongs to selection
-      if (Collections.disjoint(selectableItemsUnderCursor, this.movedItems)) {
+      if (Collections.disjoint(selectableItemsUnderCursor, this.oldSelection)) {
         // Select only the item with highest priority under cursor position
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress()));
-        this.movedItems = home.getSelectedItems();
+      }       
+      List<Selectable> selectedItems = home.getSelectedItems();
+      this.movedItems = new ArrayList<Selectable>(selectedItems.size());      
+      for (Selectable item : selectedItems) {
+        if (isItemMovable(item)) {
+          this.movedItems.add(item);
+        }
       }
       if (this.movedItems.size() == 1
           && this.movedItems.get(0) instanceof HomePieceOfFurniture) {
@@ -4108,7 +4198,8 @@ public class PlanController extends FurnitureController implements Controller {
         this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
         this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-        if (this.movedPieceOfFurniture.isResizable()) {
+        if (this.movedPieceOfFurniture.isResizable()
+            && isItemResizable(this.movedPieceOfFurniture)) {
           this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
         }
         this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
@@ -4127,6 +4218,9 @@ public class PlanController extends FurnitureController implements Controller {
         moveItems(this.movedItems, x - this.xLastMouseMove, y - this.yLastMouseMove);
       }
       
+      if (!this.mouseMoved) {
+        selectItems(this.movedItems);
+      }
       getView().makePointVisible(x, y);
       this.xLastMouseMove = x;
       this.yLastMouseMove = y;
@@ -4137,7 +4231,8 @@ public class PlanController extends FurnitureController implements Controller {
     public void releaseMouse(float x, float y) {
       if (this.mouseMoved) {
         // Post in undo support a move or duplicate operation if selection isn't a camera 
-        if (!(this.movedItems.get(0) instanceof Camera)) {
+        if (this.movedItems.size() > 0
+            && !(this.movedItems.get(0) instanceof Camera)) {
           if (this.duplicatedItems != null) {
             postItemsDuplication(this.movedItems, this.duplicatedItems);
           } else if (this.movedPieceOfFurniture != null) {
@@ -4149,7 +4244,7 @@ public class PlanController extends FurnitureController implements Controller {
                 this.elevationMovedPieceOfFurniture,
                 this.movedDoorOrWindowBoundToWall);
           } else {
-            postItemsMove(this.movedItems,
+            postItemsMove(this.movedItems, this.oldSelection,
                 this.xLastMouseMove - getXLastMousePress(), 
                 this.yLastMouseMove - getYLastMousePress());
           }
@@ -4192,7 +4287,8 @@ public class PlanController extends FurnitureController implements Controller {
           this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
           this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-          if (this.movedPieceOfFurniture.isResizable()) {
+          if (this.movedPieceOfFurniture.isResizable()
+              && isItemResizable(this.movedPieceOfFurniture)) {
             this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
           }
           this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
@@ -4212,7 +4308,8 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void setDuplicationActivated(boolean duplicationActivated) {
-      if (!(this.movedItems.get(0) instanceof Camera)) {
+      if (this.movedItems.size() > 0
+          && !(this.movedItems.get(0) instanceof Camera)) {
         if (duplicationActivated
             && this.duplicatedItems == null) {
           // Duplicate original items and add them to home
@@ -4237,7 +4334,8 @@ public class PlanController extends FurnitureController implements Controller {
             this.movedPieceOfFurniture.setX(this.xMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setY(this.yMovedPieceOfFurniture);
             this.movedPieceOfFurniture.setAngle(this.angleMovedPieceOfFurniture);
-            if (this.movedPieceOfFurniture.isResizable()) {
+            if (this.movedPieceOfFurniture.isResizable()
+                && isItemResizable(this.movedPieceOfFurniture)) {
               this.movedPieceOfFurniture.setDepth(this.depthMovedPieceOfFurniture);
             }
             this.movedPieceOfFurniture.setElevation(this.elevationMovedPieceOfFurniture);
@@ -4266,7 +4364,9 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setCursor(PlanView.CursorType.SELECTION);
         }
         
-        selectItems(this.movedItems);
+        if (this.mouseMoved) {
+          selectItems(this.movedItems);
+        }
       }
     }
     
@@ -5943,7 +6043,7 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getDimensionLineCreationState());
         } else {
           // Switch to offset choice
-          offsetChoice = true;
+          this.offsetChoice = true;
           PlanView planView = getView();
           planView.setCursor(PlanView.CursorType.HEIGHT);
           planView.deleteFeedback();

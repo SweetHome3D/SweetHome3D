@@ -176,11 +176,13 @@ public class FurnitureController implements Controller {
   public void deleteFurniture(List<HomePieceOfFurniture> deletedFurniture) {
     final boolean basePlanLocked = this.home.isBasePlanLocked();
     List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture(); 
-    // Sort the deleted furniture in the ascending order of their index in home
+    // Sort the deletable furniture in the ascending order of their index in home
     Map<Integer, HomePieceOfFurniture> sortedMap = 
         new TreeMap<Integer, HomePieceOfFurniture>(); 
     for (HomePieceOfFurniture piece : deletedFurniture) {
-      sortedMap.put(homeFurniture.indexOf(piece), piece); 
+      if (isPieceOfFurnitureDeletable(piece)) {
+        sortedMap.put(homeFurniture.indexOf(piece), piece);
+      }
     }
     final HomePieceOfFurniture [] furniture = sortedMap.values().
         toArray(new HomePieceOfFurniture [sortedMap.size()]); 
@@ -244,6 +246,22 @@ public class FurnitureController implements Controller {
    */
   protected boolean isPieceOfFurniturePartOfBasePlan(HomePieceOfFurniture piece) {
     return piece.isDoorOrWindow();
+  }
+
+  /**
+   * Returns <code>true</code> if the given <code>piece</code> may be moved.
+   * Default implementation always returns <code>true</code>. 
+   */
+  protected boolean isPieceOfFurnitureMovable(HomePieceOfFurniture piece) {
+    return true;
+  }
+
+  /**
+   * Returns <code>true</code> if the given <code>piece</code> may be deleted.
+   * Default implementation always returns <code>true</code>. 
+   */
+  protected boolean isPieceOfFurnitureDeletable(HomePieceOfFurniture piece) {
+    return true;
   }
 
   /**
@@ -398,8 +416,7 @@ public class FurnitureController implements Controller {
    * Controls the alignment of selected furniture on top of the first selected piece.
    */
   public void alignSelectedFurnitureOnTop() {
-    final List<HomePieceOfFurniture> selectedFurniture = 
-        Home.getFurnitureSubList(this.home.getSelectedItems());
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
@@ -429,6 +446,19 @@ public class FurnitureController implements Controller {
       }
     }
   }
+  
+  private List<HomePieceOfFurniture> getMovableSelectedFurniture() {
+    List<HomePieceOfFurniture> movableSelectedFurniture = new ArrayList<HomePieceOfFurniture>(); 
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item instanceof HomePieceOfFurniture) {
+        HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
+        if (isPieceOfFurnitureMovable(piece)) {
+          movableSelectedFurniture.add(piece);
+        }
+      }
+    }  
+    return movableSelectedFurniture;
+  }
 
   private void doAlignFurnitureOnTop(AlignedPieceOfFurniture [] alignedFurniture, 
                                      HomePieceOfFurniture leadPiece) {
@@ -456,8 +486,7 @@ public class FurnitureController implements Controller {
    * Controls the alignment of selected furniture on bottom of the first selected piece.
    */
   public void alignSelectedFurnitureOnBottom() {
-    final List<HomePieceOfFurniture> selectedFurniture = 
-        Home.getFurnitureSubList(this.home.getSelectedItems());
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
@@ -502,8 +531,7 @@ public class FurnitureController implements Controller {
    * Controls the alignment of selected furniture on left of the first selected piece.
    */
   public void alignSelectedFurnitureOnLeft() {
-    final List<HomePieceOfFurniture> selectedFurniture = 
-        Home.getFurnitureSubList(this.home.getSelectedItems());
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
@@ -548,8 +576,7 @@ public class FurnitureController implements Controller {
    * Controls the alignment of selected furniture on right of the first selected piece.
    */
   public void alignSelectedFurnitureOnRight() {
-    final List<HomePieceOfFurniture> selectedFurniture = 
-        Home.getFurnitureSubList(this.home.getSelectedItems());
+    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
     if (selectedFurniture.size() >= 2) {
       final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
       final AlignedPieceOfFurniture [] alignedFurniture = 
