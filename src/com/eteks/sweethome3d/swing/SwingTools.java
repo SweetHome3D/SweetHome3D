@@ -47,6 +47,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -55,6 +56,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.model.TextureImage;
@@ -291,6 +293,20 @@ public class SwingTools {
         })), 0, 0, null);
     imageGraphics.dispose();
     return image;
+  }
+  
+  /**
+   * Returns the border of a component where a user may drop objects.
+   */
+  public static Border getDropableComponentBorder() {
+    Border border = null;
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      border = UIManager.getBorder("InsetBorder.aquaVariant");
+    }
+    if (border == null) {
+      border = BorderFactory.createLoweredBevelBorder(); 
+    }
+    return border;
   }
   
   /**

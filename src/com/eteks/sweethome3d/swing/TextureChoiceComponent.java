@@ -65,6 +65,8 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
+import javax.swing.UIManager;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -243,7 +245,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
           TextureChoiceComponent.class, "chosenTextureLabel.text"));
       this.texturePreviewLabel = new JLabel();
-      this.texturePreviewLabel.setBorder(BorderFactory.createLoweredBevelBorder());
+      this.texturePreviewLabel.setBorder(SwingTools.getDropableComponentBorder());
       // Add to label a transfer handler to let user drag and drop a file on it 
       this.texturePreviewLabel.setTransferHandler(new TransferHandler() {
           @Override

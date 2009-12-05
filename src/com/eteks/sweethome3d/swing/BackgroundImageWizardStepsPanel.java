@@ -174,7 +174,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           return success;
         }
       });
-    this.imageChoicePreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
+    this.imageChoicePreviewComponent.setBorder(SwingTools.getDropableComponentBorder());
     
     // Image scale panel components
     this.scaleLabel = new JLabel(preferences.getLocalizedString(

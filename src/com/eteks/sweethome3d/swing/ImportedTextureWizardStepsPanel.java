@@ -181,7 +181,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           return success;
         }
       });
-    this.imageChoicePreviewComponent.setBorder(BorderFactory.createLoweredBevelBorder());
+    this.imageChoicePreviewComponent.setBorder(SwingTools.getDropableComponentBorder());
     
     // Attributes panel components
     this.attributesLabel = new JLabel(preferences.getLocalizedString(
