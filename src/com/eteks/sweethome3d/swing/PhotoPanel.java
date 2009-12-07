@@ -565,9 +565,9 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
       
       dialog.setLocationByPlatform(true);
-      Window homeWindow = SwingUtilities.getWindowAncestor((Component)parentView);
-      if (homeWindow != null) {
-        int windowRightBorder = homeWindow.getX() + homeWindow.getWidth();
+      Component homeRoot = SwingUtilities.getRoot((Component)parentView);
+      if (homeRoot != null) {
+        int windowRightBorder = homeRoot.getX() + homeRoot.getWidth();
         Dimension screenSize = getToolkit().getScreenSize();
         Insets screenInsets = getToolkit().getScreenInsets(getGraphicsConfiguration());
         int screenRightBorder = screenSize.width - screenInsets.right;
@@ -577,7 +577,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           // Move the dialog to the right of window
           dialog.setLocationByPlatform(false);
           dialog.setLocation(Math.min(windowRightBorder + 5, screenRightBorder - dialogWidth), 
-              homeWindow.getY());
+              Math.max(Math.min(homeRoot.getY(), screenSize.height - dialog.getHeight() - screenInsets.bottom), screenInsets.top));
         }
       }
       
