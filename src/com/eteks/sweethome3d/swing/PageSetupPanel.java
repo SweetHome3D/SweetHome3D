@@ -452,7 +452,7 @@ public class PageSetupPanel extends JPanel implements DialogView {
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
             this, this.dialogTitle, this.pageFormatButton) == JOptionPane.OK_OPTION
         && this.controller != null) {
-          this.controller.modifyPageSetup();
+      this.controller.modifyPageSetup();
     }
   }
 }
