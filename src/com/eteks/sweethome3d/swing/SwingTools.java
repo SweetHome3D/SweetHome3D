@@ -206,14 +206,16 @@ public class SwingTools {
     JOptionPane optionPane = new JOptionPane(messageComponent, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
     final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parentComponent), title);
-    // Add a listener that transfer focus to focusedComponent when dialog is shown
-    dialog.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentShown(ComponentEvent ev) {
-          focusedComponent.requestFocusInWindow();
-          dialog.removeComponentListener(this);
-        }
-      });
+    if (focusedComponent != null) {
+      // Add a listener that transfer focus to focusedComponent when dialog is shown
+      dialog.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentShown(ComponentEvent ev) {
+            focusedComponent.requestFocusInWindow();
+            dialog.removeComponentListener(this);
+          }
+        });
+    }
     dialog.setVisible(true);
     
     dialog.dispose();
@@ -236,14 +238,16 @@ public class SwingTools {
     JOptionPane optionPane = new JOptionPane(messageComponent, 
         messageType, JOptionPane.DEFAULT_OPTION);
     final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane(parentComponent), title);
-    // Add a listener that transfer focus to focusedComponent when dialog is shown
-    dialog.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentShown(ComponentEvent ev) {
-          focusedComponent.requestFocusInWindow();
-          dialog.removeComponentListener(this);
-        }
-      });
+    if (focusedComponent != null) {
+      // Add a listener that transfer focus to focusedComponent when dialog is shown
+      dialog.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentShown(ComponentEvent ev) {
+            focusedComponent.requestFocusInWindow();
+            dialog.removeComponentListener(this);
+          }
+        });
+    }
     dialog.setVisible(true);    
     dialog.dispose();
   }

@@ -114,293 +114,311 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    */
   private void createComponents(UserPreferences preferences,
                                 final UserPreferencesController controller) {
-    // Create language label and combo box bound to controller LANGUAGE property
-    this.languageLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "languageLabel.text"));    
-    this.languageComboBox = new JComboBox(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
-    this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(JList list, 
-            Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          String language = (String)value;
-          Locale locale;
-          int underscoreIndex = language.indexOf("_");
-          if (underscoreIndex != -1) {
-            locale = new Locale(language.substring(0, underscoreIndex), 
-                language.substring(underscoreIndex + 1));
-          } else {
-            locale = new Locale(language);
-          }
-          String displayedValue = locale.getDisplayLanguage(locale);
-          displayedValue = Character.toUpperCase(displayedValue.charAt(0)) + displayedValue.substring(1);
-          return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
-              cellHasFocus);
-        }
-      });
-    this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
-    this.languageComboBox.setSelectedItem(controller.getLanguage());
-    this.languageComboBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setLanguage((String)languageComboBox.getSelectedItem());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.LANGUAGE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            languageComboBox.setSelectedItem(controller.getLanguage());
-          }
-        });
-    
-    // Create unit label and radio buttons bound to controller UNIT property
-    this.unitLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "unitLabel.text"));
-    this.centimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "centimeterRadioButton.text"), 
-        controller.getUnit() == LengthUnit.CENTIMETER);
-    this.centimeterRadioButton.setActionCommand(LengthUnit.CENTIMETER.name());
-    this.inchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "inchRadioButton.text"), 
-        controller.getUnit() == LengthUnit.INCH);
-    this.inchRadioButton.setActionCommand(LengthUnit.INCH.name());
-    this.millimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "millimeterRadioButton.text"), 
-        controller.getUnit() == LengthUnit.MILLIMETER);
-    this.millimeterRadioButton.setActionCommand(LengthUnit.MILLIMETER.name());
-    this.meterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "meterRadioButton.text"), 
-        controller.getUnit() == LengthUnit.METER);
-    this.meterRadioButton.setActionCommand(LengthUnit.METER.name());
-    final ButtonGroup unitButtonGroup = new ButtonGroup();
-    unitButtonGroup.add(this.centimeterRadioButton);
-    unitButtonGroup.add(this.inchRadioButton);
-    unitButtonGroup.add(this.millimeterRadioButton);
-    unitButtonGroup.add(this.meterRadioButton);
-
-    ItemListener unitChangeListener = new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setUnit(LengthUnit.valueOf(unitButtonGroup.getSelection().getActionCommand())); 
-        }
-      };
-    this.centimeterRadioButton.addItemListener(unitChangeListener);
-    this.inchRadioButton.addItemListener(unitChangeListener);
-    this.millimeterRadioButton.addItemListener(unitChangeListener);
-    this.meterRadioButton.addItemListener(unitChangeListener);
-    controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            switch (controller.getUnit()) {
-              case CENTIMETER :
-                centimeterRadioButton.setSelected(true);
-                break;
-              case INCH :
-                inchRadioButton.setSelected(true);
-                break;
-              case MILLIMETER :
-                millimeterRadioButton.setSelected(true);
-                break;
-              case METER :
-                meterRadioButton.setSelected(true);
-                break;
+    if (controller.isPropertyEditable(UserPreferencesController.Property.LANGUAGE)) {
+      // Create language label and combo box bound to controller LANGUAGE property
+      this.languageLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "languageLabel.text"));    
+      this.languageComboBox = new JComboBox(new DefaultComboBoxModel(preferences.getSupportedLanguages()));
+      this.languageComboBox.setRenderer(new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(JList list, 
+              Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            String language = (String)value;
+            Locale locale;
+            int underscoreIndex = language.indexOf("_");
+            if (underscoreIndex != -1) {
+              locale = new Locale(language.substring(0, underscoreIndex), 
+                  language.substring(underscoreIndex + 1));
+            } else {
+              locale = new Locale(language);
             }
+            String displayedValue = locale.getDisplayLanguage(locale);
+            displayedValue = Character.toUpperCase(displayedValue.charAt(0)) + displayedValue.substring(1);
+            return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
+                cellHasFocus);
           }
         });
-
-    // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
-    this.magnetismEnabledLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "magnetismLabel.text"));
-    this.magnetismCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "magnetismCheckBox.text"), controller.isMagnetismEnabled());
-    this.magnetismCheckBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setMagnetismEnabled(magnetismCheckBox.isSelected());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.MAGNETISM_ENABLED, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            magnetismCheckBox.setSelected(controller.isMagnetismEnabled());
-          }
-        });
-
-    // Create rulers label and check box bound to controller RULERS_VISIBLE property
-    this.rulersVisibleLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "rulersLabel.text"));
-    this.rulersCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "rulersCheckBox.text"), controller.isRulersVisible());
-    this.rulersCheckBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setRulersVisible(rulersCheckBox.isSelected());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.RULERS_VISIBLE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            rulersCheckBox.setSelected(controller.isRulersVisible());
-          }
-        });
-    
-    // Create grid label and check box bound to controller GRID_VISIBLE property
-    this.gridVisibleLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "gridLabel.text"));
-    this.gridCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "gridCheckBox.text"), controller.isGridVisible());
-    this.gridCheckBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setGridVisible(gridCheckBox.isSelected());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.GRID_VISIBLE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            gridCheckBox.setSelected(controller.isGridVisible());
-          }
-        });
-    
-    // Create furniture appearance label and radio buttons bound to controller FURNITURE_VIEWED_FROM_TOP property
-    this.furnitureIconLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "furnitureIconLabel.text"));
-    this.catalogIconRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "catalogIconRadioButton.text"), 
-        !controller.isFurnitureViewedFromTop());
-    this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "topViewRadioButton.text"), 
-        controller.isFurnitureViewedFromTop());
-    if (Component3DManager.getInstance().isOffScreenImageSupported()) {
-      ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
-      furnitureAppearanceButtonGroup.add(this.catalogIconRadioButton);
-      furnitureAppearanceButtonGroup.add(this.topViewRadioButton);
-  
-      ItemListener furnitureAppearanceChangeListener = new ItemListener() {
+      this.languageComboBox.setMaximumRowCount(this.languageComboBox.getModel().getSize());
+      this.languageComboBox.setSelectedItem(controller.getLanguage());
+      this.languageComboBox.addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent ev) {
-            controller.setFurnitureViewedFromTop(topViewRadioButton.isSelected());
+            controller.setLanguage((String)languageComboBox.getSelectedItem());
           }
-        };
-      this.catalogIconRadioButton.addItemListener(furnitureAppearanceChangeListener);
-      this.topViewRadioButton.addItemListener(furnitureAppearanceChangeListener);
-      controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP, 
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.LANGUAGE, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
+              languageComboBox.setSelectedItem(controller.getLanguage());
             }
           });
-    } else {
-      this.catalogIconRadioButton.setEnabled(false);
-      this.topViewRadioButton.setEnabled(false);
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.UNIT)) {
+      // Create unit label and radio buttons bound to controller UNIT property
+      this.unitLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "unitLabel.text"));
+      this.centimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "centimeterRadioButton.text"), 
+          controller.getUnit() == LengthUnit.CENTIMETER);
+      this.centimeterRadioButton.setActionCommand(LengthUnit.CENTIMETER.name());
+      this.inchRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "inchRadioButton.text"), 
+          controller.getUnit() == LengthUnit.INCH);
+      this.inchRadioButton.setActionCommand(LengthUnit.INCH.name());
+      this.millimeterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "millimeterRadioButton.text"), 
+          controller.getUnit() == LengthUnit.MILLIMETER);
+      this.millimeterRadioButton.setActionCommand(LengthUnit.MILLIMETER.name());
+      this.meterRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "meterRadioButton.text"), 
+          controller.getUnit() == LengthUnit.METER);
+      this.meterRadioButton.setActionCommand(LengthUnit.METER.name());
+      final ButtonGroup unitButtonGroup = new ButtonGroup();
+      unitButtonGroup.add(this.centimeterRadioButton);
+      unitButtonGroup.add(this.inchRadioButton);
+      unitButtonGroup.add(this.millimeterRadioButton);
+      unitButtonGroup.add(this.meterRadioButton);
+
+      ItemListener unitChangeListener = new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setUnit(LengthUnit.valueOf(unitButtonGroup.getSelection().getActionCommand())); 
+          }
+        };
+      this.centimeterRadioButton.addItemListener(unitChangeListener);
+      this.inchRadioButton.addItemListener(unitChangeListener);
+      this.millimeterRadioButton.addItemListener(unitChangeListener);
+      this.meterRadioButton.addItemListener(unitChangeListener);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.UNIT, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              switch (controller.getUnit()) {
+                case CENTIMETER :
+                  centimeterRadioButton.setSelected(true);
+                  break;
+                case INCH :
+                  inchRadioButton.setSelected(true);
+                  break;
+                case MILLIMETER :
+                  millimeterRadioButton.setSelected(true);
+                  break;
+                case METER :
+                  meterRadioButton.setSelected(true);
+                  break;
+              }
+            }
+          });
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.MAGNETISM_ENABLED)) {
+      // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
+      this.magnetismEnabledLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "magnetismLabel.text"));
+      this.magnetismCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "magnetismCheckBox.text"), controller.isMagnetismEnabled());
+      this.magnetismCheckBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setMagnetismEnabled(magnetismCheckBox.isSelected());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.MAGNETISM_ENABLED, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              magnetismCheckBox.setSelected(controller.isMagnetismEnabled());
+            }
+          });
     }
 
-    // Create room rendering label and radio buttons bound to controller ROOM_RENDERING property
-    this.roomRenderingLabel = new JLabel(preferences.getLocalizedString(
-        UserPreferencesPanel.class, "roomRenderingLabel.text"));
-    this.monochromeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "monochromeRadioButton.text"), 
-        !controller.isRoomFloorColoredOrTextured());
-    this.floorColorOrTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "floorColorOrTextureRadioButton.text"), 
-        controller.isRoomFloorColoredOrTextured());
-    ButtonGroup roomRenderingButtonGroup = new ButtonGroup();
-    roomRenderingButtonGroup.add(this.monochromeRadioButton);
-    roomRenderingButtonGroup.add(this.floorColorOrTextureRadioButton);
-
-    ItemListener roomRenderingChangeListener = new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setRoomFloorColoredOrTextured(floorColorOrTextureRadioButton.isSelected());
-        }
-      };
-    this.monochromeRadioButton.addItemListener(roomRenderingChangeListener);
-    this.floorColorOrTextureRadioButton.addItemListener(roomRenderingChangeListener);
-    controller.addPropertyChangeListener(UserPreferencesController.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            floorColorOrTextureRadioButton.setSelected(controller.isRoomFloorColoredOrTextured());
+    if (controller.isPropertyEditable(UserPreferencesController.Property.RULERS_VISIBLE)) {
+      // Create rulers label and check box bound to controller RULERS_VISIBLE property
+      this.rulersVisibleLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "rulersLabel.text"));
+      this.rulersCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "rulersCheckBox.text"), controller.isRulersVisible());
+      this.rulersCheckBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setRulersVisible(rulersCheckBox.isSelected());
           }
         });
-
-    // Create wall pattern label and combo box bound to controller WALL_PATTERN property
-    this.wallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "wallPatternLabel.text"));    
-    List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
-    this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
-    this.wallPatternComboBox.setRenderer(new DefaultListCellRenderer() {
-        @Override
-        public Component getListCellRendererComponent(final JList list, 
-            Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          TextureImage wallPattern = (TextureImage)value;
-          final Component component = super.getListCellRendererComponent(
-              list, "", index, isSelected, cellHasFocus);
-          final BufferedImage patternImage = SwingTools.getPatternImage(
-              wallPattern, list.getBackground(), list.getForeground());
-          setIcon(new Icon() {
-              public int getIconWidth() {
-                return patternImage.getWidth() * 4 + 1;
-              }
-        
-              public int getIconHeight() {
-                return patternImage.getHeight() + 2;
-              }
-        
-              public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2D = (Graphics2D)g;
-                for (int i = 0; i < 4; i++) {
-                  g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
-                }
-                g2D.setColor(list.getForeground());
-                g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.RULERS_VISIBLE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              rulersCheckBox.setSelected(controller.isRulersVisible());
+            }
+          });
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.GRID_VISIBLE)) {
+      // Create grid label and check box bound to controller GRID_VISIBLE property
+      this.gridVisibleLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "gridLabel.text"));
+      this.gridCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "gridCheckBox.text"), controller.isGridVisible());
+      this.gridCheckBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setGridVisible(gridCheckBox.isSelected());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.GRID_VISIBLE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              gridCheckBox.setSelected(controller.isGridVisible());
+            }
+          });
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP)) {
+      // Create furniture appearance label and radio buttons bound to controller FURNITURE_VIEWED_FROM_TOP property
+      this.furnitureIconLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "furnitureIconLabel.text"));
+      this.catalogIconRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "catalogIconRadioButton.text"), 
+          !controller.isFurnitureViewedFromTop());
+      this.topViewRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "topViewRadioButton.text"), 
+          controller.isFurnitureViewedFromTop());
+      if (Component3DManager.getInstance().isOffScreenImageSupported()) {
+        ButtonGroup furnitureAppearanceButtonGroup = new ButtonGroup();
+        furnitureAppearanceButtonGroup.add(this.catalogIconRadioButton);
+        furnitureAppearanceButtonGroup.add(this.topViewRadioButton);
+    
+        ItemListener furnitureAppearanceChangeListener = new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+              controller.setFurnitureViewedFromTop(topViewRadioButton.isSelected());
+            }
+          };
+        this.catalogIconRadioButton.addItemListener(furnitureAppearanceChangeListener);
+        this.topViewRadioButton.addItemListener(furnitureAppearanceChangeListener);
+        controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_VIEWED_FROM_TOP, 
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                topViewRadioButton.setSelected(controller.isFurnitureViewedFromTop());
               }
             });
-          return component;
-        }
-      });
-    this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
-    this.wallPatternComboBox.addItemListener(new ItemListener() {
-        public void itemStateChanged(ItemEvent ev) {
-          controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            wallPatternComboBox.setSelectedItem(controller.getWallPattern());
+      } else {
+        this.catalogIconRadioButton.setEnabled(false);
+        this.topViewRadioButton.setEnabled(false);
+      }
+    }
+
+    if (controller.isPropertyEditable(UserPreferencesController.Property.ROOM_FLOOR_COLORED_OR_TEXTURED)) {
+      // Create room rendering label and radio buttons bound to controller ROOM_FLOOR_COLORED_OR_TEXTURED property
+      this.roomRenderingLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "roomRenderingLabel.text"));
+      this.monochromeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "monochromeRadioButton.text"), 
+          !controller.isRoomFloorColoredOrTextured());
+      this.floorColorOrTextureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "floorColorOrTextureRadioButton.text"), 
+          controller.isRoomFloorColoredOrTextured());
+      ButtonGroup roomRenderingButtonGroup = new ButtonGroup();
+      roomRenderingButtonGroup.add(this.monochromeRadioButton);
+      roomRenderingButtonGroup.add(this.floorColorOrTextureRadioButton);
+      ItemListener roomRenderingChangeListener = new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setRoomFloorColoredOrTextured(floorColorOrTextureRadioButton.isSelected());
+          }
+        };
+      this.monochromeRadioButton.addItemListener(roomRenderingChangeListener);
+      this.floorColorOrTextureRadioButton.addItemListener(roomRenderingChangeListener);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.ROOM_FLOOR_COLORED_OR_TEXTURED, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              floorColorOrTextureRadioButton.setSelected(controller.isRoomFloorColoredOrTextured());
+            }
+          });
+    }
+
+    if (controller.isPropertyEditable(UserPreferencesController.Property.WALL_PATTERN)) {
+      // Create wall pattern label and combo box bound to controller WALL_PATTERN property
+      this.wallPatternLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "wallPatternLabel.text"));    
+      List<TextureImage> patterns = preferences.getPatternsCatalog().getPatterns();
+      this.wallPatternComboBox = new JComboBox(new DefaultComboBoxModel(patterns.toArray()));
+      this.wallPatternComboBox.setRenderer(new DefaultListCellRenderer() {
+          @Override
+          public Component getListCellRendererComponent(final JList list, 
+              Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            TextureImage wallPattern = (TextureImage)value;
+            final Component component = super.getListCellRendererComponent(
+                list, "", index, isSelected, cellHasFocus);
+            final BufferedImage patternImage = SwingTools.getPatternImage(
+                wallPattern, list.getBackground(), list.getForeground());
+            setIcon(new Icon() {
+                public int getIconWidth() {
+                  return patternImage.getWidth() * 4 + 1;
+                }
+          
+                public int getIconHeight() {
+                  return patternImage.getHeight() + 2;
+                }
+          
+                public void paintIcon(Component c, Graphics g, int x, int y) {
+                  Graphics2D g2D = (Graphics2D)g;
+                  for (int i = 0; i < 4; i++) {
+                    g2D.drawImage(patternImage, x + i * patternImage.getWidth(), y + 1, list);
+                  }
+                  g2D.setColor(list.getForeground());
+                  g2D.drawRect(x, y, getIconWidth() - 2, getIconHeight() - 1);
+                }
+              });
+            return component;
           }
         });
-    
-    // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
-    this.newWallThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "newWallThicknessLabel.text"));
-    final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
-        0.5f, 0.125f, 5f, 0.005f, controller);
-    this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
-    newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
-    newWallThicknessSpinnerModel.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setNewWallThickness(newWallThicknessSpinnerModel.getLength());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_THICKNESS, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+      this.wallPatternComboBox.setSelectedItem(controller.getWallPattern());
+      this.wallPatternComboBox.addItemListener(new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setWallPattern((TextureImage)wallPatternComboBox.getSelectedItem());
           }
         });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.WALL_PATTERN, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              wallPatternComboBox.setSelectedItem(controller.getWallPattern());
+            }
+          });
+    }
     
-    
-    // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
-    this.newWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        UserPreferencesPanel.class, "newWallHeightLabel.text"));
-    final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
-        10f, 2f, 100f, 0.1f, controller);
-    this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
-    newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
-    newWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setNewWallHeight(newWallHeightSpinnerModel.getLength());
-        }
-      });
-    controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_HEIGHT, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+    if (controller.isPropertyEditable(UserPreferencesController.Property.NEW_WALL_THICKNESS)) {
+      // Create wall thickness label and spinner bound to controller NEW_WALL_THICKNESS property
+      this.newWallThicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "newWallThicknessLabel.text"));
+      final SpinnerLengthModel newWallThicknessSpinnerModel = new SpinnerLengthModel(
+          0.5f, 0.125f, 5f, 0.005f, controller);
+      this.newWallThicknessSpinner = new AutoCommitSpinner(newWallThicknessSpinnerModel);
+      newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+      newWallThicknessSpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setNewWallThickness(newWallThicknessSpinnerModel.getLength());
           }
         });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_THICKNESS, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              newWallThicknessSpinnerModel.setLength(controller.getNewWallThickness());
+            }
+          });
+    }
+    
+    if (controller.isPropertyEditable(UserPreferencesController.Property.NEW_WALL_HEIGHT)) {
+      // Create wall height label and spinner bound to controller NEW_WALL_HEIGHT property
+      this.newWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "newWallHeightLabel.text"));
+      final SpinnerLengthModel newWallHeightSpinnerModel = new SpinnerLengthModel(
+          10f, 2f, 100f, 0.1f, controller);
+      this.newWallHeightSpinner = new AutoCommitSpinner(newWallHeightSpinnerModel);
+      newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+      newWallHeightSpinnerModel.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setNewWallHeight(newWallHeightSpinnerModel.getLength());
+          }
+        });
+      controller.addPropertyChangeListener(UserPreferencesController.Property.NEW_WALL_HEIGHT, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              newWallHeightSpinnerModel.setLength(controller.getNewWallHeight());
+            }
+          });
+    }
     
     this.resetDisplayedActionTipsButton = new JButton(new ResourceAction.ButtonAction(
         new ResourceAction(preferences, UserPreferencesPanel.class, "RESET_DISPLAYED_ACTION_TIPS", true) {
@@ -418,40 +436,60 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
    */
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
-      this.languageLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "languageLabel.mnemonic")).getKeyCode());
-      this.languageLabel.setLabelFor(this.languageComboBox);
-      this.centimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "centimeterRadioButton.mnemonic")).getKeyCode());
-      this.inchRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "inchRadioButton.mnemonic")).getKeyCode());
-      this.millimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "millimeterRadioButton.mnemonic")).getKeyCode());
-      this.meterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "meterRadioButton.mnemonic")).getKeyCode());
-      this.magnetismCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "magnetismCheckBox.mnemonic")).getKeyCode());
-      this.rulersCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "rulersCheckBox.mnemonic")).getKeyCode());
-      this.gridCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "gridCheckBox.mnemonic")).getKeyCode());
-      this.catalogIconRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
-      this.topViewRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "topViewRadioButton.mnemonic")).getKeyCode());
-      this.monochromeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "monochromeRadioButton.mnemonic")).getKeyCode());
-      this.floorColorOrTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "floorColorOrTextureRadioButton.mnemonic")).getKeyCode());
-      this.wallPatternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "wallPatternLabel.mnemonic")).getKeyCode());
-      this.wallPatternLabel.setLabelFor(this.wallPatternComboBox);
-      this.newWallThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "newWallThicknessLabel.mnemonic")).getKeyCode());
-      this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
-      this.newWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "newWallHeightLabel.mnemonic")).getKeyCode());
-      this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
+      if (this.languageLabel != null) {
+        this.languageLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "languageLabel.mnemonic")).getKeyCode());
+        this.languageLabel.setLabelFor(this.languageComboBox);
+      }
+      if (this.unitLabel != null) {
+        this.centimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "centimeterRadioButton.mnemonic")).getKeyCode());
+        this.inchRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "inchRadioButton.mnemonic")).getKeyCode());
+        this.millimeterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "millimeterRadioButton.mnemonic")).getKeyCode());
+        this.meterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "meterRadioButton.mnemonic")).getKeyCode());
+      }
+      if (this.magnetismEnabledLabel != null) {
+        this.magnetismCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "magnetismCheckBox.mnemonic")).getKeyCode());
+      }
+      if (this.rulersVisibleLabel != null) {
+        this.rulersCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "rulersCheckBox.mnemonic")).getKeyCode());
+      }
+      if (this.gridVisibleLabel != null) {
+        this.gridCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "gridCheckBox.mnemonic")).getKeyCode());
+      }
+      if (this.furnitureIconLabel != null) {
+        this.catalogIconRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "catalogIconRadioButton.mnemonic")).getKeyCode());
+        this.topViewRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "topViewRadioButton.mnemonic")).getKeyCode());
+      }
+      if (this.roomRenderingLabel != null) {
+        this.monochromeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "monochromeRadioButton.mnemonic")).getKeyCode());
+        this.floorColorOrTextureRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "floorColorOrTextureRadioButton.mnemonic")).getKeyCode());
+      }
+      if (this.wallPatternLabel != null) {
+        this.wallPatternLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "wallPatternLabel.mnemonic")).getKeyCode());
+        this.wallPatternLabel.setLabelFor(this.wallPatternComboBox);
+      }
+      if (this.newWallThicknessLabel != null) {
+        this.newWallThicknessLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "newWallThicknessLabel.mnemonic")).getKeyCode());
+        this.newWallThicknessLabel.setLabelFor(this.newWallThicknessSpinner);
+      }
+      if (this.newWallHeightLabel != null) {
+        this.newWallHeightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "newWallHeightLabel.mnemonic")).getKeyCode());
+        this.newWallHeightLabel.setLabelFor(this.newWallHeightSpinner);
+      }
     }
   }
   
@@ -463,95 +501,116 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     Insets labelInsets = new Insets(0, 0, 5, 5);
-    // First row
-    add(this.languageLabel, new GridBagConstraints(
-        0, 0, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
-    add(this.languageComboBox, new GridBagConstraints(
-        1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Second row
-    add(this.unitLabel, new GridBagConstraints(
-        0, 1, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.centimeterRadioButton, new GridBagConstraints(
-        1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
-    add(this.inchRadioButton, new GridBagConstraints(
-        2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
-    // Third row
-    add(this.millimeterRadioButton, new GridBagConstraints(
-        1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.meterRadioButton, new GridBagConstraints(
-        2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Fourth row
-    add(this.magnetismEnabledLabel, new GridBagConstraints(
-        0, 3, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.magnetismCheckBox, new GridBagConstraints(
-        1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Fifth row
-    add(this.rulersVisibleLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.rulersCheckBox, new GridBagConstraints(
-        1, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Sixth row
-    add(this.gridVisibleLabel, new GridBagConstraints(
-        0, 5, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.gridCheckBox, new GridBagConstraints(
-        1, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Seventh row
-    add(this.furnitureIconLabel, new GridBagConstraints(
-        0, 6, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.catalogIconRadioButton, new GridBagConstraints(
-        1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.topViewRadioButton, new GridBagConstraints(
-        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets , 0, 0));
-    // Eighth row
-    add(this.roomRenderingLabel, new GridBagConstraints(
-        0, 7, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.monochromeRadioButton, new GridBagConstraints(
-        1, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
-        2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets , 0, 0));
-    // Ninth row
-    add(this.wallPatternLabel, new GridBagConstraints(
-        0, 8, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.wallPatternComboBox, new GridBagConstraints(
-        1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Tenth row
-    add(this.newWallThicknessLabel, new GridBagConstraints(
-        0, 9, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.newWallThicknessSpinner, new GridBagConstraints(
-        1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    // Eleventh row
-    add(this.newWallHeightLabel, new GridBagConstraints(
-        0, 10, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
-    add(this.newWallHeightSpinner, new GridBagConstraints(
-        1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    if (this.languageLabel != null) {
+      // First row
+      add(this.languageLabel, new GridBagConstraints(
+          0, 0, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.languageComboBox, new GridBagConstraints(
+          1, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.unitLabel != null) {
+      // Second row
+      add(this.unitLabel, new GridBagConstraints(
+          0, 1, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.centimeterRadioButton, new GridBagConstraints(
+          1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
+      add(this.inchRadioButton, new GridBagConstraints(
+          2, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
+      // Third row
+      add(this.millimeterRadioButton, new GridBagConstraints(
+          1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.meterRadioButton, new GridBagConstraints(
+          2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.magnetismEnabledLabel != null) {
+      // Fourth row
+      add(this.magnetismEnabledLabel, new GridBagConstraints(
+          0, 3, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.magnetismCheckBox, new GridBagConstraints(
+          1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.rulersVisibleLabel != null) {
+      // Fifth row
+      add(this.rulersVisibleLabel, new GridBagConstraints(
+          0, 4, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.rulersCheckBox, new GridBagConstraints(
+          1, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.gridVisibleLabel != null) {
+      // Sixth row
+      add(this.gridVisibleLabel, new GridBagConstraints(
+          0, 5, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.gridCheckBox, new GridBagConstraints(
+          1, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.furnitureIconLabel != null) {
+      // Seventh row
+      add(this.furnitureIconLabel, new GridBagConstraints(
+          0, 6, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.catalogIconRadioButton, new GridBagConstraints(
+          1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.topViewRadioButton, new GridBagConstraints(
+          2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    }
+    if (this.roomRenderingLabel != null) {
+      // Eighth row
+      add(this.roomRenderingLabel, new GridBagConstraints(
+          0, 7, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.monochromeRadioButton, new GridBagConstraints(
+          1, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+          2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    }
+    if (this.wallPatternLabel != null) {
+      // Ninth row
+      add(this.wallPatternLabel, new GridBagConstraints(
+          0, 8, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.wallPatternComboBox, new GridBagConstraints(
+          1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+    }
+    if (this.newWallThicknessLabel != null) {
+      // Tenth row
+      add(this.newWallThicknessLabel, new GridBagConstraints(
+          0, 9, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newWallThicknessSpinner, new GridBagConstraints(
+          1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
+    if (this.newWallHeightLabel != null) {
+      // Eleventh row
+      add(this.newWallHeightLabel, new GridBagConstraints(
+          0, 10, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.newWallHeightSpinner, new GridBagConstraints(
+          1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    }
     // Last row
-    if (this.resetDisplayedActionTipsButton.getText().length() > 0) {
+    if (this.resetDisplayedActionTipsButton.getText() != null
+        && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
           0, 11, 3, 1, 0, 0, GridBagConstraints.CENTER, 
