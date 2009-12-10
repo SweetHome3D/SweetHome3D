@@ -91,4 +91,26 @@ public class URLContent implements Content {
     String file = this.url.getFile();
     return file.substring(file.indexOf('!') + 2);
   }
+  
+  /**
+   * Returns <code>true</code> if the object in parameter is an URL content
+   * that references the same URL as this object.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    } else if (obj instanceof URLContent) {
+      URLContent urlContent = (URLContent)obj;
+      return urlContent.url == this.url
+          || urlContent.url.equals(this.url);
+    } else {
+      return false;
+    }
+  }
+  
+  @Override
+  public int hashCode() {
+    return this.url.hashCode();
+  }
 }
