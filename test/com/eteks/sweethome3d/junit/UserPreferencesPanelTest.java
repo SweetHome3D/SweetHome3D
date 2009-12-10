@@ -294,6 +294,7 @@ public class UserPreferencesPanelTest extends TestCase {
    * Tests language changes on the GUI. 
    */
   public void testLanguageChange() {
+    Locale defaultLocale = Locale.getDefault();
     Locale.setDefault(Locale.US);
     UserPreferences preferences = new DefaultUserPreferences() {
       @Override
@@ -342,6 +343,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new ImportedTextureWizardController(preferences, viewFactory, contentManager).getView();
       
       new HelpController(preferences, viewFactory).getView();
+      Locale.setDefault(defaultLocale);
     }
   }
 }
