@@ -82,6 +82,10 @@ public class ScaledImageComponent extends JComponent {
   
   @Override
   protected void paintComponent(Graphics g) {
+    if (isOpaque()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+    }
     paintImage(g, null);
   }
 
