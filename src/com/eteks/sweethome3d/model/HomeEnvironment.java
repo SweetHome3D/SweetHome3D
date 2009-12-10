@@ -89,6 +89,24 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
+   * Creates home environment from parameters.
+   * @since 2.2
+   */
+  public HomeEnvironment(int groundColor, HomeTexture groundTexture, 
+                         int skyColor, HomeTexture skyTexture,
+                         int lightColor, float wallsAlpha) {
+    this.groundColor = groundColor;
+    this.groundTexture = groundTexture;
+    this.skyColor = skyColor;
+    this.lightColor = lightColor;
+    this.wallsAlpha = wallsAlpha;
+    this.drawingMode = DrawingMode.FILL;
+    this.photoWidth = 400;
+    this.photoHeight = 300;
+    this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
+  }
+
+  /**
    * Initializes environment transient fields  
    * and reads attributes from <code>in</code> stream with default reading method.
    */
