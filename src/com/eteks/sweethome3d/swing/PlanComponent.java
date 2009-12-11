@@ -1686,6 +1686,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       List<Selectable> selectedItems = this.home.getSelectedItems();
       
       Color selectionColor = getSelectionColor(); 
+      Color furnitureOutlineColor = getFurnitureOutlineColor();
       Paint selectionOutlinePaint = new Color(selectionColor.getRed(), selectionColor.getGreen(), 
           selectionColor.getBlue(), 128);
       Stroke selectionOutlineStroke = new BasicStroke(6 / planScale, 
@@ -1737,7 +1738,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         paintWallsOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
             planScale, foregroundColor);
         paintFurniture(g2D, Home.getFurnitureSubList(this.draggedItemsFeedback), selectedItems, planScale, null, 
-            foregroundColor, paintMode, false);
+            foregroundColor, furnitureOutlineColor, paintMode, false);
         paintFurnitureOutline(g2D, this.draggedItemsFeedback, selectionOutlinePaint, selectionOutlineStroke, null, 
             planScale, foregroundColor);
       }
@@ -1792,7 +1793,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     checkCurrentThreadIsntInterrupted(paintMode);
     paintFurniture(g2D, this.sortedHomeFurniture, selectedItems, 
-        planScale, backgroundColor, foregroundColor, paintMode, true);
+        planScale, backgroundColor, foregroundColor, getFurnitureOutlineColor(), paintMode, true);
     
     checkCurrentThreadIsntInterrupted(paintMode);
     paintDimensionLines(g2D, this.home.getDimensionLines(), selectedItems, 
@@ -1841,6 +1842,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
   }
 
+  /**
+   * Returns the color used to draw furniture outline of 
+   * the shape where a user can click to select a piece of furniture.
+   */
+  protected Color getFurnitureOutlineColor() {
+    return new Color((getForeground().getRGB() & 0xFFFFFF) | 0x55000000, true);
+  }
+  
   /**
    * Paints rooms. 
    */
@@ -2278,10 +2287,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture, 
                               List<Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, 
+                              Color furnitureOutlineColor,
                               PaintMode paintMode, boolean paintIcon) {    
     if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
-      Composite oldComposite = g2D.getComposite();
       final boolean allFurnitureViewedFromTop = 
           this.preferences.isFurnitureViewedFromTop()
           && Component3DManager.getInstance().isOffScreenImageSupported();
@@ -2321,9 +2330,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (paintMode == PaintMode.PAINT) {
                 // Draw selection outline rectangle  
                 g2D.setStroke(pieceBorderStroke);
-                g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+                g2D.setPaint(furnitureOutlineColor);
                 g2D.draw(pieceShape);
-                g2D.setComposite(oldComposite);
               } 
             } else {
               if (paintIcon) {
@@ -2338,9 +2346,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               if (piece instanceof HomeDoorOrWindow
                   && paintMode == PaintMode.PAINT) {
                 // Draw outline rectangle
-                g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.33f));
+                g2D.setPaint(furnitureOutlineColor);
                 g2D.draw(pieceShape);
-                g2D.setComposite(oldComposite);
               } 
             }
           }
