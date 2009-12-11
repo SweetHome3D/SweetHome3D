@@ -3078,7 +3078,9 @@ public class PlanController extends FurnitureController implements Controller {
     boolean basePlanLocked = this.home.isBasePlanLocked();
     // Delete furniture and add it again in a compound edit
     List<HomePieceOfFurniture> furniture = Home.getFurnitureSubList(items);
-    deleteFurniture(furniture);
+    for (HomePieceOfFurniture piece : furniture) {
+      this.home.deletePieceOfFurniture(piece);
+    }
     
     // Post duplicated items in a compound edit  
     this.undoSupport.beginUpdate();
