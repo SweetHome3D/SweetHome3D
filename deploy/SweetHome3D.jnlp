@@ -65,11 +65,11 @@
   </resources>
  
   <resources os="Windows" arch="x86">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/windows/java3d.jar"/>
   </resources>
   <resources os="Windows" arch="amd64">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
 
@@ -79,24 +79,24 @@
   </resources>
 
   <resources os="Linux" arch="x86">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="i386">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/i386/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="amd64">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/x64/java3d.jar"/>
   </resources>
   <resources os="Linux" arch="x86_64">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <jar href="lib/linux/x64/java3d.jar"/>
   </resources>
 
   <resources os="SunOS">
-    <jar href="lib/iText-2.1.5.jar"/>
+    <jar href="lib/iText-2.1.7.jar"/>
     <extension href="http://download.java.net/media/java3d/webstart/release/java3d-1.5-latest.jnlp"/>
   </resources>
   
