@@ -53,163 +53,176 @@ import com.eteks.sweethome3d.tools.URLContent;
  */
 public class DefaultFurnitureCatalog extends FurnitureCatalog {
   /**
-   * The key for the ID of a piece of furniture (optional). 
-   * Two pieces of furniture read in a furniture catalog can't have the same ID
-   * and the second one will be ignored.   
+   * The keys of the properties values read in <code>.properties</code> files.
    */
-  public static final String KEY_ID = "id";
-  /**
-   * The key for the name of a piece of furniture (mandatory).
-   */
-  public static final String KEY_NAME = "name";
-  /**
-   * The key for the description of a piece of furniture (optional). 
-   * This may give detailed information about a piece of furniture.
-   */
-  public static final String KEY_DESCRIPTION = "description";
-  /**
-   * The key for the category's name of a piece of furniture (mandatory).
-   * A new category with this name will be created if it doesn't exist.
-   */
-  public static final String KEY_CATEGORY = "category";
-  /**
-   * The key for the icon file of a piece of furniture (mandatory). 
-   * This icon file can be either the path to an image relative to classpath
-   * or an absolute URL. 
-   */
-  public static final String KEY_ICON = "icon";
-  /**
-   * The key for the plan icon file of a piece of furniture (optional).
-   * This icon file can be either the path to an image relative to classpath
-   * or an absolute URL. 
-   */
-  public static final String KEY_PLAN_ICON = "planIcon";
-  /**
-   * The key for the 3D model file of a piece of furniture (mandatory).
-   * The 3D model file can be either a path relative to classpath
-   * or an absolute URL. 
-   */
-  public static final String KEY_MODEL = "model";
-  /**
-   * The key for a piece of furniture with multiple parts (optional).
-   * If the value of this key is <code>true</code>, all the files
-   * stored in the same directory as the 3D model file (MTL, texture files...)
-   * will be considered as being necessary to view correctly the 3D model. 
-   */
-  public static final String KEY_MULTI_PART_MODEL = "multiPartModel";
-  /**
-   * The key for the width in centimeters of a piece of furniture (mandatory).
-   */
-  public static final String KEY_WIDTH = "width";
-  /**
-   * The key for the height in centimeters of a piece of furniture (mandatory).
-   */
-  public static final String KEY_DEPTH = "depth";
-  /**
-   * The key for the height in centimeters of a piece of furniture (mandatory).
-   */
-  public static final String KEY_HEIGHT = "height";
-  /**
-   * The key for the movability of a piece of furniture (mandatory).
-   * If the value of this key is <code>true</code>, the piece of furniture
-   * will be considered as a movable piece. 
-   */
-  public static final String KEY_MOVABLE = "movable";
-  /**
-   * The key for the door or window type of a piece of furniture (mandatory).
-   * If the value of this key is <code>true</code>, the piece of furniture
-   * will be considered as a door or a window. 
-   */
-  public static final String KEY_DOOR_OR_WINDOW = "doorOrWindow";
-  /**
-   * The key for the wall thickness in centimeters of a door or a window (optional).
-   * By default, a door or a window has the same depth as the wall it belongs to.
-   */
-  public static final String KEY_DOOR_OR_WINDOW_WALL_THICKNESS = "doorOrWindowWallThickness";
-  /**
-   * The key for the distance in centimeters of a door or a window to its wall (optional).
-   * By default, this distance is zero.
-   */
-  public static final String KEY_DOOR_OR_WINDOW_WALL_DISTANCE = "doorOrWindowWallDistance";
-  /**
-   * The key for the sash axis distance(s) of a door or a window along X axis (optional).
-   * If a door or a window has more than one sash, the values of each sash should be 
-   * separated by spaces.  
-   */
-  public static final String KEY_DOOR_OR_WINDOW_SASH_X_AXIS = "doorOrWindowSashXAxis";
-  /**
-   * The key for the sash axis distance(s) of a door or a window along Y axis 
-   * (mandatory if sash axis distance along X axis is defined).
-   */
-  public static final String KEY_DOOR_OR_WINDOW_SASH_Y_AXIS = "doorOrWindowSashYAxis";
-  /**
-   * The key for the sash width(s) of a door or a window  
-   * (mandatory if sash axis distance along X axis is defined).
-   */
-  public static final String KEY_DOOR_OR_WINDOW_SASH_WIDTH = "doorOrWindowSashWidth";
-  /**
-   * The key for the sash start angle(s) of a door or a window  
-   * (mandatory if sash axis distance along X axis is defined).
-   */
-  public static final String KEY_DOOR_OR_WINDOW_SASH_START_ANGLE = "doorOrWindowSashStartAngle";
-  /**
-   * The key for the sash end angle(s) of a door or a window  
-   * (mandatory if sash axis distance along X axis is defined).
-   */
-  public static final String KEY_DOOR_OR_WINDOW_SASH_END_ANGLE = "doorOrWindowSashEndAngle";
-  /**
-   * The key for the abscissa(s) of light sources in a light (optional).
-   * If a light has more than one light source, the values of each light source should 
-   * be separated by spaces.
-   */
-  public static final String KEY_LIGHT_SOURCE_X = "lightSourceX";
-  /**
-   * The key for the ordinate(s) of light sources in a light (mandatory if light source abscissa is defined).
-   */
-  public static final String KEY_LIGHT_SOURCE_Y = "lightSourceY";
-  /**
-   * The key for the elevation(s) of light sources in a light (mandatory if light source abscissa is defined).
-   */
-  public static final String KEY_LIGHT_SOURCE_Z = "lightSourceZ";
-  /**
-   * The key for the color(s) of light sources in a light (mandatory if light source abscissa is defined).
-   */
-  public static final String KEY_LIGHT_SOURCE_COLOR = "lightSourceColor";
-  /**
-   * The key for the elevation in centimeters of a piece of furniture (optional).
-   */
-  public static final String KEY_ELEVATION = "elevation";
-  /**
-   * The key for the transformation matrix values applied to a piece of furniture (optional).
-   * If the 3D model of a piece of furniture isn't correctly oriented, 
-   * the value of this key should give the 9 values of the transformation matrix 
-   * that will orient it correctly.  
-   */
-  public static final String KEY_MODEL_ROTATION = "modelRotation";
-  /**
-   * The key for the creator of a piece of furniture (optional).
-   * By default, creator is eTeks.
-   */
-  public static final String KEY_CREATOR = "creator";
-  /**
-   * The key for the resizability of a piece of furniture (optional).
-   * If the value of this key is <code>false</code>, the piece of furniture
-   * will be considered as a piece with a fixed size. 
-   */
-  public static final String KEY_RESIZABLE = "resizable";
-  /**
-   * The key for the price of a piece of furniture (optional).
-   */
-  public static final String KEY_PRICE = "price";
-  /**
-   * The key for the VAT percentage of a piece of furniture (optional).
-   */
-  public static final String KEY_VALUE_ADDED_TAX_PERCENTAGE = "valueAddedTaxPercentage";
+  public enum PropertyKey {
+    /**
+     * The key for the ID of a piece of furniture (optional). 
+     * Two pieces of furniture read in a furniture catalog can't have the same ID
+     * and the second one will be ignored.   
+     */
+    ID("id"),
+    /**
+     * The key for the name of a piece of furniture (mandatory).
+     */
+    NAME("name"),
+    /**
+     * The key for the description of a piece of furniture (optional). 
+     * This may give detailed information about a piece of furniture.
+     */
+    DESCRIPTION("description"),
+    /**
+     * The key for the category's name of a piece of furniture (mandatory).
+     * A new category with this name will be created if it doesn't exist.
+     */
+    CATEGORY("category"),
+    /**
+     * The key for the icon file of a piece of furniture (mandatory). 
+     * This icon file can be either the path to an image relative to classpath
+     * or an absolute URL. 
+     */
+    ICON("icon"),
+    /**
+     * The key for the plan icon file of a piece of furniture (optional).
+     * This icon file can be either the path to an image relative to classpath
+     * or an absolute URL. 
+     */
+    PLAN_ICON("planIcon"),
+    /**
+     * The key for the 3D model file of a piece of furniture (mandatory).
+     * The 3D model file can be either a path relative to classpath
+     * or an absolute URL. 
+     */
+    MODEL("model"),
+    /**
+     * The key for a piece of furniture with multiple parts (optional).
+     * If the value of this key is <code>true</code>, all the files
+     * stored in the same directory as the 3D model file (MTL, texture files...)
+     * will be considered as being necessary to view correctly the 3D model. 
+     */
+    MULTI_PART_MODEL("multiPartModel"),
+    /**
+     * The key for the width in centimeters of a piece of furniture (mandatory).
+     */
+    WIDTH("width"),
+    /**
+     * The key for the height in centimeters of a piece of furniture (mandatory).
+     */
+    DEPTH("depth"),
+    /**
+     * The key for the height in centimeters of a piece of furniture (mandatory).
+     */
+    HEIGHT("height"),
+    /**
+     * The key for the movability of a piece of furniture (mandatory).
+     * If the value of this key is <code>true</code>, the piece of furniture
+     * will be considered as a movable piece. 
+     */
+    MOVABLE("movable"),
+    /**
+     * The key for the door or window type of a piece of furniture (mandatory).
+     * If the value of this key is <code>true</code>, the piece of furniture
+     * will be considered as a door or a window. 
+     */
+    DOOR_OR_WINDOW("doorOrWindow"),
+    /**
+     * The key for the wall thickness in centimeters of a door or a window (optional).
+     * By default, a door or a window has the same depth as the wall it belongs to.
+     */
+    DOOR_OR_WINDOW_WALL_THICKNESS("doorOrWindowWallThickness"),
+    /**
+     * The key for the distance in centimeters of a door or a window to its wall (optional).
+     * By default, this distance is zero.
+     */
+    DOOR_OR_WINDOW_WALL_DISTANCE("doorOrWindowWallDistance"),
+    /**
+     * The key for the sash axis distance(s) of a door or a window along X axis (optional).
+     * If a door or a window has more than one sash, the values of each sash should be 
+     * separated by spaces.  
+     */
+    DOOR_OR_WINDOW_SASH_X_AXIS("doorOrWindowSashXAxis"),
+    /**
+     * The key for the sash axis distance(s) of a door or a window along Y axis 
+     * (mandatory if sash axis distance along X axis is defined).
+     */
+    DOOR_OR_WINDOW_SASH_Y_AXIS("doorOrWindowSashYAxis"),
+    /**
+     * The key for the sash width(s) of a door or a window  
+     * (mandatory if sash axis distance along X axis is defined).
+     */
+    DOOR_OR_WINDOW_SASH_WIDTH("doorOrWindowSashWidth"),
+    /**
+     * The key for the sash start angle(s) of a door or a window  
+     * (mandatory if sash axis distance along X axis is defined).
+     */
+    DOOR_OR_WINDOW_SASH_START_ANGLE("doorOrWindowSashStartAngle"),
+    /**
+     * The key for the sash end angle(s) of a door or a window  
+     * (mandatory if sash axis distance along X axis is defined).
+     */
+    DOOR_OR_WINDOW_SASH_END_ANGLE("doorOrWindowSashEndAngle"),
+    /**
+     * The key for the abscissa(s) of light sources in a light (optional).
+     * If a light has more than one light source, the values of each light source should 
+     * be separated by spaces.
+     */
+    LIGHT_SOURCE_X("lightSourceX"),
+    /**
+     * The key for the ordinate(s) of light sources in a light (mandatory if light source abscissa is defined).
+     */
+    LIGHT_SOURCE_Y("lightSourceY"),
+    /**
+     * The key for the elevation(s) of light sources in a light (mandatory if light source abscissa is defined).
+     */
+    LIGHT_SOURCE_Z("lightSourceZ"),
+    /**
+     * The key for the color(s) of light sources in a light (mandatory if light source abscissa is defined).
+     */
+    LIGHT_SOURCE_COLOR("lightSourceColor"),
+    /**
+     * The key for the elevation in centimeters of a piece of furniture (optional).
+     */
+    ELEVATION("elevation"),
+    /**
+     * The key for the transformation matrix values applied to a piece of furniture (optional).
+     * If the 3D model of a piece of furniture isn't correctly oriented, 
+     * the value of this key should give the 9 values of the transformation matrix 
+     * that will orient it correctly.  
+     */
+    MODEL_ROTATION("modelRotation"),
+    /**
+     * The key for the creator of a piece of furniture (optional).
+     * By default, creator is eTeks.
+     */
+    CREATOR("creator"),
+    /**
+     * The key for the resizability of a piece of furniture (optional).
+     * If the value of this key is <code>false</code>, the piece of furniture
+     * will be considered as a piece with a fixed size. 
+     */
+    RESIZABLE("resizable"),
+    /**
+     * The key for the price of a piece of furniture (optional).
+     */
+    PRICE("price"),
+    /**
+     * The key for the VAT percentage of a piece of furniture (optional).
+     */
+    VALUE_ADDED_TAX_PERCENTAGE("valueAddedTaxPercentage");
+    
+    private String keyPrefix;
 
-  /**
-   * Separator between a <code>KEY_...</code> constant and the order number of a piece of furniture.
-   */
-  public static final String SEPARATOR = "#";
+    private PropertyKey(String keyPrefix) {
+      this.keyPrefix = keyPrefix;
+    }
+    
+    /**
+     * Returns the key for the piece property of the given index.
+     */
+    public String getKey(int pieceIndex) {
+      return keyPrefix + "#" + pieceIndex;
+    }
+  }
 
   /**
    * The name of <code>.properties</code> family files in furniture plug-in files. 
@@ -308,7 +321,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
       try {
         // Try do load Furniture property file from current file  
         readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-            new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
+                new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
             pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
       } catch (MissingResourceException ex) {
         // Ignore malformed plugin furniture catalog
@@ -322,96 +335,120 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * if it isn't <code>null</code>. 
    */
   private void readFurniture(ResourceBundle resource, 
-                             URL furnitureUrl,
+                             URL furnitureCatalogUrl,
                              Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
     if (resource != null) {
-      for (int i = 1;; i++) {
-        String name = null;
-        try {
-          name = resource.getString(KEY_NAME + SEPARATOR + i);
-        } catch (MissingResourceException ex) {
-          // Stop the loop when a key name# doesn't exist
-          break;
-        }
-        String description = getOptionalString(resource, KEY_DESCRIPTION + SEPARATOR + i, null);
-        String category = resource.getString(KEY_CATEGORY + SEPARATOR + i);
-        Content icon  = getContent(resource, KEY_ICON + SEPARATOR + i, furnitureUrl, false, false);
-        Content planIcon = getContent(resource, KEY_PLAN_ICON + SEPARATOR + i, furnitureUrl, false, true);
-        boolean multiPartModel = false;
-        try {
-          multiPartModel = Boolean.parseBoolean(resource.getString(KEY_MULTI_PART_MODEL + SEPARATOR + i));
-        } catch (MissingResourceException ex) {
-          // By default inDirectory is false
-        }
-        Content model = getContent(resource, KEY_MODEL + SEPARATOR + i, furnitureUrl, multiPartModel, false);
-        float width = Float.parseFloat(resource.getString(KEY_WIDTH + SEPARATOR + i));
-        float depth = Float.parseFloat(resource.getString(KEY_DEPTH + SEPARATOR + i));
-        float height = Float.parseFloat(resource.getString(KEY_HEIGHT + SEPARATOR + i));
-        boolean movable = Boolean.parseBoolean(resource.getString(KEY_MOVABLE + SEPARATOR + i));
-        boolean doorOrWindow = Boolean.parseBoolean(resource.getString(KEY_DOOR_OR_WINDOW + SEPARATOR + i));
-        float elevation = getOptionalFloat(resource, KEY_ELEVATION + SEPARATOR + i, 0);
-        float [][] modelRotation = getModelRotation(resource, KEY_MODEL_ROTATION + SEPARATOR + i);
-        // By default creator is eTeks
-        String creator = getOptionalString(resource, KEY_CREATOR + SEPARATOR + i, "eTeks");
-        String id = getOptionalString(resource, KEY_ID + SEPARATOR + i, null);
-        if (id != null) {
+      CatalogPieceOfFurniture piece;
+      for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl)) != null; i++) {
+        if (piece.getId() != null) {
           // Take into account only furniture that have an ID
-          if (identifiedFurniture.contains(id)) {
+          if (identifiedFurniture.contains(piece.getId())) {
             continue;
           } else {
             // Add id to identifiedFurniture to be sure that two pieces with a same ID
             // won't be added twice to furniture catalog (in case they are cited twice
             // in different furniture properties files)
-            identifiedFurniture.add(id);
+            identifiedFurniture.add(piece.getId());
           }
         }
-        boolean resizable = true;
-        try {
-          resizable = Boolean.parseBoolean(resource.getString(KEY_RESIZABLE + SEPARATOR + i));
-        } catch (MissingResourceException ex) {
-          // By default piece is resizable
-        }
-        BigDecimal price = null;
-        try {
-          price = new BigDecimal(resource.getString(KEY_PRICE + SEPARATOR + i));
-        } catch (MissingResourceException ex) {
-          // By default price is null
-        }
-        BigDecimal valueAddedTaxPercentage = null;
-        try {
-          valueAddedTaxPercentage = new BigDecimal(resource.getString(KEY_VALUE_ADDED_TAX_PERCENTAGE + SEPARATOR + i));
-        } catch (MissingResourceException ex) {
-          // By default price is null
-        }
-  
-        FurnitureCategory pieceCategory = new FurnitureCategory(category);
-        CatalogPieceOfFurniture piece;
-        if (doorOrWindow) {
-          float wallThicknessPercentage = getOptionalFloat(
-              resource, KEY_DOOR_OR_WINDOW_WALL_THICKNESS + SEPARATOR + i, depth) / depth;
-          float wallDistancePercentage = getOptionalFloat(
-              resource, KEY_DOOR_OR_WINDOW_WALL_DISTANCE + SEPARATOR + i, 0) / depth;
-          Sash [] sashes = getDoorOrWindowSashes(resource, i, width, depth);
-          piece = new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
-              width, depth, height, elevation, movable, 
-              wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
-              resizable, price, valueAddedTaxPercentage);
-        } else {
-          LightSource [] lightSources = getLightSources(resource, i, width, depth, height);
-          if (lightSources != null) {
-            piece = new CatalogLight(id, name, description, icon, planIcon, model,
-                width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
-                resizable, price, valueAddedTaxPercentage);
-          } else {
-            piece = new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
-                width, depth, height, elevation, movable, modelRotation, creator, 
-                resizable, price, valueAddedTaxPercentage);
-          }
-        }
+        FurnitureCategory pieceCategory = readFurnitureCategory(resource, i);
         add(pieceCategory, piece, furnitureHomonymsCounter);
       }
     }
+  }
+
+  /**
+   * Returns the piece of furniture at the given <code>index</code> of a 
+   * localized <code>resource</code> bundle. 
+   * @param resource             a resource bundle 
+   * @param index                the index of the read piece
+   * @param furnitureCatalogUrl  the URL from which piece resources will be loaded 
+   *            or <code>null</code> if it's read from current classpath.
+   * @return the read piece of furniture or <code>null</code> if the piece at the given index doesn't exist.
+   * @throws MissingResourceException if mandatory keys are not defined.
+   */
+  protected CatalogPieceOfFurniture readPieceOfFurniture(ResourceBundle resource, 
+                                                         int index, 
+                                                         URL furnitureCatalogUrl) {
+    String name = null;
+    try {
+      name = resource.getString(PropertyKey.NAME.getKey(index));
+    } catch (MissingResourceException ex) {
+      // Return null if key name# doesn't exist
+      return null;
+    }
+    String description = getOptionalString(resource, PropertyKey.DESCRIPTION.getKey(index), null);
+    Content icon  = getContent(resource, PropertyKey.ICON.getKey(index), furnitureCatalogUrl, false, false);
+    Content planIcon = getContent(resource, PropertyKey.PLAN_ICON.getKey(index), furnitureCatalogUrl, false, true);
+    boolean multiPartModel = false;
+    try {
+      multiPartModel = Boolean.parseBoolean(resource.getString(PropertyKey.MULTI_PART_MODEL.getKey(index)));
+    } catch (MissingResourceException ex) {
+      // By default inDirectory is false
+    }
+    Content model = getContent(resource, PropertyKey.MODEL.getKey(index), furnitureCatalogUrl, multiPartModel, false);
+    float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
+    float depth = Float.parseFloat(resource.getString(PropertyKey.DEPTH.getKey(index)));
+    float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
+    boolean movable = Boolean.parseBoolean(resource.getString(PropertyKey.MOVABLE.getKey(index)));
+    boolean doorOrWindow = Boolean.parseBoolean(resource.getString(PropertyKey.DOOR_OR_WINDOW.getKey(index)));
+    float elevation = getOptionalFloat(resource, PropertyKey.ELEVATION.getKey(index), 0);
+    float [][] modelRotation = getModelRotation(resource, PropertyKey.MODEL_ROTATION.getKey(index));
+    // By default creator is eTeks
+    String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index), "eTeks");
+    String id = getOptionalString(resource, PropertyKey.ID.getKey(index), null);
+    boolean resizable = true;
+    try {
+      resizable = Boolean.parseBoolean(resource.getString(PropertyKey.RESIZABLE.getKey(index)));
+    } catch (MissingResourceException ex) {
+      // By default piece is resizable
+    }
+    BigDecimal price = null;
+    try {
+      price = new BigDecimal(resource.getString(PropertyKey.PRICE.getKey(index)));
+    } catch (MissingResourceException ex) {
+      // By default price is null
+    }
+    BigDecimal valueAddedTaxPercentage = null;
+    try {
+      valueAddedTaxPercentage = new BigDecimal(resource.getString(PropertyKey.VALUE_ADDED_TAX_PERCENTAGE.getKey(index)));
+    } catch (MissingResourceException ex) {
+      // By default price is null
+    }
+
+    if (doorOrWindow) {
+      float wallThicknessPercentage = getOptionalFloat(
+          resource, PropertyKey.DOOR_OR_WINDOW_WALL_THICKNESS.getKey(index), depth) / depth;
+      float wallDistancePercentage = getOptionalFloat(
+          resource, PropertyKey.DOOR_OR_WINDOW_WALL_DISTANCE.getKey(index), 0) / depth;
+      Sash [] sashes = getDoorOrWindowSashes(resource, index, width, depth);
+      return new CatalogDoorOrWindow(id, name, description, icon, planIcon, model,
+          width, depth, height, elevation, movable, 
+          wallThicknessPercentage, wallDistancePercentage, sashes, modelRotation, creator, 
+          resizable, price, valueAddedTaxPercentage);
+    } else {
+      LightSource [] lightSources = getLightSources(resource, index, width, depth, height);
+      if (lightSources != null) {
+        return new CatalogLight(id, name, description, icon, planIcon, model,
+            width, depth, height, elevation, movable, lightSources, modelRotation, creator, 
+            resizable, price, valueAddedTaxPercentage);
+      } else {
+        return new CatalogPieceOfFurniture(id, name, description, icon, planIcon, model,
+            width, depth, height, elevation, movable, modelRotation, creator, 
+            resizable, price, valueAddedTaxPercentage);
+      }
+    }
+  }
+  
+  /**
+   * Returns the furniture category of a piece at the given <code>index</code> of a 
+   * localized <code>resource</code> bundle. 
+   * @throws MissingResourceException if mandatory keys are not defined.
+   */
+  protected FurnitureCategory readFurnitureCategory(ResourceBundle resource, int index) {
+    String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
+    return new FurnitureCategory(category);
   }
     
   /**
@@ -538,29 +575,29 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                                         float doorOrWindowWidth, 
                                         float doorOrWindowDepth) throws MissingResourceException {
     Sash [] sashes;
-    String sashXAxisString = getOptionalString(resource, KEY_DOOR_OR_WINDOW_SASH_X_AXIS + SEPARATOR + index, null);
+    String sashXAxisString = getOptionalString(resource, PropertyKey.DOOR_OR_WINDOW_SASH_X_AXIS.getKey(index), null);
     if (sashXAxisString != null) {
       String [] sashXAxisValues = sashXAxisString.split(" ");
       // If doorOrWindowHingesX#i key exists the 3 other keys with the same count of numbers must exist too
-      String [] sashYAxisValues = resource.getString(KEY_DOOR_OR_WINDOW_SASH_Y_AXIS + SEPARATOR + index).split(" ");
+      String [] sashYAxisValues = resource.getString(PropertyKey.DOOR_OR_WINDOW_SASH_Y_AXIS.getKey(index)).split(" ");
       if (sashYAxisValues.length != sashXAxisValues.length) {
         throw new IllegalArgumentException(
-            "Expected " + sashXAxisValues.length + " values in " + KEY_DOOR_OR_WINDOW_SASH_Y_AXIS + SEPARATOR + index + " key");
+            "Expected " + sashXAxisValues.length + " values in " + PropertyKey.DOOR_OR_WINDOW_SASH_Y_AXIS.getKey(index) + " key");
       }
-      String [] sashWidths = resource.getString(KEY_DOOR_OR_WINDOW_SASH_WIDTH + SEPARATOR + index).split(" ");
+      String [] sashWidths = resource.getString(PropertyKey.DOOR_OR_WINDOW_SASH_WIDTH.getKey(index)).split(" ");
       if (sashWidths.length != sashXAxisValues.length) {
         throw new IllegalArgumentException(
-            "Expected " + sashXAxisValues.length + " values in " + KEY_DOOR_OR_WINDOW_SASH_WIDTH + SEPARATOR + index + " key");
+            "Expected " + sashXAxisValues.length + " values in " + PropertyKey.DOOR_OR_WINDOW_SASH_WIDTH.getKey(index) + " key");
       }
-      String [] sashStartAngles = resource.getString(KEY_DOOR_OR_WINDOW_SASH_START_ANGLE + SEPARATOR + index).split(" ");
+      String [] sashStartAngles = resource.getString(PropertyKey.DOOR_OR_WINDOW_SASH_START_ANGLE.getKey(index)).split(" ");
       if (sashStartAngles.length != sashXAxisValues.length) {
         throw new IllegalArgumentException(
-            "Expected " + sashXAxisValues.length + " values in " + KEY_DOOR_OR_WINDOW_SASH_START_ANGLE + SEPARATOR + index + " key");
+            "Expected " + sashXAxisValues.length + " values in " + PropertyKey.DOOR_OR_WINDOW_SASH_START_ANGLE.getKey(index) + " key");
       }
-      String [] sashEndAngles = resource.getString(KEY_DOOR_OR_WINDOW_SASH_END_ANGLE + SEPARATOR + index).split(" ");
+      String [] sashEndAngles = resource.getString(PropertyKey.DOOR_OR_WINDOW_SASH_END_ANGLE.getKey(index)).split(" ");
       if (sashEndAngles.length != sashXAxisValues.length) {
         throw new IllegalArgumentException(
-            "Expected " + sashXAxisValues.length + " values in " + KEY_DOOR_OR_WINDOW_SASH_END_ANGLE + SEPARATOR + index + " key");
+            "Expected " + sashXAxisValues.length + " values in " + PropertyKey.DOOR_OR_WINDOW_SASH_END_ANGLE.getKey(index) + " key");
       }
       
       sashes = new Sash [sashXAxisValues.length];
@@ -587,24 +624,24 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                                          float lightDepth,
                                          float lightHeight) throws MissingResourceException {
     LightSource [] lightSources = null;
-    String lightSourceXString = getOptionalString(resource, KEY_LIGHT_SOURCE_X + SEPARATOR + index, null);
+    String lightSourceXString = getOptionalString(resource, PropertyKey.LIGHT_SOURCE_X.getKey(index), null);
     if (lightSourceXString != null) {
       String [] lightSourceX = lightSourceXString.split(" ");
       // If doorOrWindowHingesX#i key exists the 3 other keys with the same count of numbers must exist too
-      String [] lightSourceY = resource.getString(KEY_LIGHT_SOURCE_Y + SEPARATOR + index).split(" ");
+      String [] lightSourceY = resource.getString(PropertyKey.LIGHT_SOURCE_Y.getKey(index)).split(" ");
       if (lightSourceY.length != lightSourceX.length) {
         throw new IllegalArgumentException(
-            "Expected " + lightSourceX.length + " values in " + KEY_LIGHT_SOURCE_Y + SEPARATOR + index + " key");
+            "Expected " + lightSourceX.length + " values in " + PropertyKey.LIGHT_SOURCE_Y.getKey(index) + " key");
       }
-      String [] lightSourceZ = resource.getString(KEY_LIGHT_SOURCE_Z + SEPARATOR + index).split(" ");
+      String [] lightSourceZ = resource.getString(PropertyKey.LIGHT_SOURCE_Z.getKey(index)).split(" ");
       if (lightSourceZ.length != lightSourceX.length) {
         throw new IllegalArgumentException(
-            "Expected " + lightSourceX.length + " values in " + KEY_LIGHT_SOURCE_Z + SEPARATOR + index + " key");
+            "Expected " + lightSourceX.length + " values in " + PropertyKey.LIGHT_SOURCE_Z.getKey(index) + " key");
       }
-      String [] lightSourceColors = resource.getString(KEY_LIGHT_SOURCE_COLOR + SEPARATOR + index).split(" ");
+      String [] lightSourceColors = resource.getString(PropertyKey.LIGHT_SOURCE_COLOR.getKey(index)).split(" ");
       if (lightSourceColors.length != lightSourceX.length) {
         throw new IllegalArgumentException(
-            "Expected " + lightSourceX.length + " values in " + KEY_LIGHT_SOURCE_COLOR + SEPARATOR + index + " key");
+            "Expected " + lightSourceX.length + " values in " + PropertyKey.LIGHT_SOURCE_COLOR.getKey(index) + " key");
       }
       
       lightSources = new LightSource [lightSourceX.length];
