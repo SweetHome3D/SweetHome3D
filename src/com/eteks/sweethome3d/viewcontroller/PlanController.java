@@ -1660,14 +1660,14 @@ public class PlanController extends FurnitureController implements Controller {
 
     if (alpha1 != alpha2) {
       // If first line is vertical
-      if (Float.isInfinite(alpha1)) {
-        if (!Float.isInfinite(alpha2)) { 
+      if (Math.abs(alpha1) > 1E5)  {
+        if (Math.abs(alpha2) < 1E5) {
           x = point1 [0];
           y = alpha2 * x + beta2;
         }
         // If second line is vertical
-      } else if (Float.isInfinite(alpha2)) {
-        if (!Float.isInfinite(alpha1)) { 
+      } else if (Math.abs(alpha2) > 1E5) {
+        if (Math.abs(alpha1) < 1E5) {
           x = point3 [0];
           y = alpha1 * x + beta1;
         }

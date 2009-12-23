@@ -604,13 +604,17 @@ public class Wall implements Serializable, Selectable {
     // If the two lines are not parallel
     if (alpha1 != alpha2) {
       // If first line is vertical
-      if (point1 [0] == point2 [0]) {
-        x = point1 [0];
-        y = alpha2 * x + beta2;
+      if (Math.abs(alpha1) > 1E5)  {
+        if (Math.abs(alpha2) < 1E5) {
+          x = point1 [0];
+          y = alpha2 * x + beta2;
+        }
       // If second line is vertical
-      } else if (point3 [0] == point4 [0]) {
-        x = point3 [0];
-        y = alpha1 * x + beta1;
+      } else if (Math.abs(alpha2) > 1E5) {
+        if (Math.abs(alpha1) < 1E5) {
+          x = point3 [0];
+          y = alpha1 * x + beta1;
+        }
       } else  {
         x = (beta2 - beta1) / (alpha1 - alpha2);
         y = alpha1 * x + beta1;
