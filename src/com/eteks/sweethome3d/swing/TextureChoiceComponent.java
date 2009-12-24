@@ -48,7 +48,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.MissingResourceException;
 
 import javax.swing.AbstractListModel;
 import javax.swing.BorderFactory;
@@ -248,8 +247,31 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
 
       this.chosenTextureLabel = new JLabel(preferences.getLocalizedString(
           TextureChoiceComponent.class, "chosenTextureLabel.text"));
-      this.texturePreviewLabel = new JLabel();
-      
+      this.texturePreviewLabel = new JLabel() {
+          private int lastIconWidth;
+
+          @Override
+          protected void paintComponent(Graphics g) {
+            // If icon width changed after its loading  
+            Icon icon = getIcon();
+            if (icon != null
+                && icon.getIconWidth() != this.lastIconWidth) {
+              // Revalidate label to layout again texture panel
+              this.lastIconWidth = icon.getIconWidth(); 
+              revalidate();
+            } else {
+              super.paintComponent(g);
+            }
+          }
+          
+          @Override
+          public void setIcon(Icon icon) {
+            if (icon != null) {
+              this.lastIconWidth = icon.getIconWidth();
+            }
+            super.setIcon(icon);
+          }
+        };
 
       try {
         String importTextureButtonText = SwingTools.getLocalizedLabelText(
@@ -455,7 +477,6 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       if (previewTexture != null) {
         this.texturePreviewLabel.setIcon(
             IconManager.getInstance().getIcon(previewTexture.getImage(), PREVIEW_ICON_HEIGHT, this.texturePreviewLabel));
-        texturePreviewLabel.revalidate();
       } else {
         // Preview a dummy empty icon
         this.texturePreviewLabel.setIcon(new Icon() {
