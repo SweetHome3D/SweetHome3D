@@ -358,7 +358,7 @@ public class Wall3D extends Object3DBranch {
     
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates (coords);
-
+    
     // Compute wall texture coordinates
     if (texture != null) {
       TexCoord2f [] textureCoords = new TexCoord2f [points.length * 4];
@@ -377,8 +377,8 @@ public class Wall3D extends Object3DBranch {
           points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
       textureCoords [j++] = firstTextureCoords;
       textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-      textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [top.length - 1].y / texture.getHeight());
-      textureCoords [j++] = new TexCoord2f(0, top [0].y / texture.getHeight());
+      textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [0].y / texture.getHeight());
+      textureCoords [j++] = new TexCoord2f(0, top [top.length - 1].y / texture.getHeight());
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
