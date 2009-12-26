@@ -368,6 +368,7 @@ public class PlanComponentWithFurnitureTest extends ComponentTestFixture {
     // Start items duplication 
     tester.actionKeyPress(OperatingSystem.isMacOSX() ? KeyEvent.VK_ALT : KeyEvent.VK_CONTROL);
     tester.actionMousePress(planComponent, new ComponentLocation(new Point(50, 170)));
+    tester.actionMouseMove(planComponent, new ComponentLocation(new Point(51, 170)));
     // Check selection changed
     assertFalse("Selection didn't change", selectedItems.equals(frame.home.getSelectedItems()));
     assertEquals("Selection doesn't contain 4 items", 4, frame.home.getSelectedItems().size());    
