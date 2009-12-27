@@ -35,7 +35,7 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
    the web page of your choice ; you can change the width and the height of
    the applet by modifying the values of its "width" and "height" attributes
 7. Install this web page at the location of your choice, copying it with 
-   the directories "lib" 
+   the files in the directory named "lib" 
 
 Note that by default, "homeURL" value is equal to "default.sh3d" and a non 
 absolute URL will be relative to the web page containing the applet scripts.
