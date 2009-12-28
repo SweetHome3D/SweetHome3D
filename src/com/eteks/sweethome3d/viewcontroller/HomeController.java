@@ -471,9 +471,9 @@ public class HomeController implements Controller {
   }
 
   /**
-   * Textures catalog listener that writes preferences each time a texture 
-   * is deleted or added in textures catalog. This listener is bound to this controller 
-   * with a weak reference to avoid strong link between catalog and this controller.  
+   * Properties listener that writes preferences each time the value of one of its properties changes. 
+   * This listener is bound to this controller with a weak reference to avoid strong link 
+   * between catalog and this controller.  
    */
   private static class UserPreferencesPropertiesChangeListener extends UserPreferencesChangeListener
                                                                implements PropertyChangeListener { 
