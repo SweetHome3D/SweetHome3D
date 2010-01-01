@@ -130,7 +130,6 @@ public class ModelManager {
       }
     }
     this.additionalLoaderClasses = loaderClasses.toArray(new Class [loaderClasses.size()]);
-    this.modelsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 
   /**
@@ -304,7 +303,7 @@ public class ModelManager {
         this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
       } else {
         if (this.modelsLoader == null) {
-          this.modelsLoader = Executors.newSingleThreadExecutor();
+          this.modelsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
         List<ModelObserver> observers = this.loadingModelObservers.get(content);
         if (observers != null) {
