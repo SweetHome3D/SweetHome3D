@@ -57,7 +57,6 @@ public class TextureManager {
     this.errorTexture = getColoredImageTexture(Color.RED);
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.textures = Collections.synchronizedMap(new WeakHashMap<Content, Texture>());
-    this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   }
 
   /**
@@ -133,7 +132,7 @@ public class TextureManager {
         // Notify wait texture to observer
         textureObserver.textureUpdated(this.waitTexture);
         if (this.texturesLoader == null) {
-          this.texturesLoader = Executors.newSingleThreadExecutor();
+          this.texturesLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         }
         // Load the image in a different thread
         this.texturesLoader.execute(new Runnable () {
