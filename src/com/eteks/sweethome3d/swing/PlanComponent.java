@@ -4351,18 +4351,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
       BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
-      int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
-          0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
-          0, imageWithWhiteBackgound.getWidth());
+      int [] imageWithWhiteBackgoundPixels = getImagePixels(imageWithWhiteBackgound);
       
       // Render scene with a black background
       background.setColor(0, 0, 0);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
       BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
-      int [] imageWithBlackBackgoundPixels = imageWithBlackBackgound.getRGB(
-          0, 0, imageWithBlackBackgound.getWidth(), imageWithBlackBackgound.getHeight(), null,
-          0, imageWithBlackBackgound.getWidth());
+      int [] imageWithBlackBackgoundPixels = getImagePixels(imageWithBlackBackgound);
       
       // Create an image with transparent pixels where model isn't drawn
       for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
@@ -4377,6 +4373,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       return new ImageIcon(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
           imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
           imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())));
+    }
+
+    /**
+     * Returns the pixels of the given <code>image</code>.
+     */
+    private int [] getImagePixels(BufferedImage image) {
+      if (image.getType() == BufferedImage.TYPE_INT_RGB
+          || image.getType() == BufferedImage.TYPE_INT_ARGB) {
+        // Use a faster way to get pixels 
+        return (int [])image.getRaster().getDataElements(0, 0, image.getWidth(), image.getHeight(), null);
+      } else {
+        return image.getRGB(0, 0, image.getWidth(), image.getHeight(), null,
+            0, image.getWidth());
+      }
     }
 
     /**
