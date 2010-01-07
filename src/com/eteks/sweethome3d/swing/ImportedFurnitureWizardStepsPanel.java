@@ -27,6 +27,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -35,6 +36,7 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -44,6 +46,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.MemoryImageSource;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -2125,20 +2128,46 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
      */
     private BufferedImage getIconImage() {
       BufferedImage iconImage = null;
-      // Under Mac OS X 10.5 (build 1.5.0_13-b05-237 or 1.5.0_16-b06-284) / Java 3D 1.5, 
-      // there's a very strange bug with 3D offscreen images that happens *only* 
-      // when the user imports furniture from the menu :
-      // all screen menu bar items get disabled until an other dialog is opened   
-      if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        try {
-          // Create icon from an off screen image  
-          Dimension iconSize = getPreferredSize();        
-          View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-          iconImage = Component3DManager.getInstance().
-              getOffScreenImage(view, iconSize.width, iconSize.height);
-        } catch (IllegalRenderingStateException ex) {
-          // Catch exception to create an image with Robot 
+      try {
+        // Create icon from an off screen image  
+        Dimension iconSize = getPreferredSize();        
+        View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
+        // Render scene with a white background
+        setBackgroundColor(Color.WHITE);
+        BufferedImage imageWithWhiteBackgound = Component3DManager.getInstance().
+            getOffScreenImage(view, iconSize.width, iconSize.height);
+        // Render scene with a black background
+        setBackgroundColor(Color.BLACK);
+        BufferedImage imageWithBlackBackgound = Component3DManager.getInstance().
+            getOffScreenImage(view, iconSize.width, iconSize.height);
+        setBackgroundColor(UIManager.getColor("window"));
+        int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
+            0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
+            0, imageWithWhiteBackgound.getWidth());
+        int [] imageWithBlackBackgoundPixels = imageWithBlackBackgound.getRGB(
+            0, 0, imageWithBlackBackgound.getWidth(), imageWithBlackBackgound.getHeight(), null,
+            0, imageWithBlackBackgound.getWidth());
+        
+        // Create an image with transparent pixels where model isn't drawn
+        for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
+          if (imageWithBlackBackgoundPixels [i] != imageWithWhiteBackgoundPixels [i]
+              && imageWithBlackBackgoundPixels [i] == 0xFF000000
+              && imageWithWhiteBackgoundPixels [i] == 0xFFFFFFFF) {
+            imageWithWhiteBackgoundPixels [i] = 0;
+          }           
         }
+        
+        iconImage = new BufferedImage(imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
+            BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2D = (Graphics2D)iconImage.getGraphics();
+        g2D.drawImage(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
+            imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
+            imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())), null, null);
+        g2D.dispose();
+      } catch (IllegalRenderingStateException ex) {
+        // Catch exception to create an image with Robot 
+      } finally {
+        setBackgroundColor(UIManager.getColor("window"));
       }
       
       if (iconImage == null) {
