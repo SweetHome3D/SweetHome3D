@@ -374,7 +374,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           controller.setBackFaceShown(backFaceShownCheckBox.isSelected());
         }
       });
-    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON,
+    controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN,
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If back face shown changes update back face shown check box
@@ -1819,7 +1819,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
      * displayed by this component.
      */
     protected void addRotationListener(final ImportedFurnitureWizardController controller) {
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON, 
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               setBackFaceShown(controller.isBackFaceShown());
@@ -1874,7 +1874,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
      * displayed by this component.
      */
     protected void addSizeListeners(final ImportedFurnitureWizardController controller) {
-      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHWON, 
+      controller.addPropertyChangeListener(ImportedFurnitureWizardController.Property.BACK_FACE_SHOWN, 
           new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
               setBackFaceShown(controller.isBackFaceShown());

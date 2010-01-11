@@ -53,7 +53,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 public class ImportedFurnitureWizardController extends WizardController 
                                                implements Controller {
   public enum Property {STEP, NAME, MODEL, WIDTH, DEPTH, HEIGHT, ELEVATION, MOVABLE, 
-      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHWON, MODEL_ROTATION,  
+      DOOR_OR_WINDOW, COLOR, CATEGORY, BACK_FACE_SHOWN, MODEL_ROTATION,  
       ICON_YAW, PROPORTIONAL}
 
   public enum Step {MODEL, ROTATION, ATTRIBUTES, ICON};
@@ -393,7 +393,7 @@ public class ImportedFurnitureWizardController extends WizardController
   public void setBackFaceShown(boolean backFaceShown) {
     if (backFaceShown != this.backFaceShown) {
       this.backFaceShown = backFaceShown;
-      this.propertyChangeSupport.firePropertyChange(Property.BACK_FACE_SHWON.name(), !backFaceShown, backFaceShown);
+      this.propertyChangeSupport.firePropertyChange(Property.BACK_FACE_SHOWN.name(), !backFaceShown, backFaceShown);
     }
   }
 
