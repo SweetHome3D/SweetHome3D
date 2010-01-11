@@ -2468,7 +2468,11 @@ public class PlanController extends FurnitureController implements Controller {
     if (!movedItems.isEmpty()) {
       moveItems(movedItems, dx, dy);
       selectAndShowItems(movedItems);
-      postItemsMove(movedItems, selectedItems, dx, dy);
+      if (movedItems.size() != 1
+          || !(movedItems.get(0) instanceof Camera)) {
+        // Post move undo only for items different from the camera 
+        postItemsMove(movedItems, selectedItems, dx, dy);
+      }
     }
   }
 
