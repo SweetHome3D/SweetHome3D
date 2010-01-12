@@ -36,8 +36,6 @@ import java.awt.Rectangle;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -72,7 +70,6 @@ import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
-import javax.swing.AbstractButton;
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -1372,7 +1369,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns the tool bar displayed in this pane.
    */
   private JToolBar createToolBar(Home home) {
-    final JToolBar toolBar = new JToolBar();
+    final JToolBar toolBar = new UnfocusableToolBar();
     addActionToToolBar(ActionType.NEW_HOME, toolBar);
     addActionToToolBar(ActionType.OPEN, toolBar);
     addActionToToolBar(ActionType.SAVE, toolBar);
@@ -1433,25 +1430,6 @@ public class HomePane extends JRootPane implements HomeView {
       } 
     }
 
-    updateToolBarButtons(toolBar);
-    // Update toolBar buttons when component orientation changes 
-    // and when buttons are added or removed to it  
-    toolBar.addPropertyChangeListener("componentOrientation", 
-        new PropertyChangeListener () {
-          public void propertyChange(PropertyChangeEvent evt) {
-            updateToolBarButtons(toolBar);
-          }
-        });
-    toolBar.addContainerListener(new ContainerListener() {
-        public void componentAdded(ContainerEvent ev) {
-          updateToolBarButtons(toolBar);
-        }
-        
-        public void componentRemoved(ContainerEvent ev) {
-          updateToolBarButtons(toolBar);
-        }
-      });
-    
     return toolBar;
   }
 
@@ -1482,53 +1460,6 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
     
-  /**
-   * Ensures that all the children of toolBar aren't focusable. 
-   * Under Mac OS X 10.5, it also uses segmented buttons and groups them depending
-   * on toolbar orientation and whether a button is after or before a separator.
-   */
-  private void updateToolBarButtons(final JToolBar toolBar) {
-    // Retrieve component orientation because Mac OS X 10.5 miserably doesn't it take into account 
-    ComponentOrientation orientation = toolBar.getComponentOrientation();
-    Component previousComponent = null;
-    for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {        
-      JComponent component = (JComponent)toolBar.getComponentAtIndex(i); 
-      // Remove focusable property on buttons
-      component.setFocusable(false);
-      
-      if (!(component instanceof AbstractButton)) {
-        previousComponent = null;
-        continue;
-      }          
-      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-        Component nextComponent;
-        if (i < n - 1) {
-          nextComponent = toolBar.getComponentAtIndex(i + 1);
-        } else {
-          nextComponent = null;
-        }
-        component.putClientProperty("JButton.buttonType", "segmentedTextured");
-        if (previousComponent == null
-            && !(nextComponent instanceof AbstractButton)) {
-          component.putClientProperty("JButton.segmentPosition", "only");
-        } else if (previousComponent == null) {
-          component.putClientProperty("JButton.segmentPosition", 
-              orientation == ComponentOrientation.LEFT_TO_RIGHT 
-                ? "first"
-                : "last");
-        } else if (!(nextComponent instanceof AbstractButton)) {
-          component.putClientProperty("JButton.segmentPosition",
-              orientation == ComponentOrientation.LEFT_TO_RIGHT 
-                ? "last"
-                : "first");
-        } else {
-          component.putClientProperty("JButton.segmentPosition", "middle");
-        }
-        previousComponent = component;
-      }
-    }
-  }
-  
   /**
    * Enables or disables the action matching <code>actionType</code>.
    */
