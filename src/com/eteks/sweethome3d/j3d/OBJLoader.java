@@ -1363,12 +1363,15 @@ public class OBJLoader extends LoaderBase implements Loader {
       tokenizer.pushBack();
     } else {
       // Skip other lines (including comment lines starting by #)
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {        
-      }
+      int token;
+      do {
+        token = tokenizer.nextToken();
+      } while (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF);
       tokenizer.pushBack();     
     }
     
-    if (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
+    int token = tokenizer.nextToken();
+    if (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF) {
       throw new IncorrectFormatException("Expected end of line at line " + tokenizer.lineno());
     }
   }
@@ -1464,7 +1467,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     Map<String, Appearance> appearances = new HashMap<String, Appearance>();
     Appearance              currentAppearance = null;    
     StreamTokenizer tokenizer = createTokenizer(reader);
-    while (tokenizer .nextToken() != StreamTokenizer.TT_EOF) {
+    while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {
       switch (tokenizer.ttype) {
         case StreamTokenizer.TT_WORD :
           currentAppearance = parseMaterialLine(tokenizer, 
@@ -1614,13 +1617,15 @@ public class OBJLoader extends LoaderBase implements Loader {
       }
       tokenizer.pushBack();     
     } else {
-      // Skip other lines (including comment lines starting by #)
-      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {        
-      }
+      int token;
+      do {
+        token = tokenizer.nextToken();
+      } while (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF);
       tokenizer.pushBack();     
     }
     
-    if (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {
+    int token = tokenizer.nextToken();
+    if (token != StreamTokenizer.TT_EOL && token != StreamTokenizer.TT_EOF) {
       throw new IncorrectFormatException("Expected end of line at line " + tokenizer.lineno());
     }
     
