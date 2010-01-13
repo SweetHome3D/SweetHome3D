@@ -63,6 +63,7 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -174,7 +175,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(ImportedTextureWizardStepsPanel.this, 
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
                 preferences.getLocalizedString(
                     ImportedTextureWizardStepsPanel.class, "imageChoiceError"));
           }
@@ -523,7 +524,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
             if (!ignoreException) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    JOptionPane.showMessageDialog(ImportedTextureWizardStepsPanel.this, 
+                    JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
                         preferences.getLocalizedString(
                             ImportedTextureWizardStepsPanel.class, "imageChoiceError", imageName));
                   }

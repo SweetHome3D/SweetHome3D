@@ -31,6 +31,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
@@ -103,7 +104,7 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
             optionPane.setValue(cancelButton);
           }
         });
-      this.dialog = optionPane.createDialog((JComponent)executingView, dialogTitle);
+      this.dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)executingView), dialogTitle);
       
       try {
         // Sleep 200 ms before showing dialog to avoid displaying it 

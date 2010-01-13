@@ -552,7 +552,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       final JOptionPane optionPane = new JOptionPane(this, 
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
           null, new Object [] {createButton, saveButton, closeButton}, createButton);
-      final JDialog dialog = optionPane.createDialog((Component)parentView, this.dialogTitle);
+      final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
@@ -707,10 +707,12 @@ public class PhotoPanel extends JPanel implements DialogView {
         this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoDialog.title"), 
         ContentManager.ContentType.PNG, this.home.getName());
     try {
-      ImageIO.write(this.photoComponent.getImage(), "PNG", new File(pngFile));
+      if (pngFile != null) {
+        ImageIO.write(this.photoComponent.getImage(), "PNG", new File(pngFile));
+      }
     } catch (IOException ex) {
       String messageFormat = this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.message");
-      JOptionPane.showMessageDialog(this, String.format(messageFormat, ex.getMessage()), 
+      JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), String.format(messageFormat, ex.getMessage()), 
           this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.title"), JOptionPane.ERROR_MESSAGE);
     }
   }

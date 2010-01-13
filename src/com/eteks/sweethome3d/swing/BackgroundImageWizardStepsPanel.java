@@ -56,7 +56,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -64,6 +63,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -168,7 +168,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
                 preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "imageChoiceError"));
           }
           return success;
@@ -410,7 +410,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           if (imageContent == null) {
             EventQueue.invokeLater(new Runnable() {
                 public void run() {
-                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
                       preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, 
                           "imageChoiceError", imageName));
                 }
@@ -445,7 +445,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                 } else if (isShowing()){
                   controller.setImage(null);
                   setImageChoiceTexts(preferences);
-                  JOptionPane.showMessageDialog(BackgroundImageWizardStepsPanel.this, 
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
                       preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, 
                           "imageChoiceFormatError"));
                 }

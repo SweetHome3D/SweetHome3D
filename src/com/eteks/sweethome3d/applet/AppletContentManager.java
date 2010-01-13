@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.applet;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.RecorderException;
@@ -94,13 +95,13 @@ public class AppletContentManager extends FileContentManager {
       if (availableHomes != null && availableHomes.length == 0) {
         String message = this.preferences.getLocalizedString(
             AppletContentManager.class, "showOpenDialog.noAvailableHomes");
-        JOptionPane.showMessageDialog((JComponent)parentView, 
+        JOptionPane.showMessageDialog(SwingUtilities.getRootPane((JComponent)parentView), 
             message, getFileDialogTitle(false), JOptionPane.INFORMATION_MESSAGE);
         return null;
       } else {
         String message = this.preferences.getLocalizedString(
             AppletContentManager.class, "showOpenDialog.message");
-        return (String)JOptionPane.showInputDialog((JComponent)parentView, 
+        return (String)JOptionPane.showInputDialog(SwingUtilities.getRootPane((JComponent)parentView), 
             message, getFileDialogTitle(false), JOptionPane.QUESTION_MESSAGE, null, availableHomes, null);
       }
     } else {
@@ -122,7 +123,7 @@ public class AppletContentManager extends FileContentManager {
     if (contentType == ContentType.SWEET_HOME_3D) {
       String message = this.preferences.getLocalizedString(
           AppletContentManager.class, "showSaveDialog.message");
-      String savedName = (String)JOptionPane.showInputDialog((JComponent)parentView, 
+      String savedName = (String)JOptionPane.showInputDialog(SwingUtilities.getRootPane((JComponent)parentView), 
           message, getFileDialogTitle(true), JOptionPane.QUESTION_MESSAGE, null, null, name);
       if (savedName == null) {
         return null;
@@ -156,6 +157,7 @@ public class AppletContentManager extends FileContentManager {
   private void showError(View parentView, String message) {
     String title = this.preferences.getLocalizedString(
         AppletContentManager.class, "showError.title");
-    JOptionPane.showMessageDialog((JComponent)parentView, message, title, JOptionPane.ERROR_MESSAGE);    
+    JOptionPane.showMessageDialog(SwingUtilities.getRootPane((JComponent)parentView), 
+        message, title, JOptionPane.ERROR_MESSAGE);    
   }
 }

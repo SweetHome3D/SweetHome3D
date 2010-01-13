@@ -29,6 +29,7 @@ import java.util.Map;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
 import com.eteks.sweethome3d.model.Content;
@@ -554,7 +555,7 @@ public class FileContentManager implements ContentManager {
     String replace = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.overwrite");
     String cancel = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.cancel");
     
-    return JOptionPane.showOptionDialog((JComponent)parentView, 
+    return JOptionPane.showOptionDialog(SwingUtilities.getRootPane((JComponent)parentView), 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
         null, new Object [] {replace, cancel}, cancel) == JOptionPane.OK_OPTION;
   }

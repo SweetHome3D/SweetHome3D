@@ -278,7 +278,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                 ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.title");
             findModelsMessageTextArea.setEditable(false);
             findModelsMessageTextArea.setOpaque(false);
-            JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
                 findModelsMessageTextArea, findModelsTitle, 
                 JOptionPane.INFORMATION_MESSAGE);
           }
@@ -310,7 +310,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
                 preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceError"));
           }
           return success;
@@ -1066,7 +1066,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                 } else if (isShowing()) {
                   controller.setModel(null);
                   setModelChoiceTexts(preferences);
-                  JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
                       preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceFormatError"));
                 }
               }
@@ -1082,7 +1082,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                                     final UserPreferences preferences) {
     EventQueue.invokeLater(new Runnable() {
       public void run() {
-        JOptionPane.showMessageDialog(ImportedFurnitureWizardStepsPanel.this, 
+        JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
             preferences.getLocalizedString(
                 ImportedFurnitureWizardStepsPanel.class, "modelChoiceError", modelName));
       }
