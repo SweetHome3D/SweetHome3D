@@ -128,10 +128,12 @@ public class Component3DManager {
   }
 
   /**
-   * Returns a new <code>canva3D</code> instance.
+   * Returns a new <code>canva3D</code> instance that will call <code>renderingObserver</code>
+   * methods during the rendering loop.
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
-  private Canvas3D getCanvas3D(boolean offscreen) {
+  private Canvas3D getCanvas3D(boolean offscreen,
+                               final RenderingObserver renderingObserver) {
     if (this.configuration == null) {
       throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
     }
@@ -139,7 +141,28 @@ public class Component3DManager {
       // Ensure unused canvases are freed
       System.gc();
       // Create a Java 3D canvas  
-      return new Canvas3D(this.configuration, offscreen);
+      return new Canvas3D(this.configuration, offscreen) {
+          @Override
+          public void preRender() {
+            if (renderingObserver != null) {
+              renderingObserver.canvas3DPreRendered(this);
+            }
+          }
+          
+          @Override
+          public void postRender() {
+            if (renderingObserver != null) {
+              renderingObserver.canvas3DPostRendered(this);
+            }
+          }
+          
+          @Override
+          public void postSwap() {
+            if (renderingObserver != null) {
+              renderingObserver.canvas3DSwapped(this);
+            }
+          }
+        };
     } catch (IllegalArgumentException ex) {
       IllegalRenderingStateException ex2 = new IllegalRenderingStateException("Can't create Canvas 3D");
       ex2.initCause(ex);
@@ -152,7 +175,18 @@ public class Component3DManager {
    * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
    */
   public Canvas3D getOnscreenCanvas3D() {
-    return getCanvas3D(false);
+    return getOnscreenCanvas3D(null);
+  }
+  
+  /**
+   * Returns a new on screen <code>canva3D</code> instance which rendering will be observed
+   * with the given rendering observer.
+   * @param renderingObserver an observer of the 3D rendering process of the returned canvas.
+   *            Caution: The methods of the observer will be called in 3D rendering loop thread. 
+   * @throws IllegalRenderingStateException  if the canvas 3D couldn't be created.
+   */
+  public Canvas3D getOnscreenCanvas3D(RenderingObserver renderingObserver) {
+    return getCanvas3D(false, renderingObserver);
   }
   
   /**
@@ -161,7 +195,7 @@ public class Component3DManager {
    *    To avoid this exception, call {@link #isOffScreenImageSupported() isOffScreenImageSupported()} first.
    */
   public Canvas3D getOffScreenCanvas3D(int width, int height) {
-    Canvas3D offScreenCanvas = getCanvas3D(true);
+    Canvas3D offScreenCanvas = getCanvas3D(true, null);
     // Configure canvas 3D for offscreen
     Screen3D screen3D = offScreenCanvas.getScreen3D();
     screen3D.setSize(width, height);
@@ -254,5 +288,26 @@ public class Component3DManager {
       VirtualUniverse.addRenderingErrorListener(renderingErrorListener);
       return renderingErrorListener;
     }
+  }
+  
+  /**
+   * An observer that receives notifications during the different steps 
+   * of the loop rendering a canvas 3D.
+   */
+  public static interface RenderingObserver {
+    /**
+     * Called before <code>canvas3D</code> is rendered.
+     */
+    public void canvas3DPreRendered(Canvas3D canvas3D); 
+
+    /**
+     * Called after <code>canvas3D</code> is rendered.
+     */
+    public void canvas3DPostRendered(Canvas3D canvas3D); 
+
+    /**
+     * Called after <code>canvas3D</code> buffer is swapped.
+     */
+    public void canvas3DSwapped(Canvas3D canvas3D); 
   }
 }
