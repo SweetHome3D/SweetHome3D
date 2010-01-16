@@ -100,7 +100,11 @@ public class ModelPreviewComponent extends JComponent {
     this(false);
   }
   
-  public ModelPreviewComponent(boolean supportPitchAndScaleChange) {
+  /**
+   * Returns an 3D model preview component that lets the user change its pitch and scale 
+   * if <code>pitchAndScaleChangeSupported</code> is <code>true</code>.
+   */
+  public ModelPreviewComponent(boolean pitchAndScaleChangeSupported) {
     this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(
         new Component3DManager.RenderingObserver() {
           public void canvas3DPreRendered(Canvas3D canvas3d) {
@@ -118,7 +122,7 @@ public class ModelPreviewComponent extends JComponent {
     setLayout(new GridLayout(1, 1));
     add(this.canvas3D);
     this.canvas3D.setFocusable(false);      
-    addMouseListeners(this.canvas3D, supportPitchAndScaleChange);
+    addMouseListeners(this.canvas3D, pitchAndScaleChangeSupported);
     
     setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
 
@@ -129,9 +133,16 @@ public class ModelPreviewComponent extends JComponent {
     addAncestorListener();
   }
 
+  /**
+   * Returns component preferred size.
+   */
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(200, 200);
+    if (isPreferredSizeSet()) {
+      return getPreferredSize();
+    } else {
+      return new Dimension(200, 200);
+    }
   }
 
   /**
@@ -145,7 +156,7 @@ public class ModelPreviewComponent extends JComponent {
    * Adds an AWT mouse listener to canvas that will update view platform transform.  
    */
   private void addMouseListeners(Canvas3D canvas3D, 
-                                 final boolean supportPitchAndScaleChange) {
+                                 final boolean pitchAndScaleChangeSupported) {
     final float ANGLE_FACTOR = 0.02f;
     final float ZOOM_FACTOR = 0.02f;
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
@@ -165,7 +176,7 @@ public class ModelPreviewComponent extends JComponent {
             setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));    
             this.xLastMouseMove = ev.getX();
             
-            if (supportPitchAndScaleChange) {
+            if (pitchAndScaleChangeSupported) {
               if (ev.isAltDown()) {
                 // Mouse move along Y axis with Alt down changes scale
                 setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp((ev.getY() - this.yLastMouseMove) * ZOOM_FACTOR))));
@@ -182,7 +193,7 @@ public class ModelPreviewComponent extends JComponent {
     canvas3D.addMouseListener(mouseListener);
     canvas3D.addMouseMotionListener(mouseListener);
     
-    if (supportPitchAndScaleChange) {
+    if (pitchAndScaleChangeSupported) {
       canvas3D.addMouseWheelListener(new MouseWheelListener() {
           public void mouseWheelMoved(MouseWheelEvent ev) {
             // Mouse move along Y axis with Alt down changes scale
