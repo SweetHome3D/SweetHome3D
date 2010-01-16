@@ -393,7 +393,7 @@ public class ModelPreviewComponent extends JComponent {
   private Node getBackgroundNode() {
     Background background = new Background(new Color3f(0.9f, 0.9f, 0.9f));
     background.setCapability(Background.ALLOW_COLOR_WRITE);
-    background.setApplicationBounds(new BoundingBox());
+    background.setApplicationBounds(new BoundingSphere(new Point3d(0, 0, 0), 100));
     return background;
   }
   
