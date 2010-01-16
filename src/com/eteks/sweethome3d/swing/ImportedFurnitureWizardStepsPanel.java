@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.AWTException;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -27,16 +26,10 @@ import java.awt.ComponentOrientation;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.KeyboardFocusManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -44,9 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.awt.image.MemoryImageSource;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -58,7 +48,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -67,29 +56,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import javax.imageio.ImageIO;
 import javax.jnlp.BasicService;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
-import javax.media.j3d.AmbientLight;
-import javax.media.j3d.Appearance;
-import javax.media.j3d.Background;
-import javax.media.j3d.BoundingBox;
-import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
-import javax.media.j3d.DirectionalLight;
-import javax.media.j3d.Group;
-import javax.media.j3d.IllegalRenderingStateException;
-import javax.media.j3d.Light;
-import javax.media.j3d.Material;
-import javax.media.j3d.Node;
-import javax.media.j3d.PhysicalBody;
-import javax.media.j3d.PhysicalEnvironment;
-import javax.media.j3d.PolygonAttributes;
-import javax.media.j3d.Shape3D;
 import javax.media.j3d.Transform3D;
-import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.swing.BorderFactory;
 import javax.swing.ComboBoxEditor;
@@ -116,11 +88,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.MouseInputAdapter;
-import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -137,8 +105,6 @@ import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
-import com.sun.j3d.utils.universe.SimpleUniverse;
-import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * Wizard panel for furniture import. 
@@ -1273,10 +1239,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    */
   public Content getIcon() {
     try {
-      File tempFile = File.createTempFile("urlContent", "tmp");
-      tempFile.deleteOnExit();
-      ImageIO.write(this.iconPreviewComponent.getIconImage(), "png", tempFile);
-      return new TemporaryURLContent(tempFile.toURI().toURL());
+      return this.iconPreviewComponent.getIcon(400);
     } catch (IOException ex) {
       try {
         return new URLContent(new URL("file:/dummySweetHome3DContent"));
@@ -1285,530 +1248,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       }
     }
   }
-
-  
-  /**
-   * Super class of 3D preview component for model. 
-   */
-  private static class ModelPreviewComponent extends JComponent {
-    private SimpleUniverse     universe;
-    private Canvas3D           canvas3D;
-    private BranchGroup        sceneTree;
-    private float              viewYaw = (float) Math.PI / 8;
-
-    public ModelPreviewComponent() {
-      this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();
-
-      // Layout canvas3D
-      setLayout(new GridLayout(1, 1));
-      add(this.canvas3D);
-      this.canvas3D.setFocusable(false);      
-      addMouseListeners(this.canvas3D);
-      
-      setBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED));
-
-      this.sceneTree = createSceneTree();
-      
-      // Add an ancestor listener to create canvas universe once this component is made visible 
-      // and clean up universe once its parent frame is disposed
-      addAncestorListener();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return new Dimension(200, 200);
-    }
-
-    /**
-     * Returns the canvas 3D displayed by this component.
-     */
-    protected Canvas3D getCanvas3D() {
-      return this.canvas3D;
-    }
-    
-    /**
-     * Adds an AWT mouse listener to canvas that will udate view platform transform.  
-     */
-    private void addMouseListeners(Canvas3D canvas3D) {
-      MouseInputAdapter mouseListener = new MouseInputAdapter() {
-          private int xLastMouseMove;
-          
-          @Override
-          public void mousePressed(MouseEvent ev) {
-            this.xLastMouseMove = ev.getX();
-          }
-    
-          @Override
-          public void mouseDragged(MouseEvent ev) {
-            final float ANGLE_FACTOR = 0.02f;
-            if (getModel() != null) {
-              // Mouse move along X axis changes yaw 
-              setViewYaw(getViewYaw() - ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove));                            
-              this.xLastMouseMove = ev.getX();
-            }
-          }
-        };
-
-      canvas3D.addMouseListener(mouseListener);
-      canvas3D.addMouseMotionListener(mouseListener);
-    }
-
-    /**
-     * Adds an ancestor listener to this component to manage canvas universe 
-     * creation and clean up.  
-     */
-    private void addAncestorListener() {
-      addAncestorListener(new AncestorListener() {
-          public void ancestorAdded(AncestorEvent event) {
-            if (universe == null) {
-              createUniverse();
-            }
-          }
-          
-          public void ancestorRemoved(AncestorEvent event) {
-            if (universe != null) {
-              disposeUniverse();
-            }
-          }
-          
-          public void ancestorMoved(AncestorEvent event) {
-          }        
-        });
-    }
-    
-    /**
-     * Creates universe bound to canvas.
-     */
-    private void createUniverse() {
-      // Link canvas 3D to a default universe
-      this.universe = new SimpleUniverse(this.canvas3D);
-      this.canvas3D.setFocusable(false);
-      // Set viewer location 
-      updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
-          getViewYaw(), getViewPitch());
-      // Link scene to universe
-      this.universe.addBranchGraph(this.sceneTree);
-
-      if (OperatingSystem.isMacOSX()) {
-        final Component root = SwingUtilities.getRoot(ModelPreviewComponent.this);
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-              // Force a real repaint of the component with a resize of its root, 
-              // otherwise some canvas 3D may not be displayed
-              Dimension rootSize = root.getSize();
-              root.setSize(new Dimension(rootSize.width + 1, rootSize.height));
-              try {
-                Thread.sleep(100);
-              } catch (InterruptedException ex) {
-              }
-              root.setSize(new Dimension(rootSize.width, rootSize.height));
-              // Request focus again even if dialog isn't supposed to have lost focus !
-              if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != root) {
-                root.requestFocus();
-              }
-            } 
-          });
-      }
-    }
-    
-    /**
-     * Disposes universe bound to canvas.
-     */
-    private void disposeUniverse() {
-      // Unlink scene to universe
-      this.universe.getLocale().removeBranchGraph(this.sceneTree);
-      this.universe.cleanup();
-      this.universe = null;
-    }
-    
-    /**
-     * Creates a view bound to universe that views current model from a point of view oriented with 
-     * <code>yaw</code> and <code>pitch</code> angles.
-     */
-    protected View createView(float yaw, float pitch, int projectionPolicy) {
-      if (this.universe == null) {
-        createUniverse();
-      }
-      // Reuse same physical body and environment
-      PhysicalBody physicalBody = this.universe.getViewer().getPhysicalBody();
-      PhysicalEnvironment physicalEnvironment = this.universe.getViewer().getPhysicalEnvironment();
-      
-      // Create a view associated with canvas3D
-      View view = new View();
-      view.setPhysicalBody(physicalBody);
-      view.setPhysicalEnvironment(physicalEnvironment);
-      view.setProjectionPolicy(projectionPolicy);
-      // Create a viewing platform and attach it to view and universe locale
-      ViewingPlatform viewingPlatform = new ViewingPlatform();
-      viewingPlatform.setUniverse(this.universe);
-      this.universe.getLocale().addBranchGraph(
-          (BranchGroup)viewingPlatform.getViewPlatformTransform().getParent());
-      view.attachViewPlatform(viewingPlatform.getViewPlatform());
-
-      // Set user point of view depending on yaw and pitch angles
-      updateViewPlatformTransform(viewingPlatform.getViewPlatformTransform(), yaw, pitch);
-      return view;
-    }
-    
-    /**
-     * Returns the <code>yaw</code> angle used by view platform transform.
-     */
-    protected float getViewYaw() {
-      return this.viewYaw;
-    }
-    
-    /**
-     * Sets the <code>yaw</code> angle used by view platform transform.
-     */
-    protected void setViewYaw(float viewYaw) {
-      this.viewYaw = viewYaw;
-      if (this.universe != null) {
-        updateViewPlatformTransform(this.universe.getViewingPlatform().getViewPlatformTransform(), 
-            this.viewYaw, getViewPitch());
-      }
-    }
-
-    /**
-     * Returns the <code>pitch</code> angle used by view platform transform.
-     */
-    protected float getViewPitch() {
-      return -(float)Math.PI / 16;
-    }
-  
-    /**
-     * Updates the view platform transformation from current yaw and pitch angles. 
-     */
-    private void updateViewPlatformTransform(TransformGroup viewPlatformTransform,
-                                             float viewYaw, float viewPitch) {
-      // Default distance used to view a 2 unit wide scene
-      double nominalDistanceToCenter = 1.4 / Math.tan(Math.PI / 8);
-      // We don't use a TransformGroup in scene tree to be able to share the same scene 
-      // in the different views displayed by OrientationPreviewComponent class 
-      Transform3D pitchRotation = new Transform3D();
-      pitchRotation.rotX(viewPitch);
-      Transform3D yawRotation = new Transform3D();
-      yawRotation.rotY(viewYaw);
-      Transform3D transform = new Transform3D();
-      transform.setTranslation(
-          new Vector3d(Math.sin(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch), 
-              nominalDistanceToCenter * Math.sin(-viewPitch), 
-              Math.cos(viewYaw) * nominalDistanceToCenter * Math.cos(viewPitch)));
-      yawRotation.mul(pitchRotation);
-      transform.mul(yawRotation);
-      viewPlatformTransform.setTransform(transform);
-    }
-    
-    /**
-     * Returns scene tree root.
-     */
-    private BranchGroup createSceneTree() {
-      BranchGroup root = new BranchGroup();
-      root.setCapability(BranchGroup.ALLOW_DETACH);
-      root.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-      // Build scene tree
-      root.addChild(getModelTree());
-      root.addChild(getBackgroundNode());
-      for (Light light : getLights()) {
-        root.addChild(light);
-      }
-      return root;
-    }
-    
-    /**
-     * Returns the background node.  
-     */
-    private Node getBackgroundNode() {
-      Background background = new Background(new Color3f(0.9f, 0.9f, 0.9f));
-      background.setCapability(Background.ALLOW_COLOR_WRITE);
-      background.setApplicationBounds(new BoundingBox());
-      return background;
-    }
-    
-    /**
-     * Sets the background color.
-     */
-    protected void setBackgroundColor(Color backgroundColor) {
-      ((Background)this.sceneTree.getChild(1)).setColor(new Color3f(backgroundColor));
-    }
-    
-    /**
-     * Returns the lights of the scene.
-     */
-    private Light [] getLights() {
-      Light [] lights = {
-          new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(1.732f, -0.8f, -1)), 
-          new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(-1.732f, -0.8f, -1)), 
-          new DirectionalLight(new Color3f(0.9f, 0.9f, 0.9f), new Vector3f(0, -0.8f, 1)), 
-          new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))}; 
-
-      for (Light light : lights) {
-        light.setInfluencingBounds(new BoundingSphere(new Point3d(0, 0, 0), 100));
-      }
-      return lights;
-    }
-
-    /**
-     * Returns the root of model tree.
-     */
-    private Node getModelTree() {
-      TransformGroup modelTransformGroup = new TransformGroup();      
-      //  Allow transform group to have new children
-      modelTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
-      modelTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
-      modelTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-      // Allow the change of the transformation that sets model size and position
-      modelTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-      return modelTransformGroup;
-    }
-
-    /**
-     * Returns the <code>model</code> displayed by this component. 
-     */
-    protected BranchGroup getModel() {
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      if (modelTransformGroup.numChildren() > 0) {
-        return (BranchGroup)modelTransformGroup.getChild(0);
-      } else {
-        return null;
-      }
-    }
-    
-    /**
-     * Sets the <code>model</code> displayed by this component. 
-     * The model is shown at its default orientation and size.
-     */
-    public void setModel(BranchGroup model) {
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      modelTransformGroup.removeAllChildren();
-      if (model != null) {
-        model = (BranchGroup)model.cloneTree(true);
-        model.setCapability(BranchGroup.ALLOW_DETACH);
-        setNodeCapabilities(model);
-        
-        BoundingBox bounds = ModelManager.getInstance().getBounds(model);
-        Point3d lower = new Point3d();
-        bounds.getLower(lower);
-        Point3d upper = new Point3d();
-        bounds.getUpper(upper);
-        
-        // Translate model to center
-        Transform3D translation = new Transform3D ();
-        translation.setTranslation(
-            new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                         -lower.y - (upper.y - lower.y) / 2, 
-                         -lower.z - (upper.z - lower.z) / 2));
-        // Scale model to make it fit in a 1.8 unit wide box
-        Transform3D modelTransform = new Transform3D();
-        modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
-                                                 upper.z - lower.z));
-        modelTransform.mul(translation);
-        
-        modelTransformGroup.setTransform(modelTransform);
-        modelTransformGroup.addChild(model);
-      }
-    }
-    
-    /**
-     * Sets the capability to read bounds, to write polygon and material attributes  
-     * for all children of <code>node</code>.
-     */
-    private void setNodeCapabilities(Node node) {
-      if (node instanceof Group) {
-        node.setCapability(Group.ALLOW_CHILDREN_READ);
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          setNodeCapabilities((Node)enumeration.nextElement());
-        }
-      } else if (node instanceof Shape3D) {
-        node.setCapability(Node.ALLOW_BOUNDS_READ);
-        Appearance appearance = ((Shape3D)node).getAppearance();
-        if (appearance == null) {
-          appearance = new Appearance();
-          ((Shape3D)node).setAppearance(appearance);
-        }
-        appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
-        appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
-        appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-        node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-
-        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-        if (polygonAttributes == null) {
-          polygonAttributes = new PolygonAttributes();
-          polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
-          polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
-          appearance.setPolygonAttributes(polygonAttributes);
-        }
-      }
-    }
-    
-    /**
-     * Sets the back face visibility of all <code>Shape3D</code> children nodes of displayed model.
-     */
-    protected void setBackFaceShown(boolean backFaceShown) {
-      setBackFaceShown(this.sceneTree.getChild(0), backFaceShown);
-    }
-    
-    /**
-     * Sets the back face visibility of all <code>Shape3D</code> children nodes of <code>node</code>.
-     */
-    private void setBackFaceShown(Node node, boolean backFaceShown) {
-      if (node instanceof Group) {
-        // Set visibility of all children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          setBackFaceShown((Node)enumeration.nextElement(), backFaceShown);
-        }
-      } else if (node instanceof Shape3D) {
-        Appearance appearance = ((Shape3D)node).getAppearance();
-        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-        // Change cull face
-        polygonAttributes.setCullFace(backFaceShown 
-            ? PolygonAttributes.CULL_FRONT
-            : PolygonAttributes.CULL_BACK);
-        // Change back face normal flip
-        polygonAttributes.setBackFaceNormalFlip(backFaceShown);
-      }
-    }
-
-    /**
-     * Updates the rotation of the model displayed by this component. 
-     * The model is shown at its default size.
-     */
-    protected void setModelRotation(float [][] modelRotation) {
-      BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
-      Point3d lower = new Point3d();
-      bounds.getLower(lower);
-      Point3d upper = new Point3d();
-      bounds.getUpper(upper);
-      
-      // Translate model to center
-      Transform3D translation = new Transform3D ();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                       -lower.y - (upper.y - lower.y) / 2, 
-                       -lower.z - (upper.z - lower.z) / 2));
-      // Apply model rotation
-      Transform3D rotationTransform = new Transform3D();
-      if (modelRotation != null) {
-        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-        rotationTransform.setRotation(modelRotationMatrix);
-      }
-      rotationTransform.mul(translation);
-      // Scale model to make it fit in a 1.8 unit wide box      
-      Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
-      modelTransform.mul(rotationTransform);
-      
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      modelTransformGroup.setTransform(modelTransform);
-    }
-    
-    /**
-     * Updates the rotation and the size of the model displayed by this component. 
-     */
-    protected void setModelRotationAndSize(float [][] modelRotation,
-                                           float width, float depth, float height) {
-      BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
-      Point3d lower = new Point3d();
-      bounds.getLower(lower);
-      Point3d upper = new Point3d();
-      bounds.getUpper(upper);
-      
-      // Translate model to center
-      Transform3D translation = new Transform3D ();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                       -lower.y - (upper.y - lower.y) / 2, 
-                       -lower.z - (upper.z - lower.z) / 2));
-      // Scale model to make it fill a 1 unit wide box
-      Transform3D scaleOneTransform = new Transform3D();
-      scaleOneTransform.setScale (
-          new Vector3d(1 / (upper.x -lower.x), 
-              1 / (upper.y - lower.y), 
-              1 / (upper.z - lower.z)));
-      scaleOneTransform.mul(translation);
-      // Apply model rotation
-      Transform3D rotationTransform = new Transform3D();
-      if (modelRotation != null) {
-        Matrix3f modelRotationMatrix = new Matrix3f(modelRotation [0][0], modelRotation [0][1], modelRotation [0][2],
-            modelRotation [1][0], modelRotation [1][1], modelRotation [1][2],
-            modelRotation [2][0], modelRotation [2][1], modelRotation [2][2]);
-        rotationTransform.setRotation(modelRotationMatrix);
-      }
-      rotationTransform.mul(scaleOneTransform);
-      // Scale model to its size
-      Transform3D scaleTransform = new Transform3D();
-      if (width != 0 && depth != 0 && height != 0) {
-        scaleTransform.setScale (new Vector3d(width, height, depth));
-      }
-      scaleTransform.mul(rotationTransform);
-      // Scale model to make it fit in a 1.8 unit wide box      
-      Transform3D modelTransform = new Transform3D();
-      if (width != 0 && depth != 0 && height != 0) {
-        modelTransform.setScale(1.8 / Math.max(Math.max(width, height), depth));
-      } else {
-        modelTransform.setScale(1.8 / Math.max(Math.max((upper.x -lower.x), (upper.z - lower.z)), (upper.y - lower.y)));
-      }
-      modelTransform.mul(scaleTransform);
-      
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      modelTransformGroup.setTransform(modelTransform);
-    }
-
-    /**
-     * Sets the color applied to piece model.
-     */
-    protected void setModelColor(Integer color) {
-      if (color != null) {
-        Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
-                                             ((color >>> 8) & 0xFF) / 256f,
-                                                     (color & 0xFF) / 256f);
-        setMaterial(this.sceneTree.getChild(0), 
-            new Material(materialColor, new Color3f(), materialColor, materialColor, 64));
-      } else {
-        // Set default material of model
-        setMaterial(this.sceneTree.getChild(0), null);
-      }
-    }
-
-    /**
-     * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
-     * with a given <code>material</code>. 
-     */
-    private void setMaterial(Node node, Material material) {
-      if (node instanceof Group) {
-        // Set material of all children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          setMaterial((Node)enumeration.nextElement(), material);
-        }
-      } else if (node instanceof Shape3D) {
-        Shape3D shape = (Shape3D)node;
-        String shapeName = (String)shape.getUserData();
-        // Change material of all shape that are not window panes
-        if (shapeName == null
-            || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
-          Appearance appearance = shape.getAppearance();
-          // Use appearance user data to store shape default material
-          Material defaultMaterial = (Material)appearance.getUserData();
-          if (defaultMaterial == null) {
-            defaultMaterial = appearance.getMaterial();
-            appearance.setUserData(defaultMaterial);
-          }
-          // Change material
-          if (material != null) {
-            appearance.setMaterial(material);
-          } else {
-            // Restore default material
-            appearance.setMaterial(defaultMaterial);
-          }
-        }
-      }
-    }
-  }
-  
   
   /**
    * Preview component for model changes. 
@@ -1979,12 +1418,12 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addAncestorListener(new AncestorListener() {
           public void ancestorAdded(AncestorEvent event) {
             // Attach the 3 other canvases to super class universe with their own view
-            createView(0, 0, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
+            createView(0, 0, 1, View.PARALLEL_PROJECTION).addCanvas3D(frontViewCanvas);
             createView(Locale.getDefault().equals(Locale.US) 
                           ? -(float)Math.PI / 2 
                           : (float)Math.PI / 2, 
-                0, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
-            createView(0, -(float)Math.PI / 2, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
+                0, 1, View.PARALLEL_PROJECTION).addCanvas3D(sideViewCanvas);
+            createView(0, -(float)Math.PI / 2, 1, View.PARALLEL_PROJECTION).addCanvas3D(topViewCanvas);
           }
           
           public void ancestorRemoved(AncestorEvent event) {
@@ -2107,7 +1546,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
       addColorListener(controller);
       addIconYawListener(controller);
 
-      setBackgroundColor(UIManager.getColor("window"));
+      setBackground(UIManager.getColor("window"));
     }
 
     @Override
@@ -2121,69 +1560,6 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     protected void setViewYaw(float viewYaw) {
       super.setViewYaw(viewYaw);
       this.controller.setIconYaw(viewYaw);
-    }
-    
-    /**
-     * Returns the icon image matching the displayed view.  
-     */
-    private BufferedImage getIconImage() {
-      BufferedImage iconImage = null;
-      try {
-        // Create icon from an off screen image  
-        Dimension iconSize = getPreferredSize();        
-        View view = createView(getViewYaw(), getViewPitch(), View.PERSPECTIVE_PROJECTION);
-        // Render scene with a white background
-        setBackgroundColor(Color.WHITE);
-        BufferedImage imageWithWhiteBackgound = Component3DManager.getInstance().
-            getOffScreenImage(view, iconSize.width, iconSize.height);
-        // Render scene with a black background
-        setBackgroundColor(Color.BLACK);
-        BufferedImage imageWithBlackBackgound = Component3DManager.getInstance().
-            getOffScreenImage(view, iconSize.width, iconSize.height);
-        setBackgroundColor(UIManager.getColor("window"));
-        int [] imageWithWhiteBackgoundPixels = imageWithWhiteBackgound.getRGB(
-            0, 0, imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), null,
-            0, imageWithWhiteBackgound.getWidth());
-        int [] imageWithBlackBackgoundPixels = imageWithBlackBackgound.getRGB(
-            0, 0, imageWithBlackBackgound.getWidth(), imageWithBlackBackgound.getHeight(), null,
-            0, imageWithBlackBackgound.getWidth());
-        
-        // Create an image with transparent pixels where model isn't drawn
-        for (int i = 0; i < imageWithBlackBackgoundPixels.length; i++) {
-          if (imageWithBlackBackgoundPixels [i] != imageWithWhiteBackgoundPixels [i]
-              && imageWithBlackBackgoundPixels [i] == 0xFF000000
-              && imageWithWhiteBackgoundPixels [i] == 0xFFFFFFFF) {
-            imageWithWhiteBackgoundPixels [i] = 0;
-          }           
-        }
-        
-        iconImage = new BufferedImage(imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
-            BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2D = (Graphics2D)iconImage.getGraphics();
-        g2D.drawImage(Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(
-            imageWithWhiteBackgound.getWidth(), imageWithWhiteBackgound.getHeight(), 
-            imageWithWhiteBackgoundPixels, 0, imageWithWhiteBackgound.getWidth())), null, null);
-        g2D.dispose();
-      } catch (IllegalRenderingStateException ex) {
-        // Catch exception to create an image with Robot 
-      } finally {
-        setBackgroundColor(UIManager.getColor("window"));
-      }
-      
-      if (iconImage == null) {
-        // If off screen canvas fails, capture current canvas with Robot
-        Component canvas3D = getCanvas3D();
-        Point canvas3DOrigin = new Point();
-        SwingUtilities.convertPointToScreen(canvas3DOrigin, canvas3D);
-        try {
-          iconImage = new Robot().createScreenCapture(
-              new Rectangle(canvas3DOrigin, canvas3D.getSize()));
-        } catch (AWTException ex2) {
-          throw new RuntimeException(ex2);
-        }
-      }
-      
-      return iconImage;
     }
   }
 }
