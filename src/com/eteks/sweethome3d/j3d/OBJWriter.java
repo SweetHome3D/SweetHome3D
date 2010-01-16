@@ -22,10 +22,12 @@ package com.eteks.sweethome3d.j3d;
 import java.awt.image.RenderedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilterWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -38,6 +40,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
@@ -965,6 +969,71 @@ public class OBJWriter extends FilterWriter {
     }
   }
 
+  /**
+   * Writes <code>node</code> in an entry at OBJ format of the given zip file 
+   * along with its MTL file and texture images.
+   */
+  public static void writeNodeInZIPFile(Node node, 
+                                        File zipFile,    
+                                        int compressionLevel,
+                                        String entryName, 
+                                        String header) throws IOException {
+    // Create a temporary folder
+    File tempFolder = null;
+    for (int i = 0; i < 10 && tempFolder == null; i++) { 
+      tempFolder = File.createTempFile("obj", "tmp");
+      tempFolder.delete();
+      if (!tempFolder.mkdirs()) {
+        tempFolder = null;
+      }
+    }
+    if (tempFolder == null) {
+      throw new IOException("Couldn't create a temporary folder");
+    }
+            
+    ZipOutputStream zipOut = null;
+    try {
+      // Write model in an OBJ file
+      OBJWriter writer = new OBJWriter(new File(tempFolder, entryName), header, -1);
+      writer.writeNode(node);
+      writer.close();
+      // Create a ZIP file containing temp folder files (OBJ + MTL + texture files)
+      zipOut = new ZipOutputStream(new FileOutputStream(zipFile));
+      zipOut.setLevel(compressionLevel);
+      for (File tempFile : tempFolder.listFiles()) {
+        if (tempFile.isFile()) {
+          InputStream tempIn = null;
+          try {
+            zipOut.putNextEntry(new ZipEntry(tempFile.getName()));
+            tempIn = new FileInputStream(tempFile);
+            byte [] buffer = new byte [8096];
+            int size; 
+            while ((size = tempIn.read(buffer)) != -1) {
+              zipOut.write(buffer, 0, size);
+            }
+            zipOut.closeEntry();
+          } finally {
+            if (tempIn != null) {
+              tempIn.close();
+            }
+          }          
+        }
+      }
+    } finally {
+      if (zipOut != null) {
+        zipOut.close();
+      }
+      // Empty tempFolder
+      for (File tempFile : tempFolder.listFiles()) {
+        if (tempFile.isFile()) {
+          tempFile.delete();
+        }
+      }
+      tempFolder.delete();
+    }
+  }
+  
+  
   /**
    * An <code>Appearance</code> wrapper able to compare 
    * if two appearances are equal for MTL format.  

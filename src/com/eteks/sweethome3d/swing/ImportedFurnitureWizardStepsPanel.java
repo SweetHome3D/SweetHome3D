@@ -1060,67 +1060,16 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
    * Caution : this method must be thread safe because it's called from model loader executor. 
    */
   private Content copyToTemporaryOBJContent(BranchGroup model, String modelName) throws IOException {
-    setReadingState();
-    // Try to create a temporary folder
-    File tempFolder = null;
-    for (int i = 0; i < 10 && tempFolder == null; i++) { 
-      tempFolder = File.createTempFile("urlContent", "tmp");
-      tempFolder.delete();
-      if (!tempFolder.mkdirs()) {
-        tempFolder = null;
-      }
-    }
-    if (tempFolder == null) {
-      throw new IOException("Couldn't create a temporary folder");
-    }
-            
-    String objFile = new File(modelName).getName();
-    if (!objFile.toLowerCase().endsWith(".obj")) {
-      objFile += ".obj";
-    }
-    ZipOutputStream tempZipOut = null;
     try {
-      // Write model in an OBJ file
-      OBJWriter writer = new OBJWriter(new File(tempFolder, objFile), "3D model import " + modelName, -1);
-      writer.writeNode(model);
-      writer.close();
-      // Create an uncompressed ZIP file containing temp folder files (OBJ + MTL + texture files)
-      File tempZipFile = File.createTempFile("urlContent", "tmp");
-      tempZipFile.deleteOnExit();
-      tempZipOut = new ZipOutputStream(new FileOutputStream(tempZipFile));
-      tempZipOut.setLevel(0);
-      for (File tempFile : tempFolder.listFiles()) {
-        if (tempFile.isFile()) {
-          InputStream tempIn = null;
-          try {
-            tempZipOut.putNextEntry(new ZipEntry(tempFile.getName()));
-            tempIn = new FileInputStream(tempFile);
-            byte [] buffer = new byte [8096];
-            int size; 
-            while ((size = tempIn.read(buffer)) != -1) {
-              tempZipOut.write(buffer, 0, size);
-            }
-            tempZipOut.closeEntry();
-          } finally {
-            if (tempIn != null) {
-              tempIn.close();
-            }
-          }
-          
-        }
+      setReadingState();
+      String objFile = new File(modelName).getName();
+      if (!objFile.toLowerCase().endsWith(".obj")) {
+        objFile += ".obj";
       }
+      File tempZipFile = File.createTempFile("urlContent", "tmp");
+      OBJWriter.writeNodeInZIPFile(model, tempZipFile, 0, objFile, "3D model import " + modelName);
       return new TemporaryURLContent(new URL("jar:" + tempZipFile.toURI().toURL() + "!/" + objFile));
     } finally {
-      if (tempZipOut != null) {
-        tempZipOut.close();
-      }
-      // Empty tempFolder
-      for (File tempFile : tempFolder.listFiles()) {
-        if (tempFile.isFile()) {
-          tempFile.delete();
-        }
-      }
-      tempFolder.delete();
       setDefaultState();
     }
   }
