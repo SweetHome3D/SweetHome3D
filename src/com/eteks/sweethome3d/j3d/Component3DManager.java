@@ -44,6 +44,8 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  * @author Emmanuel Puybaret
  */
 public class Component3DManager {
+  private static final String CHECK_OFF_SCREEN_IMAGE_SUPPORT = "com.eteks.sweethome3d.j3d.checkOffScreenSupport";
+  
   private static Component3DManager instance;
   
   private RenderingErrorObserver renderingErrorObserver;
@@ -99,28 +101,35 @@ public class Component3DManager {
   }
   
   /**
-   * Returns <code>true</code> if offscreen is supported in Java 3D on user system. 
+   * Returns <code>true</code> if offscreen is supported in Java 3D on user system.
+   * Will always return <code>false</code> if <code>com.eteks.sweethome3d.j3d.checkOffScreenSupport</code>
+   * system is equal to <code>false</code>. By default, <code>com.eteks.sweethome3d.j3d.checkOffScreenSupport</code>
+   * is equal to <code>true</code>.
    */
   public boolean isOffScreenImageSupported() {
     if (this.offScreenImageSupported == null) {
-      SimpleUniverse universe = null;
-      try {
-        // Create a universe bound to no canvas 3D
-        ViewingPlatform viewingPlatform = new ViewingPlatform();
-        Viewer viewer = new Viewer(new Canvas3D [0]);
-        universe = new SimpleUniverse(viewingPlatform, viewer);     
-        // Create a dummy 3D image to check if it can be rendered in current Java 3D configuration
-        getOffScreenImage(viewer.getView(), 1, 1);
-        this.offScreenImageSupported = true;
-      } catch (IllegalRenderingStateException ex) {
-        this.offScreenImageSupported = false;
-      } catch (NullPointerException ex) {
-        this.offScreenImageSupported = false;
-      } catch (IllegalArgumentException ex) {
-        this.offScreenImageSupported = false;
-      } finally {
-        if (universe != null) {
-          universe.cleanup();
+      if ("false".equalsIgnoreCase(System.getProperty(CHECK_OFF_SCREEN_IMAGE_SUPPORT, "true"))) {
+        this.offScreenImageSupported = Boolean.FALSE;
+      } else {
+        SimpleUniverse universe = null;
+        try {
+          // Create a universe bound to no canvas 3D
+          ViewingPlatform viewingPlatform = new ViewingPlatform();
+          Viewer viewer = new Viewer(new Canvas3D [0]);
+          universe = new SimpleUniverse(viewingPlatform, viewer);     
+          // Create a dummy 3D image to check if it can be rendered in current Java 3D configuration
+          getOffScreenImage(viewer.getView(), 1, 1);
+          this.offScreenImageSupported = Boolean.TRUE;
+        } catch (IllegalRenderingStateException ex) {
+          this.offScreenImageSupported = Boolean.FALSE;
+        } catch (NullPointerException ex) {
+          this.offScreenImageSupported = Boolean.FALSE;
+        } catch (IllegalArgumentException ex) {
+          this.offScreenImageSupported = Boolean.FALSE;
+        } finally {
+          if (universe != null) {
+            universe.cleanup();
+          }
         }
       }
     }
