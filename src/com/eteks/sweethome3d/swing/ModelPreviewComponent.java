@@ -476,20 +476,22 @@ public class ModelPreviewComponent extends JComponent {
       Point3d upper = new Point3d();
       bounds.getUpper(upper);
       
-      // Translate model to center
-      Transform3D translation = new Transform3D ();
-      translation.setTranslation(
-          new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                       -lower.y - (upper.y - lower.y) / 2, 
-                       -lower.z - (upper.z - lower.z) / 2));
-      // Scale model to make it fit in a 1.8 unit wide box
-      Transform3D modelTransform = new Transform3D();
-      modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
-                                               upper.z - lower.z));
-      modelTransform.mul(translation);
-      
-      modelTransformGroup.setTransform(modelTransform);
-      modelTransformGroup.addChild(model);
+      if (lower.getX() != Double.POSITIVE_INFINITY) {
+        // Translate model to center
+        Transform3D translation = new Transform3D ();
+        translation.setTranslation(
+            new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+                         -lower.y - (upper.y - lower.y) / 2, 
+                         -lower.z - (upper.z - lower.z) / 2));
+        // Scale model to make it fit in a 1.8 unit wide box
+        Transform3D modelTransform = new Transform3D();
+        modelTransform.setScale (1.8 / Math.max (Math.max (upper.x -lower.x, upper.y - lower.y), 
+                                                 upper.z - lower.z));
+        modelTransform.mul(translation);
+        
+        modelTransformGroup.setTransform(modelTransform);
+        modelTransformGroup.addChild(model);
+      }
     }
   }
   
