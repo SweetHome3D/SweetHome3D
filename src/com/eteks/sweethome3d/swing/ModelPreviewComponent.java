@@ -139,7 +139,7 @@ public class ModelPreviewComponent extends JComponent {
   @Override
   public Dimension getPreferredSize() {
     if (isPreferredSizeSet()) {
-      return getPreferredSize();
+      return super.getPreferredSize();
     } else {
       return new Dimension(200, 200);
     }
