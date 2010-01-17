@@ -45,10 +45,10 @@ import com.eteks.sweethome3d.viewcontroller.View;
 public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
   private final UserPreferences        preferences;
   private final ThreadedTaskController controller;
-  private JLabel                 taskLabel;
-  private JProgressBar           taskProgressBar;
-  private JDialog                dialog;
-  private boolean                taskRunning;
+  private JLabel                       taskLabel;
+  private JProgressBar                 taskProgressBar;
+  private JDialog                      dialog;
+  private boolean                      taskRunning;
 
   public ThreadedTaskPanel(String taskMessage, 
                            UserPreferences preferences, 
@@ -75,6 +75,45 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
   private void layoutComponents() {
     add(this.taskLabel, BorderLayout.NORTH);
     add(this.taskProgressBar, BorderLayout.SOUTH);
+  }
+  
+  /**
+   * Sets the status of the progress bar shown by this panel as indeterminate.
+   * This method may be called from an other thread than EDT.  
+   */
+  public void setIndeterminateProgress() {
+    if (EventQueue.isDispatchThread()) {
+      this.taskProgressBar.setIndeterminate(true);
+    } else {
+      // Ensure modifications are done in EDT
+      invokeLater(new Runnable() {
+          public void run() {
+            setIndeterminateProgress();
+          }
+        });
+    }
+  }
+  
+  /**
+   * Sets the current value of the progress bar shown by this panel.  
+   * This method may be called from an other thread than EDT.  
+   */
+  public void setProgress(final int value, 
+                          final int minimum, 
+                          final int maximum) {
+    if (EventQueue.isDispatchThread()) {
+      this.taskProgressBar.setIndeterminate(false);
+      this.taskProgressBar.setValue(value);
+      this.taskProgressBar.setMinimum(minimum);
+      this.taskProgressBar.setMaximum(maximum);
+    } else {
+      // Ensure modifications are done in EDT
+      invokeLater(new Runnable() {
+          public void run() {
+            setProgress(value, minimum, maximum);
+          }
+        });
+    }
   }
   
   /**
