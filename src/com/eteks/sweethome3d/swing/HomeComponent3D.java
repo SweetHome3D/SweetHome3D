@@ -19,18 +19,27 @@
  */
 package com.eteks.sweethome3d.swing;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Composite;
+import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
@@ -60,6 +69,7 @@ import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.Group;
 import javax.media.j3d.IllegalRenderingStateException;
+import javax.media.j3d.J3DGraphics2D;
 import javax.media.j3d.Light;
 import javax.media.j3d.Node;
 import javax.media.j3d.Shape3D;
@@ -74,6 +84,8 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import javax.swing.RepaintManager;
+import javax.swing.SwingUtilities;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.MouseInputAdapter;
@@ -141,7 +153,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
   private BufferedImage                            printedImage;
-
+  private BufferedImage                            overlappingChildrenImage;
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
    * with no controller.
@@ -196,9 +208,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home = home;
     this.displayShadowOnFloor = displayShadowOnFloor;
 
-    // Create the Java 3D canvas that will display home 
-    Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D();    
-    setLayout(new GridLayout(1, 1));
+    // Create the Java 3D canvas that will display home   
+    final Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
+        public void canvas3DSwapped(Canvas3D canvas3D) {
+        }
+        
+        public void canvas3DPreRendered(Canvas3D canvas3D) {
+        }
+        
+        public void canvas3DPostRendered(Canvas3D canvas3D) {
+          if (overlappingChildrenImage != null) {
+            J3DGraphics2D g2D = canvas3D.getGraphics2D();
+            g2D.drawImage(overlappingChildrenImage, null, 0, 0);
+            g2D.flush(true);
+          }
+        }
+      });   
+    setLayout(new GridLayout());
     add(canvas3D);
 
     if (controller != null) {
@@ -212,6 +238,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     // Add an ancestor listener to create canvas universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
     addAncestorListener(canvas3D, displayShadowOnFloor);
+    addComponentListener();
   }
 
   /**
@@ -236,6 +263,74 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void ancestorMoved(AncestorEvent event) {
         }        
       });
+  }
+  
+  /**
+   * Adds a component listener that updates child components that may
+   * overlap canvas 3D.
+   */
+  private void addComponentListener() {
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent ev) {
+        updateOverlappingChildrenImage();          
+      }
+      
+      @Override
+      public void componentShown(ComponentEvent e) {
+        updateOverlappingChildrenImage();          
+      }
+    });
+  }
+
+  /**
+   * Updates the image of the components that may overlap canvas 3D 
+   * (with a Z order smaller than the one of the canvas 3D).
+   */
+  private void updateOverlappingChildrenImage() {
+    // Search canvas 3D among children
+    int index = getComponentCount();
+    while (--index >= 0 && !(getComponent(index) instanceof Canvas3D)) {      
+    }
+    if (index >= 0) {
+      Rectangle canvasBounds = getComponent(index).getBounds();
+      Rectangle imageSize = new Rectangle();
+      for (int i = --index; i >= 0; i--) {
+        Rectangle componentBounds = getComponent(i).getBounds();
+        if (canvasBounds.intersects(componentBounds)) {
+          imageSize.add(componentBounds.x + componentBounds.width, 
+              componentBounds.y + componentBounds.height);
+        }
+      }
+      if (imageSize.width > 0 && imageSize.height > 0) {
+        Graphics2D g2D;
+        if (this.overlappingChildrenImage == null
+            || this.overlappingChildrenImage.getWidth() != imageSize.width
+            || this.overlappingChildrenImage.getHeight() != imageSize.height) {
+          this.overlappingChildrenImage = new BufferedImage(
+              imageSize.width, imageSize.height, BufferedImage.TYPE_4BYTE_ABGR);
+          g2D = (Graphics2D)this.overlappingChildrenImage.getGraphics();
+        } else {
+          // Clear image
+          g2D = (Graphics2D)this.overlappingChildrenImage.getGraphics();
+          Composite oldComposite = g2D.getComposite();
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
+          g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
+          g2D.setComposite(oldComposite);
+        }
+        for (int i = index; i >= 0; i--) {
+          Component component = getComponent(i);
+          Point location = component.getLocation();
+          AffineTransform oldTransform = g2D.getTransform();
+          g2D.translate(location.x - canvasBounds.x, location.y - canvasBounds.x);
+          component.paintAll(g2D);
+          g2D.setTransform(oldTransform);
+        }
+        g2D.dispose();
+        return;
+      }
+    }
+    this.overlappingChildrenImage = null;
   }
 
   /**
@@ -536,58 +631,170 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Adds AWT mouse listeners to <code>canvas3D</code> that calls back <code>controller</code> methods.  
    */
-  private void addMouseListeners(final HomeController3D controller, Component canvas3D) {
+  private void addMouseListeners(final HomeController3D controller, final Component canvas3D) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
-        private int xLastMouseMove;
-        private int yLastMouseMove;
+        private int        xLastMouseMove;
+        private int        yLastMouseMove;
+        private Component  grabComponent;
+        private Component  previousMouseEventTarget;
         
         @Override
         public void mousePressed(MouseEvent ev) {
-          if (ev.isPopupTrigger()) {
-            mouseReleased(ev);
-          } else if (isEnabled()) {
-            requestFocusInWindow();
-            this.xLastMouseMove = ev.getX();
-            this.yLastMouseMove = ev.getY();
+          if (!retargetMouseEventToOverlappingChildren(ev)) {
+            if (ev.isPopupTrigger()) {
+              mouseReleased(ev);
+            } else if (isEnabled()) {
+              requestFocusInWindow();
+              this.xLastMouseMove = ev.getX();
+              this.yLastMouseMove = ev.getY();
+            }
           }
         }
   
         @Override
         public void mouseReleased(MouseEvent ev) {
-          if (ev.isPopupTrigger()) {
-            getComponentPopupMenu().show(HomeComponent3D.this, ev.getX(), ev.getY());
-          } 
+          if (!retargetMouseEventToOverlappingChildren(ev)) {
+            if (ev.isPopupTrigger()) {
+              getComponentPopupMenu().show(HomeComponent3D.this, ev.getX(), ev.getY());
+            }
+          }
         }
-  
+
+        @Override
+        public void mouseClicked(MouseEvent ev) {
+          retargetMouseEventToOverlappingChildren(ev);
+        }
+        
+        @Override
+        public void mouseMoved(MouseEvent ev) {
+          retargetMouseEventToOverlappingChildren(ev);
+        }
+        
         @Override
         public void mouseDragged(MouseEvent ev) {
-          if (isEnabled()) {
-            if (ev.isAltDown()) {
-              // Mouse move along Y axis while alt is down changes camera location
-              float delta = 0.5f * (this.yLastMouseMove - ev.getY());
-              // Multiply delta by 10 if shift isn't down
-              if (!ev.isShiftDown()) {
-                delta *= 10;
-              } 
-              controller.moveCamera(delta);
-            } else {
-              final float ANGLE_FACTOR = 0.005f;
-              // Mouse move along X axis changes camera yaw 
-              float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
-              // Multiply yaw delta by 10 if shift isn't down
-              if (!ev.isShiftDown()) {
-                yawDelta *= 10;
-              } 
-              controller.rotateCameraYaw(yawDelta);
+          if (!retargetMouseEventToOverlappingChildren(ev)) {
+            if (isEnabled()) {
+              if (ev.isAltDown()) {
+                // Mouse move along Y axis while alt is down changes camera location
+                float delta = 0.5f * (this.yLastMouseMove - ev.getY());
+                // Multiply delta by 10 if shift isn't down
+                if (!ev.isShiftDown()) {
+                  delta *= 10;
+                } 
+                controller.moveCamera(delta);
+              } else {
+                final float ANGLE_FACTOR = 0.005f;
+                // Mouse move along X axis changes camera yaw 
+                float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
+                // Multiply yaw delta by 10 if shift isn't down
+                if (!ev.isShiftDown()) {
+                  yawDelta *= 10;
+                } 
+                controller.rotateCameraYaw(yawDelta);
+                
+                // Mouse move along Y axis changes camera pitch 
+                float pitchDelta = ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
+                controller.rotateCameraPitch(pitchDelta);
+              }
               
-              // Mouse move along Y axis changes camera pitch 
-              float pitchDelta = ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
-              controller.rotateCameraPitch(pitchDelta);
+              this.xLastMouseMove = ev.getX();
+              this.yLastMouseMove = ev.getY();
             }
-            
-            this.xLastMouseMove = ev.getX();
-            this.yLastMouseMove = ev.getY();
           }
+        }
+        
+        /**
+         * Retargets to the first overlapping child able to manage the the given event 
+         * and returns <code>true</code> if a child consumed the event 
+         * or needs to be repainted (meaning its state changed).
+         * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
+         * events are managed only during mouseDragged event).
+         */
+        private boolean retargetMouseEventToOverlappingChildren(MouseEvent ev) {
+          // Search canvas 3D among children
+          int index = getComponentCount();
+          while (--index >= 0 && !(getComponent(index) instanceof Canvas3D)) {      
+          }
+          if (--index >= 0) {
+            if (this.grabComponent != null
+                && (ev.getID() == MouseEvent.MOUSE_RELEASED
+                    || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
+              Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), this.grabComponent);
+              dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, ev.getID(), point.x, point.y));
+              if (ev.getID() == MouseEvent.MOUSE_RELEASED) {
+                this.grabComponent = null;
+              } else {
+                if (this.previousMouseEventTarget == null
+                    && this.grabComponent.contains(point)) {
+                  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_ENTERED, point.x, point.y));
+                  this.previousMouseEventTarget = this.grabComponent;
+                } else if (this.previousMouseEventTarget != null
+                    && !this.grabComponent.contains(point)) { 
+                  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_EXITED, point.x, point.y));
+                  this.previousMouseEventTarget = null;
+                }
+              }
+              return true;
+            } else {                
+              for (int i = index; i >= 0; i--) {
+                Component component = getComponent(i);                
+                Component mouseEventTarget = retargetMouseEvent(component, ev);
+                if (mouseEventTarget != null) {
+                  this.previousMouseEventTarget = mouseEventTarget;
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        }
+        
+        private Component retargetMouseEvent(Component component, MouseEvent ev) {
+          if (component.getBounds().contains(ev.getPoint())) {
+            if (component instanceof Container) {
+              Container container = (Container)component;
+              for (int i = container.getComponentCount() - 1; i >= 0; i--) {
+                Component c = container.getComponent(i);
+                MouseEvent retargetedEvent = deriveEvent(ev, component, ev.getID(), 
+                    ev.getX() - component.getX(), ev.getY() - component.getY());
+                Component mouseEventTarget = retargetMouseEvent(c, retargetedEvent);
+                if (mouseEventTarget != null) {
+                  return mouseEventTarget;
+                }
+              }
+            }
+            int newX = ev.getX() - component.getX();
+            int newY = ev.getY() - component.getY();
+            if (dispatchRetargetedEvent(deriveEvent(ev, component, ev.getID(), newX, newY))) {              
+              if (ev.getID() == MouseEvent.MOUSE_PRESSED) {
+                this.grabComponent = component;
+              }  
+              return component;
+            } 
+          } 
+          return null;
+        }
+        
+        /**
+         * Dispatches the given event to its component and returns <code>true</code> if component needs to be redrawn.
+         */
+        private boolean dispatchRetargetedEvent(MouseEvent ev) {
+          ev.getComponent().dispatchEvent(ev);
+          if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
+            updateOverlappingChildrenImage();
+            canvas3D.repaint();
+            return true;
+          }
+          return false;
+        }
+        
+        /**
+         * Returns a new <code>MouseEvent</code> derived from the one given in parameter.
+         */
+        private MouseEvent deriveEvent(MouseEvent ev, Component component, int id, int x, int y) {
+          return new MouseEvent(component, id, ev.getWhen(), 
+              ev.getModifiersEx() | ev.getModifiers(), x, y, 
+              ev.getClickCount(), ev.isPopupTrigger(), ev.getButton());
         }
       };
     MouseWheelListener mouseWheelListener = new MouseWheelListener() {
