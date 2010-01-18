@@ -229,9 +229,8 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
    * Displays this panel in a modal resizable dialog box. 
    */
   public void displayView(View parentView) {
-    String dialogTitle = preferences.getLocalizedString(
-        PrintPreviewPanel.class, "printPreview.title");
-    JOptionPane optionPane = new JOptionPane(SwingUtilities.getRootPane(this), 
+    String dialogTitle = preferences.getLocalizedString(PrintPreviewPanel.class, "printPreview.title");
+    JOptionPane optionPane = new JOptionPane(this, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 
     JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((JComponent)parentView), dialogTitle);
     dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
