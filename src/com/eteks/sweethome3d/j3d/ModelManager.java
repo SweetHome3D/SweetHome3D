@@ -208,6 +208,11 @@ public class ModelManager {
         new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
         new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
     computeBounds(node, objectBounds);
+    Point3d lower = new Point3d();
+    objectBounds.getLower(lower);
+    if (lower.x == Double.POSITIVE_INFINITY) {
+      throw new IllegalArgumentException("Node has no bounds");
+    }
     return objectBounds;
   }
   

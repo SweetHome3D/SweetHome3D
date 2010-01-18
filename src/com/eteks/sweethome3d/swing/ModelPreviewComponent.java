@@ -470,13 +470,13 @@ public class ModelPreviewComponent extends JComponent {
       model.setCapability(BranchGroup.ALLOW_DETACH);
       setNodeCapabilities(model);
       
-      BoundingBox bounds = ModelManager.getInstance().getBounds(model);
-      Point3d lower = new Point3d();
-      bounds.getLower(lower);
-      Point3d upper = new Point3d();
-      bounds.getUpper(upper);
-      
-      if (lower.getX() != Double.POSITIVE_INFINITY) {
+      if (model.numChildren() > 0) {
+        BoundingBox bounds = ModelManager.getInstance().getBounds(model);
+        Point3d lower = new Point3d();
+        bounds.getLower(lower);
+        Point3d upper = new Point3d();
+        bounds.getUpper(upper);
+        
         // Translate model to center
         Transform3D translation = new Transform3D ();
         translation.setTranslation(
@@ -562,13 +562,14 @@ public class ModelPreviewComponent extends JComponent {
    * The model is shown at its default size.
    */
   protected void setModelRotation(float [][] modelRotation) {
-    BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
-    Point3d lower = new Point3d();
-    bounds.getLower(lower);
-    Point3d upper = new Point3d();
-    bounds.getUpper(upper);
+    BranchGroup model = getModel();
+    if (model != null && model.numChildren() > 0) {
+      BoundingBox bounds = ModelManager.getInstance().getBounds(model);
+      Point3d lower = new Point3d();
+      bounds.getLower(lower);
+      Point3d upper = new Point3d();
+      bounds.getUpper(upper);
     
-    if (lower.getX() != Double.POSITIVE_INFINITY) {
       // Translate model to center
       Transform3D translation = new Transform3D ();
       translation.setTranslation(
@@ -599,13 +600,14 @@ public class ModelPreviewComponent extends JComponent {
    */
   protected void setModelRotationAndSize(float [][] modelRotation,
                                          float width, float depth, float height) {
-    BoundingBox bounds = ModelManager.getInstance().getBounds(getModel());
-    Point3d lower = new Point3d();
-    bounds.getLower(lower);
-    Point3d upper = new Point3d();
-    bounds.getUpper(upper);
-    
-    if (lower.getX() != Double.POSITIVE_INFINITY) {
+    BranchGroup model = getModel();
+    if (model != null && model.numChildren() > 0) {
+      BoundingBox bounds = ModelManager.getInstance().getBounds(model);
+      Point3d lower = new Point3d();
+      bounds.getLower(lower);
+      Point3d upper = new Point3d();
+      bounds.getUpper(upper);
+      
       // Translate model to center
       Transform3D translation = new Transform3D ();
       translation.setTranslation(
