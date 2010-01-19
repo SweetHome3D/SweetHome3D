@@ -27,7 +27,10 @@ import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -36,7 +39,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
@@ -83,6 +85,7 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
@@ -133,6 +136,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private final boolean                            displayShadowOnFloor;
   private final Map<Selectable, Object3DBranch>    homeObjects = new HashMap<Selectable, Object3DBranch>();
   private Collection<Selectable>                   homeObjectsToUpdate;
+  private Canvas3D                                 canvas3D;
   private SimpleUniverse                           universe;
   private Camera                                   camera;
   // Listeners bound to home that updates 3D scene objects
@@ -153,7 +157,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
   private BufferedImage                            printedImage;
-  private BufferedImage                            overlappingChildrenImage;
+  private JComponent                               overlappingComponent;
+  private BufferedImage                            overlappingComponentImage;
+  
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
    * with no controller.
@@ -208,8 +214,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home = home;
     this.displayShadowOnFloor = displayShadowOnFloor;
 
-    // Create the Java 3D canvas that will display home   
-    final Canvas3D canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
+    this.canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(new Component3DManager.RenderingObserver() {        
         public void canvas3DSwapped(Canvas3D canvas3D) {
         }
         
@@ -217,18 +222,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         public void canvas3DPostRendered(Canvas3D canvas3D) {
-          if (overlappingChildrenImage != null) {
+          if (overlappingComponentImage != null) {
             J3DGraphics2D g2D = canvas3D.getGraphics2D();
-            g2D.drawImage(overlappingChildrenImage, null, 0, 0);
+            g2D.clipRect(0, 0, canvas3D.getWidth(), canvas3D.getHeight());
+            g2D.drawImage(overlappingComponentImage, null, 0, 0);
             g2D.flush(true);
           }
         }
       });   
+    JPanel canvasPanel = new JPanel(new GridBagLayout());
+    canvasPanel.add(this.canvas3D, new GridBagConstraints(0, 0, 2, 2, 1, 1, 
+        GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));    
     setLayout(new GridLayout());
-    add(canvas3D);
+    add(canvasPanel);
 
     if (controller != null) {
-      addMouseListeners(controller, canvas3D);
+      addMouseListeners(controller, this.canvas3D);
       createActions(controller);
       installKeyboardActions();
       // Let this component manage focus
@@ -237,7 +246,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     // Add an ancestor listener to create canvas universe once this component is made visible 
     // and clean up universe once its parent frame is disposed
-    addAncestorListener(canvas3D, displayShadowOnFloor);
+    addAncestorListener(this.canvas3D, displayShadowOnFloor);
     addComponentListener();
   }
 
@@ -264,73 +273,85 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }        
       });
   }
-  
+
   /**
-   * Adds a component listener that updates child components that may
-   * overlap canvas 3D.
+   * Adds a component listener that updates overlapping component image.
    */
   private void addComponentListener() {
     addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent ev) {
-        updateOverlappingChildrenImage();          
+        updateOverlappingComponentImage();          
       }
       
       @Override
       public void componentShown(ComponentEvent e) {
-        updateOverlappingChildrenImage();          
+        updateOverlappingComponentImage();          
       }
     });
   }
 
   /**
+   * Sets the component that will be drawn upon the heavyweight 3D component shown by this component.
+   * Mouse events will targeted to the overlapping component when needed.
+   * Supports transparent components. 
+   */
+  protected void setOverlappingComponent(JComponent overlappingComponent) {
+    // Add a component listener that updates overlapping image
+    overlappingComponent.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent ev) {
+          updateOverlappingComponentImage();          
+        }
+        
+        @Override
+        public void componentMoved(ComponentEvent e) {
+          updateOverlappingComponentImage();          
+        }
+      });
+    if (this.overlappingComponent != null) {
+      this.overlappingComponent.getParent().remove(this.overlappingComponent);
+    }
+    this.overlappingComponent = overlappingComponent;
+    // Add the overlapping component to this component to be able to paint it 
+    // but show it behind heavyweight canvas 3D
+    this.canvas3D.getParent().add(overlappingComponent, new GridBagConstraints(0, 0, 1, 1, 0, 0, 
+        GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));    
+    updateOverlappingComponentImage();          
+  }
+  
+  /**
    * Updates the image of the components that may overlap canvas 3D 
    * (with a Z order smaller than the one of the canvas 3D).
    */
-  private void updateOverlappingChildrenImage() {
-    // Search canvas 3D among children
-    int index = getComponentCount();
-    while (--index >= 0 && !(getComponent(index) instanceof Canvas3D)) {      
-    }
-    if (index >= 0) {
-      Rectangle canvasBounds = getComponent(index).getBounds();
-      Rectangle imageSize = new Rectangle();
-      for (int i = --index; i >= 0; i--) {
-        Rectangle componentBounds = getComponent(i).getBounds();
-        if (canvasBounds.intersects(componentBounds)) {
-          imageSize.add(componentBounds.x + componentBounds.width, 
-              componentBounds.y + componentBounds.height);
-        }
-      }
-      if (imageSize.width > 0 && imageSize.height > 0) {
+  private void updateOverlappingComponentImage() {
+    if (this.overlappingComponent != null) {
+      Rectangle componentBounds = this.overlappingComponent.getBounds();
+      Rectangle imageSize = new Rectangle(this.canvas3D.getX(), this.canvas3D.getY());
+      imageSize.add(componentBounds.x + componentBounds.width, 
+          componentBounds.y + componentBounds.height);
+      if (!imageSize.isEmpty()) {
         Graphics2D g2D;
-        if (this.overlappingChildrenImage == null
-            || this.overlappingChildrenImage.getWidth() != imageSize.width
-            || this.overlappingChildrenImage.getHeight() != imageSize.height) {
-          this.overlappingChildrenImage = new BufferedImage(
+        if (this.overlappingComponentImage == null
+            || this.overlappingComponentImage.getWidth() != imageSize.width
+            || this.overlappingComponentImage.getHeight() != imageSize.height) {
+          this.overlappingComponentImage = new BufferedImage(
               imageSize.width, imageSize.height, BufferedImage.TYPE_4BYTE_ABGR);
-          g2D = (Graphics2D)this.overlappingChildrenImage.getGraphics();
+          g2D = (Graphics2D)this.overlappingComponentImage.getGraphics();
         } else {
           // Clear image
-          g2D = (Graphics2D)this.overlappingChildrenImage.getGraphics();
+          g2D = (Graphics2D)this.overlappingComponentImage.getGraphics();
           Composite oldComposite = g2D.getComposite();
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
           g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
           g2D.setComposite(oldComposite);
         }
-        for (int i = index; i >= 0; i--) {
-          Component component = getComponent(i);
-          Point location = component.getLocation();
-          AffineTransform oldTransform = g2D.getTransform();
-          g2D.translate(location.x - canvasBounds.x, location.y - canvasBounds.x);
-          component.paintAll(g2D);
-          g2D.setTransform(oldTransform);
-        }
+        this.overlappingComponent.paintAll(g2D);
         g2D.dispose();
         return;
       }
+      this.overlappingComponentImage = null;
     }
-    this.overlappingChildrenImage = null;
   }
 
   /**
@@ -704,18 +725,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         /**
-         * Retargets to the first overlapping child able to manage the the given event 
-         * and returns <code>true</code> if a child consumed the event 
+         * Retargets to the first overlapping component able to manage the the given event 
+         * and returns <code>true</code> if a component consumed the event 
          * or needs to be repainted (meaning its state changed).
          * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
          * events are managed only during mouseDragged event).
          */
         private boolean retargetMouseEventToOverlappingChildren(MouseEvent ev) {
-          // Search canvas 3D among children
-          int index = getComponentCount();
-          while (--index >= 0 && !(getComponent(index) instanceof Canvas3D)) {      
-          }
-          if (--index >= 0) {
+          if (overlappingComponent != null) {
             if (this.grabComponent != null
                 && (ev.getID() == MouseEvent.MOUSE_RELEASED
                     || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
@@ -736,13 +753,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }
               return true;
             } else {                
-              for (int i = index; i >= 0; i--) {
-                Component component = getComponent(i);                
-                Component mouseEventTarget = retargetMouseEvent(component, ev);
-                if (mouseEventTarget != null) {
-                  this.previousMouseEventTarget = mouseEventTarget;
-                  return true;
-                }
+              Component mouseEventTarget = retargetMouseEvent(overlappingComponent, ev);
+              if (mouseEventTarget != null) {
+                this.previousMouseEventTarget = mouseEventTarget;
+                return true;
               }
             }
           }
@@ -781,7 +795,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         private boolean dispatchRetargetedEvent(MouseEvent ev) {
           ev.getComponent().dispatchEvent(ev);
           if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
-            updateOverlappingChildrenImage();
+            updateOverlappingComponentImage();
             canvas3D.repaint();
             return true;
           }
