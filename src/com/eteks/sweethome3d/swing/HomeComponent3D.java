@@ -24,13 +24,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -224,15 +223,36 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void canvas3DPostRendered(Canvas3D canvas3D) {
           if (overlappingComponentImage != null) {
             J3DGraphics2D g2D = canvas3D.getGraphics2D();
-            g2D.clipRect(0, 0, canvas3D.getWidth(), canvas3D.getHeight());
             g2D.drawImage(overlappingComponentImage, null, 0, 0);
             g2D.flush(true);
           }
         }
       });   
-    JPanel canvasPanel = new JPanel(new GridBagLayout());
-    canvasPanel.add(this.canvas3D, new GridBagConstraints(0, 0, 2, 2, 1, 1, 
-        GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));    
+    JPanel canvasPanel = new JPanel(new LayoutManager() {
+        public void addLayoutComponent(String name, Component comp) {
+        }
+        
+        public void removeLayoutComponent(Component comp) {
+        }
+        
+        public Dimension preferredLayoutSize(Container parent) {
+          return canvas3D.getPreferredSize();
+        }
+        
+        public Dimension minimumLayoutSize(Container parent) {
+          return canvas3D.getMinimumSize();
+        }
+        
+        public void layoutContainer(Container parent) {
+          canvas3D.setBounds(0, 0, parent.getWidth(), parent.getHeight());
+          if (overlappingComponent != null) {
+            // Ensure that overlappingComponent is always in top corner             
+            Dimension preferredSize = overlappingComponent.getPreferredSize();
+            overlappingComponent.setBounds(0, 0, preferredSize.width, preferredSize.height);
+          }
+        }
+      });
+    canvasPanel.add(this.canvas3D);    
     setLayout(new GridLayout());
     add(canvasPanel);
 
@@ -315,8 +335,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.overlappingComponent = overlappingComponent;
     // Add the overlapping component to this component to be able to paint it 
     // but show it behind heavyweight canvas 3D
-    this.canvas3D.getParent().add(overlappingComponent, new GridBagConstraints(0, 0, 1, 1, 0, 0, 
-        GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));    
+    this.canvas3D.getParent().add(overlappingComponent);    
     updateOverlappingComponentImage();          
   }
   
