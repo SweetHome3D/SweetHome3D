@@ -79,101 +79,69 @@ public class HomeFileRecorder implements HomeRecorder {
    */
   public void writeHome(Home home, String name) throws RecorderException {
     File homeFile = new File(name);
-    File backupFile = null;    
-
-    // Backup existing home file to a temporary file
     if (homeFile.exists()
-        && homeFile.canWrite()) {
-      try {
-        backupFile = File.createTempFile("backup", ".sh3d");
-        copyFile(homeFile, backupFile);
-      } catch (IOException ex) {
-        if (backupFile != null) {
-          backupFile.delete();
-        }
-        throw new RecorderException("Can't create temporary backup of " + homeFile, ex);
-      }
+        && !homeFile.canWrite()) {
+      throw new RecorderException("Can't write over file " + name);
     }
     
     DefaultHomeOutputStream homeOut = null;
+    File tempFile = null;
     try {
-      homeOut = new DefaultHomeOutputStream(new FileOutputStream(homeFile), 
+      // Open a stream on a temporary file 
+      tempFile = File.createTempFile("save", ".sh3d");
+      homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
           this.compressionLevel, this.includeOnlyTemporaryContent);
-      // Write home with HomeOuputStream 
-      // Overwriting it will ensure that home file rights are kept
-      homeOut.writeHome(home); 
+      // Write home with HomeOuputStream
+      homeOut.writeHome(home);
     } catch (InterruptedIOException ex) {
-      try {
-        if (homeOut != null) {
-          homeOut.close();
-        }
-      } catch (IOException ex2) {          
-      }
-      
-      restoreHomeFile(homeFile, backupFile, 
-          "Can't restore backup of " + homeFile + " after interruption");          
       throw new InterruptedRecorderException("Save " + name + " interrupted");
-    } catch (FileNotFoundException ex) {
-      throw new RecorderException("Can't save file " + name, ex);
     } catch (IOException ex) {
-      try {
-        if (homeOut != null) {
-          homeOut.close();
-        }
-      } catch (IOException ex2) {          
-      }
-      
-      restoreHomeFile(homeFile, backupFile, 
-          "Can't save file " + name + " and restore backup");
-      throw new RecorderException("Can't save file " + name, ex);
+      throw new RecorderException("Can't save home " + name, ex);
     } finally {
       try {
         if (homeOut != null) {
           homeOut.close();
         }
       } catch (IOException ex) {
-        restoreHomeFile(homeFile, backupFile,
-            "Can't close file " + name + " and restore backup");
-        throw new RecorderException("Can't close home " + name, ex);
-      } finally {
-        if (backupFile != null) {
-          backupFile.delete();
-        }
-      }
-      
-      if (backupFile != null) {
-        backupFile.delete();
+        throw new RecorderException("Can't close file " + name, ex);
       }
     }
-  }
 
-  /**
-   * Copy <code>file1</code> to <code>file2</code>.
-   */
-  private void copyFile(File file1, File file2) throws RecorderException {
+    // Open destination file
+    OutputStream out;
+    try {
+      out = new FileOutputStream(homeFile);
+    } catch (FileNotFoundException ex) {
+      if (tempFile != null) {
+        tempFile.delete();
+      }
+      throw new RecorderException("Can't save file " + name, ex);
+    }
+    
+    // Copy temporary file to home file
+    // Overwriting home file will ensure that its rights are kept
     byte [] buffer = new byte [8192];
     InputStream in = null;
-    OutputStream out = null;
     try {
-      in = new FileInputStream(file1);          
-      out = new FileOutputStream(file2);
+      in = new FileInputStream(tempFile);          
       int size; 
       while ((size = in.read(buffer)) != -1) {
         out.write(buffer, 0, size);
       }
     } catch (IOException ex) { 
-      throw new RecorderException("Can't copy file " + file1 + " to " + file2);
+      throw new RecorderException("Can't copy file " + tempFile + " to " + name);
     } finally {
       try {
         if (out != null) {          
           out.close();
         }
       } catch (IOException ex) {
-        throw new RecorderException("Can't close file " + file2, ex);
+        throw new RecorderException("Can't close file " + name, ex);
       }
       try {
         if (in != null) {          
           in.close();
+          tempFile.delete();
         }
       } catch (IOException ex) {
         // Forget exception
@@ -181,27 +149,6 @@ public class HomeFileRecorder implements HomeRecorder {
     }
   }
   
-  /**
-   * Copy <code>backupFile</code> to <code>homeFile</code> and deletes <code>backupFile</code>.
-   */
-  private void restoreHomeFile(File homeFile, File backupFile,  
-                               String errorMessage) throws RecorderException {
-    if (backupFile != null) {
-      try {
-        // Prefer copy than rename to keep file rights
-        copyFile(backupFile, homeFile);
-      } catch (RecorderException ex2) {
-        // Last chance : delete home file and rename backup file to home file
-        if (!homeFile.delete()
-            || !backupFile.renameTo(homeFile)) {
-          throw new RecorderException(errorMessage);
-        }
-      }
-    } else {
-      homeFile.delete();
-    }
-  }
-
   /**
    * Returns a home instance read from its file <code>name</code>.
    * @throws RecorderException if a problem occurred while reading home, 
