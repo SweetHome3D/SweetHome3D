@@ -1711,8 +1711,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               selectionColor, locationFeedbackStroke, planScale,
               selectionOutlinePaint, selectionOutlineStroke);
         } else if (DimensionLine.class.isAssignableFrom(this.alignedObjectClass)) {
-          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback,
-              selectionColor, locationFeedbackStroke, planScale);
+          paintDimensionLineAlignmentFeedback(g2D, (DimensionLine)this.alignedObjectFeedback, this.locationFeeback, this.showPointFeedback,               
+              selectionColor, locationFeedbackStroke, planScale,
+              selectionOutlinePaint, selectionOutlineStroke);
         }
       }
       if (this.centerAngleFeedback != null) {
@@ -3054,11 +3055,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
   /**
    * Paints dimension line location feedback.
+   * @param showPointFeedback2 
    */
   private void paintDimensionLineAlignmentFeedback(Graphics2D g2D, 
                                                    DimensionLine alignedDimensionLine, Point2D locationFeedback, 
+                                                   boolean showPointFeedback, 
                                                    Paint feedbackPaint, Stroke feedbackStroke,
-                                                   float planScale) {
+                                                   float planScale, Paint pointPaint, 
+                                                   Stroke pointStroke) {
     // Paint dimension line location feedback
     if (locationFeedback != null) {      
       float margin = 1f / planScale;
@@ -3167,6 +3171,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           g2D.draw(new Line2D.Float(x, y - 25 / planScale, 
               x, y - deltaYToClosestObject + 25 / planScale));
         }
+      }
+
+      if (showPointFeedback) {
+        paintPointFeedback(g2D, locationFeedback, feedbackPaint, planScale, pointPaint, pointStroke);
       }
     }
   }

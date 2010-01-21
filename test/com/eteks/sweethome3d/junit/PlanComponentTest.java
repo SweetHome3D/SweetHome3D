@@ -48,6 +48,7 @@ import abbot.tester.JComponentTester;
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -361,6 +362,36 @@ public class PlanComponentTest extends ComponentTestFixture {
     Wall wall6 = orderedWalls.get(6);
     assertSelectionContains(frame.home, wall4, wall5, wall6, wall7);
     assertWallsAreJoined(wall6, wall7, wall4);
+    
+    // 4. Create a dimension line with keyboard
+    frame.planController.setMode(PlanController.Mode.DIMENSION_LINE_CREATION);
+    assertEquals("Current mode isn't " + PlanController.Mode.DIMENSION_LINE_CREATION, 
+        PlanController.Mode.DIMENSION_LINE_CREATION, frame.planController.getMode());
+    tester.actionClick(planComponent, 200, 300);
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyString("250"); // x start
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyString("200"); // length
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyString("45"); // angle
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    tester.actionKeyString("50"); // offset
+    tester.actionKeyStroke(KeyEvent.VK_ENTER);
+    
+
+    Collection<DimensionLine> dimensionLines = frame.home.getDimensionLines();
+    assertEquals("Incorrect dimension lines count", 1, dimensionLines.size());
+    DimensionLine dimensionLine = dimensionLines.iterator().next();
+    assertTrue("Incorrect X start " + 250 + " " + dimensionLine.getXStart(), 
+        Math.abs(250 - dimensionLine.getXStart()) < 1E-10);
+    assertTrue("Incorrect Y start " + 560 + " " + dimensionLine.getYStart(), 
+        Math.abs(560 - dimensionLine.getYStart()) < 1E-10);
+    assertTrue("Incorrect X end " + 391.421 + " " + dimensionLine.getXEnd(), 
+        Math.abs(391.421 - dimensionLine.getXEnd()) < 1E-3);
+    assertTrue("Incorrect Y end " + 418.579 + " " + dimensionLine.getYEnd(), 
+        Math.abs(418.579 - dimensionLine.getYEnd()) < 1E-3);
+    assertTrue("Incorrect offset " + 50 + " " + dimensionLine.getYEnd(), 
+        Math.abs(50 - dimensionLine.getOffset()) < 1E-10);
   }
     
   /**

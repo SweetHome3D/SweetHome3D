@@ -101,7 +101,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Fields that can be edited in plan view.
    */
-  public static enum EditableProperty {X, Y, LENGTH, ANGLE, THICKNESS}
+  public static enum EditableProperty {X, Y, LENGTH, ANGLE, THICKNESS, OFFSET}
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
@@ -5936,6 +5936,14 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     @Override
+    public void setEditionActivated(boolean editionActivated) {
+      if (editionActivated) {
+        setState(getDimensionLineDrawingState());
+        PlanController.this.setEditionActivated(editionActivated);
+      }
+    }
+
+    @Override
     public void exit() {
       getView().deleteFeedback();
     }  
@@ -5995,7 +6003,8 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       PlanView planView = getView();
-      if (offsetChoice) {
+      planView.deleteFeedback();
+      if (this.offsetChoice) {
         float distanceToDimensionLine = (float)Line2D.ptLineDist(this.xStart, this.yStart, 
             this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
         int relativeCCW = Line2D.relativeCCW(this.xStart, this.yStart, 
@@ -6007,8 +6016,7 @@ public class PlanController extends FurnitureController implements Controller {
         float xEnd;
         float yEnd;
         if (this.magnetismEnabled) {
-          PointWithAngleMagnetism point = new PointWithAngleMagnetism(
-              this.xStart, this.yStart, x, y,
+          PointWithAngleMagnetism point = new PointWithAngleMagnetism(this.xStart, this.yStart, x, y,
               preferences.getLengthUnit(), planView.getPixelLength());
           xEnd = point.getX();
           yEnd = point.getY();
@@ -6040,13 +6048,7 @@ public class PlanController extends FurnitureController implements Controller {
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
         if (this.offsetChoice) {
-          selectItem(this.newDimensionLine);
-          // Post dimension line creation to undo support
-          postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
-              this.oldSelection, this.oldBasePlanLocked);
-          this.newDimensionLine = null;
-          // Change state to WallCreationState 
-          setState(getDimensionLineCreationState());
+          validateDrawnDimensionLine();
         } else {
           // Switch to offset choice
           this.offsetChoice = true;
@@ -6054,6 +6056,125 @@ public class PlanController extends FurnitureController implements Controller {
           planView.setCursor(PlanView.CursorType.HEIGHT);
           planView.deleteFeedback();
         }
+      }
+    }
+
+    private void validateDrawnDimensionLine() {
+      selectItem(this.newDimensionLine);
+      // Post dimension line creation to undo support
+      postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
+          this.oldSelection, this.oldBasePlanLocked);
+      this.newDimensionLine = null;
+      // Change state to DimensionLineCreationState 
+      setState(getDimensionLineCreationState());
+    }
+
+    private Integer getDimensionLineAngle(DimensionLine dimensionLine) {
+      if (dimensionLine.getLength() == 0) {
+        return 0;
+      } else {
+        return (int)Math.round(Math.toDegrees(Math.atan2(
+            dimensionLine.getYStart() - dimensionLine.getYEnd(), dimensionLine.getXEnd() - dimensionLine.getXStart())));
+      }
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      PlanView planView = getView();
+      if (editionActivated) {
+        planView.deleteFeedback();
+        if (this.newDimensionLine == null) {
+          // Edit xStart and yStart
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.X,
+                                                                       EditableProperty.Y},
+              new Object [] {this.xStart, this.yStart},
+              this.xStart, this.yStart);
+        } else if (this.offsetChoice) {
+          // Edit offset
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.OFFSET},
+              new Object [] {this.newDimensionLine.getOffset()},
+              this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd());
+        } else {
+          // Edit length and angle
+          planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
+                                                                       EditableProperty.ANGLE},
+              new Object [] {this.newDimensionLine.getLength(), 
+                             getDimensionLineAngle(this.newDimensionLine)},
+              this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd());
+        }
+      } else { 
+        if (this.newDimensionLine == null) {
+          // Create a new dimension line once user entered its start point 
+          float defaultLength = preferences.getLengthUnit() == LengthUnit.INCH 
+              ? LengthUnit.footToCentimeter(3) : 100;
+          this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, 
+              this.xStart + defaultLength, this.yStart, 0);
+          // Activate automatically second step to let user enter the 
+          // length and angle of the new dimension line
+          planView.deleteFeedback();
+          setEditionActivated(true);
+        } else if (this.offsetChoice) {
+          validateDrawnDimensionLine();
+        } else {
+          this.offsetChoice = true;
+          setEditionActivated(true);
+        }
+      }
+    }
+
+    @Override
+    public void updateEditableProperty(EditableProperty editableProperty, Object value) {
+      PlanView planView = getView();
+      if (this.newDimensionLine == null) {
+        // Update start point of the dimension line
+        switch (editableProperty) {
+          case X : 
+            this.xStart = value != null ? ((Number)value).floatValue() : 0;
+            this.xStart = Math.max(-100000f, Math.min(this.xStart, 100000f));
+            break;      
+          case Y : 
+            this.yStart = value != null ? ((Number)value).floatValue() : 0;
+            this.yStart = Math.max(-100000f, Math.min(this.yStart, 100000f));
+            break;      
+        }
+        planView.setAlignmentFeedback(DimensionLine.class, null, this.xStart, this.yStart, true);
+        planView.makePointVisible(this.xStart, this.yStart);
+      } else if (this.offsetChoice) {
+        if (editableProperty == EditableProperty.OFFSET) {
+          // Update new dimension line offset 
+          float offset = value != null ? ((Number)value).floatValue() : 0;
+          offset = Math.max(-100000f, Math.min(offset, 100000f));
+          this.newDimensionLine.setOffset(offset);
+        }
+      } else {
+        float xEnd = this.newDimensionLine.getXEnd();
+        float yEnd = this.newDimensionLine.getYEnd();
+        // Update end point of the dimension line
+        switch (editableProperty) {
+          case LENGTH : 
+            float length = value != null ? ((Number)value).floatValue() : 0;
+            length = Math.max(0.001f, Math.min(length, 100000f));
+            double dimensionLineAngle = Math.PI - Math.atan2(this.yStart - yEnd, this.xStart - xEnd);
+            xEnd = (float)(this.xStart + length * Math.cos(dimensionLineAngle));
+            yEnd = (float)(this.yStart - length * Math.sin(dimensionLineAngle));
+            break;      
+          case ANGLE : 
+            dimensionLineAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
+            float dimensionLineLength = this.newDimensionLine.getLength();              
+            xEnd = (float)(this.xStart + dimensionLineLength * Math.cos(dimensionLineAngle));
+            yEnd = (float)(this.yStart - dimensionLineLength * Math.sin(dimensionLineAngle));
+            break;
+          default :
+            return;
+        }
+
+        // Update new dimension line
+        this.newDimensionLine.setXEnd(xEnd);
+        this.newDimensionLine.setYEnd(yEnd);
+        planView.setAlignmentFeedback(DimensionLine.class, this.newDimensionLine, xEnd, yEnd, false);
+        // Ensure dimension line end points are visible
+        planView.makePointVisible(this.xStart, this.yStart);
+        planView.makePointVisible(xEnd, yEnd);
       }
     }
 
