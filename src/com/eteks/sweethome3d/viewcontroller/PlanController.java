@@ -6251,7 +6251,10 @@ public class PlanController extends FurnitureController implements Controller {
       float yResizePoint;
       // Compute the closest resize point placed on the extension line and the distance 
       // between that point and the dimension line base
-      if (this.selectedDimensionLine.getXStart() == this.selectedDimensionLine.getXEnd()) {
+      float alpha1 = (float)(this.selectedDimensionLine.getYEnd() - this.selectedDimensionLine.getYStart()) 
+          / (this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
+      // If line is vertical
+      if (Math.abs(alpha1) > 1E5) {
         xResizePoint = getXLastMousePress();
         if (this.startPoint) {
           yResizePoint = this.selectedDimensionLine.getYStart();
@@ -6266,11 +6269,10 @@ public class PlanController extends FurnitureController implements Controller {
         }
         yResizePoint = getYLastMousePress();
       } else {
-        float alpha1 = (float)(this.selectedDimensionLine.getYEnd() - this.selectedDimensionLine.getYStart()) 
-            / (this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
         float beta1 = getYLastMousePress() - alpha1 * getXLastMousePress();
         float alpha2 = -1 / alpha1;
         float beta2;
+        
         if (this.startPoint) {
           beta2 = this.selectedDimensionLine.getYStart() - alpha2 * this.selectedDimensionLine.getXStart();
         } else {
