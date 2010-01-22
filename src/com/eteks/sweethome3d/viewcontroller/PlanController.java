@@ -2543,8 +2543,8 @@ public class PlanController extends FurnitureController implements Controller {
   
   /**
    * Moves <code>wall</code> start point to (<code>x</code>, <code>y</code>)
-   * if <code>startPoint</code> is true or <code>wall</code> end point 
-   * to (<code>x</code>, <code>y</code>) if <code>startPoint</code> is false.
+   * if <code>editingStartPoint</code> is true or <code>wall</code> end point 
+   * to (<code>x</code>, <code>y</code>) if <code>editingStartPoint</code> is false.
    */
   private void moveWallPoint(Wall wall, float x, float y, boolean startPoint) {
     if (startPoint) {
@@ -2563,8 +2563,8 @@ public class PlanController extends FurnitureController implements Controller {
   
   /**
    * Moves <code>dimensionLine</code> start point to (<code>x</code>, <code>y</code>)
-   * if <code>startPoint</code> is true or <code>dimensionLine</code> end point 
-   * to (<code>x</code>, <code>y</code>) if <code>startPoint</code> is false.
+   * if <code>editingStartPoint</code> is true or <code>dimensionLine</code> end point 
+   * to (<code>x</code>, <code>y</code>) if <code>editingStartPoint</code> is false.
    */
   private void moveDimensionLinePoint(DimensionLine dimensionLine, float x, float y, boolean startPoint) {
     if (startPoint) {
@@ -2574,6 +2574,19 @@ public class PlanController extends FurnitureController implements Controller {
       dimensionLine.setXEnd(x);
       dimensionLine.setYEnd(y);
     }    
+  }
+  
+  /**
+   * Swaps start and end points of the given dimension line.
+   */
+  private void reverseDimensionLine(DimensionLine dimensionLine) {
+    float swappedX = dimensionLine.getXStart();
+    float swappedY = dimensionLine.getYStart();
+    dimensionLine.setXStart(dimensionLine.getXEnd());
+    dimensionLine.setYStart(dimensionLine.getYEnd());
+    dimensionLine.setXEnd(swappedX);
+    dimensionLine.setYEnd(swappedY);
+    dimensionLine.setOffset(-dimensionLine.getOffset());
   }
   
   /**
@@ -3460,7 +3473,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable operation about <code>dimensionLine</code> resizing.
    */
   private void postDimensionLineResize(final DimensionLine dimensionLine, final float oldX, final float oldY, 
-                                       final boolean startPoint) {
+                                       final boolean startPoint, final boolean reversed) {
     final float newX;
     final float newY;
     if (startPoint) {
@@ -3470,12 +3483,17 @@ public class PlanController extends FurnitureController implements Controller {
       newX = dimensionLine.getXEnd();
       newY = dimensionLine.getYEnd();
     }
-    if (newX != oldX || newY != oldY) {
+    if (newX != oldX || newY != oldY || reversed) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          moveDimensionLinePoint(dimensionLine, oldX, oldY, startPoint);
+          if (reversed) {
+            reverseDimensionLine(dimensionLine);
+            moveDimensionLinePoint(dimensionLine, oldX, oldY, !startPoint);
+          } else {
+            moveDimensionLinePoint(dimensionLine, oldX, oldY, startPoint);
+          }
           selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
         }
         
@@ -3483,6 +3501,9 @@ public class PlanController extends FurnitureController implements Controller {
         public void redo() throws CannotRedoException {
           super.redo();
           moveDimensionLinePoint(dimensionLine, newX, newY, startPoint);
+          if (reversed) {
+            reverseDimensionLine(dimensionLine);
+          }
           selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
         }      
   
@@ -5955,6 +5976,7 @@ public class PlanController extends FurnitureController implements Controller {
   private class DimensionLineDrawingState extends ControllerState {
     private float            xStart;
     private float            yStart;
+    private boolean          editingStartPoint;
     private DimensionLine    newDimensionLine;
     private List<Selectable> oldSelection;
     private boolean          oldBasePlanLocked;
@@ -5992,6 +6014,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.oldBasePlanLocked = home.isBasePlanLocked();
       this.xStart = getXLastMousePress();
       this.yStart = getYLastMousePress();
+      this.editingStartPoint = false;
       this.offsetChoice = false;
       this.newDimensionLine = null;
       deselectAll();
@@ -6005,40 +6028,77 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       planView.deleteFeedback();
       if (this.offsetChoice) {
-        float distanceToDimensionLine = (float)Line2D.ptLineDist(this.xStart, this.yStart, 
+        float distanceToDimensionLine = (float)Line2D.ptLineDist(
+            this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
             this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
-        int relativeCCW = Line2D.relativeCCW(this.xStart, this.yStart, 
+        int relativeCCW = Line2D.relativeCCW(
+            this.newDimensionLine.getXStart(), this.newDimensionLine.getYStart(), 
             this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd(), x, y);
         this.newDimensionLine.setOffset(
             -Math.signum(relativeCCW) * distanceToDimensionLine);
       } else {
         // Compute the coordinates where dimension line end point should be moved
-        float xEnd;
-        float yEnd;
+        float newX;
+        float newY;
         if (this.magnetismEnabled) {
-          PointWithAngleMagnetism point = new PointWithAngleMagnetism(this.xStart, this.yStart, x, y,
+          PointWithAngleMagnetism point = new PointWithAngleMagnetism(
+              this.xStart, this.yStart, x, y,
               preferences.getLengthUnit(), planView.getPixelLength());
-          xEnd = point.getX();
-          yEnd = point.getY();
+          newX = point.getX();
+          newY = point.getY();
         } else {
-          xEnd = x;
-          yEnd = y;
+          newX = x;
+          newY = y;
         }
   
         // If current dimension line doesn't exist
         if (this.newDimensionLine == null) {
           // Create a new one
-          this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, xEnd, yEnd, 0);
+          this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, newX, newY, 0);
         } else {
-          // Otherwise update its end point
-          this.newDimensionLine.setXEnd(xEnd); 
-          this.newDimensionLine.setYEnd(yEnd); 
+          // Otherwise update its end points
+          if (this.editingStartPoint) {
+            this.newDimensionLine.setXStart(newX); 
+            this.newDimensionLine.setYStart(newY);
+          } else {
+            this.newDimensionLine.setXEnd(newX); 
+            this.newDimensionLine.setYEnd(newY);
+          }
         }         
+        updateReversedDimensionLine();
+        
         planView.setAlignmentFeedback(DimensionLine.class, 
-            this.newDimensionLine, xEnd, yEnd, false);
+            this.newDimensionLine, newX, newY, false);
       }
       // Ensure point at (x,y) is visible
       planView.makePointVisible(x, y);
+    }
+
+    /**
+     * Swaps start and end point of the created dimension line if needed
+     * to ensure its text is never upside down.  
+     */
+    private void updateReversedDimensionLine() {
+      double angle = getDimensionLineAngle();
+      boolean reverse = angle < -Math.PI / 2 || angle > Math.PI / 2;
+      if (reverse ^ this.editingStartPoint) {
+        reverseDimensionLine(this.newDimensionLine);
+        this.editingStartPoint = !this.editingStartPoint;
+      }
+    }
+
+    private double getDimensionLineAngle() {
+      if (this.newDimensionLine.getLength() == 0) {
+        return 0;
+      } else {
+        if (this.editingStartPoint) {
+          return Math.atan2(this.yStart - this.newDimensionLine.getYStart(), 
+              this.newDimensionLine.getXStart() - this.xStart);
+        } else {
+          return Math.atan2(this.yStart - this.newDimensionLine.getYEnd(), 
+              this.newDimensionLine.getXEnd() - this.xStart);
+        }
+      }
     }
 
     @Override
@@ -6069,15 +6129,6 @@ public class PlanController extends FurnitureController implements Controller {
       setState(getDimensionLineCreationState());
     }
 
-    private Integer getDimensionLineAngle(DimensionLine dimensionLine) {
-      if (dimensionLine.getLength() == 0) {
-        return 0;
-      } else {
-        return (int)Math.round(Math.toDegrees(Math.atan2(
-            dimensionLine.getYStart() - dimensionLine.getYEnd(), dimensionLine.getXEnd() - dimensionLine.getXStart())));
-      }
-    }
-
     @Override
     public void setEditionActivated(boolean editionActivated) {
       PlanView planView = getView();
@@ -6099,7 +6150,7 @@ public class PlanController extends FurnitureController implements Controller {
           planView.setToolTipEditedProperties(new EditableProperty [] {EditableProperty.LENGTH,
                                                                        EditableProperty.ANGLE},
               new Object [] {this.newDimensionLine.getLength(), 
-                             getDimensionLineAngle(this.newDimensionLine)},
+                             (int)Math.round(Math.toDegrees(getDimensionLineAngle()))},
               this.newDimensionLine.getXEnd(), this.newDimensionLine.getYEnd());
         }
       } else { 
@@ -6147,34 +6198,40 @@ public class PlanController extends FurnitureController implements Controller {
           this.newDimensionLine.setOffset(offset);
         }
       } else {
-        float xEnd = this.newDimensionLine.getXEnd();
-        float yEnd = this.newDimensionLine.getYEnd();
+        float newX;
+        float newY;
         // Update end point of the dimension line
         switch (editableProperty) {
           case LENGTH : 
             float length = value != null ? ((Number)value).floatValue() : 0;
             length = Math.max(0.001f, Math.min(length, 100000f));
-            double dimensionLineAngle = Math.PI - Math.atan2(this.yStart - yEnd, this.xStart - xEnd);
-            xEnd = (float)(this.xStart + length * Math.cos(dimensionLineAngle));
-            yEnd = (float)(this.yStart - length * Math.sin(dimensionLineAngle));
+            double dimensionLineAngle = getDimensionLineAngle();
+            newX = (float)(this.xStart + length * Math.cos(dimensionLineAngle));
+            newY = (float)(this.yStart - length * Math.sin(dimensionLineAngle));
             break;      
           case ANGLE : 
             dimensionLineAngle = Math.toRadians(value != null ? ((Number)value).floatValue() : 0);
             float dimensionLineLength = this.newDimensionLine.getLength();              
-            xEnd = (float)(this.xStart + dimensionLineLength * Math.cos(dimensionLineAngle));
-            yEnd = (float)(this.yStart - dimensionLineLength * Math.sin(dimensionLineAngle));
+            newX = (float)(this.xStart + dimensionLineLength * Math.cos(dimensionLineAngle));
+            newY = (float)(this.yStart - dimensionLineLength * Math.sin(dimensionLineAngle));
             break;
           default :
             return;
         }
 
         // Update new dimension line
-        this.newDimensionLine.setXEnd(xEnd);
-        this.newDimensionLine.setYEnd(yEnd);
-        planView.setAlignmentFeedback(DimensionLine.class, this.newDimensionLine, xEnd, yEnd, false);
+        if (this.editingStartPoint) {
+          this.newDimensionLine.setXStart(newX); 
+          this.newDimensionLine.setYStart(newY);
+        } else {
+          this.newDimensionLine.setXEnd(newX); 
+          this.newDimensionLine.setYEnd(newY);
+        }
+        updateReversedDimensionLine();
+        planView.setAlignmentFeedback(DimensionLine.class, this.newDimensionLine, newX, newY, false);
         // Ensure dimension line end points are visible
         planView.makePointVisible(this.xStart, this.yStart);
-        planView.makePointVisible(xEnd, yEnd);
+        planView.makePointVisible(newX, newY);
       }
     }
 
@@ -6213,9 +6270,10 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private class DimensionLineResizeState extends ControllerState {
     private DimensionLine selectedDimensionLine;
-    private boolean       startPoint;
+    private boolean       editingStartPoint;
     private float         oldX;
     private float         oldY;
+    private boolean       reversedDimensionLine;
     private float         deltaXToResizePoint;
     private float         deltaYToResizePoint;
     private float         distanceFromResizePointToDimensionBaseLine;
@@ -6237,15 +6295,16 @@ public class PlanController extends FurnitureController implements Controller {
       planView.setResizeIndicatorVisible(true);
       
       this.selectedDimensionLine = (DimensionLine)home.getSelectedItems().get(0);
-      this.startPoint = this.selectedDimensionLine 
+      this.editingStartPoint = this.selectedDimensionLine 
           == getResizedDimensionLineStartAt(getXLastMousePress(), getYLastMousePress());
-      if (this.startPoint) {
+      if (this.editingStartPoint) {
         this.oldX = this.selectedDimensionLine.getXStart();
         this.oldY = this.selectedDimensionLine.getYStart();
       } else {
         this.oldX = this.selectedDimensionLine.getXEnd();
         this.oldY = this.selectedDimensionLine.getYEnd();
       }
+      this.reversedDimensionLine = false;
 
       float xResizePoint;
       float yResizePoint;
@@ -6256,13 +6315,13 @@ public class PlanController extends FurnitureController implements Controller {
       // If line is vertical
       if (Math.abs(alpha1) > 1E5) {
         xResizePoint = getXLastMousePress();
-        if (this.startPoint) {
+        if (this.editingStartPoint) {
           yResizePoint = this.selectedDimensionLine.getYStart();
         } else {
           yResizePoint = this.selectedDimensionLine.getYEnd();
         }
       } else if (this.selectedDimensionLine.getYStart() == this.selectedDimensionLine.getYEnd()) {
-        if (this.startPoint) {
+        if (this.editingStartPoint) {
           xResizePoint = this.selectedDimensionLine.getXStart();
         } else {
           xResizePoint = this.selectedDimensionLine.getXEnd();
@@ -6273,7 +6332,7 @@ public class PlanController extends FurnitureController implements Controller {
         float alpha2 = -1 / alpha1;
         float beta2;
         
-        if (this.startPoint) {
+        if (this.editingStartPoint) {
           beta2 = this.selectedDimensionLine.getYStart() - alpha2 * this.selectedDimensionLine.getXStart();
         } else {
           beta2 = this.selectedDimensionLine.getYEnd() - alpha2 * this.selectedDimensionLine.getXEnd();
@@ -6284,7 +6343,7 @@ public class PlanController extends FurnitureController implements Controller {
 
       this.deltaXToResizePoint = getXLastMousePress() - xResizePoint;
       this.deltaYToResizePoint = getYLastMousePress() - yResizePoint;
-      if (this.startPoint) {
+      if (this.editingStartPoint) {
         this.distanceFromResizePointToDimensionBaseLine = (float)Point2D.distance(xResizePoint, yResizePoint, 
             this.selectedDimensionLine.getXStart(), this.selectedDimensionLine.getYStart());
         planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
@@ -6303,7 +6362,7 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       float xResizePoint = x - this.deltaXToResizePoint;
       float yResizePoint = y - this.deltaYToResizePoint;
-      if (this.startPoint) {
+      if (this.editingStartPoint) {
         // Compute the new start point of the dimension line knowing that the distance 
         // from resize point to dimension line base is constant, 
         // and that the end point of the dimension line doesn't move
@@ -6335,7 +6394,8 @@ public class PlanController extends FurnitureController implements Controller {
             yNewStartPoint = point.getY();
           } 
 
-          moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.startPoint);        
+          moveDimensionLinePoint(this.selectedDimensionLine, xNewStartPoint, yNewStartPoint, this.editingStartPoint);
+          updateReversedDimensionLine();
           planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
               xNewStartPoint, yNewStartPoint, false);
         } else {
@@ -6373,7 +6433,8 @@ public class PlanController extends FurnitureController implements Controller {
             yNewEndPoint = point.getY();
           } 
 
-          moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.startPoint);
+          moveDimensionLinePoint(this.selectedDimensionLine, xNewEndPoint, yNewEndPoint, this.editingStartPoint);
+          updateReversedDimensionLine();
           planView.setAlignmentFeedback(DimensionLine.class, this.selectedDimensionLine, 
               xNewEndPoint, yNewEndPoint, false);
         } else {
@@ -6385,9 +6446,32 @@ public class PlanController extends FurnitureController implements Controller {
       getView().makePointVisible(x, y);
     }
 
+    /**
+     * Swaps start and end point of the dimension line if needed
+     * to ensure its text is never upside down.  
+     */
+    private void updateReversedDimensionLine() {
+      double angle = getDimensionLineAngle();
+      if (angle < -Math.PI / 2 || angle > Math.PI / 2) {
+        reverseDimensionLine(this.selectedDimensionLine);
+        this.editingStartPoint = !this.editingStartPoint;
+        this.reversedDimensionLine = !this.reversedDimensionLine;
+      }
+    }
+
+    private double getDimensionLineAngle() {
+      if (this.selectedDimensionLine.getLength() == 0) {
+        return 0;
+      } else {
+        return Math.atan2(this.selectedDimensionLine.getYStart() - this.selectedDimensionLine.getYEnd(), 
+            this.selectedDimensionLine.getXEnd() - this.selectedDimensionLine.getXStart());
+      }
+    }
+
     @Override
     public void releaseMouse(float x, float y) {
-      postDimensionLineResize(this.selectedDimensionLine, this.oldX, this.oldY, this.startPoint);
+      postDimensionLineResize(this.selectedDimensionLine, this.oldX, this.oldY, 
+          this.editingStartPoint, this.reversedDimensionLine);
       setState(getSelectionState());
     }
 
@@ -6401,7 +6485,11 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      moveDimensionLinePoint(this.selectedDimensionLine, this.oldX, this.oldY, this.startPoint);
+      if (this.reversedDimensionLine) {
+        reverseDimensionLine(this.selectedDimensionLine);
+        this.editingStartPoint = !this.editingStartPoint;
+      }
+      moveDimensionLinePoint(this.selectedDimensionLine, this.oldX, this.oldY, this.editingStartPoint);
       setState(getSelectionState());
     }
 
@@ -6616,7 +6704,7 @@ public class PlanController extends FurnitureController implements Controller {
         return 0;
       } else {
         return (int)Math.round(Math.toDegrees(Math.atan2(
-            points [pointIndex][1] - points [previousPointIndex][1], 
+            points [previousPointIndex][1] - points [pointIndex][1], 
             points [pointIndex][0] - points [previousPointIndex][0])));
       }
     }
