@@ -281,6 +281,7 @@ public enum LengthUnit {
         final MessageFormat footFormat = new MessageFormat(resource.getString("footFormat"));
         final MessageFormat footInchFormat = new MessageFormat(resource.getString("footInchFormat"));
         final MessageFormat footInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
+        final String        footInchSeparator = resource.getString("footInchSeparator");
         final NumberFormat  footNumberFormat = NumberFormat.getIntegerInstance();
         final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
         final char [] inchFractionCharacters = {'\u215b',   // 1/8
@@ -344,6 +345,12 @@ public enum LengthUnit {
                 value = footToCentimeter(feet.intValue());                
                 numberPosition = new ParsePosition(quoteIndex + 1);
                 skipWhiteSpaces(text, numberPosition);
+                // Test optional foot inch separator
+                if (numberPosition.getIndex() < text.length()
+                    && footInchSeparator.indexOf(text.charAt(numberPosition.getIndex())) >= 0) {
+                  numberPosition.setIndex(numberPosition.getIndex() + 1);
+                  skipWhiteSpaces(text, numberPosition);
+                }
                 if (numberPosition.getIndex() == text.length()) {
                   parsePosition.setIndex(text.length());
                   return value;
