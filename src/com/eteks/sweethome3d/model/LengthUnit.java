@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.text.Format;
+import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.Locale;
@@ -277,8 +278,11 @@ public enum LengthUnit {
         this.name = resource.getString("inchUnit");
         
         // Create format for feet and inches
-        final NumberFormat footFormat = NumberFormat.getIntegerInstance();
-        final NumberFormat inchFormat = NumberFormat.getNumberInstance();
+        final MessageFormat footFormat = new MessageFormat(resource.getString("footFormat"));
+        final MessageFormat footInchFormat = new MessageFormat(resource.getString("footInchFormat"));
+        final MessageFormat footInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
+        final NumberFormat  footNumberFormat = NumberFormat.getIntegerInstance();
+        final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
         final char [] inchFractionCharacters = {'\u215b',   // 1/8
                                                 '\u00bc',   // 1/4  
                                                 '\u215c',   // 3/8
@@ -290,14 +294,12 @@ public enum LengthUnit {
             @Override
             public StringBuffer format(double number, StringBuffer result,
                                        FieldPosition fieldPosition) {
-              float feet = (float)Math.floor(centimeterToFoot((float)number));              
-              float remainingInches = centimeterToInch((float)number - footToCentimeter(feet));
+              double feet = Math.floor(centimeterToFoot((float)number));              
+              float remainingInches = centimeterToInch((float)number - footToCentimeter((float)feet));
               if (remainingInches >= 11.9995f) {
                 feet++;
                 remainingInches -= 12;
               }
-              footFormat.format(feet, result, fieldPosition);
-              result.append('\'');
               fieldPosition.setEndIndex(fieldPosition.getEndIndex() + 1);
               // Format remaining inches only if it's larger that 0.0005
               if (remainingInches >= 0.0005f) {
@@ -307,17 +309,16 @@ public enum LengthUnit {
                 float remainderToClosestEighth = fractionPart % 0.125f;
                 if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
                   int eighth = Math.round(fractionPart * 8); 
-                  String remainingInchesString;
                   if (eighth == 0 || eighth == 8) {
-                    remainingInchesString = Math.round(remainingInches) + "\"";
+                    footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
                   } else {
-                    remainingInchesString = String.valueOf(integerPart) + inchFractionCharacters [eighth - 1] + "\"";
+                    footInchEighthFormat.format(new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
                   }
-                  result.append(remainingInchesString);
-                  fieldPosition.setEndIndex(fieldPosition.getEndIndex() + remainingInchesString.length());
                 } else {                
-                  super.format(remainingInches, result, fieldPosition);
+                  footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
                 }
+              } else {
+                footFormat.format(new Object [] {feet}, result, fieldPosition);
               }
               return result;
             }
@@ -330,7 +331,7 @@ public enum LengthUnit {
               // Parse feet
               int quoteIndex = text.indexOf('\'', parsePosition.getIndex());
               if (quoteIndex != -1) {
-                Number feet = footFormat.parse(text, numberPosition);
+                Number feet = footNumberFormat.parse(text, numberPosition);
                 if (feet == null) {
                   parsePosition.setErrorIndex(numberPosition.getErrorIndex());
                   return null;
@@ -349,7 +350,7 @@ public enum LengthUnit {
                 }
               } 
               // Parse inches
-              Number inches = inchFormat.parse(text, numberPosition);
+              Number inches = inchNumberFormat.parse(text, numberPosition);
               if (inches == null) {
                 parsePosition.setErrorIndex(numberPosition.getErrorIndex());
                 return null;
