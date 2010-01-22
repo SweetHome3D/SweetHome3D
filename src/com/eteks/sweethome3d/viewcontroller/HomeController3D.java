@@ -60,7 +60,7 @@ public class HomeController3D implements Controller {
    * Creates the controller of home 3D view.
    * @param home the home edited by this controller and its view
    */
-  public HomeController3D(Home home, 
+  public HomeController3D(final Home home, 
                           UserPreferences preferences,
                           ViewFactory viewFactory, 
                           ContentManager contentManager, 
@@ -77,6 +77,13 @@ public class HomeController3D implements Controller {
     setCameraState(home.getCamera() == home.getTopCamera() 
         ? this.topCameraState
         : this.observerCameraState);
+    home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {      
+        public void propertyChange(PropertyChangeEvent ev) {
+          setCameraState(home.getCamera() == home.getTopCamera() 
+              ? topCameraState
+              : observerCameraState);
+        }
+      });
   }
 
   /**
@@ -95,7 +102,6 @@ public class HomeController3D implements Controller {
    */
   public void viewFromTop() {
     this.home.setCamera(this.home.getTopCamera());
-    setCameraState(getTopCameraState());              
   }
   
   /**
@@ -103,7 +109,6 @@ public class HomeController3D implements Controller {
    */
   public void viewFromObserver() {
     this.home.setCamera(this.home.getObserverCamera());
-    setCameraState(getObserverCameraState());
   }
   
   /**
