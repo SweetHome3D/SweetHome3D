@@ -282,6 +282,8 @@ public enum LengthUnit {
         final MessageFormat footInchFormat = new MessageFormat(resource.getString("footInchFormat"));
         final MessageFormat footInchEighthFormat = new MessageFormat(resource.getString("footInchEighthFormat"));
         final String        footInchSeparator = resource.getString("footInchSeparator");
+        final boolean       inchDecimalsRoundedToClosestHeighth = 
+            resource.getString("inchDecimalsRoundedToClosestHeighth").toLowerCase().equals("true");        
         final NumberFormat  footNumberFormat = NumberFormat.getIntegerInstance();
         final NumberFormat  inchNumberFormat = NumberFormat.getNumberInstance();
         final char [] inchFractionCharacters = {'\u215b',   // 1/8
@@ -297,7 +299,9 @@ public enum LengthUnit {
                                        FieldPosition fieldPosition) {
               double feet = Math.floor(centimeterToFoot((float)number));              
               float remainingInches = centimeterToInch((float)number - footToCentimeter((float)feet));
-              if (remainingInches >= 11.9995f) {
+              if (remainingInches >= 11.9995f
+                  || (inchDecimalsRoundedToClosestHeighth
+                      && remainingInches >= 11.9375f)) {
                 feet++;
                 remainingInches -= 12;
               }
@@ -307,16 +311,25 @@ public enum LengthUnit {
                 // Try to format decimals with 1/8, 1/4, 1/2 fractions first
                 int integerPart = (int)Math.floor(remainingInches);
                 float fractionPart = remainingInches - integerPart;
-                float remainderToClosestEighth = fractionPart % 0.125f;
-                if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
+                if (inchDecimalsRoundedToClosestHeighth) {
                   int eighth = Math.round(fractionPart * 8); 
                   if (eighth == 0 || eighth == 8) {
-                    footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
-                  } else {
+                    footInchFormat.format(new Object [] {feet, Math.round(remainingInches * 8) / 8f}, result, fieldPosition);
+                  } else { 
                     footInchEighthFormat.format(new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
                   }
-                } else {                
-                  footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
+                } else {
+                  float remainderToClosestEighth = fractionPart % 0.125f;
+                  if (remainderToClosestEighth <= 0.0005f || remainderToClosestEighth >= 0.1245f) {
+                    int eighth = Math.round(fractionPart * 8); 
+                    if (eighth == 0 || eighth == 8) {
+                      footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
+                    } else {
+                      footInchEighthFormat.format(new Object [] {feet, integerPart, inchFractionCharacters [eighth - 1]}, result, fieldPosition);
+                    }
+                  } else {                
+                    footInchFormat.format(new Object [] {feet, remainingInches}, result, fieldPosition);
+                  }
                 }
               } else {
                 footFormat.format(new Object [] {feet}, result, fieldPosition);
