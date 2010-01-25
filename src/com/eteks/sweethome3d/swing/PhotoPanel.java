@@ -689,13 +689,12 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void stopPhotoCreation() {
     if (this.photoCreationExecutor != null) {
-      this.photoCreationExecutor.shutdownNow();
-      this.photoCreationExecutor = null;
-
       if (this.photoRenderer != null) {
         this.photoRenderer.stop();
         this.photoRenderer = null;
       }
+      this.photoCreationExecutor.shutdownNow();
+      this.photoCreationExecutor = null;
     }
   }
 
