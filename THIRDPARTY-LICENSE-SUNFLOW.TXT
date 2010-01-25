@@ -1,4 +1,4 @@
-The following additional provisions apply to sunflow-0.07.3b.jar third party software
+The following additional provisions apply to sunflow-0.07.3c.jar third party software
 included as part of this product.
 
 Copyright (c) 2003-2007 Christopher Kulla
