@@ -722,7 +722,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void close() {
     Window window = SwingUtilities.getWindowAncestor(this);
-    if (window.isShowing()) {
+    if (window.isDisplayable()) {
       window.dispose();
     }    
     currentPhotoPanel = null;
