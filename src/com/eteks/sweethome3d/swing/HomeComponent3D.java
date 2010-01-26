@@ -1113,7 +1113,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     }
     
     for (Light light : lights) {
-      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 10000));
+      light.setInfluencingBounds(new BoundingSphere(new Point3d(), 1E7));
     }
     
     if (listenToHomeUpdates) {
