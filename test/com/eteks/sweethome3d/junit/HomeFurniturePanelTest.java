@@ -19,10 +19,23 @@
  */
 package com.eteks.sweethome3d.junit;
 
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Locale;
 
-import junit.framework.TestCase;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JOptionPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.JSpinner.DefaultEditor;
+
+import junit.extensions.abbot.ComponentTestFixture;
+import abbot.finder.AWTHierarchy;
+import abbot.finder.BasicFinder;
+import abbot.finder.ComponentSearchException;
+import abbot.finder.matchers.ClassMatcher;
+import abbot.tester.JComponentTester;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
 import com.eteks.sweethome3d.model.Home;
@@ -37,8 +50,8 @@ import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
  * Tests {@link com.eteks.sweethome3d.swing.HomeFurniturePanel home piece of furniture panel}.
  * @author Emmanuel Puybaret
  */
-public class HomeFurniturePanelTest extends TestCase {
-  public void testHomePieceOfFurniturePanel() {
+public class HomeFurniturePanelTest extends ComponentTestFixture {
+  public void testHomePieceOfFurniturePanel() throws ComponentSearchException, NoSuchFieldException, IllegalAccessException {
     // 1. Create default preferences for a user that uses centimeter
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
@@ -78,6 +91,49 @@ public class HomeFurniturePanelTest extends TestCase {
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, (int)Math.toDegrees(piece1.getAngle()), 
         piece1.getWidth(), null, null, null, null, null, controller);
+    
+    // 4. Display furniture dialog
+    JComponentTester tester = new JComponentTester();
+    JDialog furnitureDialog = showHomeFurniturePanel(preferences, controller, tester);
+    // Retrieve HomeFurniturePanel components
+    HomeFurniturePanel panel = (HomeFurniturePanel)TestUtilities.findComponent(
+        furnitureDialog, HomeFurniturePanel.class);
+    JTextField nameTextField = (JTextField)TestUtilities.getField(panel, "nameTextField");
+    JSpinner xSpinner = (JSpinner)TestUtilities.getField(panel, "xSpinner");
+    JSpinner ySpinner = (JSpinner)TestUtilities.getField(panel, "ySpinner");
+    assertEquals("Wrong name", piece1.getName(), nameTextField.getText());
+    assertEquals("Wrong X", new Float(piece1.getX()), xSpinner.getValue());
+    assertNull("Wrong Y", ySpinner.getValue());
+    // Edit values
+    tester.waitForIdle();
+    assertTrue("Name text field doesn't have focus", nameTextField.hasFocus());
+    // Check text field is selected when it gains focus
+    assertEquals("Name text isn't selected", nameTextField.getText(), nameTextField.getSelectedText());
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.waitForIdle();
+    assertTrue("X field doesn't have focus", ((DefaultEditor)xSpinner.getEditor()).getTextField().hasFocus());
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.waitForIdle();
+    JFormattedTextField ySpinnerTextField = ((DefaultEditor)ySpinner.getEditor()).getTextField();
+    assertTrue("Y field doesn't have focus", ySpinnerTextField.hasFocus());
+    // Test if numbers greater than 10000 are correctly handled
+    tester.actionKeyString("10020");
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.waitForIdle();
+    assertFalse("Y field still has focus", ySpinnerTextField.hasFocus());
+    assertEquals("Wrong Y", new Float(10020), ySpinner.getValue());
+    tester.actionKeyPress(KeyEvent.VK_SHIFT);
+    tester.actionKeyStroke(KeyEvent.VK_TAB);
+    tester.actionKeyRelease(KeyEvent.VK_SHIFT);
+    tester.waitForIdle();
+    assertTrue("Y field doesn't have focus", ySpinnerTextField.hasFocus());
+    tester.actionKeyString("12345");
+    // Test auto commit fields
+    doClickOnOkInDialog(furnitureDialog, tester);
+    assertEquals("Wrong Y", new Float(12345), piece1.getY());
+    assertEquals("Wrong Y", new Float(12345), piece2.getY());
   }
   
   /**
@@ -99,6 +155,43 @@ public class HomeFurniturePanelTest extends TestCase {
     assertEquals("Wrong color", color, controller.getColor());
     assertEquals("Wrong visibility", visible, controller.getVisible());
     assertEquals("Wrong model mirrored", modelMirrored, controller.getModelMirrored());
+  }
+
+  /**
+   * Returns the dialog that displays furniture attributes. 
+   */
+  private JDialog showHomeFurniturePanel(UserPreferences preferences,
+                                         final HomeFurnitureController controller,
+                                         JComponentTester tester) throws ComponentSearchException {
+    tester.invokeLater(new Runnable() { 
+        public void run() {
+          // Display dialog box later in Event Dispatch Thread to avoid blocking test thread
+          controller.displayView(null);
+        }
+      });
+    // Wait for 3D view to be shown
+    tester.waitForFrameShowing(new AWTHierarchy(), preferences.getLocalizedString(
+        HomeFurniturePanel.class, "homeFurniture.title"));
+    // Check dialog box is displayed
+    JDialog homeFurnitureDialog = (JDialog)new BasicFinder().find(null, 
+        new ClassMatcher (JDialog.class, true));
+    assertTrue("Furniture dialog not showing", homeFurnitureDialog.isShowing());
+    return homeFurnitureDialog;
+  }
+  
+  /**
+   * Cliks on OK in dialog to close it.
+   */
+  private void doClickOnOkInDialog(JDialog dialog, JComponentTester tester) throws ComponentSearchException {
+    final JOptionPane attributesOptionPane = (JOptionPane)TestUtilities.findComponent(
+        dialog, JOptionPane.class);
+    tester.invokeAndWait(new Runnable() {
+        public void run() {
+          // Select Ok option to hide dialog box in Event Dispatch Thread
+          attributesOptionPane.setValue(JOptionPane.OK_OPTION); 
+        }
+      });
+    assertFalse("Dialog still showing", dialog.isShowing());
   }
 
   public static void main(String [] args) {
