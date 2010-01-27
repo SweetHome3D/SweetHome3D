@@ -49,6 +49,17 @@ public final class TestUtilities {
   }
 
   /**
+   * Sets the value of the <code>fieldName</code> 
+   * in a given <code>instance</code> by reflection.
+   */
+  public static void setField(Object instance, String fieldName, Object value)
+      throws NoSuchFieldException, IllegalAccessException {
+    Field field = instance.getClass().getDeclaredField(fieldName);
+    field.setAccessible(true);
+    field.set(instance, value);
+  }
+
+  /**
    * Returns the component of a given class in <code>container</code> hierarchy.
    */
   public static Component findComponent(Container container, 
