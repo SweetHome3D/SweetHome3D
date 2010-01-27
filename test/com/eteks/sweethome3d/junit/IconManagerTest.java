@@ -25,13 +25,9 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -55,10 +51,8 @@ public class IconManagerTest extends TestCase {
       throws NoSuchFieldException, IllegalAccessException, InterruptedException, BrokenBarrierException, ClassNotFoundException {
     // Stop iconsLoader of iconManager 
     IconManager iconManager = IconManager.getInstance();
-    ThreadPoolExecutor iconsLoader = 
-        (ThreadPoolExecutor)TestUtilities.getField(iconManager, "iconsLoader");
-    iconsLoader.shutdownNow();
-    // Replace it by an executor that controls the start of a task with a barrier
+    iconManager.clear();
+    // Replace icon manager by an executor that controls the start of a task with a barrier
     final CyclicBarrier iconLoadingStartBarrier = new CyclicBarrier(2);
     final ThreadPoolExecutor replacingIconsLoader = 
       new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>()) {
@@ -69,14 +63,7 @@ public class IconManagerTest extends TestCase {
         }
     };
     // Redirect rejected tasks on iconsLoader to the replacing executor
-    iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
-      public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
-        replacingIconsLoader.execute(r);
-      }
-    });
-    
-    // Empty existing icons to prove IconManager work
-    ((Map)TestUtilities.getField(iconManager, "icons")).clear();
+    TestUtilities.setField(iconManager, "iconsLoader", replacingIconsLoader);
     
     // Test icon loading on a good image
     testIconLoading(getClass().getResource("resources/test.png"), true, iconLoadingStartBarrier);
@@ -98,12 +85,7 @@ public class IconManagerTest extends TestCase {
     assertNotSame("Error icon loaded with IconProxy", errorIcon.getClass(), iconProxyClass);
 
     // For other tests, replace again iconLoader by an executor that let icon loading complete normally
-    final Executor nextTestsIconsLoader = Executors.newFixedThreadPool(5); 
-    iconsLoader.setRejectedExecutionHandler(new RejectedExecutionHandler () {
-      public void rejectedExecution(final Runnable r, ThreadPoolExecutor executor) {
-        nextTestsIconsLoader.execute(r);
-      }
-    });
+    iconManager.clear();
   }
 
   /**
