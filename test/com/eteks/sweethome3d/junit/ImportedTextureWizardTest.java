@@ -188,7 +188,7 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     ImportedTextureWizardStepsPanel panel = (ImportedTextureWizardStepsPanel)TestUtilities.findComponent(
         textureWizardDialog, ImportedTextureWizardStepsPanel.class);
     JButton imageChoiceOrChangeButton = (JButton)TestUtilities.getField(panel, "imageChoiceOrChangeButton");
-    JTextField nameTextField = (JTextField)TestUtilities.getField(panel, "nameTextField");
+    final JTextField nameTextField = (JTextField)TestUtilities.getField(panel, "nameTextField");
     JComboBox categoryComboBox = (JComboBox)TestUtilities.getField(panel, "categoryComboBox");
     JSpinner widthSpinner = (JSpinner)TestUtilities.getField(panel, "widthSpinner");
     JSpinner heightSpinner = (JSpinner)TestUtilities.getField(panel, "heightSpinner");
@@ -228,9 +228,12 @@ public class ImportedTextureWizardTest extends ComponentTestFixture {
     assertEquals("Wrong default category", userCategoryName, 
         ((TexturesCategory)categoryComboBox.getSelectedItem()).getName());
     // Rename texture  
-    String textureTestName = "#@" + System.currentTimeMillis() + "@#";
-    nameTextField.setText(textureTestName);    
-    tester.waitForIdle();    
+    final String textureTestName = "#@" + System.currentTimeMillis() + "@#";
+    tester.invokeAndWait(new Runnable() {
+      public void run() {
+        nameTextField.setText(textureTestName);    
+      }
+    });
     // Check next button is enabled again
     assertTrue("Next button isn't enabled", nextFinishOptionButton.isEnabled());
 
