@@ -23,7 +23,6 @@ import java.text.ParseException;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.text.DefaultFormatter;
 import javax.swing.text.NumberFormatter;
 
 import com.eteks.sweethome3d.model.LengthUnit;
@@ -52,9 +51,52 @@ public class NullableSpinner extends AutoCommitSpinner {
         @Override
         public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField tf) {
           return new NumberFormatter () {
-              {
-                if (defaultFormatter instanceof DefaultFormatter) {
-                  setCommitsOnValidEdit(((DefaultFormatter)defaultFormatter).getCommitsOnValidEdit());
+              @Override
+              public boolean getCommitsOnValidEdit() {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  return ((NumberFormatter)defaultFormatter).getCommitsOnValidEdit();
+                } else {
+                  return super.getCommitsOnValidEdit();
+                }
+              }
+              
+              @SuppressWarnings("unchecked")
+              @Override
+              public Comparable getMaximum() {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  return ((NumberFormatter)defaultFormatter).getMaximum();
+                } else {
+                  return super.getMaximum();
+                }
+              }
+              
+              @SuppressWarnings("unchecked")
+              @Override
+              public Comparable getMinimum() {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  return ((NumberFormatter)defaultFormatter).getMinimum();
+                } else {
+                  return super.getMinimum();
+                }
+              }
+              
+              @SuppressWarnings("unchecked")
+              @Override
+              public void setMaximum(Comparable maximum) {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  ((NumberFormatter)defaultFormatter).setMaximum(maximum);
+                } else {
+                  super.setMaximum(maximum);
+                }
+              }
+              
+              @SuppressWarnings("unchecked")
+              @Override
+              public void setMinimum(Comparable minimum) {
+                if (defaultFormatter instanceof NumberFormatter) {
+                  ((NumberFormatter)defaultFormatter).setMinimum(minimum);
+                } else {
+                  super.setMinimum(minimum);
                 }
               }
               

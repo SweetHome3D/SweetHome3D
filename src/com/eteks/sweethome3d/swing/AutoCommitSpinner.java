@@ -21,14 +21,11 @@ package com.eteks.sweethome3d.swing;
 
 import java.text.DecimalFormat;
 import java.text.Format;
-import java.text.ParseException;
-import java.text.Format.Field;
 
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
-import javax.swing.JFormattedTextField.AbstractFormatter;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
@@ -52,7 +49,7 @@ public class AutoCommitSpinner extends JSpinner {
       // Commit text during edition
       if (textField.getFormatterFactory() instanceof DefaultFormatterFactory) {
         DefaultFormatterFactory formatterFactory = (DefaultFormatterFactory)textField.getFormatterFactory();
-        AbstractFormatter defaultFormatter = formatterFactory.getDefaultFormatter();
+        JFormattedTextField.AbstractFormatter defaultFormatter = formatterFactory.getDefaultFormatter();
         if (defaultFormatter instanceof DefaultFormatter) {
           ((DefaultFormatter)defaultFormatter).setCommitsOnValidEdit(true);
         }
@@ -75,18 +72,8 @@ public class AutoCommitSpinner extends JSpinner {
               }
             
               @Override
-              public boolean getAllowsInvalid() {
-                return numberFormatter.getAllowsInvalid();
-              }
-              
-              @Override
               public boolean getCommitsOnValidEdit() {
-                return numberFormatter.getCommitsOnValidEdit();
-              }
-              
-              @Override
-              public Field [] getFields(int offset) {
-                return numberFormatter.getFields(offset);
+                return true;
               }
               
               @SuppressWarnings("unchecked")
@@ -101,30 +88,10 @@ public class AutoCommitSpinner extends JSpinner {
                 return numberFormatter.getMinimum();
               }
               
-              @Override
-              public boolean getOverwriteMode() {
-                return numberFormatter.getOverwriteMode();
-              }
-              
-              @Override
-              public Class<?> getValueClass() {
-                return numberFormatter.getValueClass();
-              }
-              
-              @Override
-              public void install(JFormattedTextField formattedTextField) {
-                numberFormatter.install(formattedTextField);
-              }
-              
-              @Override
-              public void setAllowsInvalid(boolean allowsInvalid) {
-                numberFormatter.setAllowsInvalid(allowsInvalid);
-              }
-              
               @SuppressWarnings("unchecked")
               @Override
-              public void setMaximum(Comparable max) {
-                numberFormatter.setMaximum(max);
+              public void setMaximum(Comparable maximum) {
+                numberFormatter.setMaximum(maximum);
               }
               
               @SuppressWarnings("unchecked")
@@ -134,28 +101,8 @@ public class AutoCommitSpinner extends JSpinner {
               }
               
               @Override
-              public void setOverwriteMode(boolean overwriteMode) {
-                numberFormatter.setOverwriteMode(overwriteMode);
-              }
-              
-              @Override
-              public void setCommitsOnValidEdit(boolean commit) {
-                super.setCommitsOnValidEdit(commit);
-              }
-              
-              @Override
-              public void setValueClass(Class<?> valueClass) {
-                numberFormatter.setValueClass(valueClass);
-              }
-              
-              @Override
-              public void uninstall() {
-                numberFormatter.uninstall();
-              }
-              
-              @Override
-              public Object stringToValue(String text) throws ParseException {
-                return super.stringToValue(text);
+              public Class<?> getValueClass() {
+                return numberFormatter.getValueClass();
               }
             };
           textField.setFormatterFactory(new DefaultFormatterFactory(editFormatter));
