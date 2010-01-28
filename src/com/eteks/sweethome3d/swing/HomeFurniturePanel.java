@@ -255,7 +255,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         HomeFurniturePanel.class, "widthLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
         new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 100000f);
-    this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
+    this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     widthSpinnerModel.setNullable(controller.getWidth() == null);
     widthSpinnerModel.setLength(controller.getWidth());
     final PropertyChangeListener widthChangeListener = new PropertyChangeListener() {
