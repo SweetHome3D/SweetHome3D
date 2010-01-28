@@ -102,6 +102,8 @@ public class FurnitureCatalogTree extends JTree implements View {
       addMouseListener(controller);
     }
     ToolTipManager.sharedInstance().registerComponent(this);
+    // Remove Select all action
+    getActionMap().getParent().remove("selectAll");
   }
 
   /**
