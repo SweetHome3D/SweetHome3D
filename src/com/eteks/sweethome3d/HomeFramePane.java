@@ -121,7 +121,7 @@ public class HomeFramePane extends JRootPane implements View {
     
           @Override
           public Component getComponentBefore(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
+            return focusableComponents.get((focusableComponents.indexOf(component) + focusableComponents.size() - 1) % focusableComponents.size());
           }
     
           @Override
