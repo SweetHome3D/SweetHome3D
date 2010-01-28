@@ -129,7 +129,7 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
 public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable {
   private enum ActionType {MOVE_CAMERA_FORWARD, MOVE_CAMERA_FAST_FORWARD, MOVE_CAMERA_BACKWARD, MOVE_CAMERA_FAST_BACKWARD,  
       ROTATE_CAMERA_YAW_LEFT, ROTATE_CAMERA_YAW_FAST_LEFT, ROTATE_CAMERA_YAW_RIGHT, ROTATE_CAMERA_YAW_FAST_RIGHT, 
-      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN}
+      ROTATE_CAMERA_PITCH_UP, ROTATE_CAMERA_PITCH_DOWN, ELEVATE_CAMERA_UP, ELEVATE_CAMERA_DOWN}
   
   private final Home                               home;
   private final boolean                            displayShadowOnFloor;
@@ -879,6 +879,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     inputMap.put(KeyStroke.getKeyStroke("D"), ActionType.ROTATE_CAMERA_YAW_FAST_RIGHT);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_UP"), ActionType.ROTATE_CAMERA_PITCH_UP);
     inputMap.put(KeyStroke.getKeyStroke("PAGE_DOWN"), ActionType.ROTATE_CAMERA_PITCH_DOWN);
+    inputMap.put(KeyStroke.getKeyStroke("HOME"), ActionType.ELEVATE_CAMERA_UP);
+    inputMap.put(KeyStroke.getKeyStroke("END"), ActionType.ELEVATE_CAMERA_DOWN);
   }
  
   /**
@@ -895,6 +897,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
       public void actionPerformed(ActionEvent e) {
         controller.moveCamera(this.delta);
+      }
+    }
+    // Elevate camera action mapped to arrow keys 
+    class ElevateCameraAction extends AbstractAction {
+      private final float delta;
+      
+      public ElevateCameraAction(float delta) {
+        this.delta = delta;
+      }
+
+      public void actionPerformed(ActionEvent e) {
+        controller.elevateCamera(this.delta);
       }
     }
     // Rotate camera yaw action mapped to arrow keys 
@@ -926,6 +940,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     actionMap.put(ActionType.MOVE_CAMERA_FAST_FORWARD, new MoveCameraAction(10));
     actionMap.put(ActionType.MOVE_CAMERA_BACKWARD, new MoveCameraAction(-1));
     actionMap.put(ActionType.MOVE_CAMERA_FAST_BACKWARD, new MoveCameraAction(-10));
+    actionMap.put(ActionType.ELEVATE_CAMERA_DOWN, new ElevateCameraAction(-2.5f));
+    actionMap.put(ActionType.ELEVATE_CAMERA_UP, new ElevateCameraAction(2.5f));
     actionMap.put(ActionType.ROTATE_CAMERA_YAW_LEFT, new RotateCameraYawAction(-(float)Math.PI / 180));
     actionMap.put(ActionType.ROTATE_CAMERA_YAW_FAST_LEFT, new RotateCameraYawAction(-(float)Math.PI / 18));
     actionMap.put(ActionType.ROTATE_CAMERA_YAW_RIGHT, new RotateCameraYawAction((float)Math.PI / 180));

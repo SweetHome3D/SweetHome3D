@@ -138,6 +138,13 @@ public class HomeController3D implements Controller {
   }
 
   /**
+   * Elevates home camera of <code>delta</code>.
+   */
+  public void elevateCamera(float delta) {
+    this.cameraState.elevateCamera(delta);
+  }
+
+  /**
    * Rotates home camera yaw angle of <code>delta</code> radians.
    */
   public void rotateCameraYaw(float delta) {
@@ -178,6 +185,9 @@ public class HomeController3D implements Controller {
     public void moveCamera(float delta) {
     }
 
+    public void elevateCamera(float delta) {     
+    }
+    
     public void rotateCameraYaw(float delta) {
     }
 
@@ -398,6 +408,16 @@ public class HomeController3D implements Controller {
     public void moveCamera(float delta) {
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
+      // Select observer camera for user feedback
+      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    }
+    
+    @Override
+    public void elevateCamera(float delta) {
+      float newElevation = this.observerCamera.getZ() + delta; 
+      newElevation = Math.max(newElevation, 10 * 14 / 15);
+      newElevation = Math.min(newElevation, 1000 * 14 / 15);
+      this.observerCamera.setZ(newElevation);
       // Select observer camera for user feedback
       home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }

@@ -131,6 +131,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       pieceOfFurnitureNameOffsetState;
   private final ControllerState       cameraYawRotationState;
   private final ControllerState       cameraPitchRotationState;
+  private final ControllerState       cameraElevationState;
   private final ControllerState       dimensionLineCreationState;
   private final ControllerState       dimensionLineDrawingState;
   private final ControllerState       dimensionLineResizeState;
@@ -191,6 +192,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.pieceOfFurnitureNameOffsetState = new PieceOfFurnitureNameOffsetState();
     this.cameraYawRotationState = new CameraYawRotationState();
     this.cameraPitchRotationState = new CameraPitchRotationState();
+    this.cameraElevationState = new CameraElevationState();
     this.dimensionLineCreationState = new DimensionLineCreationState();
     this.dimensionLineDrawingState = new DimensionLineDrawingState();
     this.dimensionLineResizeState = new DimensionLineResizeState();
@@ -465,6 +467,13 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getCameraPitchRotationState() {
     return this.cameraPitchRotationState;
+  }
+
+  /**
+   * Returns the camera elevation state.
+   */
+  protected ControllerState getCameraElevationState() {
+    return this.cameraElevationState;
   }
 
   /**
@@ -2322,6 +2331,30 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
+   * that can be used to change the camera elevation.
+   */
+  private Camera getElevatedCameraAt(float x, float y) {
+    List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Camera
+        && isItemResizable(selectedItems.get(0))) {
+      ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
+      float margin = PIXEL_MARGIN / getScale();
+      float [][] cameraPoints = camera.getPoints();
+      // Check if (x,y) matches the point between the first and the second point 
+      // of the rectangle surrounding camera
+      float xMiddleFirstAndSecondPoint = (cameraPoints [0][0] + cameraPoints [1][0]) / 2; 
+      float yMiddleFirstAndSecondPoint = (cameraPoints [0][1] + cameraPoints [1][1]) / 2;      
+      if (Math.abs(x - xMiddleFirstAndSecondPoint) <= margin 
+          && Math.abs(y - yMiddleFirstAndSecondPoint) <= margin) {
+        return camera;
+      }
+    } 
+    return null;
+  }
+
+  /**
    * Deletes <code>items</code> in plan and record it as an undoable operation.
    */
   public void deleteItems(List<? extends Selectable> items) {
@@ -4058,6 +4091,8 @@ public class PlanController extends FurnitureController implements Controller {
       if (getYawRotatedCameraAt(x, y) != null
           || getPitchRotatedCameraAt(x, y) != null) {
         getView().setCursor(PlanView.CursorType.ROTATION);
+      } else if (getElevatedCameraAt(x, y) != null) {
+        getView().setCursor(PlanView.CursorType.ELEVATION);
       } else if (getRoomNameAt(x, y) != null
           || getRoomAreaAt(x, y) != null
           || getResizedDimensionLineStartAt(x, y) != null
@@ -4089,6 +4124,8 @@ public class PlanController extends FurnitureController implements Controller {
           setState(getCameraYawRotationState());
         } else if (getPitchRotatedCameraAt(x, y) != null) {
           setState(getCameraPitchRotationState());
+        } else if (getElevatedCameraAt(x, y) != null) {
+          setState(getCameraElevationState());
         } else if (getRoomNameAt(x, y) != null) {
           setState(getRoomNameOffsetState());
         } else if (getRoomAreaAt(x, y) != null) {
@@ -5293,7 +5330,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.rotationToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "rotationToolTipFeedback");
+          PlanController.class, "cameraElevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
@@ -5393,7 +5430,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.elevationToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "elevationToolTipFeedback");
+          PlanController.class, "cameraElevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
       this.deltaYToElevationPoint = getYLastMousePress() - elevationPoint [1];
@@ -5923,6 +5960,83 @@ public class PlanController extends FurnitureController implements Controller {
     private String getToolTipFeedbackText(float angle) {
       return String.format(this.rotationToolTipFeedback, 
           Math.round(Math.toDegrees(angle)) % 360);
+    }
+  }
+
+  /**
+   * Camera elevation state. This states manages the change of the observer camera elevation.
+   */
+  private class CameraElevationState extends ControllerState {
+    private ObserverCamera selectedCamera;
+    private float          oldElevation;
+    private String         cameraElevationToolTipFeedback;
+    private String         observerHeightToolTipFeedback;
+
+    @Override
+    public Mode getMode() {
+      return Mode.SELECTION;
+    }
+    
+    @Override
+    public boolean isModificationState() {
+      return true;
+    }
+    
+    @Override
+    public void enter() {
+      this.cameraElevationToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "cameraElevationToolTipFeedback");
+      this.observerHeightToolTipFeedback = preferences.getLocalizedString(
+          PlanController.class, "observerHeightToolTipFeedback");
+      this.selectedCamera = (ObserverCamera)home.getSelectedItems().get(0);
+      this.oldElevation = this.selectedCamera.getZ();
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(true);
+      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldElevation), 
+          getXLastMousePress(), getYLastMousePress());
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {      
+      // Compute the new angle of the camera
+      float newElevation = (float)(this.oldElevation - (y - getYLastMousePress()));
+      // Check new angle is between -60° and 90°  
+      newElevation = Math.max(newElevation, 10 * 14 / 15);
+      newElevation = Math.min(newElevation, 1000 * 14 / 15);
+      
+      // Update camera elevation
+      this.selectedCamera.setZ(newElevation);
+      
+      getView().setToolTipFeedback(getToolTipFeedbackText(newElevation), x, y);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      setState(getSelectionState());
+    }
+
+    @Override
+    public void escape() {
+      this.selectedCamera.setZ(this.oldElevation);
+      setState(getSelectionState());
+    }
+    
+    @Override
+    public void exit() {
+      PlanView planView = getView();
+      planView.setResizeIndicatorVisible(false);
+      planView.deleteFeedback();
+      this.selectedCamera = null;
+    }  
+
+    private String getToolTipFeedbackText(float elevation) {
+      String toolTipFeedbackText = "<html>" + String.format(this.cameraElevationToolTipFeedback,  
+          preferences.getLengthUnit().getFormatWithUnit().format(elevation));
+      if (elevation >= 70 && elevation <= 218.75f) {
+        toolTipFeedbackText += "<br>" + String.format(this.observerHeightToolTipFeedback,
+            preferences.getLengthUnit().getFormatWithUnit().format(elevation * 15 / 14));
+      }
+      return toolTipFeedbackText;
     }
   }
 

@@ -243,6 +243,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<Content, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
 
+  private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
   private static final GeneralPath FURNITURE_RESIZE_INDICATOR;
   private static final GeneralPath FURNITURE_ELEVATION_INDICATOR;
@@ -254,6 +255,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final GeneralPath WALL_AND_LINE_RESIZE_INDICATOR;
   private static final Shape       CAMERA_YAW_ROTATION_INDICATOR;
   private static final GeneralPath CAMERA_PITCH_ROTATION_INDICATOR;
+  private static final GeneralPath CAMERA_ELEVATION_INDICATOR;
   private static final Shape       CAMERA_BODY;
   private static final Shape       CAMERA_HEAD;  
   private static final GeneralPath DIMENSION_LINE_END;  
@@ -266,10 +268,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static final float       BORDER_STROKE_WIDTH = 1f;
 
   static {
+    POINT_INDICATOR = new Ellipse2D.Float(-1.5f, -1.5f, 3, 3);
+    
     // Create a path that draws an round arrow used as a rotation indicator 
     // at top left point of a piece of furniture
     FURNITURE_ROTATION_INDICATOR = new GeneralPath();
-    FURNITURE_ROTATION_INDICATOR.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
+    FURNITURE_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
     FURNITURE_ROTATION_INDICATOR.append(new Arc2D.Float(-8, -8, 16, 16, 45, 180, Arc2D.OPEN), false);
     FURNITURE_ROTATION_INDICATOR.moveTo(2.66f, -5.66f);
     FURNITURE_ROTATION_INDICATOR.lineTo(5.66f, -5.66f);
@@ -348,7 +352,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     // Create a path used as pitch rotation indicator for the camera
     CAMERA_PITCH_ROTATION_INDICATOR = new GeneralPath();
-    CAMERA_PITCH_ROTATION_INDICATOR.append(new Ellipse2D.Float(-1.5f, -1.5f, 3, 3), false);
+    CAMERA_PITCH_ROTATION_INDICATOR.append(POINT_INDICATOR, false);
     CAMERA_PITCH_ROTATION_INDICATOR.moveTo(4.5f, 0);
     CAMERA_PITCH_ROTATION_INDICATOR.lineTo(5.2f, 0);
     CAMERA_PITCH_ROTATION_INDICATOR.moveTo(9f, 0);
@@ -358,6 +362,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.3f, 2f);
     CAMERA_PITCH_ROTATION_INDICATOR.lineTo(12.8f, 5.8f);
     
+    // Create a path that draws a line with one arrow as an elevation indicator
+    // at the back of the camera
+    CAMERA_ELEVATION_INDICATOR = new GeneralPath();
+    CAMERA_ELEVATION_INDICATOR.moveTo(0, -4); // Vertical line
+    CAMERA_ELEVATION_INDICATOR.lineTo(0, 4);
+    CAMERA_ELEVATION_INDICATOR.moveTo(-2.5f, 4);    // Bottom line
+    CAMERA_ELEVATION_INDICATOR.lineTo(2.5f, 4);
+    CAMERA_ELEVATION_INDICATOR.moveTo(-1.2f, 0.5f); // Bottom arrow
+    CAMERA_ELEVATION_INDICATOR.lineTo(0, 3.5f);
+    CAMERA_ELEVATION_INDICATOR.lineTo(1.2f, 0.5f);
+
     // Create a path used to draw the camera 
     // This path looks like a human being seen from top that fits in one cm wide square 
     GeneralPath cameraBodyAreaPath = new GeneralPath();
@@ -3310,6 +3325,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.scale(scaleInverse, scaleInverse);
       g2D.rotate(camera.getYaw());
       g2D.draw(CAMERA_PITCH_ROTATION_INDICATOR);
+      g2D.setTransform(previousTransform);
+
+      // Draw elevation indicator at middle of first and second point of camera 
+      g2D.translate((cameraPoints [0][0] + cameraPoints [1][0]) / 2, 
+          (cameraPoints [0][1] + cameraPoints [1][1]) / 2);
+      g2D.scale(scaleInverse, scaleInverse);
+      g2D.draw(POINT_INDICATOR);
+      g2D.translate(Math.sin(camera.getYaw()) * 8, -Math.cos(camera.getYaw()) * 8);
+      g2D.draw(CAMERA_ELEVATION_INDICATOR);
       g2D.setTransform(previousTransform);
     }
   }
