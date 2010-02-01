@@ -220,8 +220,13 @@ public class NullableSpinner extends AutoCommitSpinner {
   public static class NullableSpinnerLengthModel extends NullableSpinnerNumberModel {
     private final UserPreferences preferences;
 
+    /**
+     * Creates a model managing lengths between the given <code>minimum</code> and <code>maximum</code> values in centimeter. 
+     */
     public NullableSpinnerLengthModel(UserPreferences preferences, float minimum, float maximum) {
-      super(minimum, minimum, maximum, 
+      super(minimum, 
+            preferences.getLengthUnit().centimeterToUnit(minimum), 
+            preferences.getLengthUnit().centimeterToUnit(maximum), 
             preferences.getLengthUnit() == LengthUnit.INCH
               ? 0.125f : preferences.getLengthUnit().centimeterToUnit(0.5f));
       this.preferences = preferences;
