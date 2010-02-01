@@ -532,9 +532,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       fieldOfView = (float)(Math.PI * 63 / 180);
     }
     view.setFieldOfView(fieldOfView);
-    // Use a different front clip distance for observer camera 
-    // to obtain better results
-    double frontClipDistance = observerCamera ? 2 : 5;
+    double frontClipDistance;
+    // Use a variable front clip distance for camera 
+    // depending on the elevation (at an elevation higher than 3 m
+    // back clip distance must be greater than 6000 or a black zone appears 
+    // at the horizon in off screen images)
+    if (observerCamera) {
+      frontClipDistance = 2;
+      if (camera.getZ() > 300) {
+        frontClipDistance += (camera.getZ() - 300) / 150;
+      }
+    } else {
+      frontClipDistance = 5;
+      if (camera.getZ() > 750) {
+        frontClipDistance += (camera.getZ() - 750) / 150;
+      }
+    }
     // Update front and back clip distance to ensure their ratio is less than 3000
     view.setFrontClipDistance(frontClipDistance);
     view.setBackClipDistance(frontClipDistance * 3000);

@@ -6002,7 +6002,7 @@ public class PlanController extends FurnitureController implements Controller {
       float newElevation = (float)(this.oldElevation - (y - getYLastMousePress()));
       // Check new angle is between -60° and 90°  
       newElevation = Math.max(newElevation, 10 * 14 / 15);
-      newElevation = Math.min(newElevation, 1000 * 14 / 15);
+      newElevation = Math.min(newElevation, 2500);
       
       // Update camera elevation
       this.selectedCamera.setZ(newElevation);
