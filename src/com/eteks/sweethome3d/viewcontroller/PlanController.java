@@ -5330,7 +5330,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.rotationToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "cameraElevationToolTipFeedback");
+          PlanController.class, "rotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.angleMousePress = (float)Math.atan2(this.selectedPiece.getY() - getYLastMousePress(), 
           getXLastMousePress() - this.selectedPiece.getX()); 
@@ -5430,7 +5430,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       this.elevationToolTipFeedback = preferences.getLocalizedString(
-          PlanController.class, "cameraElevationToolTipFeedback");
+          PlanController.class, "elevationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       float [] elevationPoint = this.selectedPiece.getPoints() [1];
       this.deltaYToElevationPoint = getYLastMousePress() - elevationPoint [1];
