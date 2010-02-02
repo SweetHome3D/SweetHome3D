@@ -1761,7 +1761,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Returns the plan view and 3D view pane. 
    */
-  private JComponent createPlanView3DPane(Home home, UserPreferences preferences, 
+  private JComponent createPlanView3DPane(final Home home, UserPreferences preferences, 
                                           final HomeController controller) {
     JComponent planView = (JComponent)controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(planView);
@@ -1875,15 +1875,17 @@ public class HomePane extends JRootPane implements HomeView {
     Boolean detachedView3D = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
     if (detachedView3D != null && detachedView3D.booleanValue()) {
       // Check 3D view can be viewed in one of the available screens      
-      Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
-      Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
+      final Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+      final Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
       if (dialogX != null) {
         for (GraphicsDevice screenDevice : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
           for (GraphicsConfiguration screenConfiguration : screenDevice.getConfigurations()) {
             if (screenConfiguration.getBounds().contains(dialogX, dialogY)) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    controller.detachView((View)view3D);
+                    detachView((View)view3D, dialogX, dialogY,
+                        (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY),
+                        (Integer)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
                   }
                 });
               return planView3DPane;
@@ -2021,20 +2023,10 @@ public class HomePane extends JRootPane implements HomeView {
       component = (JComponent)parent.getParent();
       parent = component.getParent();
     }
-    Point componentLocation = new Point();
-    Dimension componentSize = component.getSize();
-    SwingUtilities.convertPointToScreen(componentLocation, component);
-    
-    // Replace component by a dummy label to find easily where to attach back the component
-    JLabel dummyLabel = new JLabel();
-    dummyLabel.setMaximumSize(new Dimension());
-    dummyLabel.setName(view.getClass().getName());
-    dummyLabel.setBorder(component.getBorder());
     
     float dividerLocation;
     if (parent instanceof JSplitPane) {
       JSplitPane splitPane = (JSplitPane)parent;
-
       if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
         dividerLocation = (float)splitPane.getDividerLocation() 
             / (splitPane.getHeight() - splitPane.getDividerSize());
@@ -2042,6 +2034,50 @@ public class HomePane extends JRootPane implements HomeView {
         dividerLocation = (float)splitPane.getDividerLocation() 
           / (splitPane.getWidth() - splitPane.getDividerSize());
       }
+    } else {
+      dividerLocation = -1;
+    }
+    
+    Integer dialogX = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+    Integer dialogWidth = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
+    if (dialogX != null && dialogWidth != null) {
+      detachView(view, dialogX, 
+          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY),
+          dialogWidth,
+          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
+    } else {
+      Point componentLocation = new Point();
+      Dimension componentSize = component.getSize();
+      SwingUtilities.convertPointToScreen(componentLocation, component);
+      
+      Insets insets = new JDialog().getInsets();
+      detachView(view, componentLocation.x - insets.left, 
+          componentLocation.y - insets.top,
+          componentSize.width + insets.left + insets.right,
+          componentSize.height + insets.top + insets.bottom);
+    }
+    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, dividerLocation);
+  }
+  
+  /**
+   * Detaches a <code>view</code> at the given location and size.
+   */
+  private void detachView(final View view, int x, int y, int width, int height) {
+    JComponent component = (JComponent)view;
+    Container parent = component.getParent();
+    if (parent instanceof JViewport) {
+      component = (JComponent)parent.getParent();
+      parent = component.getParent();
+    }
+    
+    // Replace component by a dummy label to find easily where to attach back the component
+    JLabel dummyLabel = new JLabel();
+    dummyLabel.setMaximumSize(new Dimension());
+    dummyLabel.setName(view.getClass().getName());
+    dummyLabel.setBorder(component.getBorder());
+    
+    if (parent instanceof JSplitPane) {
+      JSplitPane splitPane = (JSplitPane)parent;
       splitPane.setDividerSize(0);
       if (splitPane.getLeftComponent() == component) {
         splitPane.setLeftComponent(dummyLabel);
@@ -2054,7 +2090,6 @@ public class HomePane extends JRootPane implements HomeView {
       int componentIndex = parent.getComponentZOrder(component);
       parent.remove(componentIndex);
       parent.add(dummyLabel, componentIndex);
-      dividerLocation = -1;
     }
     
     // Display view in a separate non modal dialog
@@ -2109,27 +2144,12 @@ public class HomePane extends JRootPane implements HomeView {
         }
       });
 
-    // Set dialog location and size
-    Integer dialogX = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
-    Integer dialogWidth = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
-    if (dialogX != null && dialogWidth != null) {
-      separateDialog.setBounds(dialogX, 
-          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY),
-          dialogWidth,
-          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
-    } else {
-      Insets insets = separateDialog.getInsets();
-      separateDialog.setBounds(componentLocation.x - insets.left, 
-          componentLocation.y - insets.top,
-          componentSize.width + insets.left + insets.right,
-          componentSize.height + insets.top + insets.bottom);
-    }
+    separateDialog.setBounds(x, y, width, height);
     separateDialog.setVisible(true);
     
     this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, true);
-    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, dividerLocation);
   }
-                
+  
   /**
    * Attaches the given <code>view</code> to home view.
    */
