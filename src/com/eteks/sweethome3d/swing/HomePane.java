@@ -27,15 +27,21 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -43,6 +49,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
@@ -81,7 +89,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JEditorPane;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -104,6 +114,8 @@ import javax.swing.TransferHandler;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
@@ -152,12 +164,18 @@ public class HomePane extends JRootPane implements HomeView {
   private enum MenuActionType {FILE_MENU, EDIT_MENU, FURNITURE_MENU, PLAN_MENU, VIEW_3D_MENU, HELP_MENU, 
       OPEN_RECENT_HOME_MENU, SORT_HOME_FURNITURE_MENU, DISPLAY_HOME_FURNITURE_PROPERTY_MENU, MODIFY_TEXT_STYLE}
   
-  private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
-  private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
-  private static final String PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY    = "com.eteks.sweethome3d.SweetHome3D.PlanPaneDividerLocation";
-  private static final String PLAN_VIEWPORT_X_VISUAL_PROPERTY               = "com.eteks.sweethome3d.SweetHome3D.PlanViewportX";
-  private static final String PLAN_VIEWPORT_Y_VISUAL_PROPERTY               = "com.eteks.sweethome3d.SweetHome3D.PlanViewportY";
-  private static final String FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY          = "com.eteks.sweethome3d.SweetHome3D.FurnitureViewportY";
+  private static final String MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.MainPaneDividerLocation";
+  private static final String CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY  = "com.eteks.sweethome3d.SweetHome3D.CatalogPaneDividerLocation";
+  private static final String PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.PlanPaneDividerLocation";
+  private static final String PLAN_VIEWPORT_X_VISUAL_PROPERTY                = "com.eteks.sweethome3d.SweetHome3D.PlanViewportX";
+  private static final String PLAN_VIEWPORT_Y_VISUAL_PROPERTY                = "com.eteks.sweethome3d.SweetHome3D.PlanViewportY";
+  private static final String FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY           = "com.eteks.sweethome3d.SweetHome3D.FurnitureViewportY";
+  private static final String DETACHED_VIEW_VISUAL_PROPERTY                  = ".detachedView";
+  private static final String DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY = ".detachedViewDividerLocation";
+  private static final String DETACHED_VIEW_X_VISUAL_PROPERTY                = ".detachedViewX";
+  private static final String DETACHED_VIEW_Y_VISUAL_PROPERTY                = ".detachedViewY";
+  private static final String DETACHED_VIEW_WIDTH_VISUAL_PROPERTY            = ".detachedViewWidth";
+  private static final String DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY           = ".detachedViewHeight";
 
   private static final int    DEFAULT_SMALL_ICON_HEIGHT = 16;
   
@@ -268,7 +286,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Create the actions map of this component.
    */
   private void createActions(UserPreferences preferences, 
-                             HomeController controller) {
+                             final HomeController controller) {
     createAction(ActionType.NEW_HOME, preferences, controller, "newHome");
     createAction(ActionType.OPEN, preferences, controller, "open");
     createAction(ActionType.DELETE_RECENT_HOMES, preferences, controller, "deleteRecentHomes");
@@ -429,6 +447,20 @@ public class HomePane extends JRootPane implements HomeView {
         controller.getHomeController3D(), "viewFromTop");
     createAction(ActionType.VIEW_FROM_OBSERVER, preferences, 
         controller.getHomeController3D(), "viewFromObserver");
+    getActionMap().put(ActionType.DETACH_3D_VIEW, 
+        new ResourceAction(preferences, HomePane.class, ActionType.DETACH_3D_VIEW.name()) {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            controller.detachView(controller.getHomeController3D().getView());
+          }
+        });
+    getActionMap().put(ActionType.ATTACH_3D_VIEW, 
+        new ResourceAction(preferences, HomePane.class, ActionType.ATTACH_3D_VIEW.name()) {
+          @Override
+          public void actionPerformed(ActionEvent ev) {
+            controller.attachView(controller.getHomeController3D().getView());
+          }
+        });
     createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, 
         controller.getHomeController3D(), "modifyAttributes");
     createAction(ActionType.CREATE_PHOTO, preferences, controller, "createPhoto");
@@ -716,6 +748,10 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToMenu(ActionType.VIEW_FROM_OBSERVER, 
         this.viewFromObserverToggleModel, true, preview3DMenu);
     preview3DMenu.addSeparator();
+    JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, false);
+    if (attachDetach3DViewMenuItem != null) {
+      preview3DMenu.add(attachDetach3DViewMenuItem);
+    }
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
@@ -1063,7 +1099,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns Lock / Unlock base plan menu item.
    */
   private JMenuItem createLockUnlockBasePlanMenuItem(final Home home, 
-                                                     final boolean popup) {
+                                                       final boolean popup) {
     ActionMap actionMap = getActionMap();
     final Action unlockBasePlanAction = actionMap.get(ActionType.UNLOCK_BASE_PLAN);
     final Action lockBasePlanAction = actionMap.get(ActionType.LOCK_BASE_PLAN);
@@ -1087,7 +1123,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
-   * Returns the action active on import / modify menu.
+   * Returns the action active on Lock / Unlock base plan menu item.
    */
   private Action createLockUnlockBasePlanAction(Home home, boolean popup) {
     ActionType actionType = home.isBasePlanLocked() 
@@ -1267,7 +1303,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns Import / Modify background image menu item.
    */
   private JMenuItem createImportModifyBackgroundImageMenuItem(final Home home, 
-                                                              final boolean popup) {
+                                                                final boolean popup) {
     ActionMap actionMap = getActionMap();
     Action importBackgroundImageAction = actionMap.get(ActionType.IMPORT_BACKGROUND_IMAGE);
     Action modifyBackgroundImageAction = actionMap.get(ActionType.MODIFY_BACKGROUND_IMAGE);
@@ -1291,7 +1327,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
-   * Returns the action active on import / modify menu.
+   * Returns the action active on Import / Modify menu item.
    */
   private Action createImportModifyBackgroundImageAction(Home home, boolean popup) {
     ActionType backgroundImageActionType = home.getBackgroundImage() == null 
@@ -1307,7 +1343,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns Hide / Show background image menu item.
    */
   private JMenuItem createHideShowBackgroundImageMenuItem(final Home home, 
-                                                          final boolean popup) {
+                                                            final boolean popup) {
     ActionMap actionMap = getActionMap();
     Action hideBackgroundImageAction = actionMap.get(ActionType.HIDE_BACKGROUND_IMAGE);
     Action showBackgroundImageAction = actionMap.get(ActionType.SHOW_BACKGROUND_IMAGE);
@@ -1331,7 +1367,7 @@ public class HomePane extends JRootPane implements HomeView {
   }
   
   /**
-   * Returns the action active on hide / show menu.
+   * Returns the action active on Hide / Show menu item.
    */
   private Action createHideShowBackgroundImageAction(Home home, boolean popup) {
     BackgroundImage backgroundImage = home.getBackgroundImage();
@@ -1339,6 +1375,51 @@ public class HomePane extends JRootPane implements HomeView {
         ? ActionType.HIDE_BACKGROUND_IMAGE
         : ActionType.SHOW_BACKGROUND_IMAGE;
     Action backgroundImageAction = getActionMap().get(backgroundImageActionType);
+    return popup 
+        ? new ResourceAction.PopupMenuItemAction(backgroundImageAction)
+        : new ResourceAction.MenuItemAction(backgroundImageAction);
+  }
+  
+  /**
+   * Returns Attach / Detach menu item for the 3D view.
+   */
+  private JMenuItem createAttachDetach3DViewMenuItem(final HomeController controller, 
+                                                                      final boolean popup) {
+    ActionMap actionMap = getActionMap();
+    Action display3DViewInSeparateWindowAction = actionMap.get(ActionType.DETACH_3D_VIEW);
+    Action display3DViewInMainWindowAction = actionMap.get(ActionType.ATTACH_3D_VIEW);
+    if (display3DViewInSeparateWindowAction.getValue(Action.NAME) != null
+        && display3DViewInMainWindowAction.getValue(Action.NAME) != null) {
+      final JMenuItem attachDetach3DViewMenuItem = new JMenuItem(
+          createAttachDetach3DViewAction(controller, popup));
+      // Add a listener to 3D view to switch action when its parent changes
+      ((JComponent)controller.getHomeController3D().getView()).addAncestorListener(new AncestorListener() {        
+          public void ancestorAdded(AncestorEvent ev) {
+            attachDetach3DViewMenuItem.setAction(
+                createAttachDetach3DViewAction(controller, popup));
+          }
+          
+          public void ancestorRemoved(AncestorEvent ev) {
+          }
+          
+          public void ancestorMoved(AncestorEvent ev) {
+          }        
+        });    
+      return attachDetach3DViewMenuItem;
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Returns the action Attach / Detach menu item.
+   */
+  private Action createAttachDetach3DViewAction(HomeController controller, boolean popup) {
+    JRootPane view3DRootPane = SwingUtilities.getRootPane((JComponent)controller.getHomeController3D().getView());
+    ActionType display3DViewActionType = view3DRootPane == this        
+        ? ActionType.DETACH_3D_VIEW
+        : ActionType.ATTACH_3D_VIEW;
+    Action backgroundImageAction = getActionMap().get(display3DViewActionType);
     return popup 
         ? new ResourceAction.PopupMenuItemAction(backgroundImageAction)
         : new ResourceAction.MenuItemAction(backgroundImageAction);
@@ -1681,7 +1762,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Returns the plan view and 3D view pane. 
    */
   private JComponent createPlanView3DPane(Home home, UserPreferences preferences, 
-                                       final HomeController controller) {
+                                          final HomeController controller) {
     JComponent planView = (JComponent)controller.getPlanController().getView();
     JScrollPane planScrollPane = new HomeScrollPane(planView);
     setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
@@ -1762,7 +1843,7 @@ public class HomePane extends JRootPane implements HomeView {
     planView.setComponentPopupMenu(planViewPopup);
     
     // Configure 3D view
-    JComponent view3D = (JComponent)controller.getHomeController3D().getView();
+    final JComponent view3D = (JComponent)controller.getHomeController3D().getView();
     view3D.setPreferredSize(planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
     view3D.addFocusListener(new FocusableViewListener(controller, view3D));
@@ -1773,6 +1854,10 @@ public class HomePane extends JRootPane implements HomeView {
     addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
         this.viewFromObserverToggleModel, true, view3DPopup);
     view3DPopup.addSeparator();
+    JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
+    if (attachDetach3DViewMenuItem != null) {
+      view3DPopup.add(attachDetach3DViewMenuItem);
+    }
     addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
@@ -1785,6 +1870,31 @@ public class HomePane extends JRootPane implements HomeView {
         planScrollPane, view3D);
     configureSplitPane(planView3DPane, home, 
         PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
+    
+    // Detach 3D view if it was detached when saved and its dialog can be viewed in one of the screen devices
+    Boolean detachedView3D = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
+    if (detachedView3D != null && detachedView3D.booleanValue()) {
+      // Check 3D view can be viewed in one of the available screens      
+      Integer dialogX = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+      Integer dialogY = (Integer)this.home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY);
+      if (dialogX != null) {
+        for (GraphicsDevice screenDevice : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+          for (GraphicsConfiguration screenConfiguration : screenDevice.getConfigurations()) {
+            if (screenConfiguration.getBounds().contains(dialogX, dialogY)) {
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    controller.detachView((View)view3D);
+                  }
+                });
+              return planView3DPane;
+            }
+          }
+        }
+      }
+      planView3DPane.setDividerLocation(0.5);
+      controller.setVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, null);
+    }
+    
     return planView3DPane;
   }
   
@@ -1898,6 +2008,176 @@ public class HomePane extends JRootPane implements HomeView {
     MouseAndFocusListener listener = new MouseAndFocusListener();
     ((JComponent)view).addMouseListener(listener);
     ((JComponent)view).addFocusListener(listener);
+  }
+  
+
+  /**
+   * Detaches the given <code>view</code> from home view.
+   */
+  public void detachView(final View view) {
+    JComponent component = (JComponent)view;
+    Container parent = component.getParent();
+    if (parent instanceof JViewport) {
+      component = (JComponent)parent.getParent();
+      parent = component.getParent();
+    }
+    Point componentLocation = new Point();
+    Dimension componentSize = component.getSize();
+    SwingUtilities.convertPointToScreen(componentLocation, component);
+    
+    // Replace component by a dummy label to find easily where to attach back the component
+    JLabel dummyLabel = new JLabel();
+    dummyLabel.setMaximumSize(new Dimension());
+    dummyLabel.setName(view.getClass().getName());
+    dummyLabel.setBorder(component.getBorder());
+    
+    float dividerLocation;
+    if (parent instanceof JSplitPane) {
+      JSplitPane splitPane = (JSplitPane)parent;
+
+      if (splitPane.getOrientation() == JSplitPane.VERTICAL_SPLIT) {
+        dividerLocation = (float)splitPane.getDividerLocation() 
+            / (splitPane.getHeight() - splitPane.getDividerSize());
+      } else {
+        dividerLocation = (float)splitPane.getDividerLocation() 
+          / (splitPane.getWidth() - splitPane.getDividerSize());
+      }
+      splitPane.setDividerSize(0);
+      if (splitPane.getLeftComponent() == component) {
+        splitPane.setLeftComponent(dummyLabel);
+        splitPane.setDividerLocation(0f);
+      } else {
+        splitPane.setRightComponent(dummyLabel);
+        splitPane.setDividerLocation(1f);
+      }
+    } else {
+      int componentIndex = parent.getComponentZOrder(component);
+      parent.remove(componentIndex);
+      parent.add(dummyLabel, componentIndex);
+      dividerLocation = -1;
+    }
+    
+    // Display view in a separate non modal dialog
+    Window window = SwingUtilities.getWindowAncestor(this);
+    if (!(window instanceof JFrame)) {
+      window = JOptionPane.getRootFrame();
+    }
+    JFrame defaultFrame = (JFrame)window;
+    final JDialog separateDialog = new JDialog(defaultFrame);
+    separateDialog.setResizable(true);
+    // Use same title as home frame 
+    separateDialog.setTitle(defaultFrame.getTitle());
+    defaultFrame.addPropertyChangeListener("title", new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          separateDialog.setTitle((String)ev.getNewValue());
+        }
+      });
+    // Use same document modified indicator
+    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      defaultFrame.getRootPane().addPropertyChangeListener("Window.documentModified", new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          separateDialog.getRootPane().putClientProperty("Window.documentModified", ev.getNewValue());
+        }
+      });      
+    } else if (OperatingSystem.isMacOSX()) {
+      defaultFrame.getRootPane().addPropertyChangeListener("windowModified", new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            separateDialog.getRootPane().putClientProperty("windowModified", ev.getNewValue());
+          }
+        });      
+    }
+    component.setBorder(null);
+    separateDialog.setContentPane(component);
+    separateDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    separateDialog.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowClosing(WindowEvent ev) {
+          controller.attachView(view);
+        }
+      });
+    separateDialog.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent ev) {
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY, separateDialog.getWidth());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY, separateDialog.getHeight());
+        }
+        
+        @Override
+        public void componentMoved(ComponentEvent ev) {
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY, separateDialog.getX());
+          controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY, separateDialog.getY());
+        }
+      });
+
+    // Set dialog location and size
+    Integer dialogX = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_X_VISUAL_PROPERTY);
+    Integer dialogWidth = (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_WIDTH_VISUAL_PROPERTY);
+    if (dialogX != null && dialogWidth != null) {
+      separateDialog.setBounds(dialogX, 
+          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_Y_VISUAL_PROPERTY),
+          dialogWidth,
+          (Integer)this.home.getVisualProperty(view.getClass().getName() + DETACHED_VIEW_HEIGHT_VISUAL_PROPERTY));
+    } else {
+      Insets insets = separateDialog.getInsets();
+      separateDialog.setBounds(componentLocation.x - insets.left, 
+          componentLocation.y - insets.top,
+          componentSize.width + insets.left + insets.right,
+          componentSize.height + insets.top + insets.bottom);
+    }
+    separateDialog.setVisible(true);
+    
+    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, true);
+    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY, dividerLocation);
+  }
+                
+  /**
+   * Attaches the given <code>view</code> to home view.
+   */
+  public void attachView(View view) {
+    JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
+    if (dummyComponent != null) {
+      JComponent component = (JComponent)view;
+      Window window = SwingUtilities.getWindowAncestor(component);
+      component.setBorder(dummyComponent.getBorder());      
+      Container parent = dummyComponent.getParent();
+      if (parent instanceof JSplitPane) {
+        JSplitPane splitPane = (JSplitPane)parent;
+        float dividerLocation = (Float)this.home.getVisualProperty(
+            view.getClass().getName() + DETACHED_VIEW_DIVIDER_LOCATION_VISUAL_PROPERTY);
+        splitPane.setDividerSize(UIManager.getInt("SplitPane.dividerSize"));
+        splitPane.setDividerLocation(dividerLocation);
+        if (splitPane.getLeftComponent() == dummyComponent) {
+          splitPane.setLeftComponent(component);
+        } else {
+          splitPane.setRightComponent(component);
+        }
+      } else {
+        int componentIndex = parent.getComponentZOrder(dummyComponent);
+        parent.remove(componentIndex);
+        parent.add(component, componentIndex);
+      }
+      window.dispose();
+    }
+    
+    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
+  }
+  
+  /**
+   * Returns among <code>parent</code> children the first child with the given name.
+   */
+  private Component findChild(Container parent, String childName) {
+    for (int i = 0; i < parent.getComponentCount(); i++) {
+      Component child = parent.getComponent(i);
+      if (childName.equals(child.getName())) {
+        return child;
+      } else if (child instanceof Container) {
+        child = findChild((Container)child, childName);
+        if (child != null) {
+          return child;
+        }
+      }            
+    }
+    return null;
   }
   
   /**
@@ -2603,7 +2883,9 @@ public class HomePane extends JRootPane implements HomeView {
         
     public void focusGained(FocusEvent ev) {
       // Display a colored border
-      this.feedbackComponent.setBorder(FOCUSED_BORDER);
+      if (SwingUtilities.getRootPane(this.feedbackComponent) == HomePane.this) {
+        this.feedbackComponent.setBorder(FOCUSED_BORDER);
+      }
       // Update the component used by clipboard actions
       focusedComponent = (JComponent)ev.getComponent();
       // Notify controller that active view changed
@@ -2612,7 +2894,9 @@ public class HomePane extends JRootPane implements HomeView {
     }
     
     public void focusLost(FocusEvent ev) {
-      this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
+      if (SwingUtilities.getRootPane(this.feedbackComponent) == HomePane.this) {
+        this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
+      }
       focusedComponent.removeKeyListener(specialKeysListener);
     }
   }

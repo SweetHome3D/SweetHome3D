@@ -274,6 +274,9 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_TOP, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
+    homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
+    homeView.setEnabled(HomeView.ActionType.ATTACH_3D_VIEW, true);
+    homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_PHOTO, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, true);
@@ -1834,6 +1837,24 @@ public class HomeController implements Controller {
     planController.setScale(newScale);
   }
 
+  /**
+   * Detaches the given <code>view</code> from home view.
+   */
+  public void detachView(View view) {
+    if (view != null) {
+      getView().detachView(view);
+    }
+  }
+      		
+  /**
+   * Attaches the given <code>view</code> to home view.
+   */
+  public void attachView(View view) {
+    if (view != null) {
+      getView().attachView(view);
+    }
+  }
+                
   /**
    * Displays help window.
    */

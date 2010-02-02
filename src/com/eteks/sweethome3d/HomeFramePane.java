@@ -42,6 +42,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
+import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -116,27 +117,39 @@ public class HomeFramePane extends JRootPane implements View {
       homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
           @Override
           public Component getComponentAfter(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
+            int index = focusableComponents.indexOf(component);
+            Component nextComponent;
+            do {
+              index = (index + 1) % focusableComponents.size();
+              nextComponent = focusableComponents.get(index);
+            } while (nextComponent != component && SwingUtilities.getRootPane(nextComponent) != controller.getHomeController().getView());
+            return nextComponent;
           }
     
           @Override
           public Component getComponentBefore(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) + focusableComponents.size() - 1) % focusableComponents.size());
+            int index = focusableComponents.indexOf(component);
+            Component previousComponent;
+            do {
+              index = (index + focusableComponents.size() - 1) % focusableComponents.size();
+              previousComponent = focusableComponents.get(index);
+            } while (previousComponent != component && SwingUtilities.getRootPane(previousComponent) != controller.getHomeController().getView());
+            return previousComponent;
           }
     
           @Override
           public Component getDefaultComponent(Container container) {
-            return focusableComponents.get(0);
+            return getComponentAfter(container, focusableComponents.get(focusableComponents.size() - 1));
           }
     
           @Override
           public Component getFirstComponent(Container container) {
-            return focusableComponents.get(0);
+            return getDefaultComponent(container);
           }
     
           @Override
           public Component getLastComponent(Container container) {
-            return focusableComponents.get(focusableComponents.size() - 1);
+            return getComponentBefore(container, focusableComponents.get(0));
           }
         });
     }

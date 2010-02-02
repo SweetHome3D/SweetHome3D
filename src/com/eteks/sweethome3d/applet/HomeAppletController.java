@@ -75,6 +75,8 @@ public class HomeAppletController extends HomeController {
     view.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, false);
     view.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, false);
     view.setEnabled(HomeView.ActionType.CREATE_PHOTO, false);
+    
+    view.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, false);
   }
   
   /**
