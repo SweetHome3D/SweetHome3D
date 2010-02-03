@@ -746,8 +746,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
-      private Point   lastMousePressedLocation;
-      private Boolean autoscrolls;
+      private Point lastMousePressedLocation;
       
       @Override
       public void mousePressed(MouseEvent ev) {
@@ -755,11 +754,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();          
           if (ev.getButton() == MouseEvent.BUTTON1) {
-            // Forbid autoscrolls when panning 
-            if (PlanController.Mode.PANNING == controller.getMode()) {
-              this.autoscrolls = getAutoscrolls();
-              setAutoscrolls(false);
-            }
             controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
                 ev.getClickCount(), ev.isShiftDown(), 
                 OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown());
@@ -771,10 +765,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       public void mouseReleased(MouseEvent ev) {
         if (isEnabled() && !ev.isPopupTrigger() && ev.getButton() == MouseEvent.BUTTON1) {
           controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
-          if (this.autoscrolls != null) {            
-            // Restore autoscrolls
-            setAutoscrolls(this.autoscrolls);
-          }
         }
       }
 
