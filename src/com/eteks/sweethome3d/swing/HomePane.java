@@ -2896,6 +2896,7 @@ public class HomePane extends JRootPane implements HomeView {
               && SwingUtilities.getRootPane(focusedComponent) == HomePane.this) {
             previousMode = planController.getMode();
             planController.setMode(PlanController.Mode.PANNING);
+            ev.consume();
           }
         }  
       
@@ -2904,6 +2905,7 @@ public class HomePane extends JRootPane implements HomeView {
               && previousMode != null) {
             controller.getPlanController().setMode(previousMode);
             previousMode = null;
+            ev.consume();
           }
         }
         
