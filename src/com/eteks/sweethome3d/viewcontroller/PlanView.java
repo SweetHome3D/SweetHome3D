@@ -33,7 +33,7 @@ public interface PlanView extends View {
   /**
    * The cursor types available in plan view.
    */
-  public enum CursorType {SELECTION, DRAW, ROTATION, ELEVATION, HEIGHT, RESIZE, DUPLICATION}
+  public enum CursorType {SELECTION, PANNING, DRAW, ROTATION, ELEVATION, HEIGHT, RESIZE, DUPLICATION}
   
   /**
    * Sets rectangle selection feedback coordinates. 
@@ -48,7 +48,7 @@ public interface PlanView extends View {
   public abstract void makeSelectionVisible();
 
   /**
-   * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
+   * Ensures the point at (<code>x</code>, <code>y</code>) is visible,
    * moving scroll bars if needed.
    */
   public abstract void makePointVisible(float x, float y);
@@ -64,6 +64,11 @@ public interface PlanView extends View {
   public abstract void setScale(float scale);
 
   /**
+   * Moves the view from (dx, dy) unit in the scrolling zone it belongs to.
+   */
+  public abstract void moveView(float dx, float dy);
+
+  /**
    * Returns <code>x</code> converted in model coordinates space.
    */
   public abstract float convertXPixelToModel(int x);
@@ -72,6 +77,16 @@ public interface PlanView extends View {
    * Returns <code>y</code> converted in model coordinates space.
    */
   public abstract float convertYPixelToModel(int y);
+
+  /**
+   * Returns <code>x</code> converted in screen coordinates space.
+   */
+  public abstract int convertXModelToScreen(float x);
+
+  /**
+   * Returns <code>y</code> converted in screen coordinates space.
+   */
+  public abstract int convertYModelToScreen(float y);
 
   /**
    * Returns the length in centimeters of a pixel with the current scale.

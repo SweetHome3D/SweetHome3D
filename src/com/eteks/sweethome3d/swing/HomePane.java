@@ -182,9 +182,10 @@ public class HomePane extends JRootPane implements HomeView {
   private final Home                            home;
   private final UserPreferences                 preferences;
   private final HomeController                  controller;
-  // Button models shared by Select, Create walls, Create rooms, Create dimensions 
+  // Button models shared by Select, Pan, Create walls, Create rooms, Create dimensions 
   // and Create labels menu items and their matching tool bar buttons
   private final JToggleButton.ToggleButtonModel selectToggleModel;
+  private final JToggleButton.ToggleButtonModel panToggleModel;
   private final JToggleButton.ToggleButtonModel createWallsToggleModel;
   private final JToggleButton.ToggleButtonModel createRoomsToggleModel;
   private final JToggleButton.ToggleButtonModel createDimensionLinesToggleModel;
@@ -211,12 +212,15 @@ public class HomePane extends JRootPane implements HomeView {
     this.home = home;
     this.preferences = preferences;
     this.controller = controller;
-    // Create unique toggle button models for Selection / Wall creation / Room creation / 
+    // Create unique toggle button models for Selection / Pan / Wall creation / Room creation / 
     // Dimension line creation / Label creation states
     // so the matching menu items and tool bar buttons always reflect the same toggle state at screen
     this.selectToggleModel = new JToggleButton.ToggleButtonModel();
     this.selectToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.SELECTION);
+    this.panToggleModel = new JToggleButton.ToggleButtonModel();
+    this.panToggleModel.setSelected(controller.getPlanController().getMode() 
+        == PlanController.Mode.PANNING);
     this.createWallsToggleModel = new JToggleButton.ToggleButtonModel();
     this.createWallsToggleModel.setSelected(controller.getPlanController().getMode() 
         == PlanController.Mode.WALL_CREATION);
@@ -232,6 +236,7 @@ public class HomePane extends JRootPane implements HomeView {
     
     ButtonGroup modeGroup = new ButtonGroup();
     this.selectToggleModel.setGroup(modeGroup);
+    this.panToggleModel.setGroup(modeGroup);
     this.createWallsToggleModel.setGroup(modeGroup);
     this.createRoomsToggleModel.setGroup(modeGroup);
     this.createDimensionLinesToggleModel.setGroup(modeGroup);
@@ -397,6 +402,8 @@ public class HomePane extends JRootPane implements HomeView {
     
     createAction(ActionType.SELECT, preferences, controller, "setMode", 
         PlanController.Mode.SELECTION);
+    createAction(ActionType.PAN, preferences, controller, "setMode", 
+        PlanController.Mode.PANNING);
     createAction(ActionType.CREATE_WALLS, preferences, controller, "setMode",
         PlanController.Mode.WALL_CREATION);
     createAction(ActionType.CREATE_ROOMS, preferences, controller, "setMode",
@@ -617,6 +624,8 @@ public class HomePane extends JRootPane implements HomeView {
           public void propertyChange(PropertyChangeEvent ev) {
             selectToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.SELECTION);
+            panToggleModel.setSelected(planController.getMode() 
+                == PlanController.Mode.PANNING);
             createWallsToggleModel.setSelected(planController.getMode() 
                 == PlanController.Mode.WALL_CREATION);
             createRoomsToggleModel.setSelected(planController.getMode() 
@@ -706,6 +715,8 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu planMenu = new JMenu(this.menuActionMap.get(MenuActionType.PLAN_MENU));
     addToggleActionToMenu(ActionType.SELECT, 
         this.selectToggleModel, true, planMenu);
+    addToggleActionToMenu(ActionType.PAN, 
+        this.panToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_WALLS, 
         this.createWallsToggleModel, true, planMenu);
     addToggleActionToMenu(ActionType.CREATE_ROOMS, 
@@ -1469,6 +1480,7 @@ public class HomePane extends JRootPane implements HomeView {
     toolBar.addSeparator();
    
     addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, toolBar);
+    addToggleActionToToolBar(ActionType.PAN, this.panToggleModel, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_WALLS, this.createWallsToggleModel, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_ROOMS, this.createRoomsToggleModel, toolBar);
     addToggleActionToToolBar(ActionType.CREATE_DIMENSION_LINES, this.createDimensionLinesToggleModel, toolBar);
@@ -1804,6 +1816,8 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.addSeparator();
     addToggleActionToPopupMenu(ActionType.SELECT, 
         this.selectToggleModel, true, planViewPopup);
+    addToggleActionToPopupMenu(ActionType.PAN, 
+        this.panToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_WALLS, 
         this.createWallsToggleModel, true, planViewPopup);
     addToggleActionToPopupMenu(ActionType.CREATE_ROOMS, 
@@ -2867,9 +2881,32 @@ public class HomePane extends JRootPane implements HomeView {
    * home controller.
    */
   private class FocusableViewListener implements FocusListener {
-    private HomeController controller;
-    private JComponent     feedbackComponent;
-    private KeyListener    specialKeysListener = new KeyAdapter() {
+    private HomeController      controller;
+    private JComponent          feedbackComponent;
+    private PlanController.Mode previousMode;
+    private KeyListener         specialKeysListener = new KeyAdapter() {
+        public void keyPressed(KeyEvent ev) {
+          // Temporarily toggle plan controller mode to panning mode when space bar is pressed  
+          PlanController planController = controller.getPlanController();
+          if (ev.getKeyCode() == KeyEvent.VK_SPACE 
+              && (ev.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK)) == 0
+              && getActionMap().get(ActionType.PAN).getValue(Action.NAME) != null 
+              && planController.getMode() != PlanController.Mode.PANNING
+              && !planController.isModificationState()
+              && SwingUtilities.getRootPane(focusedComponent) == HomePane.this) {
+            previousMode = planController.getMode();
+            planController.setMode(PlanController.Mode.PANNING);
+          }
+        }  
+      
+        public void keyReleased(KeyEvent ev) {
+          if (ev.getKeyCode() == KeyEvent.VK_SPACE 
+              && previousMode != null) {
+            controller.getPlanController().setMode(previousMode);
+            previousMode = null;
+          }
+        }
+        
         @Override
         public void keyTyped(KeyEvent ev) {
           // This listener manages accelerator keys that may require the use of shift key 
@@ -2910,14 +2947,17 @@ public class HomePane extends JRootPane implements HomeView {
       focusedComponent = (JComponent)ev.getComponent();
       // Notify controller that active view changed
       this.controller.focusedViewChanged((View)focusedComponent);
-      focusedComponent.addKeyListener(specialKeysListener);
+      focusedComponent.addKeyListener(this.specialKeysListener);
     }
     
     public void focusLost(FocusEvent ev) {
       if (SwingUtilities.getRootPane(this.feedbackComponent) == HomePane.this) {
         this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
       }
-      focusedComponent.removeKeyListener(specialKeysListener);
+      focusedComponent.removeKeyListener(this.specialKeysListener);
+      if (previousMode != null) {
+        controller.getPlanController().setMode(previousMode);
+      }
     }
   }
   

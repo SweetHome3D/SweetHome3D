@@ -254,6 +254,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_VALUE_ADDED_TAX, true);
     homeView.setEnabled(HomeView.ActionType.DISPLAY_HOME_FURNITURE_PRICE_VALUE_ADDED_TAX_INCLUDED, true);
     homeView.setEnabled(HomeView.ActionType.SELECT, true);
+    homeView.setEnabled(HomeView.ActionType.PAN, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_WALLS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_ROOMS, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_DIMENSION_LINES, true);

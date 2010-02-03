@@ -209,6 +209,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor          elevationCursor;
   private final Cursor          heightCursor;
   private final Cursor          resizeCursor;
+  private final Cursor          panningCursor;
   private final Cursor          duplicationCursor;
   private Rectangle2D           rectangleFeedback;
   private Class<? extends Selectable> alignedObjectClass;
@@ -242,6 +243,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Area                        wallsAreaCache;
   private Map<Content, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
+
 
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
@@ -443,6 +445,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         "resources/cursors/height32x32.png", "Height cursor");
     this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
         "resources/cursors/resize32x32.png", "Resize cursor");
+    this.panningCursor = createCustomCursor("resources/cursors/panning16x16.png",
+        "resources/cursors/panning32x32.png", "Panning cursor");
     this.duplicationCursor = DragSource.DefaultCopyDrop;
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
@@ -742,14 +746,20 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */
   private void addMouseListeners(final PlanController controller) {
     MouseInputAdapter mouseListener = new MouseInputAdapter() {
-      Point lastMousePressedLocation;
+      private Point   lastMousePressedLocation;
+      private Boolean autoscrolls;
       
       @Override
       public void mousePressed(MouseEvent ev) {
         this.lastMousePressedLocation = ev.getPoint();
         if (isEnabled() && !ev.isPopupTrigger()) {
-          requestFocusInWindow();
+          requestFocusInWindow();          
           if (ev.getButton() == MouseEvent.BUTTON1) {
+            // Forbid autoscrolls when panning 
+            if (PlanController.Mode.PANNING == controller.getMode()) {
+              this.autoscrolls = getAutoscrolls();
+              setAutoscrolls(false);
+            }
             controller.pressMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()), 
                 ev.getClickCount(), ev.isShiftDown(), 
                 OperatingSystem.isMacOSX() ? ev.isAltDown() : ev.isControlDown());
@@ -761,6 +771,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       public void mouseReleased(MouseEvent ev) {
         if (isEnabled() && !ev.isPopupTrigger() && ev.getButton() == MouseEvent.BUTTON1) {
           controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
+          if (this.autoscrolls != null) {            
+            // Restore autoscrolls
+            setAutoscrolls(this.autoscrolls);
+          }
         }
       }
 
@@ -3410,13 +3424,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Ensures the point at (<code>xPixel</code>, <code>yPixel</code>) is visible,
+   * Ensures the point at (<code>x</code>, <code>y</code>) is visible,
    * moving scroll bars if needed.
    */
   public void makePointVisible(float x, float y) {
     scrollRectToVisible(getShapePixelBounds(new Rectangle2D.Float(x, y, 1 / getScale(), 1 / getScale())));
   }
 
+  /**
+   * Moves the view from (dx, dy) unit in the scrolling zone it belongs to.
+   */
+  public void moveView(float dx, float dy) {
+    if (getParent() instanceof JViewport) {
+      JViewport viewport = (JViewport)getParent();
+      Rectangle viewRectangle = viewport.getViewRect();
+      viewRectangle.translate(Math.round(dx * getScale()), Math.round(dy * getScale()));
+      viewRectangle.x = Math.min(Math.max(0, viewRectangle.x), getWidth() - viewRectangle.width);
+      viewRectangle.y = Math.min(Math.max(0, viewRectangle.y), getHeight() - viewRectangle.height);
+      viewport.setViewPosition(viewRectangle.getLocation());
+    }
+  }
+  
   /**
    * Returns the scale used to display the plan.
    */
@@ -3499,6 +3527,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * Returns <code>x</code> converted in screen coordinates space.
+   */
+  public int convertXModelToScreen(float x) {
+    Point point = new Point(convertXModelToPixel(x), 0);
+    SwingUtilities.convertPointToScreen(point, this);
+    return point.x;
+  }
+
+  /**
+   * Returns <code>y</code> converted in screen coordinates space.
+   */
+  public int convertYModelToScreen(float y) {
+    Point point = new Point(0, convertYModelToPixel(y));
+    SwingUtilities.convertPointToScreen(point, this);
+    return point.y;
+  }
+
+
+  /**
    * Returns the length in centimeters of a pixel with the current scale.
    */
   public float getPixelLength() {
@@ -3540,6 +3587,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       case RESIZE :
         setCursor(this.resizeCursor);
         break;
+      case PANNING :
+        setCursor(this.panningCursor);
+        break;
       case DUPLICATION :
         setCursor(this.duplicationCursor);
         break;
@@ -3547,9 +3597,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
-   * Sets tool tip text displayed as feeback. 
+   * Sets tool tip text displayed as feedback. 
    * @param toolTipFeedback the text displayed in the tool tip 
-   *                    or <code>null</code> to make tool tip disapear.
+   *                    or <code>null</code> to make tool tip disappear.
    */
   public void setToolTipFeedback(String toolTipFeedback, float x, float y) {
     stopToolTipPropertiesEdition();

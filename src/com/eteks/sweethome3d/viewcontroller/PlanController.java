@@ -76,11 +76,12 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public static class Mode {
     // Don't qualify Mode as an enumeration to be able to extend Mode class
-    public static final Mode SELECTION = new Mode("SELECTION"); 
-    public static final Mode WALL_CREATION = new Mode("WALL_CREATION");
-    public static final Mode ROOM_CREATION = new Mode("ROOM_CREATION");
-    public static final Mode DIMENSION_LINE_CREATION = new Mode("DIMENSION_LINE_CREATION"); 
-    public static final Mode LABEL_CREATION = new Mode("LABEL_CREATION");
+    public static final Mode SELECTION               = new Mode("SELECTION");
+    public static final Mode PANNING                 = new Mode("PANNING");
+    public static final Mode WALL_CREATION           = new Mode("WALL_CREATION");
+    public static final Mode ROOM_CREATION           = new Mode("ROOM_CREATION");
+    public static final Mode DIMENSION_LINE_CREATION = new Mode("DIMENSION_LINE_CREATION");
+    public static final Mode LABEL_CREATION          = new Mode("LABEL_CREATION");
     
     private final String name;
     
@@ -120,6 +121,7 @@ public class PlanController extends FurnitureController implements Controller {
   private final ControllerState       selectionState;
   private final ControllerState       rectangleSelectionState;
   private final ControllerState       selectionMoveState;
+  private final ControllerState       panningState;
   private final ControllerState       dragAndDropState;
   private final ControllerState       wallCreationState;
   private final ControllerState       wallDrawingState;
@@ -181,6 +183,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.selectionState = new SelectionState();
     this.selectionMoveState = new SelectionMoveState();
     this.rectangleSelectionState = new RectangleSelectionState();
+    this.panningState = new PanningState();
     this.dragAndDropState = new DragAndDropState();
     this.wallCreationState = new WallCreationState();
     this.wallDrawingState = new WallDrawingState();
@@ -390,6 +393,13 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected ControllerState getRectangleSelectionState() {
     return this.rectangleSelectionState;
+  }
+
+  /**
+   * Returns the panning state.
+   */
+  protected ControllerState getPanningState() {
+    return this.panningState;
   }
 
   /**
@@ -4034,6 +4044,8 @@ public class PlanController extends FurnitureController implements Controller {
     public void setMode(Mode mode) {
       if (mode == Mode.SELECTION) {
         setState(getSelectionState());
+      } else if (mode == Mode.PANNING) {
+        setState(getPanningState());
       } else if (mode == Mode.WALL_CREATION) {
         setState(getWallCreationState());
       } else if (mode == Mode.ROOM_CREATION) {
@@ -4568,6 +4580,82 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Panning state. 
+   */
+  private class PanningState extends ControllerState {
+    private Integer xLastMouseMove;
+    private Integer yLastMouseMove;
+    
+    @Override
+    public Mode getMode() {
+      return Mode.PANNING;
+    }
+
+    @Override
+    public void setMode(Mode mode) {
+      if (mode == Mode.SELECTION) {
+        setState(getSelectionState());
+      } else if (mode == Mode.WALL_CREATION) {
+        setState(getWallCreationState());
+      } else if (mode == Mode.ROOM_CREATION) {
+        setState(getRoomCreationState());
+      } else if (mode == Mode.DIMENSION_LINE_CREATION) {
+        setState(getDimensionLineCreationState());
+      } else if (mode == Mode.LABEL_CREATION) {
+        setState(getLabelCreationState());
+      } 
+    }
+
+    @Override
+    public void enter() {
+      getView().setCursor(PlanView.CursorType.PANNING);
+    }
+    
+    @Override
+    public void moveSelection(float dx, float dy) {
+      getView().moveView(dx * 10, dy * 10);
+    }
+    
+    @Override
+    public void pressMouse(float x, float y, int clickCount, boolean shiftDown, boolean duplicationActivated) {
+      if (clickCount == 1) {
+        this.xLastMouseMove = getView().convertXModelToScreen(x);
+        this.yLastMouseMove = getView().convertYModelToScreen(y);
+      } else {
+        this.xLastMouseMove = null;
+        this.yLastMouseMove = null;
+      }
+    }
+    
+    @Override
+    public void moveMouse(float x, float y) {
+      if (this.xLastMouseMove != null) {
+        int newX = getView().convertXModelToScreen(x);
+        int newY = getView().convertYModelToScreen(y);
+        getView().moveView((this.xLastMouseMove - newX) / getScale(), (this.yLastMouseMove - newY) / getScale());
+        this.xLastMouseMove = newX;
+        this.yLastMouseMove = newY;
+      }
+    }
+    
+    @Override
+    public void releaseMouse(float x, float y) {
+      this.xLastMouseMove = null;
+    }
+    
+    @Override
+    public void escape() {
+      this.xLastMouseMove = null;
+    }
+    
+    @Override
+    public void exit() {
+      this.xLastMouseMove = null;
+      this.yLastMouseMove = null;
+    }
+  }
+
+  /**
    * Drag and drop state. This state manages the dragging of items
    * transfered from outside of plan view with the mouse.
    */
@@ -4807,6 +4895,8 @@ public class PlanController extends FurnitureController implements Controller {
       escape();
       if (mode == Mode.SELECTION) {
         setState(getSelectionState());
+      } else if (mode == Mode.PANNING) {
+        setState(getPanningState());
       } else if (mode == Mode.ROOM_CREATION) {
         setState(getRoomCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
@@ -6113,6 +6203,8 @@ public class PlanController extends FurnitureController implements Controller {
       escape();
       if (mode == Mode.SELECTION) {
         setState(getSelectionState());
+      } else if (mode == Mode.PANNING) {
+        setState(getPanningState());
       } else if (mode == Mode.WALL_CREATION) {
         setState(getWallCreationState());
       } else if (mode == Mode.ROOM_CREATION) {
@@ -6869,6 +6961,8 @@ public class PlanController extends FurnitureController implements Controller {
       escape();
       if (mode == Mode.SELECTION) {
         setState(getSelectionState());
+      } else if (mode == Mode.PANNING) {
+        setState(getPanningState());
       } else if (mode == Mode.WALL_CREATION) {
         setState(getWallCreationState());
       } else if (mode == Mode.DIMENSION_LINE_CREATION) {
