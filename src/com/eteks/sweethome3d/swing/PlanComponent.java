@@ -438,15 +438,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       setAutoscrolls(true);
     }
     this.rotationCursor = createCustomCursor("resources/cursors/rotation16x16.png",
-        "resources/cursors/rotation32x32.png", "Rotation cursor");
+        "resources/cursors/rotation32x32.png", "Rotation cursor", Cursor.MOVE_CURSOR);
     this.elevationCursor = createCustomCursor("resources/cursors/elevation16x16.png",
-        "resources/cursors/elevation32x32.png", "Elevation cursor");
+        "resources/cursors/elevation32x32.png", "Elevation cursor", Cursor.MOVE_CURSOR);
     this.heightCursor = createCustomCursor("resources/cursors/height16x16.png",
-        "resources/cursors/height32x32.png", "Height cursor");
+        "resources/cursors/height32x32.png", "Height cursor", Cursor.MOVE_CURSOR);
     this.resizeCursor = createCustomCursor("resources/cursors/resize16x16.png",
-        "resources/cursors/resize32x32.png", "Resize cursor");
+        "resources/cursors/resize32x32.png", "Resize cursor", Cursor.MOVE_CURSOR);
     this.panningCursor = createCustomCursor("resources/cursors/panning16x16.png",
-        "resources/cursors/panning32x32.png", "Panning cursor");
+        "resources/cursors/panning32x32.png", "Panning cursor", Cursor.HAND_CURSOR);
     this.duplicationCursor = DragSource.DefaultCopyDrop;
     // Install default colors
     super.setForeground(UIManager.getColor("textText"));
@@ -1013,13 +1013,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    */ 
   private Cursor createCustomCursor(String smallCursorImageResource, 
                                     String largeCursorImageResource,
-                                    String cursorName) {
+                                    String cursorName,
+                                    int    defaultCursor) {
     // Retrieve system cursor size
     Dimension cursorSize = getToolkit().getBestCursorSize(16, 16);
     String cursorImageResource;
     // If returned cursor size is 0, system doesn't support custom cursor  
     if (cursorSize.width == 0) {      
-      return Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);      
+      return Cursor.getPredefinedCursor(defaultCursor);      
     } else {
       // Use a different cursor image depending on system cursor size 
       if (cursorSize.width > 16) {
