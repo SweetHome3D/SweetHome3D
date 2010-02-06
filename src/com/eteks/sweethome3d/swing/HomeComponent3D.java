@@ -110,6 +110,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
@@ -355,7 +356,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             || this.overlappingComponentImage.getWidth() != imageSize.width
             || this.overlappingComponentImage.getHeight() != imageSize.height) {
           this.overlappingComponentImage = new BufferedImage(
-              imageSize.width, imageSize.height, BufferedImage.TYPE_4BYTE_ABGR);
+              imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
           g2D = (Graphics2D)this.overlappingComponentImage.getGraphics();
         } else {
           // Clear image
@@ -1258,13 +1259,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group homeRoot) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (!ev.getPropertyName().equals(HomePieceOfFurniture.Property.NAME.name())) {
-            HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
-            updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-            // If piece is a door or a window, update walls that intersect with piece
-            if (piece.isDoorOrWindow()) {
-              updateObjects(home.getWalls());
-            }
+          switch (HomePieceOfFurniture.Property.valueOf(ev.getPropertyName())) {
+            case X:
+            case Y:
+            case ANGLE:
+            case WIDTH:
+            case DEPTH:
+            case HEIGHT:
+            case ELEVATION:
+            case COLOR:
+            case MODEL_MIRRORED:
+            case VISIBLE:
+              HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
+              updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+              // If piece is or contains a door or a window, update walls that intersect with piece
+              if (containsDoorsAndWindows(piece)) {
+                updateObjects(home.getWalls());
+              }
+              break;
           }
         }
       };
@@ -1284,8 +1296,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               piece.removePropertyChangeListener(furnitureChangeListener);
               break;
           }
-          // If piece is a door or a window, update walls that intersect with piece
-          if (piece.isDoorOrWindow()) {
+          // If piece is or contains a door or a window, update walls that intersect with piece
+          if (containsDoorsAndWindows(piece)) {
             updateObjects(home.getWalls());
           }
         }
@@ -1293,6 +1305,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home.addFurnitureListener(this.furnitureListener);
   }
 
+  /**
+   * Returns <code>true</code> if the given <code>piece</code> is or contains a door or window.  
+   */
+  private boolean containsDoorsAndWindows(HomePieceOfFurniture piece) {
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        if (containsDoorsAndWindows(groupPiece)) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return piece.isDoorOrWindow();
+    }
+  }
+  
   /**
    * Adds a room listener to home rooms that updates the scene 
    * <code>homeRoot</code>, each time a room is added, updated or deleted. 

@@ -68,11 +68,13 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
@@ -572,6 +574,9 @@ public class FurnitureTable extends JTable implements View, Printable {
    * Column table model used by this table.
    */
   private static class FurnitureTableColumnModel extends DefaultTableColumnModel {
+    private static final ResourceURLContent GROUP_ICON_CONTENT = 
+        new ResourceURLContent(FurnitureTable.class, "resources/groupIcon.png");
+    
     private Map<HomePieceOfFurniture.SortableProperty, TableColumn> availableColumns;
 
     public FurnitureTableColumnModel(Home home, UserPreferences preferences) {
@@ -791,6 +796,7 @@ public class FurnitureTable extends JTable implements View, Printable {
      */
     private TableCellRenderer getNameWithIconRenderer() {
       return new DefaultTableCellRenderer() { 
+
         @Override
         public Component getTableCellRendererComponent(JTable table, 
              Object value, boolean isSelected, boolean hasFocus, 
@@ -798,7 +804,12 @@ public class FurnitureTable extends JTable implements View, Printable {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
           JLabel label = (JLabel)super.getTableCellRendererComponent(
             table, piece.getName(), isSelected, hasFocus, row, column); 
-          Content iconContent = piece.getIcon(); 
+          Content iconContent;
+          if (piece instanceof HomeFurnitureGroup) {
+            iconContent = GROUP_ICON_CONTENT;
+          } else {
+            iconContent = piece.getIcon();
+          }
           label.setIcon(IconManager.getInstance().getIcon(
               iconContent, table.getRowHeight(), table)); 
           return label;

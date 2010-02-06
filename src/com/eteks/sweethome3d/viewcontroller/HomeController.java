@@ -56,6 +56,7 @@ import com.eteks.sweethome3d.model.HomeApplication;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeLight;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeRecorder;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
@@ -620,11 +621,13 @@ public class HomeController implements Controller {
     boolean homeSelectionContainsDeletableFurniture = false;
     boolean homeSelectionContainsOneCopiableItemOrMore = false;
     boolean homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = false;
+    boolean homeSelectionContainsFurnitureGroup = false;
     boolean homeSelectionContainsWalls = false;
     boolean homeSelectionContainsRooms = false;
     boolean homeSelectionContainsOneWall = false;
     boolean homeSelectionContainsOneLabel = false;
     boolean homeSelectionContainsItemsWithText = false;
+    FurnitureController furnitureController = getFurnitureController();
     if (!modificationState) {
       for (Selectable item : selectedItems) {
         if (getPlanController().isItemDeletable(item)) {
@@ -635,14 +638,20 @@ public class HomeController implements Controller {
       List<HomePieceOfFurniture> selectedFurniture = Home.getFurnitureSubList(selectedItems);
       homeSelectionContainsFurniture = !selectedFurniture.isEmpty();
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        if (getFurnitureController().isPieceOfFurnitureDeletable(piece)) {
+        if (furnitureController.isPieceOfFurnitureDeletable(piece)) {
           homeSelectionContainsDeletableFurniture = true;
+          break;
+        }
+      }
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        if (piece instanceof HomeFurnitureGroup) {
+          homeSelectionContainsFurnitureGroup = true;
           break;
         }
       }
       int movablePiecesOfFurnitureCount = 0;
       for (HomePieceOfFurniture piece : selectedFurniture) {
-        if (getFurnitureController().isPieceOfFurnitureMovable(piece)) {
+        if (furnitureController.isPieceOfFurnitureMovable(piece)) {
           movablePiecesOfFurnitureCount++;
           if (movablePiecesOfFurnitureCount >= 2) {
             homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore = true;
@@ -680,7 +689,7 @@ public class HomeController implements Controller {
           break;
         }
       }
-    } else if (this.focusedView == getFurnitureController().getView()) {
+    } else if (this.focusedView == furnitureController.getView()) {
       view.setEnabled(HomeView.ActionType.COPY, homeSelectionContainsFurniture);
       view.setEnabled(HomeView.ActionType.CUT, homeSelectionContainsDeletableFurniture);
       view.setEnabled(HomeView.ActionType.DELETE, homeSelectionContainsDeletableFurniture);
@@ -702,14 +711,14 @@ public class HomeController implements Controller {
         (catalogSelectionContainsFurniture
             && this.focusedView == getFurnitureCatalogController().getView())
         || (homeSelectionContainsDeletableItems 
-            && (this.focusedView == getFurnitureController().getView()
+            && (this.focusedView == furnitureController.getView()
                 || this.focusedView == getPlanController().getView()
                 || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomeView.ActionType.MODIFY_FURNITURE,
         (catalogSelectionContainsOneModifiablePiece
              && this.focusedView == getFurnitureCatalogController().getView())
         || (homeSelectionContainsFurniture 
-             && (this.focusedView == getFurnitureController().getView()
+             && (this.focusedView == furnitureController.getView()
                  || this.focusedView == getPlanController().getView()
                  || this.focusedView == getHomeController3D().getView())));
     view.setEnabled(HomeView.ActionType.MODIFY_WALL,
@@ -738,6 +747,10 @@ public class HomeController implements Controller {
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
     view.setEnabled(HomeView.ActionType.ALIGN_FURNITURE_ON_RIGHT,
         homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.GROUP_FURNITURE,
+        homeSelectionContainsTwoMovablePiecesOfFurnitureOrMore);
+    view.setEnabled(HomeView.ActionType.UNGROUP_FURNITURE,
+        homeSelectionContainsFurnitureGroup);
   }
 
   /**
@@ -900,7 +913,7 @@ public class HomeController implements Controller {
       getFurnitureController().modifySelectedFurniture();
     }    
   }
-
+  
   /**
    * Imports furniture to the catalog or home depending on the focused view.  
    */

@@ -32,6 +32,7 @@ import javax.swing.undo.UndoableEdit;
 import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -117,7 +118,7 @@ public class FurnitureController implements Controller {
         toArray(new HomePieceOfFurniture [furniture.size()]);
     // Get indices of furniture added to home
     final int [] furnitureIndex = new int [furniture.size()];
-    int endIndex = home.getFurniture().size();
+    int endIndex = this.home.getFurniture().size();
     boolean basePlanLocked = oldBasePlanLocked;
     for (int i = 0; i < furnitureIndex.length; i++) {
       furnitureIndex [i] = endIndex++; 
@@ -394,7 +395,166 @@ public class FurnitureController implements Controller {
           this.viewFactory, this.undoSupport).displayView(getView());
     }
   }
-  
+
+  /**
+   * Groups the selected furniture as one piece of furniture.
+   */
+  public void groupSelectedFurniture() {
+    List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
+    if (!selectedFurniture.isEmpty()) {
+      final boolean basePlanLocked = this.home.isBasePlanLocked();
+      final List<Selectable> oldSelection = this.home.getSelectedItems();
+      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+      // Sort the grouped furniture in the ascending order of their index in home
+      Map<Integer, HomePieceOfFurniture> sortedMap = 
+          new TreeMap<Integer, HomePieceOfFurniture>(); 
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+          sortedMap.put(homeFurniture.indexOf(piece), piece);
+      }
+      final HomePieceOfFurniture [] groupPieces = sortedMap.values().
+          toArray(new HomePieceOfFurniture [sortedMap.size()]); 
+      final int [] groupPiecesIndex = new int [groupPieces.length];
+      int i = 0;
+      for (int index : sortedMap.keySet()) {
+        groupPiecesIndex [i++] = index; 
+      }
+
+      String furnitureGroupName = this.preferences.getLocalizedString(
+          FurnitureController.class, "groupName", getFurnitureGroupCount(homeFurniture) + 1);
+      final HomeFurnitureGroup furnitureGroup = new HomeFurnitureGroup(selectedFurniture, furnitureGroupName);
+      final int furnitureGroupIndex = homeFurniture.size() - groupPieces.length;
+      
+      doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
+          new int [] {furnitureGroupIndex}, basePlanLocked);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+            @Override
+            public void undo() throws CannotUndoException {
+              super.undo();
+              doUngroupFurniture(groupPieces, groupPiecesIndex, 
+                  new HomeFurnitureGroup [] {furnitureGroup}, basePlanLocked);
+              home.setSelectedItems(oldSelection);
+            }
+            
+            @Override
+            public void redo() throws CannotRedoException {
+              super.redo();
+              doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
+                  new int [] {furnitureGroupIndex}, basePlanLocked);
+            }
+            
+            @Override
+            public String getPresentationName() {
+              return preferences.getLocalizedString(FurnitureController.class, "undoGroupName");
+            }
+          };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
+  /**
+   * Returns the count of furniture groups among the given list.
+   */
+  private int getFurnitureGroupCount(List<HomePieceOfFurniture> furniture) {
+    int i = 0;
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece instanceof HomeFurnitureGroup) {
+        i += 1 + getFurnitureGroupCount(((HomeFurnitureGroup)piece).getFurniture());
+      }
+    }
+    return i;
+  }
+
+  private void doGroupFurniture(HomePieceOfFurniture [] groupPieces,
+                                HomeFurnitureGroup [] furnitureGroups,
+                                int [] furnitureGroupsIndex,
+                                boolean basePlanLocked) {
+    doDeleteFurniture(groupPieces, basePlanLocked);
+    doAddFurniture(furnitureGroups, furnitureGroupsIndex, basePlanLocked);
+  }
+
+  private void doUngroupFurniture(HomePieceOfFurniture [] groupPieces,
+                                  int [] groupPiecesIndex,
+                                  HomeFurnitureGroup [] furnitureGroups,
+                                  boolean basePlanLocked) {
+    doDeleteFurniture(furnitureGroups, basePlanLocked);
+    doAddFurniture(groupPieces, groupPiecesIndex, basePlanLocked);
+  }
+
+  /**
+   * Ungroups the selected groups of furniture.
+   */
+  public void ungroupSelectedFurniture() {
+    List<HomeFurnitureGroup> movableSelectedFurnitureGroups = new ArrayList<HomeFurnitureGroup>(); 
+    for (Selectable item : this.home.getSelectedItems()) {
+      if (item instanceof HomeFurnitureGroup) {
+        HomeFurnitureGroup group = (HomeFurnitureGroup)item;
+        if (isPieceOfFurnitureMovable(group)) {
+          movableSelectedFurnitureGroups.add(group);
+        }
+      }
+    }  
+    if (!movableSelectedFurnitureGroups.isEmpty()) {
+      final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
+      final List<Selectable> oldSelection = this.home.getSelectedItems();
+      List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
+      // Sort the groups in the ascending order of their index in home
+      Map<Integer, HomeFurnitureGroup> sortedMap = 
+          new TreeMap<Integer, HomeFurnitureGroup>(); 
+      for (HomeFurnitureGroup group : movableSelectedFurnitureGroups) {
+          sortedMap.put(homeFurniture.indexOf(group), group);
+      }
+      final HomeFurnitureGroup [] furnitureGroups = sortedMap.values().
+          toArray(new HomeFurnitureGroup [sortedMap.size()]); 
+      final int [] furnitureGroupsIndex = new int [furnitureGroups.length];
+      int i = 0;
+      for (int index : sortedMap.keySet()) {
+        furnitureGroupsIndex [i++] = index; 
+      }
+
+      List<HomePieceOfFurniture> groupPiecesList = new ArrayList<HomePieceOfFurniture>();
+      for (HomeFurnitureGroup furnitureGroup : furnitureGroups) {
+        groupPiecesList.addAll(furnitureGroup.getFurniture());
+      }
+      final HomePieceOfFurniture [] groupPieces = 
+          groupPiecesList.toArray(new HomePieceOfFurniture [groupPiecesList.size()]);      
+      final int [] groupPiecesIndex = new int [groupPieces.length];
+      int endIndex = homeFurniture.size() - furnitureGroups.length;
+      boolean basePlanLocked = oldBasePlanLocked;
+      for (i = 0; i < groupPieces.length; i++) {
+        groupPiecesIndex [i] = endIndex++; 
+        // Unlock base plan if the piece is a part of it
+        basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(groupPieces [i]);
+      }  
+      final boolean newBasePlanLocked = basePlanLocked;
+
+      doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, newBasePlanLocked);
+      if (this.undoSupport != null) {
+        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+            @Override
+            public void undo() throws CannotUndoException {
+              super.undo();
+              doGroupFurniture(groupPieces, furnitureGroups, furnitureGroupsIndex, oldBasePlanLocked);
+              home.setSelectedItems(oldSelection);
+            }
+            
+            @Override
+            public void redo() throws CannotRedoException {
+              super.redo();
+              doUngroupFurniture(groupPieces, groupPiecesIndex, furnitureGroups, newBasePlanLocked);
+            }
+            
+            @Override
+            public String getPresentationName() {
+              return preferences.getLocalizedString(FurnitureController.class, "undoUngroupName");
+            }
+          };
+        this.undoSupport.postEdit(undoableEdit);
+      }
+    }
+  }
+
   /**
    * Displays the wizard that helps to import furniture to home. 
    */

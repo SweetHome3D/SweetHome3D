@@ -39,6 +39,7 @@ import javax.vecmath.Vector3f;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.sun.j3d.utils.geometry.Box;
 
@@ -70,7 +71,13 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     // Allow to read branch transform child
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     
-    createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelLoadingEnd);
+    if (piece instanceof HomeFurnitureGroup) {
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        addChild(new HomePieceOfFurniture3D(groupPiece, home, ignoreDrawingMode, waitModelLoadingEnd));
+      }
+    } else {
+      createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelLoadingEnd);
+    }
   }
 
   /**
@@ -121,10 +128,18 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   @Override
   public void update() {
-    updatePieceOfFurnitureTransform();
-    updatePieceOfFurnitureColor();      
-    updatePieceOfFurnitureVisibility();      
-    updatePieceOfFurnitureModelMirrored();
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    if (piece instanceof HomeFurnitureGroup) {
+      Enumeration<?> enumeration = getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        ((HomePieceOfFurniture3D)enumeration.nextElement()).update();
+      }
+    } else {
+      updatePieceOfFurnitureTransform();
+      updatePieceOfFurnitureColor();      
+      updatePieceOfFurnitureVisibility();      
+      updatePieceOfFurnitureModelMirrored();
+    }
   }
 
   /**

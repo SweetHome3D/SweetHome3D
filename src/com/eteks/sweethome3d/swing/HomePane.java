@@ -135,6 +135,7 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
@@ -329,6 +330,10 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnLeft");
     createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, 
         furnitureController, "alignSelectedFurnitureOnRight");
+    createAction(ActionType.GROUP_FURNITURE, preferences, 
+        furnitureController, "groupSelectedFurniture");
+    createAction(ActionType.UNGROUP_FURNITURE, preferences, 
+        furnitureController, "ungroupSelectedFurniture");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, preferences, 
@@ -707,6 +712,9 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
+    furnitureMenu.addSeparator();
+    addActionToMenu(ActionType.GROUP_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.UNGROUP_FURNITURE, furnitureMenu);
     furnitureMenu.addSeparator();
     furnitureMenu.add(createFurnitureSortMenu(home, preferences));
     furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
@@ -1756,6 +1764,9 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.MODIFY_FURNITURE, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
+    addActionToPopupMenu(ActionType.GROUP_FURNITURE, furnitureViewPopup);
+    addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, furnitureViewPopup);
+    furnitureViewPopup.addSeparator();
     furnitureViewPopup.add(createFurnitureSortMenu(home, preferences));
     furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
     furnitureViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
@@ -2637,7 +2648,7 @@ public class HomePane extends JRootPane implements HomeView {
   private Rectangle2D getExportedHomeBounds() {
     // Compute bounds that include walls and furniture
     Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
+    for (HomePieceOfFurniture piece : getVisibleFurniture(this.home.getFurniture())) {
       if (piece.isVisible()) {
         for (float [] point : piece.getPoints()) {
           if (homeBounds == null) {
@@ -2651,6 +2662,23 @@ public class HomePane extends JRootPane implements HomeView {
     return updateObjectsBounds(homeBounds, this.home.getRooms());
   }
   
+  /**
+   * Returns all the visible pieces in the given <code>furniture</code>.  
+   */
+  private List<HomePieceOfFurniture> getVisibleFurniture(List<HomePieceOfFurniture> furniture) {
+    List<HomePieceOfFurniture> visibleFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece.isVisible()) {
+        if (piece instanceof HomeFurnitureGroup) {
+          visibleFurniture.addAll(getVisibleFurniture(((HomeFurnitureGroup)piece).getFurniture()));
+        } else {
+          visibleFurniture.add(piece);
+        }
+      }
+    }
+    return visibleFurniture;
+  }
+
   /**
    * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
    */

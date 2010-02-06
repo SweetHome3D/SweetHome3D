@@ -44,7 +44,7 @@ public class Home implements Serializable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 2200;
+  public static final long CURRENT_VERSION = 2300;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   
@@ -96,6 +96,9 @@ public class Home implements Serializable {
   // The following field is a temporary copy of furniture containing HomeDoorOrWindow instances
   // created at serialization time for backward compatibility reasons
   private List<HomePieceOfFurniture>                  furnitureWithDoorsAndWindows;
+  // The following field is a temporary copy of furniture containing HomeFurnitureGroup instances
+  // created at serialization time for backward compatibility reasons
+  private List<HomePieceOfFurniture>                  furnitureWithGroups;
 
   /**
    * Creates a home with no furniture, no walls, 
@@ -174,6 +177,13 @@ public class Home implements Serializable {
         this.furnitureWithDoorsAndWindows = null;
       }
 
+      // Restore referenced HomeFurnitureGroup instances stored in a separate field 
+      // for backward compatibility reasons
+      if (this.furnitureWithGroups != null) {
+        this.furniture = this.furnitureWithGroups;
+        this.furnitureWithGroups = null;
+      }
+
       // Restore environment fields from home fields for compatibility reasons
       this.environment.setGroundColor(this.groundColor);
       this.environment.setGroundTexture(this.groundTexture);
@@ -250,20 +260,39 @@ public class Home implements Serializable {
         }
       }
     
-      // Store referenced HomeDoorOrWindow instances in a separate field 
+      // Store referenced HomeFurnitureGroup instances in a separate field 
+      // for backward compatibility reasons (version < 2.3)
+      this.furnitureWithGroups = this.furniture;
+      // Serialize a furnitureWithDoorsAndWindows field that contains only 
+      // HomePieceOfFurniture, HomeDoorOrWindow and HomeLight instances
       // for backward compatibility reasons (version < 1.7)
-      this.furnitureWithDoorsAndWindows = this.furniture;
+      this.furnitureWithDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
       // Serialize a furniture field that contains only HomePieceOfFurniture instances
       this.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
-      for (HomePieceOfFurniture piece : this.furnitureWithDoorsAndWindows) {
+      for (HomePieceOfFurniture piece : this.furnitureWithGroups) {
         if (piece.getClass() == HomePieceOfFurniture.class) {
+          this.furnitureWithDoorsAndWindows.add(piece);
           this.furniture.add(piece);
         } else {
-          // Create backward compatible instances
-          this.furniture.add(new HomePieceOfFurniture(piece));
+          if (piece.getClass() == HomeFurnitureGroup.class) {
+            // Add the ungrouped pieces to furniture and furnitureWithDoorsAndWindows list 
+            for (HomePieceOfFurniture groupPiece : getGroupFurniture((HomeFurnitureGroup)piece)) {
+              this.furnitureWithDoorsAndWindows.add(groupPiece);
+              if (groupPiece.getClass() == HomePieceOfFurniture.class) {
+                this.furniture.add(groupPiece);
+              } else {
+                // Create backward compatible instances
+                this.furniture.add(new HomePieceOfFurniture(groupPiece));
+              }
+            }            
+          } else {
+            this.furnitureWithDoorsAndWindows.add(piece);
+            // Create backward compatible instances
+            this.furniture.add(new HomePieceOfFurniture(piece));
+          }
         }
       }
-
+      
       // Store environment fields in home fields for compatibility reasons
       this.groundColor = this.environment.getGroundColor();
       this.groundTexture = this.environment.getGroundTexture();
@@ -310,6 +339,21 @@ public class Home implements Serializable {
       default :
         return false;
     }
+  }
+
+  /**
+   * Returns all the pieces of the given <code>furnitureGroup</code>.  
+   */
+  private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
+    List<HomePieceOfFurniture> groupFurniture = new ArrayList<HomePieceOfFurniture>();
+    for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
+      if (piece instanceof HomeFurnitureGroup) {
+        groupFurniture.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
+      } else {
+        groupFurniture.add(piece);
+      }
+    }
+    return groupFurniture;
   }
   
   /**

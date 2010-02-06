@@ -426,7 +426,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   public void setDepth(float depth) {
-    if (this.resizable) {
+    if (isResizable()) {
       if (depth != this.depth) {
         float oldDepth = this.depth;
         this.depth = depth;
@@ -451,7 +451,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   public void setHeight(float height) {
-    if (this.resizable) {
+    if (isResizable()) {
       if (height != this.height) {
         float oldHeight = this.height;
         this.height = height;
@@ -476,7 +476,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   public void setWidth(float width) {
-    if (this.resizable) {
+    if (isResizable()) {
       if (width != this.width) {
         float oldWidth = this.width;
         this.width = width;
@@ -704,7 +704,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * @throws IllegalStateException if this piece of furniture isn't resizable
    */
   public void setModelMirrored(boolean modelMirrored) {
-    if (this.resizable) {
+    if (isResizable()) {
       if (modelMirrored != this.modelMirrored) {
         this.modelMirrored = modelMirrored;
         this.propertyChangeSupport.firePropertyChange(Property.MODEL_MIRRORED.name(), 
@@ -839,12 +839,12 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
     if (this.shapeCache == null) {
       // Create the rectangle that matches piece bounds
       Rectangle2D pieceRectangle = new Rectangle2D.Float(
-          this.x - this.width / 2,
-          this.y - this.depth / 2,
-          this.width, this.depth);
+          getX() - getWidth() / 2,
+          getY() - getDepth() / 2,
+          getWidth(), getDepth());
       // Apply rotation to the rectangle
       AffineTransform rotation = new AffineTransform();
-      rotation.setToRotation(this.angle, this.x, this.y);
+      rotation.setToRotation(getAngle(), getX(), getY());
       PathIterator it = pieceRectangle.getPathIterator(rotation);
       GeneralPath pieceShape = new GeneralPath();
       pieceShape.append(it, false);

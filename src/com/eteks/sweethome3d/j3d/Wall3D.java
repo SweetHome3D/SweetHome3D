@@ -45,6 +45,7 @@ import javax.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Wall;
@@ -204,9 +205,8 @@ public class Wall3D extends Object3DBranch {
     
     // Search which doors or windows intersect with this wall side
     Map<HomePieceOfFurniture, Area> windowIntersections = new HashMap<HomePieceOfFurniture, Area>();
-    for (HomePieceOfFurniture piece : this.home.getFurniture()) {
-      if (piece.isDoorOrWindow() 
-          && piece.getElevation() < maxWallHeight) {
+    for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(this.home.getFurniture())) {
+      if (piece.getElevation() < maxWallHeight) {
         Shape pieceShape = getShape(piece.getPoints());
         Area pieceArea = new Area(pieceShape);
         Area intersectionArea = new Area(wallShape);
@@ -302,6 +302,23 @@ public class Wall3D extends Object3DBranch {
     return wallGeometries.toArray(new Geometry [wallGeometries.size()]);
   }
   
+  /**
+   * Returns all the visible doors and windows in the given <code>furniture</code>.  
+   */
+  private List<HomePieceOfFurniture> getVisibleDoorsAndWindows(List<HomePieceOfFurniture> furniture) {
+    List<HomePieceOfFurniture> visibleDoorsAndWindows = new ArrayList<HomePieceOfFurniture>(furniture.size());
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece.isVisible()) {
+        if (piece instanceof HomeFurnitureGroup) {
+          visibleDoorsAndWindows.addAll(getVisibleDoorsAndWindows(((HomeFurnitureGroup)piece).getFurniture()));
+        } else if (piece.isDoorOrWindow()) {
+          visibleDoorsAndWindows.add(piece);
+        }
+      }
+    }
+    return visibleDoorsAndWindows;
+  }
+
   /**
    * Returns the points of one of the side of this wall. 
    */

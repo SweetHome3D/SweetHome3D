@@ -82,6 +82,7 @@ import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -159,6 +160,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
@@ -464,7 +466,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         public void propertyChange(PropertyChangeEvent ev) {
           if (furnitureTopViewIconsCache != null
               && HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
-            furnitureTopViewIconsCache.remove(ev.getSource());
+            for (HomePieceOfFurniture piece : getFurnitureWithoutGroups((HomePieceOfFurniture)ev.getSource())) {
+              furnitureTopViewIconsCache.remove(piece);
+            }
             repaint();
           } else if (HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())) {
             sortedHomeFurniture = null;
@@ -634,6 +638,21 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         new UserPreferencesChangeListener(this));
     preferences.addPropertyChangeListener(UserPreferences.Property.WALL_PATTERN, 
         new UserPreferencesChangeListener(this));
+  }
+
+  /**
+   * Returns all the pieces depending on the given <code>piece</code> that are not groups.  
+   */
+  private List<HomePieceOfFurniture> getFurnitureWithoutGroups(HomePieceOfFurniture piece) {
+    if (piece instanceof HomeFurnitureGroup) {
+      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
+      for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
+        pieces.addAll(getFurnitureWithoutGroups(groupPiece));
+      }
+      return pieces;
+    } else {
+      return Arrays.asList(new HomePieceOfFurniture [] {piece});
+    }
   }
 
   /**
@@ -1097,7 +1116,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the bounds of the given collection of <code>items</code>.
    */
-  private Rectangle2D getItemsBounds(Graphics g, Collection<Selectable> items) {
+  private Rectangle2D getItemsBounds(Graphics g, Collection<? extends Selectable> items) {
     Rectangle2D itemsBounds = null;
     for (Selectable item : items) {
       if (itemsBounds == null) {
@@ -1173,6 +1192,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         for (Sash sash : doorOrWindow.getSashes()) {
           itemBounds.add(getDoorOrWindowSashShape(doorOrWindow, sash).getBounds2D());
         }
+      } else if (item instanceof HomeFurnitureGroup) {
+        itemBounds.add(getItemsBounds(g, ((HomeFurnitureGroup)item).getFurniture()));
       }
       // Add to bounds the displayed name of the piece of furniture 
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
@@ -2306,7 +2327,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints home furniture.
    */
   private void paintFurniture(Graphics2D g2D, List<HomePieceOfFurniture> furniture, 
-                              List<Selectable> selectedItems, float planScale, 
+                              List<? extends Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, 
                               Color furnitureOutlineColor,
                               PaintMode paintMode, boolean paintIcon) {    
@@ -2320,9 +2341,18 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       for (HomePieceOfFurniture piece : furniture) {
         if (piece.isVisible()) {
           boolean selectedPiece = selectedItems.contains(piece);
-          // In clipboard paint mode, paint piece only if it is selected
-          if (paintMode != PaintMode.CLIPBOARD
-              || selectedPiece) {
+          if (piece instanceof HomeFurnitureGroup) {
+            List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getFurniture();
+            List<Selectable> emptyList = Collections.emptyList();
+            paintFurniture(g2D, groupFurniture,  
+                selectedPiece 
+                    ? groupFurniture 
+                    : emptyList, 
+                planScale, backgroundColor, foregroundColor, 
+                furnitureOutlineColor, paintMode, paintIcon);
+          } else if (paintMode != PaintMode.CLIPBOARD
+                    || selectedPiece) {
+            // In clipboard paint mode, paint piece only if it is selected
             Shape pieceShape = getShape(piece.getPoints());
             Shape pieceShape2D;
             if (piece instanceof HomeDoorOrWindow) {
@@ -2442,18 +2472,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints home furniture visible name.
    */
   private void paintFurnitureName(Graphics2D g2D, List<HomePieceOfFurniture> furniture,
-                                  List<Selectable> selectedItems, float planScale, 
+                                  List<? extends Selectable> selectedItems, float planScale, 
                                   Color foregroundColor, PaintMode paintMode) {
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
     // Draw furniture name
     for (HomePieceOfFurniture piece : furniture) {
-      if (piece.isVisible()
-          && piece.isNameVisible()) {
+      if (piece.isVisible()) {
         boolean selectedPiece = selectedItems.contains(piece);
-        // In clipboard paint mode, paint piece only if it is selected
-        if (paintMode != PaintMode.CLIPBOARD
-            || selectedPiece) {
+        if (piece instanceof HomeFurnitureGroup) {
+          List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)piece).getFurniture();
+          List<Selectable> emptyList = Collections.emptyList();
+          paintFurnitureName(g2D, groupFurniture, 
+               selectedPiece 
+                   ? groupFurniture 
+                   : emptyList, 
+               planScale, foregroundColor, paintMode);
+        } 
+        if (piece.isNameVisible()
+            && (paintMode != PaintMode.CLIPBOARD
+                || selectedPiece)) {
+          // In clipboard paint mode, paint piece only if it is selected
           String name = piece.getName().trim();
           if (name.length() > 0) {
             float xName = piece.getX() + piece.getNameXOffset(); 
