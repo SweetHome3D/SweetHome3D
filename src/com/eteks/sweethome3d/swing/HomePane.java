@@ -320,8 +320,10 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(ActionType.DELETE_HOME_FURNITURE, preferences,
         furnitureController, "deleteSelection");
     createAction(ActionType.MODIFY_FURNITURE, preferences, controller, "modifySelectedFurniture");
-    createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
-    createAction(ActionType.IMPORT_FURNITURE_LIBRARY, preferences, controller, "importFurnitureLibrary");
+    createAction(ActionType.GROUP_FURNITURE, preferences, 
+        furnitureController, "groupSelectedFurniture");
+    createAction(ActionType.UNGROUP_FURNITURE, preferences, 
+        furnitureController, "ungroupSelectedFurniture");
     createAction(ActionType.ALIGN_FURNITURE_ON_TOP, preferences, 
         furnitureController, "alignSelectedFurnitureOnTop");
     createAction(ActionType.ALIGN_FURNITURE_ON_BOTTOM, preferences, 
@@ -330,10 +332,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnLeft");
     createAction(ActionType.ALIGN_FURNITURE_ON_RIGHT, preferences, 
         furnitureController, "alignSelectedFurnitureOnRight");
-    createAction(ActionType.GROUP_FURNITURE, preferences, 
-        furnitureController, "groupSelectedFurniture");
-    createAction(ActionType.UNGROUP_FURNITURE, preferences, 
-        furnitureController, "ungroupSelectedFurniture");
+    createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
+    createAction(ActionType.IMPORT_FURNITURE_LIBRARY, preferences, controller, "importFurnitureLibrary");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, preferences, 
@@ -704,17 +704,16 @@ public class HomePane extends JRootPane implements HomeView {
     JMenu furnitureMenu = new JMenu(this.menuActionMap.get(MenuActionType.FURNITURE_MENU));
     addActionToMenu(ActionType.ADD_HOME_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.MODIFY_FURNITURE, furnitureMenu);
-    furnitureMenu.addSeparator();
-    addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
-    addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
+    addActionToMenu(ActionType.GROUP_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.UNGROUP_FURNITURE, furnitureMenu);
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_TOP, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_BOTTOM, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_LEFT, furnitureMenu);
     addActionToMenu(ActionType.ALIGN_FURNITURE_ON_RIGHT, furnitureMenu);
     furnitureMenu.addSeparator();
-    addActionToMenu(ActionType.GROUP_FURNITURE, furnitureMenu);
-    addActionToMenu(ActionType.UNGROUP_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
+    addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
     furnitureMenu.addSeparator();
     furnitureMenu.add(createFurnitureSortMenu(home, preferences));
     furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
@@ -1763,7 +1762,6 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.SELECT_ALL, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.MODIFY_FURNITURE, furnitureViewPopup);
-    furnitureViewPopup.addSeparator();
     addActionToPopupMenu(ActionType.GROUP_FURNITURE, furnitureViewPopup);
     addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, furnitureViewPopup);
     furnitureViewPopup.addSeparator();
@@ -1843,6 +1841,8 @@ public class HomePane extends JRootPane implements HomeView {
       planViewPopup.add(lockUnlockBasePlanMenuItem);
     }
     addActionToPopupMenu(ActionType.MODIFY_FURNITURE, planViewPopup);
+    addActionToPopupMenu(ActionType.GROUP_FURNITURE, planViewPopup);
+    addActionToPopupMenu(ActionType.UNGROUP_FURNITURE, planViewPopup);
     addActionToPopupMenu(ActionType.MODIFY_WALL, planViewPopup);
     addActionToPopupMenu(ActionType.REVERSE_WALL_DIRECTION, planViewPopup);
     addActionToPopupMenu(ActionType.SPLIT_WALL, planViewPopup);
