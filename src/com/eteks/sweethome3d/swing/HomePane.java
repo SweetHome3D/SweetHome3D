@@ -199,6 +199,7 @@ public class HomePane extends JRootPane implements HomeView {
   private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
   private final JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
   private JComponent                            focusedComponent;
+  private PlanController.Mode                   previousPlanControllerMode;
   private TransferHandler                       catalogTransferHandler;
   private TransferHandler                       furnitureTransferHandler;
   private TransferHandler                       planTransferHandler;
@@ -285,7 +286,9 @@ public class HomePane extends JRootPane implements HomeView {
 
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
     // Change component orientation
-    applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));  
+    applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+    // Retrieve default plan controller mode
+    this.previousPlanControllerMode = controller.getPlanController().getMode();
   }
 
   /**
@@ -2911,7 +2914,6 @@ public class HomePane extends JRootPane implements HomeView {
   private class FocusableViewListener implements FocusListener {
     private HomeController      controller;
     private JComponent          feedbackComponent;
-    private PlanController.Mode previousMode;
     private KeyListener         specialKeysListener = new KeyAdapter() {
         public void keyPressed(KeyEvent ev) {
           // Temporarily toggle plan controller mode to panning mode when space bar is pressed  
@@ -2922,7 +2924,7 @@ public class HomePane extends JRootPane implements HomeView {
               && planController.getMode() != PlanController.Mode.PANNING
               && !planController.isModificationState()
               && SwingUtilities.getRootPane(focusedComponent) == HomePane.this) {
-            previousMode = planController.getMode();
+            previousPlanControllerMode = planController.getMode();
             planController.setMode(PlanController.Mode.PANNING);
             ev.consume();
           }
@@ -2930,9 +2932,9 @@ public class HomePane extends JRootPane implements HomeView {
       
         public void keyReleased(KeyEvent ev) {
           if (ev.getKeyCode() == KeyEvent.VK_SPACE 
-              && previousMode != null) {
-            controller.getPlanController().setMode(previousMode);
-            previousMode = null;
+              && previousPlanControllerMode != null) {
+            controller.getPlanController().setMode(previousPlanControllerMode);
+            previousPlanControllerMode = null;
             ev.consume();
           }
         }
@@ -2985,8 +2987,11 @@ public class HomePane extends JRootPane implements HomeView {
         this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
       }
       focusedComponent.removeKeyListener(this.specialKeysListener);
-      if (previousMode != null) {
-        controller.getPlanController().setMode(previousMode);
+      if (previousPlanControllerMode != null
+          && (ev.getComponent() == controller.getPlanController().getView()
+             || ev.getOppositeComponent() == null)) {
+        controller.getPlanController().setMode(previousPlanControllerMode);
+        previousPlanControllerMode = null;
       }
     }
   }
