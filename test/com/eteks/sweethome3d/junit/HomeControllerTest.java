@@ -21,6 +21,9 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,11 +38,13 @@ import javax.swing.JTable;
 import junit.framework.TestCase;
 
 import com.eteks.sweethome3d.io.DefaultUserPreferences;
+import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
-import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.LengthUnit;
+import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.swing.FurnitureCatalogTree;
@@ -317,6 +322,122 @@ public class HomeControllerTest extends TestCase {
   }
   
   /**
+   * Tests furniture group / ungroup.
+   */
+  public void testFurnitureGroup() {
+    assertGroupActionsEnabled(false, false);
+    
+    // 1. Add the first two pieces of catalog first category to home
+    FurnitureCategory firstCategory = this.preferences.getFurnitureCatalog().getCategories().get(0);
+    List<CatalogPieceOfFurniture> catalogPieces = Arrays.asList(new CatalogPieceOfFurniture [] {
+        firstCategory.getFurniture().get(0), firstCategory.getFurniture().get(1)});
+    this.homeController.getFurnitureCatalogController().setSelectedFurniture(catalogPieces);
+    runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
+    List<HomePieceOfFurniture> pieces = this.home.getFurniture();
+    // Check home contains two selected pieces
+    assertEquals("Home doesn't contain 2 pieces", 2, pieces.size());
+    assertEquals("Home doesn't contain 2 selected items", 2, this.home.getSelectedItems().size());
+    assertGroupActionsEnabled(true, false);
+    HomePieceOfFurniture piece1 = pieces.get(0);
+    HomePieceOfFurniture piece2 = pieces.get(1);
+    piece2.move(100, 100);
+    piece2.setElevation(100);
+    
+    // 2. Group selected furniture
+    runAction(HomePane.ActionType.GROUP_FURNITURE);
+    // Check home contains one selected piece that replaced added pieces
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 1 piece", 1, pieces.size());
+    assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
+    assertFalse("Home still contains first added piece", pieces.contains(piece1));
+    assertFalse("Home still contains scond added piece", pieces.contains(piece2));
+    assertGroupActionsEnabled(false, true);
+    HomeFurnitureGroup group = (HomeFurnitureGroup)pieces.get(0);
+    // Compare surrounding rectangles
+    Rectangle2D piecesRectangle = getSurroundingRectangle(piece1);
+    piecesRectangle.add(getSurroundingRectangle(piece2));
+    Rectangle2D groupRectangle = getSurroundingRectangle(group);
+    assertEquals("Surrounding rectangle is incorrect", piecesRectangle, groupRectangle);
+    // Compare elevation and height
+    assertEquals("Wrong elevation", Math.min(piece1.getElevation(), piece2.getElevation()), group.getElevation());
+    assertEquals("Wrong height", 
+        Math.max(piece1.getElevation() + piece1.getHeight(), piece2.getElevation() + piece2.getHeight()) 
+        - Math.min(piece1.getElevation(), piece2.getElevation()), group.getHeight());
+    
+    // 3. Rotate group
+    float angle = (float)(Math.PI / 2);
+    group.setAngle(angle);
+    // Check pieces rotation
+    assertEquals("Piece angle is wrong", angle, piece1.getAngle());
+    assertEquals("Piece angle is wrong", angle, piece2.getAngle());
+    assertEquals("Group angle is wrong", angle, group.getAngle());
+    // Check surrounding rectangles
+    Rectangle2D rotatedGroupRectangle = new GeneralPath(groupRectangle).createTransformedShape(
+        AffineTransform.getRotateInstance(angle, groupRectangle.getCenterX(), groupRectangle.getCenterY())).getBounds2D();
+    groupRectangle = getSurroundingRectangle(group);
+    assertEquals("Surrounding rectangle is incorrect", rotatedGroupRectangle, groupRectangle);
+    piecesRectangle = getSurroundingRectangle(piece1);
+    piecesRectangle.add(getSurroundingRectangle(piece2));
+    assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getWidth(), groupRectangle.getWidth());
+    assertEquals("Surrounding rectangle is incorrect", piecesRectangle.getHeight(), groupRectangle.getHeight());
+    
+    // 4. Undo / Redo
+    assertActionsEnabled(true, true, true, false);
+    runAction(HomePane.ActionType.UNDO);
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 2 pieces", 2, pieces.size());
+    assertEquals("Home doesn't contain 2 selected items", 2, this.home.getSelectedItems().size());
+    assertFalse("Home contains group", pieces.contains(group));
+    assertGroupActionsEnabled(true, false);
+
+    assertActionsEnabled(true, true, true, true);
+    runAction(HomePane.ActionType.REDO);
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 1 piece", 1, pieces.size());
+    assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
+    assertTrue("Home doesn't contain group", pieces.contains(group));
+    assertGroupActionsEnabled(false, true);
+    
+    // 5. Add one more piece to home
+    catalogPieces = Arrays.asList(new CatalogPieceOfFurniture [] {firstCategory.getFurniture().get(0)});
+    this.homeController.getFurnitureCatalogController().setSelectedFurniture(catalogPieces);
+    runAction(HomePane.ActionType.ADD_HOME_FURNITURE);
+    pieces = this.home.getFurniture();
+    // Check home contains two pieces with one selected
+    assertEquals("Home doesn't contain 2 pieces", 2, pieces.size());
+    assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
+    assertGroupActionsEnabled(false, false);
+    
+    // 6. Group it with the other group
+    HomePieceOfFurniture piece3 = pieces.get(1);
+    this.home.setSelectedItems(Arrays.asList(new Selectable [] {group, piece3}));
+    assertEquals("Home doesn't contain 2 selected items", 2, this.home.getSelectedItems().size());
+    assertGroupActionsEnabled(true, true);
+    runAction(HomePane.ActionType.GROUP_FURNITURE);
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 1 piece", 1, pieces.size());
+    assertEquals("Home doesn't contain 1 selected item", 1, this.home.getSelectedItems().size());
+    HomeFurnitureGroup group2 = (HomeFurnitureGroup)pieces.get(0);
+    assertFalse("Home doesn't contain a different group", group == group2);
+    assertGroupActionsEnabled(false, true);
+    
+    // 7. Ungroup furniture
+    runAction(HomePane.ActionType.UNGROUP_FURNITURE);
+    assertGroupActionsEnabled(true, true);
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 2 piece", 2, pieces.size());
+    assertEquals("Home doesn't contain 2 selected item", 2, this.home.getSelectedItems().size());
+    assertFalse("Home contains second group", pieces.contains(group2));
+    assertTrue("Home doesn't contain group", pieces.contains(group));
+    runAction(HomePane.ActionType.UNGROUP_FURNITURE);
+    assertGroupActionsEnabled(true, false);
+    pieces = this.home.getFurniture();
+    assertEquals("Home doesn't contain 3 piece", 3, pieces.size());
+    assertEquals("Home doesn't contain 2 selected item", 2, this.home.getSelectedItems().size());
+    assertFalse("Home contains group", pieces.contains(group));
+  }
+    
+  /**
    * Runs <code>actionPerformed</code> method matching <code>actionType</code> 
    * in <code>HomePane</code>. 
    */
@@ -349,6 +470,17 @@ public class HomeControllerTest extends TestCase {
         getAction(HomePane.ActionType.UNDO).isEnabled() == undoActionEnabled);
     assertTrue("Redo action invalid state", 
         getAction(HomePane.ActionType.REDO).isEnabled() == redoActionEnabled);
+  }
+  
+  /**
+   * Asserts GROUP_FURNITURE, UNGROUP_FURNITURE are enabled or disabled. 
+   */
+  private void assertGroupActionsEnabled(boolean groupActionEnabled, 
+                                         boolean ungroupActionEnabled) {
+    assertTrue("Group action invalid state", 
+        getAction(HomePane.ActionType.GROUP_FURNITURE).isEnabled() == groupActionEnabled);
+    assertTrue("Ungroup action invalid state", 
+        getAction(HomePane.ActionType.UNGROUP_FURNITURE).isEnabled() == ungroupActionEnabled);
   }
   
   /**
@@ -422,6 +554,18 @@ public class HomeControllerTest extends TestCase {
     }    
   }
 
+  /**
+   * Returns the rectangle surrounding the given <code>piece</code>.
+   */
+  private Rectangle2D getSurroundingRectangle(HomePieceOfFurniture piece) {
+    float [][] points = piece.getPoints();
+    Rectangle2D rectangle = new Rectangle2D.Float(points [0][0], points [0][1], 0, 0);
+    for (int i = 1; i < points.length; i++) {
+      rectangle.add(points [i][0], points [i][1]);
+    }
+    return rectangle;
+  }
+  
   public static void main(String [] args) {
     ViewFactory viewFactory = new SwingViewFactory();
     UserPreferences preferences = new DefaultUserPreferences();
