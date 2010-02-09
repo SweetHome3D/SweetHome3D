@@ -22,10 +22,8 @@ package com.eteks.sweethome3d.applet;
 import java.applet.AppletContext;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.FocusTraversalPolicy;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -35,7 +33,6 @@ import java.beans.PropertyChangeListener;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.jnlp.BasicService;
@@ -160,41 +157,6 @@ public class AppletApplication extends HomeApplication {
                 // Change applet content 
                 applet.setContentPane((JComponent)controller.getView());
                 applet.getRootPane().revalidate();
-                
-                if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-                  // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-                  final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-                      (JComponent)controller.getFurnitureCatalogController().getView(),
-                      (JComponent)controller.getFurnitureController().getView(),
-                      (JComponent)controller.getPlanController().getView(),
-                      (JComponent)controller.getHomeController3D().getView()});      
-                  applet.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-                      @Override
-                      public Component getComponentAfter(Container container, Component component) {
-                        return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
-                      }
-                
-                      @Override
-                      public Component getComponentBefore(Container container, Component component) {
-                        return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
-                      }
-                
-                      @Override
-                      public Component getDefaultComponent(Container container) {
-                        return focusableComponents.get(0);
-                      }
-                
-                      @Override
-                      public Component getFirstComponent(Container container) {
-                        return focusableComponents.get(0);
-                      }
-                
-                      @Override
-                      public Component getLastComponent(Container container) {
-                        return focusableComponents.get(focusableComponents.size() - 1);
-                      }
-                    });
-                }
 
                 // Open specified home at launch time if it exits
                 if (this.firstHome) {

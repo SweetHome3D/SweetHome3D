@@ -21,10 +21,8 @@ package com.eteks.sweethome3d;
 
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.FocusTraversalPolicy;
 import java.awt.Insets;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -34,15 +32,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JRootPane;
-import javax.swing.SwingUtilities;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -106,53 +101,6 @@ public class HomeFramePane extends JRootPane implements View {
     homeFrame.setIconImage(new ImageIcon(
         HomeFramePane.class.getResource("resources/frameIcon.png")).getImage());
     updateFrameTitle(homeFrame, this.home, this.application);
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-      HomeController homeController = this.controller.getHomeController();
-      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          (JComponent)homeController.getFurnitureCatalogController().getView(),
-          (JComponent)homeController.getFurnitureController().getView(),
-          (JComponent)homeController.getPlanController().getView(),
-          (JComponent)homeController.getHomeController3D().getView()});      
-      homeFrame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-          @Override
-          public Component getComponentAfter(Container container, Component component) {
-            int index = focusableComponents.indexOf(component);
-            Component nextComponent;
-            do {
-              index = (index + 1) % focusableComponents.size();
-              nextComponent = focusableComponents.get(index);
-            } while (nextComponent != component && SwingUtilities.getRootPane(nextComponent) != controller.getHomeController().getView());
-            return nextComponent;
-          }
-    
-          @Override
-          public Component getComponentBefore(Container container, Component component) {
-            int index = focusableComponents.indexOf(component);
-            Component previousComponent;
-            do {
-              index = (index + focusableComponents.size() - 1) % focusableComponents.size();
-              previousComponent = focusableComponents.get(index);
-            } while (previousComponent != component && SwingUtilities.getRootPane(previousComponent) != controller.getHomeController().getView());
-            return previousComponent;
-          }
-    
-          @Override
-          public Component getDefaultComponent(Container container) {
-            return getComponentAfter(container, focusableComponents.get(focusableComponents.size() - 1));
-          }
-    
-          @Override
-          public Component getFirstComponent(Container container) {
-            return getDefaultComponent(container);
-          }
-    
-          @Override
-          public Component getLastComponent(Container container) {
-            return getComponentBefore(container, focusableComponents.get(0));
-          }
-        });
-    }
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));    
     // Compute frame size and location

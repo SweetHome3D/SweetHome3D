@@ -20,9 +20,6 @@
  */
 package com.eteks.sweethome3d.junit;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.FocusTraversalPolicy;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -33,8 +30,6 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.swing.Action;
 import javax.swing.JComponent;
@@ -55,7 +50,6 @@ import com.eteks.sweethome3d.swing.HomePane;
 import com.eteks.sweethome3d.swing.HomeTransferableList;
 import com.eteks.sweethome3d.swing.PlanComponent;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
-import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
@@ -80,40 +74,6 @@ public class TransferHandlerTest extends ComponentTestFixture {
 
     // 1. Create a frame that displays a home view 
     JFrame frame = new JFrame("Home TransferHandler Test");    
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      // Force focus traversal policy to ensure dividers and components of this kind won't get focus 
-      final List<JComponent> focusableComponents = Arrays.asList(new JComponent [] {
-          (JComponent)controller.getFurnitureCatalogController().getView(),
-          (JComponent)controller.getFurnitureController().getView(),
-          (JComponent)controller.getPlanController().getView(),
-          (JComponent)controller.getHomeController3D().getView()});      
-      frame.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-          @Override
-          public Component getComponentAfter(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) + 1) % focusableComponents.size());
-          }
-    
-          @Override
-          public Component getComponentBefore(Container container, Component component) {
-            return focusableComponents.get((focusableComponents.indexOf(component) - 1) % focusableComponents.size());
-          }
-    
-          @Override
-          public Component getDefaultComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getFirstComponent(Container container) {
-            return focusableComponents.get(0);
-          }
-    
-          @Override
-          public Component getLastComponent(Container container) {
-            return focusableComponents.get(focusableComponents.size() - 1);
-          }
-        });
-    }
     frame.add(homeView);
     frame.pack();
     // Ensure clipboard is empty
