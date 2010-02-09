@@ -124,7 +124,7 @@ import com.sun.j3d.utils.universe.Viewer;
 import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
- * A component that displays home walls and furniture with Java 3D. 
+ * A component that displays home walls, rooms and furniture with Java 3D. 
  * @author Emmanuel Puybaret
  */
 public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable {
@@ -758,7 +758,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         /**
-         * Retargets to the first overlapping component able to manage the the given event 
+         * Retargets to the first overlapping component able to manage the given event 
          * and returns <code>true</code> if a component consumed the event 
          * or needs to be repainted (meaning its state changed).
          * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
