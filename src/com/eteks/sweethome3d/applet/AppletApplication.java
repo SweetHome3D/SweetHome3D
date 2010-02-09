@@ -406,6 +406,9 @@ public class AppletApplication extends HomeApplication {
         new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.SELECT));
     selectToggleButton.setSelected(true);
     toolBar.add(selectToggleButton);
+    final JToggleButton panToggleButton = 
+        new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.PAN));
+    toolBar.add(panToggleButton);
     final JToggleButton createWallsToggleButton = 
         new JToggleButton(getToolBarAction(homeView, HomeView.ActionType.CREATE_WALLS));
     toolBar.add(createWallsToggleButton);
@@ -421,6 +424,7 @@ public class AppletApplication extends HomeApplication {
     // Add Select, Create Walls and Create dimensions buttons to radio group 
     ButtonGroup group = new ButtonGroup();
     group.add(selectToggleButton);
+    group.add(panToggleButton);
     group.add(createWallsToggleButton);
     group.add(createRoomsToggleButton);
     group.add(createDimensionLinesToggleButton);
@@ -430,6 +434,7 @@ public class AppletApplication extends HomeApplication {
           public void propertyChange(PropertyChangeEvent ev) {
             PlanController.Mode mode = controller.getPlanController().getMode();
             selectToggleButton.setSelected(mode == PlanController.Mode.SELECTION);
+            panToggleButton.setSelected(mode == PlanController.Mode.PANNING);
             createWallsToggleButton.setSelected(mode == PlanController.Mode.WALL_CREATION);
             createRoomsToggleButton.setSelected(mode == PlanController.Mode.ROOM_CREATION);
             createDimensionLinesToggleButton.setSelected(mode == PlanController.Mode.DIMENSION_LINE_CREATION);
