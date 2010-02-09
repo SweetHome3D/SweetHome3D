@@ -108,6 +108,7 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
@@ -1604,21 +1605,23 @@ public class HomePane extends JRootPane implements HomeView {
    * Enables or disables transfer between components.  
    */
   public void setTransferEnabled(boolean enabled) {
+    JComponent catalogView = (JComponent)this.controller.getFurnitureCatalogController().getView();
+    JComponent furnitureView = (JComponent)this.controller.getFurnitureController().getView();
+    JComponent planView = (JComponent)this.controller.getPlanController().getView();
     if (enabled) {
-      ((JComponent)this.controller.getFurnitureCatalogController().getView()).
-          setTransferHandler(this.catalogTransferHandler);
-      ((JComponent)this.controller.getFurnitureController().getView()).
-          setTransferHandler(this.furnitureTransferHandler);
-      ((JComponent)this.controller.getPlanController().getView()).
-          setTransferHandler(this.planTransferHandler);
-      ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
-          setTransferHandler(this.furnitureTransferHandler);
+      catalogView.setTransferHandler(this.catalogTransferHandler);
+      furnitureView.setTransferHandler(this.furnitureTransferHandler);
+      if (furnitureView instanceof Scrollable) {
+        ((JViewport)furnitureView.getParent()).setTransferHandler(this.furnitureTransferHandler);
+      }
+      planView.setTransferHandler(this.planTransferHandler);
     } else {
-      ((JComponent)this.controller.getFurnitureCatalogController().getView()).setTransferHandler(null);
-      ((JComponent)this.controller.getFurnitureController().getView()).setTransferHandler(null);
-      ((JComponent)this.controller.getPlanController().getView()).setTransferHandler(null);
-      ((JViewport)((JComponent)this.controller.getFurnitureController().getView()).getParent()).
-          setTransferHandler(null);
+      catalogView.setTransferHandler(null);
+      furnitureView.setTransferHandler(null);
+      if (furnitureView instanceof Scrollable) {
+        ((JViewport)furnitureView.getParent()).setTransferHandler(null);
+      }
+      planView.setTransferHandler(null);
     }
   }
 
@@ -1696,10 +1699,6 @@ public class HomePane extends JRootPane implements HomeView {
                                                 UserPreferences preferences,
                                                 final HomeController controller) {
     JComponent catalogView = (JComponent)controller.getFurnitureCatalogController().getView();
-    JScrollPane catalogScrollPane = new HomeScrollPane(catalogView);
-    // Add focus listener to catalog tree
-    catalogView.addFocusListener(new FocusableViewListener(
-        controller, catalogScrollPane));
     
     // Create catalog view popup menu
     JPopupMenu catalogViewPopup = new JPopupMenu();
@@ -1715,8 +1714,7 @@ public class HomePane extends JRootPane implements HomeView {
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
     // Configure furniture view
-    final JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();
-    JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
+    JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();
     // Set default traversal keys of furniture view
     KeyboardFocusManager focusManager =
         KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -1729,29 +1727,6 @@ public class HomePane extends JRootPane implements HomeView {
         focusManager.getDefaultFocusTraversalKeys(
             KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
 
-    // Add focus listener to furniture table 
-    furnitureView.addFocusListener(new FocusableViewListener(
-        controller, furnitureScrollPane));
-    // Add a mouse listener that gives focus to furniture view when
-    // user clicks in its viewport
-    final JViewport viewport = furnitureScrollPane.getViewport();
-    viewport.addMouseListener(
-        new MouseAdapter() {
-          @Override
-          public void mouseClicked(MouseEvent ev) {
-            furnitureView.requestFocusInWindow();
-          }
-        });    
-    Integer viewportY = (Integer)home.getVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY);
-    if (viewportY != null) {
-      viewport.setViewPosition(new Point(0, viewportY));
-    }
-    viewport.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          controller.setVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, viewport.getViewPosition().y);
-        }
-      });
-    
     // Create furniture view popup menu
     JPopupMenu furnitureViewPopup = new JPopupMenu();
     addActionToPopupMenu(ActionType.UNDO, furnitureViewPopup);
@@ -1772,11 +1747,47 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
     furnitureViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
-    ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
-    
+
+    JComponent catalogComponent = catalogView;
+    if (catalogView instanceof Scrollable) {
+      catalogComponent = new HomeScrollPane(catalogView);
+    }
+    // Add focus listener to catalog view
+    catalogView.addFocusListener(new FocusableViewListener(controller, catalogComponent));
+
+    JComponent furnitureComponent = furnitureView;
+    if (furnitureView instanceof Scrollable) {
+      JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
+      // Add focus listener to furniture table 
+      furnitureView.addFocusListener(new FocusableViewListener(
+          controller, furnitureScrollPane));
+      // Add a mouse listener that gives focus to furniture view when
+      // user clicks in its viewport (tables don't spread vertically if their row count is too small)
+      final JViewport viewport = furnitureScrollPane.getViewport();
+      viewport.addMouseListener(
+          new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent ev) {
+              viewport.getView().requestFocusInWindow();
+            }
+          });    
+      Integer viewportY = (Integer)home.getVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY);
+      if (viewportY != null) {
+        viewport.setViewPosition(new Point(0, viewportY));
+      }
+      viewport.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            controller.setVisualProperty(FURNITURE_VIEWPORT_Y_VISUAL_PROPERTY, viewport.getViewPosition().y);
+          }
+        });
+      ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
+      furnitureComponent = furnitureScrollPane;
+    }    
+    furnitureView.addFocusListener(new FocusableViewListener(controller, furnitureComponent));
+
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        catalogScrollPane, furnitureScrollPane);
+        catalogComponent, furnitureComponent);
     configureSplitPane(catalogFurniturePane, home, 
         CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
     return catalogFurniturePane;
@@ -1788,31 +1799,6 @@ public class HomePane extends JRootPane implements HomeView {
   private JComponent createPlanView3DPane(final Home home, UserPreferences preferences, 
                                           final HomeController controller) {
     JComponent planView = (JComponent)controller.getPlanController().getView();
-    JScrollPane planScrollPane = new HomeScrollPane(planView);
-    setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
-    JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
-    if (lockUnlockBasePlanButton != null) {
-      planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, 
-          lockUnlockBasePlanButton);
-    }
-    // Add a listener to update rulers visibility in preferences
-    preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
-        new RulersVisibilityChangeListener(this, planScrollPane, controller));
-    planView.addFocusListener(new FocusableViewListener(controller, planScrollPane));
-    // Restore viewport position if it exists
-    final JViewport viewport = planScrollPane.getViewport();
-    Integer viewportX = (Integer)home.getVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
-    Integer viewportY = (Integer)home.getVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY);
-    if (viewportX != null && viewportY != null) {
-      viewport.setViewPosition(new Point(viewportX, viewportY));
-    }
-    viewport.addChangeListener(new ChangeListener() {
-        public void stateChanged(ChangeEvent ev) {
-          Point viewportPosition = viewport.getViewPosition();
-          controller.setVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, viewportPosition.x);
-          controller.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
-        }
-      });
 
     // Create plan view popup menu
     JPopupMenu planViewPopup = new JPopupMenu();
@@ -1874,7 +1860,7 @@ public class HomePane extends JRootPane implements HomeView {
     final JComponent view3D = (JComponent)controller.getHomeController3D().getView();
     view3D.setPreferredSize(planView.getPreferredSize());
     view3D.setMinimumSize(new Dimension(0, 0));
-    view3D.addFocusListener(new FocusableViewListener(controller, view3D));
+    
     // Create 3D view popup menu
     JPopupMenu view3DPopup = new JPopupMenu();
     addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
@@ -1893,9 +1879,45 @@ public class HomePane extends JRootPane implements HomeView {
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
     
+    JComponent planComponent = planView;
+    if (planView instanceof Scrollable) {
+      JScrollPane planScrollPane = new HomeScrollPane(planView);
+      setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
+      JComponent lockUnlockBasePlanButton = createLockUnlockBasePlanButton(home);
+      if (lockUnlockBasePlanButton != null) {
+        planScrollPane.setCorner(JScrollPane.UPPER_LEADING_CORNER, 
+            lockUnlockBasePlanButton);
+      }
+      // Add a listener to update rulers visibility in preferences
+      preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
+          new RulersVisibilityChangeListener(this, planScrollPane, controller));
+      planView.addFocusListener(new FocusableViewListener(controller, planScrollPane));
+      // Restore viewport position if it exists
+      final JViewport viewport = planScrollPane.getViewport();
+      Integer viewportX = (Integer)home.getVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
+      Integer viewportY = (Integer)home.getVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY);
+      if (viewportX != null && viewportY != null) {
+        viewport.setViewPosition(new Point(viewportX, viewportY));
+      }
+      viewport.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            Point viewportPosition = viewport.getViewPosition();
+            controller.setVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY, viewportPosition.x);
+            controller.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
+          }
+        });
+      planComponent = planScrollPane;
+    }
+    planView.addFocusListener(new FocusableViewListener(controller, planComponent));
+
+    JComponent component3D = view3D;
+    if (view3D instanceof Scrollable) {
+      component3D = new HomeScrollPane(planView);
+    }
+    view3D.addFocusListener(new FocusableViewListener(controller, component3D));
+    
     // Create a split pane that displays both components
-    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        planScrollPane, view3D);
+    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planComponent, component3D);
     configureSplitPane(planView3DPane, home, 
         PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
     
