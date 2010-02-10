@@ -316,7 +316,10 @@ public class UserPreferencesPanelTest extends TestCase {
       // Instantiate all views available in Sweet Home 3D 
       HomeController homeController = new HomeController(home, preferences, viewFactory, contentManager);
       homeController.getView();
-      new FurnitureCatalogController(preferences.getFurnitureCatalog(), viewFactory).getView();
+      preferences.setFurnitureCatalogViewedInTree(false);
+      new FurnitureCatalogController(preferences.getFurnitureCatalog(), preferences, viewFactory, contentManager).getView();
+      preferences.setFurnitureCatalogViewedInTree(true);
+      new FurnitureCatalogController(preferences.getFurnitureCatalog(), preferences, viewFactory, contentManager).getView();
       new FurnitureController(home, preferences, viewFactory).getView();
       new PlanController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new HomeController3D(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
