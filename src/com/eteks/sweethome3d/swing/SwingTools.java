@@ -90,10 +90,31 @@ public class SwingTools {
    */
   public static void installFocusBorder(JComponent component) {
     if (unfocusedViewBorder == null) {
+      Border macOSXBorder = new AbstractBorder() {
+          private Insets insets = new Insets(1, 1, 1, 1);
+          
+          public Insets getBorderInsets(Component c) {
+            return this.insets;
+          }
+    
+          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Color previousColor = g.getColor();
+            // Paint a gradient paint around component
+            Rectangle rect = getInteriorRectangle(c, x, y, width, height);
+            g.setColor(Color.GRAY);
+            g.drawLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1);
+            g.drawLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y  + rect.height);
+            g.setColor(Color.LIGHT_GRAY);
+            g.drawLine(rect.x, rect.y  + rect.height, rect.x + rect.width, rect.y  + rect.height);
+            g.drawLine(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y  + rect.height);
+            g.setColor(previousColor);
+          }
+        };
+      
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         unfocusedViewBorder = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 2),
-            BorderFactory.createLineBorder(Color.GRAY));
+            macOSXBorder);
         focusedViewBorder = new AbstractBorder() {
             private Insets insets = new Insets(3, 3, 3, 3);
             
@@ -143,7 +164,7 @@ public class SwingTools {
         if (OperatingSystem.isMacOSX()) {
           unfocusedViewBorder = BorderFactory.createCompoundBorder(
               BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 1),
-              BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+              macOSXBorder);
         } else {
           unfocusedViewBorder = BorderFactory.createCompoundBorder(
               BorderFactory.createEmptyBorder(1, 1, 1, 1), 

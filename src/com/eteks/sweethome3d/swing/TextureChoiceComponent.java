@@ -447,6 +447,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       add(new JScrollPane(this.availableTexturesList), new GridBagConstraints(
           0, 1, 1, 2, 1, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 5, 15), 50, 0));
+      SwingTools.installFocusBorder(this.availableTexturesList);
       add(this.texturePreviewLabel, new GridBagConstraints(
           1, 1, 1, 1, 0, 0, GridBagConstraints.NORTH,
           GridBagConstraints.NONE, new Insets(0, 0, 10, 0), 0, 0));
