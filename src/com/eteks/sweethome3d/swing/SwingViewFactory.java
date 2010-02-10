@@ -67,7 +67,7 @@ public class SwingViewFactory implements ViewFactory {
   public View createFurnitureCatalogView(FurnitureCatalog catalog,
                                          UserPreferences preferences,
                                          FurnitureCatalogController furnitureCatalogController) {
-    if (preferences.isFurnitureCatalogViewedInTree()) {
+    if (preferences == null || preferences.isFurnitureCatalogViewedInTree()) {
       return new FurnitureCatalogTree(catalog, preferences, furnitureCatalogController);
     } else {
       return new FurnitureCatalogListPanel(catalog, preferences, furnitureCatalogController);
