@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -387,8 +388,8 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         }
       };
     this.listSelectionListener = new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent ev) {
-          // Updates selected furniture in catalog from selected nodes in tree. 
+        public void valueChanged(ListSelectionEvent ev) {          
+          // Updates selected furniture in catalog from selected nodes in tree.
           controller.removeSelectionListener(modelSelectionListener);
           controller.setSelectedFurniture(getSelectedFurniture());
           controller.addSelectionListener(modelSelectionListener);
@@ -409,21 +410,25 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     }
     
     this.catalogFurnitureList.clearSelection();
-    ListModel model = this.catalogFurnitureList.getModel();
-    List<Integer> selectedIndices = new ArrayList<Integer>();
-    for (CatalogPieceOfFurniture piece : controller.getSelectedFurniture()) {
-      for (int i = 0, n = model.getSize(); i < n; i++) {
-        if (piece == model.getElementAt(i)) {
-          selectedIndices.add(i);
-          break;          
+    List<CatalogPieceOfFurniture> selectedFurniture = controller.getSelectedFurniture();
+    if (selectedFurniture.size() > 0) {
+      ListModel model = this.catalogFurnitureList.getModel();
+      List<Integer> selectedIndices = new ArrayList<Integer>();
+      for (CatalogPieceOfFurniture piece : selectedFurniture) {
+        for (int i = 0, n = model.getSize(); i < n; i++) {
+          if (piece == model.getElementAt(i)) {
+            selectedIndices.add(i);
+            break;          
+          }
         }
       }
+      int [] indices = new int [selectedIndices.size()];
+      for (int i = 0; i < indices.length; i++) {
+        indices [i] = selectedIndices.get(i);
+      }
+      this.catalogFurnitureList.setSelectedIndices(indices);
+      this.catalogFurnitureList.ensureIndexIsVisible(indices [0]);
     }
-    int [] indices = new int [selectedIndices.size()];
-    for (int i = 0; i < indices.length; i++) {
-      indices [i] = selectedIndices.get(i);
-    }
-    this.catalogFurnitureList.setSelectedIndices(indices);
     
     if (this.listSelectionListener != null) {
       this.catalogFurnitureList.getSelectionModel().addListSelectionListener(this.listSelectionListener);
@@ -461,12 +466,15 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    */
   private static class CatalogCellRenderer extends DefaultListCellRenderer {
     private static final int DEFAULT_ICON_HEIGHT = 48;
+    private Font defaultFont;
+    private Font modifiablePieceFont;
     
     {
       setHorizontalTextPosition(JLabel.CENTER);
       setVerticalTextPosition(JLabel.BOTTOM);
-      setFont(UIManager.getFont("ToolTip.font"));
       setHorizontalAlignment(JLabel.CENTER);
+      this.defaultFont = UIManager.getFont("ToolTip.font");
+      this.modifiablePieceFont = new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
     }
     
     @Override
@@ -481,6 +489,8 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           value, index, isSelected, cellHasFocus);
       label.setText(" " + piece.getName() + " ");
       label.setIcon(getLabelIcon(list, piece.getIcon()));
+      label.setFont(piece.isModifiable() 
+          ? this.modifiablePieceFont : this.defaultFont);
       return label;
     }
 
@@ -525,7 +535,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     }
 
     public void setFilterText(String filterText) {
-      this.filterNamePattern = Pattern.compile(".*" + filterText + ".*", Pattern.UNICODE_CASE);
+      this.filterNamePattern = Pattern.compile(".*" + filterText + ".*", Pattern.CASE_INSENSITIVE);
       updateFurnitureList();
     }
 
