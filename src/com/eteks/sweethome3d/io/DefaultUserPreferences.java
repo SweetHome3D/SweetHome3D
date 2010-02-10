@@ -52,6 +52,8 @@ public class DefaultUserPreferences extends UserPreferences {
     PatternsCatalog patternsCatalog = new PatternsCatalog(patterns);
     setPatternsCatalog(patternsCatalog);
     // Read other preferences from resource bundle
+    setFurnitureCatalogViewedInTree(Boolean.parseBoolean(
+        getLocalizedString(DefaultUserPreferences.class, "furnitureCatalogViewedInTree")));
     setUnit(LengthUnit.valueOf(getLocalizedString(DefaultUserPreferences.class, "unit").toUpperCase()));
     setRulersVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "rulersVisible")));
     setGridVisible(Boolean.parseBoolean(getLocalizedString(DefaultUserPreferences.class, "gridVisible")));

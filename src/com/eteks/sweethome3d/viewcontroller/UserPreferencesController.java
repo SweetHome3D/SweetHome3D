@@ -36,7 +36,7 @@ public class UserPreferencesController implements Controller {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
       FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,  
-      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT}
+      NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, FURNITURE_CATALOG_VIEWED_IN_TREE}
   
   private final UserPreferences         preferences;
   private final ViewFactory             viewFactory;
@@ -45,6 +45,7 @@ public class UserPreferencesController implements Controller {
 
   private String                        language;
   private LengthUnit                    unit;
+  private boolean                       furnitureCatalogViewedInTree;
   private boolean                       magnetismEnabled;
   private boolean                       rulersVisible;
   private boolean                       gridVisible;
@@ -105,6 +106,7 @@ public class UserPreferencesController implements Controller {
   protected void updateProperties() {
     setLanguage(this.preferences.getLanguage());
     setUnit(this.preferences.getLengthUnit());
+    setFurnitureCatalogViewedInTree(this.preferences.isFurnitureCatalogViewedInTree());
     setMagnetismEnabled(this.preferences.isMagnetismEnabled());
     setGridVisible(this.preferences.isGridVisible());
     setRulersVisible(this.preferences.isRulersVisible());
@@ -161,6 +163,24 @@ public class UserPreferencesController implements Controller {
     return this.unit;
   }
 
+  /**
+   * Sets whether furniture catalog shouldn't viewed in a tree or viewed a different way.
+   */
+  public void setFurnitureCatalogViewedInTree(boolean furnitureCatalogViewedInTree) {
+    if (this.furnitureCatalogViewedInTree != furnitureCatalogViewedInTree) {
+      this.furnitureCatalogViewedInTree = furnitureCatalogViewedInTree;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_CATALOG_VIEWED_IN_TREE.name(), 
+          !furnitureCatalogViewedInTree, furnitureCatalogViewedInTree);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if furniture catalog shouldn't viewed in a tree.
+   */
+  public boolean isFurnitureCatalogViewedInTree() {
+    return this.furnitureCatalogViewedInTree;
+  }
+  
   /**
    * Sets whether magnetism is enabled or not.
    */
@@ -310,6 +330,7 @@ public class UserPreferencesController implements Controller {
   public void modifyUserPreferences() {
     this.preferences.setLanguage(getLanguage());
     this.preferences.setUnit(getUnit());
+    this.preferences.setFurnitureCatalogViewedInTree(isFurnitureCatalogViewedInTree());
     this.preferences.setMagnetismEnabled(isMagnetismEnabled());
     this.preferences.setRulersVisible(isRulersVisible());
     this.preferences.setGridVisible(isGridVisible());

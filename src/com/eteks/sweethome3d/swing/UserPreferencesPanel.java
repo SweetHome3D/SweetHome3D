@@ -75,6 +75,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   private JRadioButton   inchRadioButton;
   private JRadioButton   millimeterRadioButton;
   private JRadioButton   meterRadioButton;
+  private JLabel         furnitureCatalogViewLabel;
+  private JRadioButton   treeRadioButton;
+  private JRadioButton   listRadioButton;
   private JLabel         magnetismEnabledLabel;
   private JCheckBox      magnetismCheckBox;
   private JLabel         rulersVisibleLabel;
@@ -209,6 +212,35 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
           });
     }
     
+    if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_CATALOG_VIEWED_IN_TREE)) {
+      // Create furniture appearance label and radio buttons bound to controller FURNITURE_CATALOG_VIEWED_IN_TREE property
+      this.furnitureCatalogViewLabel = new JLabel(preferences.getLocalizedString(
+          UserPreferencesPanel.class, "furnitureCatalogViewLabel.text"));
+      this.treeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "treeRadioButton.text"), 
+          controller.isFurnitureCatalogViewedInTree());
+      this.listRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+          UserPreferencesPanel.class, "listRadioButton.text"), 
+          !controller.isFurnitureCatalogViewedInTree());
+      ButtonGroup furnitureCatalogViewButtonGroup = new ButtonGroup();
+      furnitureCatalogViewButtonGroup.add(this.treeRadioButton);
+      furnitureCatalogViewButtonGroup.add(this.listRadioButton);
+  
+      ItemListener furnitureCatalogViewChangeListener = new ItemListener() {
+          public void itemStateChanged(ItemEvent ev) {
+            controller.setFurnitureCatalogViewedInTree(treeRadioButton.isSelected());
+          }
+        };
+      this.treeRadioButton.addItemListener(furnitureCatalogViewChangeListener);
+      this.listRadioButton.addItemListener(furnitureCatalogViewChangeListener);
+      controller.addPropertyChangeListener(UserPreferencesController.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              treeRadioButton.setSelected(controller.isFurnitureCatalogViewedInTree());
+            }
+          });
+    }
+
     if (controller.isPropertyEditable(UserPreferencesController.Property.MAGNETISM_ENABLED)) {
       // Create magnetism label and check box bound to controller MAGNETISM_ENABLED property
       this.magnetismEnabledLabel = new JLabel(preferences.getLocalizedString(
@@ -451,6 +483,12 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         this.meterRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "meterRadioButton.mnemonic")).getKeyCode());
       }
+      if (this.furnitureCatalogViewLabel != null) {
+        this.treeRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "treeRadioButton.mnemonic")).getKeyCode());
+        this.listRadioButton.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+            UserPreferencesPanel.class, "listRadioButton.mnemonic")).getKeyCode());
+      }
       if (this.magnetismEnabledLabel != null) {
         this.magnetismCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
             UserPreferencesPanel.class, "magnetismCheckBox.mnemonic")).getKeyCode());
@@ -501,7 +539,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
     Insets labelInsets = new Insets(0, 0, 5, 5);
+    Insets labelInsetsWithSpace = new Insets(0, 0, 10, 5);
     Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    Insets rightComponentInsetsWithSpace = new Insets(0, 0, 10, 0);
     if (this.languageLabel != null) {
       // First row
       add(this.languageLabel, new GridBagConstraints(
@@ -525,87 +565,99 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
       // Third row
       add(this.millimeterRadioButton, new GridBagConstraints(
           1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
+          GridBagConstraints.NONE, labelInsetsWithSpace, 0, 0));
       add(this.meterRadioButton, new GridBagConstraints(
           2, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
+          GridBagConstraints.NONE, rightComponentInsetsWithSpace, 0, 0));
+    }
+    if (this.furnitureCatalogViewLabel != null) {
+      // Fourth row
+      add(this.furnitureCatalogViewLabel, new GridBagConstraints(
+          0, 3, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsetsWithSpace, 0, 0));
+      add(this.treeRadioButton, new GridBagConstraints(
+          1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsetsWithSpace, 0, 0));
+      add(this.listRadioButton, new GridBagConstraints(
+          2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsetsWithSpace, 0, 0));
     }
     if (this.magnetismEnabledLabel != null) {
-      // Fourth row
-      add(this.magnetismEnabledLabel, new GridBagConstraints(
-          0, 3, 1, 1, 0, 0, labelAlignment, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.magnetismCheckBox, new GridBagConstraints(
-          1, 3, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    }
-    if (this.rulersVisibleLabel != null) {
       // Fifth row
-      add(this.rulersVisibleLabel, new GridBagConstraints(
+      add(this.magnetismEnabledLabel, new GridBagConstraints(
           0, 4, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.rulersCheckBox, new GridBagConstraints(
+      add(this.magnetismCheckBox, new GridBagConstraints(
           1, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
-    if (this.gridVisibleLabel != null) {
+    if (this.rulersVisibleLabel != null) {
       // Sixth row
-      add(this.gridVisibleLabel, new GridBagConstraints(
+      add(this.rulersVisibleLabel, new GridBagConstraints(
           0, 5, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.gridCheckBox, new GridBagConstraints(
+      add(this.rulersCheckBox, new GridBagConstraints(
           1, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
-    if (this.furnitureIconLabel != null) {
+    if (this.gridVisibleLabel != null) {
       // Seventh row
-      add(this.furnitureIconLabel, new GridBagConstraints(
+      add(this.gridVisibleLabel, new GridBagConstraints(
           0, 6, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.catalogIconRadioButton, new GridBagConstraints(
-          1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.topViewRadioButton, new GridBagConstraints(
-          2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+      add(this.gridCheckBox, new GridBagConstraints(
+          1, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
-    if (this.roomRenderingLabel != null) {
+    if (this.furnitureIconLabel != null) {
       // Eighth row
-      add(this.roomRenderingLabel, new GridBagConstraints(
+      add(this.furnitureIconLabel, new GridBagConstraints(
           0, 7, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.monochromeRadioButton, new GridBagConstraints(
+      add(this.catalogIconRadioButton, new GridBagConstraints(
           1, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
-      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+      add(this.topViewRadioButton, new GridBagConstraints(
           2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets , 0, 0));
     }
-    if (this.wallPatternLabel != null) {
+    if (this.roomRenderingLabel != null) {
       // Ninth row
-      add(this.wallPatternLabel, new GridBagConstraints(
+      add(this.roomRenderingLabel, new GridBagConstraints(
           0, 8, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.monochromeRadioButton, new GridBagConstraints(
+          1, 8, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
+      add(this.floorColorOrTextureRadioButton, new GridBagConstraints(
+          2, 8, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, rightComponentInsets , 0, 0));
+    }
+    if (this.wallPatternLabel != null) {
+      // Tenth row
+      add(this.wallPatternLabel, new GridBagConstraints(
+          0, 9, 1, 1, 0, 0, labelAlignment, 
+          GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.wallPatternComboBox, new GridBagConstraints(
-          1, 8, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 9, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.NONE, rightComponentInsets, 0, 0));
     }
     if (this.newWallThicknessLabel != null) {
-      // Tenth row
+      // Eleventh row
       add(this.newWallThicknessLabel, new GridBagConstraints(
-          0, 9, 1, 1, 0, 0, labelAlignment, 
+          0, 10, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.newWallThicknessSpinner, new GridBagConstraints(
-          1, 9, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     if (this.newWallHeightLabel != null) {
-      // Eleventh row
+      // Twelfth  row
       add(this.newWallHeightLabel, new GridBagConstraints(
-          0, 10, 1, 1, 0, 0, labelAlignment, 
+          0, 11, 1, 1, 0, 0, labelAlignment, 
           GridBagConstraints.NONE, labelInsets, 0, 0));
       add(this.newWallHeightSpinner, new GridBagConstraints(
-          1, 10, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          1, 11, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
           GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
     }
     // Last row
@@ -613,7 +665,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
         && this.resetDisplayedActionTipsButton.getText().length() > 0) {
       // Display reset button only if its text isn't empty 
       add(this.resetDisplayedActionTipsButton, new GridBagConstraints(
-          0, 11, 3, 1, 0, 0, GridBagConstraints.CENTER, 
+          0, 12, 3, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     }
   }

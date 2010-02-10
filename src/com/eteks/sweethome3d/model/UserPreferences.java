@@ -45,7 +45,8 @@ public abstract class UserPreferences {
    */
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
-                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP}
+                        NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
+                        FURNITURE_CATALOG_VIEWED_IN_TREE}
   
   private static final String [] SUPPORTED_LANGUAGES; 
 
@@ -68,6 +69,7 @@ public abstract class UserPreferences {
   private String           language;
   private String           currency;
   private LengthUnit       unit;
+  private boolean          furnitureCatalogViewedInTree = true;
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
@@ -77,8 +79,6 @@ public abstract class UserPreferences {
   private float            newWallThickness;
   private float            newWallHeight;
   private List<String>     recentHomes;
-
-
 
   public UserPreferences() {
     this.propertyChangeSupport = new PropertyChangeSupport(this);
@@ -194,6 +194,18 @@ public abstract class UserPreferences {
     return this.unit;
   }
   
+  /**
+   * Changes the unit currently in use, and notifies listeners of this change. 
+   * @param unit one of the values of Unit.
+   */
+  public void setUnit(LengthUnit unit) {
+    if (this.unit != unit) {
+      LengthUnit oldUnit = this.unit;
+      this.unit = unit;
+      this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
+    }
+  }
+
   /**
    * Returns the preferred language to display information, noted with an ISO 639 code
    * that may be followed by an underscore and an ISO 3166 code. 
@@ -355,19 +367,27 @@ public abstract class UserPreferences {
   protected void setCurrency(String currency) {
     this.currency = currency;
   }
-
+    
   /**
-   * Changes the unit currently in use, and notifies listeners of this change. 
-   * @param unit one of the values of Unit.
+   * Returns <code>true</code> if furniture catalog shouldn't viewed in a tree.
+   * @since 2.3
    */
-  public void setUnit(LengthUnit unit) {
-    if (this.unit != unit) {
-      LengthUnit oldUnit = this.unit;
-      this.unit = unit;
-      this.propertyChangeSupport.firePropertyChange(Property.UNIT.name(), oldUnit, unit);
+  public boolean isFurnitureCatalogViewedInTree() {
+    return this.furnitureCatalogViewedInTree;
+  }
+  
+  /**
+   * Sets whether furniture catalog shouldn't viewed in a tree or viewed a different way.
+   * @since 2.3
+   */
+  public void setFurnitureCatalogViewedInTree(boolean furnitureCatalogViewedInTree) {
+    if (this.furnitureCatalogViewedInTree != furnitureCatalogViewedInTree) {
+      this.furnitureCatalogViewedInTree = furnitureCatalogViewedInTree;
+      this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_CATALOG_VIEWED_IN_TREE.name(), 
+          !furnitureCatalogViewedInTree, furnitureCatalogViewedInTree);
     }
   }
-
+  
   /**
    * Returns <code>true</code> if magnetism is enabled.
    * @return <code>true</code> by default.

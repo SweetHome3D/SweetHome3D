@@ -20,13 +20,12 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Graphics;
+import java.awt.FocusTraversalPolicy;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -35,7 +34,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -65,7 +63,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -80,7 +77,6 @@ import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -88,6 +84,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
@@ -108,13 +105,12 @@ import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
 import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.UIManager;
-import javax.swing.border.AbstractBorder;
-import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.ChangeEvent;
@@ -126,6 +122,7 @@ import javax.swing.event.MenuListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
+import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.j3d.Ground3D;
 import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
@@ -271,6 +268,8 @@ public class HomePane extends JRootPane implements HomeView {
     addHomeListener(home);
     addLanguageListener(preferences);
     addPlanControllerListener(controller.getPlanController());
+    addFocusListener();
+    updateFocusTraversalPolicy();
     JMenuBar homeMenuBar = createMenuBar(home, preferences, controller);
     setJMenuBar(homeMenuBar);
     Container contentPane = getContentPane();
@@ -647,6 +646,178 @@ public class HomePane extends JRootPane implements HomeView {
         });
   }
   
+  /**
+   * Adds a focus change listener to report to controller focus changes.  
+   */
+  private void addFocusListener() {
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("currentFocusCycleRoot", 
+        new FocusCycleRootChangeListener(this));    
+  }
+    
+  /**
+   * Property listener bound to this component with a weak reference to avoid
+   * strong link between KeyboardFocusManager and this component.  
+   */
+  private static class FocusCycleRootChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane> homePane;
+    private PropertyChangeListener  focusChangeListener;
+
+    public FocusCycleRootChangeListener(HomePane homePane) {
+      this.homePane = new WeakReference<HomePane>(homePane);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from KeyboardFocusManager
+      final HomePane homePane = this.homePane.get();
+      if (homePane == null) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+            removePropertyChangeListener("currentFocusCycleRoot", this);
+      } else {
+        if (SwingUtilities.isDescendingFrom(homePane, (Component)ev.getOldValue())) {
+          this.focusChangeListener = null;
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", 
+              this.focusChangeListener);
+        } else if (SwingUtilities.isDescendingFrom(homePane, (Component)ev.getNewValue())) {
+          this.focusChangeListener = new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              if (homePane.focusedComponent != null) {
+                // Update component which lost focused 
+                JComponent lostFocusedComponent = homePane.focusedComponent;
+                if (SwingUtilities.isDescendingFrom(lostFocusedComponent, homePane)) {
+                  lostFocusedComponent.removeKeyListener(homePane.specialKeysListener);
+
+                  if (homePane.previousPlanControllerMode != null
+                      && (lostFocusedComponent == homePane.controller.getPlanController().getView()
+                          || ev.getNewValue() == null)) {
+                    homePane.controller.getPlanController().setMode(homePane.previousPlanControllerMode);
+                    homePane.previousPlanControllerMode = null;
+                  }
+                }
+              }
+
+              homePane.focusedComponent = null;
+              
+              if (ev.getNewValue() != null) {
+                // Retrieve component which gained focused 
+                JComponent gainedFocusedComponent = (JComponent)ev.getNewValue(); 
+                // Display a colored border
+                if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, homePane)) {
+                  // Notify controller that active view changed
+                  if (gainedFocusedComponent instanceof View) {
+                    homePane.controller.focusedViewChanged((View)gainedFocusedComponent);
+                  } else {
+                    homePane.controller.focusedViewChanged((View)SwingUtilities.getAncestorOfClass(View.class, gainedFocusedComponent));
+                  }
+                  
+                  gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
+
+                  // Update the component used by clipboard actions
+                  homePane.focusedComponent = (JComponent)gainedFocusedComponent;
+                }
+              }
+            }
+          }; 
+            
+          KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", 
+              this.focusChangeListener);          
+        }
+      }
+    }
+  }
+
+  private KeyListener specialKeysListener = new KeyAdapter() {
+      public void keyPressed(KeyEvent ev) {
+        // Temporarily toggle plan controller mode to panning mode when space bar is pressed  
+        PlanController planController = controller.getPlanController();
+        if (ev.getKeyCode() == KeyEvent.VK_SPACE 
+            && (ev.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK)) == 0
+            && getActionMap().get(ActionType.PAN).getValue(Action.NAME) != null 
+            && planController.getMode() != PlanController.Mode.PANNING
+            && !planController.isModificationState()
+            && SwingUtilities.isDescendingFrom(focusedComponent, HomePane.this)
+            && !isSpaceUsedByComponent(focusedComponent)) {
+          previousPlanControllerMode = planController.getMode();
+          planController.setMode(PlanController.Mode.PANNING);
+          ev.consume();
+        }
+      }
+      
+      private boolean isSpaceUsedByComponent(JComponent component) {
+        return component instanceof JTextComponent
+            || component instanceof JComboBox;
+      }
+    
+      public void keyReleased(KeyEvent ev) {
+        if (ev.getKeyCode() == KeyEvent.VK_SPACE 
+            && previousPlanControllerMode != null) {
+          controller.getPlanController().setMode(previousPlanControllerMode);
+          previousPlanControllerMode = null;
+          ev.consume();
+        }
+      }
+      
+      @Override
+      public void keyTyped(KeyEvent ev) {
+        // This listener manages accelerator keys that may require the use of shift key 
+        // depending on keyboard layout (like + - or ?) 
+        ActionMap actionMap = getActionMap();
+        Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
+                                       actionMap.get(ActionType.ZOOM_OUT), 
+                                       actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
+                                       actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
+                                       actionMap.get(ActionType.HELP)};
+        int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
+        for (Action specialKeyAction : specialKeyActions) {
+          KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
+          if (ev.getKeyChar() == actionKeyStroke.getKeyChar()
+              && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
+              && specialKeyAction.isEnabled()) {
+            specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
+                ActionEvent.ACTION_PERFORMED, (String)specialKeyAction.getValue(Action.ACTION_COMMAND_KEY)));
+            ev.consume();
+          }
+        }
+      }
+    };
+
+  /**
+   * Sets a focus traversal policy that ignores invisible split pane components.
+   */
+  private void updateFocusTraversalPolicy() {
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        @Override
+        protected boolean accept(Component component) {
+          if (super.accept(component)) {
+            for (JSplitPane splitPane; 
+                 (splitPane = (JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, component)) != null; 
+                 component = splitPane) {
+              if (isChildComponentInvisible(splitPane, component)) {
+                return false;                
+              }                
+            }
+            return true;
+          } else {
+            return false;
+          }
+        }
+      });
+    setFocusTraversalPolicyProvider(true);
+  }
+
+  /**
+   * Returns <code>true</code> if the top or the bottom component of the <code>splitPane</code> 
+   * is a parent of the given child component and is too small enough to show it. 
+   */
+  private boolean isChildComponentInvisible(JSplitPane splitPane, Component childComponent) {
+    int dividerLocation = splitPane.getDividerLocation();
+    return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
+           && dividerLocation != -1 
+           && dividerLocation < splitPane.getMinimumDividerLocation())
+        || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
+           && dividerLocation != -1 
+           && dividerLocation > splitPane.getMaximumDividerLocation());
+  }
+
   /**
    * Returns the menu bar displayed in this pane.
    */
@@ -1659,35 +1830,11 @@ public class HomePane extends JRootPane implements HomeView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            if (focusOwner != null && isChildComponentInvisible(focusOwner)) {
-              List<View> splitPanesFocusableViews = Arrays.asList(new View [] {
-                  controller.getFurnitureCatalogController().getView(),
-                  controller.getFurnitureController().getView(),
-                  controller.getPlanController().getView(),
-                  controller.getHomeController3D().getView()});      
-              // Find the first child component that is visible among split panes
-              int focusOwnerIndex = splitPanesFocusableViews.indexOf(focusOwner);
-              for (int i = 1; i < splitPanesFocusableViews.size(); i++) {
-                View focusableView = splitPanesFocusableViews.get(
-                    (focusOwnerIndex + i) % splitPanesFocusableViews.size());
-                if (!isChildComponentInvisible((JComponent)focusableView)) {
-                  ((JComponent)focusableView).requestFocusInWindow();
-                  break;
-                }
-              }
+            if (focusOwner != null && isChildComponentInvisible(splitPane, focusOwner)) {
+              FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicy();
+              focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner).requestFocusInWindow();              
             }
             controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
-          }
-
-          /**
-           * Returns <code>true</code> if the top or the bottom component is a parent 
-           * of the given child component and is too small enough to show it. 
-           */
-          private boolean isChildComponentInvisible(Component childComponent) {
-            return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
-                 && splitPane.getDividerLocation() < splitPane.getMinimumDividerLocation())
-                || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
-                    && splitPane.getDividerLocation() > splitPane.getMaximumDividerLocation());
           }
         });
   }
@@ -1713,19 +1860,17 @@ public class HomePane extends JRootPane implements HomeView {
     catalogViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
+        new FurnitureCatalogViewChangeListener(this, catalogView));
+    
     // Configure furniture view
     JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();
     // Set default traversal keys of furniture view
-    KeyboardFocusManager focusManager =
-        KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    furnitureView.setFocusTraversalKeys(
-        KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-        focusManager.getDefaultFocusTraversalKeys(
-            KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
-    furnitureView.setFocusTraversalKeys(
-        KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-        focusManager.getDefaultFocusTraversalKeys(
-            KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
+    KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    furnitureView.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+        focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+    furnitureView.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+        focusManager.getDefaultFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
 
     // Create furniture view popup menu
     JPopupMenu furnitureViewPopup = new JPopupMenu();
@@ -1748,19 +1893,12 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
 
-    JComponent catalogComponent = catalogView;
     if (catalogView instanceof Scrollable) {
-      catalogComponent = new HomeScrollPane(catalogView);
+      catalogView = new HomeScrollPane(catalogView);
     }
-    // Add focus listener to catalog view
-    catalogView.addFocusListener(new FocusableViewListener(controller, catalogComponent));
 
-    JComponent furnitureComponent = furnitureView;
     if (furnitureView instanceof Scrollable) {
       JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
-      // Add focus listener to furniture table 
-      furnitureView.addFocusListener(new FocusableViewListener(
-          controller, furnitureScrollPane));
       // Add a mouse listener that gives focus to furniture view when
       // user clicks in its viewport (tables don't spread vertically if their row count is too small)
       final JViewport viewport = furnitureScrollPane.getViewport();
@@ -1781,18 +1919,52 @@ public class HomePane extends JRootPane implements HomeView {
           }
         });
       ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
-      furnitureComponent = furnitureScrollPane;
+      furnitureView = furnitureScrollPane;
     }    
-    furnitureView.addFocusListener(new FocusableViewListener(controller, furnitureComponent));
 
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
-        catalogComponent, furnitureComponent);
+        catalogView, furnitureView);
     configureSplitPane(catalogFurniturePane, home, 
         CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
     return catalogFurniturePane;
   }
 
+  /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class FurnitureCatalogViewChangeListener implements PropertyChangeListener {
+    private WeakReference<HomePane>   homePane;
+    private WeakReference<JComponent> furnitureCatalogView;
+
+    public FurnitureCatalogViewChangeListener(HomePane homePane, JComponent furnitureCatalogView) {
+      this.homePane = new WeakReference<HomePane>(homePane);
+      this.furnitureCatalogView = new WeakReference<JComponent>(furnitureCatalogView);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomePane homePane = this.homePane.get();
+      if (homePane == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, this);
+      } else {
+        // Replace previous furniture catalog view by the new one
+        JComponent oldFurnitureCatalogView = this.furnitureCatalogView.get();        
+        JComponent newFurnitureCatalogView = (JComponent)homePane.controller.getFurnitureCatalogController().getView();
+        newFurnitureCatalogView.setComponentPopupMenu(oldFurnitureCatalogView.getComponentPopupMenu());
+        newFurnitureCatalogView.setTransferHandler(oldFurnitureCatalogView.getTransferHandler());
+        if (newFurnitureCatalogView instanceof Scrollable) {
+          newFurnitureCatalogView = new HomeScrollPane(newFurnitureCatalogView);
+        }
+        ((JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, oldFurnitureCatalogView)).
+            setTopComponent(newFurnitureCatalogView);
+        this.furnitureCatalogView = new WeakReference<JComponent>(newFurnitureCatalogView);
+      }
+    }
+  }
+  
   /**
    * Returns the plan view and 3D view pane. 
    */
@@ -1879,7 +2051,6 @@ public class HomePane extends JRootPane implements HomeView {
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
     
-    JComponent planComponent = planView;
     if (planView instanceof Scrollable) {
       JScrollPane planScrollPane = new HomeScrollPane(planView);
       setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
@@ -1891,7 +2062,6 @@ public class HomePane extends JRootPane implements HomeView {
       // Add a listener to update rulers visibility in preferences
       preferences.addPropertyChangeListener(UserPreferences.Property.RULERS_VISIBLE, 
           new RulersVisibilityChangeListener(this, planScrollPane, controller));
-      planView.addFocusListener(new FocusableViewListener(controller, planScrollPane));
       // Restore viewport position if it exists
       final JViewport viewport = planScrollPane.getViewport();
       Integer viewportX = (Integer)home.getVisualProperty(PLAN_VIEWPORT_X_VISUAL_PROPERTY);
@@ -1906,18 +2076,16 @@ public class HomePane extends JRootPane implements HomeView {
             controller.setVisualProperty(PLAN_VIEWPORT_Y_VISUAL_PROPERTY, viewportPosition.y);
           }
         });
-      planComponent = planScrollPane;
+      planView = planScrollPane;
     }
-    planView.addFocusListener(new FocusableViewListener(controller, planComponent));
 
     JComponent component3D = view3D;
     if (view3D instanceof Scrollable) {
       component3D = new HomeScrollPane(planView);
-    }
-    view3D.addFocusListener(new FocusableViewListener(controller, component3D));
+    } 
     
     // Create a split pane that displays both components
-    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planComponent, component3D);
+    JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, component3D);
     configureSplitPane(planView3DPane, home, 
         PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
     
@@ -2878,143 +3046,7 @@ public class HomePane extends JRootPane implements HomeView {
         setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_ALWAYS);
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
-    }
-  }
-
-  private static final Border UNFOCUSED_BORDER;
-  private static final Border FOCUSED_BORDER;
-
-  static {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      UNFOCUSED_BORDER = BorderFactory.createCompoundBorder(
-          BorderFactory.createEmptyBorder(2, 2, 2, 2),
-          BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-      FOCUSED_BORDER = new AbstractBorder() {
-          private Insets insets = new Insets(3, 3, 3, 3);
-          
-          public Insets getBorderInsets(Component c) {
-            return this.insets;
-          }
-    
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            Color previousColor = g.getColor();
-            // Paint a gradient paint around component
-            Rectangle rect = getInteriorRectangle(c, x, y, width, height);
-            g.setColor(Color.GRAY);
-            g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
-            Color focusColor = UIManager.getColor("Focus.color");
-            int   transparency = 192;
-            if (focusColor == null) {
-              focusColor = UIManager.getColor("textHighlight");
-              transparency = 128;
-            }
-            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparency));
-            g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
-            g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 2, 2);
-            g.setColor(focusColor);
-            g.drawRoundRect(rect.x - 2, rect.y - 2, rect.width + 3, rect.height + 3, 1, 1);
-            
-            g.setColor(previousColor);
-          }
-        };
-    } else {
-      if (OperatingSystem.isMacOSX()) {
-        UNFOCUSED_BORDER = BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(1, 1, 1, 1),
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-      } else {
-        UNFOCUSED_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-      }
-      FOCUSED_BORDER = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
-    }
-  }
-
-  /**
-   * A focus listener that calls <code>focusChanged</code> in 
-   * home controller.
-   */
-  private class FocusableViewListener implements FocusListener {
-    private HomeController      controller;
-    private JComponent          feedbackComponent;
-    private KeyListener         specialKeysListener = new KeyAdapter() {
-        public void keyPressed(KeyEvent ev) {
-          // Temporarily toggle plan controller mode to panning mode when space bar is pressed  
-          PlanController planController = controller.getPlanController();
-          if (ev.getKeyCode() == KeyEvent.VK_SPACE 
-              && (ev.getModifiers() & (KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK)) == 0
-              && getActionMap().get(ActionType.PAN).getValue(Action.NAME) != null 
-              && planController.getMode() != PlanController.Mode.PANNING
-              && !planController.isModificationState()
-              && SwingUtilities.getRootPane(focusedComponent) == HomePane.this) {
-            previousPlanControllerMode = planController.getMode();
-            planController.setMode(PlanController.Mode.PANNING);
-            ev.consume();
-          }
-        }  
-      
-        public void keyReleased(KeyEvent ev) {
-          if (ev.getKeyCode() == KeyEvent.VK_SPACE 
-              && previousPlanControllerMode != null) {
-            controller.getPlanController().setMode(previousPlanControllerMode);
-            previousPlanControllerMode = null;
-            ev.consume();
-          }
-        }
-        
-        @Override
-        public void keyTyped(KeyEvent ev) {
-          // This listener manages accelerator keys that may require the use of shift key 
-          // depending on keyboard layout (like + - or ?) 
-          ActionMap actionMap = getActionMap();
-          Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
-                                         actionMap.get(ActionType.ZOOM_OUT), 
-                                         actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
-                                         actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
-                                         actionMap.get(ActionType.HELP)};
-          int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
-          for (Action specialKeyAction : specialKeyActions) {
-            KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
-            if (ev.getKeyChar() == actionKeyStroke.getKeyChar()
-                && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
-                && specialKeyAction.isEnabled()) {
-              specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
-                  ActionEvent.ACTION_PERFORMED, (String)specialKeyAction.getValue(Action.ACTION_COMMAND_KEY)));
-              ev.consume();
-            }
-          }
-        }
-      };
-  
-    public FocusableViewListener(HomeController controller, 
-                                 JComponent     feedbackComponent) {
-      this.controller = controller;
-      this.feedbackComponent = feedbackComponent;
-      feedbackComponent.setBorder(UNFOCUSED_BORDER);
-    }
-        
-    public void focusGained(FocusEvent ev) {
-      // Display a colored border
-      if (SwingUtilities.getRootPane(this.feedbackComponent) == HomePane.this) {
-        this.feedbackComponent.setBorder(FOCUSED_BORDER);
-      }
-      // Update the component used by clipboard actions
-      focusedComponent = (JComponent)ev.getComponent();
-      // Notify controller that active view changed
-      this.controller.focusedViewChanged((View)focusedComponent);
-      focusedComponent.addKeyListener(this.specialKeysListener);
-    }
-    
-    public void focusLost(FocusEvent ev) {
-      if (SwingUtilities.getRootPane(this.feedbackComponent) == HomePane.this) {
-        this.feedbackComponent.setBorder(UNFOCUSED_BORDER);
-      }
-      focusedComponent.removeKeyListener(this.specialKeysListener);
-      if (previousPlanControllerMode != null
-          && (ev.getComponent() == controller.getPlanController().getView()
-             || ev.getOppositeComponent() == null)) {
-        controller.getPlanController().setMode(previousPlanControllerMode);
-        previousPlanControllerMode = null;
-      }
+      SwingTools.installFocusBorder(view);
     }
   }
   

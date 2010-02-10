@@ -72,6 +72,7 @@ import com.eteks.sweethome3d.tools.URLContent;
 public class FileUserPreferences extends UserPreferences {
   private static final String LANGUAGE                              = "language";
   private static final String UNIT                                  = "unit";
+  private static final String FURNITURE_CATALOG_VIEWED_IN_TREE      = "furnitureCatalogViewedInTree";
   private static final String MAGNETISM_ENABLED                     = "magnetismEnabled";
   private static final String RULERS_VISIBLE                        = "rulersVisible";
   private static final String GRID_VISIBLE                          = "gridVisible";
@@ -166,6 +167,8 @@ public class FileUserPreferences extends UserPreferences {
     // Read other preferences 
     setUnit(LengthUnit.valueOf(preferences.get(UNIT, 
         defaultPreferences.getLengthUnit().name())));
+    setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
+        defaultPreferences.isFurnitureCatalogViewedInTree()));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
         defaultPreferences.isRulersVisible()));
@@ -406,6 +409,7 @@ public class FileUserPreferences extends UserPreferences {
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
     preferences.put(UNIT, getLengthUnit().name());   
+    preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
