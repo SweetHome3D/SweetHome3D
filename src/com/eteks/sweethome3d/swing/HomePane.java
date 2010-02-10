@@ -1860,12 +1860,11 @@ public class HomePane extends JRootPane implements HomeView {
     catalogViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
+    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
+        new FurnitureCatalogViewChangeListener(this, catalogView));
     if (catalogView instanceof Scrollable) {
       catalogView = new HomeScrollPane(catalogView);
     }
-
-    preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
-        new FurnitureCatalogViewChangeListener(this, catalogView));
     
     // Configure furniture view
     JComponent furnitureView = (JComponent)controller.getFurnitureController().getView();

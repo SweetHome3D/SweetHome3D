@@ -116,7 +116,8 @@ public class FurnitureCatalogTree extends JTree implements View {
         if (SwingUtilities.isLeftMouseButton(ev)) {
           TreePath clickedPath = getPathForLocation(ev.getX(), ev.getY());
           if (clickedPath != null
-              && clickedPath.getLastPathComponent() instanceof CatalogPieceOfFurniture) {
+              && clickedPath.getLastPathComponent() instanceof CatalogPieceOfFurniture
+              && getTransferHandler() != null) {
             getTransferHandler().exportAsDrag(FurnitureCatalogTree.this, ev, DnDConstants.ACTION_COPY);
           }
         }

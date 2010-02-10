@@ -153,7 +153,8 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     this.catalogFurnitureList.addMouseMotionListener(new MouseMotionAdapter() {
         public void mouseDragged(MouseEvent ev) {
           if (SwingUtilities.isLeftMouseButton(ev)
-              && catalogFurnitureList.getSelectedValue() != null) {
+              && catalogFurnitureList.getSelectedValue() != null
+              && catalogFurnitureList.getTransferHandler() != null) {
             catalogFurnitureList.getTransferHandler().exportAsDrag(catalogFurnitureList, ev, DnDConstants.ACTION_COPY);
           } 
         }
@@ -452,6 +453,14 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
   public void setTransferHandler(TransferHandler handler) {
     this.catalogFurnitureList.setTransferHandler(handler);
   }
+
+  /**
+   * Returns the transfer handler of the list displayed by this panel.
+   */
+  @Override
+  public TransferHandler getTransferHandler() {
+    return this.catalogFurnitureList.getTransferHandler();
+  }
   
   /**
    * Sets the popup menu of the list displayed by this panel.
@@ -459,6 +468,14 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
   @Override
   public void setComponentPopupMenu(JPopupMenu popup) {
     this.catalogFurnitureList.setComponentPopupMenu(popup);
+  }
+  
+  /**
+   * Returns the popup menu of the list displayed by this panel.
+   */
+  @Override
+  public JPopupMenu getComponentPopupMenu() {
+    return this.catalogFurnitureList.getComponentPopupMenu();
   }
   
   /**
