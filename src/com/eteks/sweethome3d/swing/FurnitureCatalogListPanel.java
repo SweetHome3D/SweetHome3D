@@ -291,10 +291,10 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
   private void setMnemonics(UserPreferences preferences) {
     if (!OperatingSystem.isMacOSX()) {
       this.categoryFilterLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "categoryFilterLabel.mnemonic")).getKeyCode());
+          FurnitureCatalogListPanel.class, "categoryFilterLabel.mnemonic")).getKeyCode());
       this.categoryFilterLabel.setLabelFor(this.categoryFilterComboBox);
       this.searchLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          UserPreferencesPanel.class, "searchLabel.mnemonic")).getKeyCode());
+          FurnitureCatalogListPanel.class, "searchLabel.mnemonic")).getKeyCode());
       this.searchLabel.setLabelFor(this.searchTextField);
     }
   }
