@@ -683,7 +683,7 @@ public class HomePane extends JRootPane implements HomeView {
               if (homePane.focusedComponent != null) {
                 // Update component which lost focused 
                 JComponent lostFocusedComponent = homePane.focusedComponent;
-                if (SwingUtilities.isDescendingFrom(lostFocusedComponent, homePane)) {
+                if (SwingUtilities.isDescendingFrom(lostFocusedComponent, SwingUtilities.getWindowAncestor(homePane))) {
                   lostFocusedComponent.removeKeyListener(homePane.specialKeysListener);
 
                   if (homePane.previousPlanControllerMode != null
@@ -699,9 +699,9 @@ public class HomePane extends JRootPane implements HomeView {
               
               if (ev.getNewValue() != null) {
                 // Retrieve component which gained focused 
-                JComponent gainedFocusedComponent = (JComponent)ev.getNewValue(); 
-                // Display a colored border
-                if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, homePane)) {
+                Component gainedFocusedComponent = (Component)ev.getNewValue(); 
+                if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
+                    && gainedFocusedComponent instanceof JComponent) {
                   // Notify controller that active view changed
                   if (gainedFocusedComponent instanceof View) {
                     homePane.controller.focusedViewChanged((View)gainedFocusedComponent);
@@ -2339,7 +2339,6 @@ public class HomePane extends JRootPane implements HomeView {
           }
         });      
     }
-    component.setBorder(null);
     separateDialog.setContentPane(component);
     separateDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
     separateDialog.addWindowListener(new WindowAdapter() {
