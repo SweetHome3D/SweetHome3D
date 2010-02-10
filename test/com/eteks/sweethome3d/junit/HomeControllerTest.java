@@ -74,6 +74,7 @@ public class HomeControllerTest extends TestCase {
   protected void setUp() {
     this.viewFactory = new SwingViewFactory();
     this.preferences = new DefaultUserPreferences();
+    this.preferences.setFurnitureCatalogViewedInTree(true);
     this.home = new Home();
     this.homeController = 
         new HomeController(this.home, this.preferences, viewFactory);

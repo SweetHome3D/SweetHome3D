@@ -61,6 +61,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 public class TransferHandlerTest extends ComponentTestFixture {
   public void testTransferHandler() throws ComponentSearchException, UnsupportedFlavorException, IOException {
     UserPreferences preferences = new DefaultUserPreferences();
+    preferences.setFurnitureCatalogViewedInTree(true);
     ViewFactory viewFactory = new SwingViewFactory();
     Home home = new Home();
     HomeController controller = new HomeController(home, preferences, viewFactory);
