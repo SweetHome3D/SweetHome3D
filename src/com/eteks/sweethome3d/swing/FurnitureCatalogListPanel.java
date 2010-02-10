@@ -20,7 +20,9 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -59,6 +61,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.LayoutFocusTraversalPolicy;
 import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -342,6 +345,20 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     SwingTools.installFocusBorder(this.catalogFurnitureList);
+    
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+            EventQueue.invokeLater(new Runnable() {
+              public void run() {
+                // Return furniture list only at the first request  
+                setFocusTraversalPolicyProvider(false);
+              }
+            });
+          return catalogFurnitureList;
+        }
+      });
   }
 
   /**
