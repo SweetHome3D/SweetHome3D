@@ -3044,6 +3044,7 @@ public class HomePane extends JRootPane implements HomeView {
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
       SwingTools.installFocusBorder(view);
+      setPreferredSize(new Dimension(275, 275));
     }
   }
   
