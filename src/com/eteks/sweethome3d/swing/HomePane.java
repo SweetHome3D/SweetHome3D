@@ -1802,7 +1802,7 @@ public class HomePane extends JRootPane implements HomeView {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         createCatalogFurniturePane(home, preferences, controller), 
         createPlanView3DPane(home, preferences, controller));
-    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, controller);
+    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.2, controller);
     return mainPane;
   }
 
@@ -1858,6 +1858,10 @@ public class HomePane extends JRootPane implements HomeView {
     catalogViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     catalogView.setComponentPopupMenu(catalogViewPopup);
 
+    if (catalogView instanceof Scrollable) {
+      catalogView = new HomeScrollPane(catalogView);
+    }
+
     preferences.addPropertyChangeListener(UserPreferences.Property.FURNITURE_CATALOG_VIEWED_IN_TREE, 
         new FurnitureCatalogViewChangeListener(this, catalogView));
     
@@ -1890,10 +1894,6 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureViewPopup.add(createFurnitureDisplayPropertyMenu(home, preferences));
     furnitureViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     furnitureView.setComponentPopupMenu(furnitureViewPopup);
-
-    if (catalogView instanceof Scrollable) {
-      catalogView = new HomeScrollPane(catalogView);
-    }
 
     if (furnitureView instanceof Scrollable) {
       JScrollPane furnitureScrollPane = new HomeScrollPane(furnitureView);
@@ -2026,29 +2026,6 @@ public class HomePane extends JRootPane implements HomeView {
     planViewPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     planView.setComponentPopupMenu(planViewPopup);
     
-    // Configure 3D view
-    final JComponent view3D = (JComponent)controller.getHomeController3D().getView();
-    view3D.setPreferredSize(planView.getPreferredSize());
-    view3D.setMinimumSize(new Dimension(0, 0));
-    
-    // Create 3D view popup menu
-    JPopupMenu view3DPopup = new JPopupMenu();
-    addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
-        this.viewFromTopToggleModel, true, view3DPopup);
-    addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
-        this.viewFromObserverToggleModel, true, view3DPopup);
-    view3DPopup.addSeparator();
-    JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
-    if (attachDetach3DViewMenuItem != null) {
-      view3DPopup.add(attachDetach3DViewMenuItem);
-    }
-    addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
-    view3DPopup.addSeparator();
-    addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
-    addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
-    view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
-    view3D.setComponentPopupMenu(view3DPopup);
-    
     if (planView instanceof Scrollable) {
       JScrollPane planScrollPane = new HomeScrollPane(planView);
       setPlanRulersVisible(planScrollPane, controller, preferences.isRulersVisible());
@@ -2077,6 +2054,29 @@ public class HomePane extends JRootPane implements HomeView {
       planView = planScrollPane;
     }
 
+    // Configure 3D view
+    final JComponent view3D = (JComponent)controller.getHomeController3D().getView();
+    view3D.setPreferredSize(planView.getPreferredSize());
+    view3D.setMinimumSize(new Dimension(0, 0));
+    
+    // Create 3D view popup menu
+    JPopupMenu view3DPopup = new JPopupMenu();
+    addToggleActionToPopupMenu(ActionType.VIEW_FROM_TOP, 
+        this.viewFromTopToggleModel, true, view3DPopup);
+    addToggleActionToPopupMenu(ActionType.VIEW_FROM_OBSERVER, 
+        this.viewFromObserverToggleModel, true, view3DPopup);
+    view3DPopup.addSeparator();
+    JMenuItem attachDetach3DViewMenuItem = createAttachDetach3DViewMenuItem(controller, true);
+    if (attachDetach3DViewMenuItem != null) {
+      view3DPopup.add(attachDetach3DViewMenuItem);
+    }
+    addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
+    view3DPopup.addSeparator();
+    addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
+    addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
+    view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
+    view3D.setComponentPopupMenu(view3DPopup);
+    
     JComponent component3D = view3D;
     if (view3D instanceof Scrollable) {
       component3D = new HomeScrollPane(planView);
@@ -3044,7 +3044,7 @@ public class HomePane extends JRootPane implements HomeView {
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
       SwingTools.installFocusBorder(view);
-      setPreferredSize(new Dimension(275, 275));
+      setPreferredSize(new Dimension(275, 400));
     }
   }
   
