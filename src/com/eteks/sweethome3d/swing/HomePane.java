@@ -1802,7 +1802,9 @@ public class HomePane extends JRootPane implements HomeView {
     JSplitPane mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
         createCatalogFurniturePane(home, preferences, controller), 
         createPlanView3DPane(home, preferences, controller));
-    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.2, controller);
+    // Set default divider location
+    mainPane.setDividerLocation(360);
+    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, controller);
     return mainPane;
   }
 
@@ -3044,7 +3046,6 @@ public class HomePane extends JRootPane implements HomeView {
         setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
       }
       SwingTools.installFocusBorder(view);
-      setPreferredSize(new Dimension(275, 400));
     }
   }
   
