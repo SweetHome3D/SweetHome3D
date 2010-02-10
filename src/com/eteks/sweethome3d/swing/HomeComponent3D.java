@@ -263,6 +263,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       installKeyboardActions();
       // Let this component manage focus
       setFocusable(true);
+      SwingTools.installFocusBorder(this);
     }
 
     // Add an ancestor listener to create canvas universe once this component is made visible 
