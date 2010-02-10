@@ -309,6 +309,11 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     // First row
     Insets labelInsets = new Insets(0, 2, 5, 3);
     Insets componentInsets = new Insets(0, 2, 3, 0);
+    if (!OperatingSystem.isMacOSX()) {
+      labelInsets.top = 2;
+      componentInsets.top = 2;
+      componentInsets.right = 2;
+    }
     add(this.categoryFilterLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, labelInsets, 0, 0));
@@ -329,12 +334,10 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     }
     // Last row
-    add(new JScrollPane(this.catalogFurnitureList) {
-          @Override
-          public Dimension getPreferredSize() {
-            return new Dimension(200, 200);
-          }
-        }, 
+    JScrollPane listScrollPane = new JScrollPane(this.catalogFurnitureList);
+    listScrollPane.setPreferredSize(new Dimension(250, 250));
+    listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    add(listScrollPane, 
         new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
