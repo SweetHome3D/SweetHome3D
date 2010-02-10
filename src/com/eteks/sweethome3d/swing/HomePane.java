@@ -287,8 +287,6 @@ public class HomePane extends JRootPane implements HomeView {
     disableMenuItemsDuringDragAndDrop(controller.getPlanController().getView(), homeMenuBar);
     // Change component orientation
     applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-    // Retrieve default plan controller mode
-    this.previousPlanControllerMode = controller.getPlanController().getMode();
   }
 
   /**
