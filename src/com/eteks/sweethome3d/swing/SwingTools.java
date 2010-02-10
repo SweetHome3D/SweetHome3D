@@ -75,70 +75,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
  */
 public class SwingTools {
   // Borders for focused views
-  private static final Border UNFOCUSED_VIEW_BORDER;
-  private static final Border FOCUSED_VIEW_BORDER;
-
-  static {
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      UNFOCUSED_VIEW_BORDER = BorderFactory.createCompoundBorder(
-          BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 2),
-          BorderFactory.createLineBorder(Color.GRAY));
-      FOCUSED_VIEW_BORDER = new AbstractBorder() {
-          private Insets insets = new Insets(3, 3, 3, 3);
-          
-          public Insets getBorderInsets(Component c) {
-            return this.insets;
-          }
-    
-          public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            Color previousColor = g.getColor();
-            // Paint a gradient paint around component
-            Rectangle rect = getInteriorRectangle(c, x, y, width, height);
-            g.setColor(Color.GRAY);
-            g.drawLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1);
-            g.drawLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y  + rect.height);
-            g.setColor(Color.LIGHT_GRAY);
-            g.drawLine(rect.x, rect.y  + rect.height, rect.x + rect.width, rect.y  + rect.height);
-            g.drawLine(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y  + rect.height);
-            Color focusColor = UIManager.getColor("Focus.color");
-            int   transparencyOutline = 128;
-            int   transparencyInline  = 180;
-            if (focusColor == null) {
-              focusColor = UIManager.getColor("textHighlight");
-              transparencyOutline = 128;
-              transparencyInline = 255;
-            }
-            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparencyOutline));
-            g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 6, 6);
-            g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
-            g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparencyInline));
-            g.drawRoundRect(rect.x - 2, rect.y - 2, rect.width + 3, rect.height + 3, 4, 4);
-
-            // Draw corners
-            g.setColor(UIManager.getColor("Panel.background"));
-            g.drawLine(rect.x - 3, rect.y - 3, rect.x - 2, rect.y - 3);
-            g.drawLine(rect.x - 3, rect.y - 2, rect.x - 3, rect.y - 2);
-            g.drawLine(rect.x + rect.width + 1, rect.y - 3, rect.x + rect.width + 2, rect.y - 3);
-            g.drawLine(rect.x + rect.width + 2, rect.y - 2, rect.x + rect.width + 2, rect.y - 2);
-            g.drawLine(rect.x - 3, rect.y + rect.height + 2, rect.x - 2, rect.y + rect.height + 2);
-            g.drawLine(rect.x - 3, rect.y + rect.height + 1, rect.x - 3, rect.y + rect.height + 1);
-            g.drawLine(rect.x + rect.width + 1, rect.y + rect.height + 2, rect.x + rect.width + 2, rect.y + rect.height + 2);
-            g.drawLine(rect.x + rect.width + 2, rect.y + rect.height + 1, rect.x + rect.width + 2, rect.y + rect.height + 1);
-
-            g.setColor(previousColor);
-          }
-        };
-    } else {
-      if (OperatingSystem.isMacOSX()) {
-        UNFOCUSED_VIEW_BORDER = BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 1),
-            BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-      } else {
-        UNFOCUSED_VIEW_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-      }
-      FOCUSED_VIEW_BORDER = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
-    }
-  }
+  private static Border unfocusedViewBorder;
+  private static Border focusedViewBorder;
 
   private SwingTools() {
     // This class contains only tools
@@ -151,6 +89,70 @@ public class SwingTools {
    * instance this border will be installed on its scroll pane parent. 
    */
   public static void installFocusBorder(JComponent component) {
+    if (unfocusedViewBorder == null) {
+      if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        unfocusedViewBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 2),
+            BorderFactory.createLineBorder(Color.GRAY));
+        focusedViewBorder = new AbstractBorder() {
+            private Insets insets = new Insets(3, 3, 3, 3);
+            
+            public Insets getBorderInsets(Component c) {
+              return this.insets;
+            }
+      
+            public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+              Color previousColor = g.getColor();
+              // Paint a gradient paint around component
+              Rectangle rect = getInteriorRectangle(c, x, y, width, height);
+              g.setColor(Color.GRAY);
+              g.drawLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1);
+              g.drawLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y  + rect.height);
+              g.setColor(Color.LIGHT_GRAY);
+              g.drawLine(rect.x, rect.y  + rect.height, rect.x + rect.width, rect.y  + rect.height);
+              g.drawLine(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y  + rect.height);
+              Color focusColor = UIManager.getColor("Focus.color");
+              int   transparencyOutline = 128;
+              int   transparencyInline  = 180;
+              if (focusColor == null) {
+                focusColor = UIManager.getColor("textHighlight");
+                transparencyOutline = 128;
+                transparencyInline = 255;
+              }
+              g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparencyOutline));
+              g.drawRoundRect(rect.x - 3, rect.y - 3, rect.width + 5, rect.height + 5, 6, 6);
+              g.drawRect(rect.x - 1, rect.y - 1, rect.width + 1, rect.height + 1);
+              g.setColor(new Color(focusColor.getRed(), focusColor.getGreen(), focusColor.getBlue(), transparencyInline));
+              g.drawRoundRect(rect.x - 2, rect.y - 2, rect.width + 3, rect.height + 3, 4, 4);
+
+              // Draw corners
+              g.setColor(UIManager.getColor("Panel.background"));
+              g.drawLine(rect.x - 3, rect.y - 3, rect.x - 2, rect.y - 3);
+              g.drawLine(rect.x - 3, rect.y - 2, rect.x - 3, rect.y - 2);
+              g.drawLine(rect.x + rect.width + 1, rect.y - 3, rect.x + rect.width + 2, rect.y - 3);
+              g.drawLine(rect.x + rect.width + 2, rect.y - 2, rect.x + rect.width + 2, rect.y - 2);
+              g.drawLine(rect.x - 3, rect.y + rect.height + 2, rect.x - 2, rect.y + rect.height + 2);
+              g.drawLine(rect.x - 3, rect.y + rect.height + 1, rect.x - 3, rect.y + rect.height + 1);
+              g.drawLine(rect.x + rect.width + 1, rect.y + rect.height + 2, rect.x + rect.width + 2, rect.y + rect.height + 2);
+              g.drawLine(rect.x + rect.width + 2, rect.y + rect.height + 1, rect.x + rect.width + 2, rect.y + rect.height + 1);
+
+              g.setColor(previousColor);
+            }
+          };
+      } else {
+        if (OperatingSystem.isMacOSX()) {
+          unfocusedViewBorder = BorderFactory.createCompoundBorder(
+              BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 1),
+              BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        } else {
+          unfocusedViewBorder = BorderFactory.createCompoundBorder(
+              BorderFactory.createEmptyBorder(1, 1, 1, 1), 
+              UIManager.getBorder("ScrollPane.border"));
+        }
+        focusedViewBorder = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
+      }
+    }
+    
     final JComponent feedbackComponent;
     if (component.getParent() instanceof JViewport
         && component.getParent().getParent() instanceof JScrollPane) {
@@ -158,14 +160,14 @@ public class SwingTools {
     } else {
       feedbackComponent = component;
     }
-    feedbackComponent.setBorder(UNFOCUSED_VIEW_BORDER);
+    feedbackComponent.setBorder(unfocusedViewBorder);
     component.addFocusListener(new FocusListener() {
         public void focusLost(FocusEvent ev) {
-          feedbackComponent.setBorder(UNFOCUSED_VIEW_BORDER);
+          feedbackComponent.setBorder(unfocusedViewBorder);
         }
         
         public void focusGained(FocusEvent ev) {
-          feedbackComponent.setBorder(FOCUSED_VIEW_BORDER);
+          feedbackComponent.setBorder(focusedViewBorder);
         }
       });
   }
