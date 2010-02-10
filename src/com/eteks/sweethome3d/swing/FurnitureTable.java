@@ -74,6 +74,7 @@ import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.model.HomePieceOfFurniture.SortableProperty;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
 import com.eteks.sweethome3d.viewcontroller.View;
@@ -187,11 +188,16 @@ public class FurnitureTable extends JTable implements View, Printable {
       int modelColumnIndex = convertColumnIndexToModel(columnIndex);
       int preferredWidth = column.getHeaderRenderer().getTableCellRendererComponent(
           this, column.getHeaderValue(), false, false, -1, columnIndex).getPreferredSize().width;
-      for (int rowIndex = 0, m = tableModel.getRowCount(); rowIndex < m; rowIndex++) {
-        preferredWidth = Math.max(preferredWidth, 
-            column.getCellRenderer().getTableCellRendererComponent(
-                this, tableModel.getValueAt(rowIndex, modelColumnIndex), false, false, -1, columnIndex).
-                    getPreferredSize().width);
+      int rowCount = tableModel.getRowCount();
+      if (rowCount > 0) {
+        for (int rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+          preferredWidth = Math.max(preferredWidth, 
+              column.getCellRenderer().getTableCellRendererComponent(
+                  this, tableModel.getValueAt(rowIndex, modelColumnIndex), false, false, -1, columnIndex).
+                      getPreferredSize().width);
+        }
+      } else {
+        preferredWidth = Math.max(preferredWidth, column.getPreferredWidth());
       }
       column.setPreferredWidth(preferredWidth + intercellWidth);
       column.setWidth(preferredWidth + intercellWidth);
@@ -598,6 +604,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         tableColumn.setIdentifier(columnProperty);
         tableColumn.setHeaderValue(getColumnName(columnProperty, preferences));
         tableColumn.setCellRenderer(getColumnRenderer(columnProperty, preferences));
+        tableColumn.setPreferredWidth(getColumnPreferredWidth(columnProperty));
         tableColumn.setHeaderRenderer(headerRenderer);
         this.availableColumns.put(columnProperty, tableColumn);
       }
@@ -729,7 +736,40 @@ public class FurnitureTable extends JTable implements View, Printable {
           throw new IllegalArgumentException("Unknown column name " + property);
       }
     }
-    
+
+    /**
+     * Returns the default preferred width of a column.
+     */
+    private int getColumnPreferredWidth(SortableProperty property) {
+      switch (property) {
+        case CATALOG_ID :
+        case NAME :
+          return 120; 
+        case WIDTH :
+        case DEPTH :
+        case HEIGHT : 
+        case X : 
+        case Y :
+        case ELEVATION : 
+          return 50;
+        case ANGLE :
+          return 35;        
+        case COLOR :
+          return 30;        
+        case MOVABLE :
+        case DOOR_OR_WINDOW : 
+        case VISIBLE :
+          return 20;
+        case PRICE :
+        case VALUE_ADDED_TAX_PERCENTAGE :
+        case VALUE_ADDED_TAX :
+        case PRICE_VALUE_ADDED_TAX_INCLUDED :
+          return 70;          
+        default :
+          throw new IllegalArgumentException("Unknown column name " + property);
+      }
+    }
+
     /**
      * Returns column renderers.
      */
