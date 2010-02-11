@@ -41,7 +41,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Area;
@@ -419,6 +421,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * An icon button that changes camera location and angles when pressed.
    */
   private static class NavigationButton extends JButton {
+    private boolean shiftDown;
+
     public NavigationButton(final HomeController3D controller, 
                             final float moveDelta, 
                             final float yawDelta, 
@@ -442,21 +446,39 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               return alpha | darkerRed | darkerGreen | darkerBlue;
             }
           }))));
+     
+      // Track shift key press
+      addMouseMotionListener(new MouseMotionAdapter() {
+          @Override
+          public void mouseDragged(MouseEvent ev) {
+            shiftDown = ev.isShiftDown();
+          }
+        });
+      addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent ev) {
+            shiftDown = ev.isShiftDown();
+          }
+        });
+      
+      // Create a timer that will update camera angles and location
       final Timer timer = new Timer(50, new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            controller.moveCamera(moveDelta);
-            controller.rotateCameraYaw(yawDelta);
+          public void actionPerformed(ActionEvent ev) {
+            controller.moveCamera(shiftDown ? moveDelta / 10 : moveDelta);
+            controller.rotateCameraYaw(shiftDown ? yawDelta / 10 : yawDelta);
             controller.rotateCameraPitch(pitchDelta);
           }
         });
       timer.setInitialDelay(0);
+      
+      // Update camera when button is armed
       addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             if (getModel().isArmed()
                 && !timer.isRunning()) {
               timer.restart();
             } else if (!getModel().isArmed()
-                && timer.isRunning()) {
+                       && timer.isRunning()) {
               timer.stop();
             }  
           }
