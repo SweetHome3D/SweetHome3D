@@ -62,6 +62,7 @@ public class AppletUserPreferences extends UserPreferences {
   private static final String LANGUAGE                         = "language";
   private static final String UNIT                             = "unit";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE = "furnitureCatalogViewedInTree";
+  private static final String NAVIGATION_PANEL_VISIBLE         = "navigationPanelVisible";
   private static final String MAGNETISM_ENABLED                = "magnetismEnabled";
   private static final String RULERS_VISIBLE                   = "rulersVisible";
   private static final String GRID_VISIBLE                     = "gridVisible";
@@ -153,6 +154,8 @@ public class AppletUserPreferences extends UserPreferences {
     setUnit(LengthUnit.valueOf(properties.getProperty(UNIT, defaultPreferences.getLengthUnit().name())));
     setFurnitureCatalogViewedInTree(Boolean.parseBoolean(properties.getProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, 
         String.valueOf(defaultPreferences.isFurnitureCatalogViewedInTree()))));
+    setNavigationPanelVisible(Boolean.parseBoolean(properties.getProperty(NAVIGATION_PANEL_VISIBLE, 
+        String.valueOf(defaultPreferences.isNavigationPanelVisible()))));
     setMagnetismEnabled(Boolean.parseBoolean(properties.getProperty(MAGNETISM_ENABLED, "true")));
     setRulersVisible(Boolean.parseBoolean(properties.getProperty(RULERS_VISIBLE, 
         String.valueOf(defaultPreferences.isMagnetismEnabled()))));
@@ -259,6 +262,8 @@ public class AppletUserPreferences extends UserPreferences {
     // Write other preferences 
     properties.setProperty(LANGUAGE, getLanguage());
     properties.setProperty(UNIT, getLengthUnit().name());   
+    properties.setProperty(FURNITURE_CATALOG_VIEWED_IN_TREE, String.valueOf(isFurnitureCatalogViewedInTree()));
+    properties.setProperty(NAVIGATION_PANEL_VISIBLE, String.valueOf(isNavigationPanelVisible()));    
     properties.setProperty(MAGNETISM_ENABLED, String.valueOf(isMagnetismEnabled()));
     properties.setProperty(RULERS_VISIBLE, String.valueOf(isRulersVisible()));
     properties.setProperty(GRID_VISIBLE, String.valueOf(isGridVisible()));

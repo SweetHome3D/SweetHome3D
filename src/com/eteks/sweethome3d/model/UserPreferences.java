@@ -46,7 +46,7 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, 
                         FURNITURE_VIEWED_FROM_TOP, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN,    
                         NEW_WALL_HEIGHT, NEW_WALL_THICKNESS, RECENT_HOMES, IGNORED_ACTION_TIP,
-                        FURNITURE_CATALOG_VIEWED_IN_TREE}
+                        FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE}
   
   private static final String [] SUPPORTED_LANGUAGES; 
 
@@ -70,6 +70,7 @@ public abstract class UserPreferences {
   private String           currency;
   private LengthUnit       unit;
   private boolean          furnitureCatalogViewedInTree = true;
+  private boolean          navigationPanelVisible = true;
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
@@ -369,7 +370,7 @@ public abstract class UserPreferences {
   }
     
   /**
-   * Returns <code>true</code> if furniture catalog shouldn't viewed in a tree.
+   * Returns <code>true</code> if the furniture catalog should be viewed in a tree.
    * @since 2.3
    */
   public boolean isFurnitureCatalogViewedInTree() {
@@ -377,7 +378,7 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Sets whether furniture catalog shouldn't viewed in a tree or viewed a different way.
+   * Sets whether the furniture catalog should be viewed in a tree or a different way.
    * @since 2.3
    */
   public void setFurnitureCatalogViewedInTree(boolean furnitureCatalogViewedInTree) {
@@ -385,6 +386,26 @@ public abstract class UserPreferences {
       this.furnitureCatalogViewedInTree = furnitureCatalogViewedInTree;
       this.propertyChangeSupport.firePropertyChange(Property.FURNITURE_CATALOG_VIEWED_IN_TREE.name(), 
           !furnitureCatalogViewedInTree, furnitureCatalogViewedInTree);
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the navigation panel should be displayed.
+   * @since 2.3
+   */
+  public boolean isNavigationPanelVisible() {
+    return this.navigationPanelVisible;
+  }
+  
+  /**
+   * Sets whether the navigation panel should be displayed or not.
+   * @since 2.3
+   */
+  public void setNavigationPanelVisible(boolean navigationPanelVisible) {
+    if (this.navigationPanelVisible != navigationPanelVisible) {
+      this.navigationPanelVisible = navigationPanelVisible;
+      this.propertyChangeSupport.firePropertyChange(Property.NAVIGATION_PANEL_VISIBLE.name(), 
+          !navigationPanelVisible, navigationPanelVisible);
     }
   }
   

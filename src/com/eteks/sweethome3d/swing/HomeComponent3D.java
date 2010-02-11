@@ -28,13 +28,19 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
@@ -42,10 +48,13 @@ import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.FilteredImageSource;
+import java.awt.image.RGBImageFilter;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,14 +91,20 @@ import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.View;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MouseInputAdapter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
@@ -157,8 +172,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   // Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
   // This image should be set to null each time the 3D view changes
   private BufferedImage                            printedImage;
-  private JComponent                               overlappingComponent;
-  private BufferedImage                            overlappingComponentImage;
+  
+  private JComponent                               navigationPanel;
+  private ComponentListener                        navigationPanelListener;
+  private BufferedImage                            navigationPanelImage;
   
   /**
    * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
@@ -222,9 +239,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         public void canvas3DPostRendered(Canvas3D canvas3D) {
-          if (overlappingComponentImage != null) {
+          // Render navigation panel upon canvas 3D if it exists
+          if (navigationPanelImage != null) {
             J3DGraphics2D g2D = canvas3D.getGraphics2D();
-            g2D.drawImage(overlappingComponentImage, null, 0, 0);
+            g2D.drawImage(navigationPanelImage, null, 0, 0);
             g2D.flush(true);
           }
         }
@@ -246,10 +264,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         
         public void layoutContainer(Container parent) {
           canvas3D.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-          if (overlappingComponent != null) {
-            // Ensure that overlappingComponent is always in top corner             
-            Dimension preferredSize = overlappingComponent.getPreferredSize();
-            overlappingComponent.setBounds(0, 0, preferredSize.width, preferredSize.height);
+          if (navigationPanel.isVisible()) {
+            // Ensure that navigationPanel is always in top corner             
+            Dimension preferredSize = navigationPanel.getPreferredSize();
+            navigationPanel.setBounds(0, 0, preferredSize.width, preferredSize.height);
           }
         }
       });
@@ -259,6 +277,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     if (controller != null) {
       addMouseListeners(controller, this.canvas3D);
+      this.navigationPanel = createNavigationPanel(home, preferences, controller);
+      this.navigationPanelListener = new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent ev) {
+            updateNavigationPanelImage();          
+          }
+          
+          @Override
+          public void componentMoved(ComponentEvent e) {
+            updateNavigationPanelImage();          
+          }
+        };
+      setNavigationPanelVisible(preferences.isNavigationPanelVisible());
+
+      preferences.addPropertyChangeListener(UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, 
+          new NavigationPanelChangeListener(this, controller));
       createActions(controller);
       installKeyboardActions();
       // Let this component manage focus
@@ -297,82 +331,198 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Adds a component listener that updates overlapping component image.
+   * Adds a component listener that updates navigation panel image.
    */
   private void addComponentListener() {
     addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent ev) {
-        updateOverlappingComponentImage();          
+        updateNavigationPanelImage();          
       }
       
       @Override
       public void componentShown(ComponentEvent e) {
-        updateOverlappingComponentImage();          
+        updateNavigationPanelImage();          
       }
     });
   }
 
   /**
+   * Preferences property listener bound to this component with a weak reference to avoid
+   * strong link between preferences and this component.  
+   */
+  private static class NavigationPanelChangeListener implements PropertyChangeListener {
+    private final WeakReference<HomeComponent3D>  homeComponent3D;
+
+    public NavigationPanelChangeListener(HomeComponent3D homeComponent3D,
+                                         HomeController3D controller) {
+      this.homeComponent3D = new WeakReference<HomeComponent3D>(homeComponent3D);
+    }
+    
+    public void propertyChange(PropertyChangeEvent ev) {
+      // If home pane was garbage collected, remove this listener from preferences
+      HomeComponent3D homeComponent3D = this.homeComponent3D.get();
+      if (homeComponent3D == null) {
+        ((UserPreferences)ev.getSource()).removePropertyChangeListener(
+            UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, this);
+      } else {
+        homeComponent3D.setNavigationPanelVisible((Boolean)ev.getNewValue());
+      }
+    }
+  }
+
+  /**
+   * Returns the component displayed as navigation panel by this 3D view.
+   */
+  private JComponent createNavigationPanel(Home home, 
+                                           UserPreferences preferences, 
+                                           HomeController3D controller) {
+    JPanel navigationPanel = new JPanel(new GridBagLayout()) {
+        @Override
+        protected void paintComponent(Graphics g) {
+          Graphics2D g2D = (Graphics2D)g;
+          g2D.setColor(Color.BLACK);
+          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2D.drawOval(3, 3, getWidth() - 4, getHeight() - 4);
+        }
+      };   
+      
+    navigationPanel.setOpaque(false);
+    navigationPanel.add(new NavigationButton(controller, 0, -(float)Math.PI / 36, 0,
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-previous.png"))),
+        new GridBagConstraints(0, 1, 1, 2, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
+    navigationPanel.add(new NavigationButton(controller, 5, 0, 0, 
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up.png"))),
+        new GridBagConstraints(1, 0, 1, 1, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(5, 0, 0, 0), 0, 0));
+    navigationPanel.add(new NavigationButton(controller, 0, (float)Math.PI / 36, 0, 
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-next.png"))),
+        new GridBagConstraints(2, 1, 1, 2, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 2), 0, 0));
+    navigationPanel.add(new NavigationButton(controller, -5, 0, 0, 
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down.png"))),
+        new GridBagConstraints(1, 3, 1, 1, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 2, 0), 0, 0));
+    navigationPanel.add(new NavigationButton(controller, 0, 0, -(float)Math.PI / 72, 
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-up-small.png"))),
+        new GridBagConstraints(1, 1, 1, 1, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0));
+    navigationPanel.add(new NavigationButton(controller, 0, 0, (float)Math.PI / 72, 
+        new ImageIcon(HomeComponent3D.class.getResource("resources/icons/tango/go-down-small.png"))),
+        new GridBagConstraints(1, 2, 1, 1, 0, 0, 
+            GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 1, 0), 0, 0));
+    return navigationPanel;
+  }
+  
+  /**
+   * An icon button that changes camera location and angles when pressed.
+   */
+  private static class NavigationButton extends JButton {
+    public NavigationButton(final HomeController3D controller, 
+                            final float moveDelta, 
+                            final float yawDelta, 
+                            final float pitchDelta, 
+                            Icon icon) {
+      super(icon);
+      // Create a darker press icon
+      setPressedIcon(new ImageIcon(createImage(new FilteredImageSource(
+          ((ImageIcon)getIcon()).getImage().getSource(),
+          new RGBImageFilter() {
+            {
+              canFilterIndexColorModel = true;
+            }
+
+            public int filterRGB (int x, int y, int rgb) {
+              // Return darker color
+              int alpha = rgb & 0xFF000000;
+              int darkerRed = ((rgb & 0xFF0000) >> 1) & 0xFF0000;
+              int darkerGreen  = ((rgb & 0x00FF00) >> 1) & 0x00FF00;
+              int darkerBlue  = (rgb & 0x0000FF) >> 1;
+              return alpha | darkerRed | darkerGreen | darkerBlue;
+            }
+          }))));
+      final Timer timer = new Timer(50, new ActionListener() {
+          public void actionPerformed(ActionEvent e) {
+            controller.moveCamera(moveDelta);
+            controller.rotateCameraYaw(yawDelta);
+            controller.rotateCameraPitch(pitchDelta);
+          }
+        });
+      timer.setInitialDelay(0);
+      addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent ev) {
+            if (getModel().isArmed()
+                && !timer.isRunning()) {
+              timer.restart();
+            } else if (!getModel().isArmed()
+                && timer.isRunning()) {
+              timer.stop();
+            }  
+          }
+        });
+      setFocusable(false);
+      setBorder(null);
+      setContentAreaFilled(false);
+    }
+  }
+
+  /**
    * Sets the component that will be drawn upon the heavyweight 3D component shown by this component.
-   * Mouse events will targeted to the overlapping component when needed.
+   * Mouse events will targeted to the navigation panel when needed.
    * Supports transparent components. 
    */
-  protected void setOverlappingComponent(JComponent overlappingComponent) {
-    // Add a component listener that updates overlapping image
-    overlappingComponent.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent ev) {
-          updateOverlappingComponentImage();          
-        }
-        
-        @Override
-        public void componentMoved(ComponentEvent e) {
-          updateOverlappingComponentImage();          
-        }
-      });
-    if (this.overlappingComponent != null) {
-      this.overlappingComponent.getParent().remove(this.overlappingComponent);
+  private void setNavigationPanelVisible(boolean visible) {
+    this.navigationPanel.setVisible(visible);
+    if (visible) {
+      // Add a component listener that updates navigation panel image
+      this.navigationPanel.addComponentListener(this.navigationPanelListener);
+      // Add the navigation panel to this component to be able to paint it 
+      // but show it behind heavyweight canvas 3D
+      this.canvas3D.getParent().add(this.navigationPanel);    
+    } else {
+      this.navigationPanel.removeComponentListener(this.navigationPanelListener);
+      if (this.navigationPanel.getParent() != null) {
+        this.navigationPanel.getParent().remove(this.navigationPanel);
+      }
     }
-    this.overlappingComponent = overlappingComponent;
-    // Add the overlapping component to this component to be able to paint it 
-    // but show it behind heavyweight canvas 3D
-    this.canvas3D.getParent().add(overlappingComponent);    
-    updateOverlappingComponentImage();          
+    revalidate();
+    updateNavigationPanelImage();          
+    this.canvas3D.repaint();
   }
   
   /**
    * Updates the image of the components that may overlap canvas 3D 
    * (with a Z order smaller than the one of the canvas 3D).
    */
-  private void updateOverlappingComponentImage() {
-    if (this.overlappingComponent != null) {
-      Rectangle componentBounds = this.overlappingComponent.getBounds();
+  private void updateNavigationPanelImage() {
+    if (this.navigationPanel.isVisible()) {
+      Rectangle componentBounds = this.navigationPanel.getBounds();
       Rectangle imageSize = new Rectangle(this.canvas3D.getX(), this.canvas3D.getY());
       imageSize.add(componentBounds.x + componentBounds.width, 
           componentBounds.y + componentBounds.height);
       if (!imageSize.isEmpty()) {
         Graphics2D g2D;
-        if (this.overlappingComponentImage == null
-            || this.overlappingComponentImage.getWidth() != imageSize.width
-            || this.overlappingComponentImage.getHeight() != imageSize.height) {
-          this.overlappingComponentImage = new BufferedImage(
+        if (this.navigationPanelImage == null
+            || this.navigationPanelImage.getWidth() != imageSize.width
+            || this.navigationPanelImage.getHeight() != imageSize.height) {
+          this.navigationPanelImage = new BufferedImage(
               imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
-          g2D = (Graphics2D)this.overlappingComponentImage.getGraphics();
+          g2D = (Graphics2D)this.navigationPanelImage.getGraphics();
         } else {
           // Clear image
-          g2D = (Graphics2D)this.overlappingComponentImage.getGraphics();
+          g2D = (Graphics2D)this.navigationPanelImage.getGraphics();
           Composite oldComposite = g2D.getComposite();
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
           g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
           g2D.setComposite(oldComposite);
         }
-        this.overlappingComponent.paintAll(g2D);
+        this.navigationPanel.paintAll(g2D);
         g2D.dispose();
         return;
       }
-      this.overlappingComponentImage = null;
     }
+    this.navigationPanelImage = null;
   }
 
   /**
@@ -695,7 +845,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         
         @Override
         public void mousePressed(MouseEvent ev) {
-          if (!retargetMouseEventToOverlappingChildren(ev)) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
             if (ev.isPopupTrigger()) {
               mouseReleased(ev);
             } else if (isEnabled()) {
@@ -708,7 +858,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   
         @Override
         public void mouseReleased(MouseEvent ev) {
-          if (!retargetMouseEventToOverlappingChildren(ev)) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
             if (ev.isPopupTrigger()) {
               getComponentPopupMenu().show(HomeComponent3D.this, ev.getX(), ev.getY());
             }
@@ -717,17 +867,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
         @Override
         public void mouseClicked(MouseEvent ev) {
-          retargetMouseEventToOverlappingChildren(ev);
+          retargetMouseEventToNavigationPanelChildren(ev);
         }
         
         @Override
         public void mouseMoved(MouseEvent ev) {
-          retargetMouseEventToOverlappingChildren(ev);
+          retargetMouseEventToNavigationPanelChildren(ev);
         }
         
         @Override
         public void mouseDragged(MouseEvent ev) {
-          if (!retargetMouseEventToOverlappingChildren(ev)) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
             if (isEnabled()) {
               if (ev.isAltDown()) {
                 // Mouse move along Y axis while alt is down changes camera location
@@ -759,14 +909,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         /**
-         * Retargets to the first overlapping component able to manage the given event 
+         * Retargets to the first component of navigation panel able to manage the given event 
          * and returns <code>true</code> if a component consumed the event 
          * or needs to be repainted (meaning its state changed).
          * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
          * events are managed only during mouseDragged event).
          */
-        private boolean retargetMouseEventToOverlappingChildren(MouseEvent ev) {
-          if (overlappingComponent != null) {
+        private boolean retargetMouseEventToNavigationPanelChildren(MouseEvent ev) {
+          if (navigationPanel.isVisible()) {
             if (this.grabComponent != null
                 && (ev.getID() == MouseEvent.MOUSE_RELEASED
                     || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
@@ -787,7 +937,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               }
               return true;
             } else {                
-              Component mouseEventTarget = retargetMouseEvent(overlappingComponent, ev);
+              Component mouseEventTarget = retargetMouseEvent(navigationPanel, ev);
               if (mouseEventTarget != null) {
                 this.previousMouseEventTarget = mouseEventTarget;
                 return true;
@@ -829,7 +979,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         private boolean dispatchRetargetedEvent(MouseEvent ev) {
           ev.getComponent().dispatchEvent(ev);
           if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
-            updateOverlappingComponentImage();
+            updateNavigationPanelImage();
             canvas3D.repaint();
             return true;
           }

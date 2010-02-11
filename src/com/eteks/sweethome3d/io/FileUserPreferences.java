@@ -73,6 +73,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String LANGUAGE                              = "language";
   private static final String UNIT                                  = "unit";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE      = "furnitureCatalogViewedInTree";
+  private static final String NAVIGATION_PANEL_VISIBLE              = "navigationPanelVisible";
   private static final String MAGNETISM_ENABLED                     = "magnetismEnabled";
   private static final String RULERS_VISIBLE                        = "rulersVisible";
   private static final String GRID_VISIBLE                          = "gridVisible";
@@ -169,6 +170,8 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.getLengthUnit().name())));
     setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
         defaultPreferences.isFurnitureCatalogViewedInTree()));
+    setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
+        defaultPreferences.isNavigationPanelVisible()));
     setMagnetismEnabled(preferences.getBoolean(MAGNETISM_ENABLED, true));
     setRulersVisible(preferences.getBoolean(RULERS_VISIBLE, 
         defaultPreferences.isRulersVisible()));
@@ -410,6 +413,7 @@ public class FileUserPreferences extends UserPreferences {
     preferences.put(LANGUAGE, getLanguage());
     preferences.put(UNIT, getLengthUnit().name());   
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
+    preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
