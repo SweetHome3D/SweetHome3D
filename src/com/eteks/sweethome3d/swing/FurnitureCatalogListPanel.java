@@ -369,13 +369,18 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    */
   private void spreadFurnitureIconsAlongListWidth() {
     int size = this.catalogFurnitureList.getModel().getSize();
-    int extendWidth = ((JViewport)this.catalogFurnitureList.getParent()).getExtentSize().width;
-    int minCellWidth = ((JComponent)this.catalogFurnitureList.getCellRenderer()).getPreferredSize().width;
-    int visibleItemsPerRow = Math.max(1, extendWidth / minCellWidth);
+    int extentWidth = ((JViewport)this.catalogFurnitureList.getParent()).getExtentSize().width;
+    // Compute a fixed cell width that will spread 
+    Dimension rendererPreferredSize = ((JComponent)this.catalogFurnitureList.getCellRenderer()).getPreferredSize();
+    int minCellWidth = rendererPreferredSize.width;
+    int visibleItemsPerRow = Math.max(1, extentWidth / minCellWidth);
     this.catalogFurnitureList.setVisibleRowCount(size % visibleItemsPerRow == 0 
         ? size / visibleItemsPerRow 
         : size / visibleItemsPerRow + 1);
-    this.catalogFurnitureList.setFixedCellWidth(minCellWidth + (extendWidth % minCellWidth) / visibleItemsPerRow);
+    this.catalogFurnitureList.setFixedCellWidth(minCellWidth + (extentWidth % minCellWidth) / visibleItemsPerRow);
+    // Set also cell height otherwise first calls to repaint done by icon manager won't repaint it 
+    // because the list have a null size at the beginning  
+    this.catalogFurnitureList.setFixedCellHeight(rendererPreferredSize.height);
   }
   
   /** 
@@ -492,6 +497,9 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
       setHorizontalAlignment(JLabel.CENTER);
       this.defaultFont = UIManager.getFont("ToolTip.font");
       this.modifiablePieceFont = new Font(this.defaultFont.getFontName(), Font.ITALIC, this.defaultFont.getSize());
+      setFont(this.defaultFont);
+      setText("");
+      setIcon(IconManager.getInstance().getWaitIcon(DEFAULT_ICON_HEIGHT));
     }
     
     @Override
