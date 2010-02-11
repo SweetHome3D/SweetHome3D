@@ -458,6 +458,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           @Override
           public void mousePressed(MouseEvent ev) {
             shiftDown = ev.isShiftDown();
+            SwingUtilities.getAncestorOfClass(HomeComponent3D.class, 
+                NavigationButton.this).requestFocusInWindow();
           }
         });
       
