@@ -375,7 +375,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.observerHeightSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, -30, 0));
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -25, 0));
     // Second row
     Insets closeLabelInsets = new Insets(0, 0, 2, 5);
     add(this.groundColorRadioButton, new GridBagConstraints(
