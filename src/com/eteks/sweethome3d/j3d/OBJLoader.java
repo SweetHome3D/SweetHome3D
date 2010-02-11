@@ -1236,6 +1236,10 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Read vertex v x y z
       this.vertices.add(new Point3f(
           parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer)));
+      // Skip next number if it exists
+      if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
+        tokenizer.pushBack();
+      }
     } else if ("vn".equals(tokenizer.sval)) {
       // Read normal vn x y z
       this.normals.add(new Vector3f(
