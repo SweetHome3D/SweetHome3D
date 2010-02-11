@@ -90,8 +90,20 @@ public class SwingTools {
    */
   public static void installFocusBorder(JComponent component) {
     if (unfocusedViewBorder == null) {
-      Border macOSXBorder = new AbstractBorder() {
+      Border unfocusedViewInteriorBorder = new AbstractBorder() {
+          private Color  topLeftColor;
+          private Color  botomRightColor;
           private Insets insets = new Insets(1, 1, 1, 1);
+          
+          {
+            if (OperatingSystem.isMacOSX()) {
+              this.topLeftColor = Color.GRAY;
+              this.botomRightColor = Color.LIGHT_GRAY;
+            } else {
+              this.topLeftColor = UIManager.getColor("TextField.darkShadow");
+              this.botomRightColor  = UIManager.getColor("TextField.light");
+            }
+          }
           
           public Insets getBorderInsets(Component c) {
             return this.insets;
@@ -99,14 +111,13 @@ public class SwingTools {
     
           public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             Color previousColor = g.getColor();
-            // Paint a gradient paint around component
             Rectangle rect = getInteriorRectangle(c, x, y, width, height);
-            g.setColor(Color.GRAY);
+            g.setColor(topLeftColor);
             g.drawLine(rect.x - 1, rect.y - 1, rect.x + rect.width, rect.y - 1);
             g.drawLine(rect.x - 1, rect.y - 1, rect.x - 1, rect.y  + rect.height);
-            g.setColor(Color.LIGHT_GRAY);
+            g.setColor(botomRightColor);
             g.drawLine(rect.x, rect.y  + rect.height, rect.x + rect.width, rect.y  + rect.height);
-            g.drawLine(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y  + rect.height);
+            g.drawLine(rect.x + rect.width, rect.y, rect.x + rect.width, rect.y  + rect.height); 
             g.setColor(previousColor);
           }
         };
@@ -114,7 +125,7 @@ public class SwingTools {
       if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
         unfocusedViewBorder = BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 2),
-            macOSXBorder);
+            unfocusedViewInteriorBorder);
         focusedViewBorder = new AbstractBorder() {
             private Insets insets = new Insets(3, 3, 3, 3);
             
@@ -164,11 +175,11 @@ public class SwingTools {
         if (OperatingSystem.isMacOSX()) {
           unfocusedViewBorder = BorderFactory.createCompoundBorder(
               BorderFactory.createLineBorder(UIManager.getColor("Panel.background"), 1),
-              macOSXBorder);
+              unfocusedViewInteriorBorder);
         } else {
           unfocusedViewBorder = BorderFactory.createCompoundBorder(
               BorderFactory.createEmptyBorder(1, 1, 1, 1), 
-              UIManager.getBorder("ScrollPane.border"));
+              unfocusedViewInteriorBorder);
         }
         focusedViewBorder = BorderFactory.createLineBorder(UIManager.getColor("textHighlight"), 2);
       }
