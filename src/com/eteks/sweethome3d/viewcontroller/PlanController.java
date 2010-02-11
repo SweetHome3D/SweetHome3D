@@ -4677,12 +4677,6 @@ public class PlanController extends FurnitureController implements Controller {
     public void escape() {
       this.xLastMouseMove = null;
     }
-    
-    @Override
-    public void exit() {
-      this.xLastMouseMove = null;
-      this.yLastMouseMove = null;
-    }
   }
 
   /**
