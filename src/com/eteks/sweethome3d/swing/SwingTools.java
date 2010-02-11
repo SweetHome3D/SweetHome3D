@@ -101,7 +101,7 @@ public class SwingTools {
               this.botomRightColor = Color.LIGHT_GRAY;
             } else {
               this.topLeftColor = UIManager.getColor("TextField.darkShadow");
-              this.botomRightColor  = UIManager.getColor("TextField.light");
+              this.botomRightColor  = UIManager.getColor("TextField.shadow");
             }
           }
           
