@@ -365,17 +365,17 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
     add(this.observerFieldOfViewLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets componentInsets = new Insets(0, 0, 10, 10);
+    Insets componentInsets = new Insets(0, 0, 10, 15);
     add(this.observerFieldOfViewSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, 10, 0));
+        GridBagConstraints.HORIZONTAL, componentInsets, 20, 0));
     add(this.observerHeightLabel, new GridBagConstraints(
         2, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
     Insets rightComponentInsets = new Insets(0, 0, 10, 0);
     add(this.observerHeightSpinner, new GridBagConstraints(
         3, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, rightComponentInsets, 10, 0));
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, -30, 0));
     // Second row
     Insets closeLabelInsets = new Insets(0, 0, 2, 5);
     add(this.groundColorRadioButton, new GridBagConstraints(
@@ -383,7 +383,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
     add(this.groundColorButton, new GridBagConstraints(
         1, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 10), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 15), 0, 0));
     add(this.skyColorRadioButton, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, closeLabelInsets, 0, 0));
