@@ -790,10 +790,11 @@ public class HomeController implements Controller {
    * Enables zoom actions depending on current scale.
    */
   private void enableZoomActions() {
-    float scale = getPlanController().getScale();
+    PlanController planController = getPlanController();
+    float scale = planController.getScale();
     HomeView view = getView();
-    view.setEnabled(HomeView.ActionType.ZOOM_IN, scale < 5);
-    view.setEnabled(HomeView.ActionType.ZOOM_OUT, scale > 0.1f);    
+    view.setEnabled(HomeView.ActionType.ZOOM_IN, scale < planController.getMaximumScale());
+    view.setEnabled(HomeView.ActionType.ZOOM_OUT, scale > planController.getMinimumScale());    
   }
   
   /**

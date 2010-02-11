@@ -376,6 +376,13 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Processes a zoom event.
+   */
+  public void zoom(float factor) {
+    this.state.zoom(factor);
+  }
+
+  /**
    * Returns the selection state.
    */
   protected ControllerState getSelectionState() {
@@ -1275,6 +1282,20 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
 
+  /**
+   * Returns the minimum scale of the plan view.
+   */
+  public float getMinimumScale() {
+    return 0.01f;
+  }
+  
+  /**
+   * Returns the maximum scale of the plan view.
+   */
+  public float getMaximumScale() {
+    return 5f;
+  }
+  
   /**
    * Returns the scale in plan view. 
    */
@@ -4033,6 +4054,9 @@ public class PlanController extends FurnitureController implements Controller {
 
     public void moveMouse(float x, float y) {
     }
+    
+    public void zoom(float factor) {
+    }
   }
 
   // ControllerState subclasses
@@ -4070,6 +4094,11 @@ public class PlanController extends FurnitureController implements Controller {
       moveAndShowSelectedItems(dx, dy);
       // Compute again feedback 
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
+    
+    @Override
+    public void zoom(float factor) {
+      setScale(Math.max(getMinimumScale(), Math.min(getScale() * factor, getMaximumScale())));
     }
   }
   

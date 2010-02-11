@@ -54,6 +54,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -810,6 +812,24 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     };
     addMouseListener(mouseListener);
     addMouseMotionListener(mouseListener);
+    addMouseWheelListener(new MouseWheelListener() {        
+        public void mouseWheelMoved(MouseWheelEvent ev) {
+          if (ev.getModifiers() == getToolkit().getMenuShortcutKeyMask()) {
+            controller.zoom((float)(ev.getWheelRotation() < 0 
+                ? Math.pow(1.05, -ev.getWheelRotation()) 
+                : Math.pow(0.95, ev.getWheelRotation())));
+          } else if (getMouseWheelListeners().length == 1) {
+            // If this listener is the only one registered on this component
+            // redispatch event to its parent (for default scroll bar management)
+            getParent().dispatchEvent(
+              new MouseWheelEvent(getParent(), ev.getID(), ev.getWhen(), 
+                  ev.getModifiersEx() | ev.getModifiers(), 
+                  ev.getX() - getX(), ev.getY() - getY(), 
+                  ev.getClickCount(), ev.isPopupTrigger(), ev.getScrollType(), 
+                  ev.getScrollAmount(), ev.getWheelRotation()));
+          }
+        }
+      });
   }
 
   /**
