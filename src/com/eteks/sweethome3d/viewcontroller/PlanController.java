@@ -4677,6 +4677,11 @@ public class PlanController extends FurnitureController implements Controller {
     public void escape() {
       this.xLastMouseMove = null;
     }
+    
+    @Override
+    public void zoom(float factor) {
+      setScale(Math.max(getMinimumScale(), Math.min(getScale() * factor, getMaximumScale())));
+    }
   }
 
   /**
