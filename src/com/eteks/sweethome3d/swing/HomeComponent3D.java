@@ -134,6 +134,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.universe.SimpleUniverse;
@@ -266,7 +267,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         
         public void layoutContainer(Container parent) {
           canvas3D.setBounds(0, 0, parent.getWidth(), parent.getHeight());
-          if (navigationPanel.isVisible()) {
+          if (navigationPanel != null 
+              && navigationPanel.isVisible()) {
             // Ensure that navigationPanel is always in top corner             
             Dimension preferredSize = navigationPanel.getPreferredSize();
             navigationPanel.setBounds(0, 0, preferredSize.width, preferredSize.height);
@@ -279,22 +281,26 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     if (controller != null) {
       addMouseListeners(controller, this.canvas3D);
-      this.navigationPanel = createNavigationPanel(home, preferences, controller);
-      this.navigationPanelListener = new ComponentAdapter() {
-          @Override
-          public void componentResized(ComponentEvent ev) {
-            updateNavigationPanelImage();          
-          }
-          
-          @Override
-          public void componentMoved(ComponentEvent e) {
-            updateNavigationPanelImage();          
-          }
-        };
-      setNavigationPanelVisible(preferences.isNavigationPanelVisible());
-
-      preferences.addPropertyChangeListener(UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, 
-          new NavigationPanelChangeListener(this, controller));
+      if (!OperatingSystem.isMacOSX()
+          || OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        // No support for navigation panel under Mac OS X Tiger 
+        // (too unstable, may crash system at 3D view resizing)
+        this.navigationPanel = createNavigationPanel(home, preferences, controller);
+        this.navigationPanelListener = new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent ev) {
+              updateNavigationPanelImage();          
+            }
+            
+            @Override
+            public void componentMoved(ComponentEvent e) {
+              updateNavigationPanelImage();          
+            }
+          };
+        setNavigationPanelVisible(preferences.isNavigationPanelVisible());
+        preferences.addPropertyChangeListener(UserPreferences.Property.NAVIGATION_PANEL_VISIBLE, 
+            new NavigationPanelChangeListener(this, controller));
+      }
       createActions(controller);
       installKeyboardActions();
       // Let this component manage focus
@@ -497,22 +503,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Supports transparent components. 
    */
   private void setNavigationPanelVisible(boolean visible) {
-    this.navigationPanel.setVisible(visible);
-    if (visible) {
-      // Add a component listener that updates navigation panel image
-      this.navigationPanel.addComponentListener(this.navigationPanelListener);
-      // Add the navigation panel to this component to be able to paint it 
-      // but show it behind heavyweight canvas 3D
-      this.canvas3D.getParent().add(this.navigationPanel);    
-    } else {
-      this.navigationPanel.removeComponentListener(this.navigationPanelListener);
-      if (this.navigationPanel.getParent() != null) {
-        this.navigationPanel.getParent().remove(this.navigationPanel);
+    if (this.navigationPanel != null) {
+      this.navigationPanel.setVisible(visible);
+      if (visible) {
+        // Add a component listener that updates navigation panel image
+        this.navigationPanel.addComponentListener(this.navigationPanelListener);
+        // Add the navigation panel to this component to be able to paint it 
+        // but show it behind heavyweight canvas 3D
+        this.canvas3D.getParent().add(this.navigationPanel);    
+      } else {
+        this.navigationPanel.removeComponentListener(this.navigationPanelListener);
+        if (this.navigationPanel.getParent() != null) {
+          this.navigationPanel.getParent().remove(this.navigationPanel);
+        }
       }
+      revalidate();
+      updateNavigationPanelImage();          
+      this.canvas3D.repaint();
     }
-    revalidate();
-    updateNavigationPanelImage();          
-    this.canvas3D.repaint();
   }
   
   /**
@@ -520,7 +528,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * (with a Z order smaller than the one of the canvas 3D).
    */
   private void updateNavigationPanelImage() {
-    if (this.navigationPanel.isVisible()) {
+    if (this.navigationPanel != null 
+        && this.navigationPanel.isVisible()) {
       Rectangle componentBounds = this.navigationPanel.getBounds();
       Rectangle imageSize = new Rectangle(this.canvas3D.getX(), this.canvas3D.getY());
       imageSize.add(componentBounds.x + componentBounds.width, 
@@ -940,7 +949,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
          * events are managed only during mouseDragged event).
          */
         private boolean retargetMouseEventToNavigationPanelChildren(MouseEvent ev) {
-          if (navigationPanel.isVisible()) {
+          if (navigationPanel != null 
+              && navigationPanel.isVisible()) {
             if (this.grabComponent != null
                 && (ev.getID() == MouseEvent.MOUSE_RELEASED
                     || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {

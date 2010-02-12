@@ -215,7 +215,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     }
     
     if (controller.isPropertyEditable(UserPreferencesController.Property.FURNITURE_CATALOG_VIEWED_IN_TREE)) {
-      // Create furniture appearance label and radio buttons bound to controller FURNITURE_CATALOG_VIEWED_IN_TREE property
+      // Create furniture catalog label and radio buttons bound to controller FURNITURE_CATALOG_VIEWED_IN_TREE property
       this.furnitureCatalogViewLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "furnitureCatalogViewLabel.text"));
       this.treeRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
@@ -244,22 +244,29 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
     }
 
     if (controller.isPropertyEditable(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE)) {
-      // Create rulers label and check box bound to controller NAVIGATION_PANEL_VISIBLE property
+      // Create navigation panel label and check box bound to controller NAVIGATION_PANEL_VISIBLE property
       this.navigationPanelLabel = new JLabel(preferences.getLocalizedString(
           UserPreferencesPanel.class, "navigationPanelLabel.text"));
       this.navigationPanelCheckBox = new JCheckBox(SwingTools.getLocalizedLabelText(preferences, 
-          UserPreferencesPanel.class, "navigationPanelCheckBox.text"), controller.isNavigationPanelVisible());
-      this.navigationPanelCheckBox.addItemListener(new ItemListener() {
-          public void itemStateChanged(ItemEvent ev) {
-            controller.setNavigationPanelVisible(navigationPanelCheckBox.isSelected());
-          }
-        });
-      controller.addPropertyChangeListener(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              navigationPanelCheckBox.setSelected(controller.isNavigationPanelVisible());
+          UserPreferencesPanel.class, "navigationPanelCheckBox.text"));
+      if (!OperatingSystem.isMacOSX()
+          || OperatingSystem.isMacOSXLeopardOrSuperior()) {
+        this.navigationPanelCheckBox.setSelected(controller.isNavigationPanelVisible());
+        this.navigationPanelCheckBox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+              controller.setNavigationPanelVisible(navigationPanelCheckBox.isSelected());
             }
           });
+        controller.addPropertyChangeListener(UserPreferencesController.Property.NAVIGATION_PANEL_VISIBLE, 
+            new PropertyChangeListener() {
+              public void propertyChange(PropertyChangeEvent ev) {
+                navigationPanelCheckBox.setSelected(controller.isNavigationPanelVisible());
+              }
+            });
+      } else {
+        // No support for navigation panel under Mac OS X Tiger (too unstable)
+        this.navigationPanelCheckBox.setEnabled(false);
+      }
     }
 
     if (controller.isPropertyEditable(UserPreferencesController.Property.MAGNETISM_ENABLED)) {
