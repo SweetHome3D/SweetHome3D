@@ -50,7 +50,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
@@ -190,7 +189,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedTextureWizardStepsPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(10);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
     final Color defaultNameTextFieldColor = this.nameTextField.getForeground();

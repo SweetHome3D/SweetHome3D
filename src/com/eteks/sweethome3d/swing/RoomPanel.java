@@ -91,7 +91,7 @@ public class RoomPanel extends JPanel implements DialogView {
     this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         RoomPanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
     final PropertyChangeListener nameChangeListener = new PropertyChangeListener() {

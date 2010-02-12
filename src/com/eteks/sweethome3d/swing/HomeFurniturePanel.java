@@ -98,7 +98,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Create name label and its text field bound to NAME controller property
     this.nameLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HomeFurniturePanel.class, "nameLabel.text"));
     this.nameTextField = new JTextField(controller.getName(), 10);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.nameTextField);
     }
     final PropertyChangeListener nameChangeListener = new PropertyChangeListener() {

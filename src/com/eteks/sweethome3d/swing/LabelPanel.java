@@ -78,7 +78,7 @@ public class LabelPanel extends JPanel implements DialogView {
     this.textLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         LabelPanel.class, "textLabel.text"));
     this.textTextField = new JTextField(controller.getText(), 20);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.textTextField);
     }
     final PropertyChangeListener textChangeListener = new PropertyChangeListener() {

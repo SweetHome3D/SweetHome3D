@@ -163,14 +163,14 @@ public class PageSetupPanel extends JPanel implements DialogView {
     this.headerFormatLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "headerFormatLabel.text"));
     this.headerFormatTextField = new JTextField(20);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.headerFormatTextField);
     }
     
     this.footerFormatLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PageSetupPanel.class, "footerFormatLabel.text"));
     this.footerFormatTextField = new JTextField(20);
-    if (!OperatingSystem.isMacOSX()) {
+    if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       SwingTools.addAutoSelectionOnFocusGain(this.footerFormatTextField);
     }
 
