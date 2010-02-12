@@ -200,7 +200,12 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     List<FurnitureCategory> categories = new ArrayList<FurnitureCategory>();
     categories.add(null);
     categories.addAll(catalog.getCategories());
-    this.categoryFilterComboBox = new JComboBox(new DefaultComboBoxModel(categories.toArray()));
+    this.categoryFilterComboBox = new JComboBox(new DefaultComboBoxModel(categories.toArray())) {
+        @Override
+        public Dimension getMinimumSize() {
+          return new Dimension(60, super.getMinimumSize().height);
+        }
+      };
     this.categoryFilterComboBox.setMaximumRowCount(20);
     this.categoryFilterComboBox.setRenderer(new DefaultListCellRenderer() {
         public Component getListCellRendererComponent(JList list, Object value,
