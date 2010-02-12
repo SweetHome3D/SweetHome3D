@@ -3835,6 +3835,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                 || ev.getKeyCode() == KeyEvent.VK_UP) {
               setFocusedTextFieldIndex((this.focusedTextFieldIndex - 1 + toolTipEditedProperties.length) % toolTipEditedProperties.length);
               ev.consume();
+            } else if ((ev.getKeyCode() == KeyEvent.VK_HOME
+                          || ev.getKeyCode() == KeyEvent.VK_END)
+                       && OperatingSystem.isMacOSX()
+                       && !OperatingSystem.isMacOSXLeopardOrSuperior()) {
+              // Support Home and End keys under Mac OS X Tiger
+              if (ev.getKeyCode() == KeyEvent.VK_HOME) {
+                focusedTextField.setCaretPosition(0);
+              } else if (ev.getKeyCode() == KeyEvent.VK_END) {
+                focusedTextField.setCaretPosition(focusedTextField.getText().length());
+              }
+              ev.consume();
             } else if (ev.getKeyCode() != KeyEvent.VK_ESCAPE) { 
               // Forward other key events to focused text field (except for Esc key, otherwise InputMap won't receive it)
               KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(this.focusedTextField, ev);
