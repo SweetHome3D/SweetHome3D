@@ -813,16 +813,11 @@ public class HomePane extends JRootPane implements HomeView {
    * is a parent of the given child component and is too small enough to show it. 
    */
   private boolean isChildComponentInvisible(JSplitPane splitPane, Component childComponent) {
-    int dividerLocation = splitPane.getDividerLocation();
     return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
-           && ((dividerLocation != -1 
-                  && dividerLocation < splitPane.getMinimumDividerLocation())
-              || splitPane.getTopComponent().getWidth() == 0
+           && (splitPane.getTopComponent().getWidth() == 0
               || splitPane.getTopComponent().getHeight() == 0))
         || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
-           && ((dividerLocation != -1 
-                  && dividerLocation > splitPane.getMaximumDividerLocation())
-              || splitPane.getBottomComponent().getWidth() == 0
+           && (splitPane.getBottomComponent().getWidth() == 0
               || splitPane.getBottomComponent().getHeight() == 0));
   }
 
