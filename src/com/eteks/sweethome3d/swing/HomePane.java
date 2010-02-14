@@ -63,6 +63,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -701,16 +702,25 @@ public class HomePane extends JRootPane implements HomeView {
                 if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
                     && gainedFocusedComponent instanceof JComponent) {
                   // Notify controller that active view changed
+                  View focusedView; 
                   if (gainedFocusedComponent instanceof View) {
-                    homePane.controller.focusedViewChanged((View)gainedFocusedComponent);
+                    focusedView = (View)gainedFocusedComponent;
                   } else {
-                    homePane.controller.focusedViewChanged((View)SwingUtilities.getAncestorOfClass(View.class, gainedFocusedComponent));
+                    focusedView = (View)SwingUtilities.getAncestorOfClass(View.class, gainedFocusedComponent);
                   }
-                  
-                  gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
+                  List<View> focusableViews = Arrays.asList(new View [] {
+                     homePane.controller.getFurnitureCatalogController().getView(),
+                     homePane.controller.getFurnitureController().getView(),
+                     homePane.controller.getPlanController().getView(),
+                     homePane.controller.getHomeController3D().getView()});
+                  if (focusableViews.contains(focusedView)) {
+                    homePane.controller.focusedViewChanged(focusedView);
 
-                  // Update the component used by clipboard actions
-                  homePane.focusedComponent = (JComponent)gainedFocusedComponent;
+                    gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
+                    
+                    // Update the component used by clipboard actions
+                    homePane.focusedComponent = (JComponent)gainedFocusedComponent;
+                  }                  
                 }
               }
             }
