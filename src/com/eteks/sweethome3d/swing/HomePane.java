@@ -814,12 +814,14 @@ public class HomePane extends JRootPane implements HomeView {
    */
   private boolean isChildComponentInvisible(JSplitPane splitPane, Component childComponent) {
     int dividerLocation = splitPane.getDividerLocation();
-    return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
+    return childComponent.getHeight() == 0
+        || childComponent.getWidth() == 0
+        || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
            && dividerLocation != -1 
-           && dividerLocation <= splitPane.getMinimumDividerLocation())
+           && dividerLocation < splitPane.getMinimumDividerLocation())
         || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
            && dividerLocation != -1 
-           && dividerLocation >= splitPane.getMaximumDividerLocation());
+           && dividerLocation > splitPane.getMaximumDividerLocation());
   }
 
   /**
@@ -1834,17 +1836,21 @@ public class HomePane extends JRootPane implements HomeView {
     }
     splitPane.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, 
         new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-            if (focusOwner != null && isChildComponentInvisible(splitPane, focusOwner)) {
-              FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicy();              
-              Component focusedComponent = focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner);
-              if (focusedComponent == null) {
-                focusedComponent = focusTraversalPolicy.getComponentBefore(HomePane.this, focusOwner);
-              }                
-              focusedComponent.requestFocusInWindow();              
-            }
-            controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
+          public void propertyChange(final PropertyChangeEvent ev) {
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                  if (focusOwner != null && isChildComponentInvisible(splitPane, focusOwner)) {
+                    FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicy();              
+                    Component focusedComponent = focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner);
+                    if (focusedComponent == null) {
+                      focusedComponent = focusTraversalPolicy.getComponentBefore(HomePane.this, focusOwner);
+                    }                
+                    focusedComponent.requestFocusInWindow();              
+                  }
+                  controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
+                }
+              });
           }
         });
   }
