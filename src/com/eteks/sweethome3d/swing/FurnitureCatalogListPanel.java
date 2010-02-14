@@ -36,6 +36,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
@@ -121,7 +122,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
    */
   private void createComponents(FurnitureCatalog catalog,
                                 final UserPreferences preferences, 
-                                FurnitureCatalogController controller) {
+                                final FurnitureCatalogController controller) {
     final CatalogListModel catalogListModel = new CatalogListModel(catalog);
     this.catalogFurnitureList = new JList(catalogListModel) {
         @Override
@@ -159,6 +160,19 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           } 
         }
       });
+    // Add a double click mouse listener to modify selected furniture.
+    this.catalogFurnitureList.addMouseListener(new MouseAdapter () {
+          @Override
+          public void mouseClicked(MouseEvent ev) {
+            if (ev.getClickCount() == 2) {
+              int clickedPieceIndex = catalogFurnitureList.locationToIndex(ev.getPoint());
+              if (clickedPieceIndex != -1) {
+                controller.modifySelectedFurniture();
+              }
+            }
+          }
+        });
+
     catalogListModel.addListDataListener(new ListDataListener() {
         public void contentsChanged(ListDataEvent ev) {
           spreadFurnitureIconsAlongListWidth();
