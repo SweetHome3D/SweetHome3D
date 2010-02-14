@@ -63,7 +63,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -701,26 +700,23 @@ public class HomePane extends JRootPane implements HomeView {
                 Component gainedFocusedComponent = (Component)ev.getNewValue(); 
                 if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
                     && gainedFocusedComponent instanceof JComponent) {
-                  // Notify controller that active view changed
-                  View focusedView; 
-                  if (gainedFocusedComponent instanceof View) {
-                    focusedView = (View)gainedFocusedComponent;
-                  } else {
-                    focusedView = (View)SwingUtilities.getAncestorOfClass(View.class, gainedFocusedComponent);
-                  }
-                  List<View> focusableViews = Arrays.asList(new View [] {
+                  View [] focusableViews = {
                      homePane.controller.getFurnitureCatalogController().getView(),
                      homePane.controller.getFurnitureController().getView(),
                      homePane.controller.getPlanController().getView(),
-                     homePane.controller.getHomeController3D().getView()});
-                  if (focusableViews.contains(focusedView)) {
-                    homePane.controller.focusedViewChanged(focusedView);
-
-                    gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
-                    
-                    // Update the component used by clipboard actions
-                    homePane.focusedComponent = (JComponent)gainedFocusedComponent;
-                  }                  
+                     homePane.controller.getHomeController3D().getView()};
+                  // Notify controller that active view changed
+                  for (View view : focusableViews) {
+                    if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, (JComponent)view)) {
+                      homePane.controller.focusedViewChanged(view);
+  
+                      gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
+                      
+                      // Update the component used by clipboard actions
+                      homePane.focusedComponent = (JComponent)gainedFocusedComponent;
+                      break;
+                    }
+                  }
                 }
               }
             }
@@ -820,10 +816,10 @@ public class HomePane extends JRootPane implements HomeView {
     int dividerLocation = splitPane.getDividerLocation();
     return (SwingUtilities.isDescendingFrom(childComponent, splitPane.getTopComponent())
            && dividerLocation != -1 
-           && dividerLocation < splitPane.getMinimumDividerLocation())
+           && dividerLocation <= splitPane.getMinimumDividerLocation())
         || (SwingUtilities.isDescendingFrom(childComponent, splitPane.getBottomComponent())
            && dividerLocation != -1 
-           && dividerLocation > splitPane.getMaximumDividerLocation());
+           && dividerLocation >= splitPane.getMaximumDividerLocation());
   }
 
   /**
@@ -1841,8 +1837,12 @@ public class HomePane extends JRootPane implements HomeView {
           public void propertyChange(PropertyChangeEvent ev) {
             Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
             if (focusOwner != null && isChildComponentInvisible(splitPane, focusOwner)) {
-              FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicy();
-              focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner).requestFocusInWindow();              
+              FocusTraversalPolicy focusTraversalPolicy = getFocusTraversalPolicy();              
+              Component focusedComponent = focusTraversalPolicy.getComponentAfter(HomePane.this, focusOwner);
+              if (focusedComponent == null) {
+                focusedComponent = focusTraversalPolicy.getComponentBefore(HomePane.this, focusOwner);
+              }                
+              focusedComponent.requestFocusInWindow();              
             }
             controller.setVisualProperty(dividerLocationProperty, ev.getNewValue());
           }
