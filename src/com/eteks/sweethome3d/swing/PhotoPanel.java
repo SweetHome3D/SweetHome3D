@@ -118,7 +118,6 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JPanel                photoPanel;
   private CardLayout            photoCardLayout;
   private ExecutorService       photoCreationExecutor;
-  private PhotoRenderer         photoRenderer;
   
   private static PhotoPanel     currentPhotoPanel; // There can be only one photo panel opened at a time
 
@@ -554,6 +553,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           null, new Object [] {createButton, saveButton, closeButton}, createButton);
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
+      dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
       dialog.addComponentListener(new ComponentAdapter() {
           @Override
           public void componentHidden(ComponentEvent ev) {
@@ -594,6 +594,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           public void windowClosed(WindowEvent ev) {
             ((JComponent)controller.get3DView()).removeComponentListener(view3DSizeListener);
             stopPhotoCreation();
+            currentPhotoPanel = null;
           }
         });
 
@@ -621,6 +622,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
   /**
    * Computes the photo.
+   * Caution : this method must be thread safe because it's called from an executor. 
    */
   private void computePhoto() {
     BufferedImage image = null;
@@ -630,7 +632,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
-        this.photoRenderer = new PhotoRenderer(this.home, quality == 2 
+        PhotoRenderer photoRenderer = new PhotoRenderer(this.home, quality == 2 
             ? PhotoRenderer.Quality.LOW 
             : PhotoRenderer.Quality.HIGH);
         if (!Thread.interrupted()) {
@@ -641,9 +643,8 @@ public class PhotoPanel extends JPanel implements DialogView {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
             }
           });
-          this.photoRenderer.render(image, this.home.getCamera(), this.photoComponent);
+          photoRenderer.render(image, this.home.getCamera(), this.photoComponent);
         }
-        this.photoRenderer = null;
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(this.home, this.preferences, quality == 1);
@@ -689,10 +690,6 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void stopPhotoCreation() {
     if (this.photoCreationExecutor != null) {
-      if (this.photoRenderer != null) {
-        this.photoRenderer.stop();
-        this.photoRenderer = null;
-      }
       this.photoCreationExecutor.shutdownNow();
       this.photoCreationExecutor = null;
     }
@@ -724,6 +721,5 @@ public class PhotoPanel extends JPanel implements DialogView {
     if (window.isDisplayable()) {
       window.dispose();
     }    
-    currentPhotoPanel = null;
   }
 }

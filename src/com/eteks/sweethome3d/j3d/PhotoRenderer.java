@@ -105,21 +105,6 @@ public class PhotoRenderer {
    * @throws IOException if texture image files required in the scene couldn't be created. 
    */
   public PhotoRenderer(Home home, Quality quality) throws IOException {
-    // As only one SunFlow renderer can run at a time,
-    // wait 10s max that SunFlow rendering threads end
-    for (int i = 0; UI.taskCanceled() && i < 100; i++) {
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException ex) {
-        break;
-      }
-    }
-    // If SunFlow rendering threads are still running, 
-    // there must be a big problem
-    if (UI.taskCanceled()) {
-      throw new IllegalStateException("Can't stop SunFlow");
-    }
-    
     this.sunflow = new SunflowAPI();
     this.quality = quality;
     int samples = quality == Quality.LOW ? 4 : 8;
@@ -286,13 +271,6 @@ public class PhotoRenderer {
     this.sunflow.render(SunflowAPI.DEFAULT_OPTIONS, new BufferedImageDisplay(image, observer));
   }
   
-  /**
-   * Stops the rendering process.
-   */
-  public void stop() {
-    UI.taskCancel();
-  }
-
   /**
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
