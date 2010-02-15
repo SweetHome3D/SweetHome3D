@@ -89,6 +89,7 @@ public class HomeFileRecorder implements HomeRecorder {
     try {
       // Open a stream on a temporary file 
       tempFile = File.createTempFile("save", ".sweethome3d");
+      tempFile.deleteOnExit();
       homeOut = new DefaultHomeOutputStream(new FileOutputStream(tempFile), 
           this.compressionLevel, this.includeOnlyTemporaryContent);
       // Write home with HomeOuputStream
@@ -103,7 +104,7 @@ public class HomeFileRecorder implements HomeRecorder {
           homeOut.close();
         }
       } catch (IOException ex) {
-        throw new RecorderException("Can't close file " + name, ex);
+        throw new RecorderException("Can't close temporary file " + name, ex);
       }
     }
 
