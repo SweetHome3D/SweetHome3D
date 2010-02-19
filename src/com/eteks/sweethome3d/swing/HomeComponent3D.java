@@ -562,7 +562,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     
     View view = viewer.getView();
     // Update field of view from current camera
-    updateView(view, this.home.getCamera(), this.home.getObserverCamera() == this.home.getCamera());
+    updateView(view, this.home.getCamera(), this.home.getTopCamera() == this.home.getCamera());
     
     // Update point of view from current camera
     updateViewPlatformTransform(viewPlatformTransform, this.home.getCamera(), false);
@@ -695,7 +695,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           // Update view transform later to avoid flickering in case of multiple camera changes 
           EventQueue.invokeLater(new Runnable() {
             public void run() {
-              updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
+              updateView(view, home.getCamera(), home.getTopCamera() == home.getCamera());
               updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), true);
             }
           });
@@ -704,7 +704,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.home.getCamera().addPropertyChangeListener(this.cameraChangeListener);
     this.homeCameraListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateView(view, home.getCamera(), home.getObserverCamera() == home.getCamera());
+          updateView(view, home.getCamera(), home.getTopCamera() == home.getCamera());
           updateViewPlatformTransform(viewPlatformTransform, home.getCamera(), false);
           // Add camera change listener to new active camera
           ((Camera)ev.getOldValue()).removePropertyChangeListener(cameraChangeListener);
@@ -717,7 +717,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * Updates <code>view</code> from <code>camera</code> field of view.
    */
-  private void updateView(View view, Camera camera, boolean observerCamera) {
+  private void updateView(View view, Camera camera, boolean topCamera) {
     float fieldOfView = camera.getFieldOfView();
     if (fieldOfView == 0) {
       fieldOfView = (float)(Math.PI * 63 / 180);
@@ -728,15 +728,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     // depending on the elevation (at an elevation higher than 3 m
     // back clip distance must be greater than 6000 or a black zone appears 
     // at the horizon in off screen images)
-    if (observerCamera) {
-      frontClipDistance = 2;
-      if (camera.getZ() > 300) {
-        frontClipDistance += (camera.getZ() - 300) / 150;
-      }
-    } else {
+    if (topCamera) {
       frontClipDistance = 5;
       if (camera.getZ() > 750) {
         frontClipDistance += (camera.getZ() - 750) / 150;
+      }
+    } else {
+      frontClipDistance = 2;
+      if (camera.getZ() > 300) {
+        frontClipDistance += (camera.getZ() - 300) / 150;
       }
     }
     // Update front and back clip distance to ensure their ratio is less than 3000
