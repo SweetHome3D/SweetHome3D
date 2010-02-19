@@ -738,6 +738,7 @@
       <fileset dir=".">
         <include name="build.xml"/>
         <include name="*.TXT"/>
+      	<include name="*-diff.zip"/>
         <include name="src/**"/>
         <include name="test/**"/>
         <include name="lib/**"/>
