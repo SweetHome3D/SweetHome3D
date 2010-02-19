@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Shape;
 import java.awt.geom.Area;
+import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -162,9 +163,11 @@ public class Wall3D extends Object3DBranch {
         : null; 
     int currentGeometriesCount = wallFilledShape.numGeometries();
     for (Geometry wallGeometry : createWallGeometries(wallSide, texture)) {
-      wallFilledShape.addGeometry(wallGeometry);
-      if (wallOutlineShape != null) {
-        wallOutlineShape.addGeometry(wallGeometry);
+      if (wallGeometry != null) {
+        wallFilledShape.addGeometry(wallGeometry);
+        if (wallOutlineShape != null) {
+          wallOutlineShape.addGeometry(wallGeometry);
+        }
       }
     }
     for (int i = currentGeometriesCount - 1; i >= 0; i--) {
@@ -180,7 +183,11 @@ public class Wall3D extends Object3DBranch {
    * that intersect wall.
    */
   private Geometry [] createWallGeometries(int wallSide, HomeTexture texture) {
-    Shape wallShape = getShape(getWallSidePoints(wallSide));
+    float [][] wallSidePoints = getWallSidePoints(wallSide);
+    float [] textureReferencePoint = wallSide == LEFT_WALL_SIDE
+        ? wallSidePoints [0]
+        : wallSidePoints [3];
+    Shape wallShape = getShape(wallSidePoints);
     Area wallArea = new Area(wallShape);
     float wallHeightAtStart = getWallHeightAtStart();
     float wallHeightAtEnd = getWallHeightAtEnd();
@@ -233,8 +240,8 @@ public class Wall3D extends Object3DBranch {
           if (wallPoints.size() > 2) {
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
             // Compute geometry for vertical part
-            wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
-                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
+            wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
+                cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
             // Compute geometry for bottom part
             wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
             // Compute geometry for top part
@@ -274,8 +281,8 @@ public class Wall3D extends Object3DBranch {
             }            
             // Generate geometry for wall part above window
             if (doorOrWindowTop < minTopY) {
-              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, doorOrWindowTop, 
-                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture));
+              wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, doorOrWindowTop, 
+                  cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta, texture, textureReferencePoint));
               wallGeometries.add(createWallHorizontalPartGeometry(
                   wallPartPoints, doorOrWindowTop));
               wallGeometries.add(createWallTopPartGeometry(wallPartPoints, 
@@ -283,8 +290,8 @@ public class Wall3D extends Object3DBranch {
             }
             // Generate geometry for wall part below window
             if (doorOrWindow.getElevation() > 0) {
-              wallGeometries.add(createWallVerticalPartGeometry(wallPartPoints, 0, 
-                  cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture));
+              wallGeometries.add(createWallVerticalPartGeometry(wall, wallPartPoints, 0, 
+                  cosWallYawAngle, sinWallYawAngle, 0, doorOrWindow.getElevation(), texture, textureReferencePoint));
               wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, 0));
               wallGeometries.add(createWallHorizontalPartGeometry(wallPartPoints, doorOrWindow.getElevation()));
             }
@@ -346,56 +353,118 @@ public class Wall3D extends Object3DBranch {
    * and <code>topLineBeta</code> factors in a vertical plan that is rotated around
    * vertical axis matching <code>cosWallYawAngle</code> and <code>sinWallYawAngle</code>. 
    */
-  private Geometry createWallVerticalPartGeometry(float [][] points, float yMin, 
+  private Geometry createWallVerticalPartGeometry(Wall wall, 
+                                                  float [][] points, float yMin, 
                                                   double cosWallYawAngle, double sinWallYawAngle, 
                                                   double topLineAlpha, double topLineBeta, 
-                                                  HomeTexture texture) {
+                                                  HomeTexture texture,
+                                                  float [] textureReferencePoint) {
     // Compute wall coordinates
     Point3f [] bottom = new Point3f [points.length];
     Point3f [] top    = new Point3f [points.length];
+    double  [] distanceSqToWallMiddle = new double [points.length];
+    float xStart = wall.getXStart();
+    float yStart = wall.getYStart();
+    float xEnd = wall.getXEnd();
+    float yEnd = wall.getYEnd();
     for (int i = 0; i < points.length; i++) {
       bottom [i] = new Point3f(points[i][0], yMin, points[i][1]);
+      distanceSqToWallMiddle [i] = Line2D.ptLineDistSq(xStart, yStart, xEnd, yEnd, bottom [i].x, bottom [i].z);
       // Compute vertical top point 
       double xTopPointWithZeroYaw = cosWallYawAngle * points[i][0] + sinWallYawAngle * points[i][1];
       float topY = (float)(topLineAlpha * xTopPointWithZeroYaw + topLineBeta);
       top [i] = new Point3f(points[i][0], topY, points[i][1]);
     }
-    Point3f [] coords = new Point3f [points.length * 4];
+    // Search which rectangles should be ignored
+    int rectanglesCount = 0;
+    boolean [] usedRectangle = new boolean [points.length]; 
+    for (int i = 0; i < points.length - 1; i++) {
+      usedRectangle [i] = distanceSqToWallMiddle [i] > 0.0001
+          || distanceSqToWallMiddle [i + 1] > 0.0001;
+      if (usedRectangle [i]) {
+        rectanglesCount++;
+      } 
+    }
+    usedRectangle [usedRectangle.length - 1] =  distanceSqToWallMiddle [0] > 0.0001
+        || distanceSqToWallMiddle [points.length - 1] > 0.0001;
+    if (usedRectangle [usedRectangle.length - 1]) {
+      rectanglesCount++;
+    }
+    if (rectanglesCount == 0) {
+      return null;
+    }
+    
+    Point3f [] coords = new Point3f [rectanglesCount * 4];
     int j = 0;
     for (int i = 0; i < points.length - 1; i++) {
-      coords [j++] = bottom [i];
-      coords [j++] = bottom [i + 1];
-      coords [j++] = top [i + 1];
-      coords [j++] = top [i];
+      if (usedRectangle [i]) {
+        coords [j++] = bottom [i];
+        coords [j++] = bottom [i + 1];
+        coords [j++] = top [i + 1];
+        coords [j++] = top [i];
+      }
     }
-    coords [j++] = bottom [points.length - 1];
-    coords [j++] = bottom [0];
-    coords [j++] = top [0];
-    coords [j++] = top [points.length - 1];
+    if (usedRectangle [usedRectangle.length - 1]) {
+      coords [j++] = bottom [points.length - 1];
+      coords [j++] = bottom [0];
+      coords [j++] = top [0];
+      coords [j++] = top [points.length - 1];
+    }
     
     GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates (coords);
     
     // Compute wall texture coordinates
     if (texture != null) {
-      TexCoord2f [] textureCoords = new TexCoord2f [points.length * 4];
+      float halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
+      TexCoord2f [] textureCoords = new TexCoord2f [rectanglesCount * 4];
       float yMinTextureCoords = yMin / texture.getHeight();
       TexCoord2f firstTextureCoords = new TexCoord2f(0, yMinTextureCoords);
       j = 0;
       for (int i = 0; i < points.length - 1; i++) {
-        float horizontalTextureCoords = (float)Point2D.distance(points[i][0], points[i][1], 
-            points[i + 1][0], points[i + 1][1]) / texture.getWidth();
-        textureCoords [j++] = firstTextureCoords;
-        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-        textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].y / texture.getHeight());
-        textureCoords [j++] = new TexCoord2f(0, top [i].y / texture.getHeight());
+        if (usedRectangle [i]) {
+          if (Math.abs(distanceSqToWallMiddle [i] - halfThicknessSq) < 0.0001
+              && Math.abs(distanceSqToWallMiddle [i + 1] - halfThicknessSq) < 0.0001) {
+            // Compute texture coordinates of wall part parallel to wall middle
+            // according to textureReferencePoint
+            float firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                points[i][0], points[i][1]) / texture.getWidth();
+            float secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+                points[i + 1][0], points[i + 1][1]) / texture.getWidth();
+            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
+            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
+            textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [i + 1].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [i].y / texture.getHeight());
+          } else {
+            float horizontalTextureCoords = (float)Point2D.distance(points[i][0], points[i][1], 
+                points[i + 1][0], points[i + 1][1]) / texture.getWidth();
+            textureCoords [j++] = firstTextureCoords;
+            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
+            textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [i + 1].y / texture.getHeight());
+            textureCoords [j++] = new TexCoord2f(0, top [i].y / texture.getHeight());
+          }
+        }
       }
-      float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
-          points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
-      textureCoords [j++] = firstTextureCoords;
-      textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
-      textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [0].y / texture.getHeight());
-      textureCoords [j++] = new TexCoord2f(0, top [top.length - 1].y / texture.getHeight());
+      if (usedRectangle [usedRectangle.length - 1]) {
+        if (Math.abs(distanceSqToWallMiddle [0] - halfThicknessSq) < 0.0001
+            && Math.abs(distanceSqToWallMiddle [points.length - 1] - halfThicknessSq) < 0.0001) {
+          float firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+              points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
+          float secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint[0], textureReferencePoint[1], 
+              points[0][0], points[0][1]) / texture.getWidth();
+          textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, yMinTextureCoords);
+          textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, yMinTextureCoords);
+          textureCoords [j++] = new TexCoord2f(secondHorizontalTextureCoords, top [0].y / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(firstHorizontalTextureCoords, top [top.length - 1].y / texture.getHeight());
+        } else {
+          float horizontalTextureCoords = (float)Point2D.distance(points[0][0], points[0][1], 
+              points[points.length - 1][0], points[points.length - 1][1]) / texture.getWidth();
+          textureCoords [j++] = firstTextureCoords;
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, yMinTextureCoords);
+          textureCoords [j++] = new TexCoord2f(horizontalTextureCoords, top [0].y / texture.getHeight());
+          textureCoords [j++] = new TexCoord2f(0, top [top.length - 1].y / texture.getHeight());
+        }
+      }
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
