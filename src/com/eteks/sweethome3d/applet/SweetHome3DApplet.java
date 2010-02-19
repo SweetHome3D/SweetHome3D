@@ -140,6 +140,10 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     the action that lets the user create a photo from the 3D view of the edited home. 
  *     <br>By default, the value of this parameter is <code>false</code>.</li>
  *     
+ *     <li><code>enableCreateVideo</code> specifies whether this applet should enable
+ *     the action that lets the user create a 3D video of the edited home. 
+ *     <br>By default, the value of this parameter is <code>false</code>.</li>
+ *     
  *     <li><code>showMemoryStatus</code> specifies whether this applet should display
  *     each second the available memory in browser status bar when it has focus. 
  *     <br>By default, the value of this parameter is <code>false</code> and 
@@ -254,12 +258,15 @@ public class SweetHome3DApplet extends JApplet {
       }
       List applicationPackages = new ArrayList(Arrays.asList(new String [] {
           "com.eteks.sweethome3d",
-          "javax.media.j3d",
+          "javax.media",
           "javax.vecmath",
           "com.sun.j3d",
           "com.sun.opengl",
           "com.sun.gluegen.runtime",
           "javax.media.opengl",
+          "com.sun.media",
+          "com.ibm.media",
+          "jmpapps.util",
           "com.microcrowd.loader.java3d",
           "org.sunflow"}));
       applicationPackages.addAll(getPluginsPackages());

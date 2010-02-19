@@ -40,6 +40,7 @@ import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardController;
 import com.eteks.sweethome3d.viewcontroller.ImportedFurnitureWizardStepsView;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
 import com.eteks.sweethome3d.viewcontroller.LabelController;
+import com.eteks.sweethome3d.viewcontroller.VideoController;
 import com.eteks.sweethome3d.viewcontroller.PageSetupController;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
@@ -238,6 +239,15 @@ public class SwingViewFactory implements ViewFactory {
                                     UserPreferences preferences, 
                                     PhotoController photoController) {
     return new PhotoPanel(home, preferences, photoController);
+  }
+  
+  /**
+   * Returns a new view able to create 3D videos of the given home. 
+   */
+  public DialogView createVideoView(Home home, 
+                                    UserPreferences preferences, 
+                                    VideoController videoController) {
+    return new VideoPanel(home, preferences, videoController);
   }
   
   /**

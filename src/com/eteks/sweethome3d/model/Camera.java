@@ -29,7 +29,7 @@ import java.io.Serializable;
  * Camera characteristics in home.
  * @author Emmanuel Puybaret
  */
-public class Camera implements Serializable {
+public class Camera implements Serializable, Cloneable {
   /**
    * The properties of a camera that may change. <code>PropertyChangeListener</code>s added 
    * to a camera will be notified under a property name equal to the string value of one these properties.
@@ -192,5 +192,27 @@ public class Camera implements Serializable {
       this.z = z;
       this.propertyChangeSupport.firePropertyChange(Property.Z.name(), oldZ, z);
     }
+  }
+
+  /**
+   * Sets the location and angles of this camera from the <code>camera</code> in parameter
+   * @since 2.3
+   */
+  public void setCamera(Camera camera) {
+    setX(camera.getX());
+    setY(camera.getY());
+    setZ(camera.getZ());
+    setYaw(camera.getYaw());
+    setPitch(camera.getPitch());
+    setFieldOfView(camera.getFieldOfView());
+  }
+  
+  /**
+   * Returns a clone of this camera.
+   * @since 2.3
+   */
+  @Override
+  public Camera clone() {
+    return new Camera(getX(), getY(), getZ(), getYaw(), getPitch(), getFieldOfView());
   }
 }

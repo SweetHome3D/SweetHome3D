@@ -320,6 +320,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void ancestorRemoved(AncestorEvent event) {
           universe.cleanup();
           removeHomeListeners();
+          universe = null;
         }
         
         public void ancestorMoved(AncestorEvent event) {
@@ -641,6 +642,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
   
   /**
+   * Optimizes this component for the creation of a sequence of multiple off screen images. 
+   * Once off screen images are generated with {@link #getOffScreenImage(int, int) getOffScreenImage}, 
+   * call {@link #endOffscreenImagesCreation() endOffscreenImagesCreation} method to free resources.
+   */
+  void startOffscreenImagesCreation() {
+    if (this.universe == null) {
+      this.universe = createUniverse(this.displayShadowOnFloor, true, true);
+    }
+  }
+  
+  /**
    * Returns an image of the home viewed by this component at the given size.
    */
   public BufferedImage getOffScreenImage(int width, int height) {
@@ -659,6 +671,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       if (offScreenImageUniverse != null) {
         offScreenImageUniverse.cleanup();
       } 
+    }
+  }
+  
+  /**
+   * Frees unnecessary resources after the creation of a sequence of multiple offscreen images.
+   */
+  void endOffscreenImagesCreation() {
+    if (this.universe != null) {
+      this.universe.cleanup();
+      removeHomeListeners();
+      this.universe = null;
     }
   }
   
@@ -1631,7 +1654,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       if (object3DEntry.getKey() instanceof HomePieceOfFurniture) {
         HomePieceOfFurniture piece = (HomePieceOfFurniture)object3DEntry.getKey();
         // This operation can be lengthy, so give up if thread is interrupted 
-        if (Thread.interrupted()) {
+        if (Thread.currentThread().isInterrupted()) {
           return;
         }
         if (piece.getElevation() == 0 

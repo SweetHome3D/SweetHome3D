@@ -98,6 +98,7 @@ public class AppletApplication extends HomeApplication {
   private static final String   ENABLE_EXPORT_TO_OBJ             = "enableExportToOBJ";
   private static final String   ENABLE_PRINT_TO_PDF              = "enablePrintToPDF";
   private static final String   ENABLE_CREATE_PHOTO              = "enableCreatePhoto";
+  private static final String   ENABLE_CREATE_VIDEO              = "enableCreateVideo";
   private static final String   SHOW_MEMORY_STATUS_PARAMETER     = "showMemoryStatus";
   private static final String   USER_LANGUAGE                    = "userLanguage";
   
@@ -468,6 +469,8 @@ public class AppletApplication extends HomeApplication {
         getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_SVG));
     controller.getView().setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, 
         getAppletBooleanParameter(this.applet, ENABLE_EXPORT_TO_OBJ));
+    controller.getView().setEnabled(HomeView.ActionType.CREATE_VIDEO, 
+        getAppletBooleanParameter(this.applet, ENABLE_CREATE_VIDEO));
     
     // Add a border
     homeView.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));

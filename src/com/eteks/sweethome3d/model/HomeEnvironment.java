@@ -24,19 +24,22 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * The environment attributes of a home.
  * @author Emmanuel Puybaret
  */
-public class HomeEnvironment implements Serializable {
+public class HomeEnvironment implements Serializable, Cloneable {
   private static final long serialVersionUID = 1L;
 
   /**
    * The environment properties that may change.
    */
   public enum Property {SKY_COLOR, SKY_TEXTURE, GROUND_COLOR, GROUND_TEXTURE, LIGHT_COLOR, WALLS_ALPHA, DRAWING_MODE,
-                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY};
+                        PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_ASPECT_RATIO, PHOTO_QUALITY,
+                        VIDEO_WIDTH, VIDEO_ASPECT_RATIO, VIDEO_QUALITY, VIDEO_FRAME_RATE, VIDEO_CAMERA_PATH};
   /**
    * The various modes used to draw home in 3D. 
    */
@@ -54,10 +57,18 @@ public class HomeEnvironment implements Serializable {
   private int                             photoWidth;
   private int                             photoHeight;
   private transient AspectRatio           photoAspectRatio;
-  // Aspect ratio is saved as a string to be able to keep backward compatibility 
+  // Aspect ratios are saved as a string to be able to keep backward compatibility 
   // if new constants are added to AspectRatio enum in future versions
   private String                          photoAspectRatioName;
   private int                             photoQuality;
+  private int                             videoWidth;
+  private transient AspectRatio           videoAspectRatio;
+  // Aspect ratios are saved as a string to be able to keep backward compatibility 
+  // if new constants are added to AspectRatio enum in future versions
+  private String                          videoAspectRatioName;
+  private int                             videoQuality;
+  private int                             videoFrameRate;
+  private List<Camera>                    cameraPath;
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
 
   /**
@@ -77,15 +88,8 @@ public class HomeEnvironment implements Serializable {
   public HomeEnvironment(int groundColor,
                          HomeTexture groundTexture, int skyColor,
                          int lightColor, float wallsAlpha) {
-    this.groundColor = groundColor;
-    this.groundTexture = groundTexture;
-    this.skyColor = skyColor;
-    this.lightColor = lightColor;
-    this.wallsAlpha = wallsAlpha;
-    this.drawingMode = DrawingMode.FILL;
-    this.photoWidth = 400;
-    this.photoHeight = 300;
-    this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
+    this(groundColor, groundTexture, skyColor, null,
+        lightColor, wallsAlpha);
   }
 
   /**
@@ -98,12 +102,17 @@ public class HomeEnvironment implements Serializable {
     this.groundColor = groundColor;
     this.groundTexture = groundTexture;
     this.skyColor = skyColor;
+    this.skyTexture = skyTexture;
     this.lightColor = lightColor;
     this.wallsAlpha = wallsAlpha;
     this.drawingMode = DrawingMode.FILL;
     this.photoWidth = 400;
     this.photoHeight = 300;
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
+    this.videoWidth = 320;
+    this.videoAspectRatio = AspectRatio.RATIO_4_3;
+    this.videoFrameRate = 25;
+    this.cameraPath = Collections.emptyList();
   }
 
   /**
@@ -115,6 +124,10 @@ public class HomeEnvironment implements Serializable {
     this.photoWidth = 400;
     this.photoHeight = 300;
     this.photoAspectRatio = AspectRatio.VIEW_3D_RATIO;
+    this.videoWidth = 320;
+    this.videoAspectRatio = AspectRatio.RATIO_4_3;
+    this.videoFrameRate = 25;
+    this.cameraPath = Collections.emptyList();
     in.defaultReadObject();
     try {
       // Read aspect from a string 
@@ -124,12 +137,21 @@ public class HomeEnvironment implements Serializable {
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
     }
+    try {
+      // Read aspect from a string 
+      if (this.videoAspectRatioName != null) {
+        this.videoAspectRatio = AspectRatio.valueOf(this.videoAspectRatioName);
+      }
+    } catch (IllegalArgumentException ex) {
+      // Ignore malformed enum constant 
+    }
   }
 
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write aspect ratio as a string to be able to read aspect ratio later 
+    // Write aspect ratios as strings to be able to read aspect ratio later 
     // even if enum changed in later versions
     this.photoAspectRatioName = this.photoAspectRatio.name();
+    this.videoAspectRatioName = this.videoAspectRatio.name();
     out.defaultWriteObject();
   }
   
@@ -282,7 +304,7 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Returns preferred photo width. 
+   * Returns the preferred photo width. 
    * @since 2.0
    */
   public int getPhotoWidth() {
@@ -290,7 +312,7 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Sets preferred photo width, and notifies
+   * Sets the preferred photo width, and notifies
    * listeners of this change. 
    * @since 2.0
    */
@@ -304,7 +326,7 @@ public class HomeEnvironment implements Serializable {
   }
   
   /**
-   * Returns preferred photo height. 
+   * Returns the preferred photo height. 
    * @since 2.0
    */
   public int getPhotoHeight() {
@@ -312,7 +334,7 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Sets preferred photo height, and notifies
+   * Sets the preferred photo height, and notifies
    * listeners of this change. 
    * @since 2.0
    */
@@ -326,7 +348,7 @@ public class HomeEnvironment implements Serializable {
   }
   
   /**
-   * Returns preferred photo aspect ratio. 
+   * Returns the preferred photo aspect ratio. 
    * @since 2.0
    */
   public AspectRatio getPhotoAspectRatio() {
@@ -334,7 +356,7 @@ public class HomeEnvironment implements Serializable {
   }
 
   /**
-   * Sets preferred photo aspect ratio, and notifies
+   * Sets the preferred photo aspect ratio, and notifies
    * listeners of this change. 
    * @since 2.0
    */
@@ -348,7 +370,7 @@ public class HomeEnvironment implements Serializable {
   }
   
   /**
-   * Returns preferred photo quality. 
+   * Returns the preferred photo quality. 
    * @since 2.0
    */
   public int getPhotoQuality() {
@@ -366,6 +388,145 @@ public class HomeEnvironment implements Serializable {
       this.photoQuality = photoQuality;
       this.propertyChangeSupport.firePropertyChange(Property.PHOTO_QUALITY.name(), 
           oldPhotoQuality, photoQuality);
+    }
+  }
+
+
+  /**
+   * Returns the preferred video width. 
+   * @since 2.3
+   */
+  public int getVideoWidth() {
+    return this.videoWidth;
+  }
+
+  /**
+   * Sets the preferred video width, and notifies
+   * listeners of this change. 
+   * @since 2.3
+   */
+  public void setVideoWidth(int videoWidth) {
+    if (this.videoWidth != videoWidth) {
+      int oldVideoWidth = this.videoWidth;
+      this.videoWidth = videoWidth;
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_WIDTH.name(), 
+          oldVideoWidth, videoWidth);
+    }
+  }
+  
+  /**
+   * Returns the preferred video height. 
+   * @since 2.3
+   */
+  public int getVideoHeight() {
+    return Math.round(getVideoWidth() / getVideoAspectRatio().getValue());
+  }
+
+  /**
+   * Returns the preferred video aspect ratio. 
+   * @since 2.3
+   */
+  public AspectRatio getVideoAspectRatio() {
+    return this.videoAspectRatio;
+  }
+
+  /**
+   * Sets the preferred video aspect ratio, and notifies
+   * listeners of this change. 
+   * @since 2.3
+   */
+  public void setVideoAspectRatio(AspectRatio videoAspectRatio) {
+    if (this.videoAspectRatio != videoAspectRatio) {
+      if (videoAspectRatio.getValue() == null) {
+        throw new IllegalArgumentException("Unsupported aspect ratio " + videoAspectRatio);
+      }
+      AspectRatio oldVideoAspectRatio = this.videoAspectRatio;
+      this.videoAspectRatio = videoAspectRatio;
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_ASPECT_RATIO.name(), 
+          oldVideoAspectRatio, videoAspectRatio);
+    }
+  }
+  
+  /**
+   * Returns preferred video quality. 
+   * @since 2.3
+   */
+  public int getVideoQuality() {
+    return this.videoQuality;
+  }
+
+  /**
+   * Sets the preferred video quality, and notifies
+   * listeners of this change. 
+   * @since 2.3
+   */
+  public void setVideoQuality(int videoQuality) {
+    if (this.videoQuality != videoQuality) {
+      int oldVideoQuality = this.videoQuality;
+      this.videoQuality = videoQuality;
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_QUALITY.name(), 
+          oldVideoQuality, videoQuality);
+    }
+  }
+  
+  /**
+   * Returns the preferred video frame rate. 
+   * @since 2.3
+   */
+  public int getVideoFrameRate() {
+    return this.videoFrameRate;
+  }
+
+  /**
+   * Sets the preferred video frame rate, and notifies
+   * listeners of this change. 
+   * @since 2.3
+   */
+  public void setVideoFrameRate(int videoFrameRate) {
+    if (this.videoFrameRate != videoFrameRate) {
+      int oldVideoFrameRate = this.videoFrameRate;
+      this.videoFrameRate = videoFrameRate;
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_FRAME_RATE.name(), 
+          oldVideoFrameRate, videoFrameRate);
+    }
+  }
+
+  /**
+   * Returns the preferred video camera path. 
+   * @since 2.3
+   */
+  public List<Camera> getVideoCameraPath() {
+    return Collections.unmodifiableList(this.cameraPath);
+  }
+
+  /**
+   * Sets the preferred video camera path, and notifies
+   * listeners of this change. 
+   * @since 2.3
+   */
+  public void setVideoCameraPath(List<Camera> cameraPath) {
+    if (this.cameraPath != cameraPath) {
+      List<Camera> oldCameraPath = this.cameraPath;
+      this.cameraPath = cameraPath;
+      if (this.cameraPath == null) {
+        this.cameraPath = Collections.emptyList();
+      }
+      this.propertyChangeSupport.firePropertyChange(Property.VIDEO_CAMERA_PATH.name(), oldCameraPath, cameraPath);
+    }
+  }
+
+  /**
+   * Returns a clone of this environment.
+   * @since 2.3
+   */
+  @Override
+  public HomeEnvironment clone() {
+    try {
+      HomeEnvironment clone = (HomeEnvironment)super.clone();
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
     }
   }
 }

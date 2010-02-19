@@ -477,6 +477,7 @@ public class HomePane extends JRootPane implements HomeView {
     createAction(ActionType.MODIFY_3D_ATTRIBUTES, preferences, 
         controller.getHomeController3D(), "modifyAttributes");
     createAction(ActionType.CREATE_PHOTO, preferences, controller, "createPhoto");
+    createAction(ActionType.CREATE_VIDEO, preferences, controller, "createVideo");
     createAction(ActionType.EXPORT_TO_OBJ, preferences, controller, "exportToOBJ");
     
     createAction(ActionType.HELP, preferences, controller, "help");
@@ -951,6 +952,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToMenu(ActionType.MODIFY_3D_ATTRIBUTES, preview3DMenu);
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
+    addActionToMenu(ActionType.CREATE_VIDEO, preview3DMenu);
     addActionToMenu(ActionType.EXPORT_TO_OBJ, preview3DMenu);
     
     // Create Help menu
@@ -1661,7 +1663,6 @@ public class HomePane extends JRootPane implements HomeView {
     toolBar.addSeparator();
 
     addActionToToolBar(ActionType.ADD_HOME_FURNITURE, toolBar);
-    addActionToToolBar(ActionType.IMPORT_FURNITURE, toolBar);
     toolBar.addSeparator();
    
     addToggleActionToToolBar(ActionType.SELECT, this.selectToggleModel, toolBar);
@@ -1682,6 +1683,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToToolBar(ActionType.ZOOM_OUT, toolBar);
     toolBar.addSeparator();
     addActionToToolBar(ActionType.CREATE_PHOTO, toolBar);
+    addActionToToolBar(ActionType.CREATE_VIDEO, toolBar);
     toolBar.addSeparator();
     
     // Add plugin actions buttons
@@ -2087,6 +2089,7 @@ public class HomePane extends JRootPane implements HomeView {
     addActionToPopupMenu(ActionType.MODIFY_3D_ATTRIBUTES, view3DPopup);
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
+    addActionToPopupMenu(ActionType.CREATE_VIDEO, view3DPopup);
     addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);

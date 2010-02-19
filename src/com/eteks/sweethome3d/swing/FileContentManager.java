@@ -171,6 +171,24 @@ public class FileContentManager implements ContentManager {
         }
       }, 
       PNG_FILTER [0]};
+  private static final String MOV_EXTENSION = ".mov";
+  /**
+   * Supported MOV filter.
+   */
+  private static final FileFilter [] MOV_FILTER = {
+      new FileFilter() {
+        @Override
+        public boolean accept(File file) {
+          // Accept directories and .mov files
+          return file.isDirectory()
+              || file.getName().toLowerCase().endsWith(MOV_EXTENSION);
+        }
+        
+        @Override
+        public String getDescription() {
+          return "MOV";
+        }
+      }};
   private static final String PDF_EXTENSION = ".pdf";
   /**
    * Supported PDF filter.
@@ -226,6 +244,7 @@ public class FileContentManager implements ContentManager {
     this.fileFilters = new HashMap<ContentType, FileFilter[]>();
     this.fileFilters.put(ContentType.MODEL, MODEL_FILTERS);
     this.fileFilters.put(ContentType.IMAGE, IMAGE_FILTERS);
+    this.fileFilters.put(ContentType.MOV, MOV_FILTER);
     this.fileFilters.put(ContentType.PNG, PNG_FILTER);
     this.fileFilters.put(ContentType.PDF, PDF_FILTER);
     this.fileFilters.put(ContentType.SVG, SVG_FILTER);
@@ -282,6 +301,7 @@ public class FileContentManager implements ContentManager {
     this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
     this.defaultFileExtensions.put(ContentType.PNG, PNG_EXTENSION);
+    this.defaultFileExtensions.put(ContentType.MOV, MOV_EXTENSION);
     this.defaultFileExtensions.put(ContentType.PDF, PDF_EXTENSION);
     this.defaultFileExtensions.put(ContentType.SVG, SVG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.OBJ, OBJ_EXTENSION);

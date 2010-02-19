@@ -43,6 +43,7 @@ public class SweetHome3DBootstrap {
         "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2u.jar",
         "sunflow-0.07.3c.jar",
+        "jmf.jar",
         "jnlp.jar",
         "j3dcore.jar", // Main Java 3D jars
         "vecmath.jar",
@@ -67,12 +68,15 @@ public class SweetHome3DBootstrap {
     
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
-        "javax.media.j3d",
+        "javax.media",
         "javax.vecmath",
         "com.sun.j3d",
         "com.sun.opengl",
         "com.sun.gluegen.runtime",
         "javax.media.opengl",
+        "com.sun.media",
+        "com.ibm.media",
+        "jmpapps.util",
         "com.microcrowd.loader.java3d",
         "org.sunflow"};
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(

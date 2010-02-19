@@ -53,6 +53,12 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
     JavaPackage loader3ds = constraint.addPackage("com.microcrowd.loader.java3d.max3ds");
+    // JMF
+    JavaPackage jmf = constraint.addPackage("javax.media");
+    JavaPackage jmfControl = constraint.addPackage("javax.media.control");
+    JavaPackage jmfDataSink = constraint.addPackage("javax.media.datasink");
+    JavaPackage jmfFormat = constraint.addPackage("javax.media.format");
+    JavaPackage jmfProtocol = constraint.addPackage("javax.media.protocol");
     // SunFlow
     JavaPackage sunflow = constraint.addPackage("org.sunflow");
     JavaPackage sunflowCore = constraint.addPackage("org.sunflow.core");
@@ -115,6 +121,11 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DSwing.dependsUpon(vecmath);
     sweetHome3DSwing.dependsUpon(sun3dUtilsGeometry);
     sweetHome3DSwing.dependsUpon(sun3dUtilsUniverse);
+    sweetHome3DSwing.dependsUpon(jmf);
+    sweetHome3DSwing.dependsUpon(jmfControl);
+    sweetHome3DSwing.dependsUpon(jmfDataSink);
+    sweetHome3DSwing.dependsUpon(jmfFormat);
+    sweetHome3DSwing.dependsUpon(jmfProtocol);
     sweetHome3DSwing.dependsUpon(iText);
     sweetHome3DSwing.dependsUpon(iTextPdf);
     sweetHome3DSwing.dependsUpon(vectorGraphicsUtil);

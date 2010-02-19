@@ -164,6 +164,12 @@ public interface ViewFactory {
                                              PhotoController photoController);
 
   /**
+   * Returns a new view able to compute a 3D video of a home. 
+   */
+  public abstract DialogView createVideoView(Home home, UserPreferences preferences, 
+                                             VideoController videoController);
+
+  /**
    * Returns a new view that displays Sweet Home 3D help.
    */
   public abstract HelpView createHelpView(UserPreferences preferences,

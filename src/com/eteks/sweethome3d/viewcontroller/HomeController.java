@@ -281,6 +281,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_3D_ATTRIBUTES, true);
     homeView.setEnabled(HomeView.ActionType.CREATE_PHOTO, true);
+    homeView.setEnabled(HomeView.ActionType.CREATE_VIDEO, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_OBJ, true);
     homeView.setEnabled(HomeView.ActionType.HELP, true);
     homeView.setEnabled(HomeView.ActionType.ABOUT, true);
@@ -1598,6 +1599,17 @@ public class HomeController implements Controller {
     PhotoController photoController = new PhotoController(this.home, this.preferences, 
         getHomeController3D().getView(), this.viewFactory, this.contentManager);
     photoController.displayView(getView());
+  }
+  
+  /**
+   * Controls the creation of 3D videos.
+   */
+  public void createVideo() {
+    getPlanController().setMode(PlanController.Mode.SELECTION);
+    getHomeController3D().viewFromObserver();
+    VideoController videoController = new VideoController(this.home, this.preferences, 
+        this.viewFactory, this.contentManager);
+    videoController.displayView(getView());
   }
   
   /**

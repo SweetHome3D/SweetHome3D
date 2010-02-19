@@ -33,6 +33,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -54,7 +55,6 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -118,7 +118,10 @@ public class PhotoPanel extends JPanel implements DialogView {
   private JPanel                photoPanel;
   private CardLayout            photoCardLayout;
   private ExecutorService       photoCreationExecutor;
-  
+  private JButton               createButton;
+  private JButton               saveButton;
+  private JButton               closeButton;
+
   private static PhotoPanel     currentPhotoPanel; // There can be only one photo panel opened at a time
 
   public PhotoPanel(Home home, 
@@ -140,7 +143,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    * Creates actions for variables.
    */
   private void createActions(UserPreferences preferences) {
-    ActionMap actions = getActionMap();
+    final ActionMap actions = getActionMap();
     actions.put(ActionType.START_PHOTO_CREATION, 
         new ResourceAction(preferences, PhotoPanel.class, ActionType.START_PHOTO_CREATION.name(), true) {
           @Override
@@ -178,7 +181,6 @@ public class PhotoPanel extends JPanel implements DialogView {
                                 final PhotoController controller) {
     this.photoComponent = new ScaledImageComponent();
     this.photoComponent.setPreferredSize(new Dimension(400, 400));
-    this.photoComponent.setBorder(null);
     // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
     // to let the user drag and drop the created image (Windows support seems to fail) 
     if (OperatingSystem.isMacOSX()) {
@@ -242,7 +244,7 @@ public class PhotoPanel extends JPanel implements DialogView {
 
     this.animatedWaitLabel = new JLabel(new ImageIcon(PhotoPanel.class.getResource("resources/animatedWait.gif")));
 
-    // Create observer width label and spinner bound to WIDTH controller property
+    // Create width label and spinner bound to WIDTH controller property
     this.widthLabel = new JLabel();
     final SpinnerNumberModel widthSpinnerModel = new SpinnerNumberModel(480, 10, 3000, 10);
     this.widthSpinner = new AutoCommitSpinner(widthSpinnerModel);
@@ -260,7 +262,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         });
 
     
-    // Create observer height label and spinner bound to HEIGHT controller property
+    // Create height label and spinner bound to HEIGHT controller property
     this.heightLabel = new JLabel();
     final SpinnerNumberModel heightSpinnerModel = new SpinnerNumberModel(480, 10, 3000, 10);
     this.heightSpinner = new AutoCommitSpinner(heightSpinnerModel);
@@ -277,7 +279,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           }
         });
 
-    // Keep proportions check box bound to ASPECT_RATIO controller property
+    // Create apply proportions check box bound to ASPECT_RATIO controller property
     boolean notFreeAspectRatio = controller.getAspectRatio() != AspectRatio.FREE_RATIO;
     this.applyProportionsCheckBox = new JCheckBox();
     this.applyProportionsCheckBox.setSelected(notFreeAspectRatio);
@@ -387,6 +389,21 @@ public class PhotoPanel extends JPanel implements DialogView {
     final JComponent view3D = (JComponent)controller.get3DView();
     controller.set3DViewAspectRatio((float)view3D.getWidth() / view3D.getHeight());
 
+    final ActionMap actionMap = getActionMap();
+    this.createButton = new JButton(actionMap.get(ActionType.START_PHOTO_CREATION));
+    this.createButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent ev) {
+          // Swap Start / Stop action
+          if (createButton.getAction() == actionMap.get(ActionType.START_PHOTO_CREATION)) {
+            createButton.setAction(actionMap.get(ActionType.STOP_PHOTO_CREATION));
+          } else {
+            createButton.setAction(actionMap.get(ActionType.START_PHOTO_CREATION));
+          }
+        }
+      });
+    this.saveButton = new JButton(actionMap.get(ActionType.SAVE_PHOTO));
+    this.closeButton = new JButton(actionMap.get(ActionType.CLOSE));
+
     setComponentTexts(preferences);
   }
 
@@ -402,12 +419,12 @@ public class PhotoPanel extends JPanel implements DialogView {
         PhotoPanel.class, "applyProportionsCheckBox.text"));
     this.qualityLabel.setText(SwingTools.getLocalizedLabelText(preferences, 
         PhotoPanel.class, "qualityLabel.text"));
-    JLabel fastLabel = new JLabel(preferences.getLocalizedString(
+    JLabel fastLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "fastLabel.text"));
     if (!Component3DManager.getInstance().isOffScreenImageSupported()) {
       fastLabel.setEnabled(false);
     }
-    JLabel bestLabel = new JLabel(preferences.getLocalizedString(
+    JLabel bestLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         PhotoPanel.class, "bestLabel.text"));
     Dictionary<Integer,JComponent> qualitySliderLabelTable = new Hashtable<Integer,JComponent>();
     qualitySliderLabelTable.put(this.qualitySlider.getMinimum(), fastLabel);
@@ -417,7 +434,7 @@ public class PhotoPanel extends JPanel implements DialogView {
       this.qualityDescriptionLabels [i].setText("<html><table><tr valign='middle'>"
          + "<td><img border='1' src='" 
          + new ResourceURLContent(PhotoPanel.class, "resources/quality" + i + ".jpg").getURL() + "'></td>"
-         + "<td>" + SwingTools.getLocalizedLabelText(preferences,PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</td>"
+         + "<td>" + preferences.getLocalizedString(PhotoPanel.class, "quality" + i + "DescriptionLabel.text") + "</td>"
          + "</tr></table>");
     }
     this.dialogTitle = preferences.getLocalizedString(PhotoPanel.class, "createPhoto.title");
@@ -425,6 +442,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     if (window != null) {
       ((JDialog)window).setTitle(this.dialogTitle);
     }
+    // Buttons text changes automatically through their action
   }
 
   /**
@@ -486,7 +504,6 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoPanel = new JPanel(this.photoCardLayout);
     photoPanel.add(this.photoComponent, PHOTO_CARD);
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
-    photoPanel.setBorder(BorderFactory.createEtchedBorder());
     // First row
     add(photoPanel, new GridBagConstraints(
         0, 0, 6, 1, 1, 1, labelAlignment, 
@@ -543,14 +560,9 @@ public class PhotoPanel extends JPanel implements DialogView {
       if (currentPhotoPanel != null) {
         currentPhotoPanel.close();
       }
-      ActionMap actionMap = getActionMap();
-      JButton createButton = new JButton(actionMap.get(ActionType.START_PHOTO_CREATION));
-      JButton saveButton = new JButton(actionMap.get(ActionType.SAVE_PHOTO));
-      JButton closeButton = new JButton(actionMap.get(ActionType.CLOSE));
-      
       final JOptionPane optionPane = new JOptionPane(this, 
           JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION,
-          null, new Object [] {createButton, saveButton, closeButton}, createButton);
+          null, new Object [] {this.createButton, this.saveButton, this.closeButton}, this.createButton);
       final JDialog dialog = optionPane.createDialog(SwingUtilities.getRootPane((Component)parentView), this.dialogTitle);
       dialog.setModal(false);
       dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -608,23 +620,30 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void startPhotoCreation() {
     this.photoComponent.setImage(null);
+    this.widthSpinner.setEnabled(false);
+    this.heightSpinner.setEnabled(false);
+    this.applyProportionsCheckBox.setEnabled(false);
+    this.aspectRatioComboBox.setEnabled(false);
+    this.qualitySlider.setEnabled(false);
     getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(false);
-    getActionMap().get(ActionType.START_PHOTO_CREATION).setEnabled(false);
     this.photoCardLayout.show(this.photoPanel, WAIT_CARD);
     
+    // Compute photo in an other executor thread
+    // Use a clone of home because the user can modify home during photo computation
+    final Home home = this.home.clone();
     this.photoCreationExecutor = Executors.newSingleThreadExecutor();
     this.photoCreationExecutor.execute(new Runnable() {
         public void run() {
-          computePhoto();
+          computePhoto(home);
         }
       });
   }
 
   /**
-   * Computes the photo.
+   * Computes the photo of the given home.
    * Caution : this method must be thread safe because it's called from an executor. 
    */
-  private void computePhoto() {
+  private void computePhoto(Home home) {
     BufferedImage image = null;
     try {
       int quality = this.controller.getQuality();
@@ -632,10 +651,10 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
         // Use photo renderer
-        PhotoRenderer photoRenderer = new PhotoRenderer(this.home, quality == 2 
+        PhotoRenderer photoRenderer = new PhotoRenderer(home, quality == 2 
             ? PhotoRenderer.Quality.LOW 
             : PhotoRenderer.Quality.HIGH);
-        if (!Thread.interrupted()) {
+        if (!Thread.currentThread().isInterrupted()) {
           image = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_RGB);
           this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
@@ -643,11 +662,11 @@ public class PhotoPanel extends JPanel implements DialogView {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
             }
           });
-          photoRenderer.render(image, this.home.getCamera(), this.photoComponent);
+          photoRenderer.render(image, home.getCamera(), this.photoComponent);
         }
       } else {
         // Compute 3D view offscreen image
-        HomeComponent3D homeComponent3D = new HomeComponent3D(this.home, this.preferences, quality == 1);
+        HomeComponent3D homeComponent3D = new HomeComponent3D(home, this.preferences, quality == 1);
         image = homeComponent3D.getOffScreenImage(imageWidth, imageHeight);
       }
     } catch (OutOfMemoryError ex) {
@@ -659,13 +678,20 @@ public class PhotoPanel extends JPanel implements DialogView {
     } catch (IOException ex) {
       image = getErrorImage();
     } finally {           
-      final BufferedImage photoImage = image;
+      final BufferedImage photoImage = this.photoCreationExecutor != null
+          ? image
+          : null;
       EventQueue.invokeLater(new Runnable() {
           public void run() {
-            photoComponent.setImage(photoImage);
-            photoCardLayout.show(photoPanel, PHOTO_CARD);
             getActionMap().get(ActionType.SAVE_PHOTO).setEnabled(photoImage != null);
-            getActionMap().get(ActionType.START_PHOTO_CREATION).setEnabled(true);
+            createButton.setAction(getActionMap().get(ActionType.START_PHOTO_CREATION));
+            photoComponent.setImage(photoImage);
+            widthSpinner.setEnabled(true);
+            heightSpinner.setEnabled(true);
+            applyProportionsCheckBox.setEnabled(true);
+            aspectRatioComboBox.setEnabled(applyProportionsCheckBox.isSelected());
+            qualitySlider.setEnabled(true);
+            photoCardLayout.show(photoPanel, PHOTO_CARD);
             photoCreationExecutor = null;
           }
         });
@@ -690,6 +716,7 @@ public class PhotoPanel extends JPanel implements DialogView {
    */
   private void stopPhotoCreation() {
     if (this.photoCreationExecutor != null) {
+      // Will interrupt executor thread
       this.photoCreationExecutor.shutdownNow();
       this.photoCreationExecutor = null;
     }

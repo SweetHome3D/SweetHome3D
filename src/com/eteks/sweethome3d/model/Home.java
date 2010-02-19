@@ -36,7 +36,7 @@ import java.util.Map;
  * The home managed by the application with its furniture and walls.
  * @author Emmanuel Puybaret
  */
-public class Home implements Serializable {
+public class Home implements Serializable, Cloneable {
   private static final long serialVersionUID = 1L;
 
   /**
@@ -303,8 +303,9 @@ public class Home implements Serializable {
       out.defaultWriteObject();
     
       // Restore current values
-      this.furniture = this.furnitureWithDoorsAndWindows;
+      this.furniture = this.furnitureWithGroups;
       this.furnitureWithDoorsAndWindows = null;
+      this.furnitureWithGroups = null;
     
       this.furnitureSortedProperty = currentFurnitureSortedProperty;
       this.furnitureVisibleProperties = currentFurnitureVisibleProperties;
@@ -964,6 +965,81 @@ public class Home implements Serializable {
    */
   public long getVersion() {
     return this.version;
+  }
+  
+  /**
+   * Returns a clone of this home and the objects it contains. 
+   * Listeners bound to this home aren't added to the returned home.
+   * @since 2.3
+   */
+  @Override
+  public Home clone() {
+    try {
+      Home clone = (Home)super.clone();
+      // Deep clone selectable items
+      clone.selectedItems = new ArrayList<Selectable>(this.selectedItems.size());
+      clone.furniture = cloneSelectableItems(
+          this.furniture, this.selectedItems, clone.selectedItems);
+      clone.rooms = cloneSelectableItems(this.rooms, this.selectedItems, clone.selectedItems);
+      clone.dimensionLines = cloneSelectableItems(
+          this.dimensionLines, this.selectedItems, clone.selectedItems);
+      clone.labels = cloneSelectableItems(this.labels, this.selectedItems, clone.selectedItems);
+      // Deep clone walls
+      clone.walls = Wall.clone(this.walls);
+      for (int i = 0; i < this.walls.size(); i++) {
+        Wall wall = this.walls.get(i);
+        if (this.selectedItems.contains(wall)) {
+          clone.selectedItems.add(clone.walls.get(i));
+        }
+      }
+      // Clone cameras
+      clone.observerCamera = this.observerCamera.clone();
+      clone.topCamera = this.topCamera.clone();
+      if (this.camera == this.observerCamera) {
+        clone.camera = clone.observerCamera;
+        if (this.selectedItems.contains(this.observerCamera)) {
+          clone.selectedItems.add(clone.observerCamera);
+        }
+      } else {
+        clone.camera = clone.topCamera;
+      }
+      // Clone other mutable objects
+      clone.environment = this.environment.clone();
+      clone.furnitureVisibleProperties = new ArrayList<HomePieceOfFurniture.SortableProperty>(
+          this.furnitureVisibleProperties);
+      clone.visualProperties = new HashMap<String, Object>(this.visualProperties);
+     // Create new listeners support
+      clone.furnitureChangeSupport = new CollectionChangeSupport<HomePieceOfFurniture>(clone);
+      clone.selectionListeners = new ArrayList<SelectionListener>();
+      clone.wallsChangeSupport = new CollectionChangeSupport<Wall>(clone);
+      clone.roomsChangeSupport = new CollectionChangeSupport<Room>(clone);
+      clone.dimensionLinesChangeSupport = new CollectionChangeSupport<DimensionLine>(clone);
+      clone.labelsChangeSupport = new CollectionChangeSupport<Label>(clone);
+      clone.propertyChangeSupport = new PropertyChangeSupport(clone);
+      return clone;
+    } catch (CloneNotSupportedException ex) {
+      throw new IllegalStateException("Super class isn't cloneable"); 
+    }
+  }
+  
+  /**
+   * Returns the list of cloned items in <code>source</code>.
+   * If a cloned item is selected its clone will be selected too (ie added to 
+   * <code>destinationSelectedItems</code>).
+   */
+  @SuppressWarnings("unchecked")
+  private <T extends Selectable> List<T> cloneSelectableItems(List<T> source,
+                                                              List<Selectable> sourceSelectedItems,
+                                                              List<Selectable> destinationSelectedItems) {
+    List<T> destination = new ArrayList<T>(source.size());
+    for (T item : source) {
+      T clone = (T)item.clone();
+      destination.add(clone);
+      if (sourceSelectedItems.contains(item)) {
+        destinationSelectedItems.add(clone);
+      }
+    }
+    return destination;
   }
   
   /**

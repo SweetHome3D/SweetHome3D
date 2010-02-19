@@ -200,11 +200,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       ACTIVATE_DUPLICATION, DEACTIVATE_DUPLICATION, 
       ACTIVATE_EDITIION, DEACTIVATE_EDITIION}
   
-  private static final float MARGIN = 40;
+  private static final float    MARGIN = 40;
   
   private final Home            home;
   private final UserPreferences preferences;
   private float                 scale  = 0.5f;
+  private boolean               selectedItemsOutlinePainted = true;
+  private boolean               backgroundPainted = true;
 
   private PlanRulerComponent    horizontalRuler;
   private PlanRulerComponent    verticalRuler;
@@ -215,6 +217,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private final Cursor          resizeCursor;
   private final Cursor          panningCursor;
   private final Cursor          duplicationCursor;
+  
   private Rectangle2D           rectangleFeedback;
   private Class<? extends Selectable> alignedObjectClass;
   private Selectable            alignedObjectFeedback;
@@ -239,7 +242,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Map<TextStyle, FontMetrics> fontsMetrics;
   
   private Rectangle2D                 planBoundsCache;  
-  private boolean                     planBoundsCacheValid;  
+  private boolean                     planBoundsCacheValid = false;  
   private BufferedImage               backgroundImageCache;
   private BufferedImage               wallsPatternImageCache;
   private Color                       wallsPatternBackgroundCache;
@@ -247,7 +250,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private Area                        wallsAreaCache;
   private Map<Content, BufferedImage> floorTextureImagesCache;
   private Map<HomePieceOfFurniture, PieceOfFurnitureTopViewIcon> furnitureTopViewIconsCache;
-
 
   private static final Shape       POINT_INDICATOR;
   private static final GeneralPath FURNITURE_ROTATION_INDICATOR;
@@ -432,12 +434,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     setOpaque(true);
     // Add listeners
     addModelListeners(home, preferences, controller);
+    createToolTipTextFields(preferences, controller);
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
       createActions(controller);      
       installDefaultKeyboardActions();
-      createToolTipTextFields(controller, preferences);
       setFocusable(true);
       setAutoscrolls(true);
     }
@@ -979,8 +981,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Creates the text fields used in tool tip and their label.
    */
-  private void createToolTipTextFields(final PlanController controller, 
-                                       UserPreferences preferences) {
+  private void createToolTipTextFields(UserPreferences preferences, 
+                                       final PlanController controller) {
     this.toolTipEditableTextFields = new HashMap<PlanController.EditableProperty, JFormattedTextField>();
     Font toolTipFont = UIManager.getFont("ToolTip.font");
     for (final PlanController.EditableProperty editableProperty : PlanController.EditableProperty.values()) {
@@ -996,25 +998,27 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       textField.setFont(toolTipFont);
       textField.setOpaque(false);
       textField.setBorder(null);
-      // Add a listener to notify changes to controller
-      textField.getDocument().addDocumentListener(new DocumentListener() {
-          public void changedUpdate(DocumentEvent ev) {
-            try {
-              textField.commitEdit();
-              controller.updateEditableProperty(editableProperty, textField.getValue());
-            } catch (ParseException ex) {
-              controller.updateEditableProperty(editableProperty, null);
+      if (controller != null) {
+        // Add a listener to notify changes to controller
+        textField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent ev) {
+              try {
+                textField.commitEdit();
+                controller.updateEditableProperty(editableProperty, textField.getValue());
+              } catch (ParseException ex) {
+                controller.updateEditableProperty(editableProperty, null);
+              }
             }
-          }
-  
-          public void insertUpdate(DocumentEvent ev) {
-            changedUpdate(ev);
-          }
-  
-          public void removeUpdate(DocumentEvent ev) {
-            changedUpdate(ev);
-          }
-        });
+    
+            public void insertUpdate(DocumentEvent ev) {
+              changedUpdate(ev);
+            }
+    
+            public void removeUpdate(DocumentEvent ev) {
+              changedUpdate(ev);
+            }
+          });
+      }
 
       this.toolTipEditableTextFields.put(editableProperty, textField);
     }
@@ -1093,11 +1097,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Returns the bounds of the plan displayed by this component.
    */
   private Rectangle2D getPlanBounds() {
-    if (this.planBoundsCache == null) {      
-      // Ensure plan bounds are 10 x 10 meters wide at minimum
-      this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
-    }
     if (!this.planBoundsCacheValid) {
+      // Always enlarge plan bounds only when plan component is a child of a scroll pane 
+      if (this.planBoundsCache == null 
+          || !(getParent() instanceof JViewport)) {
+        // Ensure plan bounds are 10 x 10 meters wide at minimum
+        this.planBoundsCache = new Rectangle2D.Float(0, 0, 1000, 1000);
+      }
       // Enlarge plan bounds to include background image, home bounds and observer camera
       if (this.backgroundImageCache != null) {
         BackgroundImage backgroundImage = this.home.getBackgroundImage();
@@ -1385,6 +1391,41 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   }
 
   /**
+   * Sets whether plan's background should be painted or not.
+   * Background may include grid and an image.   
+   */
+  public void setBackgroundPainted(boolean backgroundPainted) {
+    if (this.backgroundPainted != backgroundPainted) {
+      this.backgroundPainted = backgroundPainted;
+      repaint();
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if plan's background should be painted.
+   */
+  public boolean isBackgroundPainted() {
+    return this.backgroundPainted;
+  }
+
+  /**
+   * Sets whether the outline of home selected items should be painted or not.
+   */
+  public void setSelectedItemsOutlinePainted(boolean selectedItemsOutlinePainted) {
+    if (this.selectedItemsOutlinePainted != selectedItemsOutlinePainted) {
+      this.selectedItemsOutlinePainted = selectedItemsOutlinePainted;
+      repaint();
+    }
+  }
+  
+  /**
+   * Returns <code>true</code> if the outline of home selected items should be painted.
+   */
+  public boolean isSelectedItemsOutlinePainted() {
+    return this.selectedItemsOutlinePainted;
+  }
+  
+  /**
    * Paints this component.
    */
   @Override
@@ -1392,7 +1433,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Graphics2D g2D = (Graphics2D)g.create();
     Color backgroundColor = getBackground();
     Color foregroundColor = getForeground();
-    paintBackground(g2D, backgroundColor);
+    if (this.backgroundPainted) {
+      paintBackground(g2D, backgroundColor);
+    }
     Insets insets = getInsets();
     // Clip component to avoid drawing in empty borders
     g2D.clipRect(insets.left, insets.top, 
@@ -1406,9 +1449,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     g2D.scale(paintScale, paintScale);
     setRenderingHints(g2D);
     // Paint component contents
-    paintBackgroundImage(g2D);
-    if (this.preferences.isGridVisible()) {
-      paintGrid(g2D, paintScale);
+    if (this.backgroundPainted) {
+      paintBackgroundImage(g2D);
+      if (this.preferences.isGridVisible()) {
+        paintGrid(g2D, paintScale);
+      }
     }
     try {
       paintContent(g2D, paintScale, backgroundColor, foregroundColor, PaintMode.PAINT);
@@ -1647,7 +1692,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.translate(-backgroundImage.getXOrigin(), -backgroundImage.getYOrigin());
         g2D.scale(backgroundImage.getScale(), backgroundImage.getScale());
         Composite oldComposite = g2D.getComposite();
-        g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+        if (oldComposite instanceof AlphaComposite) {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+            ((AlphaComposite)oldComposite).getAlpha() * 0.7f));
+        } else {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+        }
         g2D.drawImage(this.backgroundImageCache, 0, 0, this);
         g2D.setComposite(oldComposite);
         g2D.setTransform(previousTransform);
@@ -1873,7 +1923,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     paintLabels(g2D, this.home.getLabels(), selectedItems, selectionOutlinePaint, dimensionLinesSelectionOutlineStroke, 
         planScale, foregroundColor, paintMode);
     
-    if (paintMode == PaintMode.PAINT) {
+    if (paintMode == PaintMode.PAINT
+        && this.selectedItemsOutlinePainted) {
       paintRoomsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
           planScale, foregroundColor);
       paintWallsOutline(g2D, selectedItems, selectionOutlinePaint, selectionOutlineStroke, selectionColor, 
@@ -1979,7 +2030,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }          
         }
         
-        g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+        if (oldComposite instanceof AlphaComposite) {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+            ((AlphaComposite)oldComposite).getAlpha() * 0.75f));
+        } else {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+        }
         g2D.fill(getShape(room.getPoints()));
         g2D.setComposite(oldComposite);
 
@@ -2751,7 +2807,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     BasicStroke dimensionLineStroke = new BasicStroke(BORDER_STROKE_WIDTH / planScale);
     // Change font size
     Font previousFont = g2D.getFont();
-    Composite previousComposite = g2D.getComposite();
+    Composite oldComposite = g2D.getComposite();
     for (DimensionLine dimensionLine : dimensionLines) {
       AffineTransform previousTransform = g2D.getTransform();
       double angle = Math.atan2(dimensionLine.getYEnd() - dimensionLine.getYStart(), 
@@ -2762,6 +2818,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.translate(0, dimensionLine.getOffset());
       
       if (paintMode == PaintMode.PAINT
+          && this.selectedItemsOutlinePainted
           && selectedItems.contains(dimensionLine)) {
         // Draw selection border
         g2D.setPaint(selectionOutlinePaint);
@@ -2816,12 +2873,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (feedback) {
         // Draw text outline with half transparent background color
         g2D.setPaint(backgroundColor);
-        g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f)); 
+        if (oldComposite instanceof AlphaComposite) {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 
+            ((AlphaComposite)oldComposite).getAlpha() * 0.7f));
+        } else {
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+        }
         g2D.setStroke(new BasicStroke(3 / planScale));
         FontRenderContext fontRenderContext = g2D.getFontRenderContext();
         TextLayout textLayout = new TextLayout(lengthText, font, fontRenderContext);
         g2D.draw(textLayout.getOutline(new AffineTransform()));
-        g2D.setComposite(previousComposite);
+        g2D.setComposite(oldComposite);
         g2D.setPaint(foregroundColor);
       }
       // Draw dimension length in middle
@@ -2915,6 +2977,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.drawString(labelText, xLabel - labelWidth / 2, yLabel);
 
         if (paintMode == PaintMode.PAINT
+            && this.selectedItemsOutlinePainted
             && selectedLabel) {
           // Draw selection border
           g2D.setPaint(selectionOutlinePaint);
@@ -3328,7 +3391,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       g2D.setStroke(stroke);
       g2D.draw(scaledCameraBody);
   
-      if (selectedItems.contains(camera)) {
+      if (selectedItems.contains(camera)
+          && this.selectedItemsOutlinePainted) {
         g2D.setPaint(selectionOutlinePaint);
         g2D.setStroke(selectionOutlineStroke);
         Area cameraOutline = new Area(scaledCameraBody);
