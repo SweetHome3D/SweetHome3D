@@ -831,8 +831,10 @@ public class VideoPanel extends JPanel implements DialogView {
                 pausePlayback();
               }
             }
-            actionMap.get(ActionType.RECORD).setEnabled(!((Timer)ev.getSource()).isRunning());
-            actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(!((Timer)ev.getSource()).isRunning() && cameraPath.size() > 0);
+            boolean pathEditable = videoCreationExecutor == null && !((Timer)ev.getSource()).isRunning();
+            actionMap.get(ActionType.RECORD).setEnabled(pathEditable);
+            actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(pathEditable && cameraPath.size() > 0);
+            actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(pathEditable && cameraPath.size() > 0);
             actionMap.get(ActionType.SEEK_BACKWARD).setEnabled(cameraPathIterator.hasPrevious());
             actionMap.get(ActionType.SKIP_BACKWARD).setEnabled(cameraPathIterator.hasPrevious());
             actionMap.get(ActionType.SEEK_FORWARD).setEnabled(cameraPathIterator.hasNext());
@@ -847,8 +849,10 @@ public class VideoPanel extends JPanel implements DialogView {
       this.playbackTimer.setCoalesce(false);
     }
     actionMap.get(ActionType.PLAYBACK).setEnabled(playable);
-    actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(cameraPath.size() > 0);
-    actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(cameraPath.size() > 0);
+    actionMap.get(ActionType.RECORD).setEnabled(this.videoCreationExecutor == null);
+    boolean emptyCameraPath = cameraPath.isEmpty();
+    actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
+    actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
     actionMap.get(ActionType.SEEK_BACKWARD).setEnabled(playable);
     actionMap.get(ActionType.SKIP_BACKWARD).setEnabled(playable);
     actionMap.get(ActionType.SEEK_FORWARD).setEnabled(false);
@@ -890,10 +894,10 @@ public class VideoPanel extends JPanel implements DialogView {
   private void pausePlayback() {
     this.playbackTimer.stop();
     this.playbackPauseButton.setAction(getActionMap().get(ActionType.PLAYBACK));
-    getActionMap().get(ActionType.RECORD).setEnabled(true);
+    getActionMap().get(ActionType.RECORD).setEnabled(this.videoCreationExecutor == null);
     boolean emptyCameraPath = this.controller.getCameraPath().isEmpty();
-    getActionMap().get(ActionType.DELETE_CAMERA_PATH).setEnabled(!emptyCameraPath);
-    getActionMap().get(ActionType.DELETE_LAST_RECORD).setEnabled(!emptyCameraPath);
+    getActionMap().get(ActionType.DELETE_CAMERA_PATH).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
+    getActionMap().get(ActionType.DELETE_LAST_RECORD).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
   }
 
   /**
