@@ -275,6 +275,7 @@
       <fileset dir="src">
         <include name="com/eteks/sweethome3d/applet/*.properties"/>
         <include name="com/eteks/sweethome3d/model/*.properties"/>
+        <include name="com/eteks/sweethome3d/swing/resources/icons/tango/go-*.png"/>
       </fileset>
     </copy>
     
@@ -286,7 +287,7 @@
       <include name="com/eteks/sweethome3d/io/*"/>
       <include name="com/eteks/sweethome3d/j3d/*"/>
       <include name="com/eteks/sweethome3d/model/*"/>
-      <include name="com/eteks/sweethome3d/swing/*"/>
+      <include name="com/eteks/sweethome3d/swing/**"/>
       <include name="com/eteks/sweethome3d/tools/*"/>
       <include name="com/eteks/sweethome3d/viewcontroller/*View*"/>      
       <include name="com/eteks/sweethome3d/viewcontroller/Controller.*"/>      

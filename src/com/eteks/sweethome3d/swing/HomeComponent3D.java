@@ -281,8 +281,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
     if (controller != null) {
       addMouseListeners(controller, this.canvas3D);
-      if (!OperatingSystem.isMacOSX()
-          || OperatingSystem.isMacOSXLeopardOrSuperior()) {
+      if (preferences != null
+          && (!OperatingSystem.isMacOSX()
+              || OperatingSystem.isMacOSXLeopardOrSuperior())) {
         // No support for navigation panel under Mac OS X Tiger 
         // (too unstable, may crash system at 3D view resizing)
         this.navigationPanel = createNavigationPanel(home, preferences, controller);

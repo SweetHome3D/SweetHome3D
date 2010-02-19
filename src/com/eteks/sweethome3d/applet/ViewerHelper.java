@@ -96,6 +96,7 @@ import com.eteks.sweethome3d.viewcontroller.WizardController;
 public final class ViewerHelper {
   private static final String HOME_URL_PARAMETER     = "homeURL";
   private static final String IGNORE_CACHE_PARAMETER = "ignoreCache";
+  private static final String NAVIGATION_PANEL       = "navigationPanel";
   
   public ViewerHelper(final JApplet applet) {
     // Create default user preferences with no catalog
@@ -113,6 +114,11 @@ public final class ViewerHelper {
         @Override
         public void write() throws RecorderException {
           throw new UnsupportedOperationException();
+        }
+        
+        @Override
+        public boolean isNavigationPanelVisible() {
+          return "true".equalsIgnoreCase(applet.getParameter(NAVIGATION_PANEL));
         }
       };
     
@@ -267,7 +273,7 @@ public final class ViewerHelper {
             public Void call() throws RecorderException {
               // Read home with application recorder
               Home openedHome = readHome(homeUrl, ignoreCache);
-              displayHome(applet.getRootPane(), openedHome, viewFactory);
+              displayHome(applet.getRootPane(), openedHome, preferences, viewFactory);
               return null;
             }
           };
@@ -386,11 +392,12 @@ public final class ViewerHelper {
    * Displays the given <code>home</code> in the main pane of <code>rootPane</code>. 
    */
   private void displayHome(final JRootPane rootPane, final Home home, 
+                           final UserPreferences preferences, 
                            final ViewFactory viewFactory) {
     EventQueue.invokeLater(new Runnable() {
         public void run() {
           HomeController3D controller = 
-              new HomeController3D(home, null, viewFactory, null, null);
+              new HomeController3D(home, preferences, viewFactory, null, null);
           rootPane.setContentPane((JComponent)controller.getView());
           rootPane.revalidate();
         }

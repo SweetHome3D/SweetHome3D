@@ -45,7 +45,11 @@ import com.eteks.sweethome3d.tools.ExtensionsClassLoader;
  *     cache or not. 
  *     <br>If its value is <code>true</code>, then each time the applet is launched the
  *     home file will be downloaded ignoring the file that may exist in cache. 
- *     By default, its value is <code>false</code>.</li></ul>
+ *     By default, its value is <code>false</code>.</li>
+ *     
+ *     <li><code>navigationPanel</code> specifies whether navigation arrows should be 
+ *     displayed or not. By default, its value is <code>false</code>. 
+ *     Use <code>true</code> to display navigation panel.</li></ul>
  *     
  * <p>Use space bar to switch between aerial view and virtual visitor view.</p>
  * 

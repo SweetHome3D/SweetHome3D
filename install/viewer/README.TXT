@@ -23,11 +23,13 @@ HOW TO INSTALL SWEET HOME 3D VIEWER
 4. Edit the "SweetHome3DViewer.html" file and paste it as the value of the 
    parameter named "homeURL" instead of "default.sh3d" default file :
      var parameters = {java_arguments:"-Xmx512m",
+                       navigationPanel:"true",
                        homeURL:"default.sh3d"};
    for example, if the URL of your SH3D file is:
      http://www.mydomain.com/myhome.sh3d
    you should obtain the following line:
      var parameters = {java_arguments:"-Xmx512m", 
+                       navigationPanel:"true",
                        homeURL:"http://www.mydomain.com/myhome.sh3d"};
 5. Open the file "SweetHome3DViewer.html" in your web browser to check if
    it works correctly
@@ -45,10 +47,15 @@ be used, add the parameter "ignoreCache" with a value equal to "true".
 For example, if your URL is the PHP request "http://www.mydomain.com/userHome.php"
 the parameters list should become:
   var parameters = {jnlp_href:"SweetHome3DViewer.jnlp", 
+                    navigationPanel:"true",
                     homeURL:"http://www.mydomain.com/userHome.php",
                     ignoreCache:"true"};
 
-
+If you don't want to display navigation arrows, remove simply the line
+  navigationPanel:"true",
+from parameters list.
+                     
+                     
 Mentioning the following copyrights on the web page where you use 
 Sweet Home 3D Viewer will be greatly appreciated:
 
