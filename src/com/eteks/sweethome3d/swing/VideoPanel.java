@@ -1409,7 +1409,8 @@ public class VideoPanel extends JPanel implements DialogView {
     public BufferedImage renderImageAt(Camera frameCamera, boolean last) throws IOException {
       try {
         checkLaunchingThreadIsntInterrupted();
-        home.setCamera(frameCamera);
+        // Replace home camera with frameCamera to avoid animation interpolator in 3D component 
+        this.home.setCamera(frameCamera);
         // Get a twice bigger offscreen image for better quality 
         // (antialiasing isn't always available for offscreen canvas)
         BufferedImage offScreenImage = this.homeComponent3D.getOffScreenImage(
