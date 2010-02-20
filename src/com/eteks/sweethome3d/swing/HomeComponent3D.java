@@ -1385,7 +1385,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addObject(homeRoot, room, waitForLoading);
     }    
     
-    if (displayShadowOnFloor && !listenToHomeUpdates) {
+    if (displayShadowOnFloor) {
       addShadowOnFloor(homeRoot);
     }
     
@@ -1396,6 +1396,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       addRoomListener(homeRoot);
       // Add environment listeners
       addEnvironmentListeners();
+      // Should update shadow on floor too but in the facts 
+      // User Interface doesn't propose to modify the furniture of a home
+      // that displays shadow on floor yet
     }
     return homeRoot;
   }
