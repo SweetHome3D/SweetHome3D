@@ -265,11 +265,11 @@ public class Wall3D extends Object3DBranch {
       for (PathIterator it = windowIntersection.getValue().getPathIterator(null, 0.1f); !it.isDone(); ) {
         float [] wallPoint = new float[2];
         if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
+          // Remove last point if it's equal to first point
+          if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
+            wallPoints.remove(wallPoints.size() - 1);
+          }
           if (wallPoints.size() > 2) {
-            // Remove last point if it's equal to first point
-            if (Arrays.equals(wallPoints.get(0), wallPoints.get(wallPoints.size() - 1))) {
-              wallPoints.remove(wallPoints.size() - 1);
-            }
             float [][] wallPartPoints = wallPoints.toArray(new float[wallPoints.size()][]);
             HomePieceOfFurniture doorOrWindow = windowIntersection.getKey();            
             float doorOrWindowTop = doorOrWindow.getElevation() + doorOrWindow.getHeight();
