@@ -445,42 +445,57 @@ public class VideoPanel extends JPanel implements DialogView {
     this.progressBar = new JProgressBar();
     this.progressBar.setIndeterminate(true);
     this.progressBar.getModel().addChangeListener(new ChangeListener() {
-        private long timeAtStart; 
+        private long timeAfterFirstImage; 
         
         public void stateChanged(ChangeEvent ev) {
           int progressValue = progressBar.getValue();
-          if (progressBar.isIndeterminate()
-              || progressValue == progressBar.getMinimum()
+          progressBar.setIndeterminate(progressValue <= progressBar.getMinimum() + 1);
+          if (progressValue == progressBar.getMinimum()
               || progressValue == progressBar.getMaximum()) {
             progressLabel.setText("");
             if (progressValue == progressBar.getMinimum()) {
-              this.timeAtStart = System.currentTimeMillis(); 
+              int framesCount = progressBar.getMaximum() - progressBar.getMinimum();
               String progressLabelFormat = preferences.getLocalizedString(VideoPanel.class, "progressStartLabel.format");
-              progressLabel.setText(String.format(progressLabelFormat, progressBar.getMaximum()));
+              progressLabel.setText(String.format(progressLabelFormat, framesCount,
+                  formatDuration(framesCount * 1000 / controller.getFrameRate())));
             }
+          } else if (progressValue == progressBar.getMinimum() + 1) {
+            this.timeAfterFirstImage = System.currentTimeMillis(); 
           } else {
-            // Update progress label
+            // Update progress label once the second image is generated 
+            // (the first one can take more time because of initialization process)
             String progressLabelFormat = preferences.getLocalizedString(VideoPanel.class, "progressLabel.format");
-            long estimatedRemainingTime = (System.currentTimeMillis() - this.timeAtStart) / progressValue  
-                * (progressBar.getMaximum() - progressValue);
-            estimatedRemainingTime /= 1000;
-            String estimatedRemainingTimeText;
-            if (estimatedRemainingTime < 60) {
-              estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
-                  VideoPanel.class, "seconds.format"), estimatedRemainingTime);
-            } else if (estimatedRemainingTime < 3600) {
-              estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
-                  VideoPanel.class, "minutesSeconds.format"), estimatedRemainingTime / 60, estimatedRemainingTime % 60);
-            } else {
-              long hours = estimatedRemainingTime / 3600;
-              long minutes = (estimatedRemainingTime % 3600) / 60;
-              long seconds = estimatedRemainingTime - hours * 3600 - minutes * 60;
-              estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
-                  VideoPanel.class, "hoursMinutesSeconds.format"), hours, minutes, seconds);
-            }
+            long estimatedRemainingTime = (System.currentTimeMillis() - this.timeAfterFirstImage) 
+                / (progressValue - 1 - progressBar.getMinimum())  
+                * (progressBar.getMaximum() - progressValue - 1);
+            String estimatedRemainingTimeText = formatDuration(estimatedRemainingTime);
             progressLabel.setText(String.format(progressLabelFormat, 
                 progressValue, progressBar.getMaximum(), estimatedRemainingTimeText));
           }          
+        }
+
+        /**
+         * Returns a localized string of <code>duration</code> in millis.
+         */
+        private String formatDuration(long duration) {
+          long durationInSeconds = duration / 1000;
+          if (duration - durationInSeconds * 1000 >= 500) {
+            durationInSeconds++;
+          }
+          String estimatedRemainingTimeText;
+          if (durationInSeconds < 60) {
+            estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
+                VideoPanel.class, "seconds.format"), durationInSeconds);
+          } else if (durationInSeconds < 3600) {
+            estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
+                VideoPanel.class, "minutesSeconds.format"), durationInSeconds / 60, durationInSeconds % 60);
+          } else {
+            long hours = durationInSeconds / 3600;
+            long minutes = (durationInSeconds % 3600) / 60;
+            estimatedRemainingTimeText = String.format(preferences.getLocalizedString(
+                VideoPanel.class, "hoursMinutes.format"), hours, minutes);
+          }
+          return estimatedRemainingTimeText;
         }
       });
     
@@ -943,7 +958,7 @@ public class VideoPanel extends JPanel implements DialogView {
    */
   private Camera [] getVideoFramesPath(int frameRate) {
     List<Camera> videoFramesPath = new ArrayList<Camera>();
-    final float moveDistancePerFrame = 240000 / 3600 / frameRate;  // 3 cm/frame = 1800 m / 3600 s / 25 frame/s = 2.4 km/h
+    final float moveDistancePerFrame = 240000f / 3600 / frameRate;  // 3 cm/frame = 1800 m / 3600 s / 25 frame/s = 2.4 km/h
     final float moveAnglePerFrame = (float)(Math.PI / 180 * 30 / frameRate); 
     
     List<Camera> cameraPath = this.controller.getCameraPath();
@@ -1038,7 +1053,6 @@ public class VideoPanel extends JPanel implements DialogView {
     final BoundedRangeModel progressModel = this.progressBar.getModel();
     EventQueue.invokeLater(new Runnable() {
         public void run() {
-          progressBar.setIndeterminate(false);
           progressModel.setMinimum(0);
           progressModel.setMaximum(videoFramesPath.length);
           progressModel.setValue(0);
