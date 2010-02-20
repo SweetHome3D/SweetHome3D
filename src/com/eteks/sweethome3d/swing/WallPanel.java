@@ -347,7 +347,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.rectangularWallHeightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             WallPanel.class, "rectangularWallHeightLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel rectangularWallHeightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
     this.rectangularWallHeightSpinner = new NullableSpinner(rectangularWallHeightSpinnerModel);
     rectangularWallHeightSpinnerModel.setNullable(controller.getRectangularWallHeight() == null);
     rectangularWallHeightSpinnerModel.setLength(controller.getRectangularWallHeight());
@@ -632,7 +632,7 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     heightPanel.add(this.rectangularWallHeightSpinner, new GridBagConstraints(
         2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), -5, 0));
     // Third row of height panel
     heightPanel.add(this.slopingWallRadioButton, new GridBagConstraints(
         0, 2, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -643,13 +643,13 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtStartSpinner, new GridBagConstraints(
         2, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), -5, 0));
     heightPanel.add(this.slopingWallHeightAtEndLabel, new GridBagConstraints(
         3, 3, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtEndSpinner, new GridBagConstraints(
         4, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -5, 0));
     
     add(heightPanel, new GridBagConstraints(
         0, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,
