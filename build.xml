@@ -508,6 +508,7 @@
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java" >
       <fileset dir="lib">
         <include name="*.jar"/>
+        <exclude name="jmf.jar"/>
         <exclude name="j3dcore.jar"/>
         <exclude name="j3dutils.jar"/>
         <exclude name="vecmath.jar"/>
@@ -515,7 +516,7 @@
         <exclude name="iText-2.1.7.jar"/>
       </fileset>
     </copy>
-    <!-- Copy jnlp.jar and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
+    <!-- Copy jnlp.jar, JMF and Mac OS X Java 3D 1.5 DLLs and JARs for Java 3D 
          to install/macosx/SweetHome3D-version/Sweet Home 3D.app/Contents/Resources/Java/ext -->
     <copy file="libtest/jnlp.jar" todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext"/>
     <copy todir="install/macosx/SweetHome3D-${version}/Sweet Home 3D.app/Contents/Resources/Java/ext" >
@@ -524,6 +525,7 @@
         <include name="*.jnilib"/>
       </fileset>
       <fileset dir="lib">
+        <include name="jmf.jar"/>
         <include name="j3dcore.jar"/>
         <include name="j3dutils.jar"/>
         <include name="vecmath.jar"/>
