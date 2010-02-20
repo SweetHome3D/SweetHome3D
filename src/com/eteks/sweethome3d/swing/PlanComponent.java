@@ -1709,22 +1709,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * Paints background grid lines.
    */
   private void paintGrid(Graphics2D g2D, float gridScale) {
-    float mainGridSize;
-    float [] gridSizes;
-    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
-      // Use a grid in inch and foot with a minimum grid increment of 1 inch
-      mainGridSize = 2.54f * 12; // 1 foot
-      gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
-    } else {
-      // Use a grid in cm and meters with a minimum grid increment of 1 cm
-      mainGridSize = 100;
-      gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100};
-    }
-    // Compute grid size to get a grid where the space between each line is around 10 pixels
-    float gridSize = gridSizes [0];
-    for (int i = 1; i < gridSizes.length && gridSize * gridScale < 10; i++) {
-      gridSize = gridSizes [i];
-    }
+    float gridSize = getGridSize(gridScale);
+    float mainGridSize = getMainGridSize(gridScale);
     
     Rectangle2D planBounds = getPlanBounds();
     float xMin = (float)planBounds.getMinX() - MARGIN;
@@ -1784,6 +1770,50 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     }
   }
 
+  /**
+   * Returns the space between main lines grid.
+   */
+  private float getMainGridSize(float gridScale) {
+    float [] mainGridSizes;
+    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+      // Use a grid in inch and foot with a minimum grid increment of 1 inch
+      float oneFoot = 2.54f * 12;
+      mainGridSizes = new float [] {oneFoot, 3 * oneFoot, 6 * oneFoot, 
+                                    12 * oneFoot, 24 * oneFoot, 48 * oneFoot, 96 * oneFoot, 192 * oneFoot, 384 * oneFoot}; 
+    } else {
+      // Use a grid in cm and meters with a minimum grid increment of 1 cm
+      mainGridSizes = new float [] {100, 200, 500, 1000, 2000, 5000, 10000};
+    }
+    // Compute grid size to get a grid where the space between each line is less than 50 pixels
+    float mainGridSize = mainGridSizes [0];
+    for (int i = 1; i < mainGridSizes.length && mainGridSize * gridScale < 50; i++) {
+      mainGridSize = mainGridSizes [i];
+    }
+    return mainGridSize;
+  }
+  
+  /**
+   * Returns the space between lines grid.
+   */
+  private float getGridSize(float gridScale) {
+    float [] gridSizes;
+    if (this.preferences.getLengthUnit() == LengthUnit.INCH) {
+      // Use a grid in inch and foot with a minimum grid increment of 1 inch
+      float oneFoot = 2.54f * 12;
+      gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, oneFoot, 3 * oneFoot, 6 * oneFoot, 
+                                12 * oneFoot, 24 * oneFoot, 48 * oneFoot, 96 * oneFoot, 192 * oneFoot, 384 * oneFoot};
+    } else {
+      // Use a grid in cm and meters with a minimum grid increment of 1 cm
+      gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000};
+    }
+    // Compute grid size to get a grid where the space between each line is less than 10 pixels
+    float gridSize = gridSizes [0];
+    for (int i = 1; i < gridSizes.length && gridSize * gridScale < 10; i++) {
+      gridSize = gridSizes [i];
+    }
+    return gridSize;
+  }
+  
   /**
    * Paints plan items.
    * @throws InterruptedIOException if painting was interrupted (may happen only 
@@ -4199,22 +4229,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
      * Paints background grid lines.
      */
     private void paintRuler(Graphics2D g2D, float rulerScale) {
-      float mainGridSize;
-      float [] gridSizes;
-      if (preferences.getLengthUnit() == LengthUnit.INCH) {
-        // Use a grid in inch and foot with a minimun grid increment of 1 inch
-        mainGridSize = 2.54f * 12; // 1 foot
-        gridSizes = new float [] {2.54f, 5.08f, 7.62f, 15.24f, 30.48f};
-      } else {
-        // Use a grid in cm and meters with a minimun grid increment of 1 cm
-        mainGridSize = 100;
-        gridSizes = new float [] {1, 2, 5, 10, 20, 50, 100};
-      }
-      // Compute grid size to get a grid where the space between each line is around 10 pixels
-      float gridSize = gridSizes [0];
-      for (int i = 1; i < gridSizes.length && gridSize * rulerScale < 10; i++) {
-        gridSize = gridSizes [i];
-      }
+      float gridSize = getGridSize(rulerScale);
+      float mainGridSize = getMainGridSize(rulerScale);
       
       Rectangle2D planBounds = getPlanBounds();    
       float xMin = (float)planBounds.getMinX() - MARGIN;
@@ -4227,13 +4243,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       int fontAscent = metrics.getAscent();
       float tickSize = 5 / rulerScale;
       float mainTickSize = (fontAscent + 6) / rulerScale;
-      NumberFormat format = NumberFormat.getNumberInstance();
-      String maxText = getFormattedTickText(format, 100);
-      int maxTextWidth = metrics.stringWidth(maxText) + 10;
-      float textInterval =
-        mainGridSize != gridSize
-          ? mainGridSize 
-          : (float)Math.ceil(maxTextWidth / (gridSize * rulerScale)) * gridSize;
+      NumberFormat format = NumberFormat.getIntegerInstance();
       
       g2D.setColor(getForeground());
       float lineWidth = 0.5f / rulerScale;
@@ -4241,22 +4251,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (this.orientation == SwingConstants.HORIZONTAL) {
         // Draw horizontal rule base
         g2D.draw(new Line2D.Float(xMin, yMax - lineWidth, xMax, yMax - lineWidth));
-        // Draw vertical lines
+        // Draw small ticks
         for (float x = (int) (xMin / gridSize) * gridSize; x < xMax; x += gridSize) {
-          if (Math.abs(Math.abs(x) % textInterval - textInterval) < 1E-2 
-              || Math.abs(Math.abs(x) % textInterval) < 1E-2) {
-            // Draw big tick
-            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
-            // Draw unit text
-            AffineTransform previousTransform = g2D.getTransform();
-            g2D.translate(x, yMax - mainTickSize);
-            g2D.scale(1 / rulerScale, 1 / rulerScale);
-            g2D.drawString(getFormattedTickText(format, x), 3, fontAscent - 1);
-            g2D.setTransform(previousTransform);
-          } else {
-            // Draw small tick
-            g2D.draw(new Line2D.Float(x, yMax - tickSize, x, yMax));
-          }
+          g2D.draw(new Line2D.Float(x, yMax - tickSize, x, yMax));
         }
       } else {
         // Draw vertical rule base
@@ -4265,14 +4262,34 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         } else {
           g2D.draw(new Line2D.Float(xMin + lineWidth, yMin, xMin + lineWidth, yMax));
         }
-        // Draw horizontal lines
+        // Draw small ticks
         for (float y = (int) (yMin / gridSize) * gridSize; y < yMax; y += gridSize) {
-          if (Math.abs(Math.abs(y) % textInterval - textInterval) < 1E-2 
-              || Math.abs(Math.abs(y) % textInterval) < 1E-2) {
-            AffineTransform previousTransform = g2D.getTransform();
+          if (leftToRightOriented) {
+            g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
+          } else {
+            g2D.draw(new Line2D.Float(xMin, y, xMin + tickSize, y));
+          }
+        }
+      }
+
+      if (mainGridSize != gridSize) {
+        g2D.setStroke(new BasicStroke(1.5f / rulerScale,
+            BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        AffineTransform previousTransform = g2D.getTransform();
+        // Draw big ticks
+        if (this.orientation == SwingConstants.HORIZONTAL) {
+          for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
+            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
+            // Draw unit text
+            g2D.translate(x, yMax - mainTickSize);
+            g2D.scale(1 / rulerScale, 1 / rulerScale);
+            g2D.drawString(getFormattedTickText(format, x), 3, fontAscent - 1);
+            g2D.setTransform(previousTransform);
+          }
+        } else {
+          for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
             String yText = getFormattedTickText(format, y);
             if (leftToRightOriented) {
-              // Draw big tick
               g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
               // Draw unit text with a vertical orientation
               g2D.translate(xMax - mainTickSize, y);
@@ -4280,7 +4297,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               g2D.rotate(-Math.PI / 2);
               g2D.drawString(yText, -metrics.stringWidth(yText) - 3, fontAscent - 1);
             } else {
-              // Draw big tick
               g2D.draw(new Line2D.Float(xMin, y, xMin +  mainTickSize, y));
               // Draw unit text with a vertical orientation
               g2D.translate(xMin + mainTickSize, y);
@@ -4289,33 +4305,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
               g2D.drawString(yText, 3, fontAscent - 1);
             }
             g2D.setTransform(previousTransform);
-          } else {
-            // Draw small tick
-            if (leftToRightOriented) {
-              g2D.draw(new Line2D.Float(xMax - tickSize, y, xMax, y));
-            } else {
-              g2D.draw(new Line2D.Float(xMin, y, xMin + tickSize, y));
-            }
-          }
-        }
-      }
-
-      if (mainGridSize != gridSize) {
-        g2D.setStroke(new BasicStroke(1.5f / rulerScale,
-            BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
-        if (this.orientation == SwingConstants.HORIZONTAL) {
-          // Draw main vertical lines
-          for (float x = (int) (xMin / mainGridSize) * mainGridSize; x < xMax; x += mainGridSize) {
-            g2D.draw(new Line2D.Float(x, yMax - mainTickSize, x, yMax));
-          }
-        } else {
-          // Draw positive main horizontal lines
-          for (float y = (int) (yMin / mainGridSize) * mainGridSize; y < yMax; y += mainGridSize) {
-            if (leftToRightOriented) {
-              g2D.draw(new Line2D.Float(xMax - mainTickSize, y, xMax, y));
-            } else {
-              g2D.draw(new Line2D.Float(xMin, y, xMax + mainTickSize, y));
-            }
           }
         }
       }
