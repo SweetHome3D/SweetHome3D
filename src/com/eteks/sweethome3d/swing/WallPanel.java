@@ -250,6 +250,7 @@ public class WallPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setLeftSideColor(leftSideColorButton.getColor());
+            controller.setLeftSidePaint(WallController.WallPaint.COLORED);
           }
         });
     controller.addPropertyChangeListener(WallController.Property.LEFT_SIDE_COLOR, 
@@ -301,6 +302,7 @@ public class WallPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setRightSideColor(rightSideColorButton.getColor());
+            controller.setRightSidePaint(WallController.WallPaint.COLORED);
           }
         });
     controller.addPropertyChangeListener(WallController.Property.RIGHT_SIDE_COLOR, 

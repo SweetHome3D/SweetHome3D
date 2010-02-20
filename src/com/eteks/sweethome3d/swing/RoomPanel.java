@@ -186,6 +186,7 @@ public class RoomPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setFloorColor(floorColorButton.getColor());
+            controller.setFloorPaint(RoomController.RoomPaint.COLORED);
           }
         });
     controller.addPropertyChangeListener(RoomController.Property.FLOOR_COLOR, 
@@ -257,6 +258,7 @@ public class RoomPanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setCeilingColor(ceilingColorButton.getColor());
+            controller.setCeilingPaint(RoomController.RoomPaint.COLORED);
           }
         });
     controller.addPropertyChangeListener(RoomController.Property.CEILING_COLOR, 
