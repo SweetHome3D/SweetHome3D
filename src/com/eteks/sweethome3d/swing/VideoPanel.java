@@ -363,7 +363,7 @@ public class VideoPanel extends JPanel implements DialogView {
           // Paint recorded camera path
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
           g2D.setColor(getSelectionColor());
-          float cameraCircleRadius = 8 / getScale();
+          float cameraCircleRadius = 7 / getScale();
           Ellipse2D ellipse = new Ellipse2D.Float(-cameraCircleRadius, -cameraCircleRadius, 
               2 * cameraCircleRadius, 2 * cameraCircleRadius);
           List<Camera> cameraPath = controller.getCameraPath();
