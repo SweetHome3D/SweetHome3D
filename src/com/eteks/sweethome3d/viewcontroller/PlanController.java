@@ -1286,7 +1286,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the minimum scale of the plan view.
    */
   public float getMinimumScale() {
-    return 0.01f;
+    return 0.05f;
   }
   
   /**
@@ -1307,6 +1307,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Controls the scale in plan view and and fires a <code>PropertyChangeEvent</code>. 
    */
   public void setScale(float scale) {
+    scale = Math.max(getMinimumScale(), Math.min(scale, getMaximumScale()));
     if (scale != getView().getScale()) {
       float oldScale = getView().getScale();
       getView().setScale(scale);
@@ -4098,7 +4099,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void zoom(float factor) {
-      setScale(Math.max(getMinimumScale(), Math.min(getScale() * factor, getMaximumScale())));
+      setScale(getScale() * factor);
     }
   }
   
@@ -4680,7 +4681,7 @@ public class PlanController extends FurnitureController implements Controller {
     
     @Override
     public void zoom(float factor) {
-      setScale(Math.max(getMinimumScale(), Math.min(getScale() * factor, getMaximumScale())));
+      setScale(getScale() * factor);
     }
   }
 
