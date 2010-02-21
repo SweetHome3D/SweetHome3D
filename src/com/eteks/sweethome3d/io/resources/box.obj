@@ -7,20 +7,20 @@
 # Foundation, and available at http://www.gnu.org/copyleft/gpl.txt
 g Cube_1
 usemtl white
-v -0.5 -0.5 0.5
-v 0.5 -0.5 0.5
-v 0.5 -0.5 -0.5
-v -0.5 -0.5 -0.5
-v -0.5 0.5 0.5
-v 0.5 0.5 0.5
-v 0.5 0.5 -0.5
-v -0.5 0.5 -0.5
-v 0 0 0.5
-v 0.5 0 0
-v 0 0 -0.5
-v -0.5 0 0
-v 0 -0.5 0
-v 0 0.5 0
+v 0 0 1
+v 1 0 1
+v 1 0 0
+v 0 0 0
+v 0 1 1
+v 1 1 1
+v 1 1 0
+v 0 1 0
+v 0 0 1
+v 1 0 0
+v 0 0 0
+v 0 0 0
+v 0 0 0
+v 0 1 0
 vn 1 0 0
 vn 0 -1 0
 vn 0 -1 0
