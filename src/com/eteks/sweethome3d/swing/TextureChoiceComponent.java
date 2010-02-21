@@ -38,6 +38,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -80,6 +82,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Button displaying a texture as an icon. When the user clicks
@@ -139,37 +142,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent ev) {
         final TexturePanel texturePanel = new TexturePanel(preferences, controller);
-        // Update edited texture in texture panel
-        texturePanel.setPreviewTexture(controller.getTexture());
-        // Show panel in a resizable modal dialog
-        JOptionPane optionPane = new JOptionPane(texturePanel, JOptionPane.PLAIN_MESSAGE, 
-            JOptionPane.OK_CANCEL_OPTION);
-        final JDialog dialog = optionPane.createDialog(
-            SwingUtilities.getRootPane(TextureChoiceComponent.this), controller.getDialogTitle());
-        dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-        dialog.setResizable(true);
-        // Pack again because resize decorations may have changed dialog preferred size
-        dialog.pack();
-        dialog.setMinimumSize(getPreferredSize());
-        // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
-        dialog.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentShown(ComponentEvent ev) {
-              KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(texturePanel);
-              dialog.removeComponentListener(this);
-            }
-          });
-        dialog.setVisible(true);
-        dialog.dispose();
-        if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
-          TextureImage selectedTexture = texturePanel.getPreviewTexture();
-          if (selectedTexture instanceof HomeTexture
-              || selectedTexture == null) {
-            controller.setTexture((HomeTexture)selectedTexture);
-          } else {
-            controller.setTexture(new HomeTexture(selectedTexture));
-          }
-        }
+        texturePanel.displayView(TextureChoiceComponent.this);
       }
     });
   }
@@ -217,7 +190,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                         TextureChoiceController controller) {
       super(new GridBagLayout());
       this.controller = controller;
-      createComponents(preferences);
+      createComponents(preferences, controller);
       setMnemonics(preferences);
       layoutComponents();
     }
@@ -225,7 +198,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
     /**
      * Creates and initializes components.
      */
-    private void createComponents(final UserPreferences preferences) {
+    private void createComponents(final UserPreferences preferences, 
+                                  final TextureChoiceController controller) {
       this.availableTexturesLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           TextureChoiceComponent.class, "availableTexturesLabel.text"));
       this.availableTexturesList = new JList(createListModel(preferences.getTexturesCatalog()));
@@ -272,6 +246,8 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             super.setIcon(icon);
           }
         };
+      // Update edited texture in texture panel
+      setPreviewTexture(controller.getTexture());
 
       try {
         String importTextureButtonText = SwingTools.getLocalizedLabelText(
@@ -528,6 +504,48 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
         }
       }
       return textures.toArray(new CatalogTexture [textures.size()]);
+    }
+    
+    public void displayView(View textureChoiceComponent) {
+      // Show panel in a resizable modal dialog
+      final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
+          JOptionPane.OK_CANCEL_OPTION);
+      final JDialog dialog = optionPane.createDialog(
+          SwingUtilities.getRootPane((JComponent)textureChoiceComponent), controller.getDialogTitle());
+      dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+      dialog.setResizable(true);
+      // Pack again because resize decorations may have changed dialog preferred size
+      dialog.pack();
+      dialog.setMinimumSize(getPreferredSize());
+      // Add a listener that transfer focus to focusable field of texture panel when dialog is shown
+      dialog.addComponentListener(new ComponentAdapter() {
+          @Override
+          public void componentShown(ComponentEvent ev) {
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent(TexturePanel.this);
+            dialog.removeComponentListener(this);
+          }
+        });
+      this.availableTexturesList.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent ev) {
+            // Close on double clicks in texture list
+            if (ev.getClickCount() == 2) {
+              optionPane.setValue(JOptionPane.OK_OPTION);
+              availableTexturesList.removeMouseListener(this);
+            }
+          }
+        });
+      dialog.setVisible(true);
+      dialog.dispose();
+      if (Integer.valueOf(JOptionPane.OK_OPTION).equals(optionPane.getValue())) {
+        TextureImage selectedTexture = getPreviewTexture();
+        if (selectedTexture instanceof HomeTexture
+            || selectedTexture == null) {
+          this.controller.setTexture((HomeTexture)selectedTexture);
+        } else {
+          this.controller.setTexture(new HomeTexture(selectedTexture));
+        }
+      }
     }
   }
 }
