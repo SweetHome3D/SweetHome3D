@@ -523,11 +523,15 @@ public class FurnitureTable extends JTable implements View, Printable {
               csv.append(copiedPiece.getName());
               break;
             case COLOR :
-              // Copy piece color at #xxxxxx format
-              csv.append(copiedPiece.getColor() != null 
-                  ? "#" + Integer.toHexString(copiedPiece.getColor()).substring(2)
-                  : "");
+              if (copiedPiece.getColor() != null) {
+                // Copy piece color at #xxxxxx format              
+                csv.append("#" + Integer.toHexString(copiedPiece.getColor()).substring(2));
+              }
               break;
+            case TEXTURE :
+              if (copiedPiece.getTexture() != null) {
+                csv.append(copiedPiece.getTexture().getName());
+              }
             case WIDTH :
             case DEPTH :
             case HEIGHT : 
