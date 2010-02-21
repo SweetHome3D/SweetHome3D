@@ -355,6 +355,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.ANGLE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_COLOR, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.COLOR);
+    createAction(ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, preferences, 
+        furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.TEXTURE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.MOVABLE);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_TYPE, preferences, 
@@ -391,6 +393,8 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.ANGLE);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_COLOR, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.COLOR);
+    createAction(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, preferences, 
+        furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.TEXTURE);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, preferences, 
         furnitureController, "toggleFurnitureVisibleProperty", HomePieceOfFurniture.SortableProperty.MOVABLE);
     createAction(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, preferences, 
@@ -1157,6 +1161,8 @@ public class HomePane extends JRootPane implements HomeView {
         sortActions, HomePieceOfFurniture.SortableProperty.ANGLE);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_COLOR, 
         sortActions, HomePieceOfFurniture.SortableProperty.COLOR);
+    addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_TEXTURE, 
+        sortActions, HomePieceOfFurniture.SortableProperty.TEXTURE);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_MOVABILITY, 
         sortActions, HomePieceOfFurniture.SortableProperty.MOVABLE);
     addActionToMap(ActionType.SORT_HOME_FURNITURE_BY_TYPE, 
@@ -1256,6 +1262,8 @@ public class HomePane extends JRootPane implements HomeView {
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.ANGLE);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_COLOR, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.COLOR);
+    addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_TEXTURE, 
+        displayPropertyActions, HomePieceOfFurniture.SortableProperty.TEXTURE);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_MOVABLE, 
         displayPropertyActions, HomePieceOfFurniture.SortableProperty.MOVABLE);
     addActionToMap(ActionType.DISPLAY_HOME_FURNITURE_DOOR_OR_WINDOW, 

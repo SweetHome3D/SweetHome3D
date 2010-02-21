@@ -42,8 +42,10 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.UserPreferences;
+import com.eteks.sweethome3d.swing.FileContentManager;
 import com.eteks.sweethome3d.swing.HomeFurniturePanel;
 import com.eteks.sweethome3d.swing.SwingViewFactory;
+import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
 
 /**
@@ -56,6 +58,7 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     Locale.setDefault(Locale.FRANCE);
     UserPreferences preferences = new DefaultUserPreferences();
     SwingViewFactory viewFactory = new SwingViewFactory();
+    ContentManager contentManager = new FileContentManager(preferences);
     // Create a home and add a selected piece of furniture to it
     Home home = new Home();
     PieceOfFurniture firstPiece = preferences.getFurnitureCatalog().
@@ -65,7 +68,7 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
 
     // 2. Create a home piece of furniture panel to edit piece
-    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, viewFactory, null);
+    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, viewFactory, contentManager, null);
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(),
         piece1.getY(), piece1.getElevation(), (int)Math.toDegrees(piece1.getAngle()), piece1.getWidth(),
@@ -87,7 +90,7 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1, piece2}));
     // Check if furniture panel edits null values 
     // if some furniture properties are the same
-    controller = new HomeFurnitureController(home, preferences, viewFactory, null);
+    controller = new HomeFurnitureController(home, preferences, viewFactory, contentManager, null);
     // Check values stored by furniture panel components are equal to the ones set
     assertFurnitureControllerEquals(piece1.getName(), piece1.getX(), null, null, (int)Math.toDegrees(piece1.getAngle()), 
         piece1.getWidth(), null, null, null, null, null, controller);
@@ -204,7 +207,8 @@ public class HomeFurniturePanelTest extends ComponentTestFixture {
     home.addPieceOfFurniture(piece1);
     home.setSelectedItems(Arrays.asList(new HomePieceOfFurniture [] {piece1}));
     
-    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, new SwingViewFactory(), null);
+    HomeFurnitureController controller = new HomeFurnitureController(home, preferences, 
+        new SwingViewFactory(), new FileContentManager(preferences), null);
     HomeFurniturePanel furniturePanel = 
         new HomeFurniturePanel(preferences, controller);
     furniturePanel.displayView(null);

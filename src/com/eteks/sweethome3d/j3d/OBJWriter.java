@@ -61,6 +61,7 @@ import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -72,6 +73,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 /**
  * An output stream that writes Java 3D nodes at OBJ + MTL format.
@@ -331,8 +333,10 @@ public class OBJWriter extends FilterWriter {
       // Start a new object at OBJ format 
       this.out.write("g " + objectName + "\n");
       
+      TexCoordGeneration texCoordGeneration = null;
       if (this.mtlFileName != null) {
         if (appearance != null) {
+          texCoordGeneration = appearance.getTexCoordGeneration();
           ComparableAppearance comparableAppearance = new ComparableAppearance(appearance);
           String appearanceName = this.appearances.get(comparableAppearance);
           if (appearanceName == null) {
@@ -346,7 +350,7 @@ public class OBJWriter extends FilterWriter {
       
       // Write object geometries
       for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        writeNodeGeometry(shape.getGeometry(i), transformationToParent);
+        writeNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration);
       }
     }    
   }
@@ -392,7 +396,9 @@ public class OBJWriter extends FilterWriter {
   /**
    * Writes a 3D geometry at OBJ format.
    */
-  private void writeNodeGeometry(Geometry geometry, Transform3D transformationToParent) throws IOException {
+  private void writeNodeGeometry(Geometry geometry, 
+                                 Transform3D transformationToParent, 
+                                 TexCoordGeneration texCoordGeneration) throws IOException {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
       
@@ -402,11 +408,25 @@ public class OBJWriter extends FilterWriter {
       boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
       Map<Vector3f, Integer> normalIndices = new HashMap<Vector3f, Integer>();
       int [] normalIndexSubstitutes = new int [geometryArray.getVertexCount()];
-      
+
       boolean textureCoordinatesDefined = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0;
       Map<TexCoord2f, Integer> textureCoordinatesIndices = new HashMap<TexCoord2f, Integer>();
       int [] textureCoordinatesIndexSubstitutes = new int [geometryArray.getVertexCount()];
 
+      boolean textureCoordinatesGenerated = false;
+      Vector4f planeS = null;
+      Vector4f planeT = null;
+      if (texCoordGeneration != null) {
+        textureCoordinatesGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
+            && texCoordGeneration.getEnable();
+        if (textureCoordinatesGenerated) {
+          planeS = new Vector4f();
+          planeT = new Vector4f();
+          texCoordGeneration.getPlaneS(planeS);
+          texCoordGeneration.getPlaneT(planeT);
+        }
+      }
+      
       checkCurrentThreadIsntInterrupted();
 
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
@@ -430,7 +450,16 @@ public class OBJWriter extends FilterWriter {
             }
           }
           // Write texture coordinates
-          if (textureCoordinatesDefined) {
+          if (texCoordGeneration != null) {
+            if (textureCoordinatesGenerated) {
+              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+                    index < n; index++, i += vertexSize) {
+                TexCoord2f textureCoordinates = generateTextureCoordinates(
+                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+                writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+              }
+            }
+          } else if (textureCoordinatesDefined) {
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
                   index < n; index++, i += vertexSize) {
               TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
@@ -455,7 +484,15 @@ public class OBJWriter extends FilterWriter {
             }
           }
           // Write texture coordinates
-          if (textureCoordinatesDefined) {
+          if (texCoordGeneration != null) {
+            if (textureCoordinatesGenerated) {
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                TexCoord2f textureCoordinates = generateTextureCoordinates(
+                    vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
+                writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+              }
+            }
+          } else if (textureCoordinatesDefined) {
             float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
               TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
@@ -481,7 +518,17 @@ public class OBJWriter extends FilterWriter {
           }
         }
         // Write texture coordinates
-        if (textureCoordinatesDefined) {
+        if (texCoordGeneration != null) {
+          if (textureCoordinatesGenerated) {
+            for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+              Point3f vertex = new Point3f();
+              geometryArray.getCoordinate(index, vertex);
+              TexCoord2f textureCoordinates = generateTextureCoordinates(
+                  vertex.x, vertex.y, vertex.z, planeS, planeT);
+              writeTextureCoordinates(textureCoordinates, index, textureCoordinatesIndices, textureCoordinatesIndexSubstitutes);
+            }
+          }
+        } else if (textureCoordinatesDefined) {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             TexCoord2f textureCoordinates = new TexCoord2f();
             geometryArray.getTextureCoordinate(0, index, textureCoordinates);
@@ -499,14 +546,14 @@ public class OBJWriter extends FilterWriter {
           for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
             writeIndexedTriangle(triangleArray, i, i + 1, i + 2, 
                 vertexIndexSubstitutes, normalIndexSubstitutes,  
-                textureCoordinatesIndexSubstitutes);
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
           }
         } else if (geometryArray instanceof IndexedQuadArray) {
           IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
           for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
             writeIndexedQuadrilateral(quadArray, i, i + 1, i + 2, i + 3, 
                 vertexIndexSubstitutes, normalIndexSubstitutes,  
-                textureCoordinatesIndexSubstitutes);
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
           }
         } else if (geometryArray instanceof IndexedGeometryStripArray) {
           IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
@@ -520,11 +567,11 @@ public class OBJWriter extends FilterWriter {
                 if (j % 2 == 0) {
                   writeIndexedTriangle(geometryStripArray, i, i + 1, i + 2, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,   
-                      textureCoordinatesIndexSubstitutes);
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
                 } else { // Vertices of odd triangles are in reverse order               
                   writeIndexedTriangle(geometryStripArray, i, i + 2, i + 1, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes);
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
                 }
               }
               initialIndex += stripIndexCounts [strip];
@@ -534,7 +581,7 @@ public class OBJWriter extends FilterWriter {
               for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2; i < n; i++) {
                 writeIndexedTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,   
-                    textureCoordinatesIndexSubstitutes);
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
               }
               initialIndex += stripIndexCounts [strip];
             }
@@ -546,14 +593,14 @@ public class OBJWriter extends FilterWriter {
           for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
             writeTriangle(triangleArray, i, i + 1, i + 2, 
                 vertexIndexSubstitutes, normalIndexSubstitutes,   
-                textureCoordinatesIndexSubstitutes);
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
           }
         } else if (geometryArray instanceof QuadArray) {
           QuadArray quadArray = (QuadArray)geometryArray;
           for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
             writeQuadrilateral(quadArray, i, i + 1, i + 2, i + 3, 
                 vertexIndexSubstitutes, normalIndexSubstitutes,   
-                textureCoordinatesIndexSubstitutes);
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
           }
         } else if (geometryArray instanceof GeometryStripArray) {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
@@ -567,11 +614,11 @@ public class OBJWriter extends FilterWriter {
                 if (j % 2 == 0) {
                   writeTriangle(geometryStripArray, i, i + 1, i + 2, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes);
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
                 } else { // Vertices of odd triangles are in reverse order               
                   writeTriangle(geometryStripArray, i, i + 2, i + 1, 
                       vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes);
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
                 }
               }
               initialIndex += stripVertexCounts [strip];
@@ -581,7 +628,7 @@ public class OBJWriter extends FilterWriter {
               for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2; i < n; i++) {
                 writeTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
                     vertexIndexSubstitutes, normalIndexSubstitutes,  
-                    textureCoordinatesIndexSubstitutes);
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
               }
               initialIndex += stripVertexCounts [strip];
             }
@@ -593,10 +640,25 @@ public class OBJWriter extends FilterWriter {
       if (normalsDefined) {
         this.normalOffset += normalIndices.size();
       }        
-      if (textureCoordinatesDefined) {
+      if (texCoordGeneration != null) {
+        if (textureCoordinatesGenerated) {
+          this.textureCoordinatesOffset += textureCoordinatesIndices.size();
+        }
+      } else if (textureCoordinatesDefined) {
         this.textureCoordinatesOffset += textureCoordinatesIndices.size();
       } 
     } 
+  }
+
+  /**
+   * Returns texture coordinates generated with <code>texCoordGeneration</code> computed
+   * as described in <code>TexCoordGeneration</code> javadoc.
+   */
+  private TexCoord2f generateTextureCoordinates(float x, float y, float z, 
+                                                Vector4f planeS, 
+                                                Vector4f planeT) {
+    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z, 
+        x * planeT.x + y * planeT.y + z * planeT.z);
   }
 
   /**
@@ -691,8 +753,10 @@ public class OBJWriter extends FilterWriter {
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                                     int [] vertexIndexSubstitutes, 
                                     int [] normalIndexSubstitutes,                                     
-                                    int [] textureCoordinatesIndexSubstitutes) throws IOException {
-    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                                    int [] textureCoordinatesIndexSubstitutes,
+                                    boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
         this.out.write("f " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
             + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
@@ -735,8 +799,10 @@ public class OBJWriter extends FilterWriter {
                                          int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                          int [] vertexIndexSubstitutes, 
                                          int [] normalIndexSubstitutes,                                      
-                                         int [] textureCoordinatesIndexSubstitutes) throws IOException {
-    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                                         int [] textureCoordinatesIndexSubstitutes,
+                                         boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
         this.out.write("f " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
             + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
@@ -787,8 +853,10 @@ public class OBJWriter extends FilterWriter {
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                              int [] vertexIndexSubstitutes,  
                              int [] normalIndexSubstitutes,                                       
-                             int [] textureCoordinatesIndexSubstitutes) throws IOException {
-    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                             int [] textureCoordinatesIndexSubstitutes,
+                             boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
         this.out.write("f " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
             + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
@@ -831,8 +899,10 @@ public class OBJWriter extends FilterWriter {
                                   int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                   int [] vertexIndexSubstitutes, 
                                   int [] normalIndexSubstitutes,                                       
-                                  int [] textureCoordinatesIndexSubstitutes) throws IOException {
-    if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+                                  int [] textureCoordinatesIndexSubstitutes,
+                                  boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
         this.out.write("f " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
             + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 

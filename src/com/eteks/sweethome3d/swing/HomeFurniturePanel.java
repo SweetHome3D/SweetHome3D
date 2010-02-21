@@ -25,10 +25,12 @@ import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -66,8 +68,11 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   private JSpinner                depthSpinner;
   private JLabel                  heightLabel;
   private JSpinner                heightSpinner;
-  private JLabel                  colorLabel;
+  private JRadioButton            defaultRadioButton;
+  private JRadioButton            colorRadioButton;
   private ColorButton             colorButton;
+  private JRadioButton            textureRadioButton;
+  private JComponent              textureComponent;
   private NullableCheckBox        visibleCheckBox;
   private NullableCheckBox        mirroredModelCheckBox;
   private String                  dialogTitle;
@@ -319,9 +324,32 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         }
       });
     
-    // Create color label and its button bound to COLOR controller property
-    this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
-        HomeFurniturePanel.class, "colorLabel.text"));
+    // Create radio buttons bound to COLOR and TEXTURE controller properties
+    this.defaultRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "defaultRadioButton.text"));
+    this.defaultRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (defaultRadioButton.isSelected()) {
+            controller.setPaint(HomeFurnitureController.FurniturePaint.DEFAULT);
+          }
+        }
+      });
+    controller.addPropertyChangeListener(HomeFurnitureController.Property.PAINT, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            updateRadioButtons(controller);
+          }
+        });
+    this.colorRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "colorRadioButton.text"));
+    this.colorRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (colorRadioButton.isSelected()) {
+            controller.setPaint(HomeFurnitureController.FurniturePaint.COLORED);
+          }
+        }
+      });
+    
     this.colorButton = new ColorButton();
     this.colorButton.setColorDialogTitle(preferences.getLocalizedString(
         HomeFurniturePanel.class, "colorDialog.title"));
@@ -330,6 +358,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             controller.setColor(colorButton.getColor());
+            controller.setPaint(HomeFurnitureController.FurniturePaint.COLORED);
           }
         });
     controller.addPropertyChangeListener(HomeFurnitureController.Property.COLOR, 
@@ -338,6 +367,24 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
             colorButton.setColor(controller.getColor());
           }
         });
+
+    this.textureRadioButton = new JRadioButton(SwingTools.getLocalizedLabelText(preferences, 
+        HomeFurniturePanel.class, "textureRadioButton.text"));
+    this.textureRadioButton.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (textureRadioButton.isSelected()) {
+            controller.setPaint(HomeFurnitureController.FurniturePaint.TEXTURED);
+          }
+        }
+      });
+    
+    this.textureComponent = (JComponent)controller.getTextureController().getView();
+
+    ButtonGroup buttonGroup = new ButtonGroup();
+    buttonGroup.add(this.defaultRadioButton);
+    buttonGroup.add(this.colorRadioButton);
+    buttonGroup.add(this.textureRadioButton);
+    updateRadioButtons(controller);
 
     // Create visible check box bound to VISIBLE controller property
     this.visibleCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences, 
@@ -392,6 +439,21 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   }
   
   /**
+   * Updates radio buttons. 
+   */
+  private void updateRadioButtons(HomeFurnitureController controller) {
+    if (controller.getPaint() == HomeFurnitureController.FurniturePaint.DEFAULT) {
+      this.defaultRadioButton.setSelected(true);
+    } else if (controller.getPaint() == HomeFurnitureController.FurniturePaint.COLORED) {
+      this.colorRadioButton.setSelected(true);
+    } else if (controller.getPaint() == HomeFurnitureController.FurniturePaint.TEXTURED) {
+      this.textureRadioButton.setSelected(true);
+    } else { // null
+      SwingTools.deselectAllRadioButtons(this.defaultRadioButton, this.colorRadioButton, this.textureRadioButton);
+    }
+  }
+
+  /**
    * Updates size components depending on the fact that furniture is resizable or not.
    */
   private void updateSizeComponents(final HomeFurnitureController controller) {
@@ -436,9 +498,12 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
       this.heightLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "heightLabel.mnemonic")).getKeyCode());
       this.heightLabel.setLabelFor(this.heightSpinner);
-      this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
-          HomeFurniturePanel.class, "colorLabel.mnemonic")).getKeyCode());
-      this.colorLabel.setLabelFor(this.colorButton);
+      this.defaultRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "defaultRadioButton.mnemonic")).getKeyCode());
+      this.colorRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "colorRadioButton.mnemonic")).getKeyCode());
+      this.textureRadioButton.setMnemonic(KeyStroke.getKeyStroke(
+          preferences.getLocalizedString(HomeFurniturePanel.class, "textureRadioButton.mnemonic")).getKeyCode());
       this.visibleCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           HomeFurniturePanel.class, "visibleCheckBox.mnemonic")).getKeyCode());
       this.mirroredModelCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
@@ -508,24 +573,34 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     // Fifth row
     add(this.angleLabel, new GridBagConstraints(
         0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, labelInsets, 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     add(this.angleSpinner, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, componentInsets, -15, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 15), -15, 0));
+    add(this.defaultRadioButton, new GridBagConstraints(
+        2, 4, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    // Sixth row
     add(this.mirroredModelCheckBox, new GridBagConstraints(
-        3, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, rightComponentInsets, 0, 0));
-    // Last row
-    Insets lastRowInsets = new Insets(0, 0, 0, 5);
-    add(this.colorLabel, new GridBagConstraints(
-        0, 5, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, lastRowInsets, 0, 0));
-    add(this.colorButton, new GridBagConstraints(
         1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-    add(this.visibleCheckBox, new GridBagConstraints(
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
+    add(this.colorRadioButton, new GridBagConstraints(
+        2, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+    add(this.colorButton, new GridBagConstraints(
         3, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+    // Last row
+    add(this.visibleCheckBox, new GridBagConstraints(
+        1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
+    add(this.textureRadioButton, new GridBagConstraints(
+        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+    add(this.textureComponent, new GridBagConstraints(
+        3, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
   }
 
   /**

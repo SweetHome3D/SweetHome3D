@@ -122,6 +122,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     setDescription(null);
     setVisible(visible);
     super.setColor(null);
+    super.setTexture(null);
     super.setX((float)boundingRectangle.getCenterX());
     super.setY((float)boundingRectangle.getCenterY());
     super.setElevation(elevation);
@@ -298,6 +299,17 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     super.setColor(color);
     for (HomePieceOfFurniture piece : this.furniture) {
       piece.setColor(color);
+    }
+  }
+  
+  /**
+   * Sets the <code>texture</code> of the furniture of this group.
+   */
+  @Override
+  public void setTexture(HomeTexture texture) {
+    super.setTexture(texture);
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.setTexture(texture);
     }
   }
   

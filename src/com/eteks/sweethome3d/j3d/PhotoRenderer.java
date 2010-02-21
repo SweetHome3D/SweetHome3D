@@ -50,6 +50,7 @@ import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -61,6 +62,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 import org.sunflow.PluginRegistry;
 import org.sunflow.SunflowAPI;
@@ -306,7 +308,9 @@ public class PhotoRenderer {
         String uuid = UUID.randomUUID().toString();
   
         String appearanceName = null;
+        TexCoordGeneration texCoordGeneration = null;
         if (appearance != null) {
+          texCoordGeneration = appearance.getTexCoordGeneration();
           appearanceName = "shader" + uuid;
           boolean mirror = shapeName != null
               && shapeName.startsWith(ModelManager.MIRROR_SHAPE_PREFIX);
@@ -317,7 +321,7 @@ public class PhotoRenderer {
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           String objectName = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          exportNodeGeometry(shape.getGeometry(i), transformationToParent, objectName, 
+          exportNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, objectName, 
               useNormals && !(shape.getParent() instanceof Wall3D));
           if (appearanceName != null) {
             this.sunflow.parameter("shaders", new String [] {appearanceName});
@@ -350,6 +354,7 @@ public class PhotoRenderer {
    * Exports a 3D geometry in Sunflow API.
    */
   private void exportNodeGeometry(Geometry geometry, Transform3D transformationToParent, 
+                                  TexCoordGeneration texCoordGeneration, 
                                   String objectName, boolean useNormals) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
@@ -357,13 +362,31 @@ public class PhotoRenderer {
       float [] vertices = new float [geometryArray.getVertexCount() * 3];
       
       float [] normals = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
-         ? new float [geometryArray.getVertexCount() * 3]
-         : null;
+          ? new float [geometryArray.getVertexCount() * 3]
+          : null;
       
-      float [] uvs = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0
-         ? new float [geometryArray.getVertexCount() * 2]
-         : null;
-         
+      boolean uvsGenerated = false;
+      Vector4f planeS = null;
+      Vector4f planeT = null;
+      if (texCoordGeneration != null) {
+        uvsGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
+            && texCoordGeneration.getEnable();
+        if (uvsGenerated) {
+          planeS = new Vector4f();
+          planeT = new Vector4f();
+          texCoordGeneration.getPlaneS(planeS);
+          texCoordGeneration.getPlaneT(planeT);
+        }
+      } 
+
+      float [] uvs;
+      if (uvsGenerated
+          || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+        uvs = new float [geometryArray.getVertexCount() * 2];
+      } else {
+        uvs = null;
+      }
+     
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
           float [] vertexData = geometryArray.getInterleavedVertices();
@@ -383,7 +406,16 @@ public class PhotoRenderer {
             }
           }
           // Export texture coordinates
-          if (uvs != null) {
+          if (texCoordGeneration != null) {
+            if (uvsGenerated) {
+              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+                    index < n; index++, i += vertexSize) {
+                TexCoord2f textureCoordinates = generateTextureCoordinates(
+                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+                exportTextureCoordinates(textureCoordinates, index, uvs);
+              }
+            }
+          } else if (uvs != null) {
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
                   index < n; index++, i += vertexSize) {
               TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
@@ -406,7 +438,15 @@ public class PhotoRenderer {
             }
           }
           // Export texture coordinates
-          if (uvs != null) {
+          if (texCoordGeneration != null) {
+            if (uvsGenerated) {
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                TexCoord2f textureCoordinates = generateTextureCoordinates(
+                    vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
+                exportTextureCoordinates(textureCoordinates, index, uvs);
+              }
+            }
+          } else if (uvs != null) {
             float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
               TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
@@ -430,7 +470,17 @@ public class PhotoRenderer {
           }
         }
         // Export texture coordinates
-        if (uvs != null) {
+        if (texCoordGeneration != null) {
+          if (uvsGenerated) {
+            for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+              Point3f vertex = new Point3f();
+              geometryArray.getCoordinate(index, vertex);
+              TexCoord2f textureCoordinates = generateTextureCoordinates(
+                  vertex.x, vertex.y, vertex.z, planeS, planeT);
+              exportTextureCoordinates(textureCoordinates, index, uvs);
+            }
+          }
+        } else if (uvs != null) {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             TexCoord2f textureCoordinates = new TexCoord2f();
             geometryArray.getTextureCoordinate(0, index, textureCoordinates);
@@ -545,6 +595,17 @@ public class PhotoRenderer {
   }
   
   /**
+   * Returns texture coordinates generated with <code>texCoordGeneration</code> computed
+   * as described in <code>TexCoordGeneration</code> javadoc.
+   */
+  private TexCoord2f generateTextureCoordinates(float x, float y, float z, 
+                                                Vector4f planeS, 
+                                                Vector4f planeT) {
+    return new TexCoord2f(x * planeS.x + y * planeS.y + z * planeS.z, 
+        x * planeT.x + y * planeT.y + z * planeT.z);
+  }
+
+  /**
    * Returns the sum of the integers in <code>stripVertexCount</code> array.
    */
   private int getTriangleCount(int [] stripVertexCount) {
@@ -585,7 +646,7 @@ public class PhotoRenderer {
    * Stores <code>textureCoordinates</code> in <code>uvs</code>.  
    */
   private void exportTextureCoordinates(TexCoord2f textureCoordinates, int index,
-                                       float [] uvs) {
+                                        float [] uvs) {
     index *= 2;
     uvs [index++] = textureCoordinates.x;
     uvs [index++] = textureCoordinates.y;

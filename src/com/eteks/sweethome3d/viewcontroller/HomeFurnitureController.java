@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
@@ -32,6 +33,7 @@ import javax.swing.undo.UndoableEditSupport;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 
@@ -44,12 +46,18 @@ public class HomeFurnitureController implements Controller {
    * The properties that may be edited by the view associated to this controller. 
    */
   public enum Property {NAME, NAME_VISIBLE, X, Y, ELEVATION, ANGLE_IN_DEGREES, 
-      WIDTH, DEPTH,  HEIGHT, COLOR, VISIBLE, MODEL_MIRRORED, RESIZABLE}
-  
+      WIDTH, DEPTH,  HEIGHT, COLOR, PAINT, VISIBLE, MODEL_MIRRORED, RESIZABLE}
+  /**
+   * The possible values for {@linkplain #getPaint() paint type}.
+   */
+  public enum FurniturePaint {DEFAULT, COLORED, TEXTURED} 
+
   private final Home                  home;
   private final UserPreferences       preferences;
   private final ViewFactory           viewFactory;
+  private final ContentManager        contentManager;
   private final UndoableEditSupport   undoSupport;
+  private TextureChoiceController     textureController;
   private final PropertyChangeSupport propertyChangeSupport;
   private DialogView                  homeFurnitureView;
 
@@ -63,6 +71,7 @@ public class HomeFurnitureController implements Controller {
   private Float   depth;
   private Float   height;
   private Integer color;
+  private FurniturePaint   furniturePaint;
   private Boolean visible;
   private Boolean modelMirrored;
   private boolean resizable;
@@ -74,13 +83,45 @@ public class HomeFurnitureController implements Controller {
                                  UserPreferences preferences, 
                                  ViewFactory viewFactory, 
                                  UndoableEditSupport undoSupport) {
+    this(home, preferences, viewFactory, null, undoSupport);
+  }
+
+  /**
+   * Creates the controller of home furniture view with undo support.
+   */
+  public HomeFurnitureController(Home home, 
+                                 UserPreferences preferences, 
+                                 ViewFactory viewFactory,
+                                 ContentManager  contentManager,
+                                 UndoableEditSupport undoSupport) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
+    this.contentManager = contentManager;
     this.undoSupport = undoSupport;
     this.propertyChangeSupport = new PropertyChangeSupport(this);
     
     updateProperties();
+  }
+
+  /**
+   * Returns the texture controller of the piece.
+   */
+  public TextureChoiceController getTextureController() {
+    // Create sub controller lazily only once it's needed
+    if (this.textureController == null
+        && this.contentManager != null) {
+      this.textureController = new TextureChoiceController(
+          this.preferences.getLocalizedString(HomeFurnitureController.class, "textureTitle"), 
+          this.preferences, this.viewFactory, this.contentManager);
+      this.textureController.addPropertyChangeListener(TextureChoiceController.Property.TEXTURE,
+          new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent ev) {
+              setPaint(FurniturePaint.TEXTURED);
+            }
+          });
+    }
+    return this.textureController;
   }
 
   /**
@@ -133,6 +174,8 @@ public class HomeFurnitureController implements Controller {
       setDepth(null);
       setHeight(null);
       setColor(null);
+      getTextureController().setTexture(null);
+      setPaint(null);
       setVisible(null);
       setModelMirrored(null);
     } else {
@@ -235,6 +278,38 @@ public class HomeFurnitureController implements Controller {
         }
       }
       setColor(color);
+
+      HomeTexture firstPieceTexture = firstPiece.getTexture();
+      HomeTexture texture = firstPieceTexture;
+      if (texture != null) {
+        for (int i = 1; i < selectedFurniture.size(); i++) {
+          if (!texture.equals(selectedFurniture.get(i).getTexture())) {
+            texture = null;
+            break;
+          }
+        }
+      }
+      getTextureController().setTexture(texture);
+
+      boolean defaultColorsAndTextures = true;
+      for (int i = 0; i < selectedFurniture.size(); i++) {
+        HomePieceOfFurniture piece = selectedFurniture.get(i);
+        if (piece.getColor() != null
+            || piece.getTexture() != null) {
+          defaultColorsAndTextures = false;
+          break;
+        }
+      }
+
+      if (color != null) {
+        setPaint(FurniturePaint.COLORED);
+      } else if (texture != null) {
+        setPaint(FurniturePaint.TEXTURED);
+      } else if (defaultColorsAndTextures) {
+        setPaint(FurniturePaint.DEFAULT);
+      } else {
+        setPaint(null);
+      }
 
       Boolean visible = firstPiece.isVisible();
       for (int i = 1; i < selectedFurniture.size(); i++) {
@@ -447,6 +522,24 @@ public class HomeFurnitureController implements Controller {
   }
   
   /**
+   * Sets whether the piece is colored, textured or unknown painted.
+   */
+  public void setPaint(FurniturePaint furniturePaint) {
+    if (furniturePaint != this.furniturePaint) {
+      FurniturePaint oldPaint = this.furniturePaint;
+      this.furniturePaint = furniturePaint;
+      this.propertyChangeSupport.firePropertyChange(Property.PAINT.name(), oldPaint, furniturePaint);
+    }
+  }
+  
+  /**
+   * Returns whether the piece is colored, textured or unknown painted.
+   */
+  public FurniturePaint getPaint() {
+    return this.furniturePaint;
+  }
+
+  /**
    * Sets whether furniture is visible or not.
    */
   public void setVisible(Boolean visible) {
@@ -518,7 +611,11 @@ public class HomeFurnitureController implements Controller {
       Float width = getWidth();
       Float depth = getDepth();
       Float height = getHeight();
-      Integer color = getColor();
+      boolean defaultColorsAndTextures = getPaint() == FurniturePaint.DEFAULT;
+      Integer color = getPaint() == FurniturePaint.COLORED 
+          ? getColor() : null;
+      HomeTexture texture = getPaint() == FurniturePaint.TEXTURED
+          ? getTextureController().getTexture() : null;
       Boolean visible = getVisible();
       Boolean modelMirrored = getModelMirrored();
       
@@ -535,12 +632,12 @@ public class HomeFurnitureController implements Controller {
       }
       // Apply modification
       doModifyFurniture(modifiedFurniture, 
-          name, nameVisible, x, y, width, depth, height, elevation, angle, color, visible, modelMirrored); 
+          name, nameVisible, x, y, width, depth, height, elevation, angle, defaultColorsAndTextures, color, texture, visible, modelMirrored); 
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new FurnitureModificationUndoableEdit(
             this.home, this.preferences, oldSelection, modifiedFurniture, 
-            name, nameVisible, x, y, width, depth, height, 
-            elevation, angle, color, modelMirrored, visible);
+            name, nameVisible, x, y, width, depth, height, elevation, angle, 
+            defaultColorsAndTextures, color, texture, modelMirrored, visible);
         this.undoSupport.postEdit(undoableEdit);
       }
     }
@@ -564,7 +661,9 @@ public class HomeFurnitureController implements Controller {
     private final Float                       height;
     private final Float                       elevation;
     private final Float                       angle;
+    private final boolean                     defaultColorsAndTextures;
     private final Integer                     color;
+    private final HomeTexture                 texture;
     private final Boolean                     modelMirrored;
     private final Boolean                     visible;
 
@@ -576,7 +675,8 @@ public class HomeFurnitureController implements Controller {
                                               Float x, Float y,
                                               Float width, Float depth, Float height,
                                               Float elevation, Float angle,
-                                              Integer color,
+                                              boolean defaultColorsAndTextures,
+                                              Integer color, HomeTexture texture,
                                               Boolean modelMirrored,
                                               Boolean visible) {
       this.home = home;
@@ -592,9 +692,11 @@ public class HomeFurnitureController implements Controller {
       this.height = height;
       this.elevation = elevation;
       this.angle = angle;
+      this.defaultColorsAndTextures = defaultColorsAndTextures;
+      this.color = color;
+      this.texture = texture;
       this.modelMirrored = modelMirrored;
       this.visible = visible;
-      this.color = color;
     }
 
     @Override
@@ -609,7 +711,9 @@ public class HomeFurnitureController implements Controller {
       super.redo();
       doModifyFurniture(this.modifiedFurniture, 
           this.name, this.nameVisible, this.x, this.y, this.width, 
-          this.depth, this.height, this.elevation, this.angle, this.color, this.visible, this.modelMirrored); 
+          this.depth, this.height, this.elevation, this.angle, 
+          this.defaultColorsAndTextures, this.color, this.texture, 
+          this.visible, this.modelMirrored); 
       home.setSelectedItems(this.oldSelection); 
     }
 
@@ -627,7 +731,8 @@ public class HomeFurnitureController implements Controller {
                                         String name, Boolean nameVisible, 
                                         Float x, Float y, Float width, 
                                         Float depth, Float height, Float elevation, 
-                                        Float angle, Integer color, 
+                                        Float angle, boolean defaultColorsAndTextures, 
+                                        Integer color, HomeTexture texture,
                                         Boolean visible, Boolean modelMirrored) {
     for (ModifiedPieceOfFurniture modifiedPiece : modifiedFurniture) {
       HomePieceOfFurniture piece = modifiedPiece.getPieceOfFurniture();
@@ -652,8 +757,16 @@ public class HomeFurnitureController implements Controller {
       }
       piece.setElevation(elevation != null 
           ? elevation.floatValue() : piece.getElevation());
-      piece.setColor(color != null 
-          ? color : piece.getColor());
+      if (defaultColorsAndTextures) {
+        piece.setColor(null);
+        piece.setTexture(null);
+      } else if (texture != null) {
+        piece.setTexture(texture);
+        piece.setColor(null);
+      } else if (color != null) {
+        piece.setColor(color);
+        piece.setTexture(null);
+      }
       piece.setVisible(visible != null 
           ? visible.booleanValue() : piece.isVisible());
     }
@@ -673,18 +786,19 @@ public class HomeFurnitureController implements Controller {
    */
   private static class ModifiedPieceOfFurniture {
     private final HomePieceOfFurniture piece;
-    private final String  name;
-    private final boolean nameVisible;
-    private final float   x;
-    private final float   y;
-    private final float   elevation;
-    private final float   angle;
-    private final float   width;
-    private final float   depth;
-    private final float   height;
-    private final Integer color;
-    private final boolean visible;
-    private final boolean modelMirrored;
+    private final String               name;
+    private final boolean              nameVisible;
+    private final float                x;
+    private final float                y;
+    private final float                elevation;
+    private final float                angle;
+    private final float                width;
+    private final float                depth;
+    private final float                height;
+    private final Integer              color;
+    private final HomeTexture          texture;
+    private final boolean              visible;
+    private final boolean              modelMirrored;
 
     public ModifiedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
@@ -698,6 +812,7 @@ public class HomeFurnitureController implements Controller {
       this.depth = piece.getDepth();
       this.height = piece.getHeight();
       this.color = piece.getColor();
+      this.texture = piece.getTexture();
       this.visible = piece.isVisible();
       this.modelMirrored = piece.isModelMirrored();
     }
@@ -720,6 +835,7 @@ public class HomeFurnitureController implements Controller {
         this.piece.setModelMirrored(modelMirrored);
       }
       this.piece.setColor(this.color);
+      this.piece.setTexture(this.texture);
       this.piece.setVisible(this.visible);
     }
   }

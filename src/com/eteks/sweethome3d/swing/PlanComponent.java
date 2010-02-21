@@ -112,6 +112,7 @@ import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -146,6 +147,7 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
 import javax.vecmath.Color3f;
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
@@ -469,7 +471,11 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     final PropertyChangeListener furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (furnitureTopViewIconsCache != null
-              && HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())) {
+              && (HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
+                  || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName()))
+                  || (HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
+                      || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName()))
+                     && ((HomePieceOfFurniture)ev.getSource()).getTexture() != null) {
             for (HomePieceOfFurniture piece : getFurnitureWithoutGroups((HomePieceOfFurniture)ev.getSource())) {
               furnitureTopViewIconsCache.remove(piece);
             }
@@ -4528,7 +4534,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (pieceColor != null) {
         Color3f materialColor = new Color3f(new Color(pieceColor));
         Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 32);
-        setMaterial(modelNode, material);
+        setMaterialAndTexture(modelNode, material, null, piece.getWidth(), piece.getDepth(), piece.getHeight());
+      } else if (piece.getTexture() != null) { 
+        setMaterialAndTexture(modelNode, null, piece.getTexture(), 
+            piece.getWidth(), piece.getDepth(), piece.getHeight());
       }
       // Update back face flip
       if (piece.isBackFaceShown()) {
@@ -4589,15 +4598,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
      * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
      * with a given <code>material</code>. 
      */
-    private void setMaterial(Node node, Material material) {
+    private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, 
+                             float pieceWidth, float pieceDepth, float pieceHeight) {
       if (node instanceof Group) {
         // Set material of all children
         Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
-          setMaterial((Node)enumeration.nextElement(), material);
+          setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, 
+              pieceWidth, pieceDepth, pieceHeight);
         }
       } else if (node instanceof Shape3D) {
-        Shape3D shape = (Shape3D)node;
+        final Shape3D shape = (Shape3D)node;
         String shapeName = (String)shape.getUserData();
         // Change material of all shape that are not window panes
         if (shapeName == null
@@ -4607,19 +4618,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             appearance = new Appearance();
             ((Shape3D)node).setAppearance(appearance);
           }
-          // Use appearance user data to store shape default material
-          Material defaultMaterial = (Material)appearance.getUserData();
-          if (defaultMaterial == null) {
-            defaultMaterial = appearance.getMaterial();
-            appearance.setUserData(defaultMaterial);
-          }
-          // Change material
           if (material != null) {
+            // Change material
             appearance.setMaterial(material);
-          } else {
-            // Restore default material
-            appearance.setMaterial(defaultMaterial);
-          }
+          } else if (texture != null) {
+            // Change texture
+            appearance.setMaterial(null);
+            Vector3f size = ModelManager.getInstance().getSize(node);
+            TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+                TexCoordGeneration.TEXTURE_COORDINATE_2,
+                new Vector4f(pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
+                new Vector4f(0, pieceHeight / size.y / texture.getHeight(), pieceDepth / size.z / texture.getHeight(), 0));
+            appearance.setTexCoordGeneration(texCoordGeneration);
+            TextureManager.getInstance().loadTexture(texture.getImage(), true,
+                new TextureManager.TextureObserver() {
+                    public void textureUpdated(Texture texture) {
+                      shape.getAppearance().setTexture(texture);
+                    }
+                  });
+          } 
         }
       }
     }

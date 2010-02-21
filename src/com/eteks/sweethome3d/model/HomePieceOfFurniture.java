@@ -50,13 +50,13 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE,
-      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
+      DESCRIPTION, WIDTH, DEPTH, HEIGHT, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_MIRRORED};
   
   /** 
    * The properties on which home furniture may be sorted.  
    */
   public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
-                                DOOR_OR_WINDOW, COLOR, VISIBLE, X, Y, ELEVATION, ANGLE,
+                                DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE,
                                 PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
@@ -114,6 +114,17 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
             return 1; 
           } else {
             return piece1.color - piece2.color;
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.TEXTURE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.texture == null) {
+            return -1;
+          } else if (piece2.texture == null) {
+            return 1; 
+          } else {
+            return collator.compare(piece1.texture.getName(), piece2.texture.getName());
           }
         }
       });
@@ -204,6 +215,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
   private boolean                movable;
   private boolean                doorOrWindow;
   private Integer                color;
+  private HomeTexture            texture;
   private float [][]             modelRotation;
   private boolean                backFaceShown;
   private boolean                resizable;
@@ -254,6 +266,7 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       this.x = homePiece.getX();
       this.y = homePiece.getY();
       this.modelMirrored = homePiece.isModelMirrored();
+      this.texture = homePiece.getTexture();
     } else {
       if (piece instanceof CatalogPieceOfFurniture) {
         this.catalogId = ((CatalogPieceOfFurniture)piece).getId();
@@ -564,6 +577,29 @@ public class HomePieceOfFurniture implements PieceOfFurniture, Serializable, Sel
       Integer oldColor = this.color;
       this.color = color;
       this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+    }
+  }
+
+  /**
+   * Returns the texture of this piece of furniture.
+   * @return the texture of the piece or <code>null</code> if piece texture is unchanged.
+   * @since 2.3
+   */
+  public HomeTexture getTexture() {
+    return this.texture;
+  }
+  
+  /**
+   * Sets the texture of this piece of furniture or <code>null</code> if piece texture is unchanged. 
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 2.3
+   */
+  public void setTexture(HomeTexture texture) {
+    if (texture != this.texture
+        || (texture != null && !texture.equals(this.texture))) {
+      HomeTexture oldTexture = this.texture;
+      this.texture = texture;
+      this.propertyChangeSupport.firePropertyChange(Property.TEXTURE.name(), oldTexture, texture);
     }
   }
 

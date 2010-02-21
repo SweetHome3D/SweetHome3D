@@ -70,6 +70,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
@@ -718,6 +719,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "angleColumn");
         case COLOR :
           return preferences.getLocalizedString(FurnitureTable.class, "colorColumn");
+        case TEXTURE :
+          return preferences.getLocalizedString(FurnitureTable.class, "textureColumn");
         case MOVABLE :
           return preferences.getLocalizedString(FurnitureTable.class, "movableColumn");
         case DOOR_OR_WINDOW : 
@@ -755,6 +758,7 @@ public class FurnitureTable extends JTable implements View, Printable {
         case ANGLE :
           return 35;        
         case COLOR :
+        case TEXTURE :
           return 30;        
         case MOVABLE :
         case DOOR_OR_WINDOW : 
@@ -796,6 +800,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getAngleRenderer();        
         case COLOR :
           return getColorRenderer();        
+        case TEXTURE :
+          return getTextureRenderer();        
         case MOVABLE :
           return getBooleanRenderer(HomePieceOfFurniture.SortableProperty.MOVABLE);
         case DOOR_OR_WINDOW : 
@@ -1086,6 +1092,35 @@ public class FurnitureTable extends JTable implements View, Printable {
       };
     }
    
+    /**
+     * Returns a renderer that displays the texture of a piece as an icon. 
+     */
+    private TableCellRenderer getTextureRenderer() {
+      return new DefaultTableCellRenderer() { 
+        {
+          setHorizontalAlignment(CENTER);
+        }
+        
+        @Override
+        public Component getTableCellRendererComponent(JTable table, 
+             Object value, boolean isSelected, boolean hasFocus, 
+             int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value; 
+          JLabel label = (JLabel)super.getTableCellRendererComponent(
+            table, null, isSelected, hasFocus, row, column); 
+          HomeTexture texture = piece.getTexture();
+          if (texture != null) {
+            Content textureContent = texture.getImage();
+            label.setIcon(IconManager.getInstance().getIcon(
+                textureContent, table.getRowHeight() - 2, table));
+          } else {
+            label.setIcon(null);
+          }
+          return label;
+        }
+      };
+    }
+
     /**
      * Returns a renderer that displays <code>property</code> of a piece of furniture 
      * with <code>JTable</code> default boolean renderer. 

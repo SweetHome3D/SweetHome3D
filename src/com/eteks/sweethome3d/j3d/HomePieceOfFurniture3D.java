@@ -30,17 +30,21 @@ import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
+import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.vecmath.Color3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.HomeTexture;
 import com.sun.j3d.utils.geometry.Box;
 
 /**
@@ -62,7 +66,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   public HomePieceOfFurniture3D(HomePieceOfFurniture piece, 
                                 Home home, 
                                 boolean ignoreDrawingMode, 
-                                boolean waitModelLoadingEnd) {
+                                boolean waitModelAndTextureLoadingEnd) {
     setUserData(piece);      
     this.home = home;
 
@@ -73,10 +77,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     
     if (piece instanceof HomeFurnitureGroup) {
       for (HomePieceOfFurniture groupPiece : ((HomeFurnitureGroup)piece).getFurniture()) {
-        addChild(new HomePieceOfFurniture3D(groupPiece, home, ignoreDrawingMode, waitModelLoadingEnd));
+        addChild(new HomePieceOfFurniture3D(groupPiece, home, ignoreDrawingMode, waitModelAndTextureLoadingEnd));
       }
     } else {
-      createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelLoadingEnd);
+      createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
     }
   }
 
@@ -85,7 +89,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   private void createPieceOfFurnitureNode(final HomePieceOfFurniture piece, 
                                           final boolean ignoreDrawingMode, 
-                                          boolean waitModelLoadingEnd) {
+                                          final boolean waitModelAndTextureLoadingEnd) {
     final TransformGroup pieceTransformGroup = new TransformGroup();
     // Allow the change of the transformation that sets piece size and position
     pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
@@ -108,7 +112,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     
     // Load piece real 3D model
     Content model = piece.getModel();
-    ModelManager.getInstance().loadModel(model, waitModelLoadingEnd,
+    ModelManager.getInstance().loadModel(model, waitModelAndTextureLoadingEnd,
         new ModelManager.ModelObserver() {
           public void modelUpdated(BranchGroup modelRoot) {
             float [][] modelRotation = piece.getModelRotation();
@@ -116,12 +120,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
             TransformGroup modelTransformGroup = 
                 ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
             modelTransformGroup.addChild(modelRoot);
-            updatePieceOfFurnitureModelNode(modelTransformGroup, ignoreDrawingMode);            
+            updatePieceOfFurnitureModelNode(modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
           
           public void modelError(Exception ex) {
             // In case of problem use a default red box
-            updatePieceOfFurnitureModelNode(getModelBox(Color.RED), ignoreDrawingMode);            
+            updatePieceOfFurnitureModelNode(getModelBox(Color.RED), ignoreDrawingMode, waitModelAndTextureLoadingEnd);            
           }
         });
   }
@@ -136,7 +140,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
     } else {
       updatePieceOfFurnitureTransform();
-      updatePieceOfFurnitureColor();      
+      updatePieceOfFurnitureColorAndTexture(false);      
       updatePieceOfFurnitureVisibility();      
       updatePieceOfFurnitureModelMirrored();
     }
@@ -171,9 +175,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   }
   
   /**
-   * Sets the color applied to piece model.
+   * Sets the color and the texture applied to piece model.
    */
-  private void updatePieceOfFurnitureColor() {
+  private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
     if (piece.getColor() != null) {
       Integer color = piece.getColor();
@@ -181,10 +185,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
                                            ((color >>> 8) & 0xFF) / 256f,
                                                    (color & 0xFF) / 256f);
       Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
-      setMaterial(getFilledModelNode(), material);
+      setMaterialAndTexture(getFilledModelNode(), material, null, false, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight());
+    } else if (piece.getTexture() != null) {
+      setMaterialAndTexture(getFilledModelNode(), null, piece.getTexture(), waitTextureLoadingEnd, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight());
     } else {
-      // Set default material of model
-      setMaterial(getFilledModelNode(), null);
+      // Set default material and texture of model
+      setMaterialAndTexture(getFilledModelNode(), null, null, false, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight());
     }
   }
 
@@ -249,7 +258,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   /**
    * Updates transform group children with <code>modelMode</code>.
    */
-  private void updatePieceOfFurnitureModelNode(Node modelNode, boolean ignoreDrawingMode) {    
+  private void updatePieceOfFurnitureModelNode(Node modelNode, boolean ignoreDrawingMode,
+                                               boolean waitTextureLoadingEnd) {    
     BranchGroup modelBranch = new BranchGroup();
     // Add model node to branch group
     modelBranch.addChild(modelNode);
@@ -268,7 +278,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     
     // Update piece color, visibility and model mirror in dispatch thread as
     // these attributes may be changed in that thread
-    updatePieceOfFurnitureColor();      
+    updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);      
     updatePieceOfFurnitureVisibility();
     updatePieceOfFurnitureModelMirrored();
   }
@@ -339,18 +349,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   }
 
   /**
-   * Sets the material attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
+   * Sets the material and texture attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
    * with a given <code>material</code>. 
    */
-  private void setMaterial(Node node, Material material) {
+  private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, boolean waitTextureLoadingEnd,
+                                     float pieceWidth, float pieceDepth, float pieceHeight) {
     if (node instanceof Group) {
       // Set material of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setMaterial((Node)enumeration.nextElement(), material);
+        setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
+            pieceWidth, pieceDepth, pieceHeight);
       }
     } else if (node instanceof Shape3D) {
-      Shape3D shape = (Shape3D)node;
+      final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
       // Change material of all shape that are not window panes
       if (shapeName == null
@@ -361,17 +373,37 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           ((Shape3D)node).setAppearance(appearance);
         }
         // Use appearance user data to store shape default material
-        Material defaultMaterial = (Material)appearance.getUserData();
-        if (defaultMaterial == null) {
-          defaultMaterial = appearance.getMaterial();
-          appearance.setUserData(defaultMaterial);
+        DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
+        if (defaultMaterialAndTexture == null) {
+          defaultMaterialAndTexture = new DefaultMaterialAndTexture(
+              appearance.getMaterial(), appearance.getTexCoordGeneration(), appearance.getTexture());
+          appearance.setUserData(defaultMaterialAndTexture);
         }
-        // Change material
         if (material != null) {
+          // Change material
           appearance.setMaterial(material);
+          appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+          appearance.setTexture(defaultMaterialAndTexture.getTexture());
+        } else if (texture != null) {
+          // Change texture
+          appearance.setMaterial(null);
+          Vector3f size = ModelManager.getInstance().getSize(node);
+          TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+              TexCoordGeneration.TEXTURE_COORDINATE_2,
+              new Vector4f(pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
+              new Vector4f(0, pieceHeight / size.y / texture.getHeight(), pieceDepth / size.z / texture.getHeight(), 0));
+          appearance.setTexCoordGeneration(texCoordGeneration);
+          TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
+              new TextureManager.TextureObserver() {
+                  public void textureUpdated(Texture texture) {
+                    shape.getAppearance().setTexture(texture);
+                  }
+                });
         } else {
-          // Restore default material
-          appearance.setMaterial(defaultMaterial);
+          // Restore default material and texture
+          appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
+          appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
+          appearance.setTexture(defaultMaterialAndTexture.getTexture());
         }
       }
     }
@@ -483,5 +515,38 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
     appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+    appearance.setCapability(Appearance.ALLOW_TEXGEN_READ);
+    appearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
+    appearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
+    appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+  }
+  
+  /**
+   * A class used to store the default material and texture of a shape.
+   */
+  private static class DefaultMaterialAndTexture {
+    private final Material           material;
+    private final TexCoordGeneration texCoordGeneration;
+    private final Texture            texture;
+
+    public DefaultMaterialAndTexture(Material material, 
+                                     TexCoordGeneration texCoordGeneration, 
+                                     Texture texture) {
+      this.material = material;
+      this.texCoordGeneration = texCoordGeneration;
+      this.texture = texture;      
+    }
+    
+    public Material getMaterial() {
+      return this.material;
+    }
+
+    public TexCoordGeneration getTexCoordGeneration() {
+      return this.texCoordGeneration;
+    }
+    
+    public Texture getTexture() {
+      return this.texture;
+    }
   }
 }

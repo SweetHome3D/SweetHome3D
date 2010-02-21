@@ -327,7 +327,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new PageSetupController(home, preferences, viewFactory, undoableEditSupport).getView();
       new PrintPreviewController(home, preferences, homeController, viewFactory).getView();
       new UserPreferencesController(preferences, viewFactory, contentManager).getView();
-      new HomeFurnitureController(home, preferences, viewFactory, undoableEditSupport).getView();
+      new HomeFurnitureController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new WallController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new RoomController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();

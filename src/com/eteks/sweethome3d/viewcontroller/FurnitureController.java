@@ -359,6 +359,7 @@ public class FurnitureController implements Controller {
               HomePieceOfFurniture.SortableProperty.ELEVATION,
               HomePieceOfFurniture.SortableProperty.ANGLE,
               HomePieceOfFurniture.SortableProperty.COLOR,
+              HomePieceOfFurniture.SortableProperty.TEXTURE,
               HomePieceOfFurniture.SortableProperty.MOVABLE,
               HomePieceOfFurniture.SortableProperty.DOOR_OR_WINDOW,
               HomePieceOfFurniture.SortableProperty.VISIBLE,
@@ -392,7 +393,7 @@ public class FurnitureController implements Controller {
   public void modifySelectedFurniture() {
     if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
       new HomeFurnitureController(this.home, this.preferences,  
-          this.viewFactory, this.undoSupport).displayView(getView());
+          this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
     }
   }
 

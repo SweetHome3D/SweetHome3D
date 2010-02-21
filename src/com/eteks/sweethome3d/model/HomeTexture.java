@@ -71,4 +71,33 @@ public class HomeTexture implements TextureImage, Serializable {
   public float getHeight() {
     return this.height;
   }
+
+  /**
+   * Returns <code>true</code> if the object in parameter is equal to this texture.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    } else if (obj instanceof HomeTexture) {
+      HomeTexture texture = (HomeTexture)obj;
+      return texture.name.equals(this.name)
+          && texture.image.equals(this.image)
+          && texture.width == this.width
+          && texture.height == this.height;
+    } else {
+      return false;
+    }
+  }
+  
+  /**
+   * Returns a hash code for this texture.
+   */
+  @Override
+  public int hashCode() {
+    return this.name.hashCode()
+        + this.image.hashCode()
+        + Float.floatToIntBits(this.width)
+        + Float.floatToIntBits(this.height);
+  }
 }

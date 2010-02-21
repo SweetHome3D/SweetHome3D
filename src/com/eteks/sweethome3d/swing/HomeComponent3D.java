@@ -1463,6 +1463,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             case HEIGHT:
             case ELEVATION:
             case COLOR:
+            case TEXTURE:
             case MODEL_MIRRORED:
             case VISIBLE:
               HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
