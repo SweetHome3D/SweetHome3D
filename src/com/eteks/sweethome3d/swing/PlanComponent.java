@@ -95,6 +95,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
@@ -4451,8 +4452,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * A proxy for the furniture top view icon. 
    */
   private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
-    private static Canvas3D    canvas3D;      
-    private static BranchGroup sceneRoot;          
+    private static Canvas3D        canvas3D;
+    private static BranchGroup     sceneRoot;
+    private static ExecutorService iconsCreator;
     
     static {
       // Create the universe used to compute top view icons 
@@ -4489,6 +4491,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         sceneRoot.addChild(light);
       }
       universe.addBranchGraph(sceneRoot);
+      iconsCreator = Executors.newSingleThreadExecutor();
     }
     
     /**
@@ -4502,10 +4505,17 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       super(IconManager.getInstance().getWaitIcon());
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
-            public void modelUpdated(BranchGroup modelNode) {
-              setIcon(createIcon(piece, modelNode));
+            public void modelUpdated(final BranchGroup modelNode) {
               if (waitingComponent != null) {
-                waitingComponent.repaint();
+                // Generate icons in an other thread to avoid blocking EDT during offscreen rendering
+                iconsCreator.execute(new Runnable() {
+                    public void run() {
+                      setIcon(createIcon(piece.clone(), modelNode));
+                      waitingComponent.repaint();
+                    }
+                  });
+              } else {
+                setIcon(createIcon(piece, modelNode));
               }
             }
         
