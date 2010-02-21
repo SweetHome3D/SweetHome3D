@@ -163,6 +163,7 @@ public class HomeFurnitureController implements Controller {
   protected void updateProperties() {
     List<HomePieceOfFurniture> selectedFurniture = 
         Home.getFurnitureSubList(this.home.getSelectedItems());
+    TextureChoiceController textureController = getTextureController();
     if (selectedFurniture.isEmpty()) {
       setName(null); // Nothing to edit
       setNameVisible(null); 
@@ -174,7 +175,9 @@ public class HomeFurnitureController implements Controller {
       setDepth(null);
       setHeight(null);
       setColor(null);
-      getTextureController().setTexture(null);
+      if (textureController != null) {
+        textureController.setTexture(null);
+      }
       setPaint(null);
       setVisible(null);
       setModelMirrored(null);
@@ -289,7 +292,10 @@ public class HomeFurnitureController implements Controller {
           }
         }
       }
-      getTextureController().setTexture(texture);
+      if (textureController != null) {
+        // Texture management available since version 2.3 only
+        textureController.setTexture(texture);
+      }
 
       boolean defaultColorsAndTextures = true;
       for (int i = 0; i < selectedFurniture.size(); i++) {
@@ -614,8 +620,13 @@ public class HomeFurnitureController implements Controller {
       boolean defaultColorsAndTextures = getPaint() == FurniturePaint.DEFAULT;
       Integer color = getPaint() == FurniturePaint.COLORED 
           ? getColor() : null;
-      HomeTexture texture = getPaint() == FurniturePaint.TEXTURED
-          ? getTextureController().getTexture() : null;
+      TextureChoiceController textureController = getTextureController();
+      HomeTexture texture;
+      if (textureController != null && getPaint() == FurniturePaint.TEXTURED) {
+        texture = textureController.getTexture();
+      } else {
+        texture = null;
+      }
       Boolean visible = getVisible();
       Boolean modelMirrored = getModelMirrored();
       

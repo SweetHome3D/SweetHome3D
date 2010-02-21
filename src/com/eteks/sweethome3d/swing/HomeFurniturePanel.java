@@ -43,6 +43,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
+import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
@@ -378,7 +379,10 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
         }
       });
     
-    this.textureComponent = (JComponent)controller.getTextureController().getView();
+    TextureChoiceController textureController = controller.getTextureController();
+    if (textureController != null) {
+      this.textureComponent = (JComponent)textureController.getView();
+    }
 
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(this.defaultRadioButton);
@@ -594,13 +598,15 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
     add(this.visibleCheckBox, new GridBagConstraints(
         1, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 15), 0, 0));
-    add(this.textureRadioButton, new GridBagConstraints(
-        2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
-    add(this.textureComponent, new GridBagConstraints(
-        3, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
+    if (this.textureComponent != null) {
+      add(this.textureRadioButton, new GridBagConstraints(
+          2, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+      add(this.textureComponent, new GridBagConstraints(
+          3, 6, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
+          GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+      this.textureComponent.setPreferredSize(this.colorButton.getPreferredSize());
+    }
   }
 
   /**
