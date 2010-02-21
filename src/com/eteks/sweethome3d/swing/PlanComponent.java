@@ -4454,7 +4454,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private static class PieceOfFurnitureModelIcon extends PieceOfFurnitureTopViewIcon {
     private static Canvas3D        canvas3D;
     private static BranchGroup     sceneRoot;
-    private static ExecutorService iconsCreator;
+    private static ExecutorService iconsCreationExecutor;
     
     static {
       // Create the universe used to compute top view icons 
@@ -4491,7 +4491,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         sceneRoot.addChild(light);
       }
       universe.addBranchGraph(sceneRoot);
-      iconsCreator = Executors.newSingleThreadExecutor();
+      iconsCreationExecutor = Executors.newSingleThreadExecutor();
     }
     
     /**
@@ -4506,16 +4506,26 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       ModelManager.getInstance().loadModel(piece.getModel(), waitingComponent == null,
           new ModelManager.ModelObserver() {
             public void modelUpdated(final BranchGroup modelNode) {
+              // Extract piece data used by iconsCreationExecutor tasks
+              final float [][] modelRotation = piece.getModelRotation();
+              final boolean backFaceShown = piece.isBackFaceShown();
+              final float pieceWidth = piece.getWidth();
+              final float pieceDepth = piece.getDepth();
+              final float pieceHeight = piece.getHeight();
+              final Integer pieceColor = piece.getColor();
+              final HomeTexture pieceTexture = piece.getTexture();
               if (waitingComponent != null) {
                 // Generate icons in an other thread to avoid blocking EDT during offscreen rendering
-                iconsCreator.execute(new Runnable() {
+                iconsCreationExecutor.execute(new Runnable() {
                     public void run() {
-                      setIcon(createIcon(piece.clone(), modelNode));
+                      setIcon(createIcon(modelNode, modelRotation, backFaceShown, 
+                          pieceWidth, pieceDepth, pieceHeight, pieceColor, pieceTexture));
                       waitingComponent.repaint();
                     }
                   });
               } else {
-                setIcon(createIcon(piece, modelNode));
+                setIcon(createIcon(modelNode, modelRotation, backFaceShown,
+                    pieceWidth, pieceDepth, pieceHeight, pieceColor, pieceTexture));
               }
             }
         
@@ -4531,26 +4541,25 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     
     /**
      * Returns an icon created and scaled from piece model content.
-     * @param piece the content from which the icon image is read
      */
-    private Icon createIcon(HomePieceOfFurniture piece, BranchGroup modelNode) {
+    private Icon createIcon(BranchGroup modelNode, float [][] modelRotation, boolean backFaceShown, 
+                            float pieceWidth, float pieceDepth, float pieceHeight, 
+                            Integer pieceColor, HomeTexture pieceTexture) {
       // Add piece model scene to a normalized transform group
       TransformGroup modelTransformGroup = 
-          ModelManager.getInstance().getNormalizedTransformGroup(modelNode, piece.getModelRotation(), 2);
+          ModelManager.getInstance().getNormalizedTransformGroup(modelNode, modelRotation, 2);
       modelTransformGroup.addChild(modelNode);
 
       // Update model color
-      final Integer pieceColor = piece.getColor();
       if (pieceColor != null) {
         Color3f materialColor = new Color3f(new Color(pieceColor));
         Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 32);
-        setMaterialAndTexture(modelNode, material, null, piece.getWidth(), piece.getDepth(), piece.getHeight());
-      } else if (piece.getTexture() != null) { 
-        setMaterialAndTexture(modelNode, null, piece.getTexture(), 
-            piece.getWidth(), piece.getDepth(), piece.getHeight());
+        setMaterialAndTexture(modelNode, material, null, pieceWidth, pieceDepth, pieceHeight);
+      } else if (pieceTexture != null) { 
+        setMaterialAndTexture(modelNode, null, pieceTexture, pieceWidth, pieceDepth, pieceHeight);
       }
       // Update back face flip
-      if (piece.isBackFaceShown()) {
+      if (backFaceShown) {
         setBackFaceNormalFlip(modelNode);
       }
       
