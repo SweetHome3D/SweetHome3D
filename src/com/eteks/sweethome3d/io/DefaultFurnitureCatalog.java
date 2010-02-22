@@ -242,7 +242,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
-   * Creates a default furniture catalog read from resources in  
+   * Creates a default furniture catalog read from resources and   
    * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(File furniturePluginFolder) {
