@@ -24,9 +24,11 @@ import java.io.FileFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -50,6 +52,12 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   public enum PropertyKey {
     /**
+     * The key for the ID of a texture (optional). 
+     * Two textures read in a texture catalog can't have the same ID
+     * and the second one will be ignored.   
+     */
+    ID("id"),
+    /**
      * The key for the name of a texture (mandatory).
      */
     NAME("name"),
@@ -71,8 +79,13 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     /**
      * The key for the height in centimeters of a texture (mandatory).
      */
-    HEIGHT("height");
-    
+    HEIGHT("height"),
+    /**
+     * The key for the creator of a piece of furniture (optional).
+     * By default, creator is eTeks.
+     */
+    CREATOR("creator");
+
     private String keyPrefix;
 
     private PropertyKey(String keyPrefix) {
@@ -105,6 +118,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   public DefaultTexturesCatalog(File texturesPluginFolder) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
+    List<String> identifiedTextures = new ArrayList<String>();
+    
     ResourceBundle resource;
     try {
       // Try to load DefaultTexturesCatalog property file from classpath 
@@ -113,7 +128,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       // Ignore texture catalog
       resource = null;
     }
-    readTextures(resource, null, textureHomonymsCounter);
+    readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
     
     if (texturesPluginFolder != null) {
       // Try to load sh3t files from plugin folder
@@ -133,7 +148,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
             URL texturesUrl = texturesFile.toURI().toURL();
             readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
                                                   new URLClassLoader(new URL [] {texturesUrl})), 
-                texturesUrl, textureHomonymsCounter);
+                texturesUrl, textureHomonymsCounter, identifiedTextures);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
@@ -152,13 +167,14 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
-    
+    List<String> identifiedTextures = new ArrayList<String>();
+
     for (URL pluginTextureCatalogUrl : pluginTexturesCatalogUrls) {
       try {
         // Try do load Furniture property file from current file  
         readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
             new URLClassLoader(new URL [] {pluginTextureCatalogUrl})), 
-            pluginTextureCatalogUrl, textureHomonymsCounter);
+            pluginTextureCatalogUrl, textureHomonymsCounter, identifiedTextures);
       } catch (MissingResourceException ex) {
         // Ignore malformed plugin furniture catalog
       }
@@ -172,7 +188,8 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    */
   private void readTextures(ResourceBundle resource, 
                             URL texturesUrl,
-                            Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
+                            Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
+                            List<String> identifiedTextures) {
     if (resource != null) {
       for (int index = 1;; index++) {
         String name = null;
@@ -186,10 +203,23 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), texturesUrl);
         float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
         float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
-  
-        add(new TexturesCategory(category),
-            new CatalogTexture(name, image, width, height),
-            textureHomonymsCounter);
+        String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
+        String id = getOptionalString(resource, PropertyKey.ID.getKey(index));
+
+        CatalogTexture texture = new CatalogTexture(id, name, image, width, height, creator);
+        if (texture.getId() != null) {
+          // Take into account only texture that have an ID
+          if (identifiedTextures.contains(texture.getId())) {
+            continue;
+          } else {
+            // Add id to identifiedTextures to be sure that two textures with a same ID
+            // won't be added twice to texture catalog (in case they are cited twice
+            // in different texture properties files)
+            identifiedTextures.add(texture.getId());
+          }
+        }
+
+        add(new TexturesCategory(category), texture, textureHomonymsCounter);
       }
     }
   }
@@ -247,6 +277,19 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
           throw new IllegalArgumentException("Invalid URL", ex2);
         }
       }
+    }
+  }
+
+  /**
+   * Returns the value of <code>propertyKey</code> in <code>resource</code>, 
+   * or <code>null</code> if the property doesn't exist.
+   */
+  private String getOptionalString(ResourceBundle resource, 
+                                   String propertyKey) {
+    try {
+      return resource.getString(propertyKey);
+    } catch (MissingResourceException ex) {
+      return null;
     }
   }
 }

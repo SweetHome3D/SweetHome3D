@@ -28,15 +28,18 @@ import java.text.Collator;
 public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> {
   private static final long serialVersionUID = 1L;
   
+  private final String          id;
   private final String          name;
   private final Content         image;
   private final float           width;
   private final float           height;
+  private final String          creator;
   private final boolean         modifiable;
   
   private TexturesCategory      category;
   
   private static final Collator COMPARATOR = Collator.getInstance();
+
   
   /**
    * Creates an unmodifiable catalog texture.
@@ -46,9 +49,25 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
    * @param height the height of the texture in centimeters
    */
   public CatalogTexture(String name, Content image, float width, float height) {
-    this(name, image, width, height, false);
+    this(null, name, image, width, height, null);
   }
 
+  /**
+   * Creates a catalog texture.
+   * @param id   the id of the texture
+   * @param name the name of this texture 
+   * @param image the content of the image used for this texture
+   * @param width the width of the texture in centimeters
+   * @param height the height of the texture in centimeters
+   * @param creator the creator of this texture
+   */
+  public CatalogTexture(String id, 
+                        String name, Content image, 
+                        float width, float height,
+                        String creator) {
+    this(id, name, image, width, height, creator, false);
+  }
+  
   /**
    * Creates a catalog texture.
    * @param name the name of this texture 
@@ -60,13 +79,30 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
   public CatalogTexture(String name, Content image, 
                         float width, float height,
                         boolean modifiable) {
+    this(null, name, image, width, height, null, modifiable);
+  }
+  
+  public CatalogTexture(String id, 
+                        String name, Content image, 
+                        float width, float height,
+                        String creator,
+                        boolean modifiable) {
+    this.id = id;
     this.name = name;
     this.image = image;
     this.width = width;
     this.height = height;
+    this.creator = creator;
     this.modifiable = modifiable;
   }
   
+  /**
+   * Returns the ID of this texture or <code>null</code>.
+   */
+  public String getId() {
+    return this.id;
+  }
+
   /**
    * Returns the name of this texture.
    */
@@ -93,6 +129,13 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
    */
   public float getHeight() {
     return this.height;
+  }
+  
+  /**
+   * Returns the creator of this texture or <code>null</code>.
+   */
+  public String getCreator() {
+    return this.creator;
   }
 
   /**
