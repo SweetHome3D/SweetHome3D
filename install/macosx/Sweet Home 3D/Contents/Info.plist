@@ -83,6 +83,30 @@
 			<key>UTTypeReferenceURL</key>
 	 		<string>http://www.sweethome3d.eu/</string>
 			<key>UTTypeDescription</key>
+			<string>Sweet Home 3D Textures Catalog</string>
+			<key>UTTypeIconFile</key>
+			<string>SweetHome3DPlugin.icns</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>com.apple.ostype</key>
+				<string>SH3T</string>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sh3t</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.eteks.sweethome3d.SweetHome3DPlugin</string>
+			<key>UTTypeReferenceURL</key>
+	 		<string>http://www.sweethome3d.eu/</string>
+			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Plugin</string>
 			<key>UTTypeIconFile</key>
 			<string>SweetHome3DPlugin.icns</string>
@@ -94,7 +118,7 @@
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>com.apple.ostype</key>
-				<string>SH3F</string>
+				<string>SH3P</string>
 				<key>public.filename-extension</key>
 				<array>
 					<string>sh3p</string>

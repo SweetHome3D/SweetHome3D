@@ -303,6 +303,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
             // Ignore file
           } catch (MissingResourceException ex) {
             // Ignore malformed plugin furniture catalog
+          } catch (IllegalArgumentException ex) {
+            // Ignore malformed plugin furniture catalog
           }
         }
       }
@@ -324,6 +326,8 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                 new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
             pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
       } catch (MissingResourceException ex) {
+        // Ignore malformed plugin furniture catalog
+      } catch (IllegalArgumentException ex) {
         // Ignore malformed plugin furniture catalog
       }
     }

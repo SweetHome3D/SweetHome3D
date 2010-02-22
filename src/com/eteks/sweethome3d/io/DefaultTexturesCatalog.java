@@ -19,9 +19,13 @@
  */
 package com.eteks.sweethome3d.io;
 
+import java.io.File;
+import java.io.FileFilter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -41,12 +45,48 @@ import com.eteks.sweethome3d.tools.URLContent;
  * @author Emmanuel Puybaret
  */
 public class DefaultTexturesCatalog extends TexturesCatalog {
-  private static final String NAME           = "name#";
-  private static final String CATEGORY       = "category#";
-  private static final String IMAGE          = "image#";
-  private static final String WIDTH          = "width#";
-  private static final String HEIGHT         = "height#";
-  
+  /**
+   * The keys of the properties values read in <code>.properties</code> files.
+   */
+  public enum PropertyKey {
+    /**
+     * The key for the name of a texture (mandatory).
+     */
+    NAME("name"),
+    /**
+     * The key for the category's name of a texture (mandatory).
+     * A new category with this name will be created if it doesn't exist.
+     */
+    CATEGORY("category"),
+    /**
+     * The key for the image file of a texture (mandatory). 
+     * This image file can be either the path to an image relative to classpath
+     * or an absolute URL. 
+     */
+    IMAGE("image"),
+    /**
+     * The key for the width in centimeters of a texture (mandatory).
+     */
+    WIDTH("width"),
+    /**
+     * The key for the height in centimeters of a texture (mandatory).
+     */
+    HEIGHT("height");
+    
+    private String keyPrefix;
+
+    private PropertyKey(String keyPrefix) {
+      this.keyPrefix = keyPrefix;
+    }
+    
+    /**
+     * Returns the key for the piece property of the given index.
+     */
+    public String getKey(int textureIndex) {
+      return keyPrefix + "#" + textureIndex;
+    }
+  }
+
   private static final String PLUGIN_TEXTURES_CATALOG_FAMILY = "PluginTexturesCatalog";
 
   private static final String HOMONYM_TEXTURE_FORMAT = "%s -%d-";
@@ -55,6 +95,14 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * Creates a default textures catalog read from resources.
    */
   public DefaultTexturesCatalog() {
+    this((File)null);
+  }
+  
+  /**
+   * Creates a default textures catalog read from resources and   
+   * plugin textures folder if <code>texturesPluginFolder</code> isn't <code>null</code>.
+   */
+  public DefaultTexturesCatalog(File texturesPluginFolder) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     ResourceBundle resource;
@@ -66,6 +114,36 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
       resource = null;
     }
     readTextures(resource, null, textureHomonymsCounter);
+    
+    if (texturesPluginFolder != null) {
+      // Try to load sh3t files from plugin folder
+      File [] texturesFiles = texturesPluginFolder.listFiles(new FileFilter () {
+        public boolean accept(File pathname) {
+          return pathname.isFile();
+        }
+      });
+      
+      if (texturesFiles != null) {
+        // Treat textures files in reverse order so file named with a date will be taken into account 
+        // from most recent to least recent
+        Arrays.sort(texturesFiles, Collections.reverseOrder());
+        for (File texturesFile : texturesFiles) {
+          try {
+            // Try to load Furniture property file from current file  
+            URL texturesUrl = texturesFile.toURI().toURL();
+            readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
+                                                  new URLClassLoader(new URL [] {texturesUrl})), 
+                texturesUrl, textureHomonymsCounter);
+          } catch (MalformedURLException ex) {
+            // Ignore file
+          } catch (MissingResourceException ex) {
+            // Ignore malformed plugin textures catalog
+          } catch (IllegalArgumentException ex) {
+            // Ignore malformed plugin textures catalog
+          }
+        }
+      }
+    }
   }
   
   /**
@@ -96,18 +174,18 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
                             URL texturesUrl,
                             Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter) {
     if (resource != null) {
-      for (int i = 1;; i++) {
+      for (int index = 1;; index++) {
         String name = null;
         try {
-          name = resource.getString(NAME + i);
+          name = resource.getString(PropertyKey.NAME.getKey(index));
         } catch (MissingResourceException ex) {
           // Stop the loop when a key name# doesn't exist
           break;
         }
-        String category = resource.getString(CATEGORY + i);
-        Content image  = getContent(resource, IMAGE + i, texturesUrl);
-        float width = Float.parseFloat(resource.getString(WIDTH + i));
-        float height = Float.parseFloat(resource.getString(HEIGHT + i));
+        String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
+        Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), texturesUrl);
+        float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
+        float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
   
         add(new TexturesCategory(category),
             new CatalogTexture(name, image, width, height),

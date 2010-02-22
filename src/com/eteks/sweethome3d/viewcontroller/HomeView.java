@@ -36,7 +36,8 @@ public interface HomeView extends View {
       NEW_HOME, CLOSE, OPEN, DELETE_RECENT_HOMES, SAVE, SAVE_AS, SAVE_AND_COMPRESS,
       PAGE_SETUP, PRINT_PREVIEW, PRINT, PRINT_TO_PDF, PREFERENCES, EXIT, 
       UNDO, REDO, CUT, COPY, PASTE, DELETE, SELECT_ALL,
-      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY,
+      ADD_HOME_FURNITURE, DELETE_HOME_FURNITURE, MODIFY_FURNITURE, 
+      IMPORT_FURNITURE, IMPORT_FURNITURE_LIBRARY, IMPORT_TEXTURES_LIBRARY,
       SORT_HOME_FURNITURE_BY_CATALOG_ID, SORT_HOME_FURNITURE_BY_NAME, 
       SORT_HOME_FURNITURE_BY_WIDTH, SORT_HOME_FURNITURE_BY_DEPTH, SORT_HOME_FURNITURE_BY_HEIGHT, 
       SORT_HOME_FURNITURE_BY_X, SORT_HOME_FURNITURE_BY_Y, SORT_HOME_FURNITURE_BY_ELEVATION, 
@@ -108,6 +109,17 @@ public interface HomeView extends View {
    * an existing furniture library or not. 
    */
   public abstract boolean confirmReplaceFurnitureLibrary(String furnitureLibraryName);
+
+  /**
+   * Displays a content chooser open dialog to choose a textures library.
+   */
+  public abstract String showImportTexturesLibraryDialog();
+
+  /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing textures library or not. 
+   */
+  public abstract boolean confirmReplaceTexturesLibrary(String texturesLibraryName);
 
   /**
    * Displays a dialog that lets user choose whether he wants to overwrite

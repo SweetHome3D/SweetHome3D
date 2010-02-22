@@ -405,7 +405,7 @@ public class AppletUserPreferences extends UserPreferences {
   }
 
   /**
-   * Throws an exception because default user preferences can't manage furniture libraries.
+   * Throws an exception because applet user preferences can't manage furniture libraries.
    */
   @Override
   public boolean furnitureLibraryExists(String name) throws RecorderException {
@@ -413,10 +413,26 @@ public class AppletUserPreferences extends UserPreferences {
   }
 
   /**
-   * Throws an exception because default user preferences can't manage additional furniture libraries.
+   * Throws an exception because applet user preferences can't manage additional furniture libraries.
    */
   @Override
   public void addFurnitureLibrary(String name) throws RecorderException {
     throw new RecorderException("No furniture libraries");
+  }
+
+  /**
+   * Throws an exception because applet user preferences can't manage textures libraries.
+   */
+  @Override
+  public boolean texturesLibraryExists(String name) throws RecorderException {
+    throw new RecorderException("No textures libraries");
+  }
+
+  /**
+   * Throws an exception because applet user preferences can't manage additional textures libraries.
+   */
+  @Override
+  public void addTexturesLibrary(String name) throws RecorderException {
+    throw new RecorderException("No textures libraries");
   }
 }

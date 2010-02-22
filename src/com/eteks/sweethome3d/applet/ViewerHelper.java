@@ -112,6 +112,16 @@ public final class ViewerHelper {
         }
   
         @Override
+        public boolean texturesLibraryExists(String name) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void addTexturesLibrary(String name) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void write() throws RecorderException {
           throw new UnsupportedOperationException();
         }

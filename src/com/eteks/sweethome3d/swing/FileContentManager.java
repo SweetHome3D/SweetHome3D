@@ -229,6 +229,7 @@ public class FileContentManager implements ContentManager {
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
   private final String                    furnitureLibraryFileExtension;
+  private final String                    texturesLibraryFileExtension;
   private final String                    pluginFileExtension;
   private File                            currentDirectory;
   private Map<ContentType, FileFilter []> fileFilters;
@@ -238,6 +239,7 @@ public class FileContentManager implements ContentManager {
     this.preferences = preferences;
     this.sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
     this.furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
+    this.texturesLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "texturesLibraryExtension");
     this.pluginFileExtension = preferences.getLocalizedString(FileContentManager.class, "pluginExtension");
     
     // Fill file filters map
@@ -276,6 +278,21 @@ public class FileContentManager implements ContentManager {
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryDescription");
+          }
+        }
+      });
+    this.fileFilters.put(ContentType.TEXTURES_LIBRARY, new FileFilter [] {
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories and .sh3f files
+            return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(texturesLibraryFileExtension);
+          }
+         
+          @Override
+          public String getDescription() {
+            return preferences.getLocalizedString(FileContentManager.class, "texturesLibraryDescription");
           }
         }
       });

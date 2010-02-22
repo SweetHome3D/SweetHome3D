@@ -218,6 +218,7 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.EXIT, applicationExists);
     homeView.setEnabled(HomeView.ActionType.IMPORT_FURNITURE, true);
     homeView.setEnabled(HomeView.ActionType.IMPORT_FURNITURE_LIBRARY, true);
+    homeView.setEnabled(HomeView.ActionType.IMPORT_TEXTURES_LIBRARY, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_NAME, true);
     homeView.setEnabled(HomeView.ActionType.SORT_HOME_FURNITURE_BY_WIDTH, true);
@@ -957,6 +958,36 @@ public class HomeController implements Controller {
     } catch (RecorderException ex) {
       String message = this.preferences.getLocalizedString(HomeController.class, 
           "importFurnitureLibraryError", furnitureLibraryName);
+      getView().showError(message);
+    }
+  }
+
+  /**
+   * Imports a textures library chosen by the user.  
+   */
+  public void importTexturesLibrary() {
+    getView().invokeLater(new Runnable() {
+        public void run() {
+          final String texturesLibraryName = getView().showImportTexturesLibraryDialog();
+          if (texturesLibraryName != null) {
+            importTexturesLibrary(texturesLibraryName);
+          }
+        }
+      });
+  }
+
+  /**
+   * Imports a given textures library. 
+   */
+  public void importTexturesLibrary(String texturesLibraryName) {
+    try {
+      if (!this.preferences.texturesLibraryExists(texturesLibraryName) 
+          || getView().confirmReplaceTexturesLibrary(texturesLibraryName)) {
+        this.preferences.addTexturesLibrary(texturesLibraryName);
+      }
+    } catch (RecorderException ex) {
+      String message = this.preferences.getLocalizedString(HomeController.class, 
+          "importTexturesLibraryError", texturesLibraryName);
       getView().showError(message);
     }
   }

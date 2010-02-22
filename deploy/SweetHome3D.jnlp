@@ -15,7 +15,7 @@
       <desktop/>
       <menu submenu="eTeks Sweet Home 3D"/>
     </shortcut>
-    <association extensions="sh3d sh3f sh3p" 
+    <association extensions="sh3d sh3f sh3t sh3p" 
                  mime-type="application/SweetHome3D"/>
   </information>
   <information locale="fr">

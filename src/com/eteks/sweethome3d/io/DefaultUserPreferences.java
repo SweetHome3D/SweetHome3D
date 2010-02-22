@@ -97,6 +97,22 @@ public class DefaultUserPreferences extends UserPreferences {
   }
   
   /**
+   * Throws an exception because default user preferences can't manage textures libraries.
+   */
+  @Override
+  public boolean texturesLibraryExists(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage textures libraries");
+  }
+
+  /**
+   * Throws an exception because default user preferences can't manage additional textures libraries.
+   */
+  @Override
+  public void addTexturesLibrary(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage textures libraries");
+  }
+  
+  /**
    * A fixed sized pattern.
    */
   private static class PatternTexture implements TextureImage {

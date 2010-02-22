@@ -111,6 +111,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String TEXTURE_CONTENT_PREFIX                = "TextureContent";
 
   private static final String PLUGIN_FURNITURE_LIBRARIES_SUB_FOLDER = "furniture";
+  private static final String PLUGIN_TEXTURES_LIBRARIES_SUB_FOLDER  = "textures";
 
   private static final Content DUMMY_CONTENT;
   
@@ -155,7 +156,7 @@ public class FileUserPreferences extends UserPreferences {
     readFurnitureCatalog(preferences);
     
     // Fill default textures catalog 
-    setTexturesCatalog(new DefaultTexturesCatalog());
+    setTexturesCatalog(new DefaultTexturesCatalog(getPluginTexturesLibrariesFolder()));
     // Read additional textures
     readTexturesCatalog(preferences);
 
@@ -256,7 +257,8 @@ public class FileUserPreferences extends UserPreferences {
       }
     }
     // Add default textures that don't have homonym among user catalog
-    TexturesCatalog defaultTexturesCatalog = new DefaultTexturesCatalog();
+    TexturesCatalog defaultTexturesCatalog = 
+        new DefaultTexturesCatalog(getPluginTexturesLibrariesFolder());
     for (TexturesCategory category : defaultTexturesCatalog.getCategories()) {
       for (CatalogTexture texture : category.getTextures()) {
         try {
@@ -641,6 +643,18 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
+   * Returns the folder where plugin texture libraries files must be placed 
+   * or <code>null</code> if that folder can't be retrieved.
+   */
+  private File getPluginTexturesLibrariesFolder() {
+    try {
+      return new File(getApplicationFolder(), PLUGIN_TEXTURES_LIBRARIES_SUB_FOLDER);
+    } catch (IOException ex) {
+      return null;
+    }
+  }
+
+  /**
    * Returns Sweet Home 3D application folder. 
    */
   public File getApplicationFolder() throws IOException {
@@ -749,7 +763,7 @@ public class FileUserPreferences extends UserPreferences {
   }
 
   /**
-   * Returns <code>true</code> if the given furniture library file exists in plugin directory.
+   * Returns <code>true</code> if the given furniture library file exists in plugin furniture libraries folder.
    * @param name the name of the resource to check
    */
   @Override
@@ -777,7 +791,7 @@ public class FileUserPreferences extends UserPreferences {
       String libraryFileName = new File(furnitureLibraryName).getName();
       File destinationFile = new File(furnitureLibrariesPluginFolder, libraryFileName);
 
-      // Copy furnitureCatalogFile to furniture plugin folder
+      // Copy furnitureLibraryName to furniture plugin folder
       InputStream tempIn = null;
       OutputStream tempOut = null;
       try {
@@ -801,6 +815,62 @@ public class FileUserPreferences extends UserPreferences {
     } catch (IOException ex) {
       throw new RecorderException(
           "Can't write " + furnitureLibraryName +  " in furniture libraries plugin folder", ex);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the given textures library file exists in plugin textures libraries folder.
+   * @param name the name of the resource to check
+   */
+  @Override
+  public boolean texturesLibraryExists(String name) throws RecorderException {
+    File texturesLibrariesPluginFolder = getPluginTexturesLibrariesFolder();
+    if (texturesLibrariesPluginFolder == null) {
+      throw new RecorderException("Can't access to textures libraries plugin folder");
+    } else {
+      String libraryFileName = new File(name).getName();
+      return new File(texturesLibrariesPluginFolder, libraryFileName).exists();
+    }
+  }
+
+  /**
+   * Adds the file <code>texturesLibraryName</code> to plugin textures libraries folder 
+   * to make the textures library available to catalog.
+   */
+  @Override
+  public void addTexturesLibrary(String texturesLibraryName) throws RecorderException {
+    try {
+      File texturesLibrariesPluginFolder = getPluginTexturesLibrariesFolder();
+      if (texturesLibrariesPluginFolder == null) {
+        throw new RecorderException("Can't access to textures libraries plugin folder");
+      }
+      String libraryFileName = new File(texturesLibraryName).getName();
+      File destinationFile = new File(texturesLibrariesPluginFolder, libraryFileName);
+
+      // Copy texturesLibraryName to textures plugin folder
+      InputStream tempIn = null;
+      OutputStream tempOut = null;
+      try {
+        tempIn = new BufferedInputStream(new FileInputStream(texturesLibraryName));
+        texturesLibrariesPluginFolder.mkdirs();
+        tempOut = new FileOutputStream(destinationFile);          
+        byte [] buffer = new byte [8192];
+        int size; 
+        while ((size = tempIn.read(buffer)) != -1) {
+          tempOut.write(buffer, 0, size);
+        }
+      } finally {
+        if (tempIn != null) {
+          tempIn.close();
+        }
+        if (tempOut != null) {
+          tempOut.close();
+        }
+      }
+      updateDefaultCatalogs();
+    } catch (IOException ex) {
+      throw new RecorderException(
+          "Can't write " + texturesLibraryName +  " in textures libraries plugin folder", ex);
     }
   }
 }

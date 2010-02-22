@@ -529,6 +529,15 @@ public class SweetHome3D extends HomeApplication {
               createHomeFrameController(createHome()).getHomeController().importFurnitureLibrary(furnitureLibraryName);
             }
           });
+      } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.TEXTURES_LIBRARY)) {
+        run(new String [0]);
+        final String texturesLibraryName = args [1];
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Import textures library with a dummy controller 
+              createHomeFrameController(createHome()).getHomeController().importTexturesLibrary(texturesLibraryName);
+            }
+          });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.PLUGIN)) {
         run(new String [0]);
         final String pluginName = args [1];

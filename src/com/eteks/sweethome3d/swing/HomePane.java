@@ -335,6 +335,7 @@ public class HomePane extends JRootPane implements HomeView {
         furnitureController, "alignSelectedFurnitureOnRight");
     createAction(ActionType.IMPORT_FURNITURE, preferences, controller, "importFurniture");
     createAction(ActionType.IMPORT_FURNITURE_LIBRARY, preferences, controller, "importFurnitureLibrary");
+    createAction(ActionType.IMPORT_TEXTURES_LIBRARY, preferences, controller, "importTexturesLibrary");
     createAction(ActionType.SORT_HOME_FURNITURE_BY_CATALOG_ID, preferences, 
         furnitureController, "toggleFurnitureSort", HomePieceOfFurniture.SortableProperty.CATALOG_ID);
     createAction(ActionType.SORT_HOME_FURNITURE_BY_NAME, preferences, 
@@ -897,6 +898,7 @@ public class HomePane extends JRootPane implements HomeView {
     furnitureMenu.addSeparator();
     addActionToMenu(ActionType.IMPORT_FURNITURE, furnitureMenu);
     addActionToMenu(ActionType.IMPORT_FURNITURE_LIBRARY, furnitureMenu);
+    addActionToMenu(ActionType.IMPORT_TEXTURES_LIBRARY, furnitureMenu);
     furnitureMenu.addSeparator();
     furnitureMenu.add(createFurnitureSortMenu(home, preferences));
     furnitureMenu.add(createFurnitureDisplayPropertyMenu(home, preferences));
@@ -957,6 +959,7 @@ public class HomePane extends JRootPane implements HomeView {
     preview3DMenu.addSeparator();
     addActionToMenu(ActionType.CREATE_PHOTO, preview3DMenu);
     addActionToMenu(ActionType.CREATE_VIDEO, preview3DMenu);
+    preview3DMenu.addSeparator();
     addActionToMenu(ActionType.EXPORT_TO_OBJ, preview3DMenu);
     
     // Create Help menu
@@ -2098,6 +2101,7 @@ public class HomePane extends JRootPane implements HomeView {
     view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.CREATE_PHOTO, view3DPopup);
     addActionToPopupMenu(ActionType.CREATE_VIDEO, view3DPopup);
+    view3DPopup.addSeparator();
     addActionToPopupMenu(ActionType.EXPORT_TO_OBJ, view3DPopup);
     view3DPopup.addPopupMenuListener(new MenuItemsVisibilityListener());
     view3D.setComponentPopupMenu(view3DPopup);
@@ -2469,6 +2473,32 @@ public class HomePane extends JRootPane implements HomeView {
     String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.title");
     String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.replace");
     String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceFurnitureLibrary.doNotReplace");
+        
+    return JOptionPane.showOptionDialog(this, 
+        message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
+   * Displays a content chooser open dialog to choose a textures library.
+   */
+  public String showImportTexturesLibraryDialog() {
+    return this.controller.getContentManager().showOpenDialog(this, 
+        this.preferences.getLocalizedString(HomePane.class, "importTexturesLibraryDialog.title"), 
+        ContentManager.ContentType.TEXTURES_LIBRARY);
+  }
+
+  /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing textures library or not. 
+   */
+  public boolean confirmReplaceTexturesLibrary(String texturesLibraryName) {
+    // Retrieve displayed text in buttons and message
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.message", 
+        new File(texturesLibraryName).getName());
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.title");
+    String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.replace");
+    String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceTexturesLibrary.doNotReplace");
         
     return JOptionPane.showOptionDialog(this, 
         message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,

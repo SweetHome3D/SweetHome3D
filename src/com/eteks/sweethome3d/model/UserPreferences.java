@@ -657,6 +657,19 @@ public abstract class UserPreferences {
   public abstract boolean furnitureLibraryExists(String furnitureLibraryName) throws RecorderException;
 
   /**
+   * Adds <code>texturesLibraryName</code> to textures catalog  
+   * to make the textures library it contains available.
+   * @param texturesLibraryName  the name of the resource in which the library will be written. 
+   */
+  public abstract void addTexturesLibrary(String texturesLibraryName) throws RecorderException;
+  
+  /**
+   * Returns <code>true</code> if the given textures library exists.
+   * @param texturesLibraryName the name of the resource to check
+   */
+  public abstract boolean texturesLibraryExists(String texturesLibraryName) throws RecorderException;
+
+  /**
    * A reparentable resource bundle.
    */
   private static class ReparentableResourceBundle extends PropertyResourceBundle {
