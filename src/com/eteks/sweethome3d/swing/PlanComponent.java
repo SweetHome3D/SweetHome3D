@@ -4392,7 +4392,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
    * A proxy for the furniture plan icon. 
    */
   private static class PieceOfFurniturePlanIcon extends PieceOfFurnitureTopViewIcon {
-    private Integer color;
+    private final float pieceWidth;
+    private final float pieceDepth;
+    private Integer     pieceColor;
+    private HomeTexture pieceTexture;
     
     /**
      * Creates a plan icon proxy for a <code>piece</code> of furniture.
@@ -4403,47 +4406,74 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     public PieceOfFurniturePlanIcon(final HomePieceOfFurniture piece, 
                                     final Component waitingComponent) {
       super(IconManager.getInstance().getIcon(piece.getPlanIcon(), waitingComponent));
-      this.color = piece.getColor();
+      this.pieceWidth = piece.getWidth();
+      this.pieceDepth = piece.getDepth();
+      this.pieceColor = piece.getColor();
+      this.pieceTexture = piece.getTexture();
     }
     
     @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      if (this.color != null
-          && !isWaitIcon()
+    public void paintIcon(final Component c, Graphics g, int x, int y) {
+      if (!isWaitIcon()
           && !isErrorIcon()) {
-        // Create a monochrome icon from plan icon  
-        BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics imageGraphics = image.getGraphics();
-        super.paintIcon(c, imageGraphics, 0, 0);
-        imageGraphics.dispose();
-        
-        final int colorRed   = this.color & 0xFF0000;
-        final int colorGreen = this.color & 0xFF00;
-        final int colorBlue  = this.color & 0xFF;
-        setIcon(new ImageIcon(c.createImage(new FilteredImageSource(image.getSource (),
-            new RGBImageFilter() {
-              {
-                canFilterIndexColorModel = true;
-              }
-
-              public int filterRGB (int x, int y, int rgb) {
-                int alpha = rgb & 0xFF000000;
-                int red   = (rgb & 0x00FF0000) >> 16;
-                int green = (rgb & 0x0000FF00) >> 8;
-                int blue  = rgb & 0x000000FF;
-                
-                // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue 
-                // for faster results
-                int brightness = (red + red + red + green + green + green + green + blue) >> 3;
-                
-                red   = (colorRed   * brightness / 0xFF) & 0xFF0000;
-                green = (colorGreen * brightness / 0xFF) & 0xFF00;
-                blue  = (colorBlue  * brightness / 0xFF) & 0xFF;
-                return alpha | red | green | blue;
-              }
-            }))));
-        // Don't need color information anymore
-        this.color = null;
+        if (this.pieceColor != null) {
+          // Create a monochrome icon from plan icon  
+          BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+          Graphics imageGraphics = image.getGraphics();
+          super.paintIcon(c, imageGraphics, 0, 0);
+          imageGraphics.dispose();
+          
+          final int colorRed   = this.pieceColor & 0xFF0000;
+          final int colorGreen = this.pieceColor & 0xFF00;
+          final int colorBlue  = this.pieceColor & 0xFF;
+          setIcon(new ImageIcon(c.createImage(new FilteredImageSource(image.getSource (),
+              new RGBImageFilter() {
+                {
+                  canFilterIndexColorModel = true;
+                }
+  
+                public int filterRGB (int x, int y, int rgb) {
+                  int alpha = rgb & 0xFF000000;
+                  int red   = (rgb & 0x00FF0000) >> 16;
+                  int green = (rgb & 0x0000FF00) >> 8;
+                  int blue  = rgb & 0x000000FF;
+                  
+                  // Approximate brightness computation to 0.375 red + 0.5 green + 0.125 blue 
+                  // for faster results
+                  int brightness = (red + red + red + green + green + green + green + blue) >> 3;
+                  
+                  red   = (colorRed   * brightness / 0xFF) & 0xFF0000;
+                  green = (colorGreen * brightness / 0xFF) & 0xFF00;
+                  blue  = (colorBlue  * brightness / 0xFF) & 0xFF;
+                  return alpha | red | green | blue;
+                }
+              }))));
+          // Don't need color information anymore
+          this.pieceColor = null;
+        } else if (this.pieceTexture != null) {
+          TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
+              new TextureManager.TextureObserver() {
+                public void textureUpdated(Texture texture) {                  
+                  // Paint plan icon in an image
+                  BufferedImage image = new BufferedImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+                  final Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
+                  PieceOfFurniturePlanIcon.super.paintIcon(c, imageGraphics, 0, 0);                  
+                  // Fill the pixels of plan icon with texture image
+                  BufferedImage textureImage = ((ImageComponent2D)texture.getImage(0)).getImage();
+                  imageGraphics.setPaint(new TexturePaint(textureImage, 
+                      new Rectangle2D.Float(0, 0, -getIconWidth() / pieceWidth * pieceTexture.getWidth(), 
+                          -getIconHeight() / pieceDepth * pieceTexture.getHeight())));
+                  imageGraphics.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN));
+                  imageGraphics.fillRect(0, 0, getIconWidth(), getIconHeight());                  
+                  imageGraphics.dispose();
+                  
+                  setIcon(new ImageIcon(image));
+                }
+              });                
+  
+          // Don't need texture information anymore
+          this.pieceTexture = null;
+        }
       }
       super.paintIcon(c, g, x, y);
     }
@@ -4647,7 +4677,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             Vector3f size = ModelManager.getInstance().getSize(node);
             TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
                 TexCoordGeneration.TEXTURE_COORDINATE_2,
-                new Vector4f(pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
+                new Vector4f(-pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
                 new Vector4f(0, pieceHeight / size.y / texture.getHeight(), pieceDepth / size.z / texture.getHeight(), 0));
             appearance.setTexCoordGeneration(texCoordGeneration);
             TextureManager.getInstance().loadTexture(texture.getImage(), true,
