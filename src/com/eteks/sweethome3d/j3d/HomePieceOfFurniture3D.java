@@ -179,21 +179,23 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    */
   private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
     HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    Node filledModelNode = getFilledModelNode();
     if (piece.getColor() != null) {
       Integer color = piece.getColor();
       Color3f materialColor = new Color3f(((color >>> 16) & 0xFF) / 256f,
                                            ((color >>> 8) & 0xFF) / 256f,
                                                    (color & 0xFF) / 256f);
       Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 64);
-      setMaterialAndTexture(getFilledModelNode(), material, null, false, 
-          piece.getWidth(), piece.getDepth(), piece.getHeight());
+      setMaterialAndTexture(filledModelNode, material, null, false, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight(), null);
     } else if (piece.getTexture() != null) {
-      setMaterialAndTexture(getFilledModelNode(), null, piece.getTexture(), waitTextureLoadingEnd, 
-          piece.getWidth(), piece.getDepth(), piece.getHeight());
+      Vector3f modelSize = ModelManager.getInstance().getSize(filledModelNode);
+      setMaterialAndTexture(filledModelNode, null, piece.getTexture(), waitTextureLoadingEnd, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight(), modelSize);
     } else {
       // Set default material and texture of model
-      setMaterialAndTexture(getFilledModelNode(), null, null, false, 
-          piece.getWidth(), piece.getDepth(), piece.getHeight());
+      setMaterialAndTexture(filledModelNode, null, null, false, 
+          piece.getWidth(), piece.getDepth(), piece.getHeight(), null);
     }
   }
 
@@ -353,13 +355,13 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * with a given <code>material</code>. 
    */
   private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, boolean waitTextureLoadingEnd,
-                                     float pieceWidth, float pieceDepth, float pieceHeight) {
+                                     float pieceWidth, float pieceDepth, float pieceHeight, Vector3f modelSize) {
     if (node instanceof Group) {
       // Set material of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
-            pieceWidth, pieceDepth, pieceHeight);
+            pieceWidth, pieceDepth, pieceHeight, modelSize);
       }
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
@@ -387,11 +389,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         } else if (texture != null) {
           // Change texture
           appearance.setMaterial(null);
-          Vector3f size = ModelManager.getInstance().getSize(node);
           TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2,
-              new Vector4f(pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
-              new Vector4f(0, pieceHeight / size.y / texture.getHeight(), pieceDepth / size.z / texture.getHeight(), 0));
+              new Vector4f(-pieceWidth / modelSize.x / texture.getWidth(), 0, 0, 0), 
+              new Vector4f(0, pieceHeight / modelSize.y / texture.getHeight(), pieceDepth / modelSize.z / texture.getHeight(), 0));
           appearance.setTexCoordGeneration(texCoordGeneration);
           TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
               new TextureManager.TextureObserver() {

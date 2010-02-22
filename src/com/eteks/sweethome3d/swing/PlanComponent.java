@@ -4585,9 +4585,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       if (pieceColor != null) {
         Color3f materialColor = new Color3f(new Color(pieceColor));
         Material material = new Material(materialColor, new Color3f(), materialColor, materialColor, 32);
-        setMaterialAndTexture(modelNode, material, null, pieceWidth, pieceDepth, pieceHeight);
+        setMaterialAndTexture(modelNode, material, null, pieceWidth, pieceDepth, pieceHeight, null);
       } else if (pieceTexture != null) { 
-        setMaterialAndTexture(modelNode, null, pieceTexture, pieceWidth, pieceDepth, pieceHeight);
+        Vector3f modelSize = ModelManager.getInstance().getSize(modelNode);
+        setMaterialAndTexture(modelNode, null, pieceTexture, pieceWidth, pieceDepth, pieceHeight, modelSize);
       }
       // Update back face flip
       if (backFaceShown) {
@@ -4649,13 +4650,13 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
      * with a given <code>material</code>. 
      */
     private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, 
-                             float pieceWidth, float pieceDepth, float pieceHeight) {
+                             float pieceWidth, float pieceDepth, float pieceHeight, Vector3f modelSize) {
       if (node instanceof Group) {
         // Set material of all children
         Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
         while (enumeration.hasMoreElements()) {
           setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, 
-              pieceWidth, pieceDepth, pieceHeight);
+              pieceWidth, pieceDepth, pieceHeight, modelSize);
         }
       } else if (node instanceof Shape3D) {
         final Shape3D shape = (Shape3D)node;
@@ -4674,11 +4675,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           } else if (texture != null) {
             // Change texture
             appearance.setMaterial(null);
-            Vector3f size = ModelManager.getInstance().getSize(node);
             TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
                 TexCoordGeneration.TEXTURE_COORDINATE_2,
-                new Vector4f(-pieceWidth / size.x / texture.getWidth(), 0, 0, 0), 
-                new Vector4f(0, pieceHeight / size.y / texture.getHeight(), pieceDepth / size.z / texture.getHeight(), 0));
+                new Vector4f(-pieceWidth / modelSize.x / texture.getWidth(), 0, 0, 0), 
+                new Vector4f(0, pieceHeight / modelSize.y / texture.getHeight(), pieceDepth / modelSize.z / texture.getHeight(), 0));
             appearance.setTexCoordGeneration(texCoordGeneration);
             TextureManager.getInstance().loadTexture(texture.getImage(), true,
                 new TextureManager.TextureObserver() {
