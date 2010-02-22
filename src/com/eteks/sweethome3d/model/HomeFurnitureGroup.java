@@ -457,7 +457,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (modelMirrored != isModelMirrored()) {
       super.setModelMirrored(modelMirrored);
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.setModelMirrored(modelMirrored);
+        piece.setModelMirrored(!piece.isModelMirrored());
         piece.setX(getX() - (piece.getX() - getX()));
       }
     }

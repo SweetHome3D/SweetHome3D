@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.undo.AbstractUndoableEdit;
@@ -32,6 +33,7 @@ import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeDoorOrWindow;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Selectable;
@@ -810,6 +812,8 @@ public class HomeFurnitureController implements Controller {
     private final HomeTexture          texture;
     private final boolean              visible;
     private final boolean              modelMirrored;
+    private final Integer []           groupFurnitureColor;
+    private final HomeTexture []       groupFurnitureTexture;
 
     public ModifiedPieceOfFurniture(HomePieceOfFurniture piece) {
       this.piece = piece;
@@ -826,6 +830,19 @@ public class HomeFurnitureController implements Controller {
       this.texture = piece.getTexture();
       this.visible = piece.isVisible();
       this.modelMirrored = piece.isModelMirrored();
+      if (piece instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)piece);
+        this.groupFurnitureColor = new Integer [groupFurniture.size()];
+        this.groupFurnitureTexture = new HomeTexture [groupFurniture.size()];
+        for (int i = 0; i < groupFurniture.size(); i++) {
+          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+          this.groupFurnitureColor [i] = groupPiece.getColor();
+          this.groupFurnitureTexture [i] = groupPiece.getTexture();
+        }
+      } else {
+        this.groupFurnitureColor = null;
+        this.groupFurnitureTexture = null;
+      }
     }
 
     public HomePieceOfFurniture getPieceOfFurniture() {
@@ -848,6 +865,28 @@ public class HomeFurnitureController implements Controller {
       this.piece.setColor(this.color);
       this.piece.setTexture(this.texture);
       this.piece.setVisible(this.visible);
+      if (this.piece instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)this.piece);
+        for (int i = 0; i < groupFurniture.size(); i++) {
+          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+          groupPiece.setColor(this.groupFurnitureColor [i]);
+          groupPiece.setTexture(this.groupFurnitureTexture [i]);
+        }
+      }
+    }
+    
+    /**
+     * Returns all the children of the given <code>furnitureGroup</code>.  
+     */
+    private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
+      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
+      for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
+        pieces.add(piece);
+        if (piece instanceof HomeFurnitureGroup) {
+          pieces.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
+        } 
+      }
+      return pieces;
     }
   }
   
