@@ -82,7 +82,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     HEIGHT("height"),
     /**
      * The key for the creator of a piece of furniture (optional).
-     * By default, creator is eTeks.
+     * By default, creator is <code>null</code>.
      */
     CREATOR("creator");
 
