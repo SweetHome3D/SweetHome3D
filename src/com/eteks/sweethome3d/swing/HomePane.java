@@ -49,6 +49,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -62,6 +63,7 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -122,6 +124,7 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.event.SwingPropertyChangeSupport;
 import javax.swing.text.JTextComponent;
 
+import com.eteks.sweethome3d.j3d.Ground3D;
 import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
 import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.j3d.Room3D;
@@ -130,6 +133,7 @@ import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DimensionLine;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.InterruptedRecorderException;
 import com.eteks.sweethome3d.model.Label;
@@ -2831,6 +2835,15 @@ public class HomePane extends JRootPane implements HomeView {
           : "";      
       writer = new OBJWriter(objFile, header, -1);
 
+      if (this.home.getWalls().size() > 0) {
+        // Create a not alive new ground to be able to explore its coordinates without setting capabilities
+        Rectangle2D homeBounds = getExportedHomeBounds();
+        Ground3D groundNode = new Ground3D(this.home, 
+            (float)homeBounds.getX(), (float)homeBounds.getY(), 
+            (float)homeBounds.getWidth(), (float)homeBounds.getHeight(), true);
+        writer.writeNode(groundNode, "ground");
+      }
+      
       // Write 3D walls 
       int i = 0;
       for (Wall wall : this.home.getWalls()) {
@@ -2874,6 +2887,60 @@ public class HomePane extends JRootPane implements HomeView {
     }
   }
   
+  /**
+   * Returns home bounds. 
+   */
+  private Rectangle2D getExportedHomeBounds() {
+    // Compute bounds that include walls and furniture
+    Rectangle2D homeBounds = updateObjectsBounds(null, this.home.getWalls());
+    for (HomePieceOfFurniture piece : getVisibleFurniture(this.home.getFurniture())) {
+      if (piece.isVisible()) {
+        for (float [] point : piece.getPoints()) {
+          if (homeBounds == null) {
+            homeBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+          } else {
+            homeBounds.add(point [0], point [1]);
+          }
+        }
+      }
+    }
+    return updateObjectsBounds(homeBounds, this.home.getRooms());
+  }
+  
+  /**
+   * Returns all the visible pieces in the given <code>furniture</code>.  
+   */
+  private List<HomePieceOfFurniture> getVisibleFurniture(List<HomePieceOfFurniture> furniture) {
+    List<HomePieceOfFurniture> visibleFurniture = new ArrayList<HomePieceOfFurniture>(furniture.size());
+    for (HomePieceOfFurniture piece : furniture) {
+      if (piece.isVisible()) {
+        if (piece instanceof HomeFurnitureGroup) {
+          visibleFurniture.addAll(getVisibleFurniture(((HomeFurnitureGroup)piece).getFurniture()));
+        } else {
+          visibleFurniture.add(piece);
+        }
+      }
+    }
+    return visibleFurniture;
+  }
+
+  /**
+   * Updates <code>objectBounds</code> to include the bounds of <code>objects</code>.
+   */
+  private Rectangle2D updateObjectsBounds(Rectangle2D objectBounds,
+                                          Collection<? extends Selectable> objects) {
+    for (Selectable wall : objects) {
+      for (float [] point : wall.getPoints()) {
+        if (objectBounds == null) {
+          objectBounds = new Rectangle2D.Float(point [0], point [1], 0, 0);
+        } else {
+          objectBounds.add(point [0], point [1]);
+        }
+      }
+    }
+    return objectBounds;
+  }
+
   /**
    * Displays a dialog that let user choose whether he wants to delete 
    * the selected furniture from catalog or not.
