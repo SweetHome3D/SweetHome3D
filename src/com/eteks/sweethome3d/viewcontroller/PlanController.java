@@ -1310,7 +1310,12 @@ public class PlanController extends FurnitureController implements Controller {
     scale = Math.max(getMinimumScale(), Math.min(scale, getMaximumScale()));
     if (scale != getView().getScale()) {
       float oldScale = getView().getScale();
+      int x = getView().convertXModelToScreen(getXLastMouseMove());
+      int y = getView().convertXModelToScreen(getYLastMouseMove());
       getView().setScale(scale);
+      // Update mouse location
+      moveMouse(getView().convertXPixelToModel(x), getView().convertYPixelToModel(y));
+      
       this.propertyChangeSupport.firePropertyChange(Property.SCALE.name(), oldScale, scale);
       this.home.setVisualProperty(SCALE_VISUAL_PROPERTY, scale);
     }
@@ -1757,6 +1762,91 @@ public class PlanController extends FurnitureController implements Controller {
       if (highestSurroundingPiece != null) {
         piece.setElevation(highestElevation);
         return highestSurroundingPiece;
+      }
+    }
+    return null;
+  }
+
+  
+  /**
+   * Returns the dimension line that measures the side of a piece, the length of a room side 
+   * or the length of a wall side at (<code>x</code>, <code>y</code>) point,
+   * or <code>null</code> if it doesn't exist. 
+   */
+  private DimensionLine getMeasuringDimensionLineAt(float x, float y, 
+                                                    boolean magnetismEnabled) {
+    for (HomePieceOfFurniture piece : home.getFurniture()) {
+      DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(piece.getPoints(), x, y, magnetismEnabled);
+      if (dimensionLine != null) {
+        return dimensionLine;
+      }
+    }
+    for (GeneralPath roomPath : getRoomPathsFromWalls()) {
+      if (roomPath.intersects(x - PIXEL_MARGIN, y - PIXEL_MARGIN, 2 * PIXEL_MARGIN, 2 * PIXEL_MARGIN)) {
+        DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(
+            getPathPoints(roomPath, true), x, y, magnetismEnabled);
+        if (dimensionLine != null) {
+          return dimensionLine;
+        }
+      }
+    }
+    for (Room room : home.getRooms()) {
+      DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(room.getPoints(), x, y, magnetismEnabled);
+      if (dimensionLine != null) {
+        return dimensionLine;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns the dimension line that measures the side of the given polygon at (<code>x</code>, <code>y</code>) point,
+   * or <code>null</code> if it doesn't exist. 
+   */
+  private DimensionLine getDimensionLineBetweenPointsAt(float [][] points, float x, float y, 
+                                                        boolean magnetismEnabled) {
+    for (int i = 0; i < points.length; i++) {
+      int nextPointIndex = (i + 1) % points.length;
+      // Ignore sides with a length smaller than 0.1 cm
+      double distanceBetweenPointsSq = Point2D.distanceSq(points [i][0], points [i][1], 
+              points [nextPointIndex][0], points [nextPointIndex][1]);
+      if (distanceBetweenPointsSq > 0.01
+          && Line2D.ptSegDistSq(points [i][0], points [i][1], 
+              points [nextPointIndex][0], points [nextPointIndex][1], 
+              x, y) <= PIXEL_MARGIN * PIXEL_MARGIN) {
+        double angle = Math.atan2(points [i][1] - points [nextPointIndex][1], 
+            points [nextPointIndex][0] - points [i][0]);
+        boolean reverse = angle < -Math.PI / 2 || angle > Math.PI / 2;
+        
+        float xStart;
+        float yStart;
+        float xEnd;
+        float yEnd;
+        if (reverse) {
+          // Avoid reversed text on the dimension line
+          xStart = points [nextPointIndex][0];
+          yStart = points [nextPointIndex][1];
+          xEnd = points [i][0];
+          yEnd = points [i][1];
+        } else {
+          xStart = points [i][0];
+          yStart = points [i][1];
+          xEnd = points [nextPointIndex][0];
+          yEnd = points [nextPointIndex][1];
+        }
+        
+        if (magnetismEnabled) {
+          float magnetizedLength = this.preferences.getLengthUnit().getMagnetizedLength(
+              (float)Math.sqrt(distanceBetweenPointsSq), getView().getPixelLength());
+          if (reverse) {
+            xEnd = points [nextPointIndex][0] - (float)(magnetizedLength * Math.cos(angle));            
+            yEnd = points [nextPointIndex][1] + (float)(magnetizedLength * Math.sin(angle));
+          } else {
+            xEnd = points [i][0] + (float)(magnetizedLength * Math.cos(angle));            
+            yEnd = points [i][1] - (float)(magnetizedLength * Math.sin(angle));
+          }
+        }
+        return new DimensionLine(xStart, yStart, xEnd, yEnd, 0);
       }
     }
     return null;
@@ -3617,11 +3707,11 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the points of a general path which contains only one path.
    */
-  private float [][] getPathPoints(GeneralPath roomPath, 
+  private float [][] getPathPoints(GeneralPath path, 
                                    boolean removeAlignedPoints) {
     List<float []> pathPoints = new ArrayList<float[]>();
     float [] previousPathPoint = null;
-    for (PathIterator it = roomPath.getPathIterator(null); !it.isDone(); ) {
+    for (PathIterator it = path.getPathIterator(null); !it.isDone(); ) {
       float [] pathPoint = new float[2];
       if (it.currentSegment(pathPoint) != PathIterator.SEG_CLOSE
           && (previousPathPoint == null
@@ -6165,6 +6255,8 @@ public class PlanController extends FurnitureController implements Controller {
    * other modes, and initial dimension line creation.
    */
   private class DimensionLineCreationState extends AbstractModeChangeState {
+    private boolean magnetismEnabled;
+
     @Override
     public Mode getMode() {
       return Mode.DIMENSION_LINE_CREATION;
@@ -6173,11 +6265,18 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       getView().setCursor(PlanView.CursorType.DRAW);
+      toggleMagnetism(wasShiftDownLastMousePress());
     }
 
     @Override
     public void moveMouse(float x, float y) {
       getView().setAlignmentFeedback(DimensionLine.class, null, x, y, false);
+      DimensionLine dimensionLine = getMeasuringDimensionLineAt(x, y, this.magnetismEnabled);
+      if (dimensionLine != null) {
+        getView().setDimensionLinesFeedback(Arrays.asList(new DimensionLine [] {dimensionLine}));
+      } else {
+        getView().setDimensionLinesFeedback(null);
+      } 
     }
 
     @Override
@@ -6196,6 +6295,14 @@ public class PlanController extends FurnitureController implements Controller {
         setState(getDimensionLineDrawingState());
         PlanController.this.setEditionActivated(editionActivated);
       }
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      // Compute active magnetism
+      this.magnetismEnabled = preferences.isMagnetismEnabled()
+                              ^ magnetismToggled;
+      moveMouse(getXLastMouseMove(), getYLastMouseMove());
     }
 
     @Override
@@ -6255,6 +6362,11 @@ public class PlanController extends FurnitureController implements Controller {
       this.newDimensionLine = null;
       deselectAll();
       toggleMagnetism(wasShiftDownLastMousePress());
+      DimensionLine dimensionLine = getMeasuringDimensionLineAt(
+          getXLastMousePress(), getYLastMousePress(), this.magnetismEnabled);
+      if (dimensionLine != null) {
+        getView().setDimensionLinesFeedback(Arrays.asList(new DimensionLine [] {dimensionLine}));
+      }
       getView().setAlignmentFeedback(DimensionLine.class, 
           null, getXLastMousePress(), getYLastMousePress(), false);
     }
@@ -6291,6 +6403,7 @@ public class PlanController extends FurnitureController implements Controller {
         if (this.newDimensionLine == null) {
           // Create a new one
           this.newDimensionLine = createDimensionLine(this.xStart, this.yStart, newX, newY, 0);
+          getView().setDimensionLinesFeedback(null);
         } else {
           // Otherwise update its end points
           if (this.editingStartPoint) {
@@ -6340,6 +6453,15 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void pressMouse(float x, float y, int clickCount, 
                            boolean shiftDown, boolean duplicationActivated) {
+      if (this.newDimensionLine == null
+          && clickCount == 2) {
+        // Try to guess the item to measure
+        DimensionLine dimensionLine = getMeasuringDimensionLineAt(x, y, this.magnetismEnabled);
+        this.newDimensionLine = createDimensionLine(
+            dimensionLine.getXStart(), dimensionLine.getYStart(), 
+            dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
+            dimensionLine.getOffset());
+      }
       // Create a new dimension line only when it will have a length > 0
       // meaning after the first mouse move
       if (this.newDimensionLine != null) {
