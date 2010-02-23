@@ -741,15 +741,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // Revalidate and repaint
     super.revalidate();
     repaint();
-    if (this.horizontalRuler != null) {
-      this.horizontalRuler.revalidate();
-      this.horizontalRuler.repaint();
-    }
-    if (this.verticalRuler != null) {
-      this.verticalRuler.revalidate();
-      this.verticalRuler.repaint();
-    }
-      
+
     if (invalidatePlanBoundsCache
         && getParent() instanceof JViewport) {
       float planBoundsNewMinX = (float)getPlanBounds().getMinX();
@@ -769,6 +761,15 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           parent.setViewPosition(new Point(viewPosition.x + deltaX, viewPosition.y + deltaY));
         }
       }
+    }
+
+    if (this.horizontalRuler != null) {
+      this.horizontalRuler.revalidate();
+      this.horizontalRuler.repaint();
+    }
+    if (this.verticalRuler != null) {
+      this.verticalRuler.revalidate();
+      this.verticalRuler.repaint();
     }
   }
   
