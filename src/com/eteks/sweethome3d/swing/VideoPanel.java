@@ -815,8 +815,7 @@ public class VideoPanel extends JPanel implements DialogView {
         || lastCamera.getFieldOfView() != camera.getFieldOfView()) {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
-      cameraPath.add(new Camera(camera.getX(), camera.getY(), camera.getZ(), 
-          camera.getYaw(), camera.getPitch(), camera.getFieldOfView()));
+      cameraPath.add(camera.clone());
       this.controller.setCameraPath(cameraPath);
     }
   }
@@ -962,23 +961,23 @@ public class VideoPanel extends JPanel implements DialogView {
     final float moveAnglePerFrame = (float)(Math.PI / 180 * 30 / frameRate); 
     
     List<Camera> cameraPath = this.controller.getCameraPath();
-    Camera cameraLocation = cameraPath.get(0);
-    float x = cameraLocation.getX(); 
-    float y = cameraLocation.getY(); 
-    float z = cameraLocation.getZ();
-    float yaw = cameraLocation.getYaw(); 
-    float pitch = cameraLocation.getPitch(); 
-    float fieldOfView = cameraLocation.getFieldOfView();
-    videoFramesPath.add(new Camera(x, y, z, yaw, pitch, fieldOfView));
+    Camera camera = cameraPath.get(0);
+    float x = camera.getX(); 
+    float y = camera.getY(); 
+    float z = camera.getZ();
+    float yaw = camera.getYaw(); 
+    float pitch = camera.getPitch(); 
+    float fieldOfView = camera.getFieldOfView();
+    videoFramesPath.add(camera.clone());
     
     for (int i = 1; i < cameraPath.size(); i++) {
-      cameraLocation = cameraPath.get(i);                  
-      float newX = cameraLocation.getX(); 
-      float newY = cameraLocation.getY(); 
-      float newZ = cameraLocation.getZ();
-      float newYaw = cameraLocation.getYaw(); 
-      float newPitch = cameraLocation.getPitch(); 
-      float newFieldOfView = cameraLocation.getFieldOfView();
+      camera = cameraPath.get(i);                  
+      float newX = camera.getX(); 
+      float newY = camera.getY(); 
+      float newZ = camera.getZ();
+      float newYaw = camera.getYaw(); 
+      float newPitch = camera.getPitch(); 
+      float newFieldOfView = camera.getFieldOfView();
       
       float distance = new Point3f(x, y, z).distance(new Point3f(newX, newY, newZ));
       float moveCount = distance / moveDistancePerFrame;
@@ -1050,6 +1049,8 @@ public class VideoPanel extends JPanel implements DialogView {
     int width = this.controller.getWidth();
     int height = this.controller.getHeight();
     final Camera [] videoFramesPath = getVideoFramesPath(frameRate);
+    // Set initial camera location because its type may change rendering setting
+    home.setCamera(videoFramesPath [0]);
     final BoundedRangeModel progressModel = this.progressBar.getModel();
     EventQueue.invokeLater(new Runnable() {
         public void run() {

@@ -80,6 +80,7 @@ import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
+import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
 
@@ -137,7 +138,7 @@ public class PhotoRenderer {
     exportNode(groundTransformGroup, useNormals , true);
 
     // Set light settings 
-    boolean observerCamera = home.getCamera() == home.getObserverCamera();
+    boolean observerCamera = home.getCamera() instanceof ObserverCamera;
     HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
     if (observerCamera 
         && skyTexture != null) {
