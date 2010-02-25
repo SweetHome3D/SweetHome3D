@@ -430,7 +430,7 @@ public class ModelManager {
         updateShapeNamesAndWindowPanesTransparency(scene);
         
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
-        turnOffLights(modelNode);
+        turnOffLightsAndAllowBoundsRead(modelNode);
 
         return modelNode;
       } catch (IllegalArgumentException ex) {
@@ -490,17 +490,20 @@ public class ModelManager {
   }
   
   /**
-   * Turn off light nodes of <code>node</code> children.
+   * Turn off light nodes of <code>node</code> children and 
+   * set <code>ALLOW_BOUNDS_READ</code> capability on shapes.
    */
-  private void turnOffLights(Node node) {
+  private void turnOffLightsAndAllowBoundsRead(Node node) {
     if (node instanceof Group) {
       // Remove lights of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        turnOffLights((Node)enumeration.nextElement());
+        turnOffLightsAndAllowBoundsRead((Node)enumeration.nextElement());
       }
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
+    } else if (node instanceof Shape3D) {
+      node.setCapability(Shape3D.ALLOW_BOUNDS_READ);
     }
   }
 
