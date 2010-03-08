@@ -62,6 +62,7 @@ import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
+import com.eteks.sweethome3d.viewcontroller.VideoController;
 import com.eteks.sweethome3d.viewcontroller.WallController;
 
 /**
@@ -333,6 +334,7 @@ public class UserPreferencesPanelTest extends TestCase {
       new LabelController(home, preferences, viewFactory, undoableEditSupport).getView();
       new Home3DAttributesController(home, preferences, viewFactory, contentManager, undoableEditSupport).getView();
       new PhotoController(home, preferences, homeController.getHomeController3D().getView(), viewFactory, contentManager).getView();
+      new VideoController(home, preferences, viewFactory, contentManager).getView();
       
       new TextureChoiceController("", preferences, viewFactory, contentManager).getView();
       new ThreadedTaskController(new Callable<Void>() { 
