@@ -784,6 +784,9 @@ public class VideoPanel extends JPanel implements DialogView {
       dialog.addWindowListener(new WindowAdapter() {
         public void windowClosed(WindowEvent ev) {
           stopVideoCreation();
+          if (playbackTimer != null) {
+            pausePlayback();
+          }
           if (videoFile != null) {
             videoFile.delete();
           }
