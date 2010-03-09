@@ -739,7 +739,7 @@ public class PhotoRenderer {
           this.sunflow.parameter("diffuse", null, diffuseColor);
           float shininess = material.getShininess();
           if (shininess > 64) {
-            this.sunflow.parameter("shiny", shininess / 256f);
+            this.sunflow.parameter("shiny", shininess / 512f);
             this.sunflow.shader(appearanceName, "shiny_diffuse");
           } else {
             this.sunflow.shader(appearanceName, "diffuse");
