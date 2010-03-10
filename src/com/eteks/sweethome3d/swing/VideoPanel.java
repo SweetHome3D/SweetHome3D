@@ -809,18 +809,25 @@ public class VideoPanel extends JPanel implements DialogView {
     if (cameraPath.size() > 0) {
       lastCamera = cameraPath.get(cameraPath.size() - 1);
     }
-    if (lastCamera == null
-        || lastCamera.getX() != camera.getX()
-        || lastCamera.getY() != camera.getY()
-        || lastCamera.getZ() != camera.getZ()
-        || lastCamera.getYaw() != camera.getYaw()
-        || lastCamera.getPitch() != camera.getPitch()
-        || lastCamera.getFieldOfView() != camera.getFieldOfView()) {
+    if (lastCamera == null      
+        || !compareCameraLocation(lastCamera, camera)) {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
       cameraPath.add(camera.clone());
       this.controller.setCameraPath(cameraPath);
     }
+  }
+  
+  /**
+   * Returns <code>true</code> if the given cameras are at the same location.
+   */
+  private boolean compareCameraLocation(Camera camera1, Camera camera2) {
+    return camera1.getX() == camera2.getX() 
+        && camera1.getY() == camera2.getY() 
+        && camera1.getZ() == camera2.getZ() 
+        && camera1.getYaw() == camera2.getYaw()
+        && camera1.getPitch() == camera2.getPitch() 
+        && camera1.getFieldOfView() == camera2.getFieldOfView();
   }
 
   /**
@@ -832,7 +839,17 @@ public class VideoPanel extends JPanel implements DialogView {
     boolean playable = cameraPath.size() > 1;
     if (playable) {
       Camera [] videoFramesPath = getVideoFramesPath(12);
-      this.cameraPathIterator = Arrays.asList(videoFramesPath).listIterator(videoFramesPath.length);
+      // Find current camera location
+      Camera homeCamera = home.getCamera();
+      int index = videoFramesPath.length;
+      while (--index > 0 
+          && !compareCameraLocation(videoFramesPath [index], homeCamera)) {        
+      }
+      // Prefer last location
+      if (index < 0) {
+        index = videoFramesPath.length;
+      }
+      this.cameraPathIterator = Arrays.asList(videoFramesPath).listIterator(index);
       ActionListener playbackAction = new ActionListener() {
           public void actionPerformed(ActionEvent ev) {
             if ("backward".equals(ev.getActionCommand())) {
@@ -870,10 +887,10 @@ public class VideoPanel extends JPanel implements DialogView {
     boolean emptyCameraPath = cameraPath.isEmpty();
     actionMap.get(ActionType.DELETE_CAMERA_PATH).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
     actionMap.get(ActionType.DELETE_LAST_RECORD).setEnabled(this.videoCreationExecutor == null && !emptyCameraPath);
-    actionMap.get(ActionType.SEEK_BACKWARD).setEnabled(playable);
-    actionMap.get(ActionType.SKIP_BACKWARD).setEnabled(playable);
-    actionMap.get(ActionType.SEEK_FORWARD).setEnabled(false);
-    actionMap.get(ActionType.SKIP_FORWARD).setEnabled(false);
+    actionMap.get(ActionType.SEEK_BACKWARD).setEnabled(playable && this.cameraPathIterator.hasPrevious());
+    actionMap.get(ActionType.SKIP_BACKWARD).setEnabled(playable && this.cameraPathIterator.hasPrevious());
+    actionMap.get(ActionType.SEEK_FORWARD).setEnabled(playable && this.cameraPathIterator.hasNext());
+    actionMap.get(ActionType.SKIP_FORWARD).setEnabled(playable && this.cameraPathIterator.hasNext());
     actionMap.get(ActionType.START_VIDEO_CREATION).setEnabled(playable);
   }
 
