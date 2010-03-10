@@ -225,7 +225,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
 
   /**
-   * The name of <code>.properties</code> family files in furniture plug-in files. 
+   * The name of <code>.properties</code> family files in plugin furniture catalog files. 
    */
   public static final String PLUGIN_FURNITURE_CATALOG_FAMILY = "PluginFurnitureCatalog";
   
@@ -243,7 +243,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   
   /**
    * Creates a default furniture catalog read from resources and   
-   * plugin furniture folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
+   * furniture plugin folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(File furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
@@ -281,30 +281,30 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
     
     if (furniturePluginFolder != null) {
-      // Try to load sh3f files from plugin folder
-      File [] furnitureFiles = furniturePluginFolder.listFiles(new FileFilter () {
+      // Try to load sh3f files from plugin furniture plugin folder
+      File [] pluginFurnitureCatalogFiles = furniturePluginFolder.listFiles(new FileFilter () {
         public boolean accept(File pathname) {
           return pathname.isFile();
         }
       });
       
-      if (furnitureFiles != null) {
-        // Treat furniture files in reverse order so file named with a date will be taken into account 
+      if (pluginFurnitureCatalogFiles != null) {
+        // Treat furniture catalog files in reverse order so file named with a date will be taken into account 
         // from most recent to least recent
-        Arrays.sort(furnitureFiles, Collections.reverseOrder());
-        for (File furnitureFile : furnitureFiles) {
+        Arrays.sort(pluginFurnitureCatalogFiles, Collections.reverseOrder());
+        for (File pluginFurnitureCatalogFile : pluginFurnitureCatalogFiles) {
           try {
-            // Try to load Furniture property file from current file  
-            URL furnitureUrl = furnitureFile.toURI().toURL();
+            // Try to load the properties file describing furniture catalog from current file  
+            URL pluginFurnitureCatalogUrl = pluginFurnitureCatalogFile.toURI().toURL();
             readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
-                                                   new URLClassLoader(new URL [] {furnitureUrl})), 
-                furnitureUrl, furnitureHomonymsCounter, identifiedFurniture);
+                                                   new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
+                pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
-            // Ignore malformed plugin furniture catalog
+            // Ignore malformed furniture catalog
           } catch (IllegalArgumentException ex) {
-            // Ignore malformed plugin furniture catalog
+            // Ignore malformed furniture catalog
           }
         }
       }
@@ -321,14 +321,14 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
 
     for (URL pluginFurnitureCatalogUrl : pluginFurnitureCatalogUrls) {
       try {
-        // Try do load Furniture property file from current file  
+        // Try do load the properties file describing furniture catalog from current file  
         readFurniture(ResourceBundle.getBundle(PLUGIN_FURNITURE_CATALOG_FAMILY, Locale.getDefault(), 
                 new URLClassLoader(new URL [] {pluginFurnitureCatalogUrl})), 
             pluginFurnitureCatalogUrl, furnitureHomonymsCounter, identifiedFurniture);
       } catch (MissingResourceException ex) {
-        // Ignore malformed plugin furniture catalog
+        // Ignore malformed furniture catalog
       } catch (IllegalArgumentException ex) {
-        // Ignore malformed plugin furniture catalog
+        // Ignore malformed furniture catalog
       }
     }
   }

@@ -113,7 +113,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   
   /**
    * Creates a default textures catalog read from resources and   
-   * plugin textures folder if <code>texturesPluginFolder</code> isn't <code>null</code>.
+   * textures plugin folder if <code>texturesPluginFolder</code> isn't <code>null</code>.
    */
   public DefaultTexturesCatalog(File texturesPluginFolder) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
@@ -131,30 +131,30 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
     
     if (texturesPluginFolder != null) {
-      // Try to load sh3t files from plugin folder
-      File [] texturesFiles = texturesPluginFolder.listFiles(new FileFilter () {
+      // Try to load sh3t files from textures plugin folder
+      File [] pluginTexturesCatalogFiles = texturesPluginFolder.listFiles(new FileFilter () {
         public boolean accept(File pathname) {
           return pathname.isFile();
         }
       });
       
-      if (texturesFiles != null) {
-        // Treat textures files in reverse order so file named with a date will be taken into account 
+      if (pluginTexturesCatalogFiles != null) {
+        // Treat textures catalog files in reverse order so file named with a date will be taken into account 
         // from most recent to least recent
-        Arrays.sort(texturesFiles, Collections.reverseOrder());
-        for (File texturesFile : texturesFiles) {
+        Arrays.sort(pluginTexturesCatalogFiles, Collections.reverseOrder());
+        for (File pluginTexturesCatalogFile : pluginTexturesCatalogFiles) {
           try {
-            // Try to load Furniture property file from current file  
-            URL texturesUrl = texturesFile.toURI().toURL();
+            // Try to load the properties file describing textures catalog from current file  
+            URL pluginTexturesCatalogUrl = pluginTexturesCatalogFile.toURI().toURL();
             readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
-                                                  new URLClassLoader(new URL [] {texturesUrl})), 
-                texturesUrl, textureHomonymsCounter, identifiedTextures);
+                                                  new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
+                pluginTexturesCatalogUrl, textureHomonymsCounter, identifiedTextures);
           } catch (MalformedURLException ex) {
             // Ignore file
           } catch (MissingResourceException ex) {
-            // Ignore malformed plugin textures catalog
+            // Ignore malformed textures catalog
           } catch (IllegalArgumentException ex) {
-            // Ignore malformed plugin textures catalog
+            // Ignore malformed textures catalog
           }
         }
       }
@@ -169,14 +169,16 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
 
-    for (URL pluginTextureCatalogUrl : pluginTexturesCatalogUrls) {
+    for (URL pluginTexturesCatalogUrl : pluginTexturesCatalogUrls) {
       try {
-        // Try do load Furniture property file from current file  
+        // Try do load the properties file describing textures catalog from current file  
         readTextures(ResourceBundle.getBundle(PLUGIN_TEXTURES_CATALOG_FAMILY, Locale.getDefault(), 
-            new URLClassLoader(new URL [] {pluginTextureCatalogUrl})), 
-            pluginTextureCatalogUrl, textureHomonymsCounter, identifiedTextures);
+            new URLClassLoader(new URL [] {pluginTexturesCatalogUrl})), 
+            pluginTexturesCatalogUrl, textureHomonymsCounter, identifiedTextures);
       } catch (MissingResourceException ex) {
-        // Ignore malformed plugin furniture catalog
+        // Ignore malformed textures catalog
+      } catch (IllegalArgumentException ex) {
+        // Ignore malformed textures catalog
       }
     }
   }
