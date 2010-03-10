@@ -369,8 +369,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (width != getWidth()) {
       float widthFactor = width / getWidth();
       super.setWidth(width);
+      float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
-        float angle = getAngle();
         float angleDelta = piece.getAngle() - angle;
         float pieceWidth = piece.getWidth();
         float pieceDepth = piece.getDepth();
@@ -398,8 +398,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (depth != getDepth()) {
       float depthFactor = depth / getDepth();
       super.setDepth(depth);
+      float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
-        float angle = getAngle();
         float angleDelta = piece.getAngle() - angle;
         float pieceWidth = piece.getWidth();
         float pieceDepth = piece.getDepth();
@@ -456,9 +456,19 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public void setModelMirrored(boolean modelMirrored) {
     if (modelMirrored != isModelMirrored()) {
       super.setModelMirrored(modelMirrored);
+      float angle = getAngle();
       for (HomePieceOfFurniture piece : this.furniture) {
         piece.setModelMirrored(!piece.isModelMirrored());
-        piece.setX(getX() - (piece.getX() - getX()));
+        // Rotate piece to angle 0
+        double cosAngle = Math.cos(angle);
+        double sinAngle = Math.sin(angle);
+        float newX = getX() + (float)((piece.getX() - getX()) * cosAngle + (piece.getY() - getY()) * sinAngle);
+        float newY = getY() + (float)((piece.getX() - getX()) * -sinAngle + (piece.getY() - getY()) * cosAngle);
+        // Update its abscissa
+        newX = getX() - (newX - getX()); 
+        // Rotate piece back to its angle
+        piece.setX(getX() + (float)((newX - getX()) * cosAngle - (newY - getY()) * sinAngle));
+        piece.setY(getY() + (float)((newX - getX()) * sinAngle + (newY - getY()) * cosAngle));
       }
     }
   }
