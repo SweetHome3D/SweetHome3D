@@ -3542,39 +3542,36 @@ public class PlanController extends FurnitureController implements Controller {
 
   /**
    * Post to undo support a width and depth change on <code>piece</code>. 
-   * @param b 
    */
-  private void postPieceOfFurnitureWidthAndDepthResize(final HomePieceOfFurniture piece, 
-                                          final float oldX, final float oldY,
-                                          final float oldWidth, final float oldDepth, 
-                                          final boolean oldDoorOrWindowBoundToWall) {
+  private void postPieceOfFurnitureWidthAndDepthResize(final ResizedPieceOfFurniture resizedPiece) {
+    HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
     final float newX = piece.getX();
     final float newY = piece.getY();
     final float newWidth = piece.getWidth();
     final float newDepth = piece.getDepth();
-    if (newWidth != oldWidth
-        || newDepth != oldDepth) {
+    final boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
+        && ((HomeDoorOrWindow)piece).isBoundToWall();
+    if (newWidth != resizedPiece.getWidth()
+        || newDepth != resizedPiece.getDepth()) {
       UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setX(oldX);
-          piece.setY(oldY);
-          piece.setWidth(oldWidth);
-          piece.setDepth(oldDepth);
-          if (piece instanceof HomeDoorOrWindow) {
-            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
-          }
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+          resizedPiece.reset();
+          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {resizedPiece.getPieceOfFurniture()}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
+          HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
           piece.setX(newX);
           piece.setY(newY);
           piece.setWidth(newWidth);
           piece.setDepth(newDepth);
+          if (piece instanceof HomeDoorOrWindow) {
+            ((HomeDoorOrWindow)piece).setBoundToWall(doorOrWindowBoundToWall);
+          }
           selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
         }      
   
@@ -3837,6 +3834,104 @@ public class PlanController extends FurnitureController implements Controller {
       it.next();
     }
     return path;
+  }
+
+  /**
+   * Stores the size of a resized piece of furniture.
+   */
+  private static class ResizedPieceOfFurniture {
+    private final HomePieceOfFurniture piece;
+    private final float                x;
+    private final float                y;
+    private final float                width;
+    private final float                depth;
+    private final boolean              doorOrWindowBoundToWall;
+    private final float []             groupFurnitureX;
+    private final float []             groupFurnitureY;
+    private final float []             groupFurnitureWidth;
+    private final float []             groupFurnitureDepth;
+
+    public ResizedPieceOfFurniture(HomePieceOfFurniture piece) {
+      this.piece = piece;
+      this.x = piece.getX();
+      this.y = piece.getY();
+      this.width = piece.getWidth();
+      this.depth = piece.getDepth();
+      this.doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
+          && ((HomeDoorOrWindow)piece).isBoundToWall();
+      if (piece instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)piece);
+        this.groupFurnitureX = new float [groupFurniture.size()];
+        this.groupFurnitureY = new float [groupFurniture.size()];
+        this.groupFurnitureWidth = new float [groupFurniture.size()];
+        this.groupFurnitureDepth = new float [groupFurniture.size()];
+        for (int i = 0; i < groupFurniture.size(); i++) {
+          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+          this.groupFurnitureX [i] = groupPiece.getX();
+          this.groupFurnitureY [i] = groupPiece.getY();
+          this.groupFurnitureWidth [i] = groupPiece.getWidth();
+          this.groupFurnitureDepth [i] = groupPiece.getDepth();
+        }
+      } else {
+        this.groupFurnitureX = null;
+        this.groupFurnitureY = null;
+        this.groupFurnitureWidth = null;
+        this.groupFurnitureDepth = null;
+      }
+    }
+
+    public HomePieceOfFurniture getPieceOfFurniture() {
+      return this.piece;
+    }
+    
+    public float getWidth() {
+      return this.width;
+    }
+    
+    public float getDepth() {
+      return this.depth;
+    }
+    
+    public boolean isDoorOrWindowBoundToWall() {
+      return this.doorOrWindowBoundToWall;
+    }
+    
+    public void reset() {
+      this.piece.setX(this.x);
+      this.piece.setY(this.y);
+      this.piece.setWidth(this.width);
+      this.piece.setDepth(this.depth);
+      if (this.piece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)this.piece).setBoundToWall(this.doorOrWindowBoundToWall);
+      }
+      if (this.piece instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)this.piece);
+        for (int i = 0; i < groupFurniture.size(); i++) {
+          HomePieceOfFurniture groupPiece = groupFurniture.get(i);
+          if (this.piece.isResizable()) {
+            // Restore group furniture location and size because resizing a group isn't reversible 
+            groupPiece.setX(this.groupFurnitureX [i]);
+            groupPiece.setY(this.groupFurnitureY [i]);
+            groupPiece.setWidth(this.groupFurnitureWidth [i]);
+            groupPiece.setDepth(this.groupFurnitureDepth [i]);
+          }
+        }
+      }
+    }
+    
+    /**
+     * Returns all the children of the given <code>furnitureGroup</code>.  
+     */
+    private List<HomePieceOfFurniture> getGroupFurniture(HomeFurnitureGroup furnitureGroup) {
+      List<HomePieceOfFurniture> pieces = new ArrayList<HomePieceOfFurniture>();
+      for (HomePieceOfFurniture piece : furnitureGroup.getFurniture()) {
+        pieces.add(piece);
+        if (piece instanceof HomeFurnitureGroup) {
+          pieces.addAll(getGroupFurniture((HomeFurnitureGroup)piece));
+        } 
+      }
+      return pieces;
+    }
   }
 
   /**
@@ -5804,18 +5899,13 @@ public class PlanController extends FurnitureController implements Controller {
    * Furniture resize state. This states manages the resizing of a piece of furniture.
    */
   private class PieceOfFurnitureResizeState extends ControllerState {
-    private boolean              magnetismEnabled;
-    private float                deltaXToResizePoint;
-    private float                deltaYToResizePoint;
-    private HomePieceOfFurniture selectedPiece;
-    private float []             topLeftPoint;
-    private float                oldX;
-    private float                oldY;
-    private float                oldWidth;
-    private float                oldDepth;
-    private boolean              doorOrWindowBoundToWall;
-    private String               widthResizeToolTipFeedback;
-    private String               depthResizeToolTipFeedback;
+    private boolean                 magnetismEnabled;
+    private float                   deltaXToResizePoint;
+    private float                   deltaYToResizePoint;
+    private ResizedPieceOfFurniture resizedPiece;
+    private float []                topLeftPoint;
+    private String                  widthResizeToolTipFeedback;
+    private String                  depthResizeToolTipFeedback;
 
     @Override
     public Mode getMode() {
@@ -5833,22 +5923,18 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "widthResizeToolTipFeedback");
       this.depthResizeToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "depthResizeToolTipFeedback");
-      this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
-      float [] resizePoint = this.selectedPiece.getPoints() [2];
+      HomePieceOfFurniture selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
+      this.resizedPiece = new ResizedPieceOfFurniture(selectedPiece);
+      float [][] resizedPiecePoints = selectedPiece.getPoints();
+      float [] resizePoint = resizedPiecePoints [2];
       this.deltaXToResizePoint = getXLastMousePress() - resizePoint [0];
       this.deltaYToResizePoint = getYLastMousePress() - resizePoint [1];
-      this.oldX = this.selectedPiece.getX();
-      this.oldY = this.selectedPiece.getY();
-      this.oldWidth = this.selectedPiece.getWidth();
-      this.oldDepth = this.selectedPiece.getDepth();
-      this.topLeftPoint = this.selectedPiece.getPoints() [0];
+      this.topLeftPoint = resizedPiecePoints [0];
       this.magnetismEnabled = preferences.isMagnetismEnabled()
-                              ^ wasShiftDownLastMousePress();
-      this.doorOrWindowBoundToWall = this.selectedPiece instanceof HomeDoorOrWindow 
-          && ((HomeDoorOrWindow)this.selectedPiece).isBoundToWall();
+                              ^ wasShiftDownLastMousePress();      
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
-      planView.setToolTipFeedback(getToolTipFeedbackText(this.oldWidth, this.oldDepth), 
+      planView.setToolTipFeedback(getToolTipFeedbackText(selectedPiece.getWidth(), selectedPiece.getDepth()), 
           getXLastMousePress(), getYLastMousePress());
     }
     
@@ -5857,7 +5943,8 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute the new location and dimension of the piece to let 
       // its bottom right point be at mouse location
       PlanView planView = getView();
-      float angle = this.selectedPiece.getAngle();
+      HomePieceOfFurniture selectedPiece = this.resizedPiece.getPieceOfFurniture();
+      float angle = selectedPiece.getAngle();
       double cos = Math.cos(angle); 
       double sin = Math.sin(angle); 
       float deltaX = x - this.deltaXToResizePoint - this.topLeftPoint [0];
@@ -5869,7 +5956,7 @@ public class PlanController extends FurnitureController implements Controller {
       newWidth = Math.max(newWidth, preferences.getLengthUnit().getMinimumLength());
       
       float newDepth;
-      if (!this.doorOrWindowBoundToWall
+      if (!this.resizedPiece.isDoorOrWindowBoundToWall()
           || !this.magnetismEnabled) {
         // Update piece depth if it's not a door a window 
         // or if it's a a door a window unbound to a wall when magnetism is enabled
@@ -5879,20 +5966,20 @@ public class PlanController extends FurnitureController implements Controller {
         }
         newDepth = Math.max(newDepth, preferences.getLengthUnit().getMinimumLength());
       } else {
-        newDepth = this.oldDepth;
+        newDepth = this.resizedPiece.getDepth();
       }
 
       // Update piece new location
       float newX = (float)(this.topLeftPoint [0] + (newWidth * cos - newDepth * sin) / 2f);
       float newY = (float)(this.topLeftPoint [1] + (newWidth * sin + newDepth * cos) / 2f);
-      this.selectedPiece.setX(newX);
-      this.selectedPiece.setY(newY);
+      selectedPiece.setX(newX);
+      selectedPiece.setY(newY);
       // Update piece size
-      this.selectedPiece.setDepth(newDepth);
-      this.selectedPiece.setWidth(newWidth);
-      if (this.doorOrWindowBoundToWall) {
+      selectedPiece.setDepth(newDepth);
+      selectedPiece.setWidth(newWidth);
+      if (this.resizedPiece.isDoorOrWindowBoundToWall()) {
         // Maintain boundToWall flag
-        ((HomeDoorOrWindow)this.selectedPiece).setBoundToWall(this.magnetismEnabled);
+        ((HomeDoorOrWindow)selectedPiece).setBoundToWall(this.magnetismEnabled);
       }
 
       // Ensure point at (x,y) is visible
@@ -5902,8 +5989,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureWidthAndDepthResize(this.selectedPiece, this.oldX, this.oldY, 
-          this.oldWidth, this.oldDepth, this.doorOrWindowBoundToWall);
+      postPieceOfFurnitureWidthAndDepthResize(this.resizedPiece);
       setState(getSelectionState());
     }
 
@@ -5918,13 +6004,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      this.selectedPiece.setX(this.oldX);
-      this.selectedPiece.setY(this.oldY);
-      this.selectedPiece.setWidth(this.oldWidth);
-      this.selectedPiece.setDepth(this.oldDepth);
-      if (this.selectedPiece instanceof HomeDoorOrWindow) {
-        ((HomeDoorOrWindow)this.selectedPiece).setBoundToWall(this.doorOrWindowBoundToWall);
-      }
+      this.resizedPiece.reset();
       setState(getSelectionState());
     }
 
@@ -5933,14 +6013,14 @@ public class PlanController extends FurnitureController implements Controller {
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(false);
       planView.deleteFeedback();
-      this.selectedPiece = null;
+      this.resizedPiece = null;
     }  
     
     private String getToolTipFeedbackText(float width, float depth) {
       String toolTipFeedbackText = "<html>" + String.format(this.widthResizeToolTipFeedback,  
           preferences.getLengthUnit().getFormatWithUnit().format(width));
-      if (!(this.selectedPiece instanceof HomeDoorOrWindow) 
-          || !((HomeDoorOrWindow)this.selectedPiece).isBoundToWall()) {
+      if (!(this.resizedPiece.getPieceOfFurniture() instanceof HomeDoorOrWindow) 
+          || !((HomeDoorOrWindow)this.resizedPiece.getPieceOfFurniture()).isBoundToWall()) {
         toolTipFeedbackText += "<br>" + String.format(this.depthResizeToolTipFeedback,
             preferences.getLengthUnit().getFormatWithUnit().format(depth));
       }
