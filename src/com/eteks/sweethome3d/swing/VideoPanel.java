@@ -1083,7 +1083,10 @@ public class VideoPanel extends JPanel implements DialogView {
         new JPEGImagesToVideo().createVideoFile(width, height, frameRate, sourceStream, file);
       }
     } catch (InterruptedIOException ex) {
-      file = null;
+      if (file != null) {
+        file.delete();
+        file = null;
+      }
     } catch (IOException ex) {
       showError("createVideoError.message", ex.getMessage());
       file = null;
@@ -1137,7 +1140,7 @@ public class VideoPanel extends JPanel implements DialogView {
    */
   private void stopVideoCreation() {
     if (this.videoCreationExecutor != null) {
-      // Will interrupt executor thread
+      // Interrupt executor thread
       this.videoCreationExecutor.shutdownNow();
       this.videoCreationExecutor = null;
     }
