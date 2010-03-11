@@ -2454,6 +2454,23 @@ public class HomePane extends JRootPane implements HomeView {
   }
 
   /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing language library or not. 
+   */
+  public boolean confirmReplaceLanguageLibrary(String languageLibraryName) {
+    // Retrieve displayed text in buttons and message
+    String message = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.message", 
+        new File(languageLibraryName).getName());
+    String title = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.title");
+    String replace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.replace");
+    String doNotReplace = this.preferences.getLocalizedString(HomePane.class, "confirmReplaceLanguageLibrary.doNotReplace");
+        
+    return JOptionPane.showOptionDialog(this, 
+        message, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+        null, new Object [] {replace, doNotReplace}, doNotReplace) == JOptionPane.OK_OPTION;
+  }
+  
+  /**
    * Displays a content chooser open dialog to choose a furniture library.
    */
   public String showImportFurnitureLibraryDialog() {

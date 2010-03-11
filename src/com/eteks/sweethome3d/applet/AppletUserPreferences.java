@@ -405,6 +405,22 @@ public class AppletUserPreferences extends UserPreferences {
   }
 
   /**
+   * Throws an exception because applet user preferences can't manage language libraries.
+   */
+  @Override
+  public void addLanguageLibrary(String languageLibraryName) throws RecorderException {
+    throw new RecorderException("No language libraries");
+  }
+
+  /**
+   * Throws an exception because applet user preferences can't manage additional language libraries.
+   */
+  @Override
+  public boolean languageLibraryExists(String languageLibraryName) throws RecorderException {
+    throw new RecorderException("No language libraries");
+  }
+
+  /**
    * Throws an exception because applet user preferences can't manage furniture libraries.
    */
   @Override

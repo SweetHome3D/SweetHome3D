@@ -102,6 +102,16 @@ public final class ViewerHelper {
     // Create default user preferences with no catalog
     final UserPreferences preferences = new UserPreferences() {
         @Override
+        public void addLanguageLibrary(String languageLibraryName) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+  
+        @Override
+        public boolean languageLibraryExists(String languageLibraryName) throws RecorderException {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void addFurnitureLibrary(String furnitureLibraryName) throws RecorderException {
           throw new UnsupportedOperationException();
         }

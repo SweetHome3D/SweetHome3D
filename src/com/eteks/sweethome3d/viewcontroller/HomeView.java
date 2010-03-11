@@ -100,6 +100,12 @@ public interface HomeView extends View {
   public abstract String showOpenDialog();
 
   /**
+   * Displays a dialog that lets user choose whether he wants to overwrite
+   * an existing language library or not. 
+   */
+  public abstract boolean confirmReplaceLanguageLibrary(String languageLibraryName);
+
+  /**
    * Displays a content chooser open dialog to choose a furniture library.
    */
   public abstract String showImportFurnitureLibraryDialog();

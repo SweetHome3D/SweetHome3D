@@ -520,6 +520,15 @@ public class SweetHome3D extends HomeApplication {
       if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.SWEET_HOME_3D)) {
         // Read home file in args [1] if args [0] == "-open" with a dummy controller
         createHomeFrameController(createHome()).getHomeController().open(args [1]);
+      } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.LANGUAGE_LIBRARY)) {
+        run(new String [0]);
+        final String languageLibraryName = args [1];
+        EventQueue.invokeLater(new Runnable() {
+            public void run() {
+              // Import language library with a dummy controller 
+              createHomeFrameController(createHome()).getHomeController().importLanguageLibrary(languageLibraryName);
+            }
+          });
       } else if (getContentManager().isAcceptable(args [1], ContentManager.ContentType.FURNITURE_LIBRARY)) {
         run(new String [0]);
         final String furnitureLibraryName = args [1];

@@ -81,6 +81,22 @@ public class DefaultUserPreferences extends UserPreferences {
   }
 
   /**
+   * Throws an exception because default user preferences can't manage language libraries.
+   */
+  @Override
+  public boolean languageLibraryExists(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage language libraries");
+  }
+
+  /**
+   * Throws an exception because default user preferences can't manage additional language libraries.
+   */
+  @Override
+  public void addLanguageLibrary(String name) throws RecorderException {
+    throw new RecorderException("Default user preferences can't manage language libraries");
+  }
+  
+  /**
    * Throws an exception because default user preferences can't manage furniture libraries.
    */
   @Override

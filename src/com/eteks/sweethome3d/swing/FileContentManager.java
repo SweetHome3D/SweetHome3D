@@ -228,6 +228,7 @@ public class FileContentManager implements ContentManager {
   
   private final UserPreferences           preferences;
   private final String                    sweetHome3DFileExtension;
+  private final String                    languageLibraryFileExtension;
   private final String                    furnitureLibraryFileExtension;
   private final String                    texturesLibraryFileExtension;
   private final String                    pluginFileExtension;
@@ -238,6 +239,7 @@ public class FileContentManager implements ContentManager {
   public FileContentManager(final UserPreferences preferences) {  
     this.preferences = preferences;
     this.sweetHome3DFileExtension = preferences.getLocalizedString(FileContentManager.class, "homeExtension");
+    this.languageLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "languageLibraryExtension");
     this.furnitureLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "furnitureLibraryExtension");
     this.texturesLibraryFileExtension = preferences.getLocalizedString(FileContentManager.class, "texturesLibraryExtension");
     this.pluginFileExtension = preferences.getLocalizedString(FileContentManager.class, "pluginExtension");
@@ -263,6 +265,21 @@ public class FileContentManager implements ContentManager {
           @Override
           public String getDescription() {
             return preferences.getLocalizedString(FileContentManager.class, "homeDescription");
+          }
+        }
+      });
+    this.fileFilters.put(ContentType.LANGUAGE_LIBRARY, new FileFilter [] {
+        new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            // Accept directories and .sh3f files
+            return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(languageLibraryFileExtension);
+          }
+         
+          @Override
+          public String getDescription() {
+            return preferences.getLocalizedString(FileContentManager.class, "languageLibraryDescription");
           }
         }
       });
@@ -315,7 +332,9 @@ public class FileContentManager implements ContentManager {
     // Fill file default extension map
     this.defaultFileExtensions = new HashMap<ContentType, String>();
     this.defaultFileExtensions.put(ContentType.SWEET_HOME_3D, sweetHome3DFileExtension);
+    this.defaultFileExtensions.put(ContentType.LANGUAGE_LIBRARY, languageLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.FURNITURE_LIBRARY, furnitureLibraryFileExtension);
+    this.defaultFileExtensions.put(ContentType.TEXTURES_LIBRARY, texturesLibraryFileExtension);
     this.defaultFileExtensions.put(ContentType.PLUGIN, pluginFileExtension);
     this.defaultFileExtensions.put(ContentType.PNG, PNG_EXTENSION);
     this.defaultFileExtensions.put(ContentType.MOV, MOV_EXTENSION);

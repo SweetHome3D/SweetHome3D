@@ -55,13 +55,37 @@
 		</dict>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.eteks.sweethome3d.SweetHome3DFurnitureCatalog</string>
+			<string>com.eteks.sweethome3d.SweetHome3DLanguageLibrary</string>
 			<key>UTTypeReferenceURL</key>
 	 		<string>http://www.sweethome3d.eu/</string>
 			<key>UTTypeDescription</key>
-			<string>Sweet Home 3D Furniture Catalog</string>
+			<string>Sweet Home 3D Language Library</string>
 			<key>UTTypeIconFile</key>
-			<string>SweetHome3DFurnitureCatalog.icns</string>
+			<string>SweetHome3DLanguageLibrary.icns</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>com.apple.ostype</key>
+				<string>SH3L</string>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sh3l</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.eteks.sweethome3d.SweetHome3DFurnitureLibrary</string>
+			<key>UTTypeReferenceURL</key>
+	 		<string>http://www.sweethome3d.eu/</string>
+			<key>UTTypeDescription</key>
+			<string>Sweet Home 3D Furniture Library</string>
+			<key>UTTypeIconFile</key>
+			<string>SweetHome3DFurnitureLibrary.icns</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -79,13 +103,13 @@
 		</dict>
 		<dict>
 			<key>UTTypeIdentifier</key>
-			<string>com.eteks.sweethome3d.SweetHome3DPlugin</string>
+			<string>com.eteks.sweethome3d.SweetHome3DTexturesLibrary</string>
 			<key>UTTypeReferenceURL</key>
 	 		<string>http://www.sweethome3d.eu/</string>
 			<key>UTTypeDescription</key>
-			<string>Sweet Home 3D Textures Catalog</string>
+			<string>Sweet Home 3D Textures Library</string>
 			<key>UTTypeIconFile</key>
-			<string>SweetHome3DPlugin.icns</string>
+			<string>SweetHome3DTexturesLibrary.icns</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -143,12 +167,36 @@
 		<dict>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>com.eteks.sweethome3d.SweetHome3DFurnitureCatalog</string>
+				<string>com.eteks.sweethome3d.SweetHome3DLanguageLibrary</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string>SweetHome3DFurnitureCatalog.icns</string>
+			<string>SweetHome3DLanguageLibrary.icns</string>
 			<key>CFBundleTypeName</key>
-			<string>Sweet Home 3D Furniture Catalog Format</string>
+			<string>Sweet Home 3D Language Library Format</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.eteks.sweethome3d.SweetHome3DFurnitureLibrary</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>SweetHome3DFurnitureLibrary.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Sweet Home 3D Furniture Library Format</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+		</dict>
+		<dict>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.eteks.sweethome3d.SweetHome3DTexturesLibrary</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>SweetHome3DTexturesLibrary.icns</string>
+			<key>CFBundleTypeName</key>
+			<string>Sweet Home 3D Furniture Textures Format</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 		</dict>

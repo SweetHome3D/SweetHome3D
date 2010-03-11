@@ -28,6 +28,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.LightSource;
 import com.eteks.sweethome3d.model.Sash;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -246,39 +248,32 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
    * furniture plugin folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
    */
   public DefaultFurnitureCatalog(File furniturePluginFolder) {
+    this(null, furniturePluginFolder);
+  }
+  
+  /**
+   * Creates a default furniture catalog read from resources and   
+   * furniture plugin folder if <code>furniturePluginFolder</code> isn't <code>null</code>.
+   */
+  public DefaultFurnitureCatalog(final UserPreferences preferences, 
+                                 File furniturePluginFolder) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
         new HashMap<FurnitureCategory, Map<CatalogPieceOfFurniture,Integer>>();
     List<String> identifiedFurniture = new ArrayList<String>();
     
-    ResourceBundle resource;
-    try {
-      // Try to load DefaultFurnitureCatalog property file from classpath 
-      resource = ResourceBundle.getBundle(DefaultFurnitureCatalog.class.getName());
-    } catch (MissingResourceException ex) {
-      // Ignore furniture catalog
-      resource = null;
-    }
-    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
+    // Try to load com.eteks.sweethome3d.io.DefaultFurnitureCatalog property file from classpath 
+    final String defaultFurnitureCatalogFamily = DefaultFurnitureCatalog.class.getName();
+    readFurnitureCatalog(defaultFurnitureCatalogFamily, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
     
-    String classPackage = DefaultFurnitureCatalog.class.getName();
-    classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
-    try {
-      // Try to load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
-      resource = ResourceBundle.getBundle(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY);
-    } catch (MissingResourceException ex) {
-      // Ignore contributed furniture catalog
-      resource = null;
-    }
-    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
+    // Try to load com.eteks.sweethome3d.io.ContributedFurnitureCatalog property file from classpath 
+    String classPackage = defaultFurnitureCatalogFamily.substring(0, defaultFurnitureCatalogFamily.lastIndexOf("."));
+    readFurnitureCatalog(classPackage + "." + CONTRIBUTED_FURNITURE_CATALOG_FAMILY, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
     
-    try {
-      // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
-      resource = ResourceBundle.getBundle(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY);
-    } catch (MissingResourceException ex) {
-      // Ignore additional furniture catalog
-      resource = null;
-    }
-    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
+    // Try to load com.eteks.sweethome3d.io.AdditionalFurnitureCatalog property file from classpath
+    readFurnitureCatalog(classPackage + "." + ADDITIONAL_FURNITURE_CATALOG_FAMILY, 
+        preferences, furnitureHomonymsCounter, identifiedFurniture);
     
     if (furniturePluginFolder != null) {
       // Try to load sh3f files from furniture plugin folder
@@ -312,7 +307,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
-   * Creates a default furniture catalog read from resources in the given URLs.
+   * Creates a default furniture catalog read only from resources in the given URLs.
    */
   public DefaultFurnitureCatalog(URL [] pluginFurnitureCatalogUrls) {
     Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter = 
@@ -334,6 +329,43 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
   }
   
   /**
+   * Reads furniture of a given catalog family from resources.
+   */
+  private void readFurnitureCatalog(final String furnitureCatalogFamily,
+                                    final UserPreferences preferences,
+                                    Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
+                                    List<String> identifiedFurniture) {
+    ResourceBundle resource;
+    if (preferences != null) {
+      // Adapt getLocalizedString to ResourceBundle
+      resource = new ResourceBundle() {
+          @Override
+          protected Object handleGetObject(String key) {
+            try {
+              return preferences.getLocalizedString(furnitureCatalogFamily, key);
+            } catch (IllegalArgumentException ex) {
+              throw new MissingResourceException("Unknown key " + key, 
+                  furnitureCatalogFamily + "_" + Locale.getDefault(), key);
+            }
+          }
+          
+          @Override
+          public Enumeration<String> getKeys() {
+            // Not needed
+            throw new UnsupportedOperationException();
+          }
+        };
+    } else {
+      try {
+        resource = ResourceBundle.getBundle(furnitureCatalogFamily);
+      } catch (MissingResourceException ex) {
+        return;
+      }
+    }
+    readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
+  }
+  
+  /**
    * Reads each piece of furniture described in <code>resource</code> bundle.
    * Resources described in piece properties will be loaded from <code>furnitureUrl</code> 
    * if it isn't <code>null</code>. 
@@ -342,23 +374,21 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
                              URL furnitureCatalogUrl,
                              Map<FurnitureCategory, Map<CatalogPieceOfFurniture, Integer>> furnitureHomonymsCounter,
                              List<String> identifiedFurniture) {
-    if (resource != null) {
-      CatalogPieceOfFurniture piece;
-      for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl)) != null; i++) {
-        if (piece.getId() != null) {
-          // Take into account only furniture that have an ID
-          if (identifiedFurniture.contains(piece.getId())) {
-            continue;
-          } else {
-            // Add id to identifiedFurniture to be sure that two pieces with a same ID
-            // won't be added twice to furniture catalog (in case they are cited twice
-            // in different furniture properties files)
-            identifiedFurniture.add(piece.getId());
-          }
+    CatalogPieceOfFurniture piece;
+    for (int i = 1; (piece = readPieceOfFurniture(resource, i, furnitureCatalogUrl)) != null; i++) {
+      if (piece.getId() != null) {
+        // Take into account only furniture that have an ID
+        if (identifiedFurniture.contains(piece.getId())) {
+          continue;
+        } else {
+          // Add id to identifiedFurniture to be sure that two pieces with a same ID
+          // won't be added twice to furniture catalog (in case they are cited twice
+          // in different furniture properties files)
+          identifiedFurniture.add(piece.getId());
         }
-        FurnitureCategory pieceCategory = readFurnitureCategory(resource, i);
-        add(pieceCategory, piece, furnitureHomonymsCounter);
       }
+      FurnitureCategory pieceCategory = readFurnitureCategory(resource, i);
+      add(pieceCategory, piece, furnitureHomonymsCounter);
     }
   }
 

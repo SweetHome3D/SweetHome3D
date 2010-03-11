@@ -24,6 +24,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -49,6 +50,8 @@ public abstract class UserPreferences {
                         FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE}
   
   private static final String [] SUPPORTED_LANGUAGES; 
+  private static final List<ClassLoader> DEFAULT_CLASS_LOADER = 
+      Arrays.asList(new ClassLoader [] {UserPreferences.class.getClassLoader()});
 
   private static final TextStyle DEFAULT_TEXT_STYLE = new TextStyle(18f);
   private static final TextStyle DEFAULT_ROOM_TEXT_STYLE = new TextStyle(24f);
@@ -237,7 +240,7 @@ public abstract class UserPreferences {
    * Returns the array of available languages in Sweet Home 3D.
    */
   public String [] getSupportedLanguages() {
-    return SUPPORTED_LANGUAGES;
+    return SUPPORTED_LANGUAGES.clone();
   }
 
   /**
@@ -248,7 +251,7 @@ public abstract class UserPreferences {
    * This implementation searches first the key in a properties file named as 
    * <code>resourceClass</code>, then if this file doesn't exist, it searches 
    * the key prefixed by <code>resourceClass</code> name and a dot in a package.properties file 
-   * in the directory matching the package of <code>resourceClass</code>, 
+   * in the directory matching the package of <code>resourceClass</code>. 
    * @exception IllegalArgumentException if no string for the given key can be found
    */
   public String getLocalizedString(Class<?> resourceClass,
@@ -263,13 +266,13 @@ public abstract class UserPreferences {
         try {
           String className = resourceClass.getName();
           int lastIndex = className.lastIndexOf(".");
-          String familyName;
+          String resourceFamily;
           if (lastIndex != -1) {
-            familyName = className.substring(0, lastIndex) + ".package";
+            resourceFamily = className.substring(0, lastIndex) + ".package";
           } else {
-            familyName = "package";
+            resourceFamily = "package";
           }
-          classResourceBundle = new PrefixedResourceBundle(getResourceBundle(familyName), 
+          classResourceBundle = new PrefixedResourceBundle(getResourceBundle(resourceFamily), 
               resourceClass.getSimpleName() + ".");
           this.classResourceBundles.put(resourceClass, classResourceBundle);
         } catch (IOException ex2) {
@@ -279,79 +282,130 @@ public abstract class UserPreferences {
       }
     } 
 
-    try {
-      String localizedString = classResourceBundle.getString(resourceKey);
-      if (resourceParameters.length > 0) {
-        localizedString = String.format(localizedString, resourceParameters);
-      }
-      
-      return localizedString;
-    } catch (MissingResourceException ex) {
-      throw new IllegalArgumentException("Unknown key " + resourceKey);
-    }
+    return getLocalizedString(classResourceBundle, resourceKey, resourceParameters);
   }
   
+  /**
+   * Returns the string matching <code>resourceKey</code> in current language 
+   * for the given resource family.
+   * <code>resourceFamily</code> should match the absolute path of a .properties resource family,
+   * shouldn't start by a slash and may contain dots '.' or slash '/' as directory separators. 
+   * If <code>resourceParameters</code> isn't empty the string is considered
+   * as a format string, and the returned string will be formatted with these parameters. 
+   * This implementation searches the key in a properties file named as 
+   * <code>resourceFamily</code>. 
+   * @exception IllegalArgumentException if no string for the given key can be found
+   * @since 2.3
+   */
+  public String getLocalizedString(String resourceFamily,
+                                   String resourceKey, 
+                                   Object ... resourceParameters) {
+    try {      
+      ResourceBundle resourceBundle = getResourceBundle(resourceFamily);
+      return getLocalizedString(resourceBundle, resourceKey, resourceParameters);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(
+          "Can't find resource bundle for " + resourceFamily, ex);
+    }
+  }
+
   /**
    * Returns a new resource bundle for the given <code>familyName</code> 
    * that matches current default locale. The search will be done
    * only among .properties files.
    * @throws IOException if no .properties file was found
    */
-  private ResourceBundle getResourceBundle(String familyName) throws IOException {
-    ResourceBundle localizedResourceBundle = this.resourceBundles.get(familyName);
+  private ResourceBundle getResourceBundle(String resourceFamily) throws IOException {
+    resourceFamily = resourceFamily.replace('.', '/');
+    ResourceBundle localizedResourceBundle = this.resourceBundles.get(resourceFamily);
     if (localizedResourceBundle != null) {
       return localizedResourceBundle;
     }
     Locale defaultLocale = Locale.getDefault();
     String language = defaultLocale.getLanguage();
     String country = defaultLocale.getCountry();
-    ClassLoader classLoader = getClass().getClassLoader();
-    familyName = familyName.replace('.', '/');
-    InputStream languageCountryProperties = 
-        classLoader.getResourceAsStream(familyName + "_" + language + "_" + country + ".properties");
-    InputStream languageProperties = 
-        classLoader.getResourceAsStream(familyName + "_" + language  + ".properties");
-    InputStream defaultProperties = 
-        classLoader.getResourceAsStream(familyName + ".properties");
     ReparentableResourceBundle childResourceBundle = null;
-    try {
+    // First search resource bundle for language + country
+    for (ClassLoader classLoader : getResourceClassLoaders()) {
+      InputStream languageCountryProperties = 
+          classLoader.getResourceAsStream(resourceFamily + "_" + language + "_" + country + ".properties");
       if (languageCountryProperties != null) {
-        localizedResourceBundle =
-        childResourceBundle = new ReparentableResourceBundle(languageCountryProperties);
-      }
-      if (languageProperties != null) {
-        ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(languageProperties);
-        if (childResourceBundle != null) {
-          childResourceBundle.setParent(resourceBundle);
-        } else {
-          localizedResourceBundle = resourceBundle;
+        try {
+          localizedResourceBundle =
+          childResourceBundle = new ReparentableResourceBundle(languageCountryProperties);
+          break;
+        } finally {
+          languageCountryProperties.close();
         }
-        childResourceBundle = resourceBundle;
-      }
-      if (defaultProperties != null) {
-        ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(defaultProperties);
-        if (childResourceBundle != null) {
-          childResourceBundle.setParent(resourceBundle);
-        } else {
-          localizedResourceBundle = resourceBundle;
-        }
-      }
-      if (localizedResourceBundle == null) {
-        throw new IOException("No available resource bundle for " + familyName);
-      } 
-      this.resourceBundles.put(familyName, localizedResourceBundle);
-      return localizedResourceBundle;
-    } finally {
-      if (languageCountryProperties != null) {
-        languageCountryProperties.close();
-      }
-      if (languageProperties != null) {
-        languageProperties.close();
-      }
-      if (defaultProperties != null) {
-        defaultProperties.close();
       }
     }
+    // Second search resource bundle for language
+    for (ClassLoader classLoader : getResourceClassLoaders()) {
+      InputStream languageProperties = 
+          classLoader.getResourceAsStream(resourceFamily + "_" + language  + ".properties");
+      if (languageProperties != null) {
+        try {
+          ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(languageProperties);
+          if (childResourceBundle != null) {
+            childResourceBundle.setParent(resourceBundle);
+          } else {
+            localizedResourceBundle = resourceBundle;
+          }
+          childResourceBundle = resourceBundle;
+          break;
+        } finally {
+          languageProperties.close();
+        }
+      }
+    }
+    // Last search resource bundle for default language 
+    for (ClassLoader classLoader : getResourceClassLoaders()) {
+      InputStream defaultProperties = classLoader.getResourceAsStream(resourceFamily + ".properties");
+      if (defaultProperties != null) {
+        try {
+          ReparentableResourceBundle resourceBundle = new ReparentableResourceBundle(defaultProperties);
+          if (childResourceBundle != null) {
+            childResourceBundle.setParent(resourceBundle);
+          } else {
+            localizedResourceBundle = resourceBundle;
+          }
+          break;
+        } finally {
+          defaultProperties.close();
+        }
+      }
+    }
+    if (localizedResourceBundle == null) {
+      throw new IOException("No available resource bundle for " + resourceFamily);
+    }
+    this.resourceBundles.put(resourceFamily, localizedResourceBundle);
+    return localizedResourceBundle;
+  }
+
+  /**
+   * Returns the string matching <code>resourceKey</code> for the given resource bundle.
+   */
+  private String getLocalizedString(ResourceBundle resourceBundle, 
+                                    String         resourceKey, 
+                                    Object...      resourceParameters) {
+    try {
+      String localizedString = resourceBundle.getString(resourceKey);
+      if (resourceParameters.length > 0) {
+        localizedString = String.format(localizedString, resourceParameters);
+      }      
+      return localizedString;
+    } catch (MissingResourceException ex) {
+      throw new IllegalArgumentException("Unknown key " + resourceKey);
+    }
+  }
+
+  /**
+   * Returns the class loaders through which localized strings returned by 
+   * {@link #getLocalizedString(Class, String, Object...) getLocalizedString} might be loaded.
+   * @since 2.3
+   */
+  protected List<ClassLoader> getResourceClassLoaders() {
+    return DEFAULT_CLASS_LOADER;
   }
   
   /**
@@ -644,6 +698,21 @@ public abstract class UserPreferences {
   }
 
   /**
+   * Adds <code>languageLibraryName</code> to language catalog  
+   * to make the language library it contains available available to supported languages.
+   * @param languageLibraryName  the name of the resource in which the library will be written. 
+   * @since 2.3 
+   */
+  public abstract void addLanguageLibrary(String languageLibraryName) throws RecorderException;
+  
+  /**
+   * Returns <code>true</code> if the given language library exists.
+   * @param languageLibraryName the name of the resource to check
+   * @since 2.3 
+   */
+  public abstract boolean languageLibraryExists(String languageLibraryName) throws RecorderException;
+
+  /**
    * Adds <code>furnitureLibraryName</code> to furniture catalog  
    * to make the furniture library it contains available.
    * @param furnitureLibraryName  the name of the resource in which the library will be written. 
@@ -659,13 +728,15 @@ public abstract class UserPreferences {
   /**
    * Adds <code>texturesLibraryName</code> to textures catalog  
    * to make the textures library it contains available.
-   * @param texturesLibraryName  the name of the resource in which the library will be written. 
+   * @param texturesLibraryName  the name of the resource in which the library will be written.
+   * @since 2.3 
    */
   public abstract void addTexturesLibrary(String texturesLibraryName) throws RecorderException;
   
   /**
    * Returns <code>true</code> if the given textures library exists.
    * @param texturesLibraryName the name of the resource to check
+   * @since 2.3 
    */
   public abstract boolean texturesLibraryExists(String texturesLibraryName) throws RecorderException;
 

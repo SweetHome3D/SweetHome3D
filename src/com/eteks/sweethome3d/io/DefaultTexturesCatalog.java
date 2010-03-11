@@ -27,6 +27,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -39,6 +40,7 @@ import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.IllegalHomonymException;
 import com.eteks.sweethome3d.model.TexturesCatalog;
 import com.eteks.sweethome3d.model.TexturesCategory;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.tools.URLContent;
 
@@ -116,19 +118,49 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
    * textures plugin folder if <code>texturesPluginFolder</code> isn't <code>null</code>.
    */
   public DefaultTexturesCatalog(File texturesPluginFolder) {
+    this(null, texturesPluginFolder);
+  }
+  
+  /**
+   * Creates a default textures catalog read from resources and   
+   * textures plugin folder if <code>texturesPluginFolder</code> isn't <code>null</code>.
+   */
+  public DefaultTexturesCatalog(final UserPreferences preferences, 
+                                File texturesPluginFolder) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
         new HashMap<TexturesCategory, Map<CatalogTexture,Integer>>();
     List<String> identifiedTextures = new ArrayList<String>();
     
-    ResourceBundle resource;
-    try {
-      // Try to load DefaultTexturesCatalog property file from classpath 
-      resource = ResourceBundle.getBundle(DefaultTexturesCatalog.class.getName());
-    } catch (MissingResourceException ex) {
-      // Ignore texture catalog
-      resource = null;
+    // Try to load com.eteks.sweethome3d.io.DefaultTexturesCatalog property file from classpath 
+    final String defaultTexturesCatalogFamily = DefaultTexturesCatalog.class.getName();
+    if (preferences != null) {
+      // Adapt getLocalizedString to ResourceBundle
+      ResourceBundle resource = new ResourceBundle() {
+          @Override
+          protected Object handleGetObject(String key) {
+            try {
+              return preferences.getLocalizedString(defaultTexturesCatalogFamily, key);
+            } catch (IllegalArgumentException ex) {
+              throw new MissingResourceException("Unknown key " + key, 
+                  defaultTexturesCatalogFamily + "_" + Locale.getDefault(), key);
+            }
+          }
+          
+          @Override
+          public Enumeration<String> getKeys() {
+            // Not needed
+            throw new UnsupportedOperationException();
+          }
+        };
+      readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
+    } else {
+      try {
+        ResourceBundle resource = ResourceBundle.getBundle(defaultTexturesCatalogFamily);
+        readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
+      } catch (MissingResourceException ex) {
+        // Ignore texture catalog
+      }
     }
-    readTextures(resource, null, textureHomonymsCounter, identifiedTextures);
     
     if (texturesPluginFolder != null) {
       // Try to load sh3t files from textures plugin folder
@@ -162,7 +194,7 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
   }
   
   /**
-   * Creates a default textures catalog read from resources in the given URLs.
+   * Creates a default textures catalog read only from resources in the given URLs.
    */
   public DefaultTexturesCatalog(URL [] pluginTexturesCatalogUrls) {
     Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter = 
@@ -192,37 +224,35 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
                             URL texturesUrl,
                             Map<TexturesCategory, Map<CatalogTexture, Integer>> textureHomonymsCounter,
                             List<String> identifiedTextures) {
-    if (resource != null) {
-      for (int index = 1;; index++) {
-        String name = null;
-        try {
-          name = resource.getString(PropertyKey.NAME.getKey(index));
-        } catch (MissingResourceException ex) {
-          // Stop the loop when a key name# doesn't exist
-          break;
-        }
-        String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
-        Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), texturesUrl);
-        float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
-        float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
-        String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
-        String id = getOptionalString(resource, PropertyKey.ID.getKey(index));
-
-        CatalogTexture texture = new CatalogTexture(id, name, image, width, height, creator);
-        if (texture.getId() != null) {
-          // Take into account only texture that have an ID
-          if (identifiedTextures.contains(texture.getId())) {
-            continue;
-          } else {
-            // Add id to identifiedTextures to be sure that two textures with a same ID
-            // won't be added twice to texture catalog (in case they are cited twice
-            // in different texture properties files)
-            identifiedTextures.add(texture.getId());
-          }
-        }
-
-        add(new TexturesCategory(category), texture, textureHomonymsCounter);
+    for (int index = 1;; index++) {
+      String name = null;
+      try {
+        name = resource.getString(PropertyKey.NAME.getKey(index));
+      } catch (MissingResourceException ex) {
+        // Stop the loop when a key name# doesn't exist
+        break;
       }
+      String category = resource.getString(PropertyKey.CATEGORY.getKey(index));
+      Content image  = getContent(resource, PropertyKey.IMAGE.getKey(index), texturesUrl);
+      float width = Float.parseFloat(resource.getString(PropertyKey.WIDTH.getKey(index)));
+      float height = Float.parseFloat(resource.getString(PropertyKey.HEIGHT.getKey(index)));
+      String creator = getOptionalString(resource, PropertyKey.CREATOR.getKey(index));
+      String id = getOptionalString(resource, PropertyKey.ID.getKey(index));
+
+      CatalogTexture texture = new CatalogTexture(id, name, image, width, height, creator);
+      if (texture.getId() != null) {
+        // Take into account only texture that have an ID
+        if (identifiedTextures.contains(texture.getId())) {
+          continue;
+        } else {
+          // Add id to identifiedTextures to be sure that two textures with a same ID
+          // won't be added twice to texture catalog (in case they are cited twice
+          // in different texture properties files)
+          identifiedTextures.add(texture.getId());
+        }
+      }
+
+      add(new TexturesCategory(category), texture, textureHomonymsCounter);
     }
   }
   

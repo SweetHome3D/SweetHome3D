@@ -139,6 +139,9 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
             }
             String displayedValue = locale.getDisplayLanguage(locale);
             displayedValue = Character.toUpperCase(displayedValue.charAt(0)) + displayedValue.substring(1);
+            if (underscoreIndex != -1) {
+              displayedValue += " - " + locale.getDisplayCountry(locale); 
+            }
             return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
                 cellHasFocus);
           }

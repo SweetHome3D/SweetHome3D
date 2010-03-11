@@ -920,6 +920,22 @@ public class HomeController implements Controller {
   }
   
   /**
+   * Imports a given language library. 
+   */
+  public void importLanguageLibrary(String languageLibraryName) {
+    try {
+      if (!this.preferences.languageLibraryExists(languageLibraryName) 
+          || getView().confirmReplaceLanguageLibrary(languageLibraryName)) {
+        this.preferences.addLanguageLibrary(languageLibraryName);
+      }
+    } catch (RecorderException ex) {
+      String message = this.preferences.getLocalizedString(HomeController.class, 
+          "importLanguageLibraryError", languageLibraryName);
+      getView().showError(message);
+    }
+  }
+
+  /**
    * Imports furniture to the catalog or home depending on the focused view.  
    */
   public void importFurniture() {
