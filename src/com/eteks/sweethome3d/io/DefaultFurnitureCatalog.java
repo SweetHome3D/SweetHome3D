@@ -281,7 +281,7 @@ public class DefaultFurnitureCatalog extends FurnitureCatalog {
     readFurniture(resource, null, furnitureHomonymsCounter, identifiedFurniture);
     
     if (furniturePluginFolder != null) {
-      // Try to load sh3f files from plugin furniture plugin folder
+      // Try to load sh3f files from furniture plugin folder
       File [] pluginFurnitureCatalogFiles = furniturePluginFolder.listFiles(new FileFilter () {
         public boolean accept(File pathname) {
           return pathname.isFile();
