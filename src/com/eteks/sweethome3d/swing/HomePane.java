@@ -1977,12 +1977,16 @@ public class HomePane extends JRootPane implements HomeView {
         JComponent oldFurnitureCatalogView = this.furnitureCatalogView.get();        
         JComponent newFurnitureCatalogView = (JComponent)homePane.controller.getFurnitureCatalogController().getView();
         newFurnitureCatalogView.setComponentPopupMenu(oldFurnitureCatalogView.getComponentPopupMenu());
-        newFurnitureCatalogView.setTransferHandler(oldFurnitureCatalogView.getTransferHandler());
+        TransferHandler transferHandler = oldFurnitureCatalogView.getTransferHandler();
+        newFurnitureCatalogView.setTransferHandler(transferHandler);
+        JComponent splitPaneTopComponent = newFurnitureCatalogView; 
         if (newFurnitureCatalogView instanceof Scrollable) {
-          newFurnitureCatalogView = new HomeScrollPane(newFurnitureCatalogView);
+          splitPaneTopComponent = new HomeScrollPane(newFurnitureCatalogView);
+        } else {
+          splitPaneTopComponent = newFurnitureCatalogView;
         }
         ((JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, oldFurnitureCatalogView)).
-            setTopComponent(newFurnitureCatalogView);
+            setTopComponent(splitPaneTopComponent);
         this.furnitureCatalogView = new WeakReference<JComponent>(newFurnitureCatalogView);
       }
     }
