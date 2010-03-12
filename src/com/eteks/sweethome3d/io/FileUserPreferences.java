@@ -172,6 +172,8 @@ public class FileUserPreferences extends UserPreferences {
     readTexturesCatalog(preferences);
 
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    // Share same language settings 
+    defaultPreferences.setLanguage(getLanguage());
     
     // Fill default patterns catalog 
     PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();
@@ -320,17 +322,12 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Returns the default class loader of user preferences and class loader that
+   * Returns the default class loader of user preferences and the class loaders that
    * give access to resources in language libraries plugin folder. 
    */
   @Override
   protected List<ClassLoader> getResourceClassLoaders() {
-    if (this.resourceClassLoaders == null) {
-      // Return default class loader if this method is called from super class constructor 
-      return super.getResourceClassLoaders();
-    } else {
-      return this.resourceClassLoaders;
-    }
+    return this.resourceClassLoaders;
   }
   
   /**

@@ -145,6 +145,7 @@ public class AppletUserPreferences extends UserPreferences {
     setTexturesCatalog(new DefaultTexturesCatalog(pluginTexturesCatalogURLs));   
  
     DefaultUserPreferences defaultPreferences = new DefaultUserPreferences();
+    defaultPreferences.setLanguage(getLanguage());
     
     // Fill default patterns catalog 
     PatternsCatalog patternsCatalog = defaultPreferences.getPatternsCatalog();

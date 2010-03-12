@@ -93,7 +93,7 @@ public abstract class UserPreferences {
     String defaultLanguage = Locale.getDefault().getLanguage();
     // Find closest language among supported languages in Sweet Home 3D
     // For example, use simplified Chinese even for Chinese users (zh_?) not from China (zh_CN)
-    // unless their exact locale is supported (as in Taiwan)
+    // unless their exact locale is supported as in Taiwan (zh_TW)
     for (String supportedLanguage : SUPPORTED_LANGUAGES) {
       if (supportedLanguage.equals(defaultLanguage + "_" + this.defaultCountry)) {
         this.language = supportedLanguage;
