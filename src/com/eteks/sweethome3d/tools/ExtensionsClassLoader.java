@@ -43,9 +43,9 @@ import java.util.jar.JarFile;
  */
 public class ExtensionsClassLoader extends ClassLoader {
   private final ProtectionDomain protectionDomain;
-  private final String [] applicationPackages;
+  private final String []        applicationPackages;
 
-  private final Map extensionDlls = new HashMap();
+  private final Map  extensionDlls = new HashMap();
   private JarFile [] extensionJars = null;
 
   /**
@@ -54,9 +54,9 @@ public class ExtensionsClassLoader extends ClassLoader {
    * and will load itself all the classes belonging to packages of <code>applicationPackages</code>.
    */
   public ExtensionsClassLoader(ClassLoader parent, 
-                                ProtectionDomain protectionDomain, 
-                                String [] extensionJarsAndDlls,
-                                String [] applicationPackages) {
+                               ProtectionDomain protectionDomain, 
+                               String [] extensionJarsAndDlls,
+                               String [] applicationPackages) {
     super(parent);
     this.protectionDomain = protectionDomain;
     this.applicationPackages = applicationPackages;
@@ -189,7 +189,7 @@ public class ExtensionsClassLoader extends ClassLoader {
   }
   
   /**
-   * Returns a the library path of an extension DLL.
+   * Returns the library path of an extension DLL.
    */
   protected String findLibrary(String libname) {
     return (String)this.extensionDlls.get(libname);
