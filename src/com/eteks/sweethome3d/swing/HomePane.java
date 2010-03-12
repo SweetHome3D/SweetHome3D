@@ -196,7 +196,7 @@ public class HomePane extends JRootPane implements HomeView {
   // the matching tool bar buttons
   private final JToggleButton.ToggleButtonModel viewFromTopToggleModel;
   private final JToggleButton.ToggleButtonModel viewFromObserverToggleModel;
-  private JComponent                            focusedComponent;
+  private JComponent                            lastFocusedComponent;
   private PlanController.Mode                   previousPlanControllerMode;
   private TransferHandler                       catalogTransferHandler;
   private TransferHandler                       furnitureTransferHandler;
@@ -517,7 +517,7 @@ public class HomePane extends JRootPane implements HomeView {
     getActionMap().put(actionType,
         new ResourceAction (preferences, HomePane.class, actionType.name()) {
           public void actionPerformed(ActionEvent ev) {
-            ev = new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, null);
+            ev = new ActionEvent(lastFocusedComponent, ActionEvent.ACTION_PERFORMED, null);
             clipboardAction.actionPerformed(ev);
           }
         });
@@ -684,12 +684,12 @@ public class HomePane extends JRootPane implements HomeView {
         } else if (SwingUtilities.isDescendingFrom(homePane, (Component)ev.getNewValue())) {
           this.focusChangeListener = new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent ev) {
-              if (homePane.focusedComponent != null) {
+              if (homePane.lastFocusedComponent != null) {
                 // Update component which lost focused 
-                JComponent lostFocusedComponent = homePane.focusedComponent;
+                JComponent lostFocusedComponent = homePane.lastFocusedComponent;
                 if (SwingUtilities.isDescendingFrom(lostFocusedComponent, SwingUtilities.getWindowAncestor(homePane))) {
                   lostFocusedComponent.removeKeyListener(homePane.specialKeysListener);
-
+                  // Restore previous plan mode if plan view had focus and window is deactivated
                   if (homePane.previousPlanControllerMode != null
                       && (lostFocusedComponent == homePane.controller.getPlanController().getView()
                           || ev.getNewValue() == null)) {
@@ -699,8 +699,6 @@ public class HomePane extends JRootPane implements HomeView {
                 }
               }
 
-              homePane.focusedComponent = null;
-              
               if (ev.getNewValue() != null) {
                 // Retrieve component which gained focused 
                 Component gainedFocusedComponent = (Component)ev.getNewValue(); 
@@ -719,7 +717,7 @@ public class HomePane extends JRootPane implements HomeView {
                       gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
                       
                       // Update the component used by clipboard actions
-                      homePane.focusedComponent = (JComponent)gainedFocusedComponent;
+                      homePane.lastFocusedComponent = (JComponent)gainedFocusedComponent;
                       break;
                     }
                   }
@@ -744,8 +742,8 @@ public class HomePane extends JRootPane implements HomeView {
             && getActionMap().get(ActionType.PAN).getValue(Action.NAME) != null 
             && planController.getMode() != PlanController.Mode.PANNING
             && !planController.isModificationState()
-            && SwingUtilities.isDescendingFrom(focusedComponent, HomePane.this)
-            && !isSpaceUsedByComponent(focusedComponent)) {
+            && SwingUtilities.isDescendingFrom(lastFocusedComponent, HomePane.this)
+            && !isSpaceUsedByComponent(lastFocusedComponent)) {
           previousPlanControllerMode = planController.getMode();
           planController.setMode(PlanController.Mode.PANNING);
           ev.consume();
