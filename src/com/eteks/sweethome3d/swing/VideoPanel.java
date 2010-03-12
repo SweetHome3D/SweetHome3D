@@ -26,6 +26,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Font;
@@ -1083,6 +1084,7 @@ public class VideoPanel extends JPanel implements DialogView {
     // Delete previous file if it exists 
     if (this.videoFile != null) {
       this.videoFile.delete();
+      this.videoFile = null;
     }
     File file = null;
     try {
@@ -1167,38 +1169,81 @@ public class VideoPanel extends JPanel implements DialogView {
    * Saves the created video.
    */
   private void saveVideo() {
-    String movFile = this.controller.getContentManager().showSaveDialog(this,
+    final String movFileName = this.controller.getContentManager().showSaveDialog(this,
         this.preferences.getLocalizedString(VideoPanel.class, "saveVideoDialog.title"), 
         ContentManager.ContentType.MOV, this.home.getName());
-    if (movFile != null) {
-      OutputStream out = null;
-      InputStream in = null;
-      try {
-        // Copy temporary file to home file
-        // Overwriting home file will ensure that its rights are kept
-        out = new FileOutputStream(movFile);
-        byte [] buffer = new byte [8192];
-        in = new FileInputStream(this.videoFile);          
-        int size; 
-        while ((size = in.read(buffer)) != -1) {
-          out.write(buffer, 0, size);
-        }
-        out.close();
-        out = null;
-      } catch (IOException ex) {
-        showError("saveVideoError.message", ex.getMessage());
-      } finally {
-        try {
-          if (out != null) {          
-            out.close();
-          }
-          if (in != null) {          
-            in.close();
-          }
-        } catch (IOException ex) {
-          // Forget exception
-        }
+    if (movFileName != null) {
+      final Component rootPane = SwingUtilities.getRoot(this);
+      final Cursor defaultCursor = rootPane.getCursor();
+      rootPane.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      
+      // Disable panel actions
+      ActionMap actionMap = getActionMap();
+      final boolean [] actionEnabledStates = new boolean [ActionType.values().length];
+      for (ActionType action : ActionType.values()) {
+        actionEnabledStates [action.ordinal()] = actionMap.get(action).isEnabled();        
+        actionMap.get(action).setEnabled(false);        
       }
+      Executors.newSingleThreadExecutor().execute(new Runnable() {
+          public void run() {
+            OutputStream out = null;
+            InputStream in = null;
+            IOException exception = null;
+            try {
+              // Copy temporary file to home file
+              // Overwriting home file will ensure that its rights are kept
+              out = new FileOutputStream(movFileName);
+              byte [] buffer = new byte [8192];
+              in = new FileInputStream(videoFile);          
+              int size; 
+              while ((size = in.read(buffer)) != -1 && isDisplayable()) {
+                out.write(buffer, 0, size);
+              }
+            } catch (IOException ex) {
+              exception = ex;
+            } finally {
+              try {
+                if (out != null) {          
+                  out.close();
+                }
+              } catch (IOException ex) {
+                if (exception == null) {
+                  exception = ex;
+                }
+              }
+              try {
+                if (in != null) {          
+                  in.close();
+                }
+              } catch (IOException ex) {
+                // Ignore close exception
+              }
+              // Delete saved file in case of error or if panel was closed meanwhile
+              if (exception != null || !isDisplayable()) {
+                new File(movFileName).delete();
+                if (!isDisplayable()) {
+                  exception = null;
+                }
+              }
+              
+              final IOException caughtException = exception;
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    // Restore action state 
+                    ActionMap actionMap = getActionMap();
+                    for (ActionType action : ActionType.values()) {
+                      actionMap.get(action).setEnabled(actionEnabledStates [action.ordinal()]);        
+                    }
+                    
+                    rootPane.setCursor(defaultCursor);
+                    if (caughtException != null) {
+                      showError("saveVideoError.message", caughtException.getMessage());
+                    }
+                  }
+                });
+            }
+          }
+        });
     }
   }
 
