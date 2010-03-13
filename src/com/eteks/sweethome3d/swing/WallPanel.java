@@ -389,7 +389,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.slopingWallHeightAtStartLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtStartLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtStartSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
     this.slopingWallHeightAtStartSpinner = new NullableSpinner(slopingWallHeightAtStartSpinnerModel);
     slopingWallHeightAtStartSpinnerModel.setNullable(controller.getSlopingWallHeightAtStart() == null);
     slopingWallHeightAtStartSpinnerModel.setLength(controller.getSlopingWallHeightAtStart());
@@ -415,7 +415,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.slopingWallHeightAtEndLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "slopingWallHeightAtEndLabel.text"));
     final NullableSpinner.NullableSpinnerLengthModel slopingWallHeightAtEndSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 2000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
     this.slopingWallHeightAtEndSpinner = new NullableSpinner(slopingWallHeightAtEndSpinnerModel);
     slopingWallHeightAtEndSpinnerModel.setNullable(controller.getSlopingWallHeightAtEnd() == null);
     slopingWallHeightAtEndSpinnerModel.setLength(controller.getSlopingWallHeightAtEnd());
@@ -441,7 +441,7 @@ public class WallPanel extends JPanel implements DialogView {
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         WallPanel.class, "thicknessLabel.text", unitName));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.09999f, 10000f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
     thicknessSpinnerModel.setNullable(controller.getThickness() == null);
     thicknessSpinnerModel.setLength(controller.getThickness());
@@ -634,7 +634,7 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
     heightPanel.add(this.rectangularWallHeightSpinner, new GridBagConstraints(
         2, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), -5, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), -10, 0));
     // Third row of height panel
     heightPanel.add(this.slopingWallRadioButton, new GridBagConstraints(
         0, 2, 5, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -645,13 +645,13 @@ public class WallPanel extends JPanel implements DialogView {
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtStartSpinner, new GridBagConstraints(
         2, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), -5, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), -10, 0));
     heightPanel.add(this.slopingWallHeightAtEndLabel, new GridBagConstraints(
         3, 3, 1, 1, 1, 0, labelAlignment, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
     heightPanel.add(this.slopingWallHeightAtEndSpinner, new GridBagConstraints(
         4, 3, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -5, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), -10, 0));
     
     add(heightPanel, new GridBagConstraints(
         0, 3, 2, 1, 1, 0, GridBagConstraints.LINE_START,

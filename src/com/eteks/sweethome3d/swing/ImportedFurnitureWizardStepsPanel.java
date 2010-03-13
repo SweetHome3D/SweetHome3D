@@ -477,7 +477,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     widthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -498,7 +498,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.depthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "depthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel depthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
     this.depthSpinner = new NullableSpinner(depthSpinnerModel);
     depthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -519,7 +519,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
             ImportedFurnitureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     heightSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -554,7 +554,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.elevationLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         ImportedFurnitureWizardStepsPanel.class, "elevationLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel elevationSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 500f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0f, 2500f);
     this.elevationSpinner = new NullableSpinner(elevationSpinnerModel);
     elevationSpinnerModel.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {

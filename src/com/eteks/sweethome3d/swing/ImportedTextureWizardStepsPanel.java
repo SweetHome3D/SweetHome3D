@@ -295,7 +295,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     this.widthLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
         ImportedTextureWizardStepsPanel.class, "widthLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel widthSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
     this.widthSpinner = new NullableSpinner(widthSpinnerModel);
     widthSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
@@ -316,7 +316,7 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
     this.heightLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences,
             ImportedTextureWizardStepsPanel.class, "heightLabel.text", unitName)); 
     final NullableSpinner.NullableSpinnerLengthModel heightSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 1000f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, 0.1f, 100000f);
     this.heightSpinner = new NullableSpinner(heightSpinnerModel);
     heightSpinnerModel.addChangeListener(new ChangeListener () {
         public void stateChanged(ChangeEvent ev) {
