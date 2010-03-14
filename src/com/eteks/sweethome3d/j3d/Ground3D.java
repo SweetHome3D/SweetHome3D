@@ -129,8 +129,8 @@ public class Ground3D extends Object3DBranch {
     List<TexCoord2f> textureCoords = new ArrayList<TexCoord2f>();
     if (groundTexture != null) {
       textureCoords.add(new TexCoord2f(0, 0));
-      textureCoords.add(new TexCoord2f(0, this.depth / groundTexture.getHeight()));
-      textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), this.depth / groundTexture.getHeight()));
+      textureCoords.add(new TexCoord2f(0, -this.depth / groundTexture.getHeight()));
+      textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), -this.depth / groundTexture.getHeight()));
       textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), 0));
     }
     stripCounts.add(4);
@@ -161,7 +161,7 @@ public class Ground3D extends Object3DBranch {
                 coords.add(new Point3f(roomPoint [0], groundOffset, roomPoint [1]));
                 if (groundTexture != null) {
                   textureCoords.add(new TexCoord2f((roomPoint [0] - this.originX) / groundTexture.getWidth(), 
-                      (roomPoint [1] - this.originY) / groundTexture.getHeight()));
+                      (this.originY - roomPoint [1]) / groundTexture.getHeight()));
                 }
                 pointsCount++;
               }
