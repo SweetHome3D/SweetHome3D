@@ -233,7 +233,9 @@ public class Room3D extends Object3DBranch {
           TexCoord2f [] textureCoords = new TexCoord2f [geometryPoints.length];
           for (int j = 0; j < geometryPoints.length; j++) {
             textureCoords [j] = new TexCoord2f(geometryPoints[j][0] / texture.getWidth(), 
-                -geometryPoints[j][1] / texture.getHeight());
+                roomPart == FLOOR_PART 
+                    ? -geometryPoints[j][1] / texture.getHeight()
+                    : geometryPoints[j][1] / texture.getHeight());
           }
           geometryInfo.setTextureCoordinateParams(1, 2);
           geometryInfo.setTextureCoordinates(0, textureCoords);
