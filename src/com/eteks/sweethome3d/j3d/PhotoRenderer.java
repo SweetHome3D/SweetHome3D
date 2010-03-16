@@ -96,6 +96,7 @@ public class PhotoRenderer {
   private final Quality quality;
   private final SunflowAPI sunflow;
   private final Map<Texture, File> textureImageFilesCache = new HashMap<Texture, File>();
+  private Thread renderingThread;
 
   static {
     // Ignore logs
@@ -228,6 +229,8 @@ public class PhotoRenderer {
   public void render(final BufferedImage image, 
                      Camera camera, 
                      final ImageObserver observer) {
+    this.renderingThread = Thread.currentThread();
+    
     // Update pinhole camera lens from camera location in parameter
     Point3 eye = new Point3(camera.getX(), camera.getZ(), camera.getY());
     Matrix4 transform;
@@ -274,6 +277,16 @@ public class PhotoRenderer {
     this.sunflow.render(SunflowAPI.DEFAULT_OPTIONS, new BufferedImageDisplay(image, observer));
   }
   
+  /**
+   * Stops the rendering process.
+   */
+  public void stop() {
+    if (this.renderingThread != null) {
+      this.renderingThread.interrupt();
+      this.renderingThread = null;
+    }
+  }
+
   /**
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
