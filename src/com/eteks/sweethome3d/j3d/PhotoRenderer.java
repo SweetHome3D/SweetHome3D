@@ -282,7 +282,9 @@ public class PhotoRenderer {
    */
   public void stop() {
     if (this.renderingThread != null) {
-      this.renderingThread.interrupt();
+      if (!this.renderingThread.isInterrupted()) {
+        this.renderingThread.interrupt();
+      }
       this.renderingThread = null;
     }
   }
