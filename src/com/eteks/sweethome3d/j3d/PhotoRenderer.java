@@ -28,6 +28,7 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,18 +115,17 @@ public class PhotoRenderer {
     int samples = quality == Quality.LOW ? 4 : 8;
     
     // Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms           
-    final boolean useNormals = true;
     for (Wall wall : home.getWalls()) {
       Wall3D wall3D = new Wall3D(wall, home, true, true);
-      exportNode(wall3D, useNormals, false);
+      exportNode(wall3D, false);
     }
     for (HomePieceOfFurniture piece : home.getFurniture()) {
       HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(piece, home, true, true);
-      exportNode(piece3D, useNormals, false);
+      exportNode(piece3D, false);
     }
     for (Room room : home.getRooms()) {
       Room3D room3D = new Room3D(room, home, home.getCamera() == home.getTopCamera(), true, true);
-      exportNode(room3D, useNormals, false);
+      exportNode(room3D, false);
     } 
     // Create a dummy home to export a ground 3D not cut by rooms and large enough to join the sky at the horizon  
     Home groundHome = new Home();
@@ -136,7 +136,7 @@ public class PhotoRenderer {
     translation.setTranslation(new Vector3f(0, -0.1f, 0));
     TransformGroup groundTransformGroup = new TransformGroup(translation);
     groundTransformGroup.addChild(ground);
-    exportNode(groundTransformGroup, useNormals , true);
+    exportNode(groundTransformGroup, true);
 
     // Set light settings 
     boolean observerCamera = home.getCamera() instanceof ObserverCamera;
@@ -292,22 +292,20 @@ public class PhotoRenderer {
   /**
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
-  private void exportNode(Node node, 
-                          boolean useNormals, boolean noConstantShader) throws IOException {
-    exportNode(node, node, useNormals, noConstantShader);
+  private void exportNode(Node node, boolean noConstantShader) throws IOException {
+    exportNode(node, node, noConstantShader);
   }
 
   /**
    * Exports all the 3D shapes children of <code>node</code> at OBJ format.
    */ 
   private void exportNode(Node parent, Node node, 
-                          boolean useNormals, 
                           boolean noConstantShader) throws IOException {
     if (node instanceof Group) {
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode(parent, (Node)enumeration.nextElement(), useNormals, noConstantShader);
+        exportNode(parent, (Node)enumeration.nextElement(), noConstantShader);
       }
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
@@ -337,8 +335,7 @@ public class PhotoRenderer {
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           String objectName = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          exportNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, objectName, 
-              useNormals && !(shape.getParent() instanceof Wall3D));
+          exportNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, objectName);
           if (appearanceName != null) {
             this.sunflow.parameter("shaders", new String [] {appearanceName});
           }
@@ -371,235 +368,304 @@ public class PhotoRenderer {
    */
   private void exportNodeGeometry(Geometry geometry, Transform3D transformationToParent, 
                                   TexCoordGeneration texCoordGeneration, 
-                                  String objectName, boolean useNormals) {
+                                  String objectName) {
     if (geometry instanceof GeometryArray) {
-      GeometryArray geometryArray = (GeometryArray)geometry;      
+      GeometryArray geometryArray = (GeometryArray)geometry;
       
-      float [] vertices = new float [geometryArray.getVertexCount() * 3];
-      
-      float [] normals = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
-          ? new float [geometryArray.getVertexCount() * 3]
-          : null;
-      
-      boolean uvsGenerated = false;
-      Vector4f planeS = null;
-      Vector4f planeT = null;
-      if (texCoordGeneration != null) {
-        uvsGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
-            && texCoordGeneration.getEnable();
-        if (uvsGenerated) {
-          planeS = new Vector4f();
-          planeT = new Vector4f();
-          texCoordGeneration.getPlaneS(planeS);
-          texCoordGeneration.getPlaneT(planeT);
-        }
-      } 
-
-      float [] uvs;
-      if (uvsGenerated
-          || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
-        uvs = new float [geometryArray.getVertexCount() * 2];
+      // Create vertices indices array depending on geometry class
+      int [] verticesIndices = null;
+      int [] stripVertexCount = null;
+      if (geometryArray instanceof IndexedGeometryArray) {
+        if (geometryArray instanceof IndexedTriangleArray) {
+          verticesIndices = new int [((IndexedTriangleArray)geometryArray).getIndexCount()];
+        } else if (geometryArray instanceof IndexedQuadArray) {
+          verticesIndices = new int [((IndexedQuadArray)geometryArray).getIndexCount() * 3 / 2];
+        } else if (geometryArray instanceof IndexedTriangleStripArray) {
+          IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
+          stripVertexCount = new int [triangleStripArray.getNumStrips()];
+          triangleStripArray.getStripIndexCounts(stripVertexCount);
+          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+        } else if (geometryArray instanceof IndexedTriangleFanArray) {
+          IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
+          stripVertexCount = new int [triangleFanArray.getNumStrips()];
+          triangleFanArray.getStripIndexCounts(stripVertexCount);
+          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+        } 
       } else {
-        uvs = null;
+        if (geometryArray instanceof TriangleArray) {
+          verticesIndices = new int [((TriangleArray)geometryArray).getVertexCount()];
+        } else if (geometryArray instanceof QuadArray) {
+          verticesIndices = new int [((QuadArray)geometryArray).getVertexCount() * 3 / 2];
+        } else if (geometryArray instanceof TriangleStripArray) {
+          TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
+          stripVertexCount = new int [triangleStripArray.getNumStrips()];
+          triangleStripArray.getStripVertexCounts(stripVertexCount);
+          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+        } else if (geometryArray instanceof TriangleFanArray) {
+          TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
+          stripVertexCount = new int [triangleFanArray.getNumStrips()];
+          triangleFanArray.getStripVertexCounts(stripVertexCount);
+          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+        }
       }
-     
-      if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
-        if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-          float [] vertexData = geometryArray.getInterleavedVertices();
-          int vertexSize = vertexData.length / geometryArray.getVertexCount();
-          // Export vertices coordinates 
-          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-               index < n; index++, i += vertexSize) {
-            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-            exportVertex(transformationToParent, vertex, index, vertices);
+
+      if (verticesIndices != null) {
+        float [] vertices = new float [geometryArray.getVertexCount() * 3];
+        
+        float [] normals = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
+            ? new float [geometryArray.getVertexCount() * 3]
+            : null;
+        
+        boolean uvsGenerated = false;
+        Vector4f planeS = null;
+        Vector4f planeT = null;
+        if (texCoordGeneration != null) {
+          uvsGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
+              && texCoordGeneration.getEnable();
+          if (uvsGenerated) {
+            planeS = new Vector4f();
+            planeT = new Vector4f();
+            texCoordGeneration.getPlaneS(planeS);
+            texCoordGeneration.getPlaneT(planeT);
           }
-          // Export normals
-          if (normals != null) {
-            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+        } 
+  
+        float [] uvs;
+        if (uvsGenerated
+            || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+          uvs = new float [geometryArray.getVertexCount() * 2];
+        } else {
+          uvs = null;
+        }
+       
+        if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
+          if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
+            float [] vertexData = geometryArray.getInterleavedVertices();
+            int vertexSize = vertexData.length / geometryArray.getVertexCount();
+            // Export vertices coordinates 
+            for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
                  index < n; index++, i += vertexSize) {
-              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              exportNormal(transformationToParent, normal, index, normals);
+              Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+              exportVertex(transformationToParent, vertex, index, vertices);
             }
-          }
-          // Export texture coordinates
-          if (texCoordGeneration != null) {
-            if (uvsGenerated) {
-              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+            // Export normals
+            if (normals != null) {
+              for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+                   index < n; index++, i += vertexSize) {
+                Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+                exportNormal(transformationToParent, normal, index, normals);
+              }
+            }
+            // Export texture coordinates
+            if (texCoordGeneration != null) {
+              if (uvsGenerated) {
+                for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+                      index < n; index++, i += vertexSize) {
+                  TexCoord2f textureCoordinates = generateTextureCoordinates(
+                      vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+                  exportTextureCoordinates(textureCoordinates, index, uvs);
+                }
+              }
+            } else if (uvs != null) {
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
                     index < n; index++, i += vertexSize) {
-                TexCoord2f textureCoordinates = generateTextureCoordinates(
-                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+                TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
                 exportTextureCoordinates(textureCoordinates, index, uvs);
               }
             }
-          } else if (uvs != null) {
-            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
-                  index < n; index++, i += vertexSize) {
-              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
-              exportTextureCoordinates(textureCoordinates, index, uvs);
+          } else {
+            // Export vertices coordinates
+            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+              Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
+              exportVertex(transformationToParent, vertex, index, vertices);
+            }
+            // Export normals
+            if (normals != null) {
+              float [] normalCoordinates = geometryArray.getNormalRefFloat();
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
+                exportNormal(transformationToParent, normal, index, normals);
+              }
+            }
+            // Export texture coordinates
+            if (texCoordGeneration != null) {
+              if (uvsGenerated) {
+                for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+                  TexCoord2f textureCoordinates = generateTextureCoordinates(
+                      vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
+                  exportTextureCoordinates(textureCoordinates, index, uvs);
+                }
+              }
+            } else if (uvs != null) {
+              float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
+              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
+                TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
+                exportTextureCoordinates(textureCoordinates, index, uvs);
+              }
             }
           }
         } else {
           // Export vertices coordinates
-          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
-          for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
-            Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
+          for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+            Point3f vertex = new Point3f();
+            geometryArray.getCoordinate(index, vertex);
             exportVertex(transformationToParent, vertex, index, vertices);
           }
           // Export normals
           if (normals != null) {
-            float [] normalCoordinates = geometryArray.getNormalRefFloat();
-            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
-              Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
+            for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+              Vector3f normal = new Vector3f();
+              geometryArray.getNormal(index, normal);
               exportNormal(transformationToParent, normal, index, normals);
             }
           }
           // Export texture coordinates
           if (texCoordGeneration != null) {
             if (uvsGenerated) {
-              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+              for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
+                Point3f vertex = new Point3f();
+                geometryArray.getCoordinate(index, vertex);
                 TexCoord2f textureCoordinates = generateTextureCoordinates(
-                    vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2], planeS, planeT);
+                    vertex.x, vertex.y, vertex.z, planeS, planeT);
                 exportTextureCoordinates(textureCoordinates, index, uvs);
               }
             }
           } else if (uvs != null) {
-            float [] textureCoordinatesArray = geometryArray.getTexCoordRefFloat(0);
-            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
-              TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray [i], textureCoordinatesArray [i + 1]);
-              exportTextureCoordinates(textureCoordinates, index, uvs);
-            }
-          }
-        }
-      } else {
-        // Export vertices coordinates
-        for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
-          Point3f vertex = new Point3f();
-          geometryArray.getCoordinate(index, vertex);
-          exportVertex(transformationToParent, vertex, index, vertices);
-        }
-        // Export normals
-        if (normals != null) {
-          for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
-            Vector3f normal = new Vector3f();
-            geometryArray.getNormal(index, normal);
-            exportNormal(transformationToParent, normal, index, normals);
-          }
-        }
-        // Export texture coordinates
-        if (texCoordGeneration != null) {
-          if (uvsGenerated) {
             for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
-              Point3f vertex = new Point3f();
-              geometryArray.getCoordinate(index, vertex);
-              TexCoord2f textureCoordinates = generateTextureCoordinates(
-                  vertex.x, vertex.y, vertex.z, planeS, planeT);
+              TexCoord2f textureCoordinates = new TexCoord2f();
+              geometryArray.getTextureCoordinate(0, index, textureCoordinates);
               exportTextureCoordinates(textureCoordinates, index, uvs);
             }
           }
-        } else if (uvs != null) {
-          for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
-            TexCoord2f textureCoordinates = new TexCoord2f();
-            geometryArray.getTextureCoordinate(0, index, textureCoordinates);
-            exportTextureCoordinates(textureCoordinates, index, uvs);
-          }
         }
-      }
 
-      int [] triangles = null;
-      
-      // Export triangles or quadrilaterals depending on the geometry
-      if (geometryArray instanceof IndexedGeometryArray) {
-        if (geometryArray instanceof IndexedTriangleArray) {
-          IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
-          triangles = new int [triangleArray.getIndexCount()];
-          for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
-            exportIndexedTriangle(triangleArray, i, i + 1, i + 2, triangles, i);
-          }
-        } else if (geometryArray instanceof IndexedQuadArray) {
-          IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
-          triangles = new int [quadArray.getIndexCount() * 3 / 2];
-          for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
-            exportIndexedTriangle(quadArray, i, i + 1, i + 2, triangles, i * 3 / 2);
-            exportIndexedTriangle(quadArray, i, i + 2, i + 3, triangles, i * 3 / 2 + 3);
-          }
-        } else if (geometryArray instanceof IndexedTriangleStripArray) {
-          IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
-          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripIndexCounts(stripVertexCount);
-          triangles = new int [getTriangleCount(stripVertexCount) * 3];
-          for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
-                 i < n; i++, j++, triangleIndex += 3) {
-              if (j % 2 == 0) {
-                exportIndexedTriangle(triangleStripArray, i, i + 1, i + 2, triangles, triangleIndex);
-              } else { // Vertices of odd triangles are in reverse order               
-                exportIndexedTriangle(triangleStripArray, i, i + 2, i + 1, triangles, triangleIndex);
+        // Export triangles or quadrilaterals depending on the geometry
+        if (geometryArray instanceof IndexedGeometryArray) {
+          int [] normalsIndices = normals != null
+              ? new int [verticesIndices.length]
+              : null;
+          int [] uvsIndices = uvs != null
+              ? new int [verticesIndices.length]
+              : null;
+              
+          if (geometryArray instanceof IndexedTriangleArray) {
+            IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
+            for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
+              exportIndexedTriangle(triangleArray, i, i + 1, i + 2, 
+                  verticesIndices, normalsIndices, uvsIndices, i);
+            }
+          } else if (geometryArray instanceof IndexedQuadArray) {
+            IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
+            for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
+              exportIndexedTriangle(quadArray, i, i + 1, i + 2, 
+                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2);
+              exportIndexedTriangle(quadArray, i, i + 2, i + 3, 
+                  verticesIndices, normalsIndices, uvsIndices, i * 3 / 2 + 3);
+            }
+          } else if (geometryArray instanceof IndexedTriangleStripArray) {
+            IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
+            for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
+                   i < n; i++, j++, triangleIndex += 3) {
+                if (j % 2 == 0) {
+                  exportIndexedTriangle(triangleStripArray, i, i + 1, i + 2, 
+                      verticesIndices, normalsIndices, uvsIndices, triangleIndex);
+                } else { // Vertices of odd triangles are in reverse order               
+                  exportIndexedTriangle(triangleStripArray, i, i + 2, i + 1, 
+                      verticesIndices, normalsIndices, uvsIndices, triangleIndex);
+                }
               }
+              initialIndex += stripVertexCount [strip];
             }
-            initialIndex += stripVertexCount [strip];
-          }
-        } else if (geometryArray instanceof IndexedTriangleFanArray) {
-          IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
-          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripIndexCounts(stripVertexCount);
-          triangles = new int [getTriangleCount(stripVertexCount) * 3];
-          for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
-                 i < n; i++, triangleIndex += 3) {
-              exportIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2, triangles, triangleIndex);
-            }
-            initialIndex += stripVertexCount [strip];
-          }
-        } 
-      } else {
-        if (geometryArray instanceof TriangleArray) {
-          TriangleArray triangleArray = (TriangleArray)geometryArray;
-          triangles = new int [triangleArray.getVertexCount()];
-          for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
-            exportTriangle(triangleArray, i, i + 1, i + 2, triangles, i);
-          }
-        } else if (geometryArray instanceof QuadArray) {
-          QuadArray quadArray = (QuadArray)geometryArray;
-          triangles = new int [quadArray.getVertexCount() * 3 / 2];
-          for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
-            exportTriangle(quadArray, i, i + 1, i + 2, triangles, i * 3 / 2);
-            exportTriangle(quadArray, i + 2, i + 3, i, triangles, i * 3 / 2 + 3);
-          }
-        } else if (geometryArray instanceof TriangleStripArray) {
-          TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
-          int [] stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripVertexCounts(stripVertexCount);
-          triangles = new int [getTriangleCount(stripVertexCount) * 3];
-          for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
-                 i < n; i++, j++, triangleIndex += 3) {
-              if (j % 2 == 0) {
-                exportTriangle(triangleStripArray, i, i + 1, i + 2, triangles, triangleIndex);
-              } else { // Vertices of odd triangles are in reverse order               
-                exportTriangle(triangleStripArray, i, i + 2, i + 1, triangles, triangleIndex);
+          } else if (geometryArray instanceof IndexedTriangleFanArray) {
+            IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
+            for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
+                   i < n; i++, triangleIndex += 3) {
+                exportIndexedTriangle(triangleFanArray, initialIndex, i + 1, i + 2, 
+                    verticesIndices, normalsIndices, uvsIndices, triangleIndex);
               }
+              initialIndex += stripVertexCount [strip];
             }
-            initialIndex += stripVertexCount [strip];
+          } 
+          
+          if (normalsIndices != null && !Arrays.equals(verticesIndices, normalsIndices)
+              || uvsIndices != null && !Arrays.equals(verticesIndices, uvsIndices)) {
+            // Remove indirection in verticesIndices, normals and uvsIndices
+            // because SunFlow use only verticesIndices
+            float [] directVertices = new float [verticesIndices.length * 3];
+            float [] directNormals =  normalsIndices != null
+                ? new float [verticesIndices.length * 3]
+                : null;
+            float [] directUvs =  uvsIndices != null
+                ? new float [verticesIndices.length * 2]
+                : null;
+            int verticeIndex = 0;
+            int normalIndex = 0;
+            int uvIndex = 0;
+            for (int i = 0; i < verticesIndices.length; i++) {
+              int indirectIndex = verticesIndices [i] * 3;
+              directVertices [verticeIndex++] = vertices [indirectIndex++];
+              directVertices [verticeIndex++] = vertices [indirectIndex++];
+              directVertices [verticeIndex++] = vertices [indirectIndex++];
+              if (normalsIndices != null) {
+                indirectIndex = normalsIndices [i] * 3;
+                directNormals [normalIndex++] = normals [indirectIndex++];
+                directNormals [normalIndex++] = normals [indirectIndex++];
+                directNormals [normalIndex++] = normals [indirectIndex++];
+              }
+              if (uvsIndices != null) {
+                indirectIndex = uvsIndices [i] * 2;
+                directUvs [uvIndex++] = uvs [indirectIndex++];
+                directUvs [uvIndex++] = uvs [indirectIndex++];
+              }
+              verticesIndices [i] = i;
+            }
+            vertices = directVertices;
+            normals = directNormals;
+            uvs = directUvs;
           }
-        } else if (geometryArray instanceof TriangleFanArray) {
-          TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
-          int [] stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripVertexCounts(stripVertexCount);
-          triangles = new int [getTriangleCount(stripVertexCount) * 3];
-          for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
-            for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
-                 i < n; i++, triangleIndex += 3) {
-              exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, triangles, triangleIndex);
+        } else {
+          if (geometryArray instanceof TriangleArray) {
+            TriangleArray triangleArray = (TriangleArray)geometryArray;
+            for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
+              exportTriangle(triangleArray, i, i + 1, i + 2, verticesIndices, i);
             }
-            initialIndex += stripVertexCount [strip];
+          } else if (geometryArray instanceof QuadArray) {
+            QuadArray quadArray = (QuadArray)geometryArray;
+            for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
+              exportTriangle(quadArray, i, i + 1, i + 2, verticesIndices, i * 3 / 2);
+              exportTriangle(quadArray, i + 2, i + 3, i, verticesIndices, i * 3 / 2 + 3);
+            }
+          } else if (geometryArray instanceof TriangleStripArray) {
+            TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
+            for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2, j = 0; 
+                   i < n; i++, j++, triangleIndex += 3) {
+                if (j % 2 == 0) {
+                  exportTriangle(triangleStripArray, i, i + 1, i + 2, verticesIndices, triangleIndex);
+                } else { // Vertices of odd triangles are in reverse order               
+                  exportTriangle(triangleStripArray, i, i + 2, i + 1, verticesIndices, triangleIndex);
+                }
+              }
+              initialIndex += stripVertexCount [strip];
+            }
+          } else if (geometryArray instanceof TriangleFanArray) {
+            TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
+            for (int initialIndex = 0, triangleIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 2; 
+                   i < n; i++, triangleIndex += 3) {
+                exportTriangle(triangleFanArray, initialIndex, i + 1, i + 2, verticesIndices, triangleIndex);
+              }
+              initialIndex += stripVertexCount [strip];
+            }
           }
         }
-      }
       
-      if (triangles != null) {
-        this.sunflow.parameter("triangles", triangles);
+        this.sunflow.parameter("triangles", verticesIndices);
         this.sunflow.parameter("points", "point", "vertex", vertices);
-        if (useNormals && normals != null) {
+        if (normals != null) {
           this.sunflow.parameter("normals", "vector", "vertex", normals);
         }
         if (uvs != null) {
@@ -642,7 +708,7 @@ public class PhotoRenderer {
     index *= 3;
     vertices [index++] = vertex.x;
     vertices [index++] = vertex.y;
-    vertices [index++] = vertex.z;
+    vertices [index] = vertex.z;
   }
 
   /**
@@ -655,7 +721,7 @@ public class PhotoRenderer {
     index *= 3;
     normals [index++] = normal.x;
     normals [index++] = normal.y;
-    normals [index++] = normal.z;
+    normals [index] = normal.z;
   }
 
   /**
@@ -665,7 +731,7 @@ public class PhotoRenderer {
                                         float [] uvs) {
     index *= 2;
     uvs [index++] = textureCoordinates.x;
-    uvs [index++] = textureCoordinates.y;
+    uvs [index] = textureCoordinates.y;
   }
 
   /**
@@ -673,10 +739,21 @@ public class PhotoRenderer {
    */
   private void exportIndexedTriangle(IndexedGeometryArray geometryArray, 
                                      int vertexIndex1, int vertexIndex2, int vertexIndex3,
-                                     int [] triangles, int index) {
-    triangles [index++] = geometryArray.getCoordinateIndex(vertexIndex1);
-    triangles [index++] = geometryArray.getCoordinateIndex(vertexIndex2);
-    triangles [index++] = geometryArray.getCoordinateIndex(vertexIndex3);
+                                     int [] verticesIndices, int [] normalsIndices, int [] textureCoordinatesIndices, 
+                                     int index) {
+    verticesIndices [index] = geometryArray.getCoordinateIndex(vertexIndex1);
+    verticesIndices [index + 1] = geometryArray.getCoordinateIndex(vertexIndex2);
+    verticesIndices [index + 2] = geometryArray.getCoordinateIndex(vertexIndex3);
+    if (normalsIndices != null) {
+      normalsIndices [index] = geometryArray.getNormalIndex(vertexIndex1);
+      normalsIndices [index + 1] = geometryArray.getNormalIndex(vertexIndex2);
+      normalsIndices [index + 2] = geometryArray.getNormalIndex(vertexIndex3);
+    }
+    if (textureCoordinatesIndices != null) {
+      textureCoordinatesIndices [index] = geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
+      textureCoordinatesIndices [index + 1] = geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
+      textureCoordinatesIndices [index + 2] = geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
+    }
   }
     
   /**
@@ -684,10 +761,10 @@ public class PhotoRenderer {
    */
   private void exportTriangle(GeometryArray geometryArray, 
                               int vertexIndex1, int vertexIndex2, int vertexIndex3,
-                              int [] triangles, int index) {
-    triangles [index++] = vertexIndex1;
-    triangles [index++] = vertexIndex2;
-    triangles [index++] = vertexIndex3;
+                              int [] verticesIndices, int index) {
+    verticesIndices [index++] = vertexIndex1;
+    verticesIndices [index++] = vertexIndex2;
+    verticesIndices [index] = vertexIndex3;
   }
     
   /**
