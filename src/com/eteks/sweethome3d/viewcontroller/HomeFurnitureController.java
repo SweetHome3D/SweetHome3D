@@ -774,11 +774,11 @@ public class HomeFurnitureController implements Controller {
         piece.setColor(null);
         piece.setTexture(null);
       } else if (texture != null) {
-        piece.setTexture(texture);
         piece.setColor(null);
+        piece.setTexture(texture);
       } else if (color != null) {
-        piece.setColor(color);
         piece.setTexture(null);
+        piece.setColor(color);
       }
       piece.setVisible(visible != null 
           ? visible.booleanValue() : piece.isVisible());
@@ -812,8 +812,6 @@ public class HomeFurnitureController implements Controller {
     private final HomeTexture          texture;
     private final boolean              visible;
     private final boolean              modelMirrored;
-    private final Integer []           groupFurnitureColor;
-    private final HomeTexture []       groupFurnitureTexture;
     private final float []             groupFurnitureX;
     private final float []             groupFurnitureY;
     private final float []             groupFurnitureWidth;
@@ -836,24 +834,18 @@ public class HomeFurnitureController implements Controller {
       this.modelMirrored = piece.isModelMirrored();
       if (piece instanceof HomeFurnitureGroup) {
         List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)piece);
-        this.groupFurnitureColor = new Integer [groupFurniture.size()];
-        this.groupFurnitureTexture = new HomeTexture [groupFurniture.size()];
         this.groupFurnitureX = new float [groupFurniture.size()];
         this.groupFurnitureY = new float [groupFurniture.size()];
         this.groupFurnitureWidth = new float [groupFurniture.size()];
         this.groupFurnitureDepth = new float [groupFurniture.size()];
         for (int i = 0; i < groupFurniture.size(); i++) {
           HomePieceOfFurniture groupPiece = groupFurniture.get(i);
-          this.groupFurnitureColor [i] = groupPiece.getColor();
-          this.groupFurnitureTexture [i] = groupPiece.getTexture();
           this.groupFurnitureX [i] = groupPiece.getX();
           this.groupFurnitureY [i] = groupPiece.getY();
           this.groupFurnitureWidth [i] = groupPiece.getWidth();
           this.groupFurnitureDepth [i] = groupPiece.getDepth();
         }
       } else {
-        this.groupFurnitureColor = null;
-        this.groupFurnitureTexture = null;
         this.groupFurnitureX = null;
         this.groupFurnitureY = null;
         this.groupFurnitureWidth = null;
@@ -885,8 +877,6 @@ public class HomeFurnitureController implements Controller {
         List<HomePieceOfFurniture> groupFurniture = getGroupFurniture((HomeFurnitureGroup)this.piece);
         for (int i = 0; i < groupFurniture.size(); i++) {
           HomePieceOfFurniture groupPiece = groupFurniture.get(i);
-          groupPiece.setColor(this.groupFurnitureColor [i]);
-          groupPiece.setTexture(this.groupFurnitureTexture [i]);
           if (this.piece.isResizable()) {
             // Restore group furniture location and size because resizing a group isn't reversible 
             groupPiece.setX(this.groupFurnitureX [i]);

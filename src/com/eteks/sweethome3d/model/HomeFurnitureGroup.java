@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.model;
 import java.awt.geom.Rectangle2D;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,6 +47,8 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private BigDecimal                 valueAddedTaxPercentage;
   private BigDecimal                 valueAddedTax;
   private BigDecimal                 priceValueAddedTaxIncluded;
+  private List<Integer>              furnitureDefaultColors;
+  private List<HomeTexture>          furnitureDefaultTextures;
 
   /**
    * Creates a group from the given <code>furniture</code> list. 
@@ -297,22 +300,65 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   @Override
   public void setColor(Integer color) {
     super.setColor(color);
-    for (HomePieceOfFurniture piece : this.furniture) {
-      piece.setColor(color);
+    if (color != null) {      
+      storeDefaultColorsAndTextures();
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setTexture(null);
+        piece.setColor(color);
+      } 
+    } else {
+      restoreDefaultColorsAndTextures();
     }
   }
-  
+
   /**
    * Sets the <code>texture</code> of the furniture of this group.
    */
   @Override
   public void setTexture(HomeTexture texture) {
     super.setTexture(texture);
-    for (HomePieceOfFurniture piece : this.furniture) {
-      piece.setTexture(texture);
+    if (texture != null) {      
+      storeDefaultColorsAndTextures();
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setColor(null);
+        piece.setTexture(texture);
+      } 
+    } else {
+      restoreDefaultColorsAndTextures();
     }
   }
   
+  /**
+   * Stores default colors and textures. 
+   */
+  private void storeDefaultColorsAndTextures() {
+    if (this.furnitureDefaultColors == null) {
+      // Retrieve default color and texture of child furniture
+      Integer [] furnitureDefaultColors = new Integer [this.furniture.size()];
+      HomeTexture [] furnitureDefaultTextures = new HomeTexture [this.furniture.size()];
+      for (int i = 0; i < this.furniture.size(); i++) {
+        furnitureDefaultColors [i] = this.furniture.get(i).getColor();
+        furnitureDefaultTextures [i] = this.furniture.get(i).getTexture();
+      } 
+      this.furnitureDefaultColors = Arrays.asList(furnitureDefaultColors);
+      this.furnitureDefaultTextures = Arrays.asList(furnitureDefaultTextures);
+    }
+  }
+  
+  /**
+   * Restores default colors and textures
+   */
+  private void restoreDefaultColorsAndTextures() {
+    if (this.furnitureDefaultColors != null) {
+      for (int i = 0; i < this.furniture.size(); i++) {
+        this.furniture.get(i).setColor(this.furnitureDefaultColors.get(i));
+        this.furniture.get(i).setTexture(this.furnitureDefaultTextures.get(i));
+      }
+      this.furnitureDefaultColors = null;
+      this.furnitureDefaultTextures = null;
+    }
+  }
+
   /**
    * Sets the <code>angle</code> of the furniture of this group.
    */
