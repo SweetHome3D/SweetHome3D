@@ -153,7 +153,12 @@ public class ResourceAction extends AbstractAction {
                                    Class<?> resourceClass, 
                                    String propertyKey) {
     try {
-      return preferences.getLocalizedString(resourceClass, propertyKey);
+      String localizedText = preferences.getLocalizedString(resourceClass, propertyKey);
+      if (localizedText != null && localizedText.length() > 0) {
+        return localizedText;
+      } else {
+        return null;
+      }
     } catch (IllegalArgumentException ex) {
       return null;
     }
