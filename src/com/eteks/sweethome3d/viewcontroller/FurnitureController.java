@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import javax.swing.undo.AbstractUndoableEdit;
 import javax.swing.undo.CannotRedoException;
@@ -415,9 +416,11 @@ public class FurnitureController implements Controller {
       final HomePieceOfFurniture [] groupPieces = sortedMap.values().
           toArray(new HomePieceOfFurniture [sortedMap.size()]); 
       final int [] groupPiecesIndex = new int [groupPieces.length];
+      final boolean [] groupPiecesVisible = new boolean [groupPieces.length];
       int i = 0;
-      for (int index : sortedMap.keySet()) {
-        groupPiecesIndex [i++] = index; 
+      for (Entry<Integer, HomePieceOfFurniture> pieceEntry : sortedMap.entrySet()) {
+        groupPiecesIndex [i] = pieceEntry.getKey();
+        groupPiecesVisible [i++] = pieceEntry.getValue().isVisible();
       }
 
       String furnitureGroupName = this.preferences.getLocalizedString(
@@ -434,6 +437,9 @@ public class FurnitureController implements Controller {
               super.undo();
               doUngroupFurniture(groupPieces, groupPiecesIndex, 
                   new HomeFurnitureGroup [] {furnitureGroup}, basePlanLocked);
+              for (int i = 0; i < groupPieces.length; i++) {
+                groupPieces [i].setVisible(groupPiecesVisible [i]);
+              }
               home.setSelectedItems(oldSelection);
             }
             
@@ -442,6 +448,7 @@ public class FurnitureController implements Controller {
               super.redo();
               doGroupFurniture(groupPieces, new HomeFurnitureGroup [] {furnitureGroup}, 
                   new int [] {furnitureGroupIndex}, basePlanLocked);
+              furnitureGroup.setVisible(true);
             }
             
             @Override

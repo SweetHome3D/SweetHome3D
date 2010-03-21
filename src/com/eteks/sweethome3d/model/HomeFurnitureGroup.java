@@ -524,11 +524,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
    */
   @Override
   public void setVisible(boolean visible) {
-    if (visible != isVisible()) {
-      super.setVisible(visible);
-      for (HomePieceOfFurniture piece : this.furniture) {
-        piece.setVisible(visible);
-      }
+    super.setVisible(visible);
+    for (HomePieceOfFurniture piece : this.furniture) {
+      piece.setVisible(visible);
     }
   }
 
