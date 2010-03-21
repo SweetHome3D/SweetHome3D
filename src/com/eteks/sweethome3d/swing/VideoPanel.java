@@ -562,16 +562,10 @@ public class VideoPanel extends JPanel implements DialogView {
     this.qualitySlider.setMajorTickSpacing(1);
     this.qualitySlider.setSnapToTicks(true);
     final boolean offScreenImageSupported = Component3DManager.getInstance().isOffScreenImageSupported();
-    if (offScreenImageSupported) {
-      this.qualitySlider.setValue(controller.getQuality());
-    } else {
-      // Can't support 2 first quality levels if offscreen image isn't supported 
-      this.qualitySlider.setValue(Math.max(2, controller.getQuality()));
-    }
-    qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
     this.qualitySlider.addChangeListener(new ChangeListener() {
         public void stateChanged(ChangeEvent ev) {
           if (!offScreenImageSupported) {
+            // Can't support 2 first quality levels if offscreen image isn't supported 
             qualitySlider.setValue(Math.max(2, qualitySlider.getValue()));
           }
           controller.setQuality(qualitySlider.getValue());
@@ -584,6 +578,8 @@ public class VideoPanel extends JPanel implements DialogView {
             qualityDescriptionLayout.show(qualityDescriptionPanel, String.valueOf(controller.getQuality()));
           }
         });
+    this.qualitySlider.setValue(controller.getQuality());
+    qualityDescriptionLayout.show(this.qualityDescriptionPanel, String.valueOf(this.qualitySlider.getValue()));
     
     this.createButton = new JButton(actionMap.get(ActionType.START_VIDEO_CREATION));
     this.createButton.addActionListener(new ActionListener() {
