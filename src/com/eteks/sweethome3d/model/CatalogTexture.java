@@ -98,6 +98,7 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
   
   /**
    * Returns the ID of this texture or <code>null</code>.
+   * @since 2.3
    */
   public String getId() {
     return this.id;
@@ -133,6 +134,7 @@ public class CatalogTexture implements TextureImage, Comparable<CatalogTexture> 
   
   /**
    * Returns the creator of this texture or <code>null</code>.
+   * @since 2.3
    */
   public String getCreator() {
     return this.creator;
