@@ -544,6 +544,12 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       clone.furniture.add(piece.clone());
     }
     clone.furniture = Collections.unmodifiableList(clone.furniture);
+    if (this.furnitureDefaultColors != null)  {
+      clone.furnitureDefaultColors = new ArrayList<Integer>(this.furnitureDefaultColors);
+    }
+    if (this.furnitureDefaultTextures != null) {
+      clone.furnitureDefaultTextures = new ArrayList<HomeTexture>(this.furnitureDefaultTextures);
+    }
     return clone;
   }
 }
