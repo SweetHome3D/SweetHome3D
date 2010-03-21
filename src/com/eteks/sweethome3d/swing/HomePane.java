@@ -2400,6 +2400,8 @@ public class HomePane extends JRootPane implements HomeView {
    * Attaches the given <code>view</code> to home view.
    */
   public void attachView(View view) {
+    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
+    
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
     if (dummyComponent != null) {
       JComponent component = (JComponent)view;
@@ -2424,8 +2426,6 @@ public class HomePane extends JRootPane implements HomeView {
       }
       window.dispose();
     }
-    
-    this.controller.setVisualProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, false);
   }
   
   /**
