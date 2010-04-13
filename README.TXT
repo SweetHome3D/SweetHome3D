@@ -5,7 +5,7 @@ This archive contains source code of Sweet Home 3D, an interior design Java appl
 Please read http://sweethome3d.sourceforge.net/history.html for more information
 about new features available in this version.
 
-You may also download this source code with the following CVS command :
+You may also download this source code with the following CVS command:
 
 cvs -z3 -d:pserver:anonymous@sweethome3d.cvs.sourceforge.net:/cvsroot/sweethome3d co -P -r V_2_3 SweetHome3D
 
@@ -18,7 +18,7 @@ contains all the information required to compile source code
 as an Eclipse project or with Ant.
 
 If you want to compile ant test the Java files of this release 
-with Eclipse, please follow the next steps :
+with Eclipse, please follow the next steps:
 1. install last JDK 5 or 6 available at http://java.sun.com
 2. install Eclipse available at http://www.eclipse.org
 3. in Eclipse, select File > Import... menu
@@ -41,14 +41,15 @@ application at http://sweethome3d.sourceforge.net/ or as an applet at
 http://sweethome3d.sourceforge.net/SweetHome3DOnLine.html
 
 If you want to build Sweet Home 3D with Ant, please install last JDK 5 or 6 and 
-Ant available at http://ant.apache.org/, and run ant command at archive root.
+Ant available at http://ant.apache.org/, and run ant command in the directory where
+you uncompressed this archive.
 The default target provided by build.xml Ant file builds the Java Web Start version.
 Read build.xml Ant file for more information about other available targets. 
 Note that the last part of the Ant targets javaWebStart, applet and viewer 
 requires a passphrase for keystore to sign the deployed jars. For security reasons, 
 the required file keys.keytool isn't provided with this source code. You'll have 
 first to generate this file and choose a passphrase, with the following command run 
-at archive root :
+in the directory where you uncompressed this archive:
   keytool -genkey -keystore keys.keytool -alias SweetHome3D 
 
 
@@ -57,4 +58,4 @@ Read LICENSE.TXT file for more details about licenses applicable to this softwar
 and included materials developed by third parties.
     
     
-(C) 2006-2009 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
+(C) 2006-2010 Emmanuel Puybaret / eTeks. Distributed under GNU General Public License    
