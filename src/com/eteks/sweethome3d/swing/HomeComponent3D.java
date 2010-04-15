@@ -242,6 +242,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         
         public void canvas3DPostRendered(Canvas3D canvas3D) {
+          // Copy reference to navigation panel image to avoid concurrency problems 
+          // if it's modified in the EDT while this method draws it
+          BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
           // Render navigation panel upon canvas 3D if it exists
           if (navigationPanelImage != null) {
             J3DGraphics2D g2D = canvas3D.getGraphics2D();
@@ -520,16 +523,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       imageSize.add(componentBounds.x + componentBounds.width, 
           componentBounds.y + componentBounds.height);
       if (!imageSize.isEmpty()) {
+        BufferedImage updatedImage = this.navigationPanelImage;
+        // Consider that no navigation panel image is available 
+        // while it's updated
+        this.navigationPanelImage = null;        
         Graphics2D g2D;
-        if (this.navigationPanelImage == null
-            || this.navigationPanelImage.getWidth() != imageSize.width
-            || this.navigationPanelImage.getHeight() != imageSize.height) {
-          this.navigationPanelImage = new BufferedImage(
+        if (updatedImage == null
+            || updatedImage.getWidth() != imageSize.width
+            || updatedImage.getHeight() != imageSize.height) {
+          updatedImage = new BufferedImage(
               imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB);
-          g2D = (Graphics2D)this.navigationPanelImage.getGraphics();
+          g2D = (Graphics2D)updatedImage.getGraphics();
         } else {
           // Clear image
-          g2D = (Graphics2D)this.navigationPanelImage.getGraphics();
+          g2D = (Graphics2D)updatedImage.getGraphics();
           Composite oldComposite = g2D.getComposite();
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
           g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
@@ -537,6 +544,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
         this.navigationPanel.paintAll(g2D);
         g2D.dispose();
+        // Navigation panel image ready to be displayed
+        this.navigationPanelImage = updatedImage;
         return;
       }
     }
