@@ -4387,8 +4387,7 @@ public class PlanController extends FurnitureController implements Controller {
           } else {
             // Otherwise change state to RectangleSelectionState
             setState(getRectangleSelectionState());
-          }
-          
+          }          
         }
       } else if (clickCount == 2) {
         Selectable item = getSelectableItemAt(x, y);
