@@ -293,7 +293,7 @@ public class FurnitureCatalogTree extends JTree implements View {
    * Tree model adaptor to Catalog / Category / PieceOfFurniture classes.  
    */
   private static class CatalogTreeModel implements TreeModel {
-    private FurnitureCatalog                 catalog;
+    private FurnitureCatalog        catalog;
     private List<TreeModelListener> listeners;
     
     public CatalogTreeModel(FurnitureCatalog catalog) {
