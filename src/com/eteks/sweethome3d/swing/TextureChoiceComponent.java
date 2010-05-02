@@ -267,10 +267,10 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
                 List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
                 final String textureName = files.get(0).getAbsolutePath();
                 EventQueue.invokeLater(new Runnable() {
-                  public void run() {
-                    controller.importTexture(textureName);
-                  }
-                });
+                    public void run() {
+                      controller.importTexture(textureName);
+                    }
+                  });
                 return true;
               } catch (UnsupportedFlavorException ex) {
                 return false;
