@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -264,8 +265,12 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
             public boolean importData(JComponent comp, Transferable transferedFiles) {
               try {
                 List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-                String textureName = files.get(0).getAbsolutePath();
-                controller.importTexture(textureName);
+                final String textureName = files.get(0).getAbsolutePath();
+                EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    controller.importTexture(textureName);
+                  }
+                });
                 return true;
               } catch (UnsupportedFlavorException ex) {
                 return false;
