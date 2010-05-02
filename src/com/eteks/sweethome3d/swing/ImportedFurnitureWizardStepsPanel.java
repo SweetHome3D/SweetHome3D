@@ -263,17 +263,25 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            String modelName = files.get(0).getAbsolutePath();
-            updateController(modelName, preferences, 
-                controller.getContentManager(), defaultModelCategory, false);
+            final String modelName = files.get(0).getAbsolutePath();
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  updateController(modelName, preferences, 
+                      controller.getContentManager(), defaultModelCategory, false);
+                }
+              });
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
-                preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceError"));
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+                      preferences.getLocalizedString(ImportedFurnitureWizardStepsPanel.class, "modelChoiceError"));
+                }
+              });
           }
           return success;
         }

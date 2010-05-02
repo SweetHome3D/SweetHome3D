@@ -161,15 +161,24 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            updateController(files.get(0).getAbsolutePath(), preferences, controller.getContentManager());
+            final String imageName = files.get(0).getAbsolutePath();
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  updateController(imageName, preferences, controller.getContentManager());
+                }
+              });
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
-                preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "imageChoiceError"));
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(BackgroundImageWizardStepsPanel.this), 
+                      preferences.getLocalizedString(BackgroundImageWizardStepsPanel.class, "imageChoiceError"));
+                }
+              });
           }
           return success;
         }

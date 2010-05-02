@@ -166,17 +166,24 @@ public class ImportedTextureWizardStepsPanel extends JPanel implements View {
           boolean success = true;
           try {
             List<File> files = (List<File>)transferedFiles.getTransferData(DataFlavor.javaFileListFlavor);
-            String textureName = files.get(0).getAbsolutePath();
-            updateController(textureName, controller.getContentManager(), preferences, false);
+            final String textureName = files.get(0).getAbsolutePath();
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  updateController(textureName, controller.getContentManager(), preferences, false);
+                }
+              });
           } catch (UnsupportedFlavorException ex) {
             success = false;
           } catch (IOException ex) {
             success = false;
           }
           if (!success) {
-            JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
-                preferences.getLocalizedString(
-                    ImportedTextureWizardStepsPanel.class, "imageChoiceError"));
+            EventQueue.invokeLater(new Runnable() {
+                public void run() {
+                  JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedTextureWizardStepsPanel.this), 
+                      preferences.getLocalizedString(ImportedTextureWizardStepsPanel.class, "imageChoiceError"));
+                }
+              });
           }
           return success;
         }
