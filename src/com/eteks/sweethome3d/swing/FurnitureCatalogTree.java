@@ -389,13 +389,13 @@ public class FurnitureCatalogTree extends JTree implements View {
             case ADD :
               if (piece.getCategory().getFurnitureCount() == 1) {
                 // Fire nodes inserted for new category
-                catalogTreeModel.fireTreeNodesInserted(new TreeModelEvent(this,
+                catalogTreeModel.fireTreeNodesInserted(new TreeModelEvent(catalogTreeModel,
                     new Object [] {catalog}, 
                     new int [] {Collections.binarySearch(catalog.getCategories(), piece.getCategory())}, 
                     new Object [] {piece.getCategory()}));
               } else {
                 // Fire nodes inserted for new piece
-                catalogTreeModel.fireTreeNodesInserted(new TreeModelEvent(this,
+                catalogTreeModel.fireTreeNodesInserted(new TreeModelEvent(catalogTreeModel,
                     new Object [] {catalog, piece.getCategory()},
                     new int [] {ev.getIndex()},
                     new Object [] {piece}));
@@ -404,13 +404,13 @@ public class FurnitureCatalogTree extends JTree implements View {
             case DELETE :
               if (piece.getCategory().getFurnitureCount() == 0) {
                 // Fire nodes removed for deleted category
-                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(this,
+                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(catalogTreeModel,
                     new Object [] {catalog},
                     new int [] {-(Collections.binarySearch(catalog.getCategories(), piece.getCategory()) + 1)},
                     new Object [] {piece.getCategory()}));
               } else {
                 // Fire nodes removed for deleted piece
-                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(this, 
+                catalogTreeModel.fireTreeNodesRemoved(new TreeModelEvent(catalogTreeModel, 
                     new Object [] {catalog, piece.getCategory()},
                     new int [] {ev.getIndex()},
                     new Object [] {piece}));
