@@ -83,11 +83,7 @@ public class Wall implements Serializable, Selectable {
    * with given thickness and height. Left and right colors are <code>null</code>.
    */
   public Wall(float xStart, float yStart, float xEnd, float yEnd, float thickness, float height) {
-    this.xStart = xStart;
-    this.yStart = yStart;
-    this.xEnd = xEnd;
-    this.yEnd = yEnd;
-    this.thickness = thickness;
+    this(xStart, yStart, xEnd, yEnd, thickness);
     this.height = height;
   }
   
