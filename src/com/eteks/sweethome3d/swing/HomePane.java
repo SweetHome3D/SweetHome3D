@@ -1820,7 +1820,8 @@ public class HomePane extends JRootPane implements HomeView {
         createPlanView3DPane(home, preferences, controller));
     // Set default divider location
     mainPane.setDividerLocation(360);
-    configureSplitPane(mainPane, home, MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, controller);
+    configureSplitPane(mainPane, home, 
+        MAIN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.3, true, controller);
     return mainPane;
   }
 
@@ -1832,11 +1833,15 @@ public class HomePane extends JRootPane implements HomeView {
   private void configureSplitPane(final JSplitPane splitPane,
                                   Home home,
                                   final String dividerLocationProperty,
-                                  double defaultResizeWeight, 
+                                  double defaultResizeWeight,
+                                  boolean showBorder,
                                   final HomeController controller) {
     splitPane.setContinuousLayout(true);
     splitPane.setOneTouchExpandable(true);
     splitPane.setResizeWeight(defaultResizeWeight);
+    if (!showBorder) {
+      splitPane.setBorder(null);
+    }
     // Restore divider location previously set 
     Integer dividerLocation = (Integer)home.getVisualProperty(dividerLocationProperty);
     if (dividerLocation != null) {
@@ -1948,8 +1953,9 @@ public class HomePane extends JRootPane implements HomeView {
     // Create a split pane that displays both components
     JSplitPane catalogFurniturePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
         catalogView, furnitureView);
+    catalogFurniturePane.setBorder(null);
     configureSplitPane(catalogFurniturePane, home, 
-        CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
+        CATALOG_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
     return catalogFurniturePane;
   }
 
@@ -2116,7 +2122,7 @@ public class HomePane extends JRootPane implements HomeView {
     // Create a split pane that displays both components
     JSplitPane planView3DPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, planView, component3D);
     configureSplitPane(planView3DPane, home, 
-        PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, controller);
+        PLAN_PANE_DIVIDER_LOCATION_VISUAL_PROPERTY, 0.5, false, controller);
     
     // Detach 3D view if it was detached when saved and its dialog can be viewed in one of the screen devices
     Boolean detachedView3D = (Boolean)home.getVisualProperty(view3D.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY);
