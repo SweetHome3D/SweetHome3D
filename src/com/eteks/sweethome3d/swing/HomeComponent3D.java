@@ -99,6 +99,7 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
@@ -909,7 +910,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void mouseReleased(MouseEvent ev) {
           if (!retargetMouseEventToNavigationPanelChildren(ev)) {
             if (ev.isPopupTrigger()) {
-              getComponentPopupMenu().show(HomeComponent3D.this, ev.getX(), ev.getY());
+              JPopupMenu componentPopupMenu = getComponentPopupMenu();
+              if (componentPopupMenu != null) {
+                componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
+              }
             }
           }
         }
