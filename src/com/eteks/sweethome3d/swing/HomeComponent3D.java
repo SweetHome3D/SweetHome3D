@@ -1467,25 +1467,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addFurnitureListener(final Group homeRoot) {
     this.furnitureChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          switch (HomePieceOfFurniture.Property.valueOf(ev.getPropertyName())) {
-            case X:
-            case Y:
-            case ANGLE:
-            case WIDTH:
-            case DEPTH:
-            case HEIGHT:
-            case ELEVATION:
-            case COLOR:
-            case TEXTURE:
-            case MODEL_MIRRORED:
-            case VISIBLE:
+        if (HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.X.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.Y.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.ANGLE.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.WIDTH.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.DEPTH.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.HEIGHT.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.ELEVATION.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.COLOR.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.TEXTURE.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(ev.getPropertyName())
+            || HomePieceOfFurniture.Property.VISIBLE.name().equals(ev.getPropertyName())) {
               HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
               updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
               // If piece is or contains a door or a window, update walls that intersect with piece
               if (containsDoorsAndWindows(piece)) {
                 updateObjects(home.getWalls());
               }
-              break;
           }
         }
       };
