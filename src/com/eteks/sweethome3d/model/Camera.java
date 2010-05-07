@@ -119,7 +119,7 @@ public class Camera implements Serializable, Cloneable {
   }
 
   /**
-   * Returns the field of view. in radians of this camera.
+   * Returns the field of view in radians of this camera.
    */
   public float getFieldOfView() {
     return this.fieldOfView;
