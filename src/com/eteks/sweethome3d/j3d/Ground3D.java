@@ -20,9 +20,6 @@
 package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
-import java.awt.Shape;
-import java.awt.geom.Area;
-import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +33,6 @@ import javax.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
-import com.eteks.sweethome3d.model.Room;
 import com.sun.j3d.utils.geometry.GeometryInfo;
 
 /**
@@ -117,9 +113,8 @@ public class Ground3D extends Object3DBranch {
     }
     
     // Create ground geometry
-    float groundOffset = 0f;
+    float groundOffset = -0.05f;
     List<Point3f> coords = new ArrayList<Point3f>();
-    List<Integer> stripCounts = new ArrayList<Integer>();
     // First add the coordinates of the ground rectangle
     coords.add(new Point3f(this.originX, groundOffset, this.originY)); 
     coords.add(new Point3f(this.originX, groundOffset, this.originY + this.depth));
@@ -133,55 +128,8 @@ public class Ground3D extends Object3DBranch {
       textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), -this.depth / groundTexture.getHeight()));
       textureCoords.add(new TexCoord2f(this.width / groundTexture.getWidth(), 0));
     }
-    stripCounts.add(4);
-
-    // Define all the holes in ground from rooms area
-    Area roomsArea = new Area();
-    for (Room room : home.getRooms()) {
-      if (room.isFloorVisible()) {
-        float [][] points = room.getPoints();
-        if (points.length > 2) {
-          Shape roomShape = getShape(points);
-          Area roomArea = new Area(roomShape);
-          // Remove from room area the already defined hole part if it exists
-          Area roomAreaIntersection = new Area(roomArea);
-          roomAreaIntersection.intersect(roomsArea);
-          if (!roomAreaIntersection.isEmpty()) {
-            roomArea.exclusiveOr(roomAreaIntersection);
-          }
-          
-          if (!roomArea.isEmpty()) {
-            int pointsCount = 0;
-            for (PathIterator it = roomArea.getPathIterator(null); !it.isDone(); ) {
-              float [] roomPoint = new float[2];
-              if (it.currentSegment(roomPoint) == PathIterator.SEG_CLOSE) {
-                stripCounts.add(pointsCount);
-                pointsCount = 0;
-              } else {
-                coords.add(new Point3f(roomPoint [0], groundOffset, roomPoint [1]));
-                if (groundTexture != null) {
-                  textureCoords.add(new TexCoord2f((roomPoint [0] - this.originX) / groundTexture.getWidth(), 
-                      (this.originY - roomPoint [1]) / groundTexture.getHeight()));
-                }
-                pointsCount++;
-              }
-              it.next();
-            }
-            roomsArea.add(roomArea);
-          }
-        }
-      }
-    }
-
-    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+    GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);
     geometryInfo.setCoordinates (coords.toArray(new Point3f [coords.size()]));
-    int [] stripCountsArray = new int [stripCounts.size()];
-    for (int i = 0; i < stripCountsArray.length; i++) {
-      stripCountsArray [i] = stripCounts.get(i);
-    }
-    geometryInfo.setStripCounts(stripCountsArray);
-    geometryInfo.setContourCounts(new int [] {stripCountsArray.length});
-
     if (groundTexture != null) {
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords.toArray(new TexCoord2f [textureCoords.size()]));
