@@ -521,10 +521,10 @@ public class ModelPreviewComponent extends JComponent {
       PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
       if (polygonAttributes == null) {
         polygonAttributes = new PolygonAttributes();
-        polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
-        polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
         appearance.setPolygonAttributes(polygonAttributes);
       }
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
     }
   }
   
