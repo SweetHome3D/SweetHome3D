@@ -1212,7 +1212,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Add wall, furniture, room listeners to home for further update    
       addWallListener(wallsAndFurnitureGroup);
       addFurnitureListener(wallsAndFurnitureGroup);
-      addRoomListener(groundAndRoomsGroup);
+      addRoomListener(groundAndRoomsGroup, 1);
       // Add environment listeners
       addEnvironmentListeners();
       // Should update shadow on floor too but in the facts 
@@ -1532,7 +1532,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds a room listener to home rooms that updates the children of the given 
    * <code>group</code>, each time a room is added, updated or deleted. 
    */
-  private void addRoomListener(final Group group) {
+  private void addRoomListener(final Group group, final int indexOffset) {
     this.roomChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(Arrays.asList(new Room [] {(Room)ev.getSource()}));
@@ -1547,7 +1547,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           Room room = ev.getItem();
           switch (ev.getType()) {
             case ADD :
-              addObject(group, room, false);
+              // Add room to its group at the index indicated by the event 
+              // to ensure the 3D rooms are drawn in the same order as in the plan  
+              addObject(group, room, ev.getIndex() + indexOffset, false);
               room.addPropertyChangeListener(roomChangeListener);
               break;
             case DELETE :
@@ -1587,9 +1589,21 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds to <code>group</code> a branch matching <code>homeObject</code>.
    */
   private void addObject(Group group, Selectable homeObject, boolean waitForLoading) {
+    addObject(group, homeObject, -1, waitForLoading);
+  }
+
+  /**
+   * Adds to <code>group</code> a branch matching <code>homeObject</code> at a given <code>index</code>.
+   * If <code>index</code> is equal to -1, <code>homeObject</code> will be added at the end of the group.
+   */
+  private void addObject(Group group, Selectable homeObject, int index, boolean waitForLoading) {
     Object3DBranch object3D = createObject3D(homeObject, waitForLoading);
     this.homeObjects.put(homeObject, object3D);
-    group.addChild(object3D);
+    if (index == -1) {
+      group.addChild(object3D);
+    } else {
+      group.insertChild(object3D, index);
+    }
     clearPrintedImageCache();
   }
 
