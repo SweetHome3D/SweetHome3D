@@ -141,6 +141,15 @@ public class OBJWriter extends FilterWriter {
     // Remove spaces in MTL file name
     this.mtlFileName = new File(new File(this.mtlFileName).getParent(), 
         new File(this.mtlFileName).getName().replace(' ', '_')).toString();
+    // Ensure MTL file is using only ASCII codes
+    String name = new File(this.mtlFileName).getName();
+    for (int i = 0; i < name.length(); i++) {
+      if (name.charAt(i) >= 128) {
+        this.mtlFileName = new File(new File(this.mtlFileName).getParent(),
+            "materials.mtl").toString();
+        break;
+      }
+    }
   }
   
   /**
