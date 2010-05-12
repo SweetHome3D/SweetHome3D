@@ -32,6 +32,7 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.vecmath.Color3f;
@@ -51,7 +52,16 @@ import com.sun.j3d.utils.geometry.Box;
  * Root of piece of furniture branch.
  */
 public class HomePieceOfFurniture3D extends Object3DBranch {
+  private static final Material          DEFAULT_TEXTURED_SHAPE_MATERIAL = new Material();
+  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES     = new TextureAttributes();
+  
   private final Home home;
+  
+  static {
+    DEFAULT_TEXTURED_SHAPE_MATERIAL.setShininess(0);
+    DEFAULT_TEXTURED_SHAPE_MATERIAL.setSpecularColor(0, 0, 0);
+    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
+  }
   
   /**
    * Creates the 3D piece matching the given home <code>piece</code>.
@@ -357,7 +367,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setMaterialAndTexture(Node node, Material material, HomeTexture texture, boolean waitTextureLoadingEnd,
                                      float pieceWidth, float pieceDepth, float pieceHeight, Vector3f modelSize) {
     if (node instanceof Group) {
-      // Set material of all children
+      // Set material and texture of all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
@@ -366,7 +376,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
-      // Change material of all shape that are not window panes
+      // Change material and texture of all shape that are not window panes 
       if (shapeName == null
           || !shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX)) {
         Appearance appearance = shape.getAppearance();
@@ -377,23 +387,26 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         // Use appearance user data to store shape default material
         DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
         if (defaultMaterialAndTexture == null) {
-          defaultMaterialAndTexture = new DefaultMaterialAndTexture(
-              appearance.getMaterial(), appearance.getTexCoordGeneration(), appearance.getTexture());
+          defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance.getMaterial(), 
+              appearance.getTexCoordGeneration(), appearance.getTexture(), appearance.getTextureAttributes());
           appearance.setUserData(defaultMaterialAndTexture);
         }
-        if (material != null) {
-          // Change material
+        if (material != null && defaultMaterialAndTexture.getTexture() == null) {
+          // Change material if no default texture is displayed on the shape
+          // (textures always keep the colors of their image file)
           appearance.setMaterial(material);
           appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
-          appearance.setTexture(defaultMaterialAndTexture.getTexture());
-        } else if (texture != null) {
-          // Change texture
-          appearance.setMaterial(null);
+          appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
+          appearance.setTexture(null);
+        } else if (material == null && texture != null) {
+          // Change material to white then texture
+          appearance.setMaterial((Material)DEFAULT_TEXTURED_SHAPE_MATERIAL);
           TexCoordGeneration texCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2,
               new Vector4f(-pieceWidth / modelSize.x / texture.getWidth(), 0, 0, 0), 
               new Vector4f(0, pieceHeight / modelSize.y / texture.getHeight(), pieceDepth / modelSize.z / texture.getHeight(), 0));
           appearance.setTexCoordGeneration(texCoordGeneration);
+          appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
           TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
               new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {
@@ -405,6 +418,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
           appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
           appearance.setTexture(defaultMaterialAndTexture.getTexture());
+          appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
         }
       }
     }
@@ -520,6 +534,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setCapability(Appearance.ALLOW_TEXGEN_WRITE);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+    appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
+    appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
   }
   
   /**
@@ -529,13 +545,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     private final Material           material;
     private final TexCoordGeneration texCoordGeneration;
     private final Texture            texture;
+    private final TextureAttributes  textureAttributes;
 
     public DefaultMaterialAndTexture(Material material, 
                                      TexCoordGeneration texCoordGeneration, 
-                                     Texture texture) {
+                                     Texture texture, 
+                                     TextureAttributes textureAttributes) {
       this.material = material;
       this.texCoordGeneration = texCoordGeneration;
-      this.texture = texture;      
+      this.texture = texture;
+      this.textureAttributes = textureAttributes;      
     }
     
     public Material getMaterial() {
@@ -548,6 +567,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     
     public Texture getTexture() {
       return this.texture;
+    }
+    
+    public TextureAttributes getTextureAttributes() {
+      return this.textureAttributes;
     }
   }
 }

@@ -55,15 +55,19 @@ import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
+import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
 import javax.media.j3d.TriangleArray;
 import javax.media.j3d.TriangleFanArray;
 import javax.media.j3d.TriangleStripArray;
+import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
@@ -100,7 +104,9 @@ public class ModelManager {
 
   private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
-  
+
+  private static final Material               DEFAULT_MATERIAL = new Material();
+
   private static final String ADDITIONAL_LOADER_CLASSES = "com.eteks.sweethome3d.j3d.additionalLoaderClasses";
   
   private static ModelManager instance;
@@ -490,12 +496,13 @@ public class ModelManager {
   }
   
   /**
-   * Turn off light nodes of <code>node</code> children and 
-   * set <code>ALLOW_BOUNDS_READ</code> capability on shapes.
+   * Turns off light nodes of <code>node</code> children, 
+   * sets <code>ALLOW_BOUNDS_READ</code> capability on shapes
+   * and modulates textures if needed.
    */
   private void turnOffLightsAndAllowBoundsRead(Node node) {
     if (node instanceof Group) {
-      // Remove lights of all children
+      // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         turnOffLightsAndAllowBoundsRead((Node)enumeration.nextElement());
@@ -504,7 +511,36 @@ public class ModelManager {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
       node.setCapability(Shape3D.ALLOW_BOUNDS_READ);
-    }
+      
+      Appearance appearance = ((Shape3D)node).getAppearance();
+      if (appearance != null) {
+        Texture texture = appearance.getTexture();
+        if (texture != null) {
+          // Use nicest rendering
+          texture.setMinFilter(Texture.NICEST);
+          texture.setMagFilter(Texture.NICEST);
+          
+          TextureAttributes textureAttributes = appearance.getTextureAttributes();
+          if (textureAttributes == null) {
+            // Mix texture and shape color
+            textureAttributes = new TextureAttributes();
+            textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+            appearance.setTextureAttributes(textureAttributes);
+            // Check shape color is white
+            Material material = appearance.getMaterial();
+            if (material == null) {
+              appearance.setMaterial((Material)DEFAULT_MATERIAL.cloneNodeComponent(true));
+            } else {
+              Color3f color = new Color3f();
+              DEFAULT_MATERIAL.getDiffuseColor(color);
+              material.setDiffuseColor(color);
+              DEFAULT_MATERIAL.getAmbientColor(color);
+              material.setAmbientColor(color);
+            }
+          }
+        }
+      }
+    } 
   }
 
   /**

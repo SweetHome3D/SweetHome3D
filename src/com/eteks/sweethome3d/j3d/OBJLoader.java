@@ -1613,7 +1613,7 @@ public class OBJLoader extends LoaderBase implements Loader {
           // Ignore images at other format
         }
         if (textureImage != null) {
-          TextureLoader textureLoader = new TextureLoader(textureImage, TextureLoader.GENERATE_MIPMAP);
+          TextureLoader textureLoader = new TextureLoader(textureImage);
           currentAppearance.setTexture(textureLoader.getTexture());
         }
       } else {
