@@ -54,11 +54,14 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of room branch.
  */
 public class Room3D extends Object3DBranch {
-  private static final Material DEFAULT_MATERIAL = new Material();
+  private static final Material          DEFAULT_MATERIAL            = new Material();
+  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
+  
   private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
   private static final int FLOOR_PART  = 0;
@@ -127,9 +130,7 @@ public class Room3D extends Object3DBranch {
     roomAppearance.setMaterial(DEFAULT_MATERIAL);      
     roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     // Mix texture and room color
-    TextureAttributes textureAttributes = new TextureAttributes ();
-    textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-    roomAppearance.setTextureAttributes(textureAttributes);
+    roomAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     
     return roomShape;
   }

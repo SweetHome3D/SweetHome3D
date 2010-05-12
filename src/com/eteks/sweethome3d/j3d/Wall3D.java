@@ -57,11 +57,14 @@ import com.sun.j3d.utils.geometry.NormalGenerator;
  * Root of wall branch.
  */
 public class Wall3D extends Object3DBranch {
-  private static final Material DEFAULT_MATERIAL = new Material();
+  private static final Material          DEFAULT_MATERIAL            = new Material();
+  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
+  
   private static final Map<Integer, Material> materials = new HashMap<Integer, Material>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+    MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
   }
   
   private static final int LEFT_WALL_SIDE  = 0;
@@ -134,9 +137,7 @@ public class Wall3D extends Object3DBranch {
       wallAppearance.setMaterial(DEFAULT_MATERIAL);      
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
       // Mix texture and wall color
-      TextureAttributes textureAttributes = new TextureAttributes ();
-      textureAttributes.setTextureMode(TextureAttributes.MODULATE);
-      wallAppearance.setTextureAttributes(textureAttributes);
+      wallAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     }
     
     return wallShape;
