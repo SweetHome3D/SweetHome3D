@@ -1036,8 +1036,11 @@ public class OBJWriter extends FilterWriter {
         if (texture != null) {
           ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
           RenderedImage image = imageComponent.getRenderedImage();
-          File imageFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) + "_" + appearanceName + ".jpg");
-          ImageIO.write(image, "JPEG", imageFile);
+          String fileFormat = texture.getFormat() == Texture.RGBA 
+              ? "png"
+              : "jpg";
+          File imageFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) + "_" + appearanceName + "." + fileFormat);
+          ImageIO.write(image, fileFormat, imageFile);
           writer.write("map_Kd " + imageFile.getName() + "\n");
         }
       }      
