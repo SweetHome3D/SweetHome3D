@@ -98,7 +98,7 @@ public class OBJMaterial extends Material {
     if (this.sharpness != null) {
       return this.sharpness;
     } else {
-      throw new IllegalStateException("Optical density not set");
+      throw new IllegalStateException("Sharpness not set");
     }
   }
   
