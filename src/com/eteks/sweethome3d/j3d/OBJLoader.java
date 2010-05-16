@@ -1013,7 +1013,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     try {
       return load(new InputStreamReader(new FileInputStream(file), "ISO-8859-1"), baseUrl);
     } catch (UnsupportedEncodingException ex) {
-      // Should happen with ISO-8859-1
+      // Shouldn't happen 
       return load(new InputStreamReader(new FileInputStream(file)));
     }
   }
@@ -1035,7 +1035,7 @@ public class OBJLoader extends LoaderBase implements Loader {
     try {
       return load(new InputStreamReader(in, "ISO-8859-1"), baseUrl);
     } catch (UnsupportedEncodingException ex) {
-      // Should happen with ISO-8859-1
+      // Shouldn't happen 
       return load(new InputStreamReader(in));
     }
   }
