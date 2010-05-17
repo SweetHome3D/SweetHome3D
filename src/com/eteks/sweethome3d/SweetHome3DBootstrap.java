@@ -38,7 +38,7 @@ public class SweetHome3DBootstrap {
   public static void main(String [] args) throws MalformedURLException, IllegalAccessException, 
         InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
     Class sweetHome3DBootstrapClass = SweetHome3DBootstrap.class;
-    List<String> java3DFiles = new ArrayList<String>(Arrays.asList(new String [] {
+    List<String> extensionJarsAndDlls = new ArrayList<String>(Arrays.asList(new String [] {
         "iText-2.1.5.jar", // Jars included in Sweet Home 3D executable jar file 
         "freehep-vectorgraphics-svg-2.1.1.jar",
         "Loader3DS1_2u.jar",
@@ -60,10 +60,10 @@ public class SweetHome3DBootstrap {
         "macosx/libjogl_cg.jnilib"}));
     if (System.getProperty("os.name").startsWith("Linux")
         && "64".equals(System.getProperty("sun.arch.data.model"))) {
-      java3DFiles.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
+      extensionJarsAndDlls.add("linux/x64/libj3dcore-ogl.so"); // Linux DLLs
     } else {
-      java3DFiles.add("linux/i386/libj3dcore-ogl.so"); 
-      java3DFiles.add("linux/i386/libj3dcore-ogl-cg.so");
+      extensionJarsAndDlls.add("linux/i386/libj3dcore-ogl.so"); 
+      extensionJarsAndDlls.add("linux/i386/libj3dcore-ogl-cg.so");
     }
     
     String [] applicationPackages = {
@@ -82,7 +82,7 @@ public class SweetHome3DBootstrap {
     ClassLoader java3DClassLoader = new ExtensionsClassLoader(
         sweetHome3DBootstrapClass.getClassLoader(), 
         sweetHome3DBootstrapClass.getProtectionDomain(),
-        java3DFiles.toArray(new String [java3DFiles.size()]), applicationPackages);  
+        extensionJarsAndDlls.toArray(new String [extensionJarsAndDlls.size()]), applicationPackages);  
     
     String applicationClassName = "com.eteks.sweethome3d.SweetHome3D";
     Class applicationClass = java3DClassLoader.loadClass(applicationClassName);
