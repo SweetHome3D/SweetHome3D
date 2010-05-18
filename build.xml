@@ -27,7 +27,7 @@
 -->
 <project basedir="." default="javaWebStart" name="SweetHome3D">
   <!-- The current version of Sweet Home 3D -->
-  <property name="version" value="2.3"/>
+  <property name="version" value="2.4"/>
 
   <target name="build" 
   	      description="Builds build/SweetHome3D.jar with all its classes">
@@ -414,7 +414,7 @@
     <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-ITEXT.TXT"     todir="install/windows/tmp" />
-    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/windows/tmp" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/windows/tmp" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/windows/tmp" />
   	<copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/windows/tmp"/>
     <copy file="THIRDPARTY-LICENSE-LAUNCH4J.TXT"  todir="install/windows/tmp" />
@@ -534,13 +534,13 @@
     <!-- Copy COPYING.TXT and licenses texts to install/macosx/SweetHome3D-version/ -->
     <copy file="COPYING.TXT" todir="install/macosx/SweetHome3D-${version}"/>
     <copy file="LICENSE.TXT" todir="install/macosx/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"    todir="install/macosx/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT" todir="install/macosx/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT" todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-JAVA3D.TXT"     todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-LOADER3DS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-VECTORGRAPHICS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
     <copy file="THIRDPARTY-LICENSE-SUNFLOW.TXT"   todir="install/macosx/SweetHome3D-${version}" />
-  	<copy file="THIRDPARTY-LICENSE-JMF.HTML"      todir="install/macosx/SweetHome3D-${version}"/>
-    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"     todir="install/macosx/SweetHome3D-${version}" />
-    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"  todir="install/macosx/SweetHome3D-${version}" />
+  	<copy file="THIRDPARTY-LICENSE-JMF.HTML"       todir="install/macosx/SweetHome3D-${version}"/>
+    <copy file="THIRDPARTY-LICENSE-TANGO.TXT"      todir="install/macosx/SweetHome3D-${version}" />
+    <copy file="THIRDPARTY-LICENSE-CONTRIBUTIONS.TXT"   todir="install/macosx/SweetHome3D-${version}" />
  
     <!-- Create install/SweetHome3D-version-macosx.dmg with Disk Utility -->
     <delete file="install/SweetHome3D-${version}-macosx.dmg"/>
@@ -560,7 +560,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x86.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 32 bits JRE installed in jre1.6.0_18 -->
+       CAUTION : Requires a Linux 32 bits JRE installed in jre1.6.0_20 -->
   <target name="linux32Installer" depends="application,furniture,textures,help"
   	      description="Builds install/SweetHome3D-version-linux-x86.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
@@ -598,8 +598,8 @@
 
     <!-- Copy JRE to install/linux/i386/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_18">
-      <fileset dir="jre1.6.0_18">
+    <copy todir="install/linux/i386/SweetHome3D-${version}/jre1.6.0_20">
+      <fileset dir="jre1.6.0_20">
         <include name="**"/>
 
         <exclude name="lib/ext/sunjce_provider.jar"/>
@@ -619,12 +619,12 @@
       <tarfileset dir="install/linux/i386"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
-        <exclude name="SweetHome3D-${version}/jre1.6.0_18/bin/java"/>
+        <exclude name="SweetHome3D-${version}/jre1.6.0_20/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/i386" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
-        <include name="SweetHome3D-${version}/jre1.6.0_18/bin/java"/>
+        <include name="SweetHome3D-${version}/jre1.6.0_20/bin/java"/>
       </tarfileset>
     </tar>
 
@@ -637,7 +637,7 @@
 
   <!-- Builds install/SweetHome3D-version-linux-x64.tgz archive that contains SweetHome3D command
        with a Linux JRE and Sweet Home 3D libraries.
-       CAUTION : Requires a Linux 64 bits JRE installed in jre1.6.0_18 -->
+       CAUTION : Requires a Linux 64 bits JRE installed in jre1.6.0_20 -->
   <target name="linux64Installer" depends="application,furniture,textures,help"
   	      description="Builds install/SweetHome3D-version-linux-x64.tgz archive">
     <!-- Copy SweetHome3D.jar and Linux Java 3D DLLs and JARs for Java 3D 
@@ -675,8 +675,8 @@
 
     <!-- Copy JRE to install/linux/x64/SweetHome3D-version/jre... excluding files mentioned 
          in JRE README.TXT file (JRE bin/java command excepted) -->
-    <copy todir="install/linux/x64/SweetHome3D-${version}/jre1.6.0_18">
-      <fileset dir="jre1.6.0_18">
+    <copy todir="install/linux/x64/SweetHome3D-${version}/jre1.6.0_20">
+      <fileset dir="jre1.6.0_20">
         <include name="**"/>
 
         <exclude name="lib/ext/sunjce_provider.jar"/>
@@ -696,12 +696,12 @@
       <tarfileset dir="install/linux/x64"
                   includes="SweetHome3D-${version}/**">
         <exclude name="SweetHome3D-${version}/SweetHome3D"/>
-        <exclude name="SweetHome3D-${version}/jre1.6.0_18/bin/java"/>
+        <exclude name="SweetHome3D-${version}/jre1.6.0_20/bin/java"/>
       </tarfileset>
       <!-- Change executable permission of SweetHome3D and java commands -->
       <tarfileset dir="install/linux/x64" mode="755">
         <include name="SweetHome3D-${version}/SweetHome3D"/>
-        <include name="SweetHome3D-${version}/jre1.6.0_18/bin/java"/>
+        <include name="SweetHome3D-${version}/jre1.6.0_20/bin/java"/>
       </tarfileset>
     </tar>
 
@@ -779,12 +779,12 @@
     <javadoc sourcepath="src" destdir="install/javadoc/SweetHome3D-${version}-javadoc" 
              encoding="ISO-8859-1" version="true" author="true" use="true"
              windowtitle="Sweet Home 3D ${version} API">
-      <doctitle><![CDATA[<img src='http://www.sweethome3d.eu/SweetHome3DIcon.gif' width='48' height='48' alt='Sweet Home 3D' align='absmiddle'> Sweet Home 3D ${version} API]]></doctitle>
-      <header><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></header>
-      <footer><![CDATA[<a href='http://www.sweethome3d.eu' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
+      <doctitle><![CDATA[<img src='http://www.sweethome3d.com/SweetHome3DIcon.gif' width='48' height='48' alt='Sweet Home 3D' align='absmiddle'> Sweet Home 3D ${version} API]]></doctitle>
+      <header><![CDATA[<a href='http://www.sweethome3d.com' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></header>
+      <footer><![CDATA[<a href='http://www.sweethome3d.com' target='_parent'><font size='+1'>Sweet Home 3D ${version}</font></a>]]></footer>
       <bottom><![CDATA[<table align='center'><tr>
-                       <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.eu/images/eteks.gif' border='0'><a></td>
-                       <td>© Copyrights 2006-2008 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
+                       <td><a href='http://www.eteks.com' target='_parent'><img align='absmiddle' src='http://www.sweethome3d.com/images/eteks.gif' border='0'><a></td>
+                       <td>© Copyrights 2006-2010 <a href='http://www.eteks.com' target='_parent'>eTeks</a> - All rights reserved 
                            <br>Distributed under <a href='http://www.gnu.org/licenses/gpl-2.0.html' target='_parent'>GNU General Public License</a></td></tr></table>]]></bottom>
       <link href="http://java.sun.com/j2se/1.5.0/docs/api/"/>
       <link href="http://download.java.net/media/java3d/javadoc/1.5.2/"/>

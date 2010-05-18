@@ -3,11 +3,11 @@
 <plist version="0.9">
 <dict>
 	<key>CFBundleGetInfoString</key>
-	<string>Sweet Home 3D 2.3 Copyright 2007-2010 eTeks</string>
+	<string>Sweet Home 3D 2.4 Copyright 2007-2010 eTeks</string>
 	<key>CFBundleVersion</key>
-	<string>2.3</string>
+	<string>2.4</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.3</string>
+	<string>2.4</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -33,7 +33,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3D</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://www.sweethome3d.eu/</string>
+	 		<string>http://www.sweethome3d.com/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Document</string>
 			<key>UTTypeIconFile</key>
@@ -57,7 +57,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3DLanguageLibrary</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://www.sweethome3d.eu/</string>
+	 		<string>http://www.sweethome3d.com/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Language Library</string>
 			<key>UTTypeIconFile</key>
@@ -81,7 +81,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3DFurnitureLibrary</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://www.sweethome3d.eu/</string>
+	 		<string>http://www.sweethome3d.com/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Furniture Library</string>
 			<key>UTTypeIconFile</key>
@@ -105,7 +105,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3DTexturesLibrary</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://www.sweethome3d.eu/</string>
+	 		<string>http://www.sweethome3d.com/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Textures Library</string>
 			<key>UTTypeIconFile</key>
@@ -129,7 +129,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.eteks.sweethome3d.SweetHome3DPlugin</string>
 			<key>UTTypeReferenceURL</key>
-	 		<string>http://www.sweethome3d.eu/</string>
+	 		<string>http://www.sweethome3d.com/</string>
 			<key>UTTypeDescription</key>
 			<string>Sweet Home 3D Plugin</string>
 			<key>UTTypeIconFile</key>

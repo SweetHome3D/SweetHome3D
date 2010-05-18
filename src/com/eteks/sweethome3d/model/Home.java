@@ -44,7 +44,7 @@ public class Home implements Serializable, Cloneable {
    * in <code>Home</code> class or in one of the classes that it uses,
    * this number is increased.
    */
-  public static final long CURRENT_VERSION = 2300;
+  public static final long CURRENT_VERSION = 2400;
   
   private static final boolean KEEP_BACKWARD_COMPATIBLITY = true;
   

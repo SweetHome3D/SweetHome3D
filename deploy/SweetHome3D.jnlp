@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <jnlp spec="1.5+" 
-      codebase="http://www.sweethome3d.eu/" 
+      codebase="http://www.sweethome3d.com/" 
       href="SweetHome3D.jnlp">
   <information>
     <title>Sweet Home 3D</title>
     <vendor>eTeks</vendor>
-    <homepage href="http://www.sweethome3d.eu/"/>
+    <homepage href="http://www.sweethome3d.com/"/>
     <description>Sweet Home 3D</description>
     <description kind="short">Arrange the furniture of your house</description>
     <icon href="SweetHome3DIcon.gif"/>
@@ -60,8 +60,6 @@
     <jar href="lib/freehep-vectorgraphics-svg-2.1.1.jar"/>
     <jar href="lib/sunflow-0.07.3c.jar"/>    
     <jar href="lib/jmf.jar"/>    
-    <property name="apple.laf.useScreenMenuBar" value="true"/>
-    <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="com.eteks.sweethome3d.deploymentInformation" value="Java Web Start"/>
   </resources>
  
@@ -75,6 +73,8 @@
   </resources>
 
   <resources os="Mac\ OS\ X">
+    <property name="apple.laf.useScreenMenuBar" value="true"/>
+    <property name="apple.awt.graphics.UseQuartz" value="true"/>
     <property name="j3d.rend" value="jogl"/>
     <jar href="lib/macosx/java3d.jar"/>
   </resources>
