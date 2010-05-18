@@ -35,6 +35,7 @@ import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
@@ -52,8 +53,10 @@ import com.sun.j3d.utils.geometry.Box;
  * Root of piece of furniture branch.
  */
 public class HomePieceOfFurniture3D extends Object3DBranch {
-  private static final Material          DEFAULT_TEXTURED_SHAPE_MATERIAL = new Material();
-  private static final TextureAttributes MODULATE_TEXTURE_ATTRIBUTES     = new TextureAttributes();
+  private static final Material               DEFAULT_TEXTURED_SHAPE_MATERIAL = new Material();
+  private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = 
+      new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
+  private static final TextureAttributes      MODULATE_TEXTURE_ATTRIBUTES = new TextureAttributes();
   
   private final Home home;
   
@@ -388,7 +391,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture)appearance.getUserData();
         if (defaultMaterialAndTexture == null) {
           defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance.getMaterial(), 
-              appearance.getTexCoordGeneration(), appearance.getTexture(), appearance.getTextureAttributes());
+              appearance.getTransparencyAttributes(), appearance.getTexCoordGeneration(), 
+              appearance.getTexture(), appearance.getTextureAttributes());
           appearance.setUserData(defaultMaterialAndTexture);
         }
         if (material != null && defaultMaterialAndTexture.getTexture() == null) {
@@ -411,11 +415,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
               new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {
                     shape.getAppearance().setTexture(texture);
+                    if (texture.getFormat() == Texture.RGBA) {
+                      shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
+                    }
                   }
                 });
         } else {
           // Restore default material and texture
           appearance.setMaterial(defaultMaterialAndTexture.getMaterial());
+          appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
           appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
           appearance.setTexture(defaultMaterialAndTexture.getTexture());
           appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
@@ -475,8 +483,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         appearance.setPolygonAttributes(polygonAttributes);
       }
       
-      // Change cull face
-      polygonAttributes.setCullFace(cullFace);
+      // Change cull face 
+      if (polygonAttributes.getCullFace() != PolygonAttributes.CULL_NONE) {
+        polygonAttributes.setCullFace(cullFace);
+      }
     }
   }
   
@@ -511,6 +521,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
   private PolygonAttributes createPolygonAttributesWithChangeCapabilities() {
     PolygonAttributes polygonAttributes = new PolygonAttributes();
+    polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
     polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
     polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
     return polygonAttributes;
@@ -536,8 +547,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
+    appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
+    appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
     PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
     if (polygonAttributes != null) {
+      polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
     }
@@ -547,16 +561,19 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * A class used to store the default material and texture of a shape.
    */
   private static class DefaultMaterialAndTexture {
-    private final Material           material;
-    private final TexCoordGeneration texCoordGeneration;
-    private final Texture            texture;
-    private final TextureAttributes  textureAttributes;
+    private final Material               material;
+    private final TransparencyAttributes transparencyAttributes;
+    private final TexCoordGeneration     texCoordGeneration;
+    private final Texture                texture;
+    private final TextureAttributes      textureAttributes;
 
     public DefaultMaterialAndTexture(Material material, 
+                                     TransparencyAttributes transparencyAttributes, 
                                      TexCoordGeneration texCoordGeneration, 
                                      Texture texture, 
                                      TextureAttributes textureAttributes) {
       this.material = material;
+      this.transparencyAttributes = transparencyAttributes;
       this.texCoordGeneration = texCoordGeneration;
       this.texture = texture;
       this.textureAttributes = textureAttributes;      
@@ -566,6 +583,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       return this.material;
     }
 
+    public TransparencyAttributes getTransparencyAttributes() {
+      return this.transparencyAttributes;
+    }
+    
     public TexCoordGeneration getTexCoordGeneration() {
       return this.texCoordGeneration;
     }
