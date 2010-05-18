@@ -445,6 +445,8 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsAndAllowBoundsRead(modelNode);
 
+        collapseHierarchy(modelNode, modelNode);
+        
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -557,6 +559,43 @@ public class ModelManager {
         }
       }
     } 
+  }
+
+  /**
+   * Simplifies hierarchy by replacing intermediate groups to a shape by
+   * the matching transform group.
+   */
+  private void collapseHierarchy(Group root, Node node) {
+    if (node.getClass() == Group.class
+        || node.getClass() == TransformGroup.class
+        || node.getClass() == BranchGroup.class) {
+      // Enumerate children
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        collapseHierarchy(root, (Node)enumeration.nextElement());
+      }
+    } else if (node instanceof Shape3D) {
+      // Reparent node 
+      Transform3D transformation = getTransformationToParent(root, node);
+      Group parent = (Group)node.getParent();
+      if (parent != root && parent.getParent() != root) {
+        parent.removeChild(node);
+        TransformGroup transformGroup = new TransformGroup(transformation);
+        root.addChild(transformGroup);
+        transformGroup.addChild(node);
+        removeEmptyParentGroups(root, parent);
+      }
+    }
+  }
+
+  private void removeEmptyParentGroups(Group root, Group group) {
+    if (root != group) {
+      Group parent = (Group)group.getParent();
+      if (group.numChildren() == 0) {
+        parent.removeChild(group);
+        removeEmptyParentGroups(root, parent);
+      }
+    }
   }
 
   /**
