@@ -39,13 +39,19 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
+import javax.media.j3d.GeometryStripArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.IndexedGeometryStripArray;
+import javax.media.j3d.IndexedLineArray;
+import javax.media.j3d.IndexedLineStripArray;
 import javax.media.j3d.IndexedQuadArray;
 import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
+import javax.media.j3d.LineArray;
+import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
@@ -376,50 +382,54 @@ public class PhotoRenderer {
       int [] verticesIndices = null;
       int [] stripVertexCount = null;
       if (geometryArray instanceof IndexedGeometryArray) {
-        if (geometryArray instanceof IndexedTriangleArray) {
-          verticesIndices = new int [((IndexedTriangleArray)geometryArray).getIndexCount()];
+        if (geometryArray instanceof IndexedLineArray
+            || geometryArray instanceof IndexedTriangleArray) {
+          verticesIndices = new int [((IndexedGeometryArray)geometryArray).getIndexCount()];
         } else if (geometryArray instanceof IndexedQuadArray) {
           verticesIndices = new int [((IndexedQuadArray)geometryArray).getIndexCount() * 3 / 2];
-        } else if (geometryArray instanceof IndexedTriangleStripArray) {
-          IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
-          stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripIndexCounts(stripVertexCount);
-          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
-        } else if (geometryArray instanceof IndexedTriangleFanArray) {
-          IndexedTriangleFanArray triangleFanArray = (IndexedTriangleFanArray)geometryArray;
-          stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripIndexCounts(stripVertexCount);
-          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
-        } 
+        } else if (geometryArray instanceof IndexedGeometryStripArray) {
+          IndexedTriangleStripArray geometryStripArray = (IndexedTriangleStripArray)geometryArray;
+          stripVertexCount = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripIndexCounts(stripVertexCount);          
+          if (geometryArray instanceof IndexedLineStripArray) {
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
+          } else {
+            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+          } 
+        }
       } else {
-        if (geometryArray instanceof TriangleArray) {
-          verticesIndices = new int [((TriangleArray)geometryArray).getVertexCount()];
+        if (geometryArray instanceof LineArray
+            || geometryArray instanceof TriangleArray) {
+          verticesIndices = new int [((GeometryArray)geometryArray).getVertexCount()];
         } else if (geometryArray instanceof QuadArray) {
           verticesIndices = new int [((QuadArray)geometryArray).getVertexCount() * 3 / 2];
-        } else if (geometryArray instanceof TriangleStripArray) {
-          TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
-          stripVertexCount = new int [triangleStripArray.getNumStrips()];
-          triangleStripArray.getStripVertexCounts(stripVertexCount);
-          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
-        } else if (geometryArray instanceof TriangleFanArray) {
-          TriangleFanArray triangleFanArray = (TriangleFanArray)geometryArray;
-          stripVertexCount = new int [triangleFanArray.getNumStrips()];
-          triangleFanArray.getStripVertexCounts(stripVertexCount);
-          verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+        } else if (geometryArray instanceof GeometryStripArray) {
+          GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
+          stripVertexCount = new int [geometryStripArray.getNumStrips()];
+          geometryStripArray.getStripVertexCounts(stripVertexCount);
+          if (geometryArray instanceof LineStripArray) {
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
+          } else {
+            verticesIndices = new int [getTriangleCount(stripVertexCount) * 3];
+          }       
         }
       }
 
       if (verticesIndices != null) {
+        boolean line = geometryArray instanceof IndexedLineArray
+            || geometryArray instanceof IndexedLineStripArray
+            || geometryArray instanceof LineArray
+            || geometryArray instanceof LineStripArray;
         float [] vertices = new float [geometryArray.getVertexCount() * 3];
         
-        float [] normals = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
+        float [] normals = !line && (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0
             ? new float [geometryArray.getVertexCount() * 3]
             : null;
         
         boolean uvsGenerated = false;
         Vector4f planeS = null;
         Vector4f planeT = null;
-        if (texCoordGeneration != null) {
+        if (!line && texCoordGeneration != null) {
           uvsGenerated = texCoordGeneration.getGenMode() == TexCoordGeneration.OBJECT_LINEAR
               && texCoordGeneration.getEnable();
           if (uvsGenerated) {
@@ -540,7 +550,7 @@ public class PhotoRenderer {
           }
         }
 
-        // Export triangles or quadrilaterals depending on the geometry
+        // Export lines, triangles or quadrilaterals depending on the geometry
         if (geometryArray instanceof IndexedGeometryArray) {
           int [] normalsIndices = normals != null
               ? new int [verticesIndices.length]
@@ -549,7 +559,12 @@ public class PhotoRenderer {
               ? new int [verticesIndices.length]
               : null;
               
-          if (geometryArray instanceof IndexedTriangleArray) {
+          if (geometryArray instanceof IndexedLineArray) {
+            IndexedLineArray lineArray = (IndexedLineArray)geometryArray;
+            for (int i = 0, n = lineArray.getIndexCount(); i < n; i += 2) {
+              exportIndexedLine(lineArray, i, i + 1, verticesIndices, i);
+            }
+          } else if (geometryArray instanceof IndexedTriangleArray) {
             IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
             for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
               exportIndexedTriangle(triangleArray, i, i + 1, i + 2, 
@@ -562,6 +577,15 @@ public class PhotoRenderer {
                   verticesIndices, normalsIndices, uvsIndices, i * 3 / 2);
               exportIndexedTriangle(quadArray, i, i + 2, i + 3, 
                   verticesIndices, normalsIndices, uvsIndices, i * 3 / 2 + 3);
+            }
+          } else if (geometryArray instanceof IndexedLineStripArray) {
+            IndexedLineStripArray lineStripArray = (IndexedLineStripArray)geometryArray;
+            for (int initialIndex = 0, lineIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1; 
+                   i < n; i++, lineIndex += 2) {
+                 exportIndexedLine(lineStripArray, i, i + 1, verticesIndices, lineIndex);
+              }
+              initialIndex += stripVertexCount [strip];
             }
           } else if (geometryArray instanceof IndexedTriangleStripArray) {
             IndexedTriangleStripArray triangleStripArray = (IndexedTriangleStripArray)geometryArray;
@@ -627,7 +651,12 @@ public class PhotoRenderer {
             uvs = directUvs;
           }
         } else {
-          if (geometryArray instanceof TriangleArray) {
+          if (geometryArray instanceof LineArray) {
+            LineArray lineArray = (LineArray)geometryArray;
+            for (int i = 0, n = lineArray.getVertexCount(); i < n; i += 2) {
+              exportLine(lineArray, i, i + 1, verticesIndices, i);
+            }
+          } else if (geometryArray instanceof TriangleArray) {
             TriangleArray triangleArray = (TriangleArray)geometryArray;
             for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
               exportTriangle(triangleArray, i, i + 1, i + 2, verticesIndices, i);
@@ -637,6 +666,15 @@ public class PhotoRenderer {
             for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
               exportTriangle(quadArray, i, i + 1, i + 2, verticesIndices, i * 3 / 2);
               exportTriangle(quadArray, i + 2, i + 3, i, verticesIndices, i * 3 / 2 + 3);
+            }
+          } else if (geometryArray instanceof LineStripArray) {
+            LineStripArray lineStripArray = (LineStripArray)geometryArray;
+            for (int initialIndex = 0, lineIndex = 0, strip = 0; strip < stripVertexCount.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCount [strip] - 1; 
+                   i < n; i++, lineIndex += 2) {
+                exportLine(lineStripArray, i, i + 1, verticesIndices, lineIndex);
+              }
+              initialIndex += stripVertexCount [strip];
             }
           } else if (geometryArray instanceof TriangleStripArray) {
             TriangleStripArray triangleStripArray = (TriangleStripArray)geometryArray;
@@ -663,15 +701,31 @@ public class PhotoRenderer {
           }
         }
       
-        this.sunflow.parameter("triangles", verticesIndices);
-        this.sunflow.parameter("points", "point", "vertex", vertices);
-        if (normals != null) {
-          this.sunflow.parameter("normals", "vector", "vertex", normals);
+        if (line) {
+          // Get points coordinates
+          float [] points = new float [verticesIndices.length * 3];
+          int pointIndex = 0;
+          for (int i = 0; i < verticesIndices.length; i++) {
+            int indirectIndex = verticesIndices [i] * 3;
+            points [pointIndex++] = vertices [indirectIndex++];
+            points [pointIndex++] = vertices [indirectIndex++];
+            points [pointIndex++] = vertices [indirectIndex++];
+          }
+          this.sunflow.parameter("segments", vertices.length / 2 + 1);
+          this.sunflow.parameter("widths", 0.2f);
+          this.sunflow.parameter("points", "point", "vertex", points);
+          this.sunflow.geometry(objectName, "hair");
+        } else {
+          this.sunflow.parameter("triangles", verticesIndices);
+          this.sunflow.parameter("points", "point", "vertex", vertices);
+          if (normals != null) {
+            this.sunflow.parameter("normals", "vector", "vertex", normals);
+          }
+          if (uvs != null) {
+            this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
+          }
+          this.sunflow.geometry(objectName, "triangle_mesh");
         }
-        if (uvs != null) {
-          this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
-        }
-        this.sunflow.geometry(objectName, "triangle_mesh");
       }
     } 
   }
@@ -688,7 +742,18 @@ public class PhotoRenderer {
   }
 
   /**
-   * Returns the sum of the integers in <code>stripVertexCount</code> array.
+   * Returns the sum of line integers in <code>stripVertexCount</code> array.
+   */
+  private int getLineCount(int [] stripVertexCount) {
+    int lineCount = 0;
+    for (int strip = 0; strip < stripVertexCount.length; strip++) {
+      lineCount += stripVertexCount [strip] - 1;
+    }
+    return lineCount;
+  }
+
+  /**
+   * Returns the sum of triangle integers in <code>stripVertexCount</code> array.
    */
   private int getTriangleCount(int [] stripVertexCount) {
     int triangleCount = 0;
@@ -735,7 +800,18 @@ public class PhotoRenderer {
   }
 
   /**
-   * Stores in <code>triangles</code> the indices given at vertexIndex1, vertexIndex2, vertexIndex3. 
+   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2. 
+   */
+  private void exportIndexedLine(IndexedGeometryArray geometryArray, 
+                                 int vertexIndex1, int vertexIndex2,
+                                 int [] verticesIndices, 
+                                 int index) {
+    verticesIndices [index++] = geometryArray.getCoordinateIndex(vertexIndex1);
+    verticesIndices [index] = geometryArray.getCoordinateIndex(vertexIndex2);
+  }
+    
+  /**
+   * Stores in <code>verticesIndices</code> the indices given at vertexIndex1, vertexIndex2, vertexIndex3. 
    */
   private void exportIndexedTriangle(IndexedGeometryArray geometryArray, 
                                      int vertexIndex1, int vertexIndex2, int vertexIndex3,
@@ -757,7 +833,17 @@ public class PhotoRenderer {
   }
     
   /**
-   * Stores in <code>triangles</code> the indices vertexIndex1, vertexIndex2, vertexIndex3. 
+   * Stores in <code>verticesIndices</code> the indices vertexIndex1, vertexIndex2, vertexIndex3. 
+   */
+  private void exportLine(GeometryArray geometryArray, 
+                          int vertexIndex1, int vertexIndex2, 
+                          int [] verticesIndices, int index) {
+    verticesIndices [index++] = vertexIndex1;
+    verticesIndices [index] = vertexIndex2;
+  }
+    
+  /**
+   * Stores in <code>verticesIndices</code> the indices vertexIndex1, vertexIndex2, vertexIndex3. 
    */
   private void exportTriangle(GeometryArray geometryArray, 
                               int vertexIndex1, int vertexIndex2, int vertexIndex3,

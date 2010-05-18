@@ -43,6 +43,9 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
@@ -1119,28 +1122,28 @@ public class OBJLoader extends LoaderBase implements Loader {
     BranchGroup sceneRoot = new BranchGroup();
     scene.setSceneGroup(sceneRoot);
     for (Group group : this.groups.values()) {
-      List<Face> faces = group.getFaces();
-      if (faces != null
-          && !faces.isEmpty()) {
+      List<Geometry> geometries = group.getGeometry();
+      if (geometries != null
+          && !geometries.isEmpty()) {
         int i = 0;
-        while (i < faces.size()) {
-          Face firstFace = faces.get(i);          
-          GeometryInfo geometry = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-          boolean firstFaceHasTextureCoordinateIndices = firstFace.hasTextureCoordinateIndices();
-          boolean firstFaceHasNormalIndices = firstFace.hasNormalIndices();
+        while (i < geometries.size()) {
+          Geometry firstGeometry = geometries.get(i);          
+          boolean firstGeometryHasTextureCoordinateIndices = firstGeometry.hasTextureCoordinateIndices();
+          boolean firstFaceHasNormalIndices = (firstGeometry instanceof Face) && ((Face)firstGeometry).hasNormalIndices();
           
-          String firstFaceMaterial = firstFace.getMaterial();
-          Appearance appearance = getAppearance(firstFaceMaterial);
+          String firstGeometryMaterial = firstGeometry.getMaterial();
+          Appearance appearance = getAppearance(firstGeometryMaterial);
           
-          // Search how many faces share the same characteristics 
+          // Search how many geometries share the same characteristics 
           int max = i;
-          while (++max < faces.size()) {
-            Face face = faces.get(max);
-            String material = face.getMaterial();
-            if (material == null && firstFaceMaterial != null
+          while (++max < geometries.size()) {
+            Geometry geometry = geometries.get(max);
+            String material = geometry.getMaterial();
+            if (geometry.getClass() != firstGeometry.getClass()
+                || material == null && firstGeometryMaterial != null
                 || material != null && getAppearance(material) != appearance
-                || (firstFaceHasTextureCoordinateIndices ^ face.hasTextureCoordinateIndices())
-                || (firstFaceHasNormalIndices ^ face.hasNormalIndices())) {
+                || (firstGeometryHasTextureCoordinateIndices ^ geometry.hasTextureCoordinateIndices())
+                || (firstFaceHasNormalIndices ^ ((firstGeometry instanceof Face) && ((Face)geometry).hasNormalIndices()))) {
               break;
             }
           }
@@ -1149,47 +1152,73 @@ public class OBJLoader extends LoaderBase implements Loader {
           int faceCount = max - i;
           int indexCount = 0;
           for (int j = 0; j < faceCount; j++) {
-            indexCount += faces.get(i + j).getVertexIndices().length;
+            indexCount += geometries.get(i + j).getVertexIndices().length;
           }
           int [] coordinatesIndices = new int [indexCount];
           int [] stripCounts = new int [faceCount]; 
           for (int j = 0, destIndex = 0; j < faceCount; j++) {
-            int [] faceVertexIndices = faces.get(i + j).getVertexIndices();
-            System.arraycopy(faceVertexIndices, 0, coordinatesIndices, destIndex, faceVertexIndices.length);
-            stripCounts [j] = faceVertexIndices.length;
-            destIndex += faceVertexIndices.length;
+            int [] geometryVertexIndices = geometries.get(i + j).getVertexIndices();
+            System.arraycopy(geometryVertexIndices, 0, coordinatesIndices, destIndex, geometryVertexIndices.length);
+            stripCounts [j] = geometryVertexIndices.length;
+            destIndex += geometryVertexIndices.length;
           }
-          geometry.setCoordinates(vertices);
-          geometry.setCoordinateIndices(coordinatesIndices);
-          geometry.setStripCounts(stripCounts);
-          
-          if (firstFaceHasTextureCoordinateIndices) {
-            int [] textureCoordinateIndices = new int [indexCount];
+
+          int [] textureCoordinateIndices = null;
+          if (firstGeometryHasTextureCoordinateIndices) {
+            textureCoordinateIndices = new int [indexCount];
             for (int j = 0, destIndex = 0; j < faceCount; j++) {
-              int [] faceTextureCoordinateIndices = faces.get(i + j).getTextureCoordinateIndices();
-              System.arraycopy(faceTextureCoordinateIndices, 0, textureCoordinateIndices, destIndex, faceTextureCoordinateIndices.length);
-              destIndex += faceTextureCoordinateIndices.length;
+              int [] geometryTextureCoordinateIndices = geometries.get(i + j).getTextureCoordinateIndices();
+              System.arraycopy(geometryTextureCoordinateIndices, 0, textureCoordinateIndices, destIndex, geometryTextureCoordinateIndices.length);
+              destIndex += geometryTextureCoordinateIndices.length;
             }
-            geometry.setTextureCoordinateParams(1, 2);
-            geometry.setTextureCoordinates(0, textureCoodinates);
-            geometry.setTextureCoordinateIndices(0, textureCoordinateIndices);
           } 
-          
-          if (firstFaceHasNormalIndices) {
-            int [] normalIndices = new int [indexCount];
-            for (int j = 0, destIndex = 0; j < faceCount; j++) {
-              int [] faceNormalIndices = faces.get(i + j).getNormalIndices();
-              System.arraycopy(faceNormalIndices, 0, normalIndices, destIndex, faceNormalIndices.length);
-              destIndex += faceNormalIndices.length;
+
+          GeometryArray geometryArray;
+          if (firstGeometry instanceof Face) {
+            GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
+            geometryInfo.setCoordinates(vertices);
+            geometryInfo.setCoordinateIndices(coordinatesIndices);
+            geometryInfo.setStripCounts(stripCounts);
+            
+            if (firstGeometryHasTextureCoordinateIndices) {
+              geometryInfo.setTextureCoordinateParams(1, 2);
+              geometryInfo.setTextureCoordinates(0, textureCoodinates);
+              geometryInfo.setTextureCoordinateIndices(0, textureCoordinateIndices);
+            } 
+            
+            if (firstFaceHasNormalIndices) {
+              int [] normalIndices = new int [indexCount];
+              for (int j = 0, destIndex = 0; j < faceCount; j++) {
+                int [] faceNormalIndices = ((Face)geometries.get(i + j)).getNormalIndices();
+                System.arraycopy(faceNormalIndices, 0, normalIndices, destIndex, faceNormalIndices.length);
+                destIndex += faceNormalIndices.length;
+              }
+              geometryInfo.setNormals(normals);
+              geometryInfo.setNormalIndices(normalIndices);
+            } else {
+              NormalGenerator normalGenerator = new NormalGenerator(Math.PI / 2);
+              if (!group.isSmooth()) {
+                normalGenerator.setCreaseAngle(0);
+              }
+              normalGenerator.generateNormals(geometryInfo);
             }
-            geometry.setNormals(normals);
-            geometry.setNormalIndices(normalIndices);
-          } else {
-            NormalGenerator normalGenerator = new NormalGenerator(Math.PI / 2);
-            if (!group.isSmooth()) {
-              normalGenerator.setCreaseAngle(0);
+            geometryArray = geometryInfo.getGeometryArray(true, true, false);
+          } else { // Line
+            int format = IndexedGeometryArray.COORDINATES;
+            if (firstGeometryHasTextureCoordinateIndices) {
+              format |= IndexedGeometryArray.TEXTURE_COORDINATE_2;
             }
-            normalGenerator.generateNormals(geometry);
+            
+            // Use non indexed line array to avoid referencing the whole vertices
+            geometryArray = new LineStripArray(coordinatesIndices.length, format, stripCounts);            
+            for (int j = 0; j < coordinatesIndices.length; j++) {
+              geometryArray.setCoordinate(j, vertices [coordinatesIndices [j]]);
+            }
+            if (firstGeometryHasTextureCoordinateIndices) {
+              for (int j = 0; j < coordinatesIndices.length; j++) {
+                geometryArray.setTextureCoordinate(0, j, textureCoodinates [textureCoordinateIndices [j]]);
+              }
+            }
           }
           
           // Clone appearance to avoid sharing it
@@ -1197,12 +1226,12 @@ public class OBJLoader extends LoaderBase implements Loader {
             appearance = (Appearance)appearance.cloneNodeComponent(false);
             // Create texture coordinates if geometry doesn't define its own coordinates 
             // and appearance contains a texture 
-            if (!firstFaceHasTextureCoordinateIndices
+            if (!firstGeometryHasTextureCoordinateIndices
                 && appearance.getTexture() != null) {
               appearance.setTexCoordGeneration(new TexCoordGeneration());
             }
           }
-          Shape3D shape = new Shape3D(geometry.getGeometryArray(true, true, false), appearance);   
+          Shape3D shape = new Shape3D(geometryArray, appearance);   
           sceneRoot.addChild(shape);
           scene.addNamedObject(group.getName() + (i == 0 ? "" : String.valueOf(i)), shape);
           
@@ -1252,6 +1281,44 @@ public class OBJLoader extends LoaderBase implements Loader {
       // Skip next number if it exists
       if (tokenizer.nextToken() == StreamTokenizer.TT_EOL) {
         tokenizer.pushBack();
+      }
+    } else if ("l".equals(tokenizer.sval)) {
+      tokenizer.ordinaryChar('/');
+      // Read line l v       v       v       ...
+      //        or l v/vt    v/vt    v/vt    ...
+      List<Integer> vertexIndices = new ArrayList<Integer>(2);
+      List<Integer> textureCoordinateIndices = new ArrayList<Integer>(2); 
+      while (tokenizer.nextToken() != StreamTokenizer.TT_EOL) {      
+        tokenizer.pushBack();        
+        // Read vertex index
+        int vertexIndex = parseInteger(tokenizer) - 1;
+        if (vertexIndex < 0) {
+          vertexIndex += this.vertices.size() + 1;
+        }
+        vertexIndices.add(vertexIndex);
+        
+        if (tokenizer.nextToken() != '/') {
+          // l v  
+          tokenizer.pushBack();        
+        } else {
+          // l v/vt : read texture coordinate index 
+          int textureCoordinateIndex = parseInteger(tokenizer) - 1;
+          if (textureCoordinateIndex < 0) {
+            textureCoordinateIndex += this.textureCoodinates.size() + 1;
+          }          
+          textureCoordinateIndices.add(textureCoordinateIndex);
+        }
+      }
+      tokenizer.pushBack();     
+      tokenizer.wordChars('/', '/');
+      if (textureCoordinateIndices.size() != 0
+          && textureCoordinateIndices.size() != vertexIndices.size()) {
+        // Ignore unconsistent texture coordinate 
+        textureCoordinateIndices.clear();
+      } 
+      if (vertexIndices.size() > 1) {
+        this.currentGroup.addGeometry(new Line(vertexIndices, textureCoordinateIndices, 
+            this.currentMaterial));
       }
     } else if ("f".equals(tokenizer.sval)) {
       tokenizer.ordinaryChar('/');
@@ -1311,7 +1378,7 @@ public class OBJLoader extends LoaderBase implements Loader {
         normalIndices.clear();
       }
       if (vertexIndices.size() > 2) {
-        this.currentGroup.addFace(new Face(vertexIndices, textureCoordinateIndices, normalIndices, 
+        this.currentGroup.addGeometry(new Face(vertexIndices, textureCoordinateIndices, normalIndices, 
             this.currentMaterial));
       }
     } else if ("g".equals(tokenizer.sval)
@@ -1649,18 +1716,16 @@ public class OBJLoader extends LoaderBase implements Loader {
   }
 
   /**
-   * The coordinates indices of a face. 
+   * The coordinates indices of a geometry. 
    */
-  private static class Face {
+  private static abstract class Geometry {
     private int [] vertexIndices;
     private int [] textureCoordinateIndices;
-    private int [] normalIndices;
     private String material;
     
-    public Face(List<Integer> vertexIndices, 
-                List<Integer> textureCoordinateIndices, 
-                List<Integer> normalIndices,
-                String        material) {
+    public Geometry(List<Integer> vertexIndices, 
+                    List<Integer> textureCoordinateIndices, 
+                    String        material) {
       this.vertexIndices = new int [vertexIndices.size()];
       for (int i = 0; i < this.vertexIndices.length; i++) {
         this.vertexIndices [i] = vertexIndices.get(i);
@@ -1669,12 +1734,6 @@ public class OBJLoader extends LoaderBase implements Loader {
         this.textureCoordinateIndices = new int [textureCoordinateIndices.size()];
         for (int i = 0; i < this.textureCoordinateIndices.length; i++) {
           this.textureCoordinateIndices [i] = textureCoordinateIndices.get(i);
-        }
-      }
-      if (normalIndices.size() != 0) {
-        this.normalIndices = new int [normalIndices.size()];
-        for (int i = 0; i < this.normalIndices.length; i++) {
-          this.normalIndices [i] = normalIndices.get(i);
         }
       }
       this.material = material;
@@ -1693,6 +1752,41 @@ public class OBJLoader extends LoaderBase implements Loader {
           && this.textureCoordinateIndices.length > 0;
     }
     
+    public String getMaterial() {
+      return this.material;
+    }
+  }
+  
+  /**
+   * The coordinates indices of a line. 
+   */
+  private static class Line extends Geometry {
+    public Line(List<Integer> vertexIndices, 
+                List<Integer> textureCoordinateIndices, 
+                String        material) {
+      super(vertexIndices, textureCoordinateIndices, material);
+    }
+  }
+  
+  /**
+   * The coordinates indices of a face. 
+   */
+  private static class Face extends Geometry {
+    private int [] normalIndices;
+    
+    public Face(List<Integer> vertexIndices, 
+                List<Integer> textureCoordinateIndices, 
+                List<Integer> normalIndices,
+                String        material) {
+      super(vertexIndices, textureCoordinateIndices, material);
+      if (normalIndices.size() != 0) {
+        this.normalIndices = new int [normalIndices.size()];
+        for (int i = 0; i < this.normalIndices.length; i++) {
+          this.normalIndices [i] = normalIndices.get(i);
+        }
+      }
+    }
+    
     public int [] getNormalIndices() {
       return this.normalIndices;
     }
@@ -1701,23 +1795,19 @@ public class OBJLoader extends LoaderBase implements Loader {
       return this.normalIndices != null
           && this.normalIndices.length > 0;
     }
-    
-    public String getMaterial() {
-      return this.material;
-    }
   }
   
   /**
    * A named group of faces. 
    */
   private static class Group {
-    private final String name;
-    private boolean      smooth;
-    private List<Face>   faces;
+    private final String   name;
+    private boolean        smooth;
+    private List<Geometry> faces;
  
     public Group(String name) {
       this.name = name;
-      this.faces = new ArrayList<Face>();
+      this.faces = new ArrayList<Geometry>();
     }
     
     public String getName() {
@@ -1732,11 +1822,11 @@ public class OBJLoader extends LoaderBase implements Loader {
       return this.smooth;
     }
     
-    public void addFace(Face face) {
+    public void addGeometry(Geometry face) {
       this.faces.add(face);
     }
     
-    public List<Face> getFaces() {
+    public List<Geometry> getGeometry() {
       return this.faces;
     }
   }

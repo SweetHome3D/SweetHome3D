@@ -53,12 +53,17 @@ import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.IndexedGeometryArray;
 import javax.media.j3d.IndexedGeometryStripArray;
+import javax.media.j3d.IndexedLineArray;
+import javax.media.j3d.IndexedLineStripArray;
 import javax.media.j3d.IndexedQuadArray;
 import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
+import javax.media.j3d.LineArray;
+import javax.media.j3d.LineStripArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
+import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TexCoordGeneration;
@@ -357,9 +362,20 @@ public class OBJWriter extends FilterWriter {
         }
       }
       
+      int cullFace = PolygonAttributes.CULL_BACK;
+      boolean backFaceNormalFlip = false;
+      if (appearance != null) {
+        PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
+        if (polygonAttributes != null) {
+          cullFace = polygonAttributes.getCullFace();
+          backFaceNormalFlip = polygonAttributes.getBackFaceNormalFlip();
+        }
+      }
+      
       // Write object geometries
       for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        writeNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration);
+        writeNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, 
+            cullFace, backFaceNormalFlip);
       }
     }    
   }
@@ -407,7 +423,9 @@ public class OBJWriter extends FilterWriter {
    */
   private void writeNodeGeometry(Geometry geometry, 
                                  Transform3D transformationToParent, 
-                                 TexCoordGeneration texCoordGeneration) throws IOException {
+                                 TexCoordGeneration texCoordGeneration, 
+                                 int cullFace, 
+                                 boolean backFaceNormalFlip) throws IOException {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
       
@@ -417,6 +435,12 @@ public class OBJWriter extends FilterWriter {
       boolean normalsDefined = (geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0;
       Map<Vector3f, Integer> normalIndices = new HashMap<Vector3f, Integer>();
       int [] normalIndexSubstitutes = new int [geometryArray.getVertexCount()];
+      int [] oppositeSideNormalIndexSubstitutes;
+      if (cullFace == PolygonAttributes.CULL_NONE) {
+        oppositeSideNormalIndexSubstitutes = new int [geometryArray.getVertexCount()];
+      } else {
+        oppositeSideNormalIndexSubstitutes = null;
+      }
 
       boolean textureCoordinatesDefined = (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0;
       Map<TexCoord2f, Integer> textureCoordinatesIndices = new HashMap<TexCoord2f, Integer>();
@@ -454,8 +478,8 @@ public class OBJWriter extends FilterWriter {
             for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                  index < n; index++, i += vertexSize) {
               Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              writeNormal(transformationToParent, normal, index,
-                  normalIndices, normalIndexSubstitutes);
+              writeNormal(transformationToParent, normal, index, normalIndices, 
+                  normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
             }
           }
           // Write texture coordinates
@@ -488,8 +512,8 @@ public class OBJWriter extends FilterWriter {
             float [] normalCoordinates = geometryArray.getNormalRefFloat();
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
               Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-              writeNormal(transformationToParent, normal, index,
-                  normalIndices, normalIndexSubstitutes);
+              writeNormal(transformationToParent, normal, index, normalIndices, 
+                  normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
             }
           }
           // Write texture coordinates
@@ -522,8 +546,8 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             Vector3f normal = new Vector3f();
             geometryArray.getNormal(index, normal);
-            writeNormal(transformationToParent, normal, index,
-                normalIndices, normalIndexSubstitutes);
+            writeNormal(transformationToParent, normal, index, normalIndices, 
+                normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
           }
         }
         // Write texture coordinates
@@ -548,21 +572,27 @@ public class OBJWriter extends FilterWriter {
 
       checkCurrentThreadIsntInterrupted();
       
-      // Write triangles or quadrilaterals depending on the geometry
+      // Write lines, triangles or quadrilaterals depending on the geometry
       if (geometryArray instanceof IndexedGeometryArray) {
-        if (geometryArray instanceof IndexedTriangleArray) {
+        if (geometryArray instanceof IndexedLineArray) {
+          IndexedLineArray lineArray = (IndexedLineArray)geometryArray;
+          for (int i = 0, n = lineArray.getIndexCount(); i < n; i += 2) {
+            writeIndexedLine(lineArray, i, i + 1,  
+                vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+          }
+        } else if (geometryArray instanceof IndexedTriangleArray) {
           IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
           for (int i = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
             writeIndexedTriangle(triangleArray, i, i + 1, i + 2, 
-                vertexIndexSubstitutes, normalIndexSubstitutes,  
-                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
           }
         } else if (geometryArray instanceof IndexedQuadArray) {
           IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
           for (int i = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
             writeIndexedQuadrilateral(quadArray, i, i + 1, i + 2, i + 3, 
-                vertexIndexSubstitutes, normalIndexSubstitutes,  
-                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
           }
         } else if (geometryArray instanceof IndexedGeometryStripArray) {
           IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
@@ -570,17 +600,25 @@ public class OBJWriter extends FilterWriter {
           geometryStripArray.getStripIndexCounts(stripIndexCounts);
           int initialIndex = 0; 
           
-          if (geometryStripArray instanceof IndexedTriangleStripArray) {
+          if (geometryStripArray instanceof IndexedLineStripArray) {
+            for (int strip = 0; strip < stripIndexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 1; i < n; i++) {
+                writeIndexedLine(geometryStripArray, i, i + 1, 
+                    vertexIndexSubstitutes, textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+              }
+              initialIndex += stripIndexCounts [strip];
+            }
+          } else if (geometryStripArray instanceof IndexedTriangleStripArray) {
             for (int strip = 0; strip < stripIndexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2, j = 0; i < n; i++, j++) {
                 if (j % 2 == 0) {
                   writeIndexedTriangle(geometryStripArray, i, i + 1, i + 2, 
-                      vertexIndexSubstitutes, normalIndexSubstitutes,   
-                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                      vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,   
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
                 } else { // Vertices of odd triangles are in reverse order               
                   writeIndexedTriangle(geometryStripArray, i, i + 2, i + 1, 
-                      vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                      vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
                 }
               }
               initialIndex += stripIndexCounts [strip];
@@ -589,27 +627,33 @@ public class OBJWriter extends FilterWriter {
             for (int strip = 0; strip < stripIndexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripIndexCounts [strip] - 2; i < n; i++) {
                 writeIndexedTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
-                    vertexIndexSubstitutes, normalIndexSubstitutes,   
-                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                    vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,   
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
               }
               initialIndex += stripIndexCounts [strip];
             }
           }
         } 
       } else {
-        if (geometryArray instanceof TriangleArray) {
+        if (geometryArray instanceof LineArray) {
+          LineArray lineArray = (LineArray)geometryArray;
+          for (int i = 0, n = lineArray.getVertexCount(); i < n; i += 2) {
+            writeLine(lineArray, i, i + 1, vertexIndexSubstitutes,    
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+          }
+        } else if (geometryArray instanceof TriangleArray) {
           TriangleArray triangleArray = (TriangleArray)geometryArray;
           for (int i = 0, n = triangleArray.getVertexCount(); i < n; i += 3) {
             writeTriangle(triangleArray, i, i + 1, i + 2, 
-                vertexIndexSubstitutes, normalIndexSubstitutes,   
-                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,   
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
           }
         } else if (geometryArray instanceof QuadArray) {
           QuadArray quadArray = (QuadArray)geometryArray;
           for (int i = 0, n = quadArray.getVertexCount(); i < n; i += 4) {
             writeQuadrilateral(quadArray, i, i + 1, i + 2, i + 3, 
-                vertexIndexSubstitutes, normalIndexSubstitutes,   
-                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,   
+                textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
           }
         } else if (geometryArray instanceof GeometryStripArray) {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
@@ -617,17 +661,25 @@ public class OBJWriter extends FilterWriter {
           geometryStripArray.getStripVertexCounts(stripVertexCounts);
           int initialIndex = 0;
           
-          if (geometryStripArray instanceof TriangleStripArray) {
+          if (geometryStripArray instanceof LineStripArray) {
+            for (int strip = 0; strip < stripVertexCounts.length; strip++) {
+              for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 1; i < n; i++) {
+                writeLine(geometryStripArray, i, i + 1, vertexIndexSubstitutes,   
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+              }
+              initialIndex += stripVertexCounts [strip];
+            }
+          } else if (geometryStripArray instanceof TriangleStripArray) {
             for (int strip = 0; strip < stripVertexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2, j = 0; i < n; i++, j++) {
                 if (j % 2 == 0) {
                   writeTriangle(geometryStripArray, i, i + 1, i + 2, 
-                      vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                      vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
                 } else { // Vertices of odd triangles are in reverse order               
                   writeTriangle(geometryStripArray, i, i + 2, i + 1, 
-                      vertexIndexSubstitutes, normalIndexSubstitutes,  
-                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                      vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                      textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
                 }
               }
               initialIndex += stripVertexCounts [strip];
@@ -636,8 +688,8 @@ public class OBJWriter extends FilterWriter {
             for (int strip = 0; strip < stripVertexCounts.length; strip++) {
               for (int i = initialIndex, n = initialIndex + stripVertexCounts [strip] - 2; i < n; i++) {
                 writeTriangle(geometryStripArray, initialIndex, i + 1, i + 2, 
-                    vertexIndexSubstitutes, normalIndexSubstitutes,  
-                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated);
+                    vertexIndexSubstitutes, normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes,  
+                    textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, cullFace);
               }
               initialIndex += stripVertexCounts [strip];
             }
@@ -711,18 +763,28 @@ public class OBJWriter extends FilterWriter {
   }
 
   /**
-   * Applies to <code>normal</code> the given transformation, and writes it in
+   * Applies to <code>normal</code> the given transformation, and writes it in  
    * a line vn at OBJ format, if the normal isn't a key of <code>normalIndices</code> yet.  
    */
   private void writeNormal(Transform3D transformationToParent,
                            Vector3f normal, int index,
                            Map<Vector3f, Integer> normalIndices,
-                           int [] normalIndexSubstitutes) throws IOException {
+                           int [] normalIndexSubstitutes, 
+                           int [] oppositeSideNormalIndexSubstitutes, 
+                           int cullFace, 
+                           boolean backFaceNormalFlip) throws IOException {
+    if (backFaceNormalFlip) {
+      normal.negate();
+    }
     if (normal.x != 0 || normal.y != 0 || normal.z != 0) {
       transformationToParent.transform(normal);
       normal.normalize();
     }
     Integer normalIndex = normalIndices.get(normal);
+    if (normalIndexSubstitutes == null) {
+      // Fill opposite side normal index substitutes array
+      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
+    }
     if (normalIndex == null) {
       normalIndexSubstitutes [index] = normalIndices.size();
       normalIndices.put(normal, normalIndexSubstitutes [index]);
@@ -732,6 +794,13 @@ public class OBJWriter extends FilterWriter {
           + " " + format(normal.z) + "\n");
     } else {
       normalIndexSubstitutes [index] = normalIndex;
+    }
+    
+    if (cullFace == PolygonAttributes.CULL_NONE) {
+      Vector3f oppositeNormal = new Vector3f(); 
+      oppositeNormal.negate(normal);
+      writeNormal(transformationToParent, oppositeNormal, index, normalIndices, 
+          null, oppositeSideNormalIndexSubstitutes, PolygonAttributes.CULL_FRONT, false);
     }
   }
 
@@ -755,15 +824,49 @@ public class OBJWriter extends FilterWriter {
   }
 
   /**
+   * Writes the line indices given at vertexIndex1, vertexIndex2, 
+   * in a line l at OBJ format. 
+   */
+  private void writeIndexedLine(IndexedGeometryArray geometryArray, 
+                                int vertexIndex1, int vertexIndex2, 
+                                int [] vertexIndexSubstitutes, 
+                                int [] textureCoordinatesIndexSubstitutes,
+                                boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+          + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex1)]) 
+          + " " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+          + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [geometryArray.getTextureCoordinateIndex(0, vertexIndex2)]) + "\n");
+    } else {
+      this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+          + " "  + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) + "\n");
+    }
+  }
+  
+  /**
    * Writes the triangle indices given at vertexIndex1, vertexIndex2, vertexIndex3, 
    * in a line f at OBJ format. 
    */
   private void writeIndexedTriangle(IndexedGeometryArray geometryArray, 
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                                     int [] vertexIndexSubstitutes, 
-                                    int [] normalIndexSubstitutes,                                     
+                                    int [] normalIndexSubstitutes, 
+                                    int [] oppositeSideNormalIndexSubstitutes,                                     
                                     int [] textureCoordinatesIndexSubstitutes,
-                                    boolean textureCoordinatesGenerated) throws IOException {
+                                    boolean textureCoordinatesGenerated, 
+                                    int cullFace) throws IOException {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex3;
+      vertexIndex3 = tmp;
+    }
+    if (normalIndexSubstitutes == null) {
+      // Use opposite side normal index substitutes array
+      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
+    }
+    
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
@@ -798,6 +901,12 @@ public class OBJWriter extends FilterWriter {
             + " "  + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
       }
     }
+
+    if (cullFace == PolygonAttributes.CULL_NONE) {
+      writeIndexedTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
+          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
+    }
   }
   
   /**
@@ -807,9 +916,25 @@ public class OBJWriter extends FilterWriter {
   private void writeIndexedQuadrilateral(IndexedGeometryArray geometryArray, 
                                          int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                          int [] vertexIndexSubstitutes, 
-                                         int [] normalIndexSubstitutes,                                      
+                                         int [] normalIndexSubstitutes, 
+                                         int [] oppositeSideNormalIndexSubstitutes,                                      
                                          int [] textureCoordinatesIndexSubstitutes,
-                                         boolean textureCoordinatesGenerated) throws IOException {
+                                         boolean textureCoordinatesGenerated, 
+                                         int cullFace) throws IOException {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex2;
+      vertexIndex2 = vertexIndex3;
+      vertexIndex3 = tmp;
+      tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex4;
+      vertexIndex4 = tmp;
+    }
+    if (normalIndexSubstitutes == null) {
+      // Use opposite side normal index substitutes array
+      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
+    }
+    
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
@@ -852,6 +977,33 @@ public class OBJWriter extends FilterWriter {
             + " "  + (this.vertexOffset + vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex4)]) + "\n");
       }
     }
+
+    if (cullFace == PolygonAttributes.CULL_NONE) {      
+      writeIndexedQuadrilateral(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4, 
+          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
+    }
+  }
+  
+  /**
+   * Writes the line indices given at vertexIndex1, vertexIndex2, 
+   * in a line l at OBJ format. 
+   */
+  private void writeLine(GeometryArray geometryArray, 
+                         int vertexIndex1, int vertexIndex2, 
+                         int [] vertexIndexSubstitutes,  
+                         int [] textureCoordinatesIndexSubstitutes,
+                         boolean textureCoordinatesGenerated) throws IOException {
+    if (textureCoordinatesGenerated
+        || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+      this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+          + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex1]) 
+          + " " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex2]) 
+          + "/" + (this.textureCoordinatesOffset + textureCoordinatesIndexSubstitutes [vertexIndex2]) + "\n");
+    } else {
+      this.out.write("l " + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex1]) 
+          + " "  + (this.vertexOffset + vertexIndex2) + "\n");
+    }
   }
   
   /**
@@ -861,9 +1013,22 @@ public class OBJWriter extends FilterWriter {
   private void writeTriangle(GeometryArray geometryArray, 
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                              int [] vertexIndexSubstitutes,  
-                             int [] normalIndexSubstitutes,                                       
+                             int [] normalIndexSubstitutes, 
+                             int [] oppositeSideNormalIndexSubstitutes,                                       
                              int [] textureCoordinatesIndexSubstitutes,
-                             boolean textureCoordinatesGenerated) throws IOException {
+                             boolean textureCoordinatesGenerated, 
+                             int cullFace) throws IOException {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex3;
+      vertexIndex3 = tmp;
+    }
+    if (normalIndexSubstitutes == null) {
+      // Use opposite side normal index substitutes array
+      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
+    }
+    
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
@@ -898,6 +1063,12 @@ public class OBJWriter extends FilterWriter {
             + " "  + (this.vertexOffset + vertexIndex3) + "\n");
       }
     }
+
+    if (cullFace == PolygonAttributes.CULL_NONE) {
+      writeTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
+          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
+    }
   }
   
   /**
@@ -907,9 +1078,25 @@ public class OBJWriter extends FilterWriter {
   private void writeQuadrilateral(GeometryArray geometryArray, 
                                   int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                   int [] vertexIndexSubstitutes, 
-                                  int [] normalIndexSubstitutes,                                       
+                                  int [] normalIndexSubstitutes, 
+                                  int [] oppositeSideNormalIndexSubstitutes,                                       
                                   int [] textureCoordinatesIndexSubstitutes,
-                                  boolean textureCoordinatesGenerated) throws IOException {
+                                  boolean textureCoordinatesGenerated, 
+                                  int cullFace) throws IOException {
+    if (cullFace == PolygonAttributes.CULL_FRONT) {
+      // Reverse vertex order
+      int tmp = vertexIndex2;
+      vertexIndex2 = vertexIndex3;
+      vertexIndex3 = tmp;
+      tmp = vertexIndex1;
+      vertexIndex1 = vertexIndex4;
+      vertexIndex4 = tmp;
+    }
+    if (normalIndexSubstitutes == null) {
+      // Use opposite side normal index substitutes array
+      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
+    }
+    
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
       if ((geometryArray.getVertexFormat() & GeometryArray.NORMALS) != 0) {
@@ -951,6 +1138,12 @@ public class OBJWriter extends FilterWriter {
             + " "  + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex3]) 
             + " "  + (this.vertexOffset + vertexIndexSubstitutes [vertexIndex4]) + "\n");
       }
+    }
+
+    if (cullFace == PolygonAttributes.CULL_NONE) {      
+      writeQuadrilateral(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4, 
+          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
     }
   }
   
