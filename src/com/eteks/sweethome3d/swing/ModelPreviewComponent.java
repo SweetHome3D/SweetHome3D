@@ -617,9 +617,9 @@ public class ModelPreviewComponent extends JComponent {
       // Scale model to make it fill a 1 unit wide box
       Transform3D scaleOneTransform = new Transform3D();
       scaleOneTransform.setScale (
-          new Vector3d(1 / (upper.x -lower.x), 
-              1 / (upper.y - lower.y), 
-              1 / (upper.z - lower.z)));
+          new Vector3d(1 / Math.max(0.0001, upper.x -lower.x), 
+              1 / Math.max(0.0001, upper.y - lower.y), 
+              1 / Math.max(0.0001, upper.z - lower.z)));
       scaleOneTransform.mul(translation);
       // Apply model rotation
       Transform3D rotationTransform = new Transform3D();
