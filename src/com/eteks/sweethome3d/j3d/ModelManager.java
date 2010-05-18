@@ -106,6 +106,8 @@ public class ModelManager {
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
 
   private static final Material               DEFAULT_MATERIAL = new Material();
+  
+  private static final float MINIMUM_SIZE = 0.0001f;
 
   private static final String ADDITIONAL_LOADER_CLASSES = "com.eteks.sweethome3d.j3d.additionalLoaderClasses";
   
@@ -124,6 +126,7 @@ public class ModelManager {
     // This class is a singleton
     this.loadedModelNodes = Collections.synchronizedMap(new WeakHashMap<Content, BranchGroup>());
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
+    // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
     if (loaderClassNames != null) {
@@ -200,7 +203,9 @@ public class ModelManager {
     bounds.getLower(lower);
     Point3d upper = new Point3d();
     bounds.getUpper(upper);
-    return new Vector3f((float)(upper.x - lower.x), (float)(upper.y - lower.y), (float)(upper.z - lower.z));
+    return new Vector3f(Math.max(MINIMUM_SIZE, (float)(upper.x - lower.x)), 
+        Math.max(MINIMUM_SIZE, (float)(upper.y - lower.y)), 
+        Math.max(MINIMUM_SIZE, (float)(upper.z - lower.z)));
   }
   
   /**
@@ -213,7 +218,7 @@ public class ModelManager {
     BoundingBox objectBounds = new BoundingBox(
         new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
         new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-    computeBounds(node, objectBounds);
+    computeBounds(node, node, objectBounds);
     Point3d lower = new Point3d();
     objectBounds.getLower(lower);
     if (lower.x == Double.POSITIVE_INFINITY) {
@@ -222,15 +227,16 @@ public class ModelManager {
     return objectBounds;
   }
   
-  private void computeBounds(Node node, BoundingBox bounds) {
+  private void computeBounds(Node root, Node node, BoundingBox bounds) {
     if (node instanceof Group) {
       // Compute the bounds of all the node children
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements ()) {
-        computeBounds((Node)enumeration.nextElement (), bounds);
+        computeBounds(root, (Node)enumeration.nextElement (), bounds);
       }
     } else if (node instanceof Shape3D) {
       Bounds shapeBounds = ((Shape3D)node).getBounds();
+      shapeBounds.transform(getTransformationToParent(root, node));
       bounds.combine(shapeBounds);
     }
   }
@@ -245,7 +251,7 @@ public class ModelManager {
    */
   public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
     // Get model bounding box size
-    BoundingBox modelBounds = ModelManager.getInstance().getBounds(node);
+    BoundingBox modelBounds = getBounds(node);
     Point3d lower = new Point3d();
     modelBounds.getLower(lower);
     Point3d upper = new Point3d();
@@ -260,9 +266,9 @@ public class ModelManager {
     // Scale model to make it fill a 1 unit wide box
     Transform3D scaleOneTransform = new Transform3D();
     scaleOneTransform.setScale (
-        new Vector3d(width / (upper.x -lower.x), 
-            width / (upper.y - lower.y), 
-            width / (upper.z - lower.z)));
+        new Vector3d(width / Math.max(MINIMUM_SIZE, upper.x -lower.x), 
+            width / Math.max(MINIMUM_SIZE, upper.y - lower.y), 
+            width / Math.max(MINIMUM_SIZE, upper.z - lower.z)));
     scaleOneTransform.mul(translation);
     Transform3D modelTransform = new Transform3D();
     if (modelRotation != null) {
@@ -400,6 +406,7 @@ public class ModelManager {
     };
 
     Loader []  defaultLoaders = new Loader [] {new OBJLoader(),
+                                               new DAELoader(),
                                                loader3DSWithNoStackTraces,
                                                new Lw3dLoader()};
     Loader [] loaders = new Loader [defaultLoaders.length + this.additionalLoaderClasses.length];
@@ -537,6 +544,15 @@ public class ModelManager {
               DEFAULT_MATERIAL.getAmbientColor(color);
               material.setAmbientColor(color);
             }
+          }
+          
+          // If texture image supports transparency
+          if (texture.getFormat() == Texture.RGBA) {
+            if (appearance.getTransparencyAttributes() == null) {
+              // Add transparency attributes to ensure transparency works
+              appearance.setTransparencyAttributes(
+                  new TransparencyAttributes(TransparencyAttributes.NICEST, 0));
+            }             
           }
         }
       }

@@ -97,6 +97,19 @@ public class FileContentManager implements ContentManager {
      new FileFilter() {
        @Override
        public boolean accept(File file) {
+         // Accept directories and 3DS files
+         return file.isDirectory()
+                || file.getName().toLowerCase().endsWith(".dae");
+       }
+   
+       @Override
+       public String getDescription() {
+         return "DAE - Collada";
+       }
+     },
+     new FileFilter() {
+       @Override
+       public boolean accept(File file) {
          // Accept directories and ZIP files
          return file.isDirectory()
                 || file.getName().toLowerCase().endsWith(".zip");
