@@ -956,11 +956,20 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           } 
           
           BranchGroup model = null;
+          Vector3f    modelSize = null;
           try {
             model = readModel(modelContent);
+            modelSize = ModelManager.getInstance().getSize(model);
             // Copy model to a temporary OBJ content with materials and textures
             modelContent = copyToTemporaryOBJContent(model, modelName);
           } catch (IOException ex) {
+            model = null;
+          } catch (IllegalArgumentException ex) {
+            // Model is empty
+            model = null;
+          }
+          
+          if (model == null) {
             try {
               // Copy model content to a temporary content
               modelContent = TemporaryURLContent.copyToTemporaryURLContent(modelContent);
@@ -989,11 +998,16 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                       URL entryUrl = new URL("jar:" + urlContent.getURL() + "!/" + entryName);
                       modelContent = new TemporaryURLContent(entryUrl);
                       model = readModel(modelContent);
+                      modelSize = ModelManager.getInstance().getSize(model);
                       break;
                     }
                   }
                 } catch (IOException ex3) {
                   // Ignore exception and try next entry
+                  model = null;
+                } catch (IllegalArgumentException ex3) {
+                  // Model is empty
+                  model = null;
                 }
               }
             } catch (IOException ex2) {
@@ -1010,6 +1024,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
           }
           
           final BranchGroup readModel = model;
+          final Vector3f    readModelSize = modelSize;
           final Content     readContent = modelContent;
           // Update components in dispatch thread
           EventQueue.invokeLater(new Runnable() {
@@ -1024,10 +1039,9 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                       modelName, ContentManager.ContentType.MODEL));
                   controller.setCategory(defaultCategory);
                   // Initialize size with default values
-                  Vector3f size = ModelManager.getInstance().getSize(readModel);
-                  controller.setWidth(size.x);
-                  controller.setDepth(size.z);
-                  controller.setHeight(size.y);
+                  controller.setWidth(readModelSize.x);
+                  controller.setDepth(readModelSize.z);
+                  controller.setHeight(readModelSize.y);
                   controller.setMovable(true);
                   controller.setDoorOrWindow(false);
                   controller.setColor(null);                  
