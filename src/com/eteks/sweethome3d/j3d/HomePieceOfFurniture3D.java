@@ -116,7 +116,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
     waitBranch.addChild(getModelBox(Color.WHITE));      
     // Allow appearance change on all children
-    setAppearanceChangeCapability(waitBranch);
+    setAppearanceChangeAndBoundsReadCapabilities(waitBranch);
     
     pieceTransformGroup.addChild(waitBranch);
     
@@ -283,7 +283,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       modelBranch.addChild(createOutlineModelNode(modelNode));
     }
     // Allow appearance change on all children
-    setAppearanceChangeCapability(modelBranch);
+    setAppearanceChangeAndBoundsReadCapabilities(modelBranch);
 
     TransformGroup transformGroup = (TransformGroup)getChild(0);
     // Remove previous nodes    
@@ -346,12 +346,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
    * Sets the capability to change material and rendering attributes
    * for all children of <code>node</code>.
    */
-  private void setAppearanceChangeCapability(Node node) {
+  private void setAppearanceChangeAndBoundsReadCapabilities(Node node) {
     if (node instanceof Group) {
       node.setCapability(Group.ALLOW_CHILDREN_READ);
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setAppearanceChangeCapability((Node)enumeration.nextElement());
+        setAppearanceChangeAndBoundsReadCapabilities((Node)enumeration.nextElement());
       }
     } else if (node instanceof Shape3D) {        
       Appearance appearance = ((Shape3D)node).getAppearance();
@@ -360,6 +360,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
       node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+      node.setCapability(Shape3D.ALLOW_BOUNDS_READ);
     }
   }
 
