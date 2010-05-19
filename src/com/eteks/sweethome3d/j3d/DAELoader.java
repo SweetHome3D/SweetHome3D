@@ -405,19 +405,6 @@ public class DAELoader extends LoaderBase implements Loader {
       this.parentElements.push(name);
     }
     
-    /**
-     * Returns the transformation from root to stack top. 
-     */
-    private Transform3D getStackedTransformations() {
-      Transform3D transform = new Transform3D();
-      for (int i = 0; i < this.parentTransformGroups.size(); i++) {
-        Transform3D parentTransform = new Transform3D();
-        this.parentTransformGroups.get(i).getTransform(parentTransform);
-        parentTransform.mul(transform);
-      }
-      return transform;
-    }
-
     @Override
     public void characters(char [] ch, int start, int length) throws SAXException {
       this.buffer.append(ch, start, length);
