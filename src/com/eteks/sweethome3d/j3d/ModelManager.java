@@ -24,6 +24,7 @@ import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Constructor;
@@ -386,7 +387,21 @@ public class ModelManager {
     
     Loader3DS loader3DSWithNoStackTraces = new Loader3DS() {
       @Override
-      public Scene load(URL url) throws FileNotFoundException {
+      public Scene load(URL url) throws FileNotFoundException, IncorrectFormatException {
+        try {
+          // Check magic number 0x4D4D
+          InputStream in = url.openStream();
+          if (in.read() != 0x4D
+              && in.read() != 0x4D) {
+            throw new IncorrectFormatException("Bad magic number");
+          }
+          in.close();
+        } catch (FileNotFoundException ex) {
+          throw ex;
+        } catch (IOException ex) {
+          throw new ParsingErrorException("Can't read url " + url);
+        }
+        
         PrintStream defaultSystemErrorStream = System.err;
         try {
           // Ignore stack traces on System.err during 3DS file loading
@@ -443,7 +458,7 @@ public class ModelManager {
         updateShapeNamesAndWindowPanesTransparency(scene);
         
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
-        turnOffLightsAndAllowBoundsRead(modelNode);
+        turnOffLightsAndModulateTextures(modelNode);
 
         collapseHierarchy(modelNode, modelNode);
         
@@ -506,21 +521,18 @@ public class ModelManager {
   
   /**
    * Turns off light nodes of <code>node</code> children, 
-   * sets <code>ALLOW_BOUNDS_READ</code> capability on shapes
    * and modulates textures if needed.
    */
-  private void turnOffLightsAndAllowBoundsRead(Node node) {
+  private void turnOffLightsAndModulateTextures(Node node) {
     if (node instanceof Group) {
       // Enumerate children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        turnOffLightsAndAllowBoundsRead((Node)enumeration.nextElement());
+        turnOffLightsAndModulateTextures((Node)enumeration.nextElement());
       }
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
-      node.setCapability(Shape3D.ALLOW_BOUNDS_READ);
-      
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
         Texture texture = appearance.getTexture();
