@@ -24,8 +24,6 @@ import java.awt.Frame;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -179,15 +177,11 @@ class MacOSXConfiguration {
     // Set application icon if program wasn't launch from bundle
     if (!"true".equalsIgnoreCase(System.getProperty("sweethome3d.bundle", "false"))) {
       try {
-        // Call setDockIconImage by reflection
-        Method setDockIconImageMethod = Application.class.getMethod("setDockIconImage", Image.class);
         String iconPath = homeApplication.getUserPreferences().getLocalizedString(HomePane.class, "about.icon");
         Image icon = ImageIO.read(HomePane.class.getResource(iconPath));
-        setDockIconImageMethod.invoke(macosxApplication, icon);
-      } catch (NoSuchMethodException ex) {
+        macosxApplication.setDockIconImage(icon);
+      } catch (NoSuchMethodError ex) {
         // Ignore icon change if setDockIconImage isn't available
-      } catch (InvocationTargetException ex) {
-      } catch (IllegalAccessException ex) {
       } catch (IOException ex) {
       }
     }
