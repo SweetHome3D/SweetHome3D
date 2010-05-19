@@ -174,7 +174,6 @@ public class DAELoader extends LoaderBase implements Loader {
     private final Stack<String>  parentElements = new Stack<String>();
     private final StringBuilder  buffer = new StringBuilder();
     private final List<Runnable> postProcessingBinders = new ArrayList<Runnable>();
-    private final BoundingBox    bounds;
 
     private final Map<String, Texture> textures = new HashMap<String, Texture>();
     private final Map<String, Appearance> effectAppearances = new HashMap<String, Appearance>();
@@ -189,6 +188,8 @@ public class DAELoader extends LoaderBase implements Loader {
     private final List<int []> polygonsPrimitives = new ArrayList<int[]>();
     private final List<List<int []>> polygonsHoles = new ArrayList<List<int[]>>();
     private final Map<String, TransformGroup> nodes = new HashMap<String, TransformGroup>();
+    private final Map<String, TransformGroup> visualScenes = new HashMap<String, TransformGroup>();
+    private TransformGroup visualScene;
     private float [] floats;
     private float [] geometryVertices;
     private float [] geometryNormals;
@@ -218,21 +219,10 @@ public class DAELoader extends LoaderBase implements Loader {
     private float   floatValue;
     private String  opaque;
     private int     inputCount;
-    private boolean inVisualScene;
 
     public DAEHandler(SceneBase scene, URL baseUrl) {
       this.scene = scene;
       this.baseUrl = baseUrl;
-      
-      this.bounds = new BoundingBox(
-          new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
-          new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-
-      BranchGroup sceneRoot = new BranchGroup();
-      scene.setSceneGroup(sceneRoot);
-      TransformGroup rootTransformGroup = new TransformGroup();
-      sceneRoot.addChild(rootTransformGroup);
-      this.parentTransformGroups.push(rootTransformGroup);
     }
 
     @Override
@@ -331,12 +321,13 @@ public class DAELoader extends LoaderBase implements Loader {
           this.vcount = null;
         } 
       } else if ("visual_scene".equals(name)) {
-        this.inVisualScene = true;
+        TransformGroup visualSceneGroup = new TransformGroup();
+        this.parentTransformGroups.push(visualSceneGroup);
+        this.visualScenes.put(attributes.getValue("id"), visualSceneGroup);
       } else if ("node".equals(name)) {
         TransformGroup nodeGroup = new TransformGroup();
-        if (this.inVisualScene
-            || this.parentTransformGroups.size() > 1) {
-          // Add sub node to root only while visual scene is built
+        if (this.parentTransformGroups.size() > 0) {
+          // Add node to parent node only for children nodes
           this.parentTransformGroups.peek().addChild(nodeGroup);
         }
         this.parentTransformGroups.push(nodeGroup);
@@ -349,30 +340,26 @@ public class DAELoader extends LoaderBase implements Loader {
         String geometryInstanceUrl = attributes.getValue("url");
         if (geometryInstanceUrl.startsWith("#")) {
           final String geometryInstanceAnchor = geometryInstanceUrl.substring(1);
-          final TransformGroup parentTransformGroup = this.parentTransformGroups.peek();
+          final TransformGroup parentTransformGroup = (TransformGroup)this.parentTransformGroups.peek();
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 // Resolve URL at the end of the document
                 for (Geometry geometry : geometries.get(geometryInstanceAnchor)) {
                   Shape3D shape = new Shape3D(geometry);
-                  Bounds shapeBounds = shape.getBounds();
-                  shapeBounds.transform(getStackedTransformations());
-                  bounds.combine(shapeBounds);
                   parentTransformGroup.addChild(shape);
                 }
               }
             });
         }
-      } else if ("node".equals(parent) && "instance_node".equals(name)) {
+      } else if ("instance_node".equals(name)) {
         String nodeInstanceUrl = attributes.getValue("url");
         if (nodeInstanceUrl.startsWith("#")) {
           final String nodeInstanceAnchor = nodeInstanceUrl.substring(1);
-          final TransformGroup parentTransformGroup = this.parentTransformGroups.peek();
+          final TransformGroup parentTransformGroup = (TransformGroup)this.parentTransformGroups.peek();
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 // Resolve URL at the end of the document
                 TransformGroup node = nodes.get(nodeInstanceAnchor);
-                updateBounds(node, getStackedTransformations());
                 parentTransformGroup.addChild(node.cloneTree());
               }
             });
@@ -403,34 +390,21 @@ public class DAELoader extends LoaderBase implements Loader {
               }
             });
         }
+      } else if ("instance_visual_scene".equals(name)) {
+        String visualSceneInstanceUrl = attributes.getValue("url");
+        if (visualSceneInstanceUrl.startsWith("#")) {
+          final String visualSceneInstanceAnchor = visualSceneInstanceUrl.substring(1);
+          this.postProcessingBinders.add(new Runnable() {
+              public void run() {
+                // Resolve URL at the end of the document
+                visualScene = visualScenes.get(visualSceneInstanceAnchor);
+              }
+            });
+        }
       }
       this.parentElements.push(name);
     }
     
-    /**
-     * Updates the current bounds with the bounds of the given <code>node</code>
-     * and its children.
-     */
-    private void updateBounds(Node node, Transform3D stackedTransformations) {
-      if (node instanceof Group) {
-        if (node instanceof TransformGroup) {
-          stackedTransformations = new Transform3D(stackedTransformations);
-          Transform3D transform = new Transform3D();
-          ((TransformGroup)node).getTransform(transform);
-          stackedTransformations.mul(transform);
-        }
-        // Compute the bounds of all the node children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren();
-        while (enumeration.hasMoreElements ()) {
-          updateBounds((Node)enumeration.nextElement(), stackedTransformations);
-        }
-      } else if (node instanceof Shape3D) {
-        Bounds shapeBounds = ((Shape3D)node).getBounds();
-        shapeBounds.transform(stackedTransformations);
-        this.bounds.combine(shapeBounds);
-      }
-    }
-
     /**
      * Returns the transformation from root to stack top. 
      */
@@ -496,7 +470,7 @@ public class DAELoader extends LoaderBase implements Loader {
       } if (this.geometryId != null) {
         handleGeometryElementsEnd(name, parent);
       } else if ("visual_scene".equals(name)) {
-        this.inVisualScene = false;
+        this.parentTransformGroups.pop();
       } else if ("node".equals(name)) {
         this.parentTransformGroups.pop();
       } else if ("matrix".equals(name)) {
@@ -904,41 +878,6 @@ public class DAELoader extends LoaderBase implements Loader {
       return indexCount;
     }
     
-    @Override
-    public void endDocument() throws SAXException {
-      for (Runnable runnable : this.postProcessingBinders) {
-        runnable.run();
-      }
-      
-      TransformGroup rootTransformGroup = this.parentTransformGroups.peek();
-      Transform3D rootTransform = new Transform3D();
-      rootTransformGroup.getTransform(rootTransform);
-
-      // Set orientation to Y_UP
-      Transform3D axisTransform = new Transform3D();
-      if ("Z_UP".equals(axis)) {
-        axisTransform.rotX(-Math.PI / 2);
-      } else if ("X_UP".equals(axis)) {
-        axisTransform.rotZ(Math.PI / 2);
-      } 
-      rootTransform.mul(axisTransform);
-      // Translate model to its center
-      Point3d lower = new Point3d();
-      this.bounds.getLower(lower);
-      if (lower.x != Double.POSITIVE_INFINITY) {
-        Point3d upper = new Point3d();
-        this.bounds.getUpper(upper);
-        Transform3D translation = new Transform3D();
-        translation.setTranslation(
-            new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
-                -lower.y - (upper.y - lower.y) / 2, 
-                -lower.z - (upper.z - lower.z) / 2));      
-        rootTransform.mul(translation);
-      }
-      
-      rootTransformGroup.setTransform(rootTransform);
-    }
-    
     /**
      * Multiplies the transform at top of the transform groups stack by the 
      * given <code>transformMultiplier</code>.
@@ -949,6 +888,75 @@ public class DAELoader extends LoaderBase implements Loader {
       transformGroup.getTransform(transform);
       transform.mul(transformMultiplier);
       transformGroup.setTransform(transform);
+    }
+
+    @Override
+    public void endDocument() throws SAXException {
+      for (Runnable runnable : this.postProcessingBinders) {
+        runnable.run();
+      }
+
+      if (this.visualScene != null) {
+        Transform3D rootTransform = new Transform3D();
+        this.visualScene.getTransform(rootTransform);
+
+        BoundingBox bounds = new BoundingBox(
+            new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
+            new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+        computeBounds(bounds, this.visualScene, new Transform3D());
+
+        // Set orientation to Y_UP
+        Transform3D axisTransform = new Transform3D();
+        if ("Z_UP".equals(axis)) {
+          axisTransform.rotX(-Math.PI / 2);
+        } else if ("X_UP".equals(axis)) {
+          axisTransform.rotZ(Math.PI / 2);
+        } 
+        rootTransform.mul(axisTransform);
+        // Translate model to its center
+        Point3d lower = new Point3d();
+        bounds.getLower(lower);
+        if (lower.x != Double.POSITIVE_INFINITY) {
+          Point3d upper = new Point3d();
+          bounds.getUpper(upper);
+          Transform3D translation = new Transform3D();
+          translation.setTranslation(
+              new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+                  -lower.y - (upper.y - lower.y) / 2, 
+                  -lower.z - (upper.z - lower.z) / 2));      
+          rootTransform.mul(translation);
+        }
+        
+        this.visualScene.setTransform(rootTransform);
+
+        BranchGroup sceneRoot = new BranchGroup();
+        this.scene.setSceneGroup(sceneRoot);
+        sceneRoot.addChild(this.visualScene);
+      }
+    }
+    
+    /**
+     * Combines the given <code>bounds</code> with the bounds of the given <code>node</code>
+     * and its children.
+     */
+    private void computeBounds(BoundingBox bounds, Node node, Transform3D parentTransformations) {
+      if (node instanceof Group) {
+        if (node instanceof TransformGroup) {
+          parentTransformations = new Transform3D(parentTransformations);
+          Transform3D transform = new Transform3D();
+          ((TransformGroup)node).getTransform(transform);
+          parentTransformations.mul(transform);
+        }
+        // Compute the bounds of all the node children
+        Enumeration<?> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasMoreElements ()) {
+          computeBounds(bounds, (Node)enumeration.nextElement(), parentTransformations);
+        }
+      } else if (node instanceof Shape3D) {
+        Bounds shapeBounds = ((Shape3D)node).getBounds();
+        shapeBounds.transform(parentTransformations);
+        bounds.combine(shapeBounds);
+      }
     }
   }
 }
