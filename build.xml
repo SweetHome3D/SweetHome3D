@@ -166,8 +166,13 @@
   	      description="Builds deploy/lib/SweetHome3D.jar and signs jars required by Sweet Home 3D with Java Web Start">
     <!-- Build SweetHome3D.jar file from the content of built jars -->
     <mkdir dir="deploy/lib"/>
+    <zip destfile="deploy/lib/SweetHome3DJavaWebStartBootstrap.jar">
+      <zipfileset src="build/SweetHome3D.jar"  
+      	  includes="com/eteks/sweethome3d/SweetHome3DJavaWebStartBootstrap.class"/>
+    </zip>
     <zip destfile="deploy/lib/SweetHome3D.jar">
-      <zipfileset src="build/SweetHome3D.jar"/>
+      <zipfileset src="build/SweetHome3D.jar" 
+      	  excludes="com/eteks/sweethome3d/SweetHome3DJavaWebStartBootstrap.class"/>
       <zipfileset src="build/Furniture.jar"/>
       <zipfileset src="build/Textures.jar"/>
       <zipfileset src="build/Help.jar"/>
