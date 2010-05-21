@@ -47,10 +47,12 @@ import javax.media.j3d.Group;
 import javax.media.j3d.IndexedGeometryArray;
 import javax.media.j3d.IndexedLineArray;
 import javax.media.j3d.IndexedLineStripArray;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.SharedGroup;
 import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
@@ -188,6 +190,7 @@ public class DAELoader extends LoaderBase implements Loader {
     private final List<int []> polygonsPrimitives = new ArrayList<int[]>();
     private final List<List<int []>> polygonsHoles = new ArrayList<List<int[]>>();
     private final Map<String, TransformGroup> nodes = new HashMap<String, TransformGroup>();
+    private final Map<String, SharedGroup> instantiatedNodes = new HashMap<String, SharedGroup>();
     private final Map<String, TransformGroup> visualScenes = new HashMap<String, TransformGroup>();
     private TransformGroup visualScene;
     private float [] floats;
@@ -359,8 +362,13 @@ public class DAELoader extends LoaderBase implements Loader {
           this.postProcessingBinders.add(new Runnable() {
               public void run() {
                 // Resolve URL at the end of the document
-                TransformGroup node = nodes.get(nodeInstanceAnchor);
-                parentTransformGroup.addChild(node.cloneTree());
+                SharedGroup sharedGroup = instantiatedNodes.get(nodeInstanceAnchor);
+                if (sharedGroup == null) {
+                  sharedGroup = new SharedGroup();
+                  sharedGroup.addChild(nodes.get(nodeInstanceAnchor));
+                  instantiatedNodes.put(nodeInstanceAnchor, sharedGroup);
+                }
+                parentTransformGroup.addChild(new Link(sharedGroup));
               }
             });
         }
@@ -382,6 +390,8 @@ public class DAELoader extends LoaderBase implements Loader {
                   while (enumeration.hasMoreElements ()) {
                     updateShapeAppearance((Node)enumeration.nextElement(), appearance);
                   }
+                } else if (node instanceof Link) {
+                  updateShapeAppearance(((Link)node).getSharedGroup(), appearance);
                 } else if (node instanceof Shape3D) {
                   if (materialInstanceSymbol.equals(geometryAppearances.get(((Shape3D)node).getGeometry()))) {
                     ((Shape3D)node).setAppearance(appearance);
@@ -890,7 +900,7 @@ public class DAELoader extends LoaderBase implements Loader {
         BoundingBox bounds = new BoundingBox(
             new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
             new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-        computeBounds(bounds, this.visualScene, new Transform3D());
+        computeBounds(this.visualScene, bounds, new Transform3D());
 
         // Set orientation to Y_UP
         Transform3D axisTransform = new Transform3D();
@@ -926,7 +936,7 @@ public class DAELoader extends LoaderBase implements Loader {
      * Combines the given <code>bounds</code> with the bounds of the given <code>node</code>
      * and its children.
      */
-    private void computeBounds(BoundingBox bounds, Node node, Transform3D parentTransformations) {
+    private void computeBounds(Node node, BoundingBox bounds, Transform3D parentTransformations) {
       if (node instanceof Group) {
         if (node instanceof TransformGroup) {
           parentTransformations = new Transform3D(parentTransformations);
@@ -937,8 +947,10 @@ public class DAELoader extends LoaderBase implements Loader {
         // Compute the bounds of all the node children
         Enumeration<?> enumeration = ((Group)node).getAllChildren();
         while (enumeration.hasMoreElements ()) {
-          computeBounds(bounds, (Node)enumeration.nextElement(), parentTransformations);
+          computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations);
         }
+      } else if (node instanceof Link) {
+        computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations);
       } else if (node instanceof Shape3D) {
         Bounds shapeBounds = ((Shape3D)node).getBounds();
         shapeBounds.transform(parentTransformations);
