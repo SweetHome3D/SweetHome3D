@@ -383,8 +383,8 @@ public class ModelManager {
   
   /**
    * Returns a clone of the given <code>node</code>.
-   * All the children and the attributes of the given node are duplicated expect the shape geometries 
-   * and the texture images.
+   * All the children and the attributes of the given node are duplicated except the geometries 
+   * and the texture images of shapes.
    */
   public Node cloneNode(Node node) {
     return cloneNode(node, new HashMap<SharedGroup, SharedGroup>());
