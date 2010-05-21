@@ -843,7 +843,7 @@ public class VideoPanel extends JPanel implements DialogView {
           && !compareCameraLocation(videoFramesPath [index], homeCamera)) {        
       }
       // Prefer last location
-      if (index < 0) {
+      if (index < 0 || index == videoFramesPath.length - 1) {
         index = videoFramesPath.length;
       }
       this.cameraPathIterator = Arrays.asList(videoFramesPath).listIterator(index);
