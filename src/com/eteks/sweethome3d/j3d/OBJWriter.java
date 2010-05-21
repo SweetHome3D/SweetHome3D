@@ -61,6 +61,7 @@ import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.LineArray;
 import javax.media.j3d.LineStripArray;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
@@ -308,26 +309,31 @@ public class OBJWriter extends FilterWriter {
       this.firstNode = false;
     }
     
-    writeNode(node, node, nodeName);
+    writeNode(node, nodeName, new Transform3D());
   }
 
   /**
    * Writes all the 3D shapes children of <code>node</code> at OBJ format.
    */ 
-  private void writeNode(Node parent, Node node, String nodeName) throws IOException {
+  private void writeNode(Node node, String nodeName, Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
       // Write all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        writeNode(parent, (Node)enumeration.nextElement(), nodeName);
+        writeNode((Node)enumeration.nextElement(), nodeName, parentTransformations);
       }
+    } else if (node instanceof Link) {
+      writeNode(((Link)node).getSharedGroup(), nodeName, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
       
-      // Retrieve transformation needed to be applied to vertices
-      Transform3D transformationToParent = getTransformationToParent(parent, node);
-
       // Build a unique human readable object name
       String objectName = "";
       if (accept(nodeName)) {
@@ -374,28 +380,10 @@ public class OBJWriter extends FilterWriter {
       
       // Write object geometries
       for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        writeNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, 
+        writeNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
             cullFace, backFaceNormalFlip);
       }
     }    
-  }
-  
-  /**
-   * Returns the transformation applied to a <code>child</code> 
-   * on the path to <code>parent</code>. 
-   */
-  private Transform3D getTransformationToParent(Node parent, Node child) {
-    Transform3D transform = new Transform3D();
-    if (child instanceof TransformGroup) {
-      ((TransformGroup)child).getTransform(transform);
-    }
-    if (child != parent) {
-      Transform3D parentTransform = getTransformationToParent(parent, child.getParent());
-      parentTransform.mul(transform);
-      return parentTransform;
-    } else {
-      return transform;
-    }
   }
   
   /**
@@ -422,7 +410,7 @@ public class OBJWriter extends FilterWriter {
    * Writes a 3D geometry at OBJ format.
    */
   private void writeNodeGeometry(Geometry geometry, 
-                                 Transform3D transformationToParent, 
+                                 Transform3D parentTransformations, 
                                  TexCoordGeneration texCoordGeneration, 
                                  int cullFace, 
                                  boolean backFaceNormalFlip) throws IOException {
@@ -470,7 +458,7 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
                index < n; index++, i += vertexSize) {
             Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-            writeVertex(transformationToParent, vertex, index,
+            writeVertex(parentTransformations, vertex, index,
                 vertexIndices, vertexIndexSubstitutes);
           }
           // Write normals
@@ -478,7 +466,7 @@ public class OBJWriter extends FilterWriter {
             for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                  index < n; index++, i += vertexSize) {
               Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              writeNormal(transformationToParent, normal, index, normalIndices, 
+              writeNormal(parentTransformations, normal, index, normalIndices, 
                   normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
             }
           }
@@ -504,7 +492,7 @@ public class OBJWriter extends FilterWriter {
           float [] vertexCoordinates = geometryArray.getCoordRefFloat();
           for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
             Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
-            writeVertex(transformationToParent, vertex, index,
+            writeVertex(parentTransformations, vertex, index,
                 vertexIndices, vertexIndexSubstitutes);
           }
           // Write normals
@@ -512,7 +500,7 @@ public class OBJWriter extends FilterWriter {
             float [] normalCoordinates = geometryArray.getNormalRefFloat();
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
               Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-              writeNormal(transformationToParent, normal, index, normalIndices, 
+              writeNormal(parentTransformations, normal, index, normalIndices, 
                   normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
             }
           }
@@ -538,7 +526,7 @@ public class OBJWriter extends FilterWriter {
         for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
           Point3f vertex = new Point3f();
           geometryArray.getCoordinate(index, vertex);
-          writeVertex(transformationToParent, vertex, index,
+          writeVertex(parentTransformations, vertex, index,
               vertexIndices, vertexIndexSubstitutes);
         }
         // Write normals
@@ -546,7 +534,7 @@ public class OBJWriter extends FilterWriter {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             Vector3f normal = new Vector3f();
             geometryArray.getNormal(index, normal);
-            writeNormal(transformationToParent, normal, index, normalIndices, 
+            writeNormal(parentTransformations, normal, index, normalIndices, 
                 normalIndexSubstitutes, oppositeSideNormalIndexSubstitutes, cullFace, backFaceNormalFlip);
           }
         }

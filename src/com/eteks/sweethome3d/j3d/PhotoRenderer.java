@@ -52,6 +52,7 @@ import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.LineArray;
 import javax.media.j3d.LineStripArray;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
@@ -299,20 +300,29 @@ public class PhotoRenderer {
    * Exports the given Java 3D <code>node</code> and its children to Sunflow API.  
    */
   private void exportNode(Node node, boolean noConstantShader) throws IOException {
-    exportNode(node, node, noConstantShader);
+    exportNode(node, noConstantShader, new Transform3D());
   }
 
   /**
    * Exports all the 3D shapes children of <code>node</code> at OBJ format.
    */ 
-  private void exportNode(Node parent, Node node, 
-                          boolean noConstantShader) throws IOException {
+  private void exportNode(Node node, 
+                          boolean noConstantShader,
+                          Transform3D parentTransformations) throws IOException {
     if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
       // Export all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        exportNode(parent, (Node)enumeration.nextElement(), noConstantShader);
+        exportNode((Node)enumeration.nextElement(), noConstantShader, parentTransformations);
       }
+    } else if (node instanceof Link) {
+      exportNode(((Link)node).getSharedGroup(), noConstantShader, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Appearance appearance = shape.getAppearance();
@@ -321,9 +331,6 @@ public class PhotoRenderer {
           || renderingAttributes.getVisible()) {
         String shapeName = (String)shape.getUserData();
         
-        // Retrieve transformation needed to be applied to vertices
-        Transform3D transformationToParent = getTransformationToParent(parent, node);
-  
         // Build a unique object name
         String uuid = UUID.randomUUID().toString();
   
@@ -341,7 +348,7 @@ public class PhotoRenderer {
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
           String objectName = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          exportNodeGeometry(shape.getGeometry(i), transformationToParent, texCoordGeneration, objectName);
+          exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, objectName);
           if (appearanceName != null) {
             this.sunflow.parameter("shaders", new String [] {appearanceName});
           }
@@ -352,27 +359,10 @@ public class PhotoRenderer {
   }
   
   /**
-   * Returns the transformation applied to a <code>child</code> 
-   * on the path to <code>parent</code>. 
-   */
-  private Transform3D getTransformationToParent(Node parent, Node child) {
-    Transform3D transform = new Transform3D();
-    if (child instanceof TransformGroup) {
-      ((TransformGroup)child).getTransform(transform);
-    }
-    if (child != parent) {
-      Transform3D parentTransform = getTransformationToParent(parent, child.getParent());
-      parentTransform.mul(transform);
-      return parentTransform;
-    } else {
-      return transform;
-    }
-  }
-  
-  /**
    * Exports a 3D geometry in Sunflow API.
    */
-  private void exportNodeGeometry(Geometry geometry, Transform3D transformationToParent, 
+  private void exportNodeGeometry(Geometry geometry, 
+                                  Transform3D parentTransformations, 
                                   TexCoordGeneration texCoordGeneration, 
                                   String objectName) {
     if (geometry instanceof GeometryArray) {
@@ -456,14 +446,14 @@ public class PhotoRenderer {
             for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
                  index < n; index++, i += vertexSize) {
               Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              exportVertex(transformationToParent, vertex, index, vertices);
+              exportVertex(parentTransformations, vertex, index, vertices);
             }
             // Export normals
             if (normals != null) {
               for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
                    index < n; index++, i += vertexSize) {
                 Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-                exportNormal(transformationToParent, normal, index, normals);
+                exportNormal(parentTransformations, normal, index, normals);
               }
             }
             // Export texture coordinates
@@ -488,14 +478,14 @@ public class PhotoRenderer {
             float [] vertexCoordinates = geometryArray.getCoordRefFloat();
             for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
               Point3f vertex = new Point3f(vertexCoordinates [i], vertexCoordinates [i + 1], vertexCoordinates [i + 2]);
-              exportVertex(transformationToParent, vertex, index, vertices);
+              exportVertex(parentTransformations, vertex, index, vertices);
             }
             // Export normals
             if (normals != null) {
               float [] normalCoordinates = geometryArray.getNormalRefFloat();
               for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
                 Vector3f normal = new Vector3f(normalCoordinates [i], normalCoordinates [i + 1], normalCoordinates [i + 2]);
-                exportNormal(transformationToParent, normal, index, normals);
+                exportNormal(parentTransformations, normal, index, normals);
               }
             }
             // Export texture coordinates
@@ -520,14 +510,14 @@ public class PhotoRenderer {
           for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
             Point3f vertex = new Point3f();
             geometryArray.getCoordinate(index, vertex);
-            exportVertex(transformationToParent, vertex, index, vertices);
+            exportVertex(parentTransformations, vertex, index, vertices);
           }
           // Export normals
           if (normals != null) {
             for (int index = 0, n = geometryArray.getVertexCount(); index < n; index++) {
               Vector3f normal = new Vector3f();
               geometryArray.getNormal(index, normal);
-              exportNormal(transformationToParent, normal, index, normals);
+              exportNormal(parentTransformations, normal, index, normals);
             }
           }
           // Export texture coordinates

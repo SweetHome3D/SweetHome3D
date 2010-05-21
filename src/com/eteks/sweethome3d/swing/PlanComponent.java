@@ -109,6 +109,7 @@ import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
@@ -4659,6 +4660,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, 
               pieceWidth, pieceDepth, pieceHeight, modelSize);
         }
+      } else if (node instanceof Link) {
+        setMaterialAndTexture(((Link)node).getSharedGroup(), material, texture, 
+            pieceWidth, pieceDepth, pieceHeight, modelSize);
       } else if (node instanceof Shape3D) {
         final Shape3D shape = (Shape3D)node;
         String shapeName = (String)shape.getUserData();
@@ -4702,6 +4706,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         while (enumeration.hasMoreElements()) {
           setBackFaceNormalFlip((Node)enumeration.nextElement());
         }
+      } else if (node instanceof Link) {
+        setBackFaceNormalFlip(((Link)node).getSharedGroup());
       } else if (node instanceof Shape3D) {
         Appearance appearance = ((Shape3D)node).getAppearance();
         if (appearance == null) {

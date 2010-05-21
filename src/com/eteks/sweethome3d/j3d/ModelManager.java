@@ -56,10 +56,12 @@ import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.IndexedTriangleFanArray;
 import javax.media.j3d.IndexedTriangleStripArray;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
+import javax.media.j3d.SharedGroup;
 import javax.media.j3d.Texture;
 import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
@@ -219,7 +221,7 @@ public class ModelManager {
     BoundingBox objectBounds = new BoundingBox(
         new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
         new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-    computeBounds(node, node, objectBounds);
+    computeBounds(node, objectBounds, new Transform3D());
     Point3d lower = new Point3d();
     objectBounds.getLower(lower);
     if (lower.x == Double.POSITIVE_INFINITY) {
@@ -228,16 +230,24 @@ public class ModelManager {
     return objectBounds;
   }
   
-  private void computeBounds(Node root, Node node, BoundingBox bounds) {
+  private void computeBounds(Node node, BoundingBox bounds, Transform3D parentTransformations) {
     if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
       // Compute the bounds of all the node children
       Enumeration<?> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasMoreElements ()) {
-        computeBounds(root, (Node)enumeration.nextElement (), bounds);
+        computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations);
       }
+    } else if (node instanceof Link) {
+      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations);
     } else if (node instanceof Shape3D) {
       Bounds shapeBounds = ((Shape3D)node).getBounds();
-      shapeBounds.transform(getTransformationToParent(root, node));
+      shapeBounds.transform(parentTransformations);
       bounds.combine(shapeBounds);
     }
   }
@@ -344,7 +354,7 @@ public class ModelManager {
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
                       for (final ModelObserver observer : loadingModelObservers.remove(content)) {
-                        BranchGroup modelNode = (BranchGroup)loadedModel.cloneTree(true);
+                        BranchGroup modelNode = (BranchGroup)cloneNode(loadedModel);
                         observer.modelUpdated(modelNode);
                       }
                     }
@@ -368,9 +378,60 @@ public class ModelManager {
     } 
     
     // Notify cached model to observer with a clone of the model
-    modelObserver.modelUpdated((BranchGroup)modelRoot.cloneTree(true));
+    modelObserver.modelUpdated((BranchGroup)cloneNode(modelRoot));
+  }
+  
+  /**
+   * Returns a clone of the given <code>node</code>.
+   * All the children and the attributes of the given node are duplicated expect the shape geometries 
+   * and the texture images.
+   */
+  public Node cloneNode(Node node) {
+    return cloneNode(node, new HashMap<SharedGroup, SharedGroup>());
   }
     
+  private Node cloneNode(Node node, Map<SharedGroup, SharedGroup> clonedSharedGroups) {
+    if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
+      Shape3D clonedShape = (Shape3D)shape.cloneNode(false);
+      Appearance appearance = shape.getAppearance();
+      if (appearance != null) {
+        // Force only duplication of node's appearance expect its texture
+        Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);
+        Texture texture = appearance.getTexture();
+        if (texture != null) {
+          clonedAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+        }
+        clonedShape.setAppearance(clonedAppearance);
+      }
+      return clonedShape;
+    } else if (node instanceof Link) {
+      Link clonedLink = (Link)node.cloneNode(true);
+      // Force duplication of shared groups too
+      SharedGroup sharedGroup = clonedLink.getSharedGroup();
+      if (sharedGroup != null) {
+        SharedGroup clonedSharedGroup = clonedSharedGroups.get(sharedGroup);
+        if (clonedSharedGroup == null) {
+          clonedSharedGroup = (SharedGroup)cloneNode(sharedGroup, clonedSharedGroups);
+          clonedSharedGroups.put(sharedGroup, clonedSharedGroup);          
+        }
+        clonedLink.setSharedGroup(clonedSharedGroup);
+      }
+      return clonedLink;
+    } else {
+      Node clonedNode = node.cloneNode(true);
+      if (node instanceof Group) {
+        Group group = (Group)node;
+        Group clonedGroup = (Group)clonedNode;
+        for (int i = 0, n = group.numChildren(); i < n; i++) {
+          Node clonedChild = cloneNode(group.getChild(i));
+          clonedGroup.addChild(clonedChild);
+        }
+      }
+      return clonedNode;
+    }
+  }
+  
   /**
    * Returns the node loaded synchronously from <code>content</code> with supported loaders. 
    * This method is threadsafe and may be called from any thread.
@@ -460,7 +521,8 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsAndModulateTextures(modelNode);
 
-        collapseHierarchy(modelNode, modelNode);
+        // TODO
+        // collapseHierarchy(modelNode, modelNode);
         
         return modelNode;
       } catch (IllegalArgumentException ex) {
@@ -530,6 +592,8 @@ public class ModelManager {
       while (enumeration.hasMoreElements()) {
         turnOffLightsAndModulateTextures((Node)enumeration.nextElement());
       }
+    } else if (node instanceof Link) {
+      turnOffLightsAndModulateTextures(((Link)node).getSharedGroup());
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
@@ -574,96 +638,47 @@ public class ModelManager {
   }
 
   /**
-   * Simplifies hierarchy by replacing intermediate groups to a shape by
-   * the matching transform group.
-   */
-  private void collapseHierarchy(Group root, Node node) {
-    if (node.getClass() == Group.class
-        || node.getClass() == TransformGroup.class
-        || node.getClass() == BranchGroup.class) {
-      // Enumerate children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        collapseHierarchy(root, (Node)enumeration.nextElement());
-      }
-    } else if (node instanceof Shape3D) {
-      // Reparent node 
-      Transform3D transformation = getTransformationToParent(root, node);
-      Group parent = (Group)node.getParent();
-      if (parent != root && parent.getParent() != root) {
-        parent.removeChild(node);
-        TransformGroup transformGroup = new TransformGroup(transformation);
-        root.addChild(transformGroup);
-        transformGroup.addChild(node);
-        removeEmptyParentGroups(root, parent);
-      }
-    }
-  }
-
-  private void removeEmptyParentGroups(Group root, Group group) {
-    if (root != group) {
-      Group parent = (Group)group.getParent();
-      if (group.numChildren() == 0) {
-        parent.removeChild(group);
-        removeEmptyParentGroups(root, parent);
-      }
-    }
-  }
-
-  /**
    * Returns the 2D area of the 3D shapes children of the given <code>node</code> 
    * projected on the floor (plan y = 0). 
    */
   public Area getAreaOnFloor(Node node) {
     Area modelAreaOnFloor = new Area();
-    computeAreaOnFloor(node, node, modelAreaOnFloor);
+    computeAreaOnFloor(node, modelAreaOnFloor, new Transform3D());
     return modelAreaOnFloor;
   }
   
   /**
    * Computes the 2D area on floor of a the 3D shapes children of <code>node</code>.
    */
-  private void computeAreaOnFloor(Node parent, Node node, Area nodeArea) {
+  private void computeAreaOnFloor(Node node, Area nodeArea, Transform3D parentTransformations) {
     if (node instanceof Group) {
+      if (node instanceof TransformGroup) {
+        parentTransformations = new Transform3D(parentTransformations);
+        Transform3D transform = new Transform3D();
+        ((TransformGroup)node).getTransform(transform);
+        parentTransformations.mul(transform);
+      }
       // Compute all children
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        computeAreaOnFloor(parent, (Node)enumeration.nextElement(), nodeArea);
+        computeAreaOnFloor((Node)enumeration.nextElement(), nodeArea, parentTransformations);
       }
+    } else if (node instanceof Link) {
+      computeAreaOnFloor(((Link)node).getSharedGroup(), nodeArea, parentTransformations);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
-      // Retrieve transformation applied to vertices
-      Transform3D transformationToParent = getTransformationToParent(parent, node);
       // Compute shape geometries area
       for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-        computeGeometryAreaOnFloor(shape.getGeometry(i), transformationToParent, nodeArea);
+        computeGeometryAreaOnFloor(shape.getGeometry(i), parentTransformations, nodeArea);
       }
     }    
-  }
-  
-  /**
-   * Returns the transformation applied to a <code>child</code> 
-   * on the path to <code>parent</code>. 
-   */
-  private Transform3D getTransformationToParent(Node parent, Node child) {
-    Transform3D transform = new Transform3D();
-    if (child instanceof TransformGroup) {
-      ((TransformGroup)child).getTransform(transform);
-    }
-    if (child != parent) {
-      Transform3D parentTransform = getTransformationToParent(parent, child.getParent());
-      parentTransform.mul(transform);
-      return parentTransform;
-    } else {
-      return transform;
-    }
   }
   
   /**
    * Computes the area on floor of a 3D geometry.
    */
   private void computeGeometryAreaOnFloor(Geometry geometry, 
-                                          Transform3D transformationToParent, 
+                                          Transform3D parentTransformations, 
                                           Area nodeArea) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;      
@@ -680,7 +695,7 @@ public class ModelManager {
             vertex.x = vertexData [i];
             vertex.y = vertexData [i + 1];
             vertex.z = vertexData [i + 2];
-            transformationToParent.transform(vertex);
+            parentTransformations.transform(vertex);
             vertices [index++] = vertex.x;
             vertices [index++] = vertex.z;
           }
@@ -691,7 +706,7 @@ public class ModelManager {
             vertex.x = vertexCoordinates [i];
             vertex.y = vertexCoordinates [i + 1];
             vertex.z = vertexCoordinates [i + 2];
-            transformationToParent.transform(vertex);
+            parentTransformations.transform(vertex);
             vertices [index++] = vertex.x;
             vertices [index++] = vertex.z;
           }
@@ -700,7 +715,7 @@ public class ModelManager {
         // Store vertices coordinates
         for (int index = 0, i = 0; index < vertices.length; i++) {
           geometryArray.getCoordinate(i, vertex);
-          transformationToParent.transform(vertex);
+          parentTransformations.transform(vertex);
           vertices [index++] = vertex.x;
           vertices [index++] = vertex.z;
         }

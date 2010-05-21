@@ -51,6 +51,7 @@ import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PhysicalBody;
@@ -466,7 +467,7 @@ public class ModelPreviewComponent extends JComponent {
     TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
     if (model != null) {
-      model = (BranchGroup)model.cloneTree(true);
+      model = (BranchGroup)ModelManager.getInstance().cloneNode(model);
       model.setCapability(BranchGroup.ALLOW_DETACH);
       setNodeCapabilities(model);
       
@@ -513,6 +514,9 @@ public class ModelPreviewComponent extends JComponent {
       while (enumeration.hasMoreElements()) {
         setNodeCapabilities((Node)enumeration.nextElement());
       }
+    } else if (node instanceof Link) {
+      node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
+      setNodeCapabilities(((Link)node).getSharedGroup());
     } else if (node instanceof Shape3D) {
       node.setCapability(Node.ALLOW_BOUNDS_READ);
       Appearance appearance = ((Shape3D)node).getAppearance();
@@ -552,6 +556,8 @@ public class ModelPreviewComponent extends JComponent {
       while (enumeration.hasMoreElements()) {
         setBackFaceShown((Node)enumeration.nextElement(), backFaceShown);
       }
+    } else if (node instanceof Link) {
+      setBackFaceShown(((Link)node).getSharedGroup(), backFaceShown);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
@@ -684,6 +690,8 @@ public class ModelPreviewComponent extends JComponent {
       while (enumeration.hasMoreElements()) {
         setMaterial((Node)enumeration.nextElement(), material);
       }
+    } else if (node instanceof Link) {
+      setMaterial(((Link)node).getSharedGroup(), material);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();

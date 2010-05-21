@@ -25,6 +25,7 @@ import java.util.Enumeration;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Group;
+import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
 import javax.media.j3d.PolygonAttributes;
@@ -329,6 +330,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       while (enumeration.hasMoreElements()) {
         setOutlineAppearance((Node)enumeration.nextElement());
       }
+    } else if (node instanceof Link) {
+      setOutlineAppearance(((Link)node).getSharedGroup());
     } else if (node instanceof Shape3D) {        
       Appearance outlineAppearance = new Appearance();
       ((Shape3D)node).setAppearance(outlineAppearance);
@@ -353,6 +356,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       while (enumeration.hasMoreElements()) {
         setAppearanceChangeAndBoundsReadCapabilities((Node)enumeration.nextElement());
       }
+    } else if (node instanceof Link) {
+      node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
+      setAppearanceChangeAndBoundsReadCapabilities(((Link)node).getSharedGroup());
     } else if (node instanceof Shape3D) {        
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
@@ -377,6 +383,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
         setMaterialAndTexture((Node)enumeration.nextElement(), material, texture, waitTextureLoadingEnd,
             pieceWidth, pieceDepth, pieceHeight, modelSize);
       }
+    } else if (node instanceof Link) {
+      setMaterialAndTexture(((Link)node).getSharedGroup(), material, texture, waitTextureLoadingEnd,
+          pieceWidth, pieceDepth, pieceHeight, modelSize);
     } else if (node instanceof Shape3D) {
       final Shape3D shape = (Shape3D)node;
       String shapeName = (String)shape.getUserData();
@@ -443,6 +452,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       while (enumeration.hasMoreElements()) {
         setVisible((Node)enumeration.nextElement(), visible);
       }
+    } else if (node instanceof Link) {
+      setVisible(((Link)node).getSharedGroup(), visible);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance == null) {
@@ -472,6 +483,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       while (enumeration.hasMoreElements()) {
         setCullFace((Node)enumeration.nextElement(), cullFace);
       }
+    } else if (node instanceof Link) {
+      setCullFace(((Link)node).getSharedGroup(), cullFace);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance == null) {
@@ -503,6 +516,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       while (enumeration.hasMoreElements()) {
         setBackFaceNormalFlip((Node)enumeration.nextElement(), backFaceNormalFlip);
       }
+    } else if (node instanceof Link) {
+      setBackFaceNormalFlip(((Link)node).getSharedGroup(), backFaceNormalFlip);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance == null) {
