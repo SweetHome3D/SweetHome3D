@@ -53,6 +53,10 @@ public class PackageDependenciesTest extends TestCase {
     JavaPackage sun3dUtilsImage = constraint.addPackage("com.sun.j3d.utils.image");
     JavaPackage sun3dUtilsUniverse = constraint.addPackage("com.sun.j3d.utils.universe");
     JavaPackage loader3ds = constraint.addPackage("com.microcrowd.loader.java3d.max3ds");
+    // XML
+    JavaPackage xmlParsers = constraint.addPackage("javax.xml.parsers");
+    JavaPackage xmlSax = constraint.addPackage("org.xml.sax");
+    JavaPackage xmlSaxHelpers = constraint.addPackage("org.xml.sax.helpers");
     // JMF
     JavaPackage jmf = constraint.addPackage("javax.media");
     JavaPackage jmfControl = constraint.addPackage("javax.media.control");
@@ -109,6 +113,9 @@ public class PackageDependenciesTest extends TestCase {
     sweetHome3DJava3D.dependsUpon(sunflowMath);
     sweetHome3DJava3D.dependsUpon(sunflowSystem);
     sweetHome3DJava3D.dependsUpon(sunflowSystemUI);
+    sweetHome3DJava3D.dependsUpon(xmlParsers);
+    sweetHome3DJava3D.dependsUpon(xmlSax);
+    sweetHome3DJava3D.dependsUpon(xmlSaxHelpers);
     
     sweetHome3DSwing.dependsUpon(sweetHome3DModel);
     sweetHome3DSwing.dependsUpon(sweetHome3DTools);
