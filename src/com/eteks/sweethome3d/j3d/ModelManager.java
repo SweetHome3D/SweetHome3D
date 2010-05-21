@@ -521,9 +521,6 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsAndModulateTextures(modelNode);
 
-        // TODO
-        // collapseHierarchy(modelNode, modelNode);
-        
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
