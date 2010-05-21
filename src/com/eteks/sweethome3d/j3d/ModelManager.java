@@ -396,7 +396,7 @@ public class ModelManager {
       Shape3D clonedShape = (Shape3D)shape.cloneNode(false);
       Appearance appearance = shape.getAppearance();
       if (appearance != null) {
-        // Force only duplication of node's appearance expect its texture
+        // Force only duplication of node's appearance except its texture
         Appearance clonedAppearance = (Appearance)appearance.cloneNodeComponent(true);
         Texture texture = appearance.getTexture();
         if (texture != null) {
