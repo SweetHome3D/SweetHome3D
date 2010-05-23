@@ -612,16 +612,19 @@ public class DAELoader extends LoaderBase implements Loader {
             if (this.inPhongBlinnOrLambert) {
               getAppearanceMaterial(this.effectId).setEmissiveColor(
                   this.floats [0], this.floats [1], this.floats [2]);
+            } else { // inConstant
+              this.effectAppearances.get(this.effectId).setColoringAttributes(new ColoringAttributes(
+                  this.floats [0], this.floats [1], this.floats [2], ColoringAttributes.SHADE_GOURAUD));
             }
-            // Always set coloring attributes in case geometries don't contain normals
-            this.effectAppearances.get(this.effectId).setColoringAttributes(new ColoringAttributes(
-                this.floats [0], this.floats [1], this.floats [2], ColoringAttributes.SHADE_GOURAUD));
           } else if ("ambient".equals(parent)) {
             getAppearanceMaterial(this.effectId).setAmbientColor(
                 this.floats [0], this.floats [1], this.floats [2]);
           } else if ("diffuse".equals(parent)) {
             getAppearanceMaterial(this.effectId).setDiffuseColor(
                 this.floats [0], this.floats [1], this.floats [2], this.floats [3]);
+            // Always set coloring attributes in case geometries don't contain normals
+            this.effectAppearances.get(this.effectId).setColoringAttributes(new ColoringAttributes(
+                this.floats [0], this.floats [1], this.floats [2], ColoringAttributes.SHADE_GOURAUD));
           } else if ("specular".equals(parent)) {
             getAppearanceMaterial(this.effectId).setSpecularColor(
                 this.floats [0], this.floats [1], this.floats [2]);
