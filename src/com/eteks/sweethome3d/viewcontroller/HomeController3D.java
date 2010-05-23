@@ -203,8 +203,9 @@ public class HomeController3D implements Controller {
   private class TopCameraState extends CameraControllerState {
     private final float MIN_SIZE = 1000;
     
-    private Camera topCamera;
+    private Camera      topCamera;
     private Rectangle2D homeBounds;
+    private float       homeHeight;
     private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent evt) {
           updateCameraFromHomeBounds();
@@ -243,6 +244,7 @@ public class HomeController3D implements Controller {
 
     public TopCameraState() {
       this.homeBounds = getHomeBounds();
+      this.homeHeight = getHomeHeight();
     }
       
     @Override
@@ -271,11 +273,12 @@ public class HomeController3D implements Controller {
       float deltaZ = (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight())  
           - Math.max(newHomeBounds.getWidth(), newHomeBounds.getHeight()));
       this.homeBounds = newHomeBounds;
+      this.homeHeight = getHomeHeight();
       moveCamera(deltaZ);
     }
 
     /**
-     * Returns home bounds that includes walls and furniture.
+     * Returns home bounds that includes walls, furniture and rooms.
      */
     private Rectangle2D getHomeBounds() {
       // Compute plan bounds to include rooms, walls and furniture
@@ -326,13 +329,38 @@ public class HomeController3D implements Controller {
       return homeBounds;
     }
 
+    /**
+     * Returns home height that includes walls and furniture.
+     */
+    private float getHomeHeight() {
+      // Compute plan bounds to include walls and furniture
+      float homeHeight = 10;
+      for (Wall wall : home.getWalls()) {
+        homeHeight = Math.max(homeHeight, wall.getHeight());
+        Float heightAtEnd = wall.getHeightAtEnd();
+        if (heightAtEnd != null) {
+          homeHeight = Math.max(homeHeight, heightAtEnd);
+        }
+      }
+      for (HomePieceOfFurniture piece : home.getFurniture()) {
+        if (piece.isVisible()) {
+          homeHeight = Math.max(homeHeight, piece.getElevation() + piece.getHeight());
+        }
+      }
+      if (homeHeight != 10) {
+        return homeHeight;
+      } else {
+        return home.getWallHeight();
+      }
+    }
+    
     @Override
     public void moveCamera(float delta) {
       // Use a 5 times bigger delta for top camera move
       delta *= 5;
       float newZ = this.topCamera.getZ() - (float)Math.sin(this.topCamera.getPitch()) * delta;
-      // Check new elevation is between home wall height and a half, and 3 times its largest dimension  
-      newZ = Math.max(newZ, home.getWallHeight() * 1.5f);
+      // Check new elevation is between home height and a half, and 3 times its largest dimension  
+      newZ = Math.max(newZ, this.homeHeight * 1.5f);
       newZ = Math.min(newZ, (float)(Math.max(this.homeBounds.getWidth(), this.homeBounds.getHeight()) * 3 * Math.sin(this.topCamera.getPitch())));
       double distanceToCenterAtGroundLevel = newZ / Math.tan(this.topCamera.getPitch());
       this.topCamera.setX((float)this.homeBounds.getCenterX() + (float)(Math.sin(this.topCamera.getYaw()) 
