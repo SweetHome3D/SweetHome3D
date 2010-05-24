@@ -24,6 +24,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
@@ -266,19 +267,23 @@ public class HomeFramePane extends JRootPane implements View {
         && screenWidth != null && screenHeight != null
         && screenWidth >= screenSize.width
         && screenHeight >= screenSize.height) {
-      // Reuse home bounds
-      frame.setBounds(x, y, width, height);
+      final Rectangle frameBounds = new Rectangle(x, y, width, height);
       if (maximized != null && maximized) {
-        if (OperatingSystem.isLinux()) {
-          EventQueue.invokeLater(new Runnable() {
+        // Display first the frame at its maximum size to keep splitters location 
+        Insets insets = frame.getInsets();
+        frame.setSize(screenSize.width + insets.left + insets.right, 
+            screenSize.height + insets.bottom);
+        EventQueue.invokeLater(new Runnable() {
             public void run() {
-              // Under Linux, maximize frame once it's displayed
+              // Resize to home non maximized bounds
+              frame.setBounds(frameBounds);
+              // Finally maximize
               frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             }
           });
-        } else {
-          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        }
+      } else {
+        // Reuse home bounds
+        frame.setBounds(frameBounds);
       }
     } else {      
       frame.setLocationByPlatform(true);
