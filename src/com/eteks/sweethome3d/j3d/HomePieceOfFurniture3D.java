@@ -25,6 +25,8 @@ import java.util.Enumeration;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Group;
+import javax.media.j3d.ImageComponent;
+import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Link;
 import javax.media.j3d.Material;
 import javax.media.j3d.Node;
@@ -352,6 +354,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   private void setAppearanceChangeAndBoundsReadCapabilities(Node node) {
     if (node instanceof Group) {
       node.setCapability(Group.ALLOW_CHILDREN_READ);
+      if (node instanceof TransformGroup) {
+        node.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+      }
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setAppearanceChangeAndBoundsReadCapabilities((Node)enumeration.nextElement());
@@ -424,10 +429,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
           TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd,
               new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {
-                    shape.getAppearance().setTexture(texture);
                     if (texture.getFormat() == Texture.RGBA) {
                       shape.getAppearance().setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
                     }
+                    shape.getAppearance().setTexture(texture);
                   }
                 });
         } else {
@@ -563,6 +568,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
+    Texture texture = appearance.getTexture();
+    if (texture != null && !texture.isLive()) {
+      texture.setCapability(Texture.ALLOW_FORMAT_READ);
+      texture.setCapability(Texture.ALLOW_FORMAT_READ);
+      for (ImageComponent image : texture.getImages()) {
+        if (!image.isLive()) {
+          image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
+        }
+      }
+    }
     appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
     PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();

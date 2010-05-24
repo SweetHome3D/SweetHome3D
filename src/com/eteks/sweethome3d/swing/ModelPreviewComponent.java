@@ -510,6 +510,9 @@ public class ModelPreviewComponent extends JComponent {
   private void setNodeCapabilities(Node node) {
     if (node instanceof Group) {
       node.setCapability(Group.ALLOW_CHILDREN_READ);
+      if (node instanceof TransformGroup) {
+        node.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+      }
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
         setNodeCapabilities((Node)enumeration.nextElement());

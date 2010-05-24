@@ -91,7 +91,9 @@ public class TextureManager {
     g.dispose();
     Texture texture = new TextureLoader(image).getTexture();
     texture.setCapability(Texture.ALLOW_IMAGE_READ);
+    texture.setCapability(Texture.ALLOW_FORMAT_READ);
     texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+    texture.getImage(0).setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
     return texture;
   }
   
@@ -175,7 +177,9 @@ public class TextureManager {
       texture.setMinFilter(Texture.NICEST);
       texture.setMagFilter(Texture.NICEST);
       texture.setCapability(Texture.ALLOW_IMAGE_READ);
+      texture.setCapability(Texture.ALLOW_FORMAT_READ);
       texture.getImage(0).setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+      texture.getImage(0).setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
       texture.setUserData(content);
     }
     return texture;
