@@ -91,7 +91,7 @@ public class FileContentManager implements ContentManager {
    
        @Override
        public String getDescription() {
-         return "3DS";
+         return "3DS - 3D Studio";
        }
      },
      new FileFilter() {
