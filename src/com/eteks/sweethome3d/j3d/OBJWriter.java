@@ -294,7 +294,7 @@ public class OBJWriter extends FilterWriter {
    * capabilities to read its children, the geometries and the appearance of its shapes.
    * Only geometries which are instances of <code>GeometryArray</code> will be written.
    * @param node     a Java 3D node  
-   * @param nodeName the name of the node. This is usefull to distinguish the objects 
+   * @param nodeName the name of the node. This is useful to distinguish the objects 
    *                 names in output. If this name is <code>null</code> or isn't built 
    *                 with A-Z, a-z, 0-9 and underscores, it will be ignored.
    * @throws IOException if the operation failed
