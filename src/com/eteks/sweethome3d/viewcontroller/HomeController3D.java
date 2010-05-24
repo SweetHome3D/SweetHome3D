@@ -336,7 +336,10 @@ public class HomeController3D implements Controller {
       // Compute plan bounds to include walls and furniture
       float homeHeight = 0;
       for (Wall wall : home.getWalls()) {
-        homeHeight = Math.max(homeHeight, wall.getHeight());
+        Float height = wall.getHeight();
+        if (height != null) {
+          homeHeight = Math.max(homeHeight, height);
+        }
         Float heightAtEnd = wall.getHeightAtEnd();
         if (heightAtEnd != null) {
           homeHeight = Math.max(homeHeight, heightAtEnd);
