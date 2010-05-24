@@ -24,6 +24,8 @@ import java.util.Enumeration;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Geometry;
+import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.ImageComponent;
 import javax.media.j3d.Link;
@@ -118,7 +120,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
     waitBranch.addChild(getModelBox(Color.WHITE));      
     // Allow appearance change on all children
-    setAppearanceChangeAndBoundsReadCapabilities(waitBranch);
+    setModelCapabilities(waitBranch);
     
     pieceTransformGroup.addChild(waitBranch);
     
@@ -284,8 +286,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // Add outline model node 
       modelBranch.addChild(createOutlineModelNode(modelNode));
     }
-    // Allow appearance change on all children
-    setAppearanceChangeAndBoundsReadCapabilities(modelBranch);
+
+    setModelCapabilities(modelBranch);
 
     TransformGroup transformGroup = (TransformGroup)getChild(0);
     // Remove previous nodes    
@@ -347,10 +349,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
   }
 
   /**
-   * Sets the capability to change material and rendering attributes
+   * Sets the capabilities to change material and rendering attributes, and to read geometries
    * for all children of <code>node</code>.
    */
-  private void setAppearanceChangeAndBoundsReadCapabilities(Node node) {
+  private void setModelCapabilities(Node node) {
     if (node instanceof Group) {
       node.setCapability(Group.ALLOW_CHILDREN_READ);
       if (node instanceof TransformGroup) {
@@ -358,15 +360,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       }
       Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasMoreElements()) {
-        setAppearanceChangeAndBoundsReadCapabilities((Node)enumeration.nextElement());
+        setModelCapabilities((Node)enumeration.nextElement());
       }
     } else if (node instanceof Link) {
       node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
-      setAppearanceChangeAndBoundsReadCapabilities(((Link)node).getSharedGroup());
+      setModelCapabilities(((Link)node).getSharedGroup());
     } else if (node instanceof Shape3D) {        
-      Appearance appearance = ((Shape3D)node).getAppearance();
+      Shape3D shape = (Shape3D)node;
+      Appearance appearance = shape.getAppearance();
       if (appearance != null) {
         setAppearanceCapabilities(appearance);
+      }
+      Enumeration<?> enumeration = shape.getAllGeometries();
+      while (enumeration.hasMoreElements()) {
+        setGeometryCapabilities((Geometry)enumeration.nextElement());
       }
       node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
       node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
@@ -587,6 +594,19 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
     }
   }
   
+  private void setGeometryCapabilities(Geometry geometry) {
+    // Sets the geometry capabilities needed to read attributes saved by OBJWriter
+    if (!geometry.isLive()
+        && geometry instanceof GeometryArray) {
+      geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
+      geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
+      geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
+      geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
+      geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
+      geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
+    }
+  }
+
   /**
    * A class used to store the default material and texture of a shape.
    */

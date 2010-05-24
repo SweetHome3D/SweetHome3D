@@ -49,6 +49,8 @@ import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.Geometry;
+import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Group;
 import javax.media.j3d.Light;
 import javax.media.j3d.Link;
@@ -521,11 +523,12 @@ public class ModelPreviewComponent extends JComponent {
       node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
       setNodeCapabilities(((Link)node).getSharedGroup());
     } else if (node instanceof Shape3D) {
+      Shape3D shape = (Shape3D)node;
       node.setCapability(Node.ALLOW_BOUNDS_READ);
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance == null) {
         appearance = new Appearance();
-        ((Shape3D)node).setAppearance(appearance);
+        shape.setAppearance(appearance);
       }
       appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
       appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
@@ -539,6 +542,20 @@ public class ModelPreviewComponent extends JComponent {
       }
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
       polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
+      
+      Enumeration<?> enumeration = shape.getAllGeometries();
+      while (enumeration.hasMoreElements()) {
+        Geometry geometry = (Geometry) enumeration.nextElement();
+        if (!geometry.isLive()
+            && geometry instanceof GeometryArray) {
+          geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
+          geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
+          geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
+          geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
+          geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
+          geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
+        }
+      }
     }
   }
   
