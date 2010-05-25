@@ -357,28 +357,32 @@ public class PhotoRenderer {
 
         // Export object geometries
         for (int i = 0, n = shape.numGeometries(); i < n; i++) {
-          String objectName = "object" + uuid + "-" + i;
+          String objectNameBase = "object" + uuid + "-" + i;
           // Always ignore normals on walls
-          exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, objectName, 
-              cullFace, backFaceNormalFlip);
-          if (appearanceName != null) {
-            this.sunflow.parameter("shaders", new String [] {appearanceName});
+          String [] objectsName = exportNodeGeometry(shape.getGeometry(i), parentTransformations, texCoordGeneration, 
+              objectNameBase, cullFace, backFaceNormalFlip);
+          if (objectsName != null) {
+            for (String objectName : objectsName) {
+              if (appearanceName != null) {
+                this.sunflow.parameter("shaders", new String [] {appearanceName});
+              }
+              this.sunflow.instance(objectName + ".instance", objectName);
+            }
           }
-          this.sunflow.instance(objectName + ".instance", objectName);
         }
       }
     }    
   }
   
   /**
-   * Exports a 3D geometry in Sunflow API.
+   * Returns the names of the exported 3D geometries in Sunflow API.
    */
-  private void exportNodeGeometry(Geometry geometry, 
-                                  Transform3D parentTransformations, 
-                                  TexCoordGeneration texCoordGeneration, 
-                                  String objectName, 
-                                  int cullFace, 
-                                  boolean backFaceNormalFlip) {
+  private String [] exportNodeGeometry(Geometry geometry, 
+                                       Transform3D parentTransformations, 
+                                       TexCoordGeneration texCoordGeneration, 
+                                       String objectNameBase, 
+                                       int cullFace, 
+                                       boolean backFaceNormalFlip) {
     if (geometry instanceof GeometryArray) {
       GeometryArray geometryArray = (GeometryArray)geometry;
       
@@ -387,8 +391,9 @@ public class PhotoRenderer {
       int [] stripVertexCount = null;
       int cullFaceMultiplier = cullFace == PolygonAttributes.CULL_NONE ? 2 : 1;
       if (geometryArray instanceof IndexedGeometryArray) {
-        if (geometryArray instanceof IndexedLineArray
-            || geometryArray instanceof IndexedTriangleArray) {
+        if (geometryArray instanceof IndexedLineArray) {
+          verticesIndices = new int [((IndexedGeometryArray)geometryArray).getIndexCount()];
+        } else if (geometryArray instanceof IndexedTriangleArray) {
           verticesIndices = new int [((IndexedGeometryArray)geometryArray).getIndexCount() * cullFaceMultiplier];
         } else if (geometryArray instanceof IndexedQuadArray) {
           verticesIndices = new int [((IndexedQuadArray)geometryArray).getIndexCount() * 3 / 2 * cullFaceMultiplier];
@@ -397,14 +402,15 @@ public class PhotoRenderer {
           stripVertexCount = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripIndexCounts(stripVertexCount);          
           if (geometryArray instanceof IndexedLineStripArray) {
-            verticesIndices = new int [getLineCount(stripVertexCount) * 2 * cullFaceMultiplier];
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
           } else {
             verticesIndices = new int [getTriangleCount(stripVertexCount) * 3 * cullFaceMultiplier];
           } 
         }
       } else {
-        if (geometryArray instanceof LineArray
-            || geometryArray instanceof TriangleArray) {
+        if (geometryArray instanceof LineArray) {
+          verticesIndices = new int [((GeometryArray)geometryArray).getVertexCount()];
+        } else if (geometryArray instanceof TriangleArray) {
           verticesIndices = new int [((GeometryArray)geometryArray).getVertexCount() * cullFaceMultiplier];
         } else if (geometryArray instanceof QuadArray) {
           verticesIndices = new int [((QuadArray)geometryArray).getVertexCount() * 3 / 2 * cullFaceMultiplier];
@@ -413,7 +419,7 @@ public class PhotoRenderer {
           stripVertexCount = new int [geometryStripArray.getNumStrips() * cullFaceMultiplier];
           geometryStripArray.getStripVertexCounts(stripVertexCount);
           if (geometryArray instanceof LineStripArray) {
-            verticesIndices = new int [getLineCount(stripVertexCount) * 2 * cullFaceMultiplier];
+            verticesIndices = new int [getLineCount(stripVertexCount) * 2];
           } else {
             verticesIndices = new int [getTriangleCount(stripVertexCount) * 3 * cullFaceMultiplier];
           }       
@@ -706,19 +712,28 @@ public class PhotoRenderer {
         }
       
         if (line) {
-          // Get points coordinates
-          float [] points = new float [verticesIndices.length * 3];
-          int pointIndex = 0;
-          for (int i = 0; i < verticesIndices.length; i++) {
-            int indirectIndex = verticesIndices [i] * 3;
-            points [pointIndex++] = vertices [indirectIndex++];
-            points [pointIndex++] = vertices [indirectIndex++];
-            points [pointIndex++] = vertices [indirectIndex++];
+          String [] objectNames = new String [verticesIndices.length / 2];
+          for (int startIndex = 0; startIndex < verticesIndices.length; startIndex += 2) {
+            String objectName = objectNameBase + "-" + startIndex;
+            objectNames [startIndex / 2] = objectName;
+            
+            // Get points coordinates of a segment
+            float [] points = new float [6];
+            int pointIndex = 0;
+            for (int i = startIndex; i <= startIndex + 1; i++) {
+              int indirectIndex = verticesIndices [i] * 3;
+              points [pointIndex++] = vertices [indirectIndex++];
+              points [pointIndex++] = vertices [indirectIndex++];
+              points [pointIndex++] = vertices [indirectIndex];
+            }
+            
+            // Create as many hairs as segments otherwise long hairs become invisible
+            this.sunflow.parameter("segments", 1);
+            this.sunflow.parameter("widths", 0.15f);
+            this.sunflow.parameter("points", "point", "vertex", points);
+            this.sunflow.geometry(objectName, "hair");
           }
-          this.sunflow.parameter("segments", vertices.length / 2 + 1);
-          this.sunflow.parameter("widths", 0.2f);
-          this.sunflow.parameter("points", "point", "vertex", points);
-          this.sunflow.geometry(objectName, "hair");
+          return objectNames;
         } else {
           this.sunflow.parameter("triangles", verticesIndices);
           this.sunflow.parameter("points", "point", "vertex", vertices);
@@ -728,10 +743,12 @@ public class PhotoRenderer {
           if (uvs != null) {
             this.sunflow.parameter("uvs", "texcoord", "vertex", uvs);
           }
-          this.sunflow.geometry(objectName, "triangle_mesh");
+          this.sunflow.geometry(objectNameBase, "triangle_mesh");
+          return new String [] {objectNameBase};
         }
       }
     } 
+    return null;
   }
   
   /**
