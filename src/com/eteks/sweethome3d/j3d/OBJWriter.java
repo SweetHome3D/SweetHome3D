@@ -769,10 +769,6 @@ public class OBJWriter extends FilterWriter {
       normal.normalize();
     }
     Integer normalIndex = normalIndices.get(normal);
-    if (normalIndexSubstitutes == null) {
-      // Fill opposite side normal index substitutes array
-      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
-    }
     if (normalIndex == null) {
       normalIndexSubstitutes [index] = normalIndices.size();
       normalIndices.put(normal, normalIndexSubstitutes [index]);
@@ -787,8 +783,9 @@ public class OBJWriter extends FilterWriter {
     if (cullFace == PolygonAttributes.CULL_NONE) {
       Vector3f oppositeNormal = new Vector3f(); 
       oppositeNormal.negate(normal);
+      // Fill opposite side normal index substitutes array
       writeNormal(transformationToParent, oppositeNormal, index, normalIndices, 
-          null, oppositeSideNormalIndexSubstitutes, PolygonAttributes.CULL_FRONT, false);
+          oppositeSideNormalIndexSubstitutes, null, PolygonAttributes.CULL_FRONT, false);
     }
   }
 
@@ -850,10 +847,6 @@ public class OBJWriter extends FilterWriter {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
-    if (normalIndexSubstitutes == null) {
-      // Use opposite side normal index substitutes array
-      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
-    }
     
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
@@ -891,8 +884,9 @@ public class OBJWriter extends FilterWriter {
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {
+      // Use opposite side normal index substitutes array
       writeIndexedTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
-          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          vertexIndexSubstitutes, oppositeSideNormalIndexSubstitutes, null,  
           textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
     }
   }
@@ -917,10 +911,6 @@ public class OBJWriter extends FilterWriter {
       tmp = vertexIndex1;
       vertexIndex1 = vertexIndex4;
       vertexIndex4 = tmp;
-    }
-    if (normalIndexSubstitutes == null) {
-      // Use opposite side normal index substitutes array
-      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
     }
     
     if (textureCoordinatesGenerated
@@ -967,8 +957,9 @@ public class OBJWriter extends FilterWriter {
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {      
+      // Use opposite side normal index substitutes array
       writeIndexedQuadrilateral(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4, 
-          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          vertexIndexSubstitutes, oppositeSideNormalIndexSubstitutes, null,  
           textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
     }
   }
@@ -1012,10 +1003,6 @@ public class OBJWriter extends FilterWriter {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
-    if (normalIndexSubstitutes == null) {
-      // Use opposite side normal index substitutes array
-      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
-    }
     
     if (textureCoordinatesGenerated
         || (geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
@@ -1053,8 +1040,9 @@ public class OBJWriter extends FilterWriter {
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {
+      // Use opposite side normal index substitutes array
       writeTriangle(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, 
-          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          vertexIndexSubstitutes, oppositeSideNormalIndexSubstitutes, null,  
           textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
     }
   }
@@ -1079,10 +1067,6 @@ public class OBJWriter extends FilterWriter {
       tmp = vertexIndex1;
       vertexIndex1 = vertexIndex4;
       vertexIndex4 = tmp;
-    }
-    if (normalIndexSubstitutes == null) {
-      // Use opposite side normal index substitutes array
-      normalIndexSubstitutes = oppositeSideNormalIndexSubstitutes;
     }
     
     if (textureCoordinatesGenerated
@@ -1129,8 +1113,9 @@ public class OBJWriter extends FilterWriter {
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {      
+      // Use opposite side normal index substitutes array
       writeQuadrilateral(geometryArray, vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4, 
-          vertexIndexSubstitutes, null, oppositeSideNormalIndexSubstitutes, 
+          vertexIndexSubstitutes, oppositeSideNormalIndexSubstitutes, null, 
           textureCoordinatesIndexSubstitutes, textureCoordinatesGenerated, PolygonAttributes.CULL_FRONT);
     }
   }
