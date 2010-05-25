@@ -313,9 +313,6 @@ public class DefaultTexturesCatalog extends TexturesCatalog {
     try {
       // Try first to interpret contentFile as an absolute URL 
       // or an URL relative to resourceUrlBase if it's not null
-      
-      System.out.println(texturesUrl+ " "+ resourceUrlBase+ " "+contentFile);
-      
       URL url;
       if (resourceUrlBase != null) {
         url = new URL(resourceUrlBase, contentFile);
