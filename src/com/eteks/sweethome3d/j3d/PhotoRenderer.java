@@ -920,9 +920,12 @@ public class PhotoRenderer {
       if (imageFile == null) {
         ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
         RenderedImage image = imageComponent.getRenderedImage();
-        imageFile = File.createTempFile("texture", ".jpg");
+        String fileFormat = texture.getFormat() == Texture.RGBA 
+            ? "png"
+            : "jpg";
+        imageFile = File.createTempFile("texture", "." + fileFormat);
         imageFile.deleteOnExit();
-        ImageIO.write(image, "JPEG", imageFile);
+        ImageIO.write(image, fileFormat, imageFile);
         this.textureImageFilesCache.put(texture, imageFile);
       }
       this.sunflow.parameter("texture", imageFile.getAbsolutePath());
